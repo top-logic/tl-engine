@@ -8,7 +8,7 @@ package com.top_logic.themes.modern.layout.sidebar;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.knowledge.gui.layout.ButtonComponent;
-import com.top_logic.layout.structure.LayoutControl;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.structure.LayoutControlFactory;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControlProvider.Strategy;
@@ -41,7 +41,7 @@ public class SidebarLayoutControlFactory extends LayoutControlFactory {
 	}
 
 	@Override
-	protected LayoutControl createSpecificLayout(LayoutComponent component, LayoutControlProvider customProvider) {
+	protected Control createSpecificLayout(LayoutComponent component, LayoutControlProvider customProvider) {
 		if (component instanceof ButtonComponent) {
 			if (component.getDialogParent() == null) {
 				// Only outside a dialog - dialogs have no global button bar.
@@ -52,7 +52,7 @@ public class SidebarLayoutControlFactory extends LayoutControlFactory {
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		if (component instanceof ButtonComponent) {
 			if (component.getDialogParent() == null) {
 				// Only outside a dialog - dialogs have no global button bar.

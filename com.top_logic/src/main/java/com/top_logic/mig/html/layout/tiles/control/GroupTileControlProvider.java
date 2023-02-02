@@ -8,9 +8,9 @@ package com.top_logic.mig.html.layout.tiles.control;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.structure.DecoratingLayoutControlProvider;
 import com.top_logic.layout.structure.DefaultLayoutData;
-import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.SimpleDecoratingLayoutControlProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -38,7 +38,7 @@ public class GroupTileControlProvider extends SimpleDecoratingLayoutControlProvi
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		GroupTileComponent group = (GroupTileComponent) component;
 
 		RootTileComponent root = RootTileComponent.getRootTile(group);

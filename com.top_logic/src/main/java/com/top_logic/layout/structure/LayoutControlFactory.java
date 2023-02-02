@@ -31,6 +31,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.WindowScope;
@@ -190,7 +191,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	}
 
 	@Override
-	public LayoutControl createLayout(LayoutComponent component) {
+	public Control createLayout(LayoutComponent component) {
 		LayoutControlProvider customProvider = component.getComponentControlProvider();
 		if (customProvider == null) {
 			return createDefaultLayout(component);
@@ -200,7 +201,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	}
 
 	@Override
-	public LayoutControl createLayout(LayoutComponent component, ToolBar contextToolbar) {
+	public Control createLayout(LayoutComponent component, ToolBar contextToolbar) {
 		ToolBar before = _contextToolbar;
 		_contextToolbar = contextToolbar;
 		try {
@@ -224,17 +225,17 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	 *        The configured {@link LayoutControlProvider} to use by default.
 	 * @return The component display.
 	 */
-	protected LayoutControl createSpecificLayout(LayoutComponent component, LayoutControlProvider customProvider) {
+	protected Control createSpecificLayout(LayoutComponent component, LayoutControlProvider customProvider) {
 		return customProvider.createLayoutControl(this, component);
 	}
 
 	@Override
-	public LayoutControl createDefaultLayout(LayoutComponent component) {
+	public Control createDefaultLayout(LayoutComponent component) {
 		return decorate(component, this);
 	}
 
 	@Override
-	public LayoutControl decorate(LayoutComponent component, Layouting layouting) {
+	public Control decorate(LayoutComponent component, Layouting layouting) {
 		List<LayoutComponent> maximizables = clearMaximizable(component);
 		if (maximizables.size() > 2) {
 			// Note: The maximizable root component must listen on a unique expandable model for
@@ -257,7 +258,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 			_contextToolbar = result.getToolbar();
 			try {
 				installToolbar(component);
-				result.setChildControl(layouting.mkLayout(this, component));
+				result.setChildControl(new LayoutControlAdapter(layouting.mkLayout(this, component)));
 			} finally {
 				_contextToolbar = before;
 			}
@@ -267,7 +268,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 
 			// A maximizable layout without its own toolbar.
 			MaximizableControl result = new MaximizableControl(maximizationModel);
-			result.setChildControl(layouting.mkLayout(this, component));
+			result.setChildControl(new LayoutControlAdapter(layouting.mkLayout(this, component)));
 			return result;
 		} else {
 			installToolbar(component);
@@ -283,7 +284,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent aBusinessComponent) {
+	public Control mkLayout(Strategy strategy, LayoutComponent aBusinessComponent) {
 		if (aBusinessComponent instanceof LayoutContainer) {
 			if (aBusinessComponent instanceof MainLayout) {
 				if (_config.getAutomaticToolbars()) {
@@ -329,7 +330,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	/**
 	 * Creates the default layout for any content component.
 	 */
-	protected LayoutControl createContentLayout(Strategy strategy, LayoutComponent component) {
+	protected Control createContentLayout(Strategy strategy, LayoutComponent component) {
 		return component.getConfig().getContentLayouting().mkLayout(strategy, component);
 	}
 
@@ -354,7 +355,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		}
 	}
 
-	private LayoutControl createTabComponentLayout(TabComponent aTabComponent) {
+	private Control createTabComponentLayout(TabComponent aTabComponent) {
         // try to resolve the for the current theme.
 		final LayoutControlProvider provider =
 			ThemeFactory.getTheme().getValue(Icons.TAB_COMPONENT_DEFAULT_CONTROL_PROVIDER);
@@ -365,10 +366,12 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
         // if the theme default could not be resolved, we have to fall back
         // to this implementation.
         else {
-			final FlowLayoutControl theContainerControl =
+			final FlowLayoutControl<?> theContainerControl =
 				new FixedFlowLayoutControl(Orientation.VERTICAL);
-			theContainerControl.addChild(TabBarControlProvider.INSTANCE.createLayoutControl(this, aTabComponent));
-			theContainerControl.addChild(DeckPaneControlProvider.INSTANCE.createLayoutControl(this, aTabComponent));
+			theContainerControl.addChild(
+				LayoutControlAdapter.wrap(TabBarControlProvider.INSTANCE.createLayoutControl(this, aTabComponent)));
+			theContainerControl.addChild(
+				LayoutControlAdapter.wrap(DeckPaneControlProvider.INSTANCE.createLayoutControl(this, aTabComponent)));
             theContainerControl.listenForInvalidation(aTabComponent);
             return theContainerControl;
         }
@@ -672,7 +675,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 			_contextToolbar = currentDialog.getToolbar();
 		}
 		try {
-			theContent = createLayout(contentComponent);
+			theContent = createControl(contentComponent);
 		} finally {
 			_contextToolbar = null;
 		}
@@ -728,7 +731,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	}
 
 	private LayoutControl createControl(LayoutComponent component) {
-		return createLayout(component);
+		return LayoutControlAdapter.wrap(createLayout(component));
 	}
 
 	/**

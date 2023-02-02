@@ -11,6 +11,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.layout.structure.DecoratingLayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControl;
@@ -54,7 +55,7 @@ public class LayoutViewProvider extends DecoratingLayoutControlProvider<LayoutVi
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		ViewConfiguration viewConfiguration =
 			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(getConfig().getView());
 		LayoutControlAdapter adapterControl = new LayoutControlAdapter(viewConfiguration.createView(component));

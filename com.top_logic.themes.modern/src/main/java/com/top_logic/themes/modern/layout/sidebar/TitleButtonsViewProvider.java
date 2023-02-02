@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.basic.AbstractControlBase;
@@ -25,7 +26,6 @@ import com.top_logic.layout.buttonbar.SimpleButtonBarModel;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.layout.component.model.ModelChangeListener;
 import com.top_logic.layout.structure.ConfiguredLayoutControlProvider;
-import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.LayoutData;
@@ -72,7 +72,7 @@ public class TitleButtonsViewProvider extends ConfiguredLayoutControlProvider<Ti
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, final LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, final LayoutComponent component) {
 		final SimpleButtonBarModel model = new SimpleButtonBarModel();
 		ButtonBarControl buttonBar = ButtonBarFactory.createButtonBar(model);
 		final LayoutControlAdapter layout = new LayoutControlAdapter(buttonBar);

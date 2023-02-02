@@ -107,7 +107,7 @@ public class SelectionModelLayoutControl extends ContainerControl<SelectionModel
                     LayoutComponent theObject = (LayoutComponent) theIt.next();
 					LayoutControl theControl = _controls.get(theObject);
                     if (theControl == null) {
-						theControl = _controlProvider.createLayout(theObject);
+						theControl = LayoutControlAdapter.wrap(_controlProvider.createLayout(theObject));
 						_controls.put(theObject, theControl);
                     }
 					internalAddChild(theControl);
@@ -146,7 +146,7 @@ public class SelectionModelLayoutControl extends ContainerControl<SelectionModel
                 LayoutComponent theObject = (LayoutComponent) theIt.next();
 				LayoutControl theControl = _controls.get(theObject);
                 if (theControl == null) {
-					theControl = _controlProvider.createLayout(theObject);
+					theControl = LayoutControlAdapter.wrap(_controlProvider.createLayout(theObject));
 					_controls.put(theObject, theControl);
                 }
 				internalAddChild(theControl);

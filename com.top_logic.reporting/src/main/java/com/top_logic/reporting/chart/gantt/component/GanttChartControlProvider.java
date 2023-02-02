@@ -6,8 +6,8 @@
 package com.top_logic.reporting.chart.gantt.component;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.structure.DefaultLayoutData;
-import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -20,7 +20,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class GanttChartControlProvider implements LayoutControlProvider {
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 		LayoutControlAdapter chart = new LayoutControlAdapter(createChartDisplay((GanttComponent) component));
 		chart.listenForInvalidation(component);
 		chart.setConstraint(DefaultLayoutData.DEFAULT_CONSTRAINT);

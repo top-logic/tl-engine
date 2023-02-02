@@ -14,9 +14,9 @@ import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.structure.ContentControl;
 import com.top_logic.layout.structure.ContextMenuLayoutControlProvider;
-import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.mig.html.layout.tiles.ToList;
 
 /**
@@ -66,7 +66,7 @@ public abstract class SingleLayoutContainer extends LayoutContainer {
 		}
 	
 		@Override
-		public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+		public Control mkLayout(Strategy strategy, LayoutComponent component) {
 			SingleLayoutContainer layout = (SingleLayoutContainer) component;
 			ContentControl result = createContentWithMenu(component);
 			LayoutComponent child = layout.getChild();

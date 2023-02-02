@@ -13,6 +13,7 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.structure.ContainerControl;
 import com.top_logic.layout.structure.ContentControl;
 import com.top_logic.layout.structure.ContextMenuLayoutControlProvider;
@@ -112,25 +113,25 @@ public class TileContainerControlProvider extends ContextMenuLayoutControlProvid
 
 	}
 
-	static final TileLayoutVisitor<LayoutControl, TileContainerComponent> CREATE_CHILD =
+	static final TileLayoutVisitor<Control, TileContainerComponent> CREATE_CHILD =
 		new AbstractTileLayoutVisitor<>() {
 
 			@Override
-			public LayoutControl visitTileRef(TileRef value, TileContainerComponent arg) {
+			public Control visitTileRef(TileRef value, TileContainerComponent arg) {
 				LayoutComponent tileComponent = arg.getTileComponent(value);
 				LayoutFactory layoutFactory = tileComponent.getMainLayout().getLayoutFactory();
 				return layoutFactory.createLayout(tileComponent, arg.getToolBar());
 			}
 
 			@Override
-			public LayoutControl visitInlinedTile(InlinedTile value, TileContainerComponent arg) {
+			public Control visitInlinedTile(InlinedTile value, TileContainerComponent arg) {
 				LayoutComponent tileComponent = arg.getTileComponent(value);
 				LayoutFactory layoutFactory = tileComponent.getMainLayout().getLayoutFactory();
 				return layoutFactory.createLayout(tileComponent, arg.getToolBar());
 			}
 
 			@Override
-			public LayoutControl visitCompositeTile(CompositeTile value, TileContainerComponent arg) {
+			public Control visitCompositeTile(CompositeTile value, TileContainerComponent arg) {
 				LayoutControlAdapter control =
 					new LayoutControlAdapter(
 						new CompositeTileControl(new ContainerComponentTile(arg, value)));
@@ -151,7 +152,7 @@ public class TileContainerControlProvider extends ContextMenuLayoutControlProvid
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		/* When the control is created then an listener is registered at the given component. There
 		 * is no time at which the listener can be removed, therefore the control must be cached and
 		 * reused.

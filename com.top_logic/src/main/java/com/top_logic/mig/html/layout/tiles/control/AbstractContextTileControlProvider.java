@@ -10,6 +10,7 @@ import javax.swing.event.ChangeListener;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.listener.EventType;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AttachedPropertyListener;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -17,6 +18,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.structure.DecoratingLayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControl;
+import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.tiles.TileLayout;
@@ -75,20 +77,21 @@ public abstract class AbstractContextTileControlProvider<C extends AbstractConte
 	 *      com.top_logic.mig.html.layout.LayoutComponent)
 	 */
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 		return super.createLayoutControl(strategy, component);
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
-		LayoutControl layout;
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
+		Control control;
 		if(_innerProvider != null ) {
-			layout = _innerProvider.createLayoutControl(strategy, component);
+			control = _innerProvider.createLayoutControl(strategy, component);
 		} else {
-			layout = strategy.createDefaultLayout(component);
+			control = strategy.createDefaultLayout(component);
 		}
-		addContextTileListener(component, layout);
-		return layout;
+		LayoutControl layoutControl = LayoutControlAdapter.wrap(control);
+		addContextTileListener(component, layoutControl);
+		return layoutControl;
 	}
 
 	private void addContextTileListener(LayoutComponent component, LayoutControl layout) {

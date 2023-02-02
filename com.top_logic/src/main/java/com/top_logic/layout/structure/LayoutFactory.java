@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.structure;
 
+import com.top_logic.layout.Control;
 import com.top_logic.layout.structure.LayoutControlProvider.Strategy;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.mig.html.layout.DialogComponent;
@@ -38,7 +39,7 @@ public interface LayoutFactory {
 	 *        The component root to transform.
 	 * @return The {@link LayoutControl} used to render the given component.
 	 */
-	LayoutControl createLayout(LayoutComponent component);
+	Control createLayout(LayoutComponent component);
 
 	/**
 	 * Creates a new {@link LayoutControl} for the given component and the given context toolbar.
@@ -65,7 +66,7 @@ public interface LayoutFactory {
 	 * 
 	 * @return The {@link LayoutControl} used to render the given component.
 	 */
-	LayoutControl createLayout(LayoutComponent component, ToolBar contextToolbar);
+	Control createLayout(LayoutComponent component, ToolBar contextToolbar);
 
 	/**
 	 * Creates a window control for the given dialog.

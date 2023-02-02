@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.structure;
 
+import com.top_logic.layout.Control;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -25,7 +26,7 @@ public abstract class LayoutControlProviderAdapter implements LayoutControlProvi
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 		return impl.createLayoutControl(strategy, component);
 	}
 

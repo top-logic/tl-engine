@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.structure;
 
+import com.top_logic.layout.Control;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -25,8 +26,8 @@ public class MaximizableLayout implements LayoutControlProvider {
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
-		LayoutControl layout = strategy.createDefaultLayout(component);
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
+		LayoutControl layout = LayoutControlAdapter.wrap(strategy.createDefaultLayout(component));
 		MaximizableControl result = new MaximizableControl(component);
 		result.setChildControl(layout);
 		return result;

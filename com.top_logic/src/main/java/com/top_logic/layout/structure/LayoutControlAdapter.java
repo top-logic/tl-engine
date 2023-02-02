@@ -101,4 +101,20 @@ public class LayoutControlAdapter extends AbstractLayoutControl<LayoutControlAda
 	public LayoutControlAdapter self() {
 		return this;
 	}
+
+	/**
+	 * Wraps the given {@link Control} into a {@link LayoutControl}.
+	 * 
+	 * <p>
+	 * If the given {@link Control} is already a {@link LayoutControl} then nothing is changed.
+	 * </p>
+	 */
+	public static LayoutControl wrap(Control control) {
+		if (control == null || control instanceof LayoutControl) {
+			return (LayoutControl) control;
+		} else {
+			return new LayoutControlAdapter(control);
+		}
+	}
+
 }

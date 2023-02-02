@@ -13,6 +13,7 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.structure.ContentControl;
 import com.top_logic.layout.structure.ContextMenuLayoutControlProvider;
@@ -95,7 +96,7 @@ public class RootTileControlProvider extends ContextMenuLayoutControlProvider<Ro
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		/* When the control is created then an listener is registered at the given component. There
 		 * is no time at which the listener can be removed, therefore cleanup actions must be
 		 * created and cached.

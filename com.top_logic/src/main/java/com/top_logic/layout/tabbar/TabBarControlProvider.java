@@ -9,12 +9,12 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.structure.DecoratingLayoutControlProvider;
 import com.top_logic.layout.structure.DefaultLayoutData;
-import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.Scrolling;
@@ -22,7 +22,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * The class {@link TabBarControlProvider} is a {@link LayoutControlProvider} which creates a
- * {@link LayoutControl} for the tab bar of a {@link TabComponent}.
+ * control for the tab bar of a {@link TabComponent}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -45,7 +45,7 @@ public class TabBarControlProvider extends DecoratingLayoutControlProvider<TabBa
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		TabComponent aTabComponent = (TabComponent) component;
 		TabBarControl theTabBar = new TabBarControl(aTabComponent.getTabBarModel());
 		theTabBar.setTabVisibilityFilter(aTabComponent.getTabVisibilityFilter());

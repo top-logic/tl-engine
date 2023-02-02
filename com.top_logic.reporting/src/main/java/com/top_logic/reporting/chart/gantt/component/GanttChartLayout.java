@@ -7,6 +7,7 @@ package com.top_logic.reporting.chart.gantt.component;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.structure.ContentControl;
 import com.top_logic.layout.structure.ContextMenuLayoutControlProvider;
@@ -34,7 +35,7 @@ public class GanttChartLayout extends ContextMenuLayoutControlProvider<GanttChar
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		FlowLayoutControl layout = new FixedFlowLayoutControl(Orientation.VERTICAL);
 
 		LayoutControlAdapter chart = new LayoutControlAdapter(createChartDisplay(component));

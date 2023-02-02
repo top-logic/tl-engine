@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.structure;
 
+import com.top_logic.layout.Control;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -16,7 +17,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public final class EmptyLayoutControlProvider implements LayoutControlProvider {
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 		return null;
 	}
 

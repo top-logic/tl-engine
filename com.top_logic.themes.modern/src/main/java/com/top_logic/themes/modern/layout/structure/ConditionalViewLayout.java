@@ -11,6 +11,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.PropertyObservable;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.InvisibleView;
@@ -21,7 +22,6 @@ import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.structure.ConfiguredLayoutControlProvider;
 import com.top_logic.layout.structure.DefaultLayoutData;
-import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.Scrolling;
@@ -101,7 +101,7 @@ public class ConditionalViewLayout extends ConfiguredLayoutControlProvider<Condi
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 		final HTMLFragment view = createView(component);
 
 		final LayoutControlAdapter layout = new LayoutControlAdapter(view);

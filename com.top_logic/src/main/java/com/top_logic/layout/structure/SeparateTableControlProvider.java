@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.basic.TableFilterOverviewControl;
@@ -157,7 +158,7 @@ public class SeparateTableControlProvider extends ConfiguredLayoutControlProvide
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 		final FormComponent formComponent = (FormComponent) component;
 		Expandable model =
 				new PersonalizingExpandable(component.getName() + "." + _tableFieldName + ".layoutExpansionState",
@@ -236,7 +237,7 @@ public class SeparateTableControlProvider extends ConfiguredLayoutControlProvide
 		} else {
 			/* Install component toolbar as toolbar for table field within the decoration callback,
 			 * because the component toolbar is installed within the default decoration. */
-			return strategy.decorate(component, installToolbarLayouting(layoutAdapter));
+			return LayoutControlAdapter.wrap(strategy.decorate(component, installToolbarLayouting(layoutAdapter)));
 		}
 	}
 
@@ -244,7 +245,7 @@ public class SeparateTableControlProvider extends ConfiguredLayoutControlProvide
 		return new Layouting() {
 
 			@Override
-			public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+			public Control mkLayout(Strategy strategy, LayoutComponent component) {
 				ToolBar contextToolbar = component.getToolBar();
 				if (contextToolbar != null) {
 					((FormComponent) component).setToolbar(_tableFieldName, contextToolbar);

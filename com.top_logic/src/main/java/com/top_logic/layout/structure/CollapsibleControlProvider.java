@@ -8,6 +8,7 @@ package com.top_logic.layout.structure;
 import com.top_logic.basic.config.Decision;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.layout.Control;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -41,11 +42,10 @@ public class CollapsibleControlProvider extends ConfiguredLayoutControlProvider<
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 		CollapsibleControl control =
 			new CollapsibleControl(component.getTitleKey(), component, true, _showMaximize, _showMinimize);
-		LayoutControl contentControl = strategy.createDefaultLayout(component);
-		control.setChildControl(contentControl);
+		control.setChildControl(LayoutControlAdapter.wrap(strategy.createDefaultLayout(component)));
 		return control;
 	}
 

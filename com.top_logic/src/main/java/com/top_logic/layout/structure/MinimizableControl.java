@@ -242,10 +242,10 @@ public class MinimizableControl extends WrappingControl<MinimizableControl> impl
 		}
 
 		@Override
-		public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+		public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 			MinimizableControl control =
 				new MinimizableControl(new DefaultLayoutData(getConfig().getMinimizedSize()), component);
-			LayoutControl contentControl = strategy.createDefaultLayout(component);
+			LayoutControl contentControl = LayoutControlAdapter.wrap(strategy.createDefaultLayout(component));
 			control.setChildControl(contentControl);
 			return control;
 		}

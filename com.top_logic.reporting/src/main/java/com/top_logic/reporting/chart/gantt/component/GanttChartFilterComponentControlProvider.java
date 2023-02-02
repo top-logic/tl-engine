@@ -11,7 +11,7 @@ import java.util.List;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.layout.structure.LayoutControl;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.MediaQueryControl;
 import com.top_logic.layout.structure.MediaQueryControl.Layout;
@@ -46,7 +46,7 @@ public class GanttChartFilterComponentControlProvider implements LayoutControlPr
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 		return _ganttChartLayout.createLayoutControl(strategy, component);
 	}
 }

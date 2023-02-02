@@ -11,6 +11,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.config.WithPlainContextMenuFactory;
@@ -71,7 +72,7 @@ public class IFrameLayoutControlProvider extends DecoratingLayoutControlProvider
 	}
 	
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		ContentControl contentControl =
 			ContentControl.create(component, _contextMenu.createContextMenuProvider(component));
 		contentControl.setCssClass(_cssClass);

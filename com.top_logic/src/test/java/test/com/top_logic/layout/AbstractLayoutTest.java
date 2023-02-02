@@ -24,6 +24,7 @@ import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.layout.ContentHandlersRegistry;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.basic.AbstractDisplayContext;
@@ -32,7 +33,6 @@ import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.basic.component.ControlSupport;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.internal.WindowId;
-import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -85,7 +85,7 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		// Simulate initial rendering to set up URL contexts.
 		ml.getEnclosingFrameScope().setUrlContext(layoutContext);
 		AbstractDisplayContext initialDisplayContext = createDisplayContext(subSession, ml);
-		LayoutControl windowControl = ml.getLayoutFactory().createLayout(ml);
+		Control windowControl = ml.getLayoutFactory().createLayout(ml);
 		windowControl.write(initialDisplayContext, new TagWriter());
 		DefaultDisplayContext.teardownDisplayContext(null, initialDisplayContext);
 		

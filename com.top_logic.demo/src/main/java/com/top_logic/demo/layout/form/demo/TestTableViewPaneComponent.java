@@ -21,6 +21,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
@@ -38,7 +39,6 @@ import com.top_logic.layout.form.tag.TableTag;
 import com.top_logic.layout.form.template.ButtonControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
-import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
@@ -275,7 +275,7 @@ public class TestTableViewPaneComponent extends FormComponent {
 
 	public static final class CP implements LayoutControlProvider {
 		@Override
-		public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+		public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 			final TestTableViewPaneComponent self = (TestTableViewPaneComponent) component;
 
 			return new LayoutControlAdapter(new HTMLFragment() {

@@ -10,6 +10,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.config.WithPlainContextMenuFactory;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
@@ -49,7 +50,7 @@ public abstract class AbstractContentLayouting<C extends AbstractContentLayoutin
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		final ContentControl contentControl =
 			ContentControl.create(component, _contextMenu.createContextMenuProvider(component));
 		if (!(component instanceof ControlRepresentable)) {

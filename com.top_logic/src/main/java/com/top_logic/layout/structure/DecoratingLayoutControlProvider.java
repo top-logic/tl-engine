@@ -7,6 +7,7 @@ package com.top_logic.layout.structure;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -36,7 +37,7 @@ public abstract class DecoratingLayoutControlProvider<C extends PolymorphicConfi
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 		return strategy.decorate(component, this);
 	}
 

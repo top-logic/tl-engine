@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.structure;
 
+import com.top_logic.layout.Control;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -28,7 +29,7 @@ public interface LayoutControlProvider {
 		 *        The {@link LayoutComponent} to create a control for.
 		 * @return The default layout for the given {@link LayoutComponent}.
 		 */
-		LayoutControl createDefaultLayout(LayoutComponent businessComponent);
+		Control createDefaultLayout(LayoutComponent businessComponent);
 
 		/**
 		 * Applies standard decorations to a layout being created.
@@ -47,7 +48,7 @@ public interface LayoutControlProvider {
 		 *        by the calling {@link LayoutControlProvider}.
 		 * @return The decorated layout to use.
 		 */
-		LayoutControl decorate(LayoutComponent component, Layouting layouting);
+		Control decorate(LayoutComponent component, Layouting layouting);
 	}
 
 	/**
@@ -69,7 +70,7 @@ public interface LayoutControlProvider {
 		 * 
 		 * @return The {@link LayoutControl} that displays the content of the given component.
 		 */
-		LayoutControl mkLayout(Strategy strategy, LayoutComponent component);
+		Control mkLayout(Strategy strategy, LayoutComponent component);
 		
 	}
 	
@@ -83,6 +84,6 @@ public interface LayoutControlProvider {
 	 * 
 	 * @return a LayoutControl for rendering the given {@link LayoutComponent}.
 	 */
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component);
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component);
 
 }

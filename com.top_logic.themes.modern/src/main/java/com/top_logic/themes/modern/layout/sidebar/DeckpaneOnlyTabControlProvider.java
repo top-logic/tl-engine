@@ -5,11 +5,13 @@
  */
 package com.top_logic.themes.modern.layout.sidebar;
 
+import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.structure.DeckPaneControl;
 import com.top_logic.layout.structure.DeckPaneControlProvider;
 import com.top_logic.layout.structure.LayoutControl;
+import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -37,8 +39,9 @@ public class DeckpaneOnlyTabControlProvider implements LayoutControlProvider {
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
-		LayoutControl deckpane = DeckPaneControlProvider.INSTANCE.createLayoutControl(strategy, component);
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
+		LayoutControl deckpane =
+			LayoutControlAdapter.wrap(DeckPaneControlProvider.INSTANCE.createLayoutControl(strategy, component));
 		((AbstractControlBase) deckpane).listenForInvalidation(component);
 		return deckpane;
 	}

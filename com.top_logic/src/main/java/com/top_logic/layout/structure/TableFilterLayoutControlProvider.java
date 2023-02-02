@@ -10,6 +10,7 @@ import com.top_logic.basic.config.Decision;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.ControlBasedTableDataProvider;
 import com.top_logic.layout.basic.TableFilterOverviewControl;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -63,7 +64,7 @@ public class TableFilterLayoutControlProvider
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, final LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, final LayoutComponent component) {
 		checkForCompatibility(component);
 
 		Expandable model;

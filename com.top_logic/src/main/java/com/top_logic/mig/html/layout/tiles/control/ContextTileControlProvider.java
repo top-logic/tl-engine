@@ -6,6 +6,7 @@
 package com.top_logic.mig.html.layout.tiles.control;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.structure.ContentControl;
 import com.top_logic.layout.structure.ContextMenuLayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControl;
@@ -34,7 +35,7 @@ public class ContextTileControlProvider extends ContextMenuLayoutControlProvider
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		ContextTileComponent contextTile = (ContextTileComponent) component;
 		ContentControl result = createContentWithMenu(component);
 		LayoutComponent selector = contextTile.getSelector();

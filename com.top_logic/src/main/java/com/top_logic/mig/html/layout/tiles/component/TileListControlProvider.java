@@ -11,7 +11,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.structure.DefaultLayoutData;
-import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.SimpleDecoratingLayoutControlProvider;
@@ -53,7 +52,7 @@ public class TileListControlProvider extends SimpleDecoratingLayoutControlProvid
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		LayoutComponent container = container(component);
 		TileListComponent tileListComponent = (TileListComponent) component;
 		TileListComponentTile rootTile = new TileListComponentTile(container, tileListComponent);

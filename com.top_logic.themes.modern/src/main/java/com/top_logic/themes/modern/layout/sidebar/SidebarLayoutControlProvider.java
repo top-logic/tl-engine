@@ -25,6 +25,7 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.AbstractSingleSelectionModel;
 import com.top_logic.layout.Attachable;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.Flavor;
@@ -50,7 +51,6 @@ import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.selection.SingleSelectVetoListener;
 import com.top_logic.layout.structure.DecoratingLayoutControlProvider;
 import com.top_logic.layout.structure.DefaultLayoutData;
-import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlAdapter;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.Scrolling;
@@ -145,7 +145,7 @@ public class SidebarLayoutControlProvider extends DecoratingLayoutControlProvide
 	}
 
 	@Override
-	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
+	public Control mkLayout(Strategy strategy, LayoutComponent component) {
 		final TabComponent tabComponent = (TabComponent) component;
 
 		// Note: The tab-switch is recorded by the underlying TabComponent implementations.

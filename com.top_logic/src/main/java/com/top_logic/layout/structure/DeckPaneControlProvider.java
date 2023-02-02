@@ -13,6 +13,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AttachedPropertyListener;
 import com.top_logic.layout.component.TabComponent;
@@ -43,15 +44,14 @@ public class DeckPaneControlProvider extends ConfiguredLayoutControlProvider<Dec
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, LayoutComponent component) {
 		assert component instanceof TabComponent;
 		TabComponent tab = (TabComponent) component;
 		DeckPaneControl deck = new DeckPaneControl(tab.getDeckPaneModel());
 		deck.addListener(AbstractControlBase.ATTACHED_PROPERTY, new Listener(strategy, tab, deck));
 
 		for (LayoutComponent child : tab.getChildList()) {
-			LayoutControl theChild = strategy.createLayout(child);
-			deck.addChild(theChild);
+			deck.addChild(LayoutControlAdapter.wrap(strategy.createLayout(child)));
 		}
 
 		return deck;
@@ -96,7 +96,7 @@ public class DeckPaneControlProvider extends ConfiguredLayoutControlProvider<Dec
 			ToolBar noContextToolBar = null;
 			List<LayoutControl> newControlChildren = newValue
 				.stream()
-				.map(component -> _strategy.createLayout(component, noContextToolBar))
+				.map(component -> LayoutControlAdapter.wrap(_strategy.createLayout(component, noContextToolBar)))
 				.collect(Collectors.toList());
 			_deck.setChildren(newControlChildren);
 			return Bubble.BUBBLE;

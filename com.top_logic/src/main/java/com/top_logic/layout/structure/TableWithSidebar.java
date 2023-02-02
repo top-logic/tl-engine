@@ -11,6 +11,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.basic.ControlBasedTableDataProvider;
 import com.top_logic.layout.basic.TableFilterOverviewControl;
@@ -78,7 +79,7 @@ public class TableWithSidebar extends ConfiguredLayoutControlProvider<TableWithS
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, final LayoutComponent component) {
+	public Control createLayoutControl(Strategy strategy, final LayoutComponent component) {
 		checkForCompatibility(component);
 
 		Expandable model =
@@ -118,7 +119,7 @@ public class TableWithSidebar extends ConfiguredLayoutControlProvider<TableWithS
 				_filterWidth, 100, DisplayDimension.HUNDERED_PERCENT, 100, Scrolling.AUTO));
 		layout.addChild(collapsibleControl);
 
-		LayoutControl table = strategy.createDefaultLayout(component);
+		LayoutControl table = LayoutControlAdapter.wrap(strategy.createDefaultLayout(component));
 		if (table instanceof CollapsibleControl) {
 			CollapsibleControl tableToolbar = (CollapsibleControl) table;
 			tableToolbar.setCanMaximize(false);

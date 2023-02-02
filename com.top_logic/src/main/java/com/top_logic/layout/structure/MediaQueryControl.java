@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlRenderer;
 import com.top_logic.layout.layoutRenderer.LayoutControlAdapterRenderer;
@@ -158,8 +159,8 @@ public class MediaQueryControl extends LayoutControlAdapter {
 		}
 
 		@Override
-		public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
-			LayoutControl contentControl = _contentLayout.createLayoutControl(strategy, component);
+		public Control mkLayout(Strategy strategy, LayoutComponent component) {
+			Control contentControl = _contentLayout.createLayoutControl(strategy, component);
 			String css = getConfig().getCssPrefix();
 			int maxColumns = getConfig().getMaxColumns();
 			return new MediaQueryControl(contentControl, css, maxColumns, _sizesConst);

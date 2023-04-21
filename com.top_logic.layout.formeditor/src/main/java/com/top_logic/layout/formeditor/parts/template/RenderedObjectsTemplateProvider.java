@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2022 Business Operation Systems GmbH. All Rights Reserved.
  */
-package com.top_logic.layout.formeditor.parts;
+package com.top_logic.layout.formeditor.parts.template;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
 
@@ -40,8 +40,10 @@ import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
-import com.top_logic.layout.formeditor.parts.RenderedObjectsTemplateProvider.Config.TypeTemplate;
-import com.top_logic.layout.formeditor.parts.RenderedObjectsTemplateProvider.Config.TypeTemplate.VariableDefinition;
+import com.top_logic.layout.formeditor.parts.ForeignObjectsTemplateProvider;
+import com.top_logic.layout.formeditor.parts.I18NConstants;
+import com.top_logic.layout.formeditor.parts.template.RenderedObjectsTemplateProvider.Config.TypeTemplate;
+import com.top_logic.layout.formeditor.parts.template.RenderedObjectsTemplateProvider.Config.TypeTemplate.VariableDefinition;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.layout.template.WithProperties;

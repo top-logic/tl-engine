@@ -48,7 +48,7 @@ public class DefaultCodeEditor extends AbstractEditor {
 		EditorControlConfig controlConfig = editorFactory.getAnnotation(property, EditorControlConfig.class);
 		ControlProvider editorCP;
 		if (controlConfig == null) {
-			editorCP = CodeEditorControl.CP.INSTANCE;
+			editorCP = CodeEditorControl.CPText.INSTANCE;
 		} else {
 			editorCP = new CodeEditorControl.CP(controlConfig.language()).warnLevel(controlConfig.warnLevel());
 		}

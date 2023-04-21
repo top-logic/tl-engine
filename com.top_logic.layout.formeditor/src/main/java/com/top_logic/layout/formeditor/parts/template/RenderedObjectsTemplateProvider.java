@@ -12,10 +12,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -26,10 +28,12 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.html.template.config.HTMLTagFormat;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
+import com.top_logic.layout.basic.AbstractVisibleControl;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
@@ -57,6 +61,8 @@ import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.model.form.implementation.FormMode;
+import com.top_logic.model.listen.ModelChangeEvent;
+import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
@@ -159,6 +165,7 @@ public class RenderedObjectsTemplateProvider
 			@Name(TEMPLATE)
 			@ControlProvider(CodeEditorControl.CPHtml.class)
 			@ItemDisplay(ItemDisplayType.VALUE)
+			@Format(HTMLTagFormat.class)
 			HTMLTemplateFragment getTemplate();
 
 			/**
@@ -308,7 +315,9 @@ public class RenderedObjectsTemplateProvider
 		 * Creates a {@link RenderedObjectsTemplateProvider.Template}.
 		 */
 		public Template(TypeTemplate config) {
-			_fragment = config.getTemplate();
+			HTMLTemplateFragment template = config.getTemplate();
+
+			_fragment = template;
 			_params = new HashMap<>();
 			for (VariableDefinition entry : config.getVariables().values()) {
 				_params.put(entry.getName(), QueryExecutor.compile(entry.getFunction()));
@@ -319,7 +328,7 @@ public class RenderedObjectsTemplateProvider
 	/**
 	 * {@link HTMLFragment} displaying a {@link TLObject} using a {@link HTMLTemplateFragment}.
 	 */
-	private final class TLObjectFragment implements HTMLFragment, WithProperties {
+	private final class TLObjectFragment extends AbstractVisibleControl implements ModelListener {
 		private final TLObject _obj;
 
 		private final Template _template;
@@ -333,12 +342,45 @@ public class RenderedObjectsTemplateProvider
 		}
 
 		@Override
-		public void write(DisplayContext context, TagWriter out) throws IOException {
+		public Object getModel() {
+			return _obj;
+		}
+
+		@Override
+		protected void attachRevalidated() {
+			super.attachRevalidated();
+
+			getScope().getFrameScope().getModelScope().addModelListener(_obj, this);
+		}
+
+		@Override
+		protected void detachInvalidated() {
+			getScope().getFrameScope().getModelScope().removeModelListener(_obj, this);
+
+			super.detachInvalidated();
+		}
+
+		@Override
+		public void notifyChange(ModelChangeEvent change) {
+			switch (change.getChange(_obj)) {
+				case UPDATED:
+					requestRepaint();
+					break;
+				case DELETED:
+					String id = getID();
+					addUpdate(new RangeReplacement(id, id, Fragments.empty()));
+					break;
+				case NONE:
+			}
+		}
+
+		@Override
+		protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
 			_template._fragment.write(context, out, this);
 		}
 
 		@Override
-		public Object getPropertyValue(String propertyName) {
+		public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
 			QueryExecutor executor = _template._params.get(propertyName);
 			if (executor != null) {
 				return executor.execute(_obj);
@@ -353,8 +395,13 @@ public class RenderedObjectsTemplateProvider
 				return value;
 			}
 
+			return super.getPropertyValue(propertyName);
+		}
+
+		@Override
+		public RuntimeException errorNoSuchProperty(String propertyName) {
 			throw new IllegalArgumentException(
-				"No such property '" + propertyName + "' in '" + this + "', available properties: "
+				"No such property '" + propertyName + "' in '" + this + "', available model properties: "
 					+ _obj.tType().getAllParts().stream().map(p -> p.getName()).collect(Collectors.joining(", ")));
 		}
 	}

@@ -266,7 +266,7 @@ public class RenderedObjectsTemplateProvider
 	@Override
 	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		if (context.getFormMode() == FormMode.DESIGN) {
-			return designTemplate(context);
+			return designTemplate();
 		} else {
 			return displayTemplate(context);
 		}
@@ -416,7 +416,7 @@ public class RenderedObjectsTemplateProvider
 		}
 	}
 
-	private HTMLTemplateFragment designTemplate(FormEditorContext context) {
+	private HTMLTemplateFragment designTemplate() {
 		Config<?> config = getConfig();
 		TLClass targetType = OptionalTypeTemplateParameters.resolve(config);
 
@@ -437,6 +437,7 @@ public class RenderedObjectsTemplateProvider
 	@Override
 	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext)
 			throws IOException {
+		writeContents(context, out, renderContext);
 	}
 
 }

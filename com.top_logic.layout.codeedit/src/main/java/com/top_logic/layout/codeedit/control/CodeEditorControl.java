@@ -97,14 +97,66 @@ public class CodeEditorControl extends AbstractFormFieldControl {
 	));
 
 	/**
+	 * {@link ControlProvider} creating a {@link CodeEditorControl} in XML mode.
+	 */
+	public final static class CPXml extends CP {
+
+		/**
+		 * Singleton {@link CodeEditorControl.CPXml} instance.
+		 */
+		public static final CodeEditorControl.CPXml INSTANCE = new CodeEditorControl.CPXml();
+
+		/**
+		 * Creates a {@link CPXml}.
+		 */
+		private CPXml() {
+			super(MODE_XML);
+		}
+
+	}
+
+	/**
+	 * {@link ControlProvider} creating a {@link CodeEditorControl} in HTML mode.
+	 */
+	public final static class CPHtml extends CP {
+
+		/**
+		 * Singleton {@link CodeEditorControl.CPXml} instance.
+		 */
+		public static final CodeEditorControl.CPHtml INSTANCE = new CodeEditorControl.CPHtml();
+
+		/**
+		 * Creates a {@link CPXml}.
+		 */
+		private CPHtml() {
+			super(MODE_HTML);
+		}
+
+	}
+
+	/**
+	 * {@link ControlProvider} creating a {@link CodeEditorControl} in HTML mode.
+	 */
+	public final static class CPText extends CP {
+
+		/**
+		 * Singleton {@link CodeEditorControl.CPXml} instance.
+		 */
+		public static final CodeEditorControl.CPText INSTANCE = new CodeEditorControl.CPText();
+
+		/**
+		 * Creates a {@link CPXml}.
+		 */
+		private CPText() {
+			super(MODE_TEXT);
+		}
+
+	}
+
+	/**
 	 * {@link ControlProvider} creating {@link CodeEditorControl}s.
 	 */
 	public static class CP extends AbstractFormFieldControlProvider {
-
-		/**
-		 * Default {@link CP} instance creating an editor in text mode.
-		 */
-		public static final CodeEditorControl.CP INSTANCE = new CodeEditorControl.CP(MODE_TEXT);
 
 		private final String _languageMode;
 

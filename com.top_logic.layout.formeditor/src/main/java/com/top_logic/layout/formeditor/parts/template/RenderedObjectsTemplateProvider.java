@@ -8,6 +8,7 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,7 @@ import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.html.template.ExpressionTemplate;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.config.HTMLTagFormat;
 import com.top_logic.layout.DisplayContext;
@@ -380,6 +382,28 @@ public class RenderedObjectsTemplateProvider
 		}
 
 		@Override
+		public void renderProperty(DisplayContext context, TagWriter out, String propertyName) throws IOException {
+			QueryExecutor executor = _template._params.get(propertyName);
+			if (executor != null) {
+				ExpressionTemplate.renderValue(context, out, executor.execute(_obj));
+				return;
+			}
+
+			TLStructuredTypePart part = _obj.tType().getPart(propertyName);
+			if (part != null) {
+				Object value = _obj.tValue(part);
+				if (value instanceof TLObject || value instanceof Collection<?>) {
+					ExpressionTemplate.renderValue(context, out, toFragment(value));
+					return;
+				}
+				ExpressionTemplate.renderValue(context, out, value);
+				return;
+			}
+
+			super.renderProperty(context, out, propertyName);
+		}
+
+		@Override
 		public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
 			QueryExecutor executor = _template._params.get(propertyName);
 			if (executor != null) {
@@ -399,10 +423,23 @@ public class RenderedObjectsTemplateProvider
 		}
 
 		@Override
+		public Collection<String> getAvailableProperties() {
+			HashSet<String> result = new HashSet<>(super.getAvailableProperties());
+			result.addAll(_template._params.keySet());
+			result.addAll(_obj.tType().getAllParts().stream().map(p -> p.getName()).collect(Collectors.toList()));
+			return result;
+		}
+
+		@Override
 		public RuntimeException errorNoSuchProperty(String propertyName) {
 			throw new IllegalArgumentException(
 				"No such property '" + propertyName + "' in '" + this + "', available model properties: "
 					+ _obj.tType().getAllParts().stream().map(p -> p.getName()).collect(Collectors.joining(", ")));
+		}
+
+		@Override
+		public String toString() {
+			return "Object of type '" + _obj.tType() + "'";
 		}
 	}
 

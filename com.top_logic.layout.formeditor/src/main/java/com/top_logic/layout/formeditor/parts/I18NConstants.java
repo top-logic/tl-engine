@@ -37,6 +37,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 FOREIGN_OBJECTS_LEGEND_KEY_PREVIEW__TYPE;
 
+	/**
+	 * @en Rendered objects
+	 */
+	public static ResKey RENDERED_OBJECTS_LABEL;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

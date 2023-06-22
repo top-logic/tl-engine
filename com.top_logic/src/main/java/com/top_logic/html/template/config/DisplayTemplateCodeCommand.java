@@ -38,7 +38,7 @@ public final class DisplayTemplateCodeCommand extends AbstractCommandModel imple
 	 */
 	public DisplayTemplateCodeCommand(HTMLTemplate template) {
 		_template = template;
-		setImage(Icons.TEMPLATE_POPUP_BUTTON);
+		setImage(Icons.POPUP_BUTTON_TEMPLATE);
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public final class DisplayTemplateCodeCommand extends AbstractCommandModel imple
 		PopupDialogControl popup =
 			new PopupDialogControl(openingButton.getFrameScope(), popupModel, openingButton.getID());
 
-		popup.setContent(Fragments.rendered(Icons.TEMPLATE_POPUP_CONTENTS.get(), this));
+		popup.setContent(Fragments.rendered(Icons.POPUP_CONTENTS_TEMPLATE.get(), this));
 		context.getWindowScope().openPopupDialog(popup);
 		return HandlerResult.DEFAULT_RESULT;
 	}

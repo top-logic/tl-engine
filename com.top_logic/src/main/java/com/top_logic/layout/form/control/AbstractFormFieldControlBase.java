@@ -29,6 +29,7 @@ import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.FocusHandling;
 import com.top_logic.layout.basic.Focusable;
 import com.top_logic.layout.basic.KeyCodeHandler;
+import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.form.BlockedStateChangedListener;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.DisabledPropertyListener;
@@ -179,35 +180,53 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 		if (field instanceof AbstractFormField) {
 			Collection<KeyEventListener> listeners = ((AbstractFormField) field).inspectKeyListeners();
 			if (listeners != null) {
-				StringBuilder buffer = new StringBuilder();
-				for (KeyEventListener listener : listeners) {
-					KeySelector[] subscribedKeys = listener.subscribedKeys();
-					for (int n = 0, cnt = subscribedKeys.length; n < cnt; n++) {
-						KeySelector selector = subscribedKeys[n];
-						if (n > 0) {
-							buffer.append(' ');
-						}
-						buffer.append('K');
-						if (selector.hasShiftModifier()) {
-							buffer.append('S');
-						}
-						if (selector.hasCtrlModifier()) {
-							buffer.append('C');
-						}
-						if (selector.hasAltModifier()) {
-							buffer.append('A');
-						}
-						int scanCode = selector.getKeyCode().getScanCode();
-						if (scanCode < 100) {
-							buffer.append('0');
-						}
-						if (scanCode < 10) {
-							buffer.append('0');
-						}
-						buffer.append(scanCode);
-					}
+				out.beginAttribute(TL_KEY_SELECTORS);
+				appendKeyData(out);
+				out.endAttribute();
+			}
+		}
+	}
+
+	/**
+	 * The key data to interpret on the client-side.
+	 * 
+	 * @see HTMLConstants#TL_KEY_SELECTORS
+	 */
+	@TemplateVariable("keys")
+	public void appendKeyData(Appendable buffer) throws IOException {
+		FormMember field = getModel();
+		if (!(field instanceof AbstractFormField)) {
+			return;
+		}
+		Collection<KeyEventListener> listeners = ((AbstractFormField) field).inspectKeyListeners();
+		if (listeners == null) {
+			return;
+		}
+		for (KeyEventListener listener : listeners) {
+			KeySelector[] subscribedKeys = listener.subscribedKeys();
+			for (int n = 0, cnt = subscribedKeys.length; n < cnt; n++) {
+				KeySelector selector = subscribedKeys[n];
+				if (n > 0) {
+					buffer.append(' ');
 				}
-				out.writeAttribute(TL_KEY_SELECTORS, buffer);
+				buffer.append('K');
+				if (selector.hasShiftModifier()) {
+					buffer.append('S');
+				}
+				if (selector.hasCtrlModifier()) {
+					buffer.append('C');
+				}
+				if (selector.hasAltModifier()) {
+					buffer.append('A');
+				}
+				int scanCode = selector.getKeyCode().getScanCode();
+				if (scanCode < 100) {
+					buffer.append('0');
+				}
+				if (scanCode < 10) {
+					buffer.append('0');
+				}
+				buffer.append((char) scanCode);
 			}
 		}
 	}
@@ -224,6 +243,7 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
     /**
      * The CSS style attribute of this control's input element.
      */
+	@TemplateVariable("inputStyle")
 	public final String getInputStyle() {
     	return this.inputStyle;
     }

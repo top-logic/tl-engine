@@ -9,7 +9,6 @@ import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.model.ComplexField;
 
 /**
@@ -41,16 +40,16 @@ public class DateInputControl extends TextInputControl {
 	}
 		
 	@Override
-	protected void writeEditableContents(DisplayContext context, TagWriter out) throws IOException {
-		super.writeEditableContents(context, out);
+	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
+		Icons.TEXT_INPUT_WITH_BUTTONS_EDIT_TEMPLATE.get().write(context, out, this);
+	}
 
-		out.beginBeginTag(SPAN);
-		out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_RIGHT_CSS_CLASS);
-		out.endBeginTag();
-
+	/**
+	 * Write the calendar pop-up button.
+	 */
+	@Override
+	public void writeButtons(DisplayContext context, TagWriter out) throws IOException {
 		_openCalendar.write(context, out);
-
-		out.endTag(SPAN);
 	}
 
 }

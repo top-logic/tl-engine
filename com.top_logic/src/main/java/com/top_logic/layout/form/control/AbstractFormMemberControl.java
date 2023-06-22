@@ -13,6 +13,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractControl;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
@@ -75,6 +76,7 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 	/**
 	 * Whether a context menu can be opened on this control.
 	 */
+	@TemplateVariable("hasContextMenu")
 	public boolean hasContextMenu() {
 		return getContextMenuProvider().hasContextMenu(getModel());
 	}
@@ -117,7 +119,9 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 	 * Write the control's <code>style</code> attribute.
 	 * 
 	 * @see #writeStyleContent(TagWriter)
+	 * @deprecated Use {@link #writeStyleContent(TagWriter)} with template-based rendering.
 	 */
+	@Deprecated
 	public final void writeStyle(TagWriter out) throws IOException {
 		out.beginAttribute(STYLE_ATTR);
 		writeStyleContent(out);
@@ -128,7 +132,8 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 	 * Hook for adding additional computed styles when writing the application defined
 	 * {@link #getCustomStyle()}.
 	 */
-	protected void writeStyleContent(TagWriter out) throws IOException {
+	@TemplateVariable("style")
+	public void writeStyleContent(TagWriter out) throws IOException {
 		out.append(style);
 	}
 
@@ -260,6 +265,7 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 	/**
 	 * The ID of this control's input element.
 	 */
+	@TemplateVariable("inputId")
 	public final String getInputId() {
 		return _inputId;
 	}
@@ -273,7 +279,12 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 		out.endJsString();
 	}
 
-	/** Utility to write the {@link #getInputId()} as {@link HTMLConstants#ID_ATTR} attribute. */
+	/**
+	 * Utility to write the {@link #getInputId()} as {@link HTMLConstants#ID_ATTR} attribute.
+	 * 
+	 * @deprecated Use {@link #getInputId()} with template-based rendering.
+	 */
+	@Deprecated
 	protected final void writeInputIdAttr(TagWriter out) throws IOException {
 		out.beginAttribute(ID_ATTR);
 		appendInputId(out);
@@ -282,7 +293,10 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 
 	/**
 	 * Writes {@link #getInputId()} (allocation-free) to the given writer.
+	 * 
+	 * @deprecated Use {@link #getInputId()} with template-based rendering.
 	 */
+	@Deprecated
 	public final void appendInputId(Appendable writer) throws IOException {
 		writer.append(getInputId());
 	}
@@ -290,7 +304,10 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 	/**
 	 * Utility for writing the {@link #getModel()}'s GUI identifier as
 	 * {@link HTMLConstants#NAME_ATTR} attribute.
+	 *
+	 * @deprecated Use {@link #getInputId()} with template-based rendering.
 	 */
+	@Deprecated
 	protected final void writeQualifiedNameAttribute(TagWriter out) throws IOException {
 		out.beginAttribute(NAME_ATTR);
 		appendInputId(out);

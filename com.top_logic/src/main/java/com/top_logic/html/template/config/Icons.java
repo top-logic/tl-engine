@@ -22,7 +22,7 @@ public class Icons extends IconsBase {
 	 * the theme editor.
 	 */
 	@DefaultValue("css:fas fa-code")
-	public static ThemeImage TEMPLATE_POPUP_BUTTON;
+	public static ThemeImage POPUP_BUTTON_TEMPLATE;
 
 	/**
 	 * Template of the contents of the popup that displays the HTML template specified in a theme
@@ -34,6 +34,6 @@ public class Icons extends IconsBase {
 	 * </p>
 	 */
 	@TemplateType(DisplayTemplateCodeCommand.class)
-	public static ThemeVar<HTMLTemplateFragment> TEMPLATE_POPUP_CONTENTS;
+	public static ThemeVar<HTMLTemplateFragment> POPUP_CONTENTS_TEMPLATE;
 
 }

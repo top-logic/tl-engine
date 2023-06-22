@@ -8,8 +8,10 @@ package com.top_logic.layout.form.control;
 import java.awt.Color;
 
 import com.top_logic.gui.ThemeVar;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.basic.DefaultValue;
 import com.top_logic.layout.basic.IconsBase;
+import com.top_logic.layout.basic.TemplateType;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.ThemeImage.Img;
 
@@ -216,5 +218,49 @@ public class Icons extends IconsBase {
 
 	@DefaultValue("16")
 	public static ThemeVar<Integer> TAB_COMPONENT_DEFAULT_TAB_HEIGHT;
+
+	/**
+	 * The template to render text input fields in edit mode.
+	 */
+	@TemplateType(TextInputControl.class)
+	public static ThemeVar<HTMLTemplateFragment> TEXT_INPUT_EDIT_SINGLE_TEMPLATE;
+
+	/**
+	 * The template to render multi-line text boxes in edit mode.
+	 */
+	@TemplateType(TextInputControl.class)
+	public static ThemeVar<HTMLTemplateFragment> TEXT_INPUT_EDIT_MULTI_TEMPLATE;
+
+	/**
+	 * The template to render text attributes in view mode.
+	 */
+	@TemplateType(TextInputControl.class)
+	public static ThemeVar<HTMLTemplateFragment> TEXT_INPUT_IMMUTABLE_SINGLE_TEMPLATE;
+
+	/**
+	 * The template to render multi-line text boxes in view mode.
+	 */
+	@TemplateType(TextInputControl.class)
+	public static ThemeVar<HTMLTemplateFragment> TEXT_INPUT_IMMUTABLE_MULTI_TEMPLATE;
+
+	/**
+	 * The template to render values that consist of a text input and one or more appended buttons.
+	 * 
+	 * <p>
+	 * Available properties are all of {@link #TEXT_INPUT_EDIT_SINGLE_TEMPLATE} with an additional
+	 * {@value TextInputControl#BUTTONS_PROPERTY} property that renders the additional buttons.
+	 * </p>
+	 * 
+	 * @see DateInputControl
+	 * @see TimeInputControl
+	 */
+	@TemplateType(TextInputControl.class)
+	public static ThemeVar<HTMLTemplateFragment> TEXT_INPUT_WITH_BUTTONS_EDIT_TEMPLATE;
+
+	/**
+	 * The template to render password input fields in edit mode.
+	 */
+	@TemplateType(PasswordInputControl.class)
+	public static ThemeVar<HTMLTemplateFragment> PASSWORD_INPUT_EDIT_TEMPLATE;
 
 }

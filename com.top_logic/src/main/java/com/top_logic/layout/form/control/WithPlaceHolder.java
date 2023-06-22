@@ -6,6 +6,7 @@
 package com.top_logic.layout.form.control;
 
 import com.top_logic.layout.Control;
+import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.form.FormField;
 
 /**
@@ -16,6 +17,7 @@ import com.top_logic.layout.form.FormField;
 public interface WithPlaceHolder {
 
 	/** The value being displayed as hint for the field, if no value has been entered yet. */
+	@TemplateVariable("placeholder")
 	String getPlaceHolder();
 
 	/** @see #getPlaceHolder() */

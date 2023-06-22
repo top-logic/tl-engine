@@ -70,18 +70,12 @@ public class TimeInputControl extends TextInputControl {
 	}
 
 	@Override
-	protected void writeEditableContents(DisplayContext context, TagWriter out) throws IOException {
-		super.writeEditableContents(context, out);
-
-		writeFixedRight(context, out);
+	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
+		Icons.TEXT_INPUT_WITH_BUTTONS_EDIT_TEMPLATE.get().write(context, out, this);
 	}
 
-	private void writeFixedRight(DisplayContext context, TagWriter out)
-			throws IOException {
-		out.beginBeginTag(SPAN);
-		out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_RIGHT_CSS_CLASS);
-		out.endBeginTag();
-
+	@Override
+	public void writeButtons(DisplayContext context, TagWriter out) throws IOException {
 		ButtonWriter buttonWriter = new ButtonWriter(this, Icons.CLOCK, ShowClock.INSTANCE);
 		buttonWriter.setID(getImageId());
 		buttonWriter.setTooltip(I18NConstants.OPEN_CLOCK__LABEL.fill(getModel().getLabel()));
@@ -92,13 +86,9 @@ public class TimeInputControl extends TextInputControl {
 		} else {
 			buttonWriter.writeDisabledButton(context, out);
 		}
-
-		out.endTag(SPAN);
 	}
 
-	/**
-	 * the client side id of the image which opens the calendar.
-	 */
+	/** the client side id of the image which opens the calendar. */
 	private String getImageId() {
 		return getID() + IMAGE_ID_SUFFIX;
 	}

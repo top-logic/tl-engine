@@ -33,7 +33,7 @@ import com.top_logic.gui.ThemeVar;
  * 
  * <pre>
  * &#64;DefaultValue("css:fas fa-code")
- * public static ThemeImage TEMPLATE_POPUP_BUTTON;
+ * public static ThemeImage POPUP_BUTTON_TEMPLATE;
  * </pre>
  * 
  * <p>

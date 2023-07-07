@@ -150,7 +150,7 @@
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 								<values>
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="Kachel Kontext-Liste"
+										label="Objekte als Kacheln"
 									/>
 								</values>
 							</value>
@@ -450,7 +450,7 @@
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 								<values>
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="Kachel Kontext-Baum"
+										label="Baum als Kachel-Kontext"
 									/>
 								</values>
 							</value>

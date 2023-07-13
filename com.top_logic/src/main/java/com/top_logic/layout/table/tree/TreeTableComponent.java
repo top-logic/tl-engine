@@ -145,8 +145,7 @@ public class TreeTableComponent extends BoundComponent
 		String TABLE = "table";
 
 		/**
-		 * The name of the property defining the {@link ComponentTableConfigProvider} that is used
-		 * to adapt the {@link TableConfiguration}.
+		 * @see #getComponentTableConfigProvider()
 		 */
 		String COMPONENT_TABLE_CONFIG_PROVIDER_NAME = "componentTableConfigProvider";
 
@@ -220,8 +219,8 @@ public class TreeTableComponent extends BoundComponent
 		TreeTableConfig getTable();
 
 		/**
-		 * Returns the factory to create programmatic {@link TableConfigurationProvider} for the
-		 * configured {@link TableComponent}.
+		 * {@link TableConfigurationProvider} for dynamically changing the
+		 * {@link TableConfiguration}.
 		 */
 		@InstanceFormat
 		@InstanceDefault(TableComponentTableConfigProvider.class)

@@ -152,7 +152,7 @@ String paramType = StringServices.nonEmpty(request.getParameter(GotoHandler.COMM
 			<div class="content">
 				<div class="heading">
 					<h1>
-						<basic:text key="<%= I18NConstants.PWD_CHANGE_WELLCOME__USER.fill(fullName) %>"/>
+						<basic:text key="<%= I18NConstants.PWD_CHANGE_WELCOME__USER.fill(fullName) %>"/>
 					</h1>
 					<h3>
 						<basic:text key="<%= I18NConstants.PWD_CHANGE_PASSWORD_EXPIRED %>"/>

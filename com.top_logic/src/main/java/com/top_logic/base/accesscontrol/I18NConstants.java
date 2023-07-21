@@ -48,9 +48,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey PWD_CHANGE_MSG_OLD_PASSWORD_WRONG;
 
 	/**
-	 * @en Wellcome {0}!
+	 * @en Welcome {0}!
 	 */
-	public static ResKey1 PWD_CHANGE_WELLCOME__USER;
+	public static ResKey1 PWD_CHANGE_WELCOME__USER;
 
 	/**
 	 * @en Your password has expired.

@@ -41,6 +41,16 @@ import com.top_logic.model.form.implementation.FormMode;
  */
 public class FormEditorEditorControl extends FormEditorDisplayControl {
 
+	/**
+	 * CSS prefix to define the maximal number of columns which are displayed in the editor part of
+	 * the form editor.
+	 * 
+	 * <p>
+	 * Up to 5 columns are currently supported: maxCols1, maxCols2, maxCols3, maxCols4, maxCols5
+	 * </p>
+	 */
+	private static final String MAX_COLS_PREFIX = "maxCols";
+
 	private static final String TARGET_CSS = "rf_innerTarget";
 
 	private static final boolean ATTRIBUTE_HIDDEN = true;
@@ -122,7 +132,7 @@ public class FormEditorEditorControl extends FormEditorDisplayControl {
 		}
 
 		if (_maxCols.getValue() != null) {
-			out.append("maxCols" + _maxCols.getValue());
+			out.append(MAX_COLS_PREFIX + _maxCols.getValue());
 		}
 	}
 

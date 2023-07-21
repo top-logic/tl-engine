@@ -6070,6 +6070,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .cMediaQuery.dflSize1 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
 .cMediaQuery.dflSize2 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
 .cMediaQuery.dflSize3 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.cMediaQuery.dflSize4 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.cMediaQuery.dflSize5 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
 .layoutControl .cMediaQuery .rf_inputCell.is-control > .rf_cell .rf_columnsLayout > *:not(body),
 .layoutControl .cMediaQuery .rf_inputCellOneLine.is-control > .rf_cell .rf_columnsLayout > *:not(body) {
 	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
@@ -6078,8 +6080,10 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
  }	
  
 .dflSize2 .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
 .rf_columnsLayout.cols2 > *:not(.rf_line),
+.cMediaQuery.dflSize3 .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.cMediaQuery.dflSize4 .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.cMediaQuery.dflSize5 .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
 .cMediaQuery.dflSize1 .rf_columnsLayout.cols2 > *:not(.rf_line)  { 
   	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
@@ -6087,24 +6091,28 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .cMediaQuery.dflSize3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
-.cMediaQuery.dflSize3 .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
+.rf_columnsLayout.cols3 > *:not(.rf_line),
+.cMediaQuery.dflSize3 .rf_columnsLayout.cols3 > *:not(.rf_line),
+.cMediaQuery.dflSize4 .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.cMediaQuery.dflSize5 .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
   	min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;
 }
 
-.cMediaQuery.dflSize3 .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .rf_columnsLayout.cols4 > *:not(.rf_line):not(.rf_line) { 
+.cMediaQuery.dflSize4 .rf_columnsLayout:not(.cols1):not(.cols2):not(.cols3) > *:not(.rf_line),
+.rf_columnsLayout.cols4 > *:not(.rf_line),
+.cMediaQuery.dflSize4 .rf_columnsLayout.cols4 > *:not(.rf_line),
+.cMediaQuery.dflSize4 .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
   	min-width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;
 }
 
-.cMediaQuery.dflSize3 .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .rf_columnsLayout.cols5 > *:not(.rf_line):not(.rf_line) { 
+.cMediaQuery.dflSize5 .rf_columnsLayout:not(.cols1):not(.cols2):not(.cols3):not(.cols4) > *:not(.rf_line),
+.rf_columnsLayout.cols5 > *:not(.rf_line),
+.cMediaQuery.dflSize5 .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.cMediaQuery.dflSize5 .rf_columnsLayout.cols5 > *:not(.rf_line) { 
   	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;
@@ -6117,29 +6125,36 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .dflSize0 .rf_content,
 .dflSize1 .rf_content,
 .dflSize2 .maxCols1 .rf_content,
-.dflSize3 .maxCols1 .rf_content {
+.dflSize3 .maxCols1 .rf_content,
+.dflSize4 .maxCols1 .rf_content,
+.dflSize5 .maxCols1 .rf_content {
 	/* avoid creating more columns than possible, use cols classes manually in those cases */
 	grid-template-columns: repeat(1, 1fr); 
 }
 
 .cMediaQuery:not(.dflSize0):not(.dflSize1) .rf_content.cols2,
 .dflSize2 .rf_content,
-.dflSize3 .maxCols2 .rf_content {
+.dflSize3 .maxCols2 .rf_content,
+.dflSize4 .maxCols2 .rf_content,
+.dflSize5 .maxCols2 .rf_content {
 	grid-template-columns: repeat(2, 1fr); 
 }
 
 .cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2) .rf_content.cols3,
-.dflSize3 .rf_content {
+.dflSize3 .rf_content,
+.dflSize4 .maxCols3 .rf_content,
+.dflSize5 .maxCols3 .rf_content {
 	grid-template-columns: repeat(3, 1fr); 
 }
 
-.cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2) .rf_content.cols4,
-.dflSize3 .maxCols4 .rf_content {
+.cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2):not(.dflSize3) .rf_content.cols4,
+.dflSize4 .rf_content,
+.dflSize5 .maxCols4 .rf_content {
 	grid-template-columns: repeat(4, 1fr);   
 }
   
-.cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2) .rf_content.cols5,
-.dflSize3 .maxCols5 .rf_content {	
+.cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2):not(.dflSize3):not(.dflSize4) .rf_content.cols5,
+.dflSize5 .rf_content {	
 	grid-template-columns: repeat(5, 1fr); 
 } 
 
@@ -6156,6 +6171,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .cMediaQuery.dflSize0 .dfListContent .rf_columnsLayout > .dfListEntry,
 .cMediaQuery.dflSize1 .dfListContent .rf_columnsLayout > .dfListEntry,
 .cMediaQuery.dflSize3 .dfListContent .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.layoutControl.cMediaQuery.dflSize4 .dfListContent .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.layoutControl.cMediaQuery.dflSize5 .dfListContent .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
 .dfListContent .rf_columnsLayout > .dfListEntry {
  	min-width: 100px;
  	width: 100%;
@@ -6172,7 +6189,9 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .cMediaQuery.dflSize0 .fltContent .rf_columnsLayout > *:not(body),
 .cMediaQuery.dflSize1 .fltContent .rf_columnsLayout > *:not(body),
 .dflSize2 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
-.dflSize3 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body) {
+.dflSize3 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
+.dflSize4 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
+.dflSize5 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body) {
 	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_FILTER));
   	width: calc(100% - var(--RF_HORIZONTAL_GAP_FILTER));
   	box-sizing: border-box;
@@ -6262,7 +6281,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .rf_labelAbove .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
-.dlgDialog .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
 .cMediaQuery.dflSize0 .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
 .rf_inputCellOneLine.rf_line > div:nth-child(2),
 .rf_inputCell > div:nth-child(2) {
@@ -6274,7 +6292,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .rf_inputCell,
 .rf_labelAbove .rf_inputCellOneLine:not(.keepInline),
-.dlgDialog .rf_inputCellOneLine:not(.keepInline),
 .cMediaQuery.dflSize0 .rf_inputCellOneLine:not(.keepInline),
 .rf_inputCellOneLine.rf_line {
 	display: grid;

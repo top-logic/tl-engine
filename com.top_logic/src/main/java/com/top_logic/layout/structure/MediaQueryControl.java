@@ -44,9 +44,10 @@ public class MediaQueryControl extends LayoutControlAdapter {
 	 * 
 	 * <p>
 	 * The dynamic class <code>dflSize[X]</code> suggests using <code>X</code> column layout for the
-	 * current document size. <code>X</code> usually ranges from <code>0</code> to <code>3</code>.
-	 * Where <code>1</code> means that there is enough space of a whole column, but a value of
-	 * <code>0</code> suggests to break contents even within a column if possible.
+	 * current document size. <code>X</code> usually ranges from <code>0</code> to
+	 * <code>{@value #DEFAULT_MAX_COLUMNS}</code>. Where <code>1</code> means that there is enough
+	 * space of a whole column, but a value of <code>0</code> suggests to break contents even within
+	 * a column if possible.
 	 * </p>
 	 */
 	public static final String SIZE_RANGE_CSS_PREFIX = "dflSize";
@@ -56,7 +57,7 @@ public class MediaQueryControl extends LayoutControlAdapter {
 	 * 
 	 * @see Layout.Config#getMaxColumns()
 	 */
-	public static final int DEFAULT_MAX_COLUMNS = 3;
+	public static final int DEFAULT_MAX_COLUMNS = 5;
 
 	/**
 	 * {@link LayoutControlProvider} creating a {@link ContentControl} wrapped in a
@@ -87,7 +88,8 @@ public class MediaQueryControl extends LayoutControlAdapter {
 			 * 
 			 * <p>
 			 * This setting can be used to limit the maximum number of columns to a value smaller
-			 * than 3, without explicitly specifying column widths using {@link #getSizes()}.
+			 * than {@link MediaQueryControl#DEFAULT_MAX_COLUMNS}, without explicitly specifying
+			 * column widths using {@link #getSizes()}.
 			 * </p>
 			 */
 			@IntDefault(DEFAULT_MAX_COLUMNS)

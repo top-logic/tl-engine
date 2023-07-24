@@ -35,10 +35,10 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class MediaQueryControl extends LayoutControlAdapter {
 
 	/**
-	 * Default CSS class for a {@link MediaQueryControl}.
+	 * Default CSS class prefix to classify the available space into a size range.
 	 * 
 	 * <p>
-	 * Depending on the available space, the {@link MediaQueryControl} adds other CSS classes
+	 * Depending on the available space, the {@link MediaQueryControl} adds CSS classes
 	 * <code>dflColumns[X]</code> that can be used to influence the layout of its contents.
 	 * </p>
 	 * 
@@ -193,7 +193,7 @@ public class MediaQueryControl extends LayoutControlAdapter {
 		@Override
 		public void appendControlCSSClasses(Appendable out, LayoutControlAdapter control) throws IOException {
 			super.appendControlCSSClasses(out, control);
-			out.append(COLUMNS_CSS);
+			out.append("cMediaQuery");
 		}
 
 	}

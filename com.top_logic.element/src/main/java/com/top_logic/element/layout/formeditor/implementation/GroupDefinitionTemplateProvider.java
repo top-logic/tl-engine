@@ -31,6 +31,8 @@ import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.form.implementation.AbstractFormContainerProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 
@@ -52,7 +54,8 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	private static final ImageProvider IMAGE_PROVIDER =
 		ImageProvider.constantImageProvider(Icons.FORM_EDITOR__GROUP);
 
-	private static final String CSS_GROUP = "rf_columnsLayout rf_innerTarget";
+	private static final String CSS_GROUP =
+		ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + ReactiveFormCSS.RF_INNER_TARGET;
 
 	/**
 	 * Creates a {@link GroupDefinitionTemplateProvider} from configuration.
@@ -78,18 +81,8 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	}
 
 	private static String getCssClasses(GroupProperties<?> config) {
-		String cssGroup = CSS_GROUP;
-
-		Integer columns = getColumns(config);
-		if (columns != null) {
-			cssGroup += " cols" + columns;
-		}
-
-		return cssGroup;
-	}
-
-	private static Integer getColumns(GroupProperties<?> config) {
-		return config.getColumns() != null ? config.getColumns().getValue() : null;
+		Columns columns = config.getColumns();
+		return columns.appendColsCSSto(CSS_GROUP);
 	}
 
 	@Override

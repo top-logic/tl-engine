@@ -26,6 +26,7 @@ import com.top_logic.layout.form.boxes.reactive_tag.GroupCellControl;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.model.form.implementation.FormEditorContext;
@@ -42,7 +43,7 @@ public class FormEditorToolboxControl extends FormEditorDisplayControl {
 	
 	private final static String CSS = "cFormEditorToolbox";
 
-	private final static String INNER_CSS = "rf_line rf_buttons";
+	private final static String INNER_CSS = ReactiveFormCSS.RF_LINE + " rf_buttons";
 
 	private List<Class<? extends FormElement<? extends FormElementTemplateProvider>>> _buttonElements;
 

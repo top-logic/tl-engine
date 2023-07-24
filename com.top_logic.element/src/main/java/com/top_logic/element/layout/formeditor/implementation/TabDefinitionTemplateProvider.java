@@ -21,6 +21,7 @@ import com.top_logic.layout.ImageProvider;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.implementation.AbstractFormContainerProvider;
 import com.top_logic.model.form.implementation.ColumnsDefinitionTemplateProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
@@ -73,7 +74,8 @@ public class TabDefinitionTemplateProvider extends AbstractFormContainerProvider
 
 	@Override
 	public HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context) {
-		HTMLTemplateFragment container = div(getIdAttribute(), css("rf_container rf_dropTarget"), content);
+		HTMLTemplateFragment container = div(getIdAttribute(),
+			css(ReactiveFormCSS.RF_CONTAINER + " " + ReactiveFormCSS.RF_DROP_TARGET), content);
 		return contentBox(container);
 	}
 

@@ -3,24 +3,6 @@ body {
     box-sizing: border-box;
 }
 
-
-/* --------------------- form responsiveness fix --------------------- */
-
-@media all and (-ms-high-contrast:active), all and (-ms-high-contrast:none) {
-    :not(.dflColumns0):not(.dflColumns1).layoutControl.dflColumns .rf_content.cols2 > *:not(.rf_line):not(.rf_groupCell),
-    .dflColumns2 .rf_content > *:not(.rf_line):not(.rf_groupCell)
-    {
-        /*
-        this is an unmaintainable, hammer-to-the-head fix for responsiveness in IE
-        unfortunately we have to support IE so ...
-        */
-        min-width: calc(50% - 80px);
-        width: calc(50% - 80px);
-    }
-
-}
-
-
 /* --------------------- adjust other styles ---------------------------- */
 .firstLevelTabBar .activeTab,
 .tabBar .activeTab

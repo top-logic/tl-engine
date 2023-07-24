@@ -39,17 +39,17 @@ public class MediaQueryControl extends LayoutControlAdapter {
 	 * 
 	 * <p>
 	 * Depending on the available space, the {@link MediaQueryControl} adds CSS classes
-	 * <code>dflColumns[X]</code> that can be used to influence the layout of its contents.
+	 * <code>dflSize[X]</code> that can be used to influence the layout of its contents.
 	 * </p>
 	 * 
 	 * <p>
-	 * The dynamic class <code>dflColumns[X]</code> suggests using <code>X</code> column layout for
-	 * the current document size. <code>X</code> usually ranges from <code>0</code> to
-	 * <code>3</code>. Where <code>1</code> means that there is enough space of a whole column, but
-	 * a value of <code>0</code> suggests to break contents even within a column if possible.
+	 * The dynamic class <code>dflSize[X]</code> suggests using <code>X</code> column layout for the
+	 * current document size. <code>X</code> usually ranges from <code>0</code> to <code>3</code>.
+	 * Where <code>1</code> means that there is enough space of a whole column, but a value of
+	 * <code>0</code> suggests to break contents even within a column if possible.
 	 * </p>
 	 */
-	public static final String COLUMNS_CSS = "dflColumns";
+	public static final String SIZE_RANGE_CSS_PREFIX = "dflSize";
 
 	/**
 	 * Default maximum columns.
@@ -79,7 +79,7 @@ public class MediaQueryControl extends LayoutControlAdapter {
 			/**
 			 * The prefix of the dynamically added CSS class.
 			 */
-			@StringDefault(COLUMNS_CSS)
+			@StringDefault(SIZE_RANGE_CSS_PREFIX)
 			String getCssPrefix();
 
 			/**
@@ -98,7 +98,7 @@ public class MediaQueryControl extends LayoutControlAdapter {
 			 * 
 			 * <p>
 			 * If the available content width is smaller than the value at position <code>X</code>,
-			 * the CSS class <code>dflColumns[X]</code> is set.
+			 * the CSS class <code>dflSize[X]</code> is set.
 			 * </p>
 			 */
 			@ListBinding
@@ -211,7 +211,7 @@ public class MediaQueryControl extends LayoutControlAdapter {
 	 *        The actual content view.
 	 */
 	public MediaQueryControl(HTMLFragment view) {
-		this(view, COLUMNS_CSS, DEFAULT_MAX_COLUMNS, "null");
+		this(view, SIZE_RANGE_CSS_PREFIX, DEFAULT_MAX_COLUMNS, "null");
 	}
 
 	/**

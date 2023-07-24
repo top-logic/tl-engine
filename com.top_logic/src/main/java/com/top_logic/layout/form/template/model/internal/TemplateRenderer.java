@@ -29,6 +29,7 @@ import com.top_logic.layout.form.template.model.MemberStyle;
 import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.layout.template.WithProperties;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.form.ReactiveFormCSS;
 
 /**
  * Utilities for rendering a {@link HTMLTemplateFragment}.
@@ -51,7 +52,7 @@ public class TemplateRenderer {
 		FormMember member = (FormMember) TemplateRenderer.model(properties);
 		ControlProvider contextControlProvider = TemplateRenderer.contextControlProvider(properties);
 		return new TemplateControl(member, contextControlProvider,
-			div(css("rf_line"), template));
+			div(css(ReactiveFormCSS.RF_LINE), template));
 	}
 
 	/**

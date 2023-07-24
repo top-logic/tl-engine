@@ -32,6 +32,7 @@ import com.top_logic.layout.form.template.model.internal.TemplateAnnotation;
 import com.top_logic.layout.form.template.model.internal.TemplateControlProvider;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.form.ReactiveFormCSS;
 
 /**
  * Factory for {@link HTMLTemplateFragment}s.
@@ -682,7 +683,7 @@ public class Templates {
 		TagTemplate contentFragment = div(css("rf_keepInline"), content);
 
 		if (wholeLine) {
-			return div(css("rf_line"), contentFragment);
+			return div(css(ReactiveFormCSS.RF_LINE), contentFragment);
 		} else {
 			return contentFragment;
 		}

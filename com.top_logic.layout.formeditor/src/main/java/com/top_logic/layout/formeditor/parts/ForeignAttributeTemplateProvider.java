@@ -32,6 +32,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.AttributeDefinition;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
@@ -163,7 +164,8 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 			return template;
 		} else {
 			return contentBox(
-				div(css("rf_inputCellOneLine rf_emptyCell"), resource(I18NConstants.FOREIGN_ATTRIBUTE_LABEL)),
+				div(css(ReactiveFormCSS.RF_INPUT_CELL_ONE_LINE + " " + ReactiveFormCSS.RF_EMPTY_CELL),
+					resource(I18NConstants.FOREIGN_ATTRIBUTE_LABEL)),
 				getWholeLine(context.getFormType()));
 		}
 	}

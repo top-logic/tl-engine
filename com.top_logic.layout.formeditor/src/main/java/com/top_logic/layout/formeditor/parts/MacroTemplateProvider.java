@@ -23,6 +23,7 @@ import com.top_logic.layout.ImageProvider;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
@@ -92,7 +93,7 @@ public class MacroTemplateProvider extends AbstractFormElementProvider<MacroPart
 			}
 		} else {
 			return contentBox(div(
-				css("rf_inputCellOneLine rf_emptyCell"),
+				css(ReactiveFormCSS.RF_INPUT_CELL_ONE_LINE + " " + ReactiveFormCSS.RF_EMPTY_CELL),
 				resource(I18NConstants.MACRO_PART_LABEL)), getWholeLine(context.getFormType()));
 		}
 	}

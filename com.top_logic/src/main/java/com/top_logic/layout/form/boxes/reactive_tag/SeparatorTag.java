@@ -11,6 +11,7 @@ import javax.servlet.jsp.JspException;
 
 import com.top_logic.layout.form.boxes.tag.BoxTag;
 import com.top_logic.layout.form.tag.AbstractTag;
+import com.top_logic.model.form.ReactiveFormCSS;
 
 /**
  * {@link BoxTag} crating a vertical or horizontal visible separator depending on the orientation of
@@ -39,9 +40,9 @@ public class SeparatorTag extends AbstractTag {
 
 	private String getCssClass() {
 		if (_visible) {
-			return "rf_hr rf_line visible";
+			return "rf_hr " + ReactiveFormCSS.RF_LINE + " visible";
 		} else {
-			return "rf_hr rf_line";
+			return "rf_hr " + ReactiveFormCSS.RF_LINE;
 		}
 	}
 

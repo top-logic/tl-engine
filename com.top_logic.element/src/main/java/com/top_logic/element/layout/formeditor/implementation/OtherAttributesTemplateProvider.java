@@ -43,6 +43,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.AnnotationContainer;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
@@ -86,7 +87,7 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 			return result;
 		} else {
 			List<HTMLTemplateFragment> otherAttributeTemplates = new ArrayList<>();
-			otherAttributeTemplates.add(css("rf_columnsLayout"));
+			otherAttributeTemplates.add(css(ReactiveFormCSS.RF_COLUMNS_LAYOUT));
 			TLObject model = context.getModel();
 			ConfigKey personalizationKey;
 			{

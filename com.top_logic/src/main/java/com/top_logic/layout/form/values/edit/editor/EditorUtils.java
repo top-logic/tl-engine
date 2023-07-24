@@ -59,6 +59,7 @@ import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.util.Resources;
 
 /**
@@ -189,7 +190,7 @@ public class EditorUtils {
 	private static HTMLTemplateFragment mapEntryTemplate() {
 		return EditorUtils.titleWithIconAndRemove(
 			htmlTemplate(Icons.ITEM_ICON),
-			div(member(EditorUtils.LIST_ITEM_GROUP, div(css("rf_columnsLayout"),
+			div(member(EditorUtils.LIST_ITEM_GROUP, div(css(ReactiveFormCSS.RF_COLUMNS_LAYOUT),
 				fieldBox(MAP_KEY_MEMBER_NAME),
 				fieldBox(MAP_VALUE_MEMBER_NAME)))),
 			null);

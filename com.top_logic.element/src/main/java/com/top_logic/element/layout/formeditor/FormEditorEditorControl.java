@@ -24,6 +24,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.form.definition.ContainerDefinition;
 import com.top_logic.model.form.definition.FormDefinition;
@@ -40,18 +41,6 @@ import com.top_logic.model.form.implementation.FormMode;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public class FormEditorEditorControl extends FormEditorDisplayControl {
-
-	/**
-	 * CSS prefix to define the maximal number of columns which are displayed in the editor part of
-	 * the form editor.
-	 * 
-	 * <p>
-	 * Up to 5 columns are currently supported: maxCols1, maxCols2, maxCols3, maxCols4, maxCols5
-	 * </p>
-	 */
-	private static final String MAX_COLS_PREFIX = "maxCols";
-
-	private static final String TARGET_CSS = "rf_innerTarget";
 
 	private static final boolean ATTRIBUTE_HIDDEN = true;
 
@@ -123,7 +112,7 @@ public class FormEditorEditorControl extends FormEditorDisplayControl {
 	@Override
 	protected void writeControlClassesContent(Appendable out) throws IOException {
 		super.writeControlClassesContent(out);
-		out.append(TARGET_CSS);
+		out.append(ReactiveFormCSS.RF_INNER_TARGET);
 
 		if (_labelPlacement == LabelPlacement.IN_FRONT_OF_INPUT) {
 			out.append("rf_labelInFrontOfInput");
@@ -131,8 +120,24 @@ public class FormEditorEditorControl extends FormEditorDisplayControl {
 			out.append("rf_labelAbove");
 		}
 
-		if (_maxCols.getValue() != null) {
-			out.append(MAX_COLS_PREFIX + _maxCols.getValue());
+		switch (_maxCols) {
+			case DEFAULT:
+				break;
+			case ONE:
+				out.append("maxCols1");
+				break;
+			case TWO:
+				out.append("maxCols2");
+				break;
+			case THREE:
+				out.append("maxCols3");
+				break;
+			case FOUR:
+				out.append("maxCols4");
+				break;
+			case FIVE:
+				out.append("maxCols5");
+				break;
 		}
 	}
 

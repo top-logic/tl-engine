@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.form.definition;
 
+import com.top_logic.basic.UnreachableAssertion;
+
 /**
  * The maximal number of columns for a form (element).
  * 
@@ -39,5 +41,45 @@ public enum Columns {
 	 */
 	public Integer getValue() {
 		return _number;
+	}
+
+	/**
+	 * Appends a CSS class that indicates the maximal number of columns.
+	 */
+	public String appendColsCSSto(String baseCSS) {
+		switch (this) {
+			case DEFAULT:
+				return baseCSS;
+			case ONE:
+			case TWO:
+			case THREE:
+			case FOUR:
+			case FIVE:
+				return baseCSS + " " + getColsCSS(getValue().intValue());
+		}
+		throw new UnreachableAssertion("Uncovered case: " + this);
+	}
+
+	/**
+	 * Determines the CSS class to display the maximal number of columns.
+	 * 
+	 * @param maxColCount
+	 *        1, 2, 3, 4, or 5.
+	 */
+	public static String getColsCSS(int maxColCount) {
+		switch (maxColCount) {
+			case 1:
+				return "cols1";
+			case 2:
+				return "cols2";
+			case 3:
+				return "cols3";
+			case 4:
+				return "cols4";
+			case 5:
+				return "cols5";
+			default:
+				throw new IllegalArgumentException("Unexpected number of columns. Only 1-5 are allowed.");
+		}
 	}
 }

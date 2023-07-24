@@ -15,6 +15,7 @@ import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.basic.ConstantControl;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.provider.ImageResourceProvider;
+import com.top_logic.model.form.ReactiveFormCSS;
 
 /**
  * Control rendering a container for an attribute (icon and label) and a field (label and input)
@@ -32,7 +33,7 @@ public class FormEditorElementControl extends ConstantControl<HTMLFragment> {
 
 	private final String DRAG_ELEMENT_CSS = "rf_dragElement";
 
-	private final String WHOLE_LINE_CSS = "rf_line";
+	private final String WHOLE_LINE_CSS = ReactiveFormCSS.RF_LINE;
 
 	private ImageProvider _imageProvider;
 

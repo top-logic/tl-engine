@@ -5971,8 +5971,6 @@ a.autoLink:hover {
 .rf_content {
 	grid-column: 1;
 	grid-row: 2;
-    -ms-grid-column:1; 
-	-ms-grid-row:2; 
 	display: grid;
 	grid-auto-flow: row;
 	grid-gap: 4px var(--RF_HORIZONTAL_GAP_CELLS);
@@ -5991,9 +5989,7 @@ a.autoLink:hover {
 
 .rf_columnsLayout,
 div.rf_buttons {
-	display: -ms-flexbox;
     display: flex;
-    -ms-flex-wrap: wrap;
     flex-wrap: wrap;
 }
 
@@ -6259,9 +6255,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .rf_inputCellOneLine {
 	display: grid;
-	display: -ms-grid;
 	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
-	-ms-grid-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
 	grid-gap: 5px 5px;
 }
 
@@ -6269,15 +6263,11 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .rf_inputCell > div:nth-child(1)  {
 	grid-row:1; 
 	grid-column:1; 
-   -ms-grid-row:1; 
-   -ms-grid-column:1; 
 }
 
 .rf_inputCellOneLine > div:nth-child(2) {
 	grid-row:1; 
 	grid-column:2; 
-   -ms-grid-row:1; 
-   -ms-grid-column:2; 
 }
 
 .rf_labelAbove .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
@@ -6286,8 +6276,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .rf_inputCell > div:nth-child(2) {
 	grid-row:2; 
 	grid-column:1; 
-   -ms-grid-row:2; 
-   -ms-grid-column:1; 	
 }
 
 .rf_inputCell,
@@ -6295,11 +6283,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .cMediaQuery.dflSize0 .rf_inputCellOneLine:not(.keepInline),
 .rf_inputCellOneLine.rf_line {
 	display: grid;
-	display: -ms-grid;
 	grid-template-columns: minmax(0px, 1fr);
-	-ms-grid-columns: minmax(0px, 1fr);
 	grid-template-rows: 24px 1fr;
-	-ms-grid-rows: 24px 1fr;	
 	line-height: 24px;
 } 
 
@@ -6406,12 +6391,9 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .rf_groupCell {
 	display: grid;
-	display: -ms-grid;
 	grid-template-columns: 100%;
 	grid-template-rows: minmax(22px, max-content) 1fr;
-	-ms-grid-columns: 100%;
 	grid-gap: 0px;
-	-ms-grid-gap: 0px;
 	border: 1px solid #DFE6F0;
 	border-radius: var(--GROUP_RADIUS);
 	margin-bottom: 10px;
@@ -6443,8 +6425,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .rf_groupCell .rf_header {
-	-ms-grid-row:1; 
-    -ms-grid-column:1; 
 	border-radius: var(--GROUP_TITLE_RADIUS);
 	padding-left: 0px;
 	padding-right: 10px;
@@ -6685,7 +6665,6 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 	user-select: none;
 	-moz-user-select: none;
 	-webkit-user-select: none;
-	-ms-user-select: none;
 }
 
 .cFormEditorDisplay .rf_dragElement,

@@ -5,7 +5,7 @@ error_param(){
 echo -e "Usage:\t./createDocker.sh [OPTION]...
 Parameter:
 \t-n [AppContextName]
-\t-d [DatabaseType]\tOptions: h2, mysql
+\t-d [DatabaseType]\tOptions: h2, mysql, postgre
 Optional additional database parameter:
 \t-l [ip|hostname]:[port]\tDefault: localhost:[DB default], H2 default:/var/lib/tomcat9/work
 \t-s [DB scheme]\t\tDefault: [AppContextName]
@@ -15,7 +15,7 @@ Optional additional database parameter:
 exit 0;
 }
 
-while getopts n:d:l:s:u:p:r: opt
+while getopts n:d:l:s:u:p:r opt
 do
    case $opt in
        n) CONTEXT="$OPTARG";;
@@ -23,7 +23,7 @@ do
               h2) DATABASE="config_h2";;
               mysql) DATABASE="config_mysql";;
               mssql) DATABASE="config_mssql";;
-              postgres) DATABASE="config_postgres";;
+              postgre) DATABASE="config_postgre";;
               oracle) DATABASE="config_oracle";;
               *) error_param;;
           esac;;
@@ -42,7 +42,7 @@ config_h2(){
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
-  sed -i -e "s/{dbLibrary}/RUN apt install libh2-java -y/g" $BUILD_PATH/Dockerfile
+  sed -i -e "s/{dbLibrary}/RUN apt install libh2-java/g" $BUILD_PATH/Dockerfile
   sed -i -e 's/{dbDriver}/org.h2.Driver/g' $BUILD_PATH/context.xml
   sed -i -e 's/{dbURL}/jdbc:h2:\/var\/lib\/tomcat9\/work/g' $BUILD_PATH/context.xml
 }
@@ -52,7 +52,7 @@ config_mysql(){
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
-  sed -i -e 's/{dbLibrary}/RUN apt install libmariadb-java -y/g' $BUILD_PATH/Dockerfile
+  sed -i -e 's/{dbLibrary}/RUN apt install libmariadb-java/g' $BUILD_PATH/Dockerfile
   sed -i -e 's/{dbDriver}/org.mariadb.jdbc.Driver/g' $BUILD_PATH/context.xml
   sed -i -e "s/{dbURL}/jdbc:mysql:\/\/$DB_URL/g" $BUILD_PATH/context.xml
 
@@ -63,9 +63,14 @@ echo "TODO"
 exit 0
 }
 
-config_postgres(){
-echo "TODO"
-exit 0
+config_postgre(){
+  [ -z "$DB_URL" ] && DB_URL="localhost:5432"
+  [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
+  [ -z "$DB_USER" ] && DB_USER="user"
+  [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
+  sed -i -e "s/{dbLibrary}/RUN apt install libpostgresql-jdbc-java/g" $BUILD_PATH/Dockerfile
+  sed -i -e 's/{dbDriver}/org.postgresql.Driver/g' $BUILD_PATH/context.xml
+  sed -i -e "s/{dbURL}/jdbc:postgresql:\/\/$DB_URL/g" $BUILD_PATH/context.xml
 }
 
 config_oracle(){

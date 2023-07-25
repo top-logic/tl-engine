@@ -6058,56 +6058,38 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .rf_columnsLayout > .rf_line,
-.rf_columnsLayout > *:not(body),
-.rf_columnsLayout.cols1 > *:not(body),
-.cMediaQuery.dflSize0 .rf_columnsLayout > *:not(body),
-.cMediaQuery.dflSize1 .rf_columnsLayout > *:not(body),
-.cMediaQuery.dflSize1 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize2 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize4 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize5 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.layoutControl .cMediaQuery .rf_inputCell.is-control > .rf_cell .rf_columnsLayout > *:not(body),
-.layoutControl .cMediaQuery .rf_inputCellOneLine.is-control > .rf_cell .rf_columnsLayout > *:not(body) {
+.cMediaQuery.dflSize0 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery.dflSize1 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize0, .dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_cell .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols1 > *:not(.rf_line) {
 	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
   	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
   	box-sizing: border-box;
  }	
- 
-.dflSize2 .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
-.rf_columnsLayout.cols2 > *:not(.rf_line),
-.cMediaQuery.dflSize3 .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize4 .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize5 .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize1 .rf_columnsLayout.cols2 > *:not(.rf_line)  { 
+
+.cMediaQuery.dflSize2 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols2 > *:not(.rf_line) { 
   	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;
 }
 
-.cMediaQuery.dflSize3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.rf_columnsLayout.cols3 > *:not(.rf_line),
-.cMediaQuery.dflSize3 .rf_columnsLayout.cols3 > *:not(.rf_line),
-.cMediaQuery.dflSize4 .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize5 .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
+.cMediaQuery.dflSize3 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize4, .dflSize5) .rf_columnsLayout.cols3 > *:not(.rf_line) { 
   	min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;
 }
 
-.cMediaQuery.dflSize4 .rf_columnsLayout:not(.cols1):not(.cols2):not(.cols3) > *:not(.rf_line),
-.rf_columnsLayout.cols4 > *:not(.rf_line),
-.cMediaQuery.dflSize4 .rf_columnsLayout.cols4 > *:not(.rf_line),
-.cMediaQuery.dflSize4 .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
+.cMediaQuery.dflSize4 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize5) .rf_columnsLayout.cols4 > *:not(.rf_line) { 
   	min-width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;
 }
 
-.cMediaQuery.dflSize5 .rf_columnsLayout:not(.cols1):not(.cols2):not(.cols3):not(.cols4) > *:not(.rf_line),
-.rf_columnsLayout.cols5 > *:not(.rf_line),
-.cMediaQuery.dflSize5 .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize5 .rf_columnsLayout.cols5 > *:not(.rf_line) { 
+.cMediaQuery.dflSize5 .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery .rf_columnsLayout.cols5 > *:not(.rf_line) { 
   	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;

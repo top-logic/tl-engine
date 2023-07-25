@@ -42,7 +42,7 @@ config_h2(){
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
-  sed -i -e "s/{dbDriver}/RUN apt install libh2-java -y/g" $BUILD_PATH/Dockerfile
+  sed -i -e "s/{dbLibrary}/RUN apt install libh2-java -y/g" $BUILD_PATH/Dockerfile
   sed -i -e 's/{dbDriver}/org.h2.Driver/g' $BUILD_PATH/context.xml
   sed -i -e 's/{dbURL}/jdbc:h2:\/var\/lib\/tomcat9\/work/g' $BUILD_PATH/context.xml
 }
@@ -52,7 +52,7 @@ config_mysql(){
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
-  sed -i -e 's/{dbDriver}/RUN apt install libmariadb-java -y/g' $BUILD_PATH/Dockerfile
+  sed -i -e 's/{dbLibrary}/RUN apt install libmariadb-java -y/g' $BUILD_PATH/Dockerfile
   sed -i -e 's/{dbDriver}/org.mariadb.jdbc.Driver/g' $BUILD_PATH/context.xml
   sed -i -e "s/{dbURL}/jdbc:mysql:\/\/$DB_URL/g" $BUILD_PATH/context.xml
 

@@ -2,7 +2,7 @@ FROM docker.top-logic.com/tomcat9-java11:latest
 MAINTAINER support@top-logic.com
 USER root
 RUN apt update
-{dbDriver}
+{dbLibrary}
 RUN echo {timeZone} > /etc/timezone
 RUN ln -sf /usr/share/zoneinfo/{timeZone} /etc/localtime
 COPY --chown=root ./*.war $CATALINA_HOME/webapps/

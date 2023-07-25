@@ -7,7 +7,7 @@ Parameter:
 \t-n [AppContextName]
 \t-d [DatabaseType]\tOptions: h2, mysql, postgre, mssql
 Optional additional database parameter:
-\t-l [JDBC URL]\t\tURL format dependent on the choosen database. Please refer to the specific documentations. Overrides all other DB settings below this line.
+\t-l [JDBC URL]\t\tURL format dependent on the choosen database. Please refer to the specific documentations. Overrides hostname, port and scheme.
 \t-h [ip|hostname]\tDefault: [IP of this machine], H2 default:/var/lib/tomcat9/work/
 \t-o [port]\t\tDefault: DB dependent default port
 \t-s [DB scheme]\t\tDefault: [AppContextName]
@@ -112,7 +112,6 @@ cp -f ./src/main/deb/data/tomcat/context.xml $BUILD_PATH/
 cd $BUILD_PATH
 
 $DATABASE
-sed -i -e "s/{dbSchema}/$DB_SCHEME/g" $BUILD_PATH/context.xml
 sed -i -e "s/{dbUser}/$DB_USER/g" $BUILD_PATH/context.xml
 sed -i -e "s/{dbPasswd}/$DB_PASSWD/g" $BUILD_PATH/context.xml
 sed -i -e "s/{contextName}/$CONTEXT/g" $BUILD_PATH/context.xml

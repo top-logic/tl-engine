@@ -6096,41 +6096,24 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 /* content of a group */
-.cMediaQuery .rf_content.cols1,
-.cMediaQuery .rf_content .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5),
-.cMediaQuery .rf_columnsLayout .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5),
 .dflSize0 .rf_content,
-.dflSize1 .rf_content,
-.dflSize2 .maxCols1 .rf_content,
-.dflSize3 .maxCols1 .rf_content,
-.dflSize4 .maxCols1 .rf_content,
-.dflSize5 .maxCols1 .rf_content {
+.dflSize1 .rf_content {
 	/* avoid creating more columns than possible, use cols classes manually in those cases */
 	grid-template-columns: repeat(1, 1fr); 
 }
 
-.cMediaQuery:not(.dflSize0):not(.dflSize1) .rf_content.cols2,
-.dflSize2 .rf_content,
-.dflSize3 .maxCols2 .rf_content,
-.dflSize4 .maxCols2 .rf_content,
-.dflSize5 .maxCols2 .rf_content {
+.dflSize2 .rf_content {
 	grid-template-columns: repeat(2, 1fr); 
 }
 
-.cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2) .rf_content.cols3,
-.dflSize3 .rf_content,
-.dflSize4 .maxCols3 .rf_content,
-.dflSize5 .maxCols3 .rf_content {
+.dflSize3 .rf_content {
 	grid-template-columns: repeat(3, 1fr); 
 }
 
-.cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2):not(.dflSize3) .rf_content.cols4,
-.dflSize4 .rf_content,
-.dflSize5 .maxCols4 .rf_content {
+.dflSize4 .rf_content {
 	grid-template-columns: repeat(4, 1fr);   
 }
   
-.cMediaQuery:not(.dflSize0):not(.dflSize1):not(.dflSize2):not(.dflSize3):not(.dflSize4) .rf_content.cols5,
 .dflSize5 .rf_content {	
 	grid-template-columns: repeat(5, 1fr); 
 } 

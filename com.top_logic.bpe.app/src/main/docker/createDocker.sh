@@ -7,7 +7,7 @@ Parameter:
 \t-n [AppContextName]
 \t-d [DatabaseType]\tOptions: h2, mysql, postgre
 Optional additional database parameter:
-\t-l [ip|hostname]:[port]\tDefault: localhost:[DB default], H2 default:/var/lib/tomcat9/work
+\t-l [ip|hostname]:[port]\tDefault: [IP of this machine]:[DB default], H2 default:/var/lib/tomcat9/work
 \t-s [DB scheme]\t\tDefault: [AppContextName]
 \t-u [DB username]\tDefault: user
 \t-p [DB password]\tDefault: passwd
@@ -48,7 +48,7 @@ config_h2(){
 }
 
 config_mysql(){
-  [ -z "$DB_URL" ] && DB_URL="localhost:3306"
+  [ -z "$DB_URL" ] && DB_URL="$LOCAL_IP:3306"
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
@@ -61,10 +61,19 @@ config_mysql(){
 config_mssql(){
 echo "TODO"
 exit 0
+#  [ -z "$DB_URL" ] && DB_URL="$LOCAL_IP:1433"
+#  [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
+#  [ -z "$DB_USER" ] && DB_USER="user"
+#  [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
+## Download v12.2.0 from MS
+#  wget https://go.microsoft.com/fwlink/?linkid=2222954 -O mssql.tar.gz
+#  tar -xvzf mssql.tar.gz
+# ...
+# rm -rf sqljdbc*
 }
 
 config_postgre(){
-  [ -z "$DB_URL" ] && DB_URL="localhost:5432"
+  [ -z "$DB_URL" ] && DB_URL="$LOCAL_IP:5432"
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
@@ -78,6 +87,7 @@ echo "TODO"
 exit 0
 }
 
+LOCAL_IP=$(hostname -I | awk '{print $1}')
 BUILD_PATH=$(dirname $(readlink -f "$0"))
 cp -f $BUILD_PATH/Dockerfile_template $BUILD_PATH/Dockerfile
 cd $BUILD_PATH/../../..

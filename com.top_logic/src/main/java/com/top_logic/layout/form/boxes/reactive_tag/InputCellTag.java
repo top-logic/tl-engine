@@ -40,7 +40,7 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 
 	private Boolean _labelAbove;
 
-	private boolean _keepInline = false;
+	private Boolean _keepInline;
 
 	private boolean _colon = Icons.COLON.get();
 
@@ -121,7 +121,6 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 	 */
 	public void setLabelAbove(boolean labelAbove) {
 		_labelAbove = labelAbove;
-		_keepInline = true;
 	}
 
 	/**
@@ -132,6 +131,9 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 	 */
 	public void setLabelFirst(boolean labelFirst) {
 		_labelFirst = labelFirst;
+		if (!labelFirst) {
+			_keepInline = true;
+		}
 	}
 
 	/**
@@ -191,9 +193,7 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 				labelAbove = groupCellParent.getLabelAbove();
 			}
 
-			if (labelAbove != null) {
-				_keepInline = true;
-			} else {
+			if (labelAbove == null) {
 				FormTag formParent = getFormParent();
 				if (formParent != null) {
 					labelAbove = formParent.getLabelAbove();
@@ -293,7 +293,9 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 		result.setCellClass(_cssClass);
 		result.setLabelWidth(getFirstColumnWidth());
 		result.setLabelAbove(getLabelAbove());
-		result.setKeepInline(_keepInline);
+		if (_keepInline != null) {
+			result.setKeepInline(_keepInline.booleanValue());
+		}
 		result.setLabelFirst(getLabelFirst());
 		result.setCellStyle(_cssStyle);
 		result.setCellWidth(_width);

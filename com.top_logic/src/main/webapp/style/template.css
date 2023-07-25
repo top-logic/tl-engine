@@ -6044,7 +6044,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 /* columns layout */
 .rf_columnsLayout .rf_content > * > .rf_line:not(.dfList),
-.rf_columnsLayout .rf_groupCell .rf_groupCell,
 .rf_inputCell .rf_columnsLayout .rf_line:not(.dfList) {
 	min-width: 100%;
   	width: -moz-fit-content;

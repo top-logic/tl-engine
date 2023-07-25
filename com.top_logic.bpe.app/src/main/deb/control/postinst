@@ -14,8 +14,7 @@ else
 fi
 
 sed -i -e 's/{dbDriver}/org.mariadb.jdbc.Driver/g' [[tl.deb.installDir]]/tomcat/context.xml
-sed -i -e 's/{dbURL}/jdbc:mysql://localhost:3306/g' [[tl.deb.installDir]]/tomcat/context.xml
-sed -i -e 's/{dbSchema}/[[tl.deb.dbSchema]]/g' [[tl.deb.installDir]]/tomcat/context.xml
+sed -i -e 's/{dbURL}/jdbc:mysql://localhost:3306/[[tl.deb.dbSchema]]/g' [[tl.deb.installDir]]/tomcat/context.xml
 sed -i -e 's/{dbUser}/[[tl.deb.dbUser]]/g' [[tl.deb.installDir]]/tomcat/context.xml
 sed -i -e 's/{contextName}/[[tl.deb.contextName]]/g' [[tl.deb.installDir]]/tomcat/context.xml
 sed -i -e 's/{dbPasswd}/'$(cat /root/[[tl.deb.dbSchema]].db.passwd)'/g' [[tl.deb.installDir]]/tomcat/context.xml

@@ -1,7 +1,7 @@
 <Context>
 	<Resource name="jdbc/toplogic"
 		type="javax.sql.DataSource"
-		url="{dbURL}/{dbSchema}"
+		url="{dbURL}"
 		driverClassName="{dbDriver}" 
 		username="{dbUser}"
 		password="{dbPasswd}"

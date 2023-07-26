@@ -1,6 +1,11 @@
 #!/bin/bash
 # Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
 
+mvn --help >/dev/null 2>&1
+[[ $(echo $?) != "0" ]] && echo "Maven is missing. Pls install with 'apt install maven'." && exit 0;
+docker --help >/dev/null 2>&1
+[[ $(echo $?) != "0" ]] && echo "Docker is missing. Pls install with 'apt install docker.io'." && exit 0;
+
 error_param(){
 echo -e "Usage:\t./createDocker.sh [OPTION]...
 Parameter:

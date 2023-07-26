@@ -5993,10 +5993,6 @@ div.rf_buttons {
     flex-wrap: wrap;
 }
 
-.rf_columnsLayout {
-    margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
-}
-
 .rf_columnsLayout.keep {
 	display: table;
 	width: 100%;
@@ -6018,8 +6014,16 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	width: 100%;
 }
 
-.rf_columnsLayout > *:not(body) {
+/* Margin left for all children of .rf_columnsLayout and .rf_content */
+.rf_columnsLayout > *:not(body),
+.rf_content > *:not(body) {
   	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+/* Invert margin left .rf_columnsLayout and .rf_content itself as workaround not to margin the first column. */
+.rf_columnsLayout,
+.rf_content {
+    margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
 }
 
 .rf_columnsLayout > .rf_groupCell {

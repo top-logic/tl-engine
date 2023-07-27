@@ -7,10 +7,11 @@ docker --help >/dev/null 2>&1
 [[ $(echo $?) != "0" ]] && echo "Docker is missing. Pls install with 'apt install docker.io'." && exit 0;
 
 error_param(){
-echo -e "Usage:\t./createDocker.sh [OPTION]...
+echo -e "Usage:\tcreateDocker.sh [OPTION]...
 Parameter:
 \t-n [AppContextName]
-\t-d [DatabaseType]\tOptions: h2, mysql, postgre, mssql, oracle
+\t-d [DatabaseType]\tOptions: h2 (default), mysql, postgre, mssql, oracle
+\t-c \t\t\tDry-run: Only create docker configuration and exit.
 
 Optional additional database parameter:
 \t-l [JDBC URL]\t\tURL format dependent on the choosen database. Please refer to the specific documentations. Overrides hostname, port and scheme.
@@ -26,7 +27,9 @@ Start local parameter:
 exit 0;
 }
 
-while getopts n:d:l:h:o:s:u:p:r opt
+DATABASE="config_h2"
+
+while getopts n:d:l:h:o:s:u:p:w:rc opt
 do
    case $opt in
        n) CONTEXT="$OPTARG";;
@@ -46,11 +49,19 @@ do
        p) DB_PASSWD="$OPTARG";;
 	   w) HTTP_PORT="$OPTARG";;
        r) START_LOCAL="true";;
+       c) START_LOCAL="true" ; CREATE_ONLY="true" ;;
        *) error_param;;
    esac
 done
 
+if [ "$CONTEXT" == "" ] ; then
+  echo "ERROR: Missing app context."
+  error_param
+  exit 1
+fi
+
 config_h2(){
+  echo "Configuring H2 database"
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
@@ -61,6 +72,7 @@ config_h2(){
 }
 
 config_mysql(){
+  echo "Configuring MySQL database"
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
@@ -74,6 +86,7 @@ config_mysql(){
 }
 
 config_mssql(){
+  echo "Configuring MSSQL database"
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
@@ -94,6 +107,7 @@ config_mssql(){
 }
 
 config_postgre(){
+  echo "Configuring PostgreSQL database"
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
@@ -106,6 +120,7 @@ config_postgre(){
 }
 
 config_oracle(){
+  echo "Configuring Oracle database"
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
@@ -120,29 +135,90 @@ config_oracle(){
   sed -i -e "s/{dbURL}/jdbc:oracle:thin:@$DB_URL/g" $BUILD_PATH/context.xml
 }
 
-LOCAL_IP=$(hostname -I | awk '{print $1}')
-BUILD_PATH=$(dirname $(readlink -f "$0"))
-cp -f $BUILD_PATH/Dockerfile_template $BUILD_PATH/Dockerfile
-cd $BUILD_PATH/../../..
-mvn package
-cp -f ./target/*app.war $BUILD_PATH/$CONTEXT.war
-cp -f ./src/main/deb/data/tomcat/context.xml $BUILD_PATH/
-cd $BUILD_PATH
+LOCAL_IP="$(hostname -I | awk '{print $1}')"
+SRC_PATH=$(dirname $(readlink -f "$0"))
+ROOT_PATH=$(realpath -s "$SRC_PATH/../../..")
+TARGET_PATH="$ROOT_PATH/target"
+BUILD_PATH="$TARGET_PATH/docker"
 
+rm "$BUILD_PATH"/*.war
+mkdir -p "$BUILD_PATH"
+
+echo
+echo "=== Building application WAR ==="
+( cd "$ROOT_PATH" ; mvn package -Dtl.deb.skip=true )
+cp -f "$TARGET_PATH"/*app.war "$BUILD_PATH/$CONTEXT.war"
+cp -f "$ROOT_PATH/src/main/deb/data/tomcat/context.xml" "$BUILD_PATH/"
+
+echo
+echo "=== Creating dockerfile ==="
+cp -f "$SRC_PATH/Dockerfile_template" "$BUILD_PATH/Dockerfile"
+echo "Created dockerfile: $BUILD_PATH/Dockerfile"
+
+echo
+echo "=== Configuring database ==="
 $DATABASE
-sed -i -e "s/{dbUser}/$DB_USER/g" $BUILD_PATH/context.xml
-sed -i -e "s/{dbPasswd}/$DB_PASSWD/g" $BUILD_PATH/context.xml
-sed -i -e "s/{contextName}/$CONTEXT/g" $BUILD_PATH/context.xml
-sed -i -e "s/{timeZone}/$(sed 's/\//\\\//g' <<<$(cat /etc/timezone))/g" $BUILD_PATH/Dockerfile
+sed -i -e "s/{dbUser}/$DB_USER/g" "$BUILD_PATH/context.xml"
+sed -i -e "s/{dbPasswd}/$DB_PASSWD/g" "$BUILD_PATH/context.xml"
+sed -i -e "s/{contextName}/$CONTEXT/g" "$BUILD_PATH/context.xml"
+sed -i -e "s/{timeZone}/$(sed 's/\//\\\//g' <<<$(cat /etc/timezone))/g" "$BUILD_PATH/Dockerfile"
 
-docker login docker.top-logic.com -u guest -p guest
-docker pull docker.top-logic.com/tomcat9-java11:latest
-docker build -t $CONTEXT $BUILD_PATH/
-
-if [[ "$START_LOCAL" == "true" ]]; then
-	docker rm -f $CONTEXT || echo "Nothing to delete"
-	sleep 5
-	[ -z "$HTTP_PORT" ] && HTTP_PORT=8080
-	docker run -tdi -p $HTTP_PORT:8080 --restart=unless-stopped --name=$CONTEXT --hostname=$CONTEXT $CONTEXT && docker logs -f $CONTEXT
+DRY_RUN=""
+if [[ "$CREATE_ONLY" == "true" ]]; then
+    echo "Stopping. The rest of the output is only a hint for possible commands"
+    DRY_RUN="echo "
 fi
+
+echo
+echo "=== Log-in to docker registry ==="
+$DRY_RUN sudo docker login docker.top-logic.com -u guest -p guest
+
+echo
+echo "=== Pulling base image ==="
+$DRY_RUN sudo docker pull docker.top-logic.com/tomcat9-java11:latest
+
+echo
+echo "=== Building docker image ==="
+$DRY_RUN sudo docker build -t "$CONTEXT" "$BUILD_PATH/"
+
+TAG="latest"
+REGISTRY="hub.docker.com"
+
+echo
+echo "=== Push to docker registry ==="
+echo sudo docker image tag "$CONTEXT" "$REGISTRY/$CONTEXT:$TAG"
+echo sudo docker image push "$REGISTRY/$CONTEXT:$TAG"
+
+if [[ "$CREATE_ONLY" != "true" && "$START_LOCAL" != "true" ]]; then
+    echo "Stopping. The rest of the output is only a hint for possible commands"
+    DRY_RUN="echo "
+fi
+
+echo
+echo "=== Removing old docker container ==="
+$DRY_RUN sudo docker rm -f "$CONTEXT" || echo "Nothing to delete"
+
+echo
+echo "=== Starting docker container ==="
+[ -z "$HTTP_PORT" ] && HTTP_PORT=8080
+$DRY_RUN sleep 5
+
+# Open browser to log-in to started app.
+(
+  echo
+  echo "=== Opening browser ==="
+
+  # Wait until container startup is at least in progress
+  $DRY_RUN sleep 10
+  $DRY_RUN xdg-open "http://localhost:$HTTP_PORT/$CONTEXT/"
+) &
+
+# Start docker container
+$DRY_RUN sudo docker run -tdi -p $HTTP_PORT:8080 --restart=unless-stopped --name="$CONTEXT" --hostname="$CONTEXT" "$CONTEXT" && $DRY_RUN sudo docker logs -f "$CONTEXT"
+
+# When the control flow reaches this point, the user has pressed Ctrl-C, stop the contaner.
+
+echo
+echo "=== Stopping docker container ==="
+$DRY_RUN sudo docker stop "$CONTEXT"
 

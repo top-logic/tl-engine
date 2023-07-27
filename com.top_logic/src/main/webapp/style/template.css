@@ -6241,6 +6241,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .rf_labelAbove .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
 .cMediaQuery.dflSize0                                 .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
 .cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
 .rf_inputCellOneLine.rf_line > div:nth-child(2),
 .rf_inputCell > div:nth-child(2) {
 	grid-row:2; 
@@ -6251,6 +6252,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .rf_labelAbove .rf_inputCellOneLine:not(.keepInline),
 .cMediaQuery.dflSize0                                 .rf_inputCellOneLine:not(.keepInline),
 .cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCellOneLine:not(.keepInline),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCellOneLine:not(.keepInline),
 .rf_inputCellOneLine.rf_line {
 	display: grid;
 	grid-template-columns: minmax(0px, 1fr);
@@ -6262,6 +6264,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .rf_inputCell > :nth-child(n+2),
 .cMediaQuery.dflSize0                                 .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
 .cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
 .rf_inputCellOneLine.rf_line > :nth-child(n+2),
 .rf_labelAbove .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2)  {
 	padding-left: 5px;

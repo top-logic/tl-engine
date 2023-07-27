@@ -114,10 +114,9 @@ public class FormEditorEditorControl extends FormEditorDisplayControl {
 		super.writeControlClassesContent(out);
 		out.append(ReactiveFormCSS.RF_INNER_TARGET);
 
-		if (_labelPlacement == LabelPlacement.IN_FRONT_OF_INPUT) {
-			out.append("rf_labelInFrontOfInput");
-		} else if (_labelPlacement == LabelPlacement.ABOVE) {
-			out.append("rf_labelAbove");
+		String labelPlacementCSS = _labelPlacement.cssClass();
+		if (labelPlacementCSS != null) {
+			out.append(labelPlacementCSS);
 		}
 
 		switch (_maxCols) {

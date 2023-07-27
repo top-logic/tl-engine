@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.form.definition;
 
+import com.top_logic.model.form.ReactiveFormCSS;
+
 /**
  * Decision about where to place labels in forms.
  * 
@@ -25,6 +27,22 @@ public enum LabelPlacement {
 				return true;
 			case IN_FRONT_OF_INPUT:
 				return false;
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * CSS class representing this {@link LabelPlacement}.
+	 * 
+	 * @return May be <code>null</code>.
+	 */
+	public String cssClass() {
+		switch (this) {
+			case ABOVE:
+				return ReactiveFormCSS.RF_LABEL_ABOVE;
+			case IN_FRONT_OF_INPUT:
+				return ReactiveFormCSS.RF_LABEL_IN_FRONT_OF_INPUT;
 			default:
 				return null;
 		}

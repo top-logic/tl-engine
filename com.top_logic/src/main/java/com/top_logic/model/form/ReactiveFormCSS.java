@@ -42,5 +42,19 @@ public interface ReactiveFormCSS {
 
 	/** CSS class for an empty cell in a reactive form. */
 	String RF_EMPTY_CELL = "rf_emptyCell";
+
+	/**
+	 * CSS class to mark that the label should be displayed in front of the value.
+	 * 
+	 * @see #RF_LABEL_ABOVE
+	 */
+	String RF_LABEL_IN_FRONT_OF_INPUT = "rf_labelInFrontOfInput";
+
+	/**
+	 * CSS class to mark that the label should be displayed above the value.
+	 * 
+	 * @see #RF_LABEL_IN_FRONT_OF_INPUT
+	 */
+	String RF_LABEL_ABOVE = "rf_labelAbove";
 }
 

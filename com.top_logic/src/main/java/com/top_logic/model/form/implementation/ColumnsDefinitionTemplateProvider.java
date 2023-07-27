@@ -84,16 +84,22 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 	@Override
 	public void addCssClassForContent(List<HTMLTemplateFragment> buffer) {
 		buffer.add(getIdAttribute());
-		buffer.add(css(getCssClass()));
+		buffer.add(css(contentCssClasses()));
 	}
 
-	String getCssClass() {
+	private String contentCssClasses() {
 		ColumnsDefinition config = getConfig();
-		String cssGroup = cssClassForColumnsLayout(config);
-
-		cssGroup += !config.getLineBreak().booleanValue() ? (" " + ReactiveFormCSS.CSS_CLASS_KEEP) : "";
-
-		return cssGroup;
+		StringBuilder css = new StringBuilder(cssClassForColumnsLayout(config));
+		if (!config.getLineBreak().booleanValue()) {
+			css.append(' ');
+			css.append(ReactiveFormCSS.CSS_CLASS_KEEP);
+		}
+		String labelPlacementCSS = config.getLabelPlacement().cssClass();
+		if (labelPlacementCSS != null) {
+			css.append(' ');
+			css.append(labelPlacementCSS);
+		}
+		return css.toString();
 	}
 
 	/**

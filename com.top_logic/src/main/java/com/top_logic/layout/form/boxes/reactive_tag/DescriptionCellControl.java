@@ -92,8 +92,6 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	private boolean _wholeLine;
 
-	private boolean _labelAbove;
-
 	/**
 	 * Whether the label is rendered first.
 	 */
@@ -183,25 +181,6 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	public void setLabelPlacement(LabelPlacement labelPlacement) {
 		_labelPlacement = labelPlacement;
-	}
-
-	/**
-	 * Whether the label should be rendered on a separate line above the input element.
-	 * 
-	 * <p>
-	 * Otherwise, the label is rendered before the input element if enough space is available.
-	 * </p>
-	 */
-	@TemplateVariable("labelAbove")
-	public boolean getLabelAbove() {
-		return _labelAbove && !getKeepInline();
-	}
-
-	/**
-	 * @see #getLabelAbove()
-	 */
-	public void setLabelAbove(boolean labelAbove) {
-		_labelAbove = labelAbove;
 	}
 
 	/**

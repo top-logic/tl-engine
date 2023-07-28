@@ -131,7 +131,6 @@ td.tl-table_cell:nth-child(2) .tblCellInnerSpacer
 .searchIrrelevant select:not( [multiple="multiple"] ),
 input:not(.input-image):not(.fltButton):not(#quickSearch-input):not( [type="image"] ):not(#icon-search-input):not(#icon-input-input):not(name*='pageInput.cpi'),
 textarea:not(.is-input),
-.rf_inputCell textarea.is-input,
 .rf_inputCellOneLine textarea.is-input,
 select:not( [multiple="multiple"] )
 {

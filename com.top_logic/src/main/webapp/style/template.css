@@ -5998,8 +5998,7 @@ div.rf_buttons {
 	width: 100%;
 }
 
-div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine,
-div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
+div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine {
 	display: table-cell;
 	padding-right: 5px;
 	padding-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
@@ -6036,8 +6035,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .rf_columnsLayout .inputCellOneLine,
-.rf_inputCellOneLine,
-.rf_inputCell {
+.rf_inputCellOneLine {
     line-height: 24px;
 }
 
@@ -6047,8 +6045,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 /* columns layout */
-.rf_columnsLayout .rf_content > * > .rf_line:not(.dfList),
-.rf_inputCell .rf_columnsLayout .rf_line:not(.dfList) {
+.rf_columnsLayout .rf_content > * > .rf_line:not(.dfList) {
 	min-width: 100%;
   	width: -moz-fit-content;
   	width: fit-content;
@@ -6188,7 +6185,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 *:not(.rf_content) > .rf_inputCellOneLine,
-*:not(.rf_content) > .rf_inputCell,
 *:not(.rf_content) > .rf_columnsLayout:not(.keep) {
 	margin-bottom: 4px;
 }
@@ -6227,8 +6223,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	grid-gap: 5px 5px;
 }
 
-.rf_inputCellOneLine > div:nth-child(1),
-.rf_inputCell > div:nth-child(1)  {
+.rf_inputCellOneLine > div:nth-child(1) {
 	grid-row:1; 
 	grid-column:1; 
 }
@@ -6238,7 +6233,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	grid-column:2; 
 }
 
-.rf_inputCell                                                                               > div:nth-child(2),
                                         .rf_labelAbove.rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
 .cMediaQuery.dflSize0                                 .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
 .cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
@@ -6248,7 +6242,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	grid-column:1; 
 }
 
-.rf_inputCell,
                                         .rf_labelAbove.rf_inputCellOneLine:not(.keepInline),
 .cMediaQuery.dflSize0                                 .rf_inputCellOneLine:not(.keepInline),
 .cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCellOneLine:not(.keepInline),
@@ -6261,7 +6254,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 } 
 
 /* indent all lines but the first */
-.rf_inputCell                                                                               > :nth-child(n+2),
                                         .rf_labelAbove.rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
 .cMediaQuery.dflSize0                                 .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
 .cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
@@ -6270,8 +6262,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	padding-left: 5px;
 }
 
-:is(.rf_inputCell, .rf_inputCellOneLine) .ace_editor div,
-:is(.rf_inputCell, .rf_inputCellOneLine) .ace_editor {
+.rf_inputCellOneLine .ace_editor div,
+.rf_inputCellOneLine .ace_editor {
 	line-height: 24px;
 }
 
@@ -6424,7 +6416,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
     margin-bottom: 0px;
 }
 
-.rf_inputCell label,
 .rf_inputCellOneLine label {
 	padding-right: 4px;
 }
@@ -6465,7 +6456,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	display: inline;
 }
 
-.rf_inputCellOneLine.keepInline, .rf_inputCell {
+.rf_inputCellOneLine.keepInline {
 	margin-bottom: 10px;	
 }
 
@@ -6554,7 +6545,6 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 .cMediaQuery.dflSize1 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
 .cMediaQuery.dflSize2 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
 .cMediaQuery.dflSize3 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery .cFormEditorPreview .rf_inputCell.is-control > .rf_cell .rf_columnsLayout > *:not(body),
 .cMediaQuery .cFormEditorPreview .rf_inputCellOneLine.is-control > .rf_cell .rf_columnsLayout > *:not(body),
 .cMediaQuery .cFormEditorPreview .rf_groupCell .rf_content .rf_groupCell .rf_content .rf_columnsLayout {
 	min-width: 100%;
@@ -6799,7 +6789,6 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
   .rf_columnsLayout .rf_content > * > .rf_line, 
   .rf_columnsLayout .rf_line, 
   .rf_columnsLayout .rf_groupCell .rf_groupCell, 
-  .rf_inputCell .rf_columnsLayout .rf_line,
   .rf_content > *:not(body),
    .cMediaQuery .rf_content.cols1 > *:not(body),
   .cMediaQuery .rf_content .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5) > *:not(.rf_line):not(.dfListEntry),

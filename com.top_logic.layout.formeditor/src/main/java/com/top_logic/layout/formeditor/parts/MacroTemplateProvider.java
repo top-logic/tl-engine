@@ -93,7 +93,7 @@ public class MacroTemplateProvider extends AbstractFormElementProvider<MacroPart
 			}
 		} else {
 			return contentBox(div(
-				css(ReactiveFormCSS.RF_INPUT_CELL_ONE_LINE + " " + ReactiveFormCSS.RF_EMPTY_CELL),
+				css(inputCellCSS(context) + " " + ReactiveFormCSS.RF_EMPTY_CELL),
 				resource(I18NConstants.MACRO_PART_LABEL)), getWholeLine(context.getFormType()));
 		}
 	}

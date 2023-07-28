@@ -33,6 +33,7 @@ import com.top_logic.layout.form.template.model.internal.TemplateControlProvider
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Factory for {@link HTMLTemplateFragment}s.
@@ -702,7 +703,25 @@ public class Templates {
 	 */
 	public static HTMLTemplateFragment descriptionBox(HTMLTemplateFragment label, HTMLTemplateFragment content,
 			boolean labelFirst) {
-		return new DescriptionBoxTemplate(label, content, labelFirst);
+		return descriptionBox(label, content, labelFirst, LabelPlacement.DEFAULT);
+	}
+
+	/**
+	 * Creates a {@link HTMLTemplateFragment} that consists of a label and content area.
+	 * 
+	 * @param label
+	 *        The label content.
+	 * @param content
+	 *        The main content.
+	 * @param labelFirst
+	 *        Whether the label is rendered before the input.
+	 * @param labelPlacement
+	 *        Whether the label is rendered above the value.
+	 * @return A {@link HTMLTemplateFragment} that renders label and content.
+	 */
+	public static HTMLTemplateFragment descriptionBox(HTMLTemplateFragment label, HTMLTemplateFragment content,
+			boolean labelFirst, LabelPlacement labelPlacement) {
+		return new DescriptionBoxTemplate(label, content, labelFirst, labelPlacement);
 	}
 
 	/**
@@ -714,8 +733,22 @@ public class Templates {
 	 * @return A {@link HTMLTemplateFragment} that renders all aspects of a primitive field.
 	 */
 	public static HTMLTemplateFragment fieldBox(String name) {
+		return fieldBox(name, LabelPlacement.DEFAULT);
+	}
+
+	/**
+	 * Creates a box template for a primitive field consisting of a label box and a content box with
+	 * the input element and an error display.
+	 * 
+	 * @param name
+	 *        The field name.
+	 * @param labelPlacement
+	 *        Whether the label is rendered above the value.
+	 * @return A {@link HTMLTemplateFragment} that renders all aspects of a primitive field.
+	 */
+	public static HTMLTemplateFragment fieldBox(String name, LabelPlacement labelPlacement) {
 		boolean labelFirst = true;
-		return member(name, descriptionBox(fragment(labelWithColon(), error()), self(), labelFirst));
+		return member(name, descriptionBox(fragment(labelWithColon(), error()), self(), labelFirst, labelPlacement));
 	}
 
 	/**
@@ -728,7 +761,7 @@ public class Templates {
 	 */
 	public static HTMLTemplateFragment fieldBoxInputFirst(String name) {
 		boolean labelFirst = false;
-		return member(name, descriptionBox(fragment(label(), error()), self(), labelFirst));
+		return member(name, descriptionBox(fragment(label(), error()), self(), labelFirst, LabelPlacement.INLINE));
 	}
 
 	/**

@@ -94,8 +94,6 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 
 	private boolean _labelAbove;
 
-	private boolean _keepInline = false;
-
 	/**
 	 * Whether the label is rendered first.
 	 */
@@ -196,7 +194,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("labelAbove")
 	public boolean getLabelAbove() {
-		return _labelAbove && !_keepInline;
+		return _labelAbove && !getKeepInline();
 	}
 
 	/**
@@ -212,14 +210,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("keepInline")
 	public boolean getKeepInline() {
-		return _keepInline;
-	}
-
-	/**
-	 * @see #getKeepInline()
-	 */
-	public void setKeepInline(boolean keepInline) {
-		_keepInline = keepInline;
+		return _labelPlacement == LabelPlacement.INLINE;
 	}
 
 	/**

@@ -17,6 +17,7 @@ import com.top_logic.layout.form.tag.ControlTagUtil;
 import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.layout.form.tag.LabelTag;
 import com.top_logic.layout.form.template.ControlProvider;
+import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * {@link AbstractTag} for creating a label/description cell for a single {@link FormMember}.
@@ -294,7 +295,7 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 		result.setLabelWidth(getFirstColumnWidth());
 		result.setLabelAbove(getLabelAbove());
 		if (_keepInline != null) {
-			result.setKeepInline(_keepInline.booleanValue());
+			result.setLabelPlacement(LabelPlacement.INLINE);
 		}
 		result.setLabelFirst(getLabelFirst());
 		result.setCellStyle(_cssStyle);

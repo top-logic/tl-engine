@@ -5,9 +5,13 @@
  */
 package com.top_logic.layout.form.boxes.reactive_tag;
 
+import java.util.Objects;
+
+import com.top_logic.basic.ExceptionUtil;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.form.boxes.model.Icons;
+import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Default mutable {@link GroupSettings} implementation.
@@ -28,7 +32,7 @@ public abstract class AbstractGroupSettings<S extends AbstractGroupSettings<S>> 
 
 	private String _width;
 
-	private Boolean _labelAbove = null;
+	private LabelPlacement _labelPlacement = LabelPlacement.DEFAULT;
 
 	private Boolean _hasBorder = null;
 
@@ -98,15 +102,35 @@ public abstract class AbstractGroupSettings<S extends AbstractGroupSettings<S>> 
 
 	@Override
 	public boolean getLabelAbove() {
-		return _labelAbove == null ? com.top_logic.layout.form.boxes.reactive_tag.Icons.LABEL_ABOVE.get()
-			: _labelAbove.booleanValue();
+		switch (_labelPlacement) {
+			case DEFAULT:
+				return com.top_logic.layout.form.boxes.reactive_tag.Icons.LABEL_ABOVE.get();
+			case ABOVE:
+				return true;
+			case INLINE:
+				return false;
+		}
+		throw ExceptionUtil.uncoveredEnum(_labelPlacement);
+	}
+
+	@Override
+	public boolean getLabelInline() {
+		switch (_labelPlacement) {
+			case DEFAULT:
+			case ABOVE:
+				return false;
+			case INLINE:
+				return true;
+		}
+		throw ExceptionUtil.uncoveredEnum(_labelPlacement);
 	}
 
 	/**
 	 * @see #getLabelAbove()
+	 * @see #getLabelInline()
 	 */
-	public S setLabelAbove(boolean labelAbove) {
-		_labelAbove = labelAbove;
+	public S setLabelPlacement(LabelPlacement labelPlacement) {
+		_labelPlacement = Objects.requireNonNull(labelPlacement);
 		return self();
 	}
 

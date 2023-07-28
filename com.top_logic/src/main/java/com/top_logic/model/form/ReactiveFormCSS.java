@@ -44,8 +44,7 @@ public interface ReactiveFormCSS {
 	String RF_EMPTY_CELL = "rf_emptyCell";
 
 	/**
-	 * CSS class to mark that the label should be displayed in the same line as the value of the
-	 * value.
+	 * CSS class to mark that the label should be displayed on the same line as the value.
 	 * 
 	 * @see #RF_LABEL_ABOVE
 	 */

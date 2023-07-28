@@ -1,5 +1,5 @@
 <div id="{id}"
-	class="is-control {canInspectClass} rf_groupCell {collapsed ? 'collapsed'} {cssClass} {labelAbove ? 'rf_labelAbove'} {wholeLine ? 'rf_line'} {rows > 1 ? 'rf_spanRow' + rows} {!hasBorder ? 'noBorder'} {!hasLegend ? 'noLegend'}"
+	class="is-control {canInspectClass} rf_groupCell {collapsed ? 'collapsed'} {cssClass} {labelAbove ? 'rf_labelAbove' : (labelInline ? 'rf_labelInline')} {wholeLine ? 'rf_line'} {rows > 1 ? 'rf_spanRow' + rows} {!hasBorder ? 'noBorder'} {!hasLegend ? 'noLegend'}"
 	style="{width ? 'width: ' + width + '; '}{style}"
 	draggable="{draggable}"
 	data-id="{dataId}"

@@ -293,7 +293,9 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 		DescriptionCellControl result = DescriptionCellControl.createInputBox(member, _controlProvider, displayStyle, _colon, _errorAsText);
 		result.setCellClass(_cssClass);
 		result.setLabelWidth(getFirstColumnWidth());
-		result.setLabelAbove(getLabelAbove());
+		if (getLabelAbove()) {
+			result.setLabelPlacement(LabelPlacement.ABOVE);
+		}
 		if (_keepInline != null) {
 			result.setLabelPlacement(LabelPlacement.INLINE);
 		}

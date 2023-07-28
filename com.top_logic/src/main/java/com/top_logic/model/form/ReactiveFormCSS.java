@@ -34,12 +34,6 @@ public interface ReactiveFormCSS {
 	/** CSS class to render an cell in a reactive form in one line. */
 	String RF_INPUT_CELL_ONE_LINE = "rf_inputCellOneLine";
 
-	/**
-	 * CSS class to render an cell in a reactive form in potentially more than one line, e.g. when
-	 * the label is above the value.
-	 */
-	String RF_INPUT_CELL = "rf_inputCell";
-
 	/** CSS class for an empty cell in a reactive form. */
 	String RF_EMPTY_CELL = "rf_emptyCell";
 

@@ -455,7 +455,9 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 		descriptionCellControl.setCellClass(_cssClass);
 		descriptionCellControl.setCellStyle(_style);
 		descriptionCellControl.setCellWidth(_width);
-		descriptionCellControl.setLabelAbove(getLabelAbove());
+		if (getLabelAbove()) {
+			descriptionCellControl.setLabelPlacement(LabelPlacement.ABOVE);
+		}
 		if (getKeepInline()) {
 			descriptionCellControl.setLabelPlacement(LabelPlacement.INLINE);
 		}

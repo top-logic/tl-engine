@@ -56,6 +56,7 @@ import com.top_logic.layout.formeditor.parts.template.RenderedObjectsTemplatePro
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.layout.template.WithProperties;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -196,12 +197,21 @@ public class RenderedObjectsTemplateProvider
 
 	private Map<TLType, Template> _templateByType = new HashMap<>();
 
+	private LayoutComponent _component;
+
 	/**
 	 * Creates a new {@link ForeignObjectsTemplateProvider}.
 	 */
 	public RenderedObjectsTemplateProvider(InstantiationContext context, Config<?> config)
 			throws ConfigurationException {
 		super(context, config);
+
+		// TODO: Does not work because form definitions are instantiated lately.
+		// context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c ->
+		// _component = c);
+
+		_component =
+			DefaultDisplayContext.getDisplayContext().getSubSessionContext().getLayoutContext().getMainLayout();
 
 		for (TypeTemplate typeTemplate : config.getValueTemplates().values()) {
 			TLType type = typeTemplate.getType().resolveType();
@@ -254,14 +264,15 @@ public class RenderedObjectsTemplateProvider
 
 	private void writeContents(DisplayContext displayContext, TagWriter out, FormEditorContext form)
 			throws IOException {
-		HTMLTemplateFragment listTemplate = getConfig().getListTemplate();
+		Config<?> config = getConfig();
+		HTMLTemplateFragment listTemplate = config.getListTemplate();
 
 		WithProperties properties = new WithProperties() {
 			@Override
 			public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
 				switch (propertyName) {
 					case "items":
-						QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
+						QueryExecutor itemsExpr = QueryExecutor.compile(config.getItems());
 						Object result = itemsExpr.execute(form.getModel());
 						return toFragment(result);
 				}
@@ -354,7 +365,7 @@ public class RenderedObjectsTemplateProvider
 				// Could be passed through the WithProperties API in the future.
 				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 
-				Object value = variableDefinition.eval(displayContext, _obj);
+				Object value = variableDefinition.eval(displayContext, _component, _obj);
 				ExpressionTemplate.renderValue(context, out, value);
 				return;
 			}
@@ -380,7 +391,7 @@ public class RenderedObjectsTemplateProvider
 				// Could be passed through the WithProperties API in the future.
 				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 
-				return variableDefinition.eval(displayContext, _obj);
+				return variableDefinition.eval(displayContext, _component, _obj);
 			}
 
 			TLStructuredTypePart part = _obj.tType().getPart(propertyName);

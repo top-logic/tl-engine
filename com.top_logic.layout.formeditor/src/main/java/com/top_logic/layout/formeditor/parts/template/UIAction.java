@@ -3,27 +3,36 @@
  */
 package com.top_logic.layout.formeditor.parts.template;
 
-import java.io.IOError;
 import java.io.IOException;
+import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.LinkGenerator;
+import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.form.component.PostCreateAction;
+import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Definition of a script that jumps to a certain object.
+ * Definition of a {@link PostCreateAction} to be invoked by an <code>onclick</code> handler.
  */
-public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Config> implements VariableDefinition {
+public class UIAction extends AbstractConfiguredInstance<UIAction.Config> implements VariableDefinition {
 
 	private QueryExecutor _targetObject;
+
+	private List<PostCreateAction> _actions;
 
 	/**
 	 * Definition of an <code>onclick</code> script that jumps to an object or opens a dialog for an
@@ -38,8 +47,8 @@ public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Co
 		Config.NAME,
 		Config.TARGET_OBJECT,
 	})
-	@TagName("link-definition")
-	public interface Config extends VariableDefinition.Config<LinkDefinition> {
+	@TagName("ui-action")
+	public interface Config extends VariableDefinition.Config<UIAction>, WithPostCreateActions.Config {
 
 		/**
 		 * @see #getTargetObject()
@@ -56,10 +65,11 @@ public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Co
 		 */
 		@Name(TARGET_OBJECT)
 		Expr getTargetObject();
+
 	}
 
 	/**
-	 * Creates a {@link LinkDefinition} from configuration.
+	 * Creates a {@link UIAction} from configuration.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -67,22 +77,42 @@ public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Co
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public LinkDefinition(InstantiationContext context, Config config) {
+	public UIAction(InstantiationContext context, Config config) {
 		super(context, config);
 
 		_targetObject = QueryExecutor.compileOptional(config.getTargetObject());
+		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 	}
 
 	@Override
 	public Object eval(DisplayContext displayContext, LayoutComponent component, Object model) {
-		StringBuilder out = new StringBuilder();
-		try {
-			Object target = _targetObject != null ? _targetObject.execute(model) : model;
-			GotoHandler.appendJSCallStatement(displayContext, out, target, null);
-		} catch (IOException ex) {
-			throw new IOError(ex);
+		Object target = _targetObject != null ? _targetObject.execute(model) : model;
+		return new LinkFragment(component, target);
+	}
+
+	private final class LinkFragment implements HTMLFragment, Command {
+		private final LayoutComponent _component;
+
+		private final Object _target;
+
+		/**
+		 * Creates a {@link LinkFragment}.
+		 */
+		private LinkFragment(LayoutComponent component, Object target) {
+			_component = component;
+			_target = target;
 		}
-		return out.toString();
+
+		@Override
+		public void write(DisplayContext context, TagWriter out) throws IOException {
+			LinkGenerator.renderLink(context, out, this);
+		}
+
+		@Override
+		public HandlerResult executeCommand(DisplayContext context) {
+			WithPostCreateActions.processCreateActions(_actions, _component, _target);
+			return HandlerResult.DEFAULT_RESULT;
+		}
 	}
 
 }

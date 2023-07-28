@@ -3,15 +3,16 @@
  */
 package com.top_logic.layout.formeditor.parts.template;
 
-import java.io.IOError;
 import java.io.IOException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -74,15 +75,29 @@ public class LinkDefinition extends AbstractConfiguredInstance<LinkDefinition.Co
 	}
 
 	@Override
-	public Object eval(DisplayContext displayContext, LayoutComponent component, Object model) {
-		StringBuilder out = new StringBuilder();
-		try {
-			Object target = _targetObject != null ? _targetObject.execute(model) : model;
-			GotoHandler.appendJSCallStatement(displayContext, out, target, null);
-		} catch (IOException ex) {
-			throw new IOError(ex);
+	public EvalResult eval(DisplayContext displayContext, LayoutComponent component, Object model) {
+		return new GotoFragment(_targetObject != null ? _targetObject.execute(model) : model);
+	}
+
+	private static final class GotoFragment extends ConstantEvalResult implements HTMLFragment {
+		private Object _model;
+
+		/**
+		 * Creates a {@link GotoFragment}.
+		 */
+		public GotoFragment(Object model) {
+			_model = model;
 		}
-		return out.toString();
+
+		@Override
+		public Object getValue(DisplayContext displayContext) {
+			return this;
+		}
+
+		@Override
+		public void write(DisplayContext context, TagWriter out) throws IOException {
+			GotoHandler.appendJSCallStatement(context, out, _model, null);
+		}
 	}
 
 }

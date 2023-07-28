@@ -18,14 +18,14 @@ public enum LabelPlacement {
 	/** Label is above its input */
 	ABOVE,
 	/** Label is in the same line as its input */
-	IN_FRONT_OF_INPUT;
+	INLINE;
 
 	/** Returns whether the element is marked to render the label above. */
 	public Boolean getLabelAbove() {
 		switch (this) {
 			case ABOVE:
 				return true;
-			case IN_FRONT_OF_INPUT:
+			case INLINE:
 				return false;
 			default:
 				return null;
@@ -41,8 +41,8 @@ public enum LabelPlacement {
 		switch (this) {
 			case ABOVE:
 				return ReactiveFormCSS.RF_LABEL_ABOVE;
-			case IN_FRONT_OF_INPUT:
-				return ReactiveFormCSS.RF_LABEL_IN_FRONT_OF_INPUT;
+			case INLINE:
+				return ReactiveFormCSS.RF_LABEL_INLINE;
 			default:
 				return null;
 		}

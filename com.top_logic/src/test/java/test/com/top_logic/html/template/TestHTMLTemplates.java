@@ -69,7 +69,7 @@ public class TestHTMLTemplates extends TestCase {
 		assertEquals("<div class=\"active visible\"></div>", html);
 	}
 
-	public void testIfThenElseExpressions() throws IOException {
+	public void testIfThenExpressions() throws IOException {
 		MapWithProperties properties = new MapWithProperties();
 
 		properties.put("isBorderBox", true);
@@ -81,6 +81,25 @@ public class TestHTMLTemplates extends TestCase {
 
 		assertEquals("<div style=\"80px\"></div>", html);
 
+	}
+
+	public void testIfThenElseExpressions() throws IOException {
+		MapWithProperties properties = new MapWithProperties();
+		properties.put("a", false);
+		properties.put("b", false);
+		properties.put("withAdditional", false);
+
+		String template =
+			"<div class=\"{a ? (withAdditional ? 'aWith': 'a') : (b ? (withAdditional ? 'bWith':'b'):'none')}\"></div>";
+		assertEquals("<div class=\"none\"></div>", html(template, properties));
+		properties.put("b", true);
+		assertEquals("<div class=\"b\"></div>", html(template, properties));
+		properties.put("withAdditional", true);
+		assertEquals("<div class=\"bWith\"></div>", html(template, properties));
+		properties.put("a", true);
+		assertEquals("<div class=\"aWith\"></div>", html(template, properties));
+		properties.put("withAdditional", false);
+		assertEquals("<div class=\"a\"></div>", html(template, properties));
 	}
 
 	public void testConditionalTag() throws IOException {

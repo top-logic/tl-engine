@@ -19,6 +19,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.form.definition.ContainerDefinition;
+import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * {@link FormElementTemplateProvider} which contains other {@link FormElementTemplateProvider}s within.
@@ -89,9 +90,12 @@ public abstract class AbstractFormContainerProvider<T extends ContainerDefinitio
 
 		addCssClassForContent(formFieldTemplates);
 
+		LabelPlacement labelPlacement = getConfig().getLabelPlacement();
 		for (FormElementTemplateProvider content : getContent()) {
 			if (content.isVisible(context.getFormType(), context.getFormMode())) {
-				formFieldTemplates.add(content.createTemplate(context));
+				HTMLTemplateFragment innerTemplate =
+					context.withLabelPlacement(labelPlacement, content::createTemplate);
+				formFieldTemplates.add(innerTemplate);
 			}
 		}
 

@@ -45,6 +45,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.FormVisibility;
+import com.top_logic.model.form.definition.LabelPlacement;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
@@ -107,7 +108,8 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 						context.getDomain(), visibility, AnnotationContainer.EMPTY);
 					if (member != null) {
 						AttributeUpdate update = AttributeFormFactory.getAttributeUpdate(member);
-						otherAttributeTemplates.add(createFieldTemplate(member, part, update));
+						LabelPlacement labelPlacement = context.getLabelPlacement();
+						otherAttributeTemplates.add(createFieldTemplate(member, part, update, labelPlacement));
 					}
 				}
 				personalizationKey = ConfigKey.derived(ConfigKey.field(contentGroup), "otherAttributes");

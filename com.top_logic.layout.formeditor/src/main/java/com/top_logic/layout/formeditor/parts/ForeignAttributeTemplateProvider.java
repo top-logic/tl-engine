@@ -164,7 +164,7 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 			return template;
 		} else {
 			return contentBox(
-				div(css(ReactiveFormCSS.RF_INPUT_CELL_ONE_LINE + " " + ReactiveFormCSS.RF_EMPTY_CELL),
+				div(css(inputCellCSS(context) + " " + ReactiveFormCSS.RF_EMPTY_CELL),
 					resource(I18NConstants.FOREIGN_ATTRIBUTE_LABEL)),
 				getWholeLine(context.getFormType()));
 		}

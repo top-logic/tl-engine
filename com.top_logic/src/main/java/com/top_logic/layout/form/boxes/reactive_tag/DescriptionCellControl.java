@@ -8,6 +8,7 @@ package com.top_logic.layout.form.boxes.reactive_tag;
 import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -28,6 +29,8 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.mig.html.layout.VisibilityListener;
+import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Control to write a tag creating a description/content cell. Its visibility is controlled by a
@@ -106,6 +109,8 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 
 	private HTMLFragment _description;
 
+	private LabelPlacement _labelPlacement = LabelPlacement.DEFAULT;
+
 	/**
 	 * Creates a {@link DescriptionCellControl}.
 	 * 
@@ -176,6 +181,13 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	}
 
 	/**
+	 * Sets the definition where the the label has to be rendered.
+	 */
+	public void setLabelPlacement(LabelPlacement labelPlacement) {
+		_labelPlacement = labelPlacement;
+	}
+
+	/**
 	 * Whether the label should be rendered on a separate line above the input element.
 	 * 
 	 * <p>
@@ -211,15 +223,23 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	}
 
 	/**
-	 * Custom CSS class to add to the top-level tag of the cell.
+	 * Space separated list of CSS classes to add to the top-level tag of the cell.
 	 */
-	@TemplateVariable("cellClass")
-	public String getCellClass() {
-		return _cellClass;
+	@TemplateVariable("cellClasses")
+	public String getCellClasses() {
+		String css = ReactiveFormCSS.RF_INPUT_CELL_ONE_LINE;
+		String labelCSS = _labelPlacement.cssClass();
+		if (labelCSS != null) {
+			css = css + " " + labelCSS;
+		}
+		if (!StringServices.isEmpty(_cellClass)) {
+			css = css + " " + _cellClass;
+		}
+		return css;
 	}
 
 	/**
-	 * @see #getCellClass()
+	 * @see #getCellClasses()
 	 */
 	public void setCellClass(String cssClass) {
 		_cellClass = cssClass;

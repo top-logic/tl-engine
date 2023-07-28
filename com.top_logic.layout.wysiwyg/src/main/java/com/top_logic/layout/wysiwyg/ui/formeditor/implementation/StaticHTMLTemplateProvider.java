@@ -79,7 +79,7 @@ public class StaticHTMLTemplateProvider extends AbstractFormElementProvider<Stat
 			return contentBox(htmlSource(content), wholeLine);
 		} else {
 			return contentBox(div(
-				css(ReactiveFormCSS.RF_INPUT_CELL_ONE_LINE + " " + ReactiveFormCSS.RF_EMPTY_CELL),
+				css(inputCellCSS(context) + " " + ReactiveFormCSS.RF_EMPTY_CELL),
 				resource(I18NConstants.STATIC_HTML_LABEL)), wholeLine);
 		}
 	}

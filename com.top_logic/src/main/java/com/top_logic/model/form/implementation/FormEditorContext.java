@@ -5,6 +5,9 @@
  */
 package com.top_logic.model.form.implementation;
 
+import java.util.Objects;
+import java.util.function.Function;
+
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.form.FormContainer;
@@ -13,6 +16,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormDefinition;
+import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Context information passed to the template generation of {@link FormElementTemplateProvider}.
@@ -48,6 +52,8 @@ public class FormEditorContext {
 	private String _domain;
 
 	private TLStructuredType _concreteType;
+
+	private LabelPlacement _labelPlacement;
 
 	/**
 	 * The mode how the in-app form is displayed.
@@ -146,6 +152,38 @@ public class FormEditorContext {
 	}
 
 	/**
+	 * The {@link LabelPlacement} determining the line where the label must be rendered.
+	 */
+	public LabelPlacement getLabelPlacement() {
+		return _labelPlacement;
+	}
+
+	/**
+	 * Executes the given {@link Function} with the given <code>labelPlacement</code> as
+	 * {@link #getLabelPlacement()}.
+	 * 
+	 * @implNote When the given {@link LabelPlacement} is {@link LabelPlacement#DEFAULT}, the action
+	 *           is executed without changing the {@link #getLabelPlacement() label placement}.
+	 * 
+	 * @param action
+	 *        The {@link Function} that should be able to access the given label placement in
+	 *        {@link #getLabelPlacement()}.
+	 */
+	public <T> T withLabelPlacement(LabelPlacement labelPlacement, Function<FormEditorContext, T> action) {
+		if (labelPlacement == LabelPlacement.DEFAULT) {
+			return action.apply(this);
+		} else {
+			LabelPlacement oldPlacement = _labelPlacement;
+			_labelPlacement = Objects.requireNonNull(labelPlacement);
+			try {
+				return action.apply(this);
+			} finally {
+				_labelPlacement = oldPlacement;
+			}
+		}
+	}
+
+	/**
 	 * Creates a {@link FormEditorContext}.
 	 *
 	 * @author <a href=mailto:sfo@top-logic.com>sfo</a>
@@ -178,6 +216,8 @@ public class FormEditorContext {
 
 		private TLStructuredType _concreteType;
 
+		private LabelPlacement _labelPlacement = LabelPlacement.DEFAULT;
+
 		/**
 		 * Empty context builder.
 		 */
@@ -202,6 +242,7 @@ public class FormEditorContext {
 			this._domain = context._domain;
 			this._isLocked = context._isLocked;
 			this._concreteType = context._concreteType;
+			this._labelPlacement = context._labelPlacement;
 		}
 
 		/**
@@ -322,6 +363,15 @@ public class FormEditorContext {
 		}
 
 		/**
+		 * @see FormEditorContext#getLabelPlacement()
+		 */
+		public Builder labelPlacement(LabelPlacement labelPlacement) {
+			_labelPlacement = Objects.requireNonNull(labelPlacement);
+
+			return this;
+		}
+
+		/**
 		 * Creates the {@link FormEditorContext}.
 		 */
 		public FormEditorContext build() {
@@ -340,6 +390,7 @@ public class FormEditorContext {
 			context._isLocked = this._isLocked;
 			context._domain = this._domain;
 			context._concreteType = this._concreteType;
+			context._labelPlacement = this._labelPlacement;
 
 			return context;
 		}

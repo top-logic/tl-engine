@@ -94,11 +94,6 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 			css.append(' ');
 			css.append(ReactiveFormCSS.CSS_CLASS_KEEP);
 		}
-		String labelPlacementCSS = config.getLabelPlacement().cssClass();
-		if (labelPlacementCSS != null) {
-			css.append(' ');
-			css.append(labelPlacementCSS);
-		}
 		return css.toString();
 	}
 

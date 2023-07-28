@@ -25,6 +25,7 @@ import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -46,6 +47,18 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	 */
 	public static final DisplayDimension DIALOG_HEIGHT = dim(230, DisplayUnit.PIXEL);
 	
+	/**
+	 * CSS class rendered for an input cell.
+	 */
+	protected static String inputCellCSS(FormEditorContext context) {
+		String labelCSS = context.getLabelPlacement().cssClass();
+		String rfInputCellOneLine = ReactiveFormCSS.RF_INPUT_CELL_ONE_LINE;
+		if (labelCSS != null) {
+			rfInputCellOneLine = rfInputCellOneLine + " " + labelCSS;
+		}
+		return rfInputCellOneLine;
+	}
+
 	/** The context of the form. */
 	private InstantiationContext _context;
 

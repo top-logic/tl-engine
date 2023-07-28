@@ -7,12 +7,14 @@ package com.top_logic.layout;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.channel.linking.ref.ComponentRef;
 import com.top_logic.layout.channel.linking.ref.ComponentRelation;
 import com.top_logic.layout.channel.linking.ref.NamedComponent;
 import com.top_logic.layout.channel.linking.ref.RefVisitor;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.util.Resources;
 
 /**
@@ -39,17 +41,36 @@ public class DefaultRefVisitor implements RefVisitor<LayoutComponent, LayoutComp
 	 * @param ref
 	 *        The {@link ComponentRef} to resolve.
 	 * @param contextComponent
-	 *        The context component. This component is used to resolve relative paths.
+	 *        The context component. This component is used to resolve relative paths. If
+	 *        <code>null</code> is given, the {@link MainLayout} of the current sub-session is used.
 	 * 
 	 * @return The resolved component. May be <code>null</code> in strange of errors.
 	 */
 	public static LayoutComponent resolveReference(Log log, ComponentRef ref, LayoutComponent contextComponent) {
 		try {
-			return ref.visit(DefaultRefVisitor.INSTANCE, contextComponent);
+			return resolveReference(ref, contextComponent);
 		} catch (RuntimeException ex) {
 			log.error("Unable to resolve reference " + ref, ex);
 			return null;
 		}
+	}
+
+	/**
+	 * Resolves the given {@link ComponentRef} in context of the given component.
+	 * 
+	 * @param ref
+	 *        The {@link ComponentRef} to resolve.
+	 * @param contextComponent
+	 *        The context component. This component is used to resolve relative paths. If
+	 *        <code>null</code> is given, the {@link MainLayout} of the current sub-session is used.
+	 * 
+	 * @return The resolved component.
+	 */
+	public static LayoutComponent resolveReference(ComponentRef ref, LayoutComponent contextComponent) {
+		LayoutComponent component = contextComponent == null
+			? DefaultDisplayContext.getDisplayContext().getSubSessionContext().getLayoutContext().getMainLayout()
+			: contextComponent;
+		return ref.visit(DefaultRefVisitor.INSTANCE, component);
 	}
 
 	@Override

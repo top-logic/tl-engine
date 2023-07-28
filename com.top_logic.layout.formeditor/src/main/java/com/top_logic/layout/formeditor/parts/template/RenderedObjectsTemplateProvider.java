@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -365,6 +366,7 @@ public class RenderedObjectsTemplateProvider
 		@Override
 		public void notifyChange(ModelChangeEvent change) {
 			switch (change.getChange(_obj)) {
+				case CREATED:
 				case UPDATED:
 					requestRepaint();
 					break;
@@ -423,11 +425,12 @@ public class RenderedObjectsTemplateProvider
 		}
 
 		@Override
-		public Collection<String> getAvailableProperties() {
-			HashSet<String> result = new HashSet<>(super.getAvailableProperties());
+		public Optional<Collection<String>> getAvailableProperties() {
+			Optional<Collection<String>> superProperties = super.getAvailableProperties();
+			HashSet<String> result = superProperties.isEmpty() ? new HashSet<>() : new HashSet<>(superProperties.get());
 			result.addAll(_template._params.keySet());
 			result.addAll(_obj.tType().getAllParts().stream().map(p -> p.getName()).collect(Collectors.toList()));
-			return result;
+			return Optional.of(result);
 		}
 
 		@Override

@@ -20,18 +20,6 @@ public enum LabelPlacement {
 	/** Label is in the same line as its input */
 	INLINE;
 
-	/** Returns whether the element is marked to render the label above. */
-	public Boolean getLabelAbove() {
-		switch (this) {
-			case ABOVE:
-				return true;
-			case INLINE:
-				return false;
-			default:
-				return null;
-		}
-	}
-
 	/**
 	 * CSS class representing this {@link LabelPlacement}.
 	 * 

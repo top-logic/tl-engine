@@ -279,4 +279,34 @@ public class ExceptionUtil {
 		Logger.error(message, exception, caller);
 	}
 
+	/**
+	 * Creates an {@link Exception} to be thrown when a "switch-block" over an enum has not covered
+	 * all cases.
+	 * 
+	 * <p>
+	 * The IDE can be configured that the compiler creates an error when there is no switch case for
+	 * some enum constant. Nethertheless, is it necessary to write code for such case. Usage:
+	 * 
+	 * <pre>
+	 * enum MyEnum { A, B, C;}
+	 * ...
+	 * long foo(MyEnum value) {
+	 *   switch(value) {
+	 *    case A: return -1;
+	 *    case B: return -3;
+	 *    case C: return 47;
+	 *   }
+	 *   throw ExceptionUtil.uncoveredEnum(value);
+	 * }
+	 * </pre>
+	 * </p>
+	 * 
+	 * @param uncovered
+	 *        Enum constant for which no switch state exists.
+	 * @return {@link UnreachableAssertion}, that states that the given constant is not covered.
+	 */
+	public static UnreachableAssertion uncoveredEnum(Enum<?> uncovered) {
+		return new UnreachableAssertion("Uncovered " + uncovered.getClass().getName() + ": " + uncovered.name());
+	}
+
 }

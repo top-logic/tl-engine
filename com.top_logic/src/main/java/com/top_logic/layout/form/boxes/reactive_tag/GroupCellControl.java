@@ -134,6 +134,11 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	}
 
 	@Override
+	public boolean getLabelInline() {
+		return _settings.getLabelInline();
+	}
+
+	@Override
 	public boolean hasBorder() {
 		return _settings.hasBorder();
 	}

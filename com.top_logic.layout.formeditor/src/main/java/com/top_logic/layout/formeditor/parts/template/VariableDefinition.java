@@ -8,6 +8,7 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * Algorithm defining the value of a template variable.
@@ -38,10 +39,12 @@ public interface VariableDefinition {
 	 *
 	 * @param displayContext
 	 *        The current {@link DisplayContext}.
+	 * @param component
+	 *        The context component.
 	 * @param model
 	 *        The currently rendered object.
 	 * @return The value that should be rendered for the template variable.
 	 */
-	Object eval(DisplayContext displayContext, Object model);
+	Object eval(DisplayContext displayContext, LayoutComponent component, Object model);
 
 }

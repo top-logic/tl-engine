@@ -197,7 +197,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("cellClasses")
 	public String getCellClasses() {
-		String css = ReactiveFormCSS.RF_INPUT_CELL_ONE_LINE;
+		String css = ReactiveFormCSS.RF_INPUT_CELL;
 		String labelCSS = _labelPlacement.cssClass();
 		if (labelCSS != null) {
 			css = css + " " + labelCSS;

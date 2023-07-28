@@ -52,11 +52,11 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	 */
 	protected static String inputCellCSS(FormEditorContext context) {
 		String labelCSS = context.getLabelPlacement().cssClass();
-		String rfInputCellOneLine = ReactiveFormCSS.RF_INPUT_CELL_ONE_LINE;
+		String rfInputCell = ReactiveFormCSS.RF_INPUT_CELL;
 		if (labelCSS != null) {
-			rfInputCellOneLine = rfInputCellOneLine + " " + labelCSS;
+			rfInputCell = rfInputCell + " " + labelCSS;
 		}
-		return rfInputCellOneLine;
+		return rfInputCell;
 	}
 
 	/** The context of the form. */

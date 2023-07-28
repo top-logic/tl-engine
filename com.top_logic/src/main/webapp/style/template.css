@@ -5263,7 +5263,7 @@ div.dfEntryHeader {
 }
 
 .dfModeFull .dfEntryTitle .rf_columnsLayout:not(.keep),
-.dfModeFull .dfEntryTitle .rf_columnsLayout:not(.keep) .rf_inputCellOneLine {
+.dfModeFull .dfEntryTitle .rf_columnsLayout:not(.keep) .rf_inputCell {
 	margin-bottom: 0px;
 }
 	
@@ -5998,7 +5998,7 @@ div.rf_buttons {
 	width: 100%;
 }
 
-div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine {
+div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	display: table-cell;
 	padding-right: 5px;
 	padding-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
@@ -6034,8 +6034,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine {
 	width: 100% !important;
 }
 
-.rf_columnsLayout .inputCellOneLine,
-.rf_inputCellOneLine {
+.rf_columnsLayout .inputCell,
+.rf_inputCell {
     line-height: 24px;
 }
 
@@ -6184,7 +6184,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine {
   	box-sizing: border-box;
 }
 
-*:not(.rf_content) > .rf_inputCellOneLine,
+*:not(.rf_content) > .rf_inputCell,
 *:not(.rf_content) > .rf_columnsLayout:not(.keep) {
 	margin-bottom: 4px;
 }
@@ -6217,36 +6217,36 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine {
 .rf_spanCol3 { grid-col-end: span 3; }
 .rf_spanCol4 { grid-col-end: span 4; }
 
-.rf_inputCellOneLine {
+.rf_inputCell {
 	display: grid;
 	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
 	grid-gap: 5px 5px;
 }
 
-.rf_inputCellOneLine > div:nth-child(1) {
+.rf_inputCell > div:nth-child(1) {
 	grid-row:1; 
 	grid-column:1; 
 }
 
-.rf_inputCellOneLine > div:nth-child(2) {
+.rf_inputCell > div:nth-child(2) {
 	grid-row:1; 
 	grid-column:2; 
 }
 
-                                        .rf_labelAbove.rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
-.cMediaQuery.dflSize0                                 .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
-.rf_inputCellOneLine.rf_line                                                                > div:nth-child(2) {
+                                        .rf_labelAbove.rf_inputCell:not(.keepInline) > div:nth-child(2),
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline) > div:nth-child(2),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline) > div:nth-child(2),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline) > div:nth-child(2),
+.rf_inputCell.rf_line                                                                > div:nth-child(2) {
 	grid-row:2; 
 	grid-column:1; 
 }
 
-                                        .rf_labelAbove.rf_inputCellOneLine:not(.keepInline),
-.cMediaQuery.dflSize0                                 .rf_inputCellOneLine:not(.keepInline),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCellOneLine:not(.keepInline),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCellOneLine:not(.keepInline),
-.rf_inputCellOneLine.rf_line {
+                                        .rf_labelAbove.rf_inputCell:not(.keepInline),
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline),
+.rf_inputCell.rf_line {
 	display: grid;
 	grid-template-columns: minmax(0px, 1fr);
 	grid-template-rows: 24px 1fr;
@@ -6254,16 +6254,16 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine {
 } 
 
 /* indent all lines but the first */
-                                        .rf_labelAbove.rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
-.cMediaQuery.dflSize0                                 .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
-.rf_inputCellOneLine.rf_line                                                                > :nth-child(n+2)  {
+                                        .rf_labelAbove.rf_inputCell:not(.keepInline) > :nth-child(n+2),
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline) > :nth-child(n+2),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline) > :nth-child(n+2),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline) > :nth-child(n+2),
+.rf_inputCell.rf_line                                                                > :nth-child(n+2)  {
 	padding-left: 5px;
 }
 
-.rf_inputCellOneLine .ace_editor div,
-.rf_inputCellOneLine .ace_editor {
+.rf_inputCell .ace_editor div,
+.rf_inputCell .ace_editor {
 	line-height: 24px;
 }
 
@@ -6350,7 +6350,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine {
 	white-space: pre-line;
 }
 
-.rf_inputCellOneLine .rightAlign {
+.rf_inputCell .rightAlign {
 	text-align: right;
 	padding-right: 5px;
 }
@@ -6416,7 +6416,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine {
     margin-bottom: 0px;
 }
 
-.rf_inputCellOneLine label {
+.rf_inputCell label {
 	padding-right: 4px;
 }
 
@@ -6456,7 +6456,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine {
 	display: inline;
 }
 
-.rf_inputCellOneLine.keepInline {
+.rf_inputCell.keepInline {
 	margin-bottom: 10px;	
 }
 
@@ -6502,7 +6502,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCellOneLine {
 }
 
 .cFormEditorPreview.rf_highlighted [data-type = 'columns'] .rf_groupCell,
-.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_inputCellOneLine,
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_inputCell,
 .cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
 	background: rgba(255,255,255,0.6);
 	border-radius: 0px
@@ -6545,7 +6545,7 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 .cMediaQuery.dflSize1 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
 .cMediaQuery.dflSize2 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
 .cMediaQuery.dflSize3 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery .cFormEditorPreview .rf_inputCellOneLine.is-control > .rf_cell .rf_columnsLayout > *:not(body),
+.cMediaQuery .cFormEditorPreview .rf_inputCell.is-control > .rf_cell .rf_columnsLayout > *:not(body),
 .cMediaQuery .cFormEditorPreview .rf_groupCell .rf_content .rf_groupCell .rf_content .rf_columnsLayout {
 	min-width: 100%;
   	width: 100%;
@@ -6614,7 +6614,7 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 	border: 1px solid #DFE6F0;
 }
 
-.cFormEditorPreview.rf_highlighted .rf_inputCellOneLine,  
+.cFormEditorPreview.rf_highlighted .rf_inputCell,  
 .cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
 	border: 1px dotted grey;
 }
@@ -6669,7 +6669,7 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 .cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_dropTarget.rf_parent,
 .rf_highlighted .rf_dragged .locked .rf_container,
 .rf_dropArea .locked,
-.cFormEditorPreview.rf_highlighted .locked .rf_inputCellOneLine,  
+.cFormEditorPreview.rf_highlighted .locked .rf_inputCell,  
 .cFormEditorPreview.rf_highlighted .locked .rf_dragElement .rf_table {
 	border: inherit;
 	background: var(--BODY_BACK);
@@ -6845,8 +6845,8 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
   	border: 1px solid rgba(0,0,0,0.0); /* trick to make a wordwrap  */
   } 
   
-  .cMediaQuery.dflSize1 .rf_inputCellOneLine > :nth-child(n+2),
-  .rf_inputCellOneLine.rf_line > :nth-child(n+2) {
+  .cMediaQuery.dflSize1 .rf_inputCell > :nth-child(n+2),
+  .rf_inputCell.rf_line > :nth-child(n+2) {
 	padding-left: 5px;
   }
 
@@ -6854,7 +6854,7 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
     margin-bottom: 20px;
   }
 
-  .rf_inputCellOneLine, .rf_line {
+  .rf_inputCell, .rf_line {
 	margin-bottom: 4px;	
   }
 }

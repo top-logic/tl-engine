@@ -21,8 +21,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
@@ -37,6 +39,7 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.basic.AbstractVisibleControl;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
@@ -50,7 +53,6 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
 import com.top_logic.layout.formeditor.parts.ForeignObjectsTemplateProvider;
 import com.top_logic.layout.formeditor.parts.I18NConstants;
 import com.top_logic.layout.formeditor.parts.template.RenderedObjectsTemplateProvider.Config.TypeTemplate;
-import com.top_logic.layout.formeditor.parts.template.RenderedObjectsTemplateProvider.Config.TypeTemplate.VariableDefinition;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.layout.template.WithProperties;
@@ -73,12 +75,14 @@ import com.top_logic.model.util.TLModelPartRef;
 /**
  * {@link FormElementTemplateProvider} creating a custom rendering for a list of objects.
  */
+@Label("Rendered objects")
 public class RenderedObjectsTemplateProvider
 		extends AbstractFormElementProvider<RenderedObjectsTemplateProvider.Config<?>> {
 
 	/**
 	 * Configuration options for {@link RenderedObjectsTemplateProvider}.
 	 */
+	@TagName("rendered-objects")
 	@DisplayInherited(DisplayStrategy.PREPEND)
 	@DisplayOrder({
 		Config.ITEMS,
@@ -180,49 +184,9 @@ public class RenderedObjectsTemplateProvider
 			 * </p>
 			 */
 			@Name(VARIABLES)
-			@Key(VariableDefinition.NAME)
+			@Key(VariableDefinition.Config.NAME)
 			@DefaultContainer
-			Map<String, VariableDefinition> getVariables();
-
-			/**
-			 * Definition of a local template variable.
-			 */
-			@DisplayOrder({
-				VariableDefinition.NAME,
-				VariableDefinition.FUNCTION,
-			})
-			interface VariableDefinition extends ConfigurationItem {
-				/**
-				 * @see #getName()
-				 */
-				String NAME = "name";
-
-				/**
-				 * @see #getFunction()
-				 */
-				String FUNCTION = "function";
-
-				/**
-				 * The name of the variable to bind.
-				 * 
-				 * <p>
-				 * When defining a variable named <code>x</code>, the value computed by the
-				 * {@link #getFunction()} can be accessed by the template expression
-				 * <code>{x}</code>.
-				 * </p>
-				 */
-				@Name(NAME)
-				@Mandatory
-				String getName();
-
-				/**
-				 * Function taking the rendered object as argument and computing a value that can be
-				 * accessed from the template through the variable {@link #getName()}.
-				 */
-				@Name(FUNCTION)
-				@Mandatory
-				Expr getFunction();
-			}
+			Map<String, VariableDefinition.Config<?>> getVariables();
 
 		}
 	}
@@ -241,7 +205,7 @@ public class RenderedObjectsTemplateProvider
 
 		for (TypeTemplate typeTemplate : config.getValueTemplates().values()) {
 			TLType type = typeTemplate.getType().resolveType();
-			_templateByType.put(type, new Template(typeTemplate));
+			_templateByType.put(type, new Template(context, typeTemplate));
 		}
 	}
 
@@ -312,18 +276,18 @@ public class RenderedObjectsTemplateProvider
 	
 		private final HTMLTemplateFragment _fragment;
 	
-		private final Map<String, QueryExecutor> _params;
+		private final Map<String, VariableDefinition> _params;
 	
 		/**
 		 * Creates a {@link RenderedObjectsTemplateProvider.Template}.
 		 */
-		public Template(TypeTemplate config) {
+		public Template(InstantiationContext context, TypeTemplate config) {
 			HTMLTemplateFragment template = config.getTemplate();
 
 			_fragment = template;
 			_params = new HashMap<>();
-			for (VariableDefinition entry : config.getVariables().values()) {
-				_params.put(entry.getName(), QueryExecutor.compile(entry.getFunction()));
+			for (VariableDefinition.Config<?> entry : config.getVariables().values()) {
+				_params.put(entry.getName(), context.getInstance(entry));
 			}
 		}
 	}
@@ -385,9 +349,13 @@ public class RenderedObjectsTemplateProvider
 
 		@Override
 		public void renderProperty(DisplayContext context, TagWriter out, String propertyName) throws IOException {
-			QueryExecutor executor = _template._params.get(propertyName);
-			if (executor != null) {
-				ExpressionTemplate.renderValue(context, out, executor.execute(_obj));
+			VariableDefinition variableDefinition = _template._params.get(propertyName);
+			if (variableDefinition != null) {
+				// Could be passed through the WithProperties API in the future.
+				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+
+				Object value = variableDefinition.eval(displayContext, _obj);
+				ExpressionTemplate.renderValue(context, out, value);
 				return;
 			}
 
@@ -407,9 +375,12 @@ public class RenderedObjectsTemplateProvider
 
 		@Override
 		public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
-			QueryExecutor executor = _template._params.get(propertyName);
-			if (executor != null) {
-				return executor.execute(_obj);
+			VariableDefinition variableDefinition = _template._params.get(propertyName);
+			if (variableDefinition != null) {
+				// Could be passed through the WithProperties API in the future.
+				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+
+				return variableDefinition.eval(displayContext, _obj);
 			}
 
 			TLStructuredTypePart part = _obj.tType().getPart(propertyName);

@@ -46,6 +46,7 @@ public class UIAction extends AbstractConfiguredInstance<UIAction.Config> implem
 	@DisplayOrder({
 		Config.NAME,
 		Config.TARGET_OBJECT,
+		Config.POST_CREATE_ACTIONS
 	})
 	@TagName("ui-action")
 	public interface Config extends VariableDefinition.Config<UIAction>, WithPostCreateActions.Config {
@@ -85,12 +86,12 @@ public class UIAction extends AbstractConfiguredInstance<UIAction.Config> implem
 	}
 
 	@Override
-	public Object eval(DisplayContext displayContext, LayoutComponent component, Object model) {
+	public EvalResult eval(DisplayContext displayContext, LayoutComponent component, Object model) {
 		Object target = _targetObject != null ? _targetObject.execute(model) : model;
 		return new LinkFragment(component, target);
 	}
 
-	private final class LinkFragment implements HTMLFragment, Command {
+	private final class LinkFragment extends ConstantEvalResult implements HTMLFragment, Command {
 		private final LayoutComponent _component;
 
 		private final Object _target;
@@ -101,6 +102,11 @@ public class UIAction extends AbstractConfiguredInstance<UIAction.Config> implem
 		private LinkFragment(LayoutComponent component, Object target) {
 			_component = component;
 			_target = target;
+		}
+
+		@Override
+		public Object getValue(DisplayContext displayContext) {
+			return this;
 		}
 
 		@Override

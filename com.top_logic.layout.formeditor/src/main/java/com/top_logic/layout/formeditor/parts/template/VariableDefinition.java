@@ -43,8 +43,60 @@ public interface VariableDefinition {
 	 *        The context component.
 	 * @param model
 	 *        The currently rendered object.
-	 * @return The value that should be rendered for the template variable.
+	 * @return The value that should be rendered when expanding the template variable.
 	 */
-	Object eval(DisplayContext displayContext, LayoutComponent component, Object model);
+	EvalResult eval(DisplayContext displayContext, LayoutComponent component, Object model);
+
+	/**
+	 * Potentially observable evaluation result of a {@link VariableDefinition}.
+	 */
+	interface EvalResult {
+		/**
+		 * The actual value to render.
+		 */
+		Object getValue(DisplayContext displayContext);
+
+		/**
+		 * Adds an {@link InvalidateListener} to this result that is informed, when the value has
+		 * potentially changed.
+		 *
+		 * @param listener
+		 *        The listener to register.
+		 * @return Whether the listener was registered. If <code>false</code>, the listener was
+		 *         already registered, or the value is not observable.
+		 * 
+		 * @implNote Only a single listener can be registered at any time.
+		 */
+		boolean addInvalidateListener(InvalidateListener listener);
+
+		/**
+		 * Removes the given {@link InvalidateListener} from this result.
+		 *
+		 * @param listener
+		 *        The listener to remove.
+		 * @return Whether the given listener was registered before.
+		 */
+		boolean removeInvalidateListener(InvalidateListener listener);
+
+		/**
+		 * Call-back interface for notifying observers of an {@link EvalResult} that the value has
+		 * potentially changed.
+		 */
+		interface InvalidateListener {
+			/**
+			 * The value of the given {@link EvalResult} has potentially changed and must be
+			 * re-evaluated.
+			 * 
+			 * <p>
+			 * Note: A listener is only informed once. After invalidation a listener is
+			 * automatically removed.
+			 * </p>
+			 * 
+			 * @param result
+			 *        The {@link EvalResult} that was observed.
+			 */
+			void handleValueInvalidation(EvalResult result);
+		}
+	}
 
 }

@@ -6,9 +6,11 @@ package com.top_logic.layout.formeditor.parts.template;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -53,6 +55,8 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
 import com.top_logic.layout.formeditor.parts.ForeignObjectsTemplateProvider;
 import com.top_logic.layout.formeditor.parts.I18NConstants;
 import com.top_logic.layout.formeditor.parts.template.RenderedObjectsTemplateProvider.Config.TypeTemplate;
+import com.top_logic.layout.formeditor.parts.template.VariableDefinition.EvalResult;
+import com.top_logic.layout.formeditor.parts.template.VariableDefinition.EvalResult.InvalidateListener;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.layout.template.WithProperties;
@@ -306,10 +310,12 @@ public class RenderedObjectsTemplateProvider
 	/**
 	 * {@link HTMLFragment} displaying a {@link TLObject} using a {@link HTMLTemplateFragment}.
 	 */
-	private final class TLObjectFragment extends AbstractVisibleControl implements ModelListener {
+	private final class TLObjectFragment extends AbstractVisibleControl implements ModelListener, InvalidateListener {
 		private final TLObject _obj;
 
 		private final Template _template;
+
+		private final List<EvalResult> _observedValues = new ArrayList<>();
 
 		/**
 		 * Creates a {@link TLObjectFragment}.
@@ -334,6 +340,11 @@ public class RenderedObjectsTemplateProvider
 		@Override
 		protected void detachInvalidated() {
 			getScope().getFrameScope().getModelScope().removeModelListener(_obj, this);
+
+			for (EvalResult result : _observedValues) {
+				result.removeInvalidateListener(this);
+			}
+			_observedValues.clear();
 
 			super.detachInvalidated();
 		}
@@ -365,7 +376,7 @@ public class RenderedObjectsTemplateProvider
 				// Could be passed through the WithProperties API in the future.
 				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 
-				Object value = variableDefinition.eval(displayContext, _component, _obj);
+				Object value = eval(displayContext, variableDefinition);
 				ExpressionTemplate.renderValue(context, out, value);
 				return;
 			}
@@ -391,7 +402,7 @@ public class RenderedObjectsTemplateProvider
 				// Could be passed through the WithProperties API in the future.
 				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 
-				return variableDefinition.eval(displayContext, _component, _obj);
+				return eval(displayContext, variableDefinition);
 			}
 
 			TLStructuredTypePart part = _obj.tType().getPart(propertyName);
@@ -404,6 +415,20 @@ public class RenderedObjectsTemplateProvider
 			}
 
 			return super.getPropertyValue(propertyName);
+		}
+
+		private Object eval(DisplayContext displayContext, VariableDefinition variableDefinition) {
+			EvalResult result = variableDefinition.eval(displayContext, _component, _obj);
+			if (result.addInvalidateListener(this)) {
+				_observedValues.add(result);
+			}
+
+			return result.getValue(displayContext);
+		}
+
+		@Override
+		public void handleValueInvalidation(EvalResult variable) {
+			requestRepaint();
 		}
 
 		@Override
@@ -466,24 +491,6 @@ public class RenderedObjectsTemplateProvider
 			return new CollectionFragment(((Collection<?>) value));
 		} else {
 			return Fragments.rendered(ResourceRenderer.INSTANCE, value);
-		}
-	}
-
-	private static class ValueProperty implements WithProperties {
-
-		private Object _value;
-
-		public ValueProperty(Object value) {
-			_value = value;
-		}
-
-		@Override
-		public Object getPropertyValue(String propertyName) throws NoSuchPropertyException {
-			switch (propertyName) {
-				case "value":
-					return _value;
-			}
-			return WithProperties.super.getPropertyValue(propertyName);
 		}
 	}
 

@@ -24,6 +24,6 @@ public interface ComponentRef extends ConfigurationItem {
 	 * Resolves the given {@link ComponentRef} relative to the given base component.
 	 */
 	static LayoutComponent resolveComponent(ComponentRef self, LayoutComponent baseComponent) {
-		return self.visit(DefaultRefVisitor.INSTANCE, baseComponent);
+		return DefaultRefVisitor.resolveReference(self, baseComponent);
 	}
 }

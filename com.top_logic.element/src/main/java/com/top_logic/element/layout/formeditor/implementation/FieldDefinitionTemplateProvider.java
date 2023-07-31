@@ -192,7 +192,7 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 					type, part, context.getDomain(), visibility, fieldDefinition);
 				if (member != null) {
 					HTMLTemplateFragment result =
-						createFieldTemplate(member, part, AttributeFormFactory.getAttributeUpdate(member),
+						createFieldTemplate(context, member, part, AttributeFormFactory.getAttributeUpdate(member),
 							context.getLabelPlacement());
 					_member = member;
 					return result;
@@ -274,14 +274,21 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		}
 	}
 
-	static HTMLTemplateFragment createFieldTemplate(FormMember member, TLStructuredTypePart part,
-			AttributeUpdate update, LabelPlacement labelPlacement) {
+	static HTMLTemplateFragment createFieldTemplate(FormEditorContext context, FormMember member,
+			TLStructuredTypePart part, AttributeUpdate update, LabelPlacement labelPlacement) {
+		String memberName = member.getName();
 		LabelPosition labelPosition = AttributeOperations.labelPosition(part, update);
 		switch (labelPosition) {
 			case DEFAULT:
-				return fieldBox(member.getName(), labelPlacement);
+				return fieldBox(memberName, labelPlacement);
 			case AFTER_VALUE:
-				return fieldBoxInputFirst(member.getName());
+				return fieldBoxInputFirst(memberName);
+			case HIDE_LABEL:
+				if (context.getFormMode() == FormMode.DESIGN) {
+					return fieldBox(member.getName());
+				} else {
+					return contentBox(fragment(member(memberName), error(memberName)));
+				}
 		}
 		throw LabelPosition.noSuchPosition(labelPosition);
 	}
@@ -394,6 +401,11 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 
 				HTMLUtil.beginSpan(out, "label");
 				renderLabel(out, part, false);
+				HTMLUtil.endSpan(out);
+				break;
+			case HIDE_LABEL:
+				HTMLUtil.beginSpan(out, "value");
+				renderValue(context, out, renderContext.getModel(), part);
 				HTMLUtil.endSpan(out);
 				break;
 		}

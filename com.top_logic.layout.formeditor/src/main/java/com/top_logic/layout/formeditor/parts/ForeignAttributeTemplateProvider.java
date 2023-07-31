@@ -190,7 +190,11 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 		HTMLTemplateFragment label = attributeLabelForPosition(part, labelPosition);
 		HTMLTemplateFragment content = span(css(NO_BASE_OBJECT_CSS),
 			resource(I18NConstants.FOREIGN_ATTRIBUTE_DISABLED_NO_MODEL__ATTRIBUTE.fill(part)));
-		return descriptionBox(label, content, labelPosition);
+		if (label != null) {
+			return descriptionBox(label, content, labelPosition);
+		} else {
+			return contentBox(content);
+		}
 	}
 
 	private HTMLTemplateFragment attributeLabelForPosition(TLStructuredTypePart part, LabelPosition labelPosition) {
@@ -199,6 +203,8 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 				return text(MetaLabelProvider.INSTANCE.getLabel(part) + ':');
 			case AFTER_VALUE:
 				return text(MetaLabelProvider.INSTANCE.getLabel(part));
+			case HIDE_LABEL:
+				return null;
 		}
 		throw LabelPosition.noSuchPosition(labelPosition);
 	}

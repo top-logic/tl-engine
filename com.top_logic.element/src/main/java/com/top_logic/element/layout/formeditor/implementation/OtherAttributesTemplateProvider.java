@@ -109,7 +109,7 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 					if (member != null) {
 						AttributeUpdate update = AttributeFormFactory.getAttributeUpdate(member);
 						LabelPlacement labelPlacement = context.getLabelPlacement();
-						otherAttributeTemplates.add(createFieldTemplate(member, part, update, labelPlacement));
+						otherAttributeTemplates.add(createFieldTemplate(context, member, part, update, labelPlacement));
 					}
 				}
 				personalizationKey = ConfigKey.derived(ConfigKey.field(contentGroup), "otherAttributes");

@@ -9,6 +9,7 @@ import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -61,21 +62,42 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 		LabelPosition labelPosition = controlLabelFirst(inputControl);
 		boolean wholeLine = controlWholeLine(inputControl);
 	
-		LabelControl labelControl =
-			(LabelControl) DefaultFormFieldControlProvider.INSTANCE.createControl(member,
-				(labelPosition == LabelPosition.DEFAULT && colon) ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
-					: FormTemplateConstants.STYLE_LABEL_VALUE);
+		LabelControl labelControl = (LabelControl) labelControl(member, colon, labelPosition);
 		Control errorControl = DefaultFormFieldControlProvider.INSTANCE.createControl(member, FormTemplateConstants.STYLE_ERROR_VALUE);
 		if (errorControl instanceof ErrorControl) {
 			((ErrorControl) errorControl).setIconDisplay(!errorAsText);
 		}
 	
-		DescriptionCellControl result = new DescriptionCellControl(member, inputControl);
-		result.setDescription(Fragments.concat(labelControl, errorControl));
+		HTMLFragment content;
+		HTMLFragment description;
+		if (labelPosition != LabelPosition.HIDE_LABEL) {
+			content = inputControl;
+			description = Fragments.concat(labelControl, errorControl);
+		} else {
+			content = Fragments.concat(inputControl, errorControl);
+			description = Fragments.empty();
+		}
+		DescriptionCellControl result = new DescriptionCellControl(member, content);
+		result.setDescription(description);
 		result.setLabelPosition(labelPosition);
 		result.setWholeLine(wholeLine);
 
 		return result;
+	}
+
+	private static Control labelControl(FormMember member, boolean colon, LabelPosition labelPosition) {
+		ControlProvider cp = DefaultFormFieldControlProvider.INSTANCE;
+		switch (labelPosition) {
+			case AFTER_VALUE:
+				return cp.createControl(member, FormTemplateConstants.STYLE_LABEL_VALUE);
+			case DEFAULT:
+				return cp.createControl(member,
+					colon ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
+						: FormTemplateConstants.STYLE_LABEL_VALUE);
+			case HIDE_LABEL:
+				return null;
+		}
+		throw new UnreachableAssertion("Uncovered label position: " + labelPosition);
 	}
 
 	private HTMLFragment _model;

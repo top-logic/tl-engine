@@ -6013,15 +6013,13 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	width: 100%;
 }
 
-/* Margin left for all children of .rf_columnsLayout and .rf_content */
-.rf_columnsLayout > *:not(body),
-.rf_content > *:not(body) {
+/* Margin left for all children of .rf_columnsLayout. */
+.rf_columnsLayout > *:not(body) {
   	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
 }
 
-/* Invert margin left .rf_columnsLayout and .rf_content itself as workaround not to margin the first column. */
-.rf_columnsLayout,
-.rf_content {
+/* Invert margin left .rf_columnsLayout itself as workaround not to margin the first column. */
+.rf_columnsLayout {
     margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
 }
 

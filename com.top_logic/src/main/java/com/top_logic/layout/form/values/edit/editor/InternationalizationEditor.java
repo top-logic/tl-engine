@@ -114,8 +114,7 @@ public class InternationalizationEditor implements Editor {
 			contentTemplates.add(member(lang, 
 				descriptionBox(
 					fragment(labelWithColon(), direct(cp), error()),
-					self(),
-					true)));
+					self())));
 			boolean withSpacing = languageIndex < (numberLanguages - 1);
 			for (int additionalIndex = 0; additionalIndex < numberAdditionals; additionalIndex++) {
 				String additionalResourceCss = ADDITIONAL_RESOURCE_CSS;

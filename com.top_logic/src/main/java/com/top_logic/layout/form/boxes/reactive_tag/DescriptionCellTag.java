@@ -51,13 +51,13 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 
 	private Boolean _labelAbove;
 
-	private boolean _keepInline = false;
+	private boolean _keepInline;
 
-	private boolean _wholeLine = false;
+	private boolean _wholeLine;
 
-	private boolean _labelFirst = true;
+	private boolean _labelFirst;
 
-	private boolean _splitControls = false;
+	private boolean _splitControls;
 
 	private JSPLayoutedControls _description;
 
@@ -65,10 +65,31 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 
 	private String _firstColumnCssClass;
 
+	{
+		setMemberVariablesToDefault();
+	}
+
 	/**
 	 * XML name of this tag.
 	 */
 	public static final String DESCRIPTION_CELL_TAG = "form:descriptionCell";
+
+	private void setMemberVariablesToDefault() {
+		_firstColumnCssClass = null;
+		_firstColumnStyle = null;
+		_description = null;
+		_splitControls = false;
+		_labelFirst = true;
+		_wholeLine = false;
+		_keepInline = false;
+		_labelAbove = null;
+		_firstColumnWidth = null;
+		_width = null;
+		_style = null;
+		_cssClass = null;
+		_contents = null;
+		_memberName = null;
+	}
 
 	/**
 	 * The name of the {@link FormMember} to listen to the visibility. If nothing is set, this cell
@@ -265,8 +286,7 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 
 	@Override
 	protected void tearDown() {
-		_contents = null;
-		_labelAbove = null;
+		setMemberVariablesToDefault();
 		super.tearDown();
 	}
 

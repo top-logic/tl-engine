@@ -242,6 +242,7 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 				case DEFAULT:
 					return true;
 				case AFTER_VALUE:
+				case HIDE_LABEL:
 					return false;
 			}
 		}
@@ -440,14 +441,34 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 					// error is already rendered in description
 					filteredControls.add(controls.get(i));
 					contentPatternNew += FormGroupTag.PLACEHOLDER;
+					LabelPosition controlLabelFirst = DescriptionCellControl.controlLabelFirst(controls.get(i));
 					if (labelFirst == null) {
-						labelFirst = DescriptionCellControl.controlLabelFirst(controls.get(i));
+						labelFirst = controlLabelFirst;
 					} else {
 						switch (labelFirst) {
 							case AFTER_VALUE:
-								labelFirst = DescriptionCellControl.controlLabelFirst(controls.get(i));
+								switch (controlLabelFirst) {
+									case AFTER_VALUE:
+									case HIDE_LABEL:
+										break;
+									case DEFAULT:
+										labelFirst = LabelPosition.DEFAULT;
+										break;
+								}
 								break;
 							case DEFAULT:
+								break;
+							case HIDE_LABEL:
+								switch (controlLabelFirst) {
+									case AFTER_VALUE:
+										labelFirst = LabelPosition.AFTER_VALUE;
+										break;
+									case DEFAULT:
+										labelFirst = LabelPosition.DEFAULT;
+										break;
+									case HIDE_LABEL:
+										break;
+								}
 								break;
 						}
 					}

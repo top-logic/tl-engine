@@ -29,6 +29,7 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.mig.html.layout.VisibilityListener;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.LabelPlacement;
 
@@ -57,12 +58,12 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 		}
 	
 		Control inputControl = cp.createControl(member, inputStyle);
-		boolean labelFirst = controlLabelFirst(inputControl);
+		LabelPosition labelPosition = controlLabelFirst(inputControl);
 		boolean wholeLine = controlWholeLine(inputControl);
 	
 		LabelControl labelControl =
 			(LabelControl) DefaultFormFieldControlProvider.INSTANCE.createControl(member,
-				labelFirst && colon ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
+				(labelPosition == LabelPosition.DEFAULT && colon) ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
 					: FormTemplateConstants.STYLE_LABEL_VALUE);
 		Control errorControl = DefaultFormFieldControlProvider.INSTANCE.createControl(member, FormTemplateConstants.STYLE_ERROR_VALUE);
 		if (errorControl instanceof ErrorControl) {
@@ -71,7 +72,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	
 		DescriptionCellControl result = new DescriptionCellControl(member, inputControl);
 		result.setDescription(Fragments.concat(labelControl, errorControl));
-		result.setLabelFirst(labelFirst);
+		result.setLabelPosition(labelPosition);
 		result.setWholeLine(wholeLine);
 
 		return result;
@@ -95,7 +96,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	/**
 	 * Whether the label is rendered first.
 	 */
-	private boolean _labelFirst = true;
+	private LabelPosition _labelPosition = LabelPosition.DEFAULT;
 
 	private String _labelWidth;
 
@@ -166,14 +167,14 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("labelFirst")
 	public boolean isLabelFirst() {
-		return _labelFirst;
+		return _labelPosition == LabelPosition.DEFAULT;
 	}
 
 	/**
 	 * @see #isLabelFirst()
 	 */
-	public void setLabelFirst(boolean labelFirst) {
-		_labelFirst = labelFirst;
+	public void setLabelPosition(LabelPosition labelPosition) {
+		_labelPosition = labelPosition;
 	}
 
 	/**
@@ -299,15 +300,21 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	}
 
 	/**
-	 * Checks whether the label is rendered first.
+	 * Computes the label position.
 	 * 
 	 * @param control
 	 *        The HTMLFragment to check.
 	 * @return If the HTMLFragment is not a {@link CheckboxControl} and not a
 	 *         {@link IconSelectControl}.
 	 */
-	protected static boolean controlLabelFirst(HTMLFragment control) {
-		return !(control instanceof CheckboxControl || control instanceof IconSelectControl);
+	protected static LabelPosition controlLabelFirst(HTMLFragment control) {
+		if (control instanceof CheckboxControl) {
+			return LabelPosition.AFTER_VALUE;
+		}
+		if (control instanceof IconSelectControl) {
+			return LabelPosition.AFTER_VALUE;
+		}
+		return LabelPosition.DEFAULT;
 	}
 
 	/**

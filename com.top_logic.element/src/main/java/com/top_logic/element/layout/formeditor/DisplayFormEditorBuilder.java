@@ -173,8 +173,7 @@ public class DisplayFormEditorBuilder {
 			}
 		});
 
-		boolean labelFirst = true;
-		template(result, descriptionBox(fragment(labelWithColon(), error()), direct(), labelFirst));
+		template(result, descriptionBox(fragment(labelWithColon(), error()), direct()));
 
 		return result;
 	}

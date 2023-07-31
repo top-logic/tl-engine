@@ -26,18 +26,17 @@ import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.editor.config.OptionalTypeTemplateParameters;
 import com.top_logic.layout.form.control.Icons;
-import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.AttributeDefinition;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
-import com.top_logic.model.resources.TLTypePartResourceProvider;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
@@ -187,17 +186,21 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 	}
 
 	private HTMLTemplateFragment handleNoBaseObject(TLStructuredTypePart part) {
-		boolean renderLabelFirst = !AttributeOperations.renderInputBeforeLabel(part);
-		Templates.resource(TLTypePartResourceProvider.labelKey(part));
-		HTMLTemplateFragment label;
-		if (renderLabelFirst) {
-			label = text(MetaLabelProvider.INSTANCE.getLabel(part) + ':');
-		} else {
-			label = text(MetaLabelProvider.INSTANCE.getLabel(part));
-		}
+		LabelPosition labelPosition = AttributeOperations.labelPosition(part);
+		HTMLTemplateFragment label = attributeLabelForPosition(part, labelPosition);
 		HTMLTemplateFragment content = span(css(NO_BASE_OBJECT_CSS),
 			resource(I18NConstants.FOREIGN_ATTRIBUTE_DISABLED_NO_MODEL__ATTRIBUTE.fill(part)));
-		return descriptionBox(label, content, renderLabelFirst);
+		return descriptionBox(label, content, labelPosition);
+	}
+
+	private HTMLTemplateFragment attributeLabelForPosition(TLStructuredTypePart part, LabelPosition labelPosition) {
+		switch (labelPosition) {
+			case DEFAULT:
+				return text(MetaLabelProvider.INSTANCE.getLabel(part) + ':');
+			case AFTER_VALUE:
+				return text(MetaLabelProvider.INSTANCE.getLabel(part));
+		}
+		throw LabelPosition.noSuchPosition(labelPosition);
 	}
 
 	@Override

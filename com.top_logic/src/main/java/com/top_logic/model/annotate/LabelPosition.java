@@ -20,8 +20,11 @@ public enum LabelPosition implements ExternallyNamed {
 	DEFAULT("default"),
 
 	/** The label is displayed after the value. */
-	AFTER_VALUE("after-value");
+	AFTER_VALUE("after-value"),
 
+	/** The label is not displayed at all. */
+	HIDE_LABEL("hide-label");
+	
 	private String _externalName;
 
 	/**

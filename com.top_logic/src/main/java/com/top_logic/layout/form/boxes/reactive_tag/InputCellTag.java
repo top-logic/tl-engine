@@ -17,6 +17,7 @@ import com.top_logic.layout.form.tag.ControlTagUtil;
 import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.layout.form.tag.LabelTag;
 import com.top_logic.layout.form.template.ControlProvider;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
@@ -299,7 +300,7 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 		if (_keepInline != null) {
 			result.setLabelPlacement(LabelPlacement.INLINE);
 		}
-		result.setLabelFirst(getLabelFirst());
+		result.setLabelPosition(getLabelFirst() ? LabelPosition.DEFAULT : LabelPosition.AFTER_VALUE);
 		result.setCellStyle(_cssStyle);
 		result.setCellWidth(_width);
 

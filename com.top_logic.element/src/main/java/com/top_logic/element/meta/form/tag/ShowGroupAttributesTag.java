@@ -36,6 +36,7 @@ import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * The {@link ShowGroupAttributesTag} creates input fields for MetaAttributes.
@@ -220,12 +221,12 @@ public class ShowGroupAttributesTag extends AbstractTag implements ControlBodyTa
                         theStyle = ((AttributedSearchComponent)this.getComponent()).getStyleInformation(theMA, theUpdate.getDomain());
                     } 
 
-					boolean inputBeforeLabel = AttributeOperations.renderInputBeforeLabel(theMA, theUpdate);
+					LabelPosition labelPosition = AttributeOperations.labelPosition(theMA, theUpdate);
 
 					{
 						_cell.setParent(containerTag);
 						_cell.setWholeLine(AttributeOperations.renderWholeLine(theMA, theUpdate));
-						_cell.setLabelFirst(!inputBeforeLabel);
+						_cell.setLabelPosition(labelPosition);
 						if (_firstColumnWidth != null) {
 							_cell.setFirstColumnWidth(_firstColumnWidth);
 						}
@@ -241,7 +242,7 @@ public class ShowGroupAttributesTag extends AbstractTag implements ControlBodyTa
 		
 						theLabel.setParent(_description);
 						theLabel.setAttributeUpdate(theUpdate);
-						theLabel.setColon(!inputBeforeLabel);
+						theLabel.setColon(labelPosition == LabelPosition.DEFAULT);
 						theLabel.setPageContext(pageContext);
 						theLabel.doStartTag();
 						theLabel.doEndTag();

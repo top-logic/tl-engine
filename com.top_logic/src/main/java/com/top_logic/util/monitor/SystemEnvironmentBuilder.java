@@ -158,7 +158,7 @@ public class SystemEnvironmentBuilder implements ModelBuilder {
 			} else {
 				content = text(value);
 			}
-			tmp.add(descriptionBox(text(key), content, true));
+			tmp.add(descriptionBox(text(key), content));
 		}
 		return fieldsetBoxWrap(resource(I18NConstants.SYSTEM_ENVIRONMENT_APPLICATION_PROPERTIES), div(tmp),
 			ConfigKey.none());
@@ -221,7 +221,7 @@ public class SystemEnvironmentBuilder implements ModelBuilder {
 			resourcePath = text(paths.isEmpty() ? "-" : paths.get(0).toString());
 		}
 		// Add a pseudo property from the file manager.
-		properties.add(descriptionBox(text("tl.resource.path"), resourcePath, true));
+		properties.add(descriptionBox(text("tl.resource.path"), resourcePath));
 
 		return fieldsetBoxWrap(resource(I18NConstants.SYSTEM_ENVIRONMENT_SYSTEM_PROPERTIES), div(properties),
 			ConfigKey.none());
@@ -231,7 +231,7 @@ public class SystemEnvironmentBuilder implements ModelBuilder {
 		HTMLTemplateFragment value =
 			isProtected.test(propName) ? resource(com.top_logic.layout.form.I18NConstants.BLOCKED_VALUE_TEXT)
 			: systemPropValue(propName);
-		return descriptionBox(text(propName), value, true);
+		return descriptionBox(text(propName), value);
 	}
 
 	private HTMLTemplateFragment systemPropValue(String propName) {

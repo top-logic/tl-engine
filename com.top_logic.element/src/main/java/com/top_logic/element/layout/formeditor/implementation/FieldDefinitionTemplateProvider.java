@@ -60,6 +60,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLCreateVisibility;
 import com.top_logic.model.annotate.TLVisibility;
@@ -275,13 +276,14 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 
 	static HTMLTemplateFragment createFieldTemplate(FormMember member, TLStructuredTypePart part,
 			AttributeUpdate update, LabelPlacement labelPlacement) {
-		boolean renderLabelFirst = !AttributeOperations.renderInputBeforeLabel(part, update);
-
-		if (renderLabelFirst) {
-			return fieldBox(member.getName(), labelPlacement);
-		} else {
-			return fieldBoxInputFirst(member.getName());
+		LabelPosition labelPosition = AttributeOperations.labelPosition(part, update);
+		switch (labelPosition) {
+			case DEFAULT:
+				return fieldBox(member.getName(), labelPlacement);
+			case AFTER_VALUE:
+				return fieldBoxInputFirst(member.getName());
 		}
+		throw LabelPosition.noSuchPosition(labelPosition);
 	}
 
 	private static FormMember createFormMember(AttributeFormContext formContext, FormContainer contentGroup,
@@ -374,23 +376,26 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		}
 
 		HTMLUtil.beginDiv(out, "field");
-		boolean renderLabelFirst = !AttributeOperations.renderInputBeforeLabel(part);
-		if (renderLabelFirst) {
-			HTMLUtil.beginDiv(out, "label");
-			renderLabel(out, part, true);
-			HTMLUtil.endDiv(out);
+		LabelPosition labelPosition = AttributeOperations.labelPosition(part);
+		switch (labelPosition) {
+			case DEFAULT:
+				HTMLUtil.beginDiv(out, "label");
+				renderLabel(out, part, true);
+				HTMLUtil.endDiv(out);
 
-			HTMLUtil.beginDiv(out, "value");
-			renderValue(context, out, renderContext.getModel(), part);
-			HTMLUtil.endDiv(out);
-		} else {
-			HTMLUtil.beginSpan(out, "value");
-			renderValue(context, out, renderContext.getModel(), part);
-			HTMLUtil.endSpan(out);
+				HTMLUtil.beginDiv(out, "value");
+				renderValue(context, out, renderContext.getModel(), part);
+				HTMLUtil.endDiv(out);
+				break;
+			case AFTER_VALUE:
+				HTMLUtil.beginSpan(out, "value");
+				renderValue(context, out, renderContext.getModel(), part);
+				HTMLUtil.endSpan(out);
 
-			HTMLUtil.beginSpan(out, "label");
-			renderLabel(out, part, false);
-			HTMLUtil.endSpan(out);
+				HTMLUtil.beginSpan(out, "label");
+				renderLabel(out, part, false);
+				HTMLUtil.endSpan(out);
+				break;
 		}
 		HTMLUtil.endDiv(out);
 	}

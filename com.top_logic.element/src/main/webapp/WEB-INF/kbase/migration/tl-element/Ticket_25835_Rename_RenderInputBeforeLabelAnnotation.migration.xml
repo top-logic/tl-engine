@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_25835_Rename_RenderInputBeforeLabelAnnotation"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27205_KeyAttributes_for_Association"
+			module="tl"
+		/>
+		<dependency name="Ticket_27236_Create_Revision_Model"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_25835_Rename_RenderInputBeforeLabelAnnotation.transform.xslt"
+		/>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			column="arguments"
+			table="TemplateLayouts"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_25835_Rename_RenderInputBeforeLabelAnnotation.transform.xslt"
+		/>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			column="annotations"
+			table="MetaElement"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_25835_Rename_RenderInputBeforeLabelAnnotation.transform.xslt"
+		/>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			column="annotations"
+			table="MetaAttribute"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_25835_Rename_RenderInputBeforeLabelAnnotation.transform.xslt"
+		/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

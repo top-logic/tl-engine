@@ -6,17 +6,24 @@
 package com.top_logic.model.annotate;
 
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.InAppClassifierConstants;
 import com.top_logic.model.config.TLTypeAnnotation;
 
 /**
- * {@link TLAnnotation} to annotate if the input is rendered before the label.
+ * Determination of the position of the label in relation to the value.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-@TagName("input-before-label")
+@TagName("label-position")
 @InApp(classifiers = { InAppClassifierConstants.FORM_RELEVANT })
-public interface RenderInputBeforeLabelAnnotation extends TLAttributeAnnotation, TLTypeAnnotation, BooleanAnnotation {
-	// Pure sum interface.
+@Label("Label position")
+public interface LabelPositionAnnotation extends TLAttributeAnnotation, TLTypeAnnotation {
+
+	/**
+	 * The position of the label in relation to the value.
+	 */
+	LabelPosition getValue();
+
 }

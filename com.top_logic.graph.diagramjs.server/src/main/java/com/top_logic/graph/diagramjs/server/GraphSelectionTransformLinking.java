@@ -50,27 +50,31 @@ public class GraphSelectionTransformLinking extends BidirectionalTransformLinkin
 
 	@Override
 	protected BiFunction<Object, Object, ?> transformation() {
-		return (newValue, oldValue) -> getModelScope(oldValue) == newValue ? oldValue : newValue;
+		return (newValue, oldValue) -> {
+			if (getMetaElementTreeObject(newValue) != getMetaElementTreeObject(oldValue)) {
+				return newValue;
+			} else {
+				return oldValue;
+			}
+		};
 	}
 
 	@Override
 	protected Function<Object, ?> inverseTransformation() {
-		return diagramSelection -> getModelScope(diagramSelection);
+		return newValue -> {
+			return getMetaElementTreeObject(newValue);
+		};
 	}
 
-	private Object getModelScope(Object modelPart) {
-		if (modelPart == null) {
-			return null;
-		}
-
-		if (modelPart instanceof TLType || modelPart instanceof TLModule) {
-			return modelPart;
-		} else if (modelPart instanceof TLTypePart) {
-			return ((TLTypePart) modelPart).getOwner();
-		} else if (modelPart instanceof TLInheritance) {
-			return ((TLInheritance) modelPart).getSource();
+	private Object getMetaElementTreeObject(Object value) {
+		if (value instanceof TLType || value instanceof TLModule) {
+			return value;
+		} else if (value instanceof TLTypePart) {
+			return ((TLTypePart) value).getOwner();
+		} else if (value instanceof TLInheritance) {
+			return ((TLInheritance) value).getSource();
 		} else {
-			throw new UnsupportedOperationException(modelPart + " is not a supported element type.");
+			return value;
 		}
 	}
 

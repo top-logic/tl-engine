@@ -10,9 +10,7 @@
 	securityProviderClass="securityRoot"
 	showMaximize="true"
 >
-	<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
-		treeModelBuilder="com.top_logic.element.layout.meta.MetaElementTreeModelBuilder"
-	/>
+	<treeBuilder class="com.top_logic.element.layout.meta.MetaElementTreeBuilder"/>
 	<table
 		defaultColumns="name, id"
 		defaultSortOrder="name"
@@ -21,7 +19,7 @@
 		id-column=""
 	>
 		<rowObjectResourceProvider class="com.top_logic.layout.tree.model.TLTreeNodeResourceProvider">
-			<impl class="com.top_logic.model.resources.TLPartScopedResourceProvider"/>
+			<impl class="com.top_logic.element.layout.meta.MetaElementTreeResourceProvider"/>
 		</rowObjectResourceProvider>
 		<exporter
 			downloadNameKey="layouts.element.meta.metaElementTree.exportName"
@@ -37,13 +35,14 @@
 					valueOrder="com.top_logic.util.TLCollator"
 				>
 					<mapping class="com.top_logic.layout.LabelMapping">
-						<labels class="com.top_logic.model.resources.TLPartScopedResourceProvider"/>
+						<labels class="com.top_logic.element.layout.meta.MetaElementTreeResourceProvider"/>
 					</mapping>
 				</comparator>
 				<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
 				<resourceProvider class="com.top_logic.mig.html.NoLinkResourceProvider"
-					inner="com.top_logic.model.resources.TLPartScopedResourceProvider"
+					inner="com.top_logic.element.layout.meta.MetaElementTreeResourceProvider"
 				/>
+				<cellExistenceTester class="com.top_logic.layout.table.filter.AllCellsExist"/>
 			</column>
 			<column name="id"
 				columnWidth="200px"

@@ -3005,4 +3005,23 @@ public class TLModelUtil {
 		};
 	}
 
+	/**
+	 * Returns true if the given {@link TLClass} has a generalization in the same module as itself,
+	 * otherwise false.
+	 * 
+	 * @param clazz
+	 *        A generalization of this class in the same module is searched.
+	 */
+	public static boolean hasGeneralizationsInSameModule(TLClass clazz) {
+		TLModule module = clazz.getModule();
+
+		for (TLClass superType : clazz.getGeneralizations()) {
+			if (superType.getModule() == module) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 }

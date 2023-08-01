@@ -4,6 +4,7 @@
 	<modules>
 		<module name="Tag">
 			<annotations>
+				<display-name value="tl.tag"/>
 				<package-binding
 					implementation-package="com.top_logic.element.version"
 					interface-package="com.top_logic.element.version.intf"

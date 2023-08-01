@@ -11,6 +11,7 @@
 					interface-package="com.top_logic.demo.model.aspect"
 					implementation-package="com.top_logic.demo.model.aspect.wrap"
 				/>
+	 			<display-name value="demo.aspect"/>
 				<singletons>
 					<singleton type="RootNode" />
 				</singletons>

@@ -4,6 +4,7 @@
 	<modules>
 		<module name="mandatorStructure">
 			<annotations>
+				<display-name value="tl.mandator"/>
 				<singletons>
 					<singleton type="RootElement"/>
 				</singletons>

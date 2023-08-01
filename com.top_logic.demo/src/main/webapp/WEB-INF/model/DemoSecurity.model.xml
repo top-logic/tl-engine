@@ -4,6 +4,7 @@
 	<modules>
 		<module name="DemoSecurity">
 			<annotations>
+				<display-name value="demo.security"/>
 				<singletons>
 					<singleton type="Root"/>
 				</singletons>

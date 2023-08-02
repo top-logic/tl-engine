@@ -13,6 +13,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.MetaControlProvider;
+import com.top_logic.element.meta.form.fieldprovider.CompositionFieldProvider;
 import com.top_logic.element.meta.form.fieldprovider.CompositionFieldProvider.Composite;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -28,6 +29,7 @@ import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.control.BlockControl;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ErrorControl;
+import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.messagebox.MessageBox;
@@ -113,10 +115,26 @@ public class CompositionControlProvider implements ControlProvider {
 						}
 					});
 
+					hideTableLabel(getModel());
+
 					Control content = MetaControlProvider.INSTANCE.createControl(getModel());
 					MessageBox.open(context, dialogModel, content,
 						Collections.singletonList(MessageBox.button(ButtonType.CLOSE, dialogModel.getCloseAction())));
 					return HandlerResult.DEFAULT_RESULT;
+				}
+
+				/**
+				 * The composite is displayed in table form. The table is the single element in the
+				 * opened dialog which already has a reasonable title.
+				 * 
+				 * <p>
+				 * This is actually only a workaround, since the title line of the dialog and that
+				 * of the table header should actually merge.
+				 * </p>
+				 */
+				private void hideTableLabel(Composite composite) {
+					TableField table = (TableField) composite.getMember(CompositionFieldProvider.TABLE_FIELD_NAME);
+					table.getTableModel().getTableConfiguration().setTitleKey(null);
 				}
 			};
 			commandModel.setImage(Icons.OPEN_CHOOSER);

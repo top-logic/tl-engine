@@ -28,6 +28,7 @@
 					large-icon="theme:tl.folder.WebFolder.large"
 				/>
 				<default-value provider="com.top_logic.element.structured.util.FolderDefaultProvider"/>
+				<label-position value="hide-label"/>
 			</annotations>
 			<attributes>
 				<property name="name"

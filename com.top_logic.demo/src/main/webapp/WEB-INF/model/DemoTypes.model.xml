@@ -510,6 +510,7 @@
 						<reference-display value="table"/>
 						<main-properties properties="name,boolean,string,float,date"/>
 						<search-relevant value="false"/>
+						<label-position value="hide-label"/>
 					</annotations>
 				</reference>
 				<property name="long"

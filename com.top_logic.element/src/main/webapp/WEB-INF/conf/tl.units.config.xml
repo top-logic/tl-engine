@@ -7,7 +7,7 @@
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance class="com.top_logic.util.resource.analyzer.IDEResources">
 				<bundles>
-					<bundle name="tl.unitsMessages"/>
+					<bundle name="model.tl.units.messages"/>
 				</bundles>
 			</instance>
 		</config>

@@ -656,7 +656,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.dnd.dropon"
+							path="Test"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -672,7 +672,39 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.dnd.dropon > Work item"
+							path="Test > test.dnd"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > test.dnd > test.dnd.dropon"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > test.dnd > test.dnd.dropon > Work item"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -782,7 +814,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.dnd.dropon > Processor"
+							path="Test > test.dnd > test.dnd.dropon > Processor"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

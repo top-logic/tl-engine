@@ -1188,7 +1188,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.binarycontent"
+							path="Test > test.binarycontent"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

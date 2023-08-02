@@ -61,7 +61,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.invalidNameAttribute"
+							path="Test > test.invalidNameAttribute"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -112,7 +112,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.invalidNameAttribute > My type"
+							path="Test > test.invalidNameAttribute > My type"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -671,7 +671,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.invalidNameAttribute"
+							path="Test > test.invalidNameAttribute"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

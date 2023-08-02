@@ -59,7 +59,7 @@
 		>
 			<selection>
 				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-					path="test.automatical.TLObject.Generalization"
+					path="Test > test.automatical > test.automatical.TLObject > test.automatical.TLObject.Generalization"
 				/>
 				<selection-state boolean="true"/>
 			</selection>
@@ -327,7 +327,7 @@
 		>
 			<selection>
 				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-					path="test.automatical.TLObject.Generalization"
+					path="Test > test.automatical > test.automatical.TLObject > test.automatical.TLObject.Generalization"
 				/>
 				<selection-state boolean="true"/>
 			</selection>

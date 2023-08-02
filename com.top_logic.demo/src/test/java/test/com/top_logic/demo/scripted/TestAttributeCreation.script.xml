@@ -3791,7 +3791,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="DemoTypes > Demo All > Mein Typ"
+							path="Demo > DemoTypes > Demo All > Mein Typ"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

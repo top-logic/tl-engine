@@ -57,7 +57,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.tree.dialog > A"
+							path="Test > test.tree > test.tree.dialog > A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -112,7 +112,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.tree.dialog > B"
+							path="Test > test.tree > test.tree.dialog > B"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -174,7 +174,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.tree.dialog > A"
+							path="Test > test.tree > test.tree.dialog > A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -291,7 +291,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.tree.dialog > B"
+							path="Test > test.tree > test.tree.dialog > B"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -1934,7 +1934,7 @@ default: {
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.tree.dialog > A"
+							path="Test > test.tree > test.tree.dialog > A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2116,7 +2116,7 @@ default: {
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.tree.dialog > B"
+							path="Test > test.tree > test.tree.dialog > B"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2182,7 +2182,7 @@ default: {
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.tree.dialog"
+							path="Test > test.tree > test.tree.dialog"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

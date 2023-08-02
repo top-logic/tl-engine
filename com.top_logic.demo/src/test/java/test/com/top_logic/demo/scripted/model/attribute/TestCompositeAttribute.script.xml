@@ -1450,7 +1450,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-									path="test.composition > Content"
+									path="Test > test.composition > Content"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -1919,7 +1919,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.composition > Content"
+							path="Test > test.composition > Content"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -2020,7 +2020,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.composition > Content"
+							path="Test > test.composition > Content"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

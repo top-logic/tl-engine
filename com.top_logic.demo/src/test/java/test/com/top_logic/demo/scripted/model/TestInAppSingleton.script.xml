@@ -50,7 +50,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton > R"
+							path="Test > test.singleton > R"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -370,7 +370,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton > A"
+							path="Test > test.singleton > A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -424,7 +424,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton > R"
+							path="Test > test.singleton > R"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -489,7 +489,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton > S > R"
+							path="Test > test.singleton > S > R"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -616,7 +616,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton > S > A"
+							path="Test > test.singleton > S > A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -736,7 +736,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton"
+							path="Test > test.singleton"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -858,7 +858,7 @@
 							/>
 						</context-model>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton > S"
+							path="Test > test.singleton > S"
 						/>
 					</model-name>
 				</action>
@@ -868,7 +868,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton > S > R"
+							path="Test > test.singleton > S > R"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -1552,7 +1552,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton"
+							path="Test > test.singleton"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -1568,7 +1568,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton > S"
+							path="Test > test.singleton > S"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -1584,7 +1584,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton > S > A"
+							path="Test > test.singleton > S > A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -1650,7 +1650,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton > S > R"
+							path="Test > test.singleton > S > R"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -1676,7 +1676,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.singleton"
+							path="Test > test.singleton"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

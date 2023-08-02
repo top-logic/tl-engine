@@ -62,7 +62,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Versionierung"
+							path="TopLogic > Versionierung"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -232,7 +232,7 @@
 							/>
 						</context-model>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Versionierung > Tag"
+							path="TopLogic > Versionierung > Tag"
 						/>
 					</model-name>
 				</action>
@@ -249,7 +249,7 @@
 							/>
 						</context-model>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Versionierung"
+							path="TopLogic > Versionierung"
 						/>
 					</model-name>
 				</action>

@@ -1336,7 +1336,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-									path="test.webfolderref"
+									path="Test > test.webfolderref"
 								/>
 								<selection-state boolean="true"/>
 							</selection>

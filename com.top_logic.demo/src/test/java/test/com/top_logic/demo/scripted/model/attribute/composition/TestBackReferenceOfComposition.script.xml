@@ -112,7 +112,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.backCompositionRef"
+							path="Test > test.backCompositionRef"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -163,7 +163,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.backCompositionRef > Container type"
+							path="Test > test.backCompositionRef > Container type"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -270,7 +270,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.backCompositionRef > Content type"
+							path="Test > test.backCompositionRef > Content type"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -401,7 +401,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.backCompositionRef > Container type"
+							path="Test > test.backCompositionRef > Container type"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -481,7 +481,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.backCompositionRef"
+							path="Test > test.backCompositionRef"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

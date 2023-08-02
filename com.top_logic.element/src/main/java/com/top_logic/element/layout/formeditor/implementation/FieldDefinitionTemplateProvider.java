@@ -285,9 +285,9 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				return fieldBoxInputFirst(memberName);
 			case HIDE_LABEL:
 				if (context.getFormMode() == FormMode.DESIGN) {
-					return fieldBox(member.getName());
+					return fieldBox(memberName);
 				} else {
-					return contentBox(fragment(member(memberName), error(memberName)));
+					return fieldBoxNoLabel(memberName);
 				}
 		}
 		throw LabelPosition.noSuchPosition(labelPosition);

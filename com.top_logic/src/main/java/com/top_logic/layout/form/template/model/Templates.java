@@ -751,8 +751,8 @@ public class Templates {
 	}
 
 	/**
-	 * Creates a box template for a primitive field consisting of a label box and a content box with
-	 * the input element and an error display.
+	 * Creates a box template for a primitive field consisting of a label box with an error display
+	 * and a content box with the input element.
 	 * 
 	 * @param name
 	 *        The field name.
@@ -766,8 +766,8 @@ public class Templates {
 	}
 
 	/**
-	 * Creates a box template for a primitive field consisting of a label box without a colon and a
-	 * content box with the input element and an error display.
+	 * Creates a box template for a primitive field consisting of a label box with an an error
+	 * display but without a colon and a content box with the input element.
 	 * 
 	 * @param name
 	 *        The field name.
@@ -776,6 +776,20 @@ public class Templates {
 	public static HTMLTemplateFragment fieldBoxInputFirst(String name) {
 		LabelPosition labelPosition = LabelPosition.AFTER_VALUE;
 		return member(name, descriptionBox(fragment(label(), error()), self(), labelPosition, LabelPlacement.INLINE));
+	}
+
+	/**
+	 * Creates a box template for a primitive field consisting of an empty label box and a content
+	 * box with the input element and an error display.
+	 * 
+	 * @param name
+	 *        The field name.
+	 * @return A {@link HTMLTemplateFragment} that renders all aspects of a primitive field.
+	 */
+	public static HTMLTemplateFragment fieldBoxNoLabel(String name) {
+		LabelPosition labelPosition = LabelPosition.HIDE_LABEL;
+		return member(name,
+			descriptionBox(Templates.empty(), fragment(self(), error()), labelPosition, LabelPlacement.DEFAULT));
 	}
 
 	/**

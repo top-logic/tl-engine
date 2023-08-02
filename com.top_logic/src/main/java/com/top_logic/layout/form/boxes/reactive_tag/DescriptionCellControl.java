@@ -412,7 +412,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("hasLabel")
 	public boolean hasLabel() {
-		return _description != null;
+		return _description != null && _labelPosition != LabelPosition.HIDE_LABEL;
 	}
 
 	/**

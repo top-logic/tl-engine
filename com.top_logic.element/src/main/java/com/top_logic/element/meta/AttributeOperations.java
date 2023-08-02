@@ -1354,6 +1354,9 @@ public class AttributeOperations {
 				return LabelPosition.AFTER_VALUE;
 			}
 		}
+		if (isComposition(attribute)) {
+			return LabelPosition.HIDE_LABEL;
+		}
 
 		return LabelPosition.DEFAULT;
 	}

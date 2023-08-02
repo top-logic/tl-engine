@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -29,7 +30,6 @@ import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.element.meta.form.MetaControlProvider;
 import com.top_logic.element.meta.form.controlprovider.CompositionControlProvider;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
-import com.top_logic.element.meta.form.util.FormUtil;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
@@ -75,7 +75,6 @@ import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.model.TableModelEvent;
 import com.top_logic.layout.table.model.TableModelListener;
-import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.layout.table.renderer.DefaultTableRenderer;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -99,7 +98,14 @@ import com.top_logic.util.Resources;
  */
 public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
-	private static final String TABLE_FIELD_NAME = "table";
+	/**
+	 * Name of the {@link TableField} in the created {@link #getFormField(EditContext, String)
+	 * field}.
+	 * 
+	 * @see Composite
+	 */
+	@FrameworkInternal
+	public static final String TABLE_FIELD_NAME = "table";
 
 	/**
 	 * The deleted objects of the table field.
@@ -130,12 +136,9 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
 		AttributeUpdateContainer updateContainer = update.getOverlay().getScope();
 
-		TLClass attrType = (TLClass) update.getValueType();
-
 		List<TableConfigurationProvider> tableConfigProviders = new ArrayList<>();
-		tableConfigProviders.add(GenericTableConfigurationProvider.getTableConfigurationProvider(attrType));
 		tableConfigProviders.add(new FieldAccessProvider(updateContainer));
-		FormUtil.addProvidersFromAnnotations(tableConfigProviders, update);
+		tableConfigProviders.add(AbstractWrapperFieldProvider.getTableConfigurationProvider(update));
 
 		TableConfiguration config = TableConfigurationFactory.build(tableConfigProviders);
 

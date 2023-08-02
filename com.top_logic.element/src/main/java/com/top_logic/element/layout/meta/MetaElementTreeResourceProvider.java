@@ -4,7 +4,7 @@
 package com.top_logic.element.layout.meta;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.layout.meta.MetaElementTreeBuilder.ModuleContainer;
+import com.top_logic.element.layout.meta.MetaElementTreeModelBuilder.ModuleContainer;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResourceProvider;
@@ -33,7 +33,7 @@ import com.top_logic.util.Resources;
  * </p>
  * 
  * @see TLPartScopedResourceProvider
- * @see MetaElementTreeBuilder
+ * @see MetaElementTreeModelBuilder
  * @see ModuleContainer
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
@@ -42,8 +42,8 @@ public class MetaElementTreeResourceProvider implements ResourceProvider {
 
 	@Override
 	public String getLabel(Object object) {
-		if (object instanceof MetaElementTreeBuilder.ModuleContainer) {
-			String name = ((MetaElementTreeBuilder.ModuleContainer) object).getName();
+		if (object instanceof MetaElementTreeModelBuilder.ModuleContainer) {
+			String name = ((MetaElementTreeModelBuilder.ModuleContainer) object).getName();
 			ResKey key = ResKey.fallback(TLModelNamingConvention.modelPartNameKey(name), ResKey.text(name));
 			return Resources.getInstance().getString(key);
 		} else {

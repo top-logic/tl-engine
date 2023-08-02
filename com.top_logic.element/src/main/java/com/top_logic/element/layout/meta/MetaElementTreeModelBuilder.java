@@ -7,17 +7,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
-import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
-import com.top_logic.layout.tree.model.AbstractTreeTableModel;
-import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableBuilder;
-import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNode;
+import com.top_logic.layout.tree.component.AbstractTreeModelBuilder;
+import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
@@ -25,7 +26,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.TLModuleDisplayName;
 
 /**
- * Builds the meta elements tree.
+ * Builds the meta elements tree model.
  * 
  * <p>
  * For each module, starting from the root node, a subtree with the following structure is created.
@@ -55,7 +56,7 @@ import com.top_logic.model.annotate.TLModuleDisplayName;
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
-public class MetaElementTreeBuilder extends DefaultTreeTableBuilder {
+public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object> {
 
 	private static final class InModule implements Filter<TLType> {
 		private final TLModule _module;
@@ -74,11 +75,13 @@ public class MetaElementTreeBuilder extends DefaultTreeTableBuilder {
 	 * The business object of the nodes between the root node and the {@link TLModule} node are of
 	 * this type.
 	 *
-	 * @see MetaElementTreeBuilder
+	 * @see MetaElementTreeModelBuilder
 	 *
 	 * @author <a href=mailto:sfo@top-logic.com>sfo</a>
 	 */
 	public static final class ModuleContainer {
+
+		private final Object _parent;
 
 		private final TLModel _model;
 
@@ -87,9 +90,24 @@ public class MetaElementTreeBuilder extends DefaultTreeTableBuilder {
 		/**
 		 * Creates a {@link ModuleContainer}.
 		 */
-		public ModuleContainer(TLModel model, String name) {
-			_name = name;
+		public ModuleContainer(Object parent, TLModel model, String name) {
+			_parent = parent;
 			_model = model;
+			_name = name;
+		}
+
+		/**
+		 * Returns the business object of its tree parent node.
+		 */
+		public Object getParent() {
+			return _parent;
+		}
+
+		/**
+		 * Returns the enclosing {@link TLModel} of which this module container is part.
+		 */
+		public TLModel getModel() {
+			return _model;
 		}
 
 		/**
@@ -99,55 +117,112 @@ public class MetaElementTreeBuilder extends DefaultTreeTableBuilder {
 			return _name;
 		}
 
-		/**
-		 * Returns the enclosing {@link TLModel} of which this module container is part.
-		 */
-		public TLModel getModel() {
-			return _model;
+	}
+
+	@Override
+	public Object retrieveModelFromNode(LayoutComponent contextComponent, Object node) {
+		if (node instanceof TLModelPart) {
+			return ((TLModelPart) node).getModel();
+		} else if (node instanceof ModuleContainer) {
+			return ((ModuleContainer) node).getModel();
+		} else {
+			return null;
 		}
 	}
 
 	@Override
-	public DefaultTreeTableNode createNode(AbstractMutableTLTreeModel<DefaultTreeTableNode> model,
-			DefaultTreeTableNode parent, Object userObject) {
-		DefaultTreeTableNode newNode = super.createNode(model, parent, userObject);
-		if (userObject instanceof ModuleContainer) {
-			AbstractTreeTableModel.markSynthetic(newNode);
-		}
-		return newNode;
-	}
-
-	@Override
-	public List<DefaultTreeTableNode> createChildList(DefaultTreeTableNode node) {
-		Object businessObject = node.getBusinessObject();
-
-		if (businessObject instanceof TLModelPart) {
-			switch (((TLModelPart) businessObject).getModelKind()) {
-				case MODEL: {
-					return createNodes(node, getModuleParts((TLModel) businessObject, StringServices.EMPTY_STRING));
+	public Collection<? extends Object> getParents(LayoutComponent contextComponent, Object node) {
+		if (node instanceof TLModelPart) {
+			switch (kind(node)) {
+				case CLASS: {
+					TLClass type = (TLClass) node;
+					List<TLClass> generalizationsInSameModule =
+						FilterUtil.filterList(new InModule(type.getModule()), type.getGeneralizations());
+					if (generalizationsInSameModule.isEmpty()) {
+						return Collections.singletonList(type.getModule());
+					} else {
+						return generalizationsInSameModule;
+					}
 				}
 				case MODULE: {
-					return createNodes(node, getTypes((TLModule) businessObject));
+					return Collections.singleton(((TLModule) node).getModel());
 				}
-				case CLASS: {
-					TLClass clazz = (TLClass) businessObject;
-
-					return createNodes(node, FilterUtil.filterList(new InModule(clazz.getModule()), clazz.getSpecializations()));
-				}
+				case ENUMERATION:
+					return Collections.singleton(((TLEnumeration) node).getModule());
 				default: {
 					return Collections.emptyList();
 				}
 			}
-		} else if (businessObject instanceof ModuleContainer) {
-			ModuleContainer moduleContainer = (ModuleContainer) businessObject;
-
-			return createNodes(node, getModuleParts(moduleContainer.getModel(), moduleContainer.getName()));
+		} else if (node instanceof ModuleContainer) {
+			return Collections.singleton(((ModuleContainer) node).getParent());
 		} else {
 			return Collections.emptyList();
 		}
 	}
 
-	private List<Object> getModuleParts(TLModel model, String prefix) {
+	@Override
+	public boolean supportsNode(LayoutComponent contextComponent, Object node) {
+		if (node instanceof TLModelPart) {
+			switch (kind(node)) {
+				case MODEL:
+				case MODULE:
+				case CLASS:
+				case ENUMERATION:
+					return true;
+				default:
+					return false;
+			}
+		} else if (node instanceof ModuleContainer) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private ModelKind kind(Object node) {
+		return ((TLModelPart) node).getModelKind();
+	}
+
+	@Override
+	public boolean supportsModel(Object model, LayoutComponent component) {
+		return model instanceof TLModel;
+	}
+
+	@Override
+	public Iterator<? extends Object> getChildIterator(Object node) {
+		if (node instanceof TLModelPart) {
+			switch (kind(node)) {
+				case MODEL: {
+					TLModel model = (TLModel) node;
+
+					return getModuleParts(model, model, StringServices.EMPTY_STRING).iterator();
+				}
+				case MODULE: {
+					return getTypes((TLModule) node).iterator();
+				}
+				case CLASS: {
+					TLClass clazz = (TLClass) node;
+					Iterator<TLClass> specializations = clazz.getSpecializations().iterator();
+
+					return FilterUtil.filterIterator(new InModule(clazz.getModule()), specializations);
+				}
+				default: {
+					return Collections.emptyIterator();
+				}
+			}
+		} else if (node instanceof ModuleContainer) {
+			ModuleContainer moduleContainer = (ModuleContainer) node;
+
+			String name = moduleContainer.getName();
+			TLModel model = moduleContainer.getModel();
+
+			return getModuleParts(moduleContainer, model, name).iterator();
+		} else {
+			return Collections.emptyIterator();
+		}
+	}
+
+	private List<Object> getModuleParts(Object parent, TLModel model, String prefix) {
 		List<Object> filteredModules = new ArrayList<>();
 		Set<String> moduleContainerNames = new HashSet<>();
 
@@ -166,7 +241,7 @@ public class MetaElementTreeBuilder extends DefaultTreeTableBuilder {
 		}
 
 		for (String moduleContainerName : moduleContainerNames) {
-			filteredModules.add(new ModuleContainer(model, moduleContainerName));
+			filteredModules.add(new ModuleContainer(parent, model, moduleContainerName));
 		}
 
 		return filteredModules;
@@ -194,15 +269,5 @@ public class MetaElementTreeBuilder extends DefaultTreeTableBuilder {
 		List<TLType> types = FilterUtil.filterList(TopLevelClasses.INSTANCE, module.getTypes());
 		types.addAll(module.getEnumerations());
 		return types;
-	}
-
-	private List<DefaultTreeTableNode> createNodes(DefaultTreeTableNode parent, Collection<?> children) {
-		List<DefaultTreeTableNode> result = new ArrayList<>();
-
-		for (Object child : children) {
-			result.add(createNode(parent.getModel(), parent, child));
-		}
-
-		return result;
 	}
 }

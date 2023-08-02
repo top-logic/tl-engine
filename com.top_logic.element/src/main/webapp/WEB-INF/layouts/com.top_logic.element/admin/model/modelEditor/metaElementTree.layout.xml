@@ -10,7 +10,9 @@
 	securityProviderClass="securityRoot"
 	showMaximize="true"
 >
-	<treeBuilder class="com.top_logic.element.layout.meta.MetaElementTreeBuilder"/>
+	<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
+		treeModelBuilder="com.top_logic.element.layout.meta.MetaElementTreeModelBuilder"
+	/>
 	<table
 		defaultColumns="name, id"
 		defaultSortOrder="name"

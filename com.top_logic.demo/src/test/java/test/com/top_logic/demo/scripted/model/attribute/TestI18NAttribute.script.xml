@@ -834,7 +834,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All > Demo A"
+							label-path="Demo > DemoTypes > Demo All > Demo A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

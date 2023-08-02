@@ -110,7 +110,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All > Demo C (TestChangeEnumMultiplicity)"
+							label-path="Demo > DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All > Demo C (TestChangeEnumMultiplicity)"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

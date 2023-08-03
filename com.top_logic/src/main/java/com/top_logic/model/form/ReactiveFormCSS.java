@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.form;
 
+import com.top_logic.layout.form.boxes.reactive_tag.GroupCellControl;
+
 /**
  * Collection of CSS classes used in reactive forms.
  * 
@@ -57,5 +59,12 @@ public interface ReactiveFormCSS {
 	 * CSS class to mark a {@link #RF_INPUT_CELL} that it contains no label.
 	 */
 	String RF_NO_LABEL = "rf_noLabel";
+
+	/**
+	 * CSS class for the element of a {@link GroupCellControl} that contains the menu.
+	 * 
+	 * @see GroupCellControl#hasMenu()
+	 */
+	String RF_MENU = "rf_menu";
 }
 

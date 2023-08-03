@@ -14,11 +14,14 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.TemplateVariable;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.WithPropertiesDelegate;
 import com.top_logic.layout.basic.WithPropertiesDelegateFactory;
+import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.template.NoSuchPropertyException;
 import com.top_logic.layout.template.WithProperties;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.Card;
 import com.top_logic.util.Resources;
 
@@ -144,17 +147,9 @@ public class TabContent implements WithProperties {
 	}
 
 	/**
-	 * Specifies the JavaScript method that is executed when the tab is pressed. The tab container
-	 * then moves the tabs so that the clicked tab becomes fully visible on the screen.
-	 * 
-	 * @param context
-	 *        The current {@link DisplayContext}.
-	 * @param out
-	 *        Writes the JavaScript function.
-	 * @throws IOException
-	 *         If an I/O error occurs
+	 * The tab container moves the tabs so that the clicked tab becomes fully visible on the screen.
 	 */
-	@TemplateVariable("onclick")
+	@TemplateVariable("adjustContainer")
 	public void writeOnClick(DisplayContext context, TagWriter out) throws IOException {
 		if (!_isSelectedTab) {
 			out.append("services.viewport.adjustContainerScrollPosition(");
@@ -162,21 +157,16 @@ public class TabContent implements WithProperties {
 			out.append(", ");
 			out.writeInt(_tabIndex);
 			out.append(");");
-			writeOnClickSelectContent(out, _tabIndex);
 		}
 	}
 
-	/**
-	 * Writes the JavaScript method which will be executed when the tab is pressed.
-	 * 
-	 * @param tabIndex
-	 *        the index of the tab which shall be selected.
-	 */
-	public void writeOnClickSelectContent(TagWriter out, int tabIndex) throws IOException {
+	/** Opens the page of the pressed tab. */
+	@TemplateVariable("onclick")
+	public void writeOnClickSelectContent(TagWriter out) throws IOException {
 		out.append("services.form.TabBarControl.handleClick(");
 		out.writeJsString(getID());
 		out.append(", ");
-		out.writeInt(tabIndex);
+		out.writeInt(_tabIndex);
 		out.append("); return false;");
 	}
 
@@ -187,13 +177,6 @@ public class TabContent implements WithProperties {
 	 * <b>Tooltip</b> should be used for the <b>data-tooltip</b> variable, because it returns text
 	 * inside HTML tags.
 	 * </p>
-	 * 
-	 * @param context
-	 *        The current {@link DisplayContext}.
-	 * @param out
-	 *        Writes the tooltip.
-	 * @throws IOException
-	 *         If an I/O error occurs
 	 */
 	@TemplateVariable("tooltip")
 	public void writeTabTooltip(DisplayContext context, TagWriter out) throws IOException {
@@ -210,14 +193,7 @@ public class TabContent implements WithProperties {
 		}
 	}
 
-	/**
-	 * Writes the full technical name of this tab.
-	 * 
-	 * @param context
-	 *        The current {@link DisplayContext}.
-	 * @param out
-	 *        Writes the key of the tab.
-	 */
+	/** Writes the full technical name of this tab. */
 	@TemplateVariable("tabKey")
 	public String writeTabKey(DisplayContext context, TagWriter out) {
 		Object cardInfo = getTabCard().getCardInfo();
@@ -230,16 +206,7 @@ public class TabContent implements WithProperties {
 		return tabKey;
 	}
 
-	/**
-	 * Writes the label to the tab.
-	 * 
-	 * @param context
-	 *        The current {@link DisplayContext}.
-	 * @param out
-	 *        Writes the label of the tab.
-	 * @throws IOException
-	 *         If an I/O error occurs
-	 */
+	/** Writes the label to the tab. */
 	@TemplateVariable("label")
 	public void writeTabLabel(DisplayContext context, TagWriter out) throws IOException {
 		Object cardInfo = getTabCard().getCardInfo();
@@ -248,6 +215,25 @@ public class TabContent implements WithProperties {
 			out.writeText(tabInfo.getLabel());
 		} else {
 			_tabCard.writeCardInfo(context, out);
+		}
+	}
+
+	/** Writes the icon to the tab. */
+	@TemplateVariable("tabIcon")
+	public void writeTabIcon(DisplayContext context, TagWriter out) throws IOException {
+		Object cardInfo = getTabCard().getCardInfo();
+		if (cardInfo instanceof TabInfo) {
+			TabInfo tabInfo = (TabInfo) cardInfo;
+			ThemeImage tabImage = tabInfo.getImage();
+			if (tabImage != null) {
+				XMLTag tabIcon = tabImage.toIcon();
+				if (tabIcon != null) {
+					tabIcon.beginBeginTag(context, out);
+					out.writeAttribute(HTMLConstants.CLASS_ATTR, "tabIcon");
+					tabIcon.endBeginTag(context, out);
+					tabIcon.endTag(context, out);
+				}
+			}
 		}
 	}
 

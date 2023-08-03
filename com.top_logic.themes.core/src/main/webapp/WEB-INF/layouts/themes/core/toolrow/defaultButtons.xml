@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="renderer"
+			optional="true"
+		/>
+		<param name="entryRenderer"
+			optional="true"
+		/>
+	</params>
+
+	<group>
+		<views>
+			<include name="toolrow/searchButtons.xml"
+				entryRenderer="${entryRenderer}"
+				renderer="${renderer}"
+			/>
+		</views>
+	</group>
+
+	<group>
+		<views>
+			<include name="toolrow/helpButton.xml"
+				entryRenderer="${entryRenderer}"
+				renderer="${renderer}"
+			/>
+		</views>
+	</group>
+</template>

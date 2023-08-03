@@ -1,0 +1,1853 @@
+/*
+****					****
+****	Form styles		****
+****					****
+*/
+.frmBody h1 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	letter-spacing: var(--heading-04-letter-spacing);
+}
+
+.rf_header .header {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
+}
+
+.rf_header {
+	grid-row: 1;
+    grid-column: 1;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	height: 2.5rem;
+	border-top: solid 1px var(--border-subtle);
+	padding: 0 0 0 var(--spacing-03);
+	white-space: nowrap;
+}
+
+.rf_header:hover {
+	background: var(--layer-hover);
+}
+
+.rf_header a:focus {
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+div.fptPage {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    right: 0px;
+}
+
+div.fptBody {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 78px;
+    bottom: 0px;
+}
+
+div.fptTitle {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    height: 53px;
+    background-color: transparent;
+}
+
+div.fptTitleContent, div.fptSubtitleContent {
+    position: absolute;
+    overflow: hidden;
+    left: 0px;
+    right: 110px;
+    top: 0px;
+    bottom: 0px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-primary);
+}
+
+div.fptTitleContent {
+	display: flex;
+	align-items: center;
+	padding: 0 var(--spacing-03);
+}
+
+div.fptTitleContent, div.fptTitle input.is-input, div.fptTitle select.is-input {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	letter-spacing: var(--heading-04-letter-spacing);
+}
+
+div.fptSubtitle {
+    position: absolute;
+    top: 53px;
+    left: 0px;
+    right: 0px;
+    height: 25px;
+    overflow: hidden;
+    background-color: var(--layer-accent);
+}
+
+div.fptSubtitleContent {
+    padding-left: var(--spacing-03);
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.fptIcon, .fptIconWithOverlay, .fptIconOverlay {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+div.fptIconBar > span.fptIcon, div.fptIconBar > span.fptIconWithOverlay {
+    font-size: 32px;
+}
+
+.fptIconOverlay {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    height: 48px;
+}
+
+.fptIconOverlay i {
+    position: absolute;
+    top: 0px;
+    right: 5px;
+    border-radius: 30px;
+    font-size: 30px;
+    padding: 4px;
+}
+
+div.fptIconBar > span.fptIconOverlay > i {
+    color: black;
+}
+
+.rf_label .cLabel label {
+	color: var(--text-secondary);
+}
+
+.rf_label {
+	margin: var(--spacing-02) 0;
+}
+
+.rf_label .cLabel label.disabled {
+	color: var(--text-disabled);
+}
+
+.frmGroupExpand a {
+	color: var(--icon);
+	font-size: 1rem;
+}
+
+.frmBody {
+	padding: 0 var(--spacing-03);
+}
+
+.frmBody form {
+	padding-top: var(--spacing-02);
+}
+
+.fhrContainer {
+	background-color: var(--layer-accent);
+}
+
+.rf_content.rf_dropTarget > :not(.fhrContainer) {
+	padding: var(--spacing-02) 20% 0 3rem;
+}
+
+
+
+
+
+.rf_content {
+	grid-column: 1;
+	grid-row: 2;
+	display: grid;
+	grid-auto-flow: row;
+	grid-gap: var(--RF_VERTICAL_GAP_CELLS) var(--RF_HORIZONTAL_GAP_CELLS);
+	padding-top: 15px;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-bottom: 10px;
+	grid-auto-rows: max-content;
+	line-height: 1.5rem;
+	border-radius: 0px 0px 3px 3px;
+}
+
+.rf_content .rf_header {
+	line-height: normal;
+}
+
+.rf_columnsLayout,
+div.rf_buttons {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.rf_columnsLayout {
+    margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
+}
+
+.rf_columnsLayout.keep {
+	display: table;
+	width: 100%;
+}
+
+div.layoutControl.dflColumns .rf_columnsLayout.keep > .rf_inputCellOneLine,
+div.layoutControl.dflColumns .rf_columnsLayout.keep > .rf_inputCell {
+	display: table-cell;
+	padding-right: 5px;
+	padding-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.rf_columnsLayout.keep > * > * {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.keep, .rf_cell {
+	width: 100%;
+}
+
+.rf_columnsLayout > *:not(body) {
+  	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.rf_columnsLayout > .rf_groupCell {
+  	margin-left: calc(var(--RF_HORIZONTAL_GAP_COLUMNS) - 2px); /* 2px for the border */
+}
+
+.dflColumns0 .rf_cellSmall,
+.dflColumns1 .rf_cellSmall {
+	width: 100% !important;
+}
+
+.rf_columnsLayout .inputCellOneLine,
+.rf_inputCellOneLine,
+.rf_inputCell {
+    line-height: 1.5rem;
+}
+
+/* even empty cells have a height */
+.rf_cell {
+    min-height: 1.5rem;
+    margin: var(--spacing-02) 0;
+}
+
+/* columns layout */
+.rf_columnsLayout .rf_content > * > .rf_line:not(.dfList),
+.rf_columnsLayout .rf_groupCell .rf_groupCell,
+.rf_inputCell .rf_columnsLayout .rf_line:not(.dfList) {
+	min-width: 100%;
+  	width: fit-content;
+  	box-sizing: border-box;
+}
+
+.rf_columnsLayout .rf_line.dfList {
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+	width: calc(100% - 25px);
+  	box-sizing: border-box;
+}
+
+.rf_columnsLayout > .rf_line,
+.rf_columnsLayout > *:not(body),
+.rf_columnsLayout.cols1 > *:not(body),
+.dflColumns.dflColumns0 .rf_columnsLayout > *:not(body),
+.dflColumns.dflColumns1 .rf_columnsLayout > *:not(body),
+.layoutControl.dflColumns.dflColumns1 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns2 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl .layoutControl.dflColumns .rf_inputCell.is-control > .rf_cell .rf_columnsLayout > *:not(body),
+.layoutControl .layoutControl.dflColumns .rf_inputCellOneLine.is-control > .rf_cell .rf_columnsLayout > *:not(body) {
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
+  	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
+  	box-sizing: border-box;
+ }	
+ 
+.dflColumns2 .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.rf_columnsLayout.cols2 > *:not(.rf_line),
+.layoutControl.dflColumns1 .rf_columnsLayout.cols2 > *:not(.rf_line)  { 
+  	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.dflColumns.dflColumns3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
+  	min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.layoutControl.dflColumns.dflColumns3 .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .rf_columnsLayout.cols4 > *:not(.rf_line):not(.rf_line) { 
+  	min-width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.layoutControl.dflColumns.dflColumns3 .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .rf_columnsLayout.cols5 > *:not(.rf_line):not(.rf_line) { 
+  	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+/* content of a group */
+.layoutControl.dflColumns .rf_content.cols1,
+.layoutControl.dflColumns .rf_content .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5),
+.layoutControl.dflColumns .rf_columnsLayout .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5),
+.dflColumns0 .rf_content,
+.dflColumns1 .rf_content,
+.dflColumns2 .maxCols1 .rf_content,
+.dflColumns3 .maxCols1 .rf_content {
+	/* avoid creating more columns than possible, use cols classes manually in those cases */
+	grid-template-columns: repeat(1, 1fr); 
+}
+
+.layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1) .rf_content.cols2,
+.dflColumns2 .rf_content,
+.dflColumns3 .maxCols2 .rf_content {
+	grid-template-columns: repeat(2, 1fr); 
+}
+
+.layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1):not(.dflColumns2) .rf_content.cols3,
+.dflColumns3 .rf_content {
+	grid-template-columns: repeat(3, 1fr); 
+}
+
+.layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1):not(.dflColumns2) .rf_content.cols4,
+.dflColumns3 .maxCols4 .rf_content {
+	grid-template-columns: repeat(4, 1fr);   
+}
+  
+.layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1):not(.dflColumns2) .rf_content.cols5,
+.dflColumns3 .maxCols5 .rf_content {	
+	grid-template-columns: repeat(5, 1fr); 
+} 
+
+
+/* in lists */
+.dfListContent > .rf_columnsLayout {
+	margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+}
+
+.dfListContent > .rf_columnsLayout > *:not(body) {
+	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY);
+}
+
+.layoutControl.dflColumns.dflColumns0 .dfListContent .rf_columnsLayout > .dfListEntry,
+.layoutControl.dflColumns.dflColumns1 .dfListContent .rf_columnsLayout > .dfListEntry,
+.layoutControl.dflColumns.dflColumns3 .dfListContent .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.dfListContent .rf_columnsLayout > .dfListEntry {
+ 	min-width: 100px;
+ 	width: 100%;
+  	box-sizing: border-box;
+}
+
+/* filter */
+.fltContent .rf_groupCell.collapsed {
+	height: 2rem;
+}
+
+.fltContent .rf_columnsLayout > .rf_line,
+.fltContent .rf_columnsLayout.cols1 > *:not(body),
+.layoutControl.dflColumns.dflColumns0 .fltContent .rf_columnsLayout > *:not(body),
+.layoutControl.dflColumns.dflColumns1 .fltContent .rf_columnsLayout > *:not(body),
+.dflColumns2 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
+.dflColumns3 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body) {
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_FILTER));
+  	width: calc(100% - var(--RF_HORIZONTAL_GAP_FILTER));
+  	box-sizing: border-box;
+ }	
+ 
+.dflColumns.dflColumns2 .fltContent .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
+.layoutControl .fltContent .rf_columnsLayout.cols2 > *:not(.rf_line),
+.layoutControl.dflColumns1 .fltContent .rf_columnsLayout.cols2 > *:not(.rf_line) { 
+  	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(50% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+ 
+.dflColumns.dflColumns3 .fltContent .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
+  	min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(33.3% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+
+.dflColumns .fltContent .rf_columnsLayout.cols4 > *:not(.rf_line) { 
+  	min-width: calc(25% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(25% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+
+.dflColumns .fltContent .rf_columnsLayout.cols5 > *:not(.rf_line) { 
+  	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(20% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+
+/* 2 columns in dialogs */
+.dlgDialog .layoutControl.dflColumns.dflColumns0 .rf_content {
+	grid-template-columns: repeat(1, 1fr); 
+}
+.dlgDialog .layoutControl.dflColumns.dflColumns1 .rf_content,
+.dlgDialog .layoutControl.dflColumns.dflColumns2 .rf_content,
+.dlgDialog .layoutControl.dflColumns.dflColumns3 .rf_content {
+	grid-template-columns: repeat(2, 1fr); 
+}
+
+.dlgDialog .dflColumns.dflColumns1 .rf_labelInFrontOfInput .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
+  	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.dlgDialog .dflColumns:not(.dflColumns0) .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
+  	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+*:not(.rf_content) > .rf_inputCellOneLine,
+*:not(.rf_content) > .rf_inputCell,
+*:not(.rf_content) > .rf_columnsLayout:not(.keep) {
+	margin-bottom: .25rem;
+}
+
+.rf_content .pre {
+	white-space: pre-wrap;
+}
+
+.rf_line,
+.layoutControl.dflColumns .rf_groupCell .rf_content .rf_groupCell {
+	/* groupCells in groupCells are rendered over the whole line per default */
+	display: grid;
+	grid-template-columns: 1fr;
+	grid-column: 1 / -1;
+}
+
+.rf_spanRow1 { grid-row-end: span 1; }
+.rf_spanRow2 { grid-row-end: span 2; }
+.rf_spanRow3 { grid-row-end: span 3; }
+.rf_spanRow4 { grid-row-end: span 4; }
+.rf_spanRow5 { grid-row-end: span 5; }
+.rf_spanRow6 { grid-row-end: span 6; }
+.rf_spanRow7 { grid-row-end: span 7; }
+.rf_spanRow8 { grid-row-end: span 8; }
+.rf_spanRow9 { grid-row-end: span 9; }
+.rf_spanRow10 { grid-row-end: span 10; }
+
+.rf_spanCol1 { grid-col-end: span 1; }
+.rf_spanCol2 { grid-col-end: span 2; }
+.rf_spanCol3 { grid-col-end: span 3; }
+.rf_spanCol4 { grid-col-end: span 4; }
+
+.rf_inputCellOneLine,
+.dlgDialog .rf_labelInFrontOfInput .rf_inputCellOneLine:not(.keepInline):not(.rf_line) {
+	display: grid;
+	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
+	grid-gap: .5rem .5rem;
+}
+
+.rf_inputCellOneLine > div:nth-child(1),
+.rf_inputCell > div:nth-child(1)  {
+	grid-row:1; 
+	grid-column:1; 
+}
+
+.rf_inputCellOneLine > div:nth-child(2),
+.dlgDialog .rf_labelInFrontOfInput .rf_inputCellOneLine:not(.keepInline):not(.rf_line) > div:nth-child(2) {
+	grid-row:1; 
+	grid-column:2; 
+}
+
+.rf_labelAbove .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
+.dlgDialog .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
+.layoutControl.dflColumns.dflColumns0 .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
+.rf_inputCellOneLine.rf_line > div:nth-child(2),
+.rf_inputCell > div:nth-child(2) {
+	grid-row:2; 
+	grid-column:1; 	
+}
+
+.rf_inputCell,
+.rf_labelAbove .rf_inputCellOneLine:not(.keepInline),
+.dlgDialog .rf_inputCellOneLine:not(.keepInline),
+.layoutControl.dflColumns.dflColumns0 .rf_inputCellOneLine:not(.keepInline),
+.rf_inputCellOneLine.rf_line {
+	display: grid;
+	grid-template-columns: minmax(0px, 1fr);
+	grid-template-rows: 24px 1fr;
+	line-height: 24px;
+} 
+
+.dlgDialog .rf_labelInFrontOfInput .rf_inputCellOneLine:not(.rf_line) > :nth-child(n+2) {
+	padding-left: 0px;
+}
+
+.rf_inputCellOneLine div:not(.rf_cell .rf_groupCell),
+.rf_inputCell div:not(.rf_cell .rf_groupCell) {
+	line-height: 24px;
+}
+
+.rf_invisible {
+	display: none;	
+}
+
+.i18nStringTable p {
+	margin-top: 0px;
+}
+
+
+/* input controls */
+/*
+.cPopupSelect.active,
+.cPopupSelect.disabled,
+.cExpandableTextInput.active,
+.cIntegerInput.active,
+.cBlockTextInput.active {
+	display: flex;
+}
+
+.cPopupSelect.active > .lFlexible,
+.cExpandableTextInput.active > .lFlexible,
+.cIntegerInput.active > .lFlexible,
+.cBlockTextInput.active > .lFlexible  {
+	display: contents;
+}
+
+.cPopupSelect .lFlexible,
+.cPopupSelect .is-popup:not([size]),
+.cIntegerInput .lFlexible,
+.cIntegerInput .is-input:not([size]),
+.cExpandableTextInput .lFlexible,
+.cExpandableTextInput .is-input:not([size]),
+.cTextInput:not(.searchIrrelevant) .is-input:not([size]),
+.cBlockTextInput .lFlexible,
+.cBlockTextInput .is-input:not([size]),
+.dfList .dfListEntry .cTextInput:not(.searchIrrelevant) textarea.is-input {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.cPopupSelect .is-popup,
+.cIntegerInput .is-input,
+.cExpandableTextInput .is-input,
+.cTextInput .is-input,
+.cBlockTextInput .is-input {
+	min-width: 20px;
+	max-width: 100%;
+}
+*/
+
+.rf_cell {
+	box-sizing: border-box;
+}
+
+.rf_content table.schedulingAlgorithm {
+	width: calc(100% - 60px);
+}
+
+*:not(.sizeSet) > .rf_cell .cIntegerInput > .cTextInput:not(.searchIrrelevant) .is-input {
+	width: auto;
+}
+
+.rf_firstColumn .is-radio,
+.rf_firstColumn .is-checkbox,
+.rf_firstColumn input.tristate {
+	margin-left: 0px;
+	margin-right: 5px;
+}
+
+.fltContent .rf_label {
+	font-weight:normal;
+}
+
+
+.mulitLines .rf_label span.can-edit {
+	/* labels are rendered over more than one line if needed */
+	white-space: pre-line;
+}
+
+.rf_inputCellOneLine .rightAlign {
+	text-align: right;
+	padding-right: 5px;
+}
+
+.rf_groupCell {
+	display: grid;
+	grid-template-columns: 100%;
+	grid-template-rows: minmax(22px, max-content) 1fr;
+	grid-gap: 0px;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--GROUP_RADIUS);
+	margin-bottom: 10px;
+    min-width: -moz-min-content;    /* Firefox */
+    min-width: -webkit-min-content; /* Chrome */
+    min-width: min-content;
+}
+
+.rf_groupCell > .rf_header {
+	border-top: none;
+}
+
+.rf_groupCell.noLegend {
+	grid-template-rows: 1fr;
+}
+
+.rf_groupCell.noBorder {
+	border: 0px;
+}
+
+.rf_groupCell.collapsed {
+	border-radius: var(--GROUP_COLLAPSED_RADIUS);
+}
+
+.fltContent .rf_groupCell {
+    border-top:1px solid #F6F7F8; 
+    border-right:1px solid #F6F7F8;
+    border-bottom:1px solid #7695C3;
+    border-left:1px solid #7695C3; 
+	border-radius: 0px;
+    position:relative;
+    padding: 0.5em;
+}
+
+.rf_groupCell.noLegend > .rf_header,
+.fltContent .rf_groupCell .rf_header {
+	background: transparent;
+}
+
+.rf_groupCell .rf_header select,
+.rf_groupCell .rf_header label {
+	color: var(--GROUP_LABEL_COLOR);
+    font-weight: bold;
+    margin-bottom: 0px;
+}
+
+.rf_inputCell label,
+.rf_inputCellOneLine label {
+	padding-right: 4px;
+}
+
+.rf_descriptionCell {
+	display: table;
+	padding-top: 8px;
+	grid-column: 1 / -1;
+}
+
+.rf_label .cCheckbox,
+.rf_label .cIconSelect {
+	display: inline-block;
+	width: 20px;
+	vertical-align: middle;
+} 
+
+.rf_hr {
+	height: 0px;
+	grid-column: 1 / -1;
+    margin-top: 5px;
+}
+
+.rf_hr.visible {
+	border-top: 1px solid #F6F7F8; 
+    border-bottom: 1px solid #E2E5E9; 
+    margin-bottom: 10px;
+}
+
+.rf_descriptionContainer {
+	display: grid;
+	grid-auto-flow: row;
+	grid-gap: 4px 5px;
+	grid-auto-rows: minmax(24px, max-content);
+}
+
+.rf_keepInline {
+	display: inline;
+}
+
+.rf_inputCellOneLine.keepInline, .rf_inputCell {
+	margin-bottom: 10px;	
+}
+
+/* Form editor */
+
+.cFormEditorElement .rf_columnsLayout,
+.cFormEditorElement .rf_columnsLayout.rf_line,
+.cFormEditorElement .rf_content {
+	margin-left: 0px;
+}
+
+.cFormEditorElement .rf_columnsLayout > *:not(body),
+.cFormEditorElement .rf_content > *:not(body) {
+	margin-left: 0px;
+  	padding-right: 0px;
+}
+
+.cFormEditorElement .rf_columnsLayout > .rf_groupCell {
+  	margin-left: -2px; /* 2px for the border */
+}
+
+.cFormEditorDisplay .hidden, 
+.hidden { 
+	display: none; 
+}
+
+.cFormEditorPreview .rf_dropTarget { 
+	height: calc(100% - 20px);
+}
+
+.rf_editor, .cFormEditorPreview.rf_dropTarget { 
+	height: 100%;
+}
+
+.rf_dropTarget { 
+	min-height: 24px;
+}
+
+.rf_dropTarget > .cFormEditorDisplay,
+.rf_dropTarget > .cFormEditorToolbar { 
+	padding: 10px;
+	height: calc(100% - 20px);
+}
+
+.cFormEditorPreview.rf_highlighted [data-type = 'columns'] .rf_groupCell,
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_inputCellOneLine,
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
+	background: rgba(255,255,255,0.6);
+	border-radius: 0px
+}
+
+.rf_frame {
+	min-height: 24px;
+}
+
+.rf_highlighted .rf_frameBorder.hover .rf_frame,
+.rf_highlighted .rf_frame.hover,
+.rf_highlighted .rf_wrapper.hover .rf_container {
+	margin-left: 20px;
+	margin-right: 20px;
+	min-width: calc(100% - 40px);
+}
+
+.rf_highlighted .rf_frameBorder.hover,
+.rf_highlighted .rf_wrapper.hover  {
+	background-image: var(--FORM_EDITOR_BUTTON_INSERT_LEFT), var(--FORM_EDITOR_BUTTON_INSERT_RIGHT);
+	background-repeat: no-repeat;
+	background-position: left center, right center; 
+}
+
+div.cFormEditorToolbox [data-tool=true] > .attribute {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	width: 100px;
+	box-sizing: border-box;
+}
+
+/* overwritten layout selectors */
+.cFormEditorPreview .rf_columnsLayout > .rf_line,
+.cFormEditorPreview .rf_columnsLayout > *:not(body),
+.cFormEditorPreview .rf_columnsLayout.cols1 > *:not(body),
+.dflColumns.dflColumns0 .cFormEditorPreview .rf_columnsLayout > *:not(body),
+.dflColumns.dflColumns1 .cFormEditorPreview .rf_columnsLayout > *:not(body),
+.layoutControl.dflColumns.dflColumns2 .cFormEditorPreview .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout:not([class*="cols"]) > *:not(.dfListEntry),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout:not([class*="cols"]) > *:not(.dfListEntry),
+.layoutControl.dflColumns.dflColumns1 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns2 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl .layoutControl.dflColumns .cFormEditorPreview .rf_inputCell.is-control > .rf_cell .rf_columnsLayout > *:not(body),
+.layoutControl .layoutControl.dflColumns .cFormEditorPreview .rf_inputCellOneLine.is-control > .rf_cell .rf_columnsLayout > *:not(body),
+.layoutControl.dflColumns .cFormEditorPreview .rf_groupCell .rf_content .rf_groupCell .rf_content .rf_columnsLayout {
+	min-width: 100%;
+  	width: 100%;
+  	padding-right: 0px;
+}
+ 
+.dflColumns2 .cFormEditorPreview .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.cFormEditorPreview .rf_columnsLayout.cols2 > *:not(.rf_line),
+.layoutControl.dflColumns1 .cFormEditorPreview .rf_columnsLayout.cols2 > *:not(.rf_line)  { 
+  	min-width: 50%; 
+ 	width: 50%; 
+  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
+  	min-width: 33.3%; 
+ 	width: 33.3%; 
+  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout.cols4 > *:not(.rf_line):not(.rf_line) { 
+  	min-width: 25%; 
+ 	width: 25%; 
+  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout.cols5 > *:not(.rf_line):not(.rf_line) { 
+  	min-width: 20%; 
+ 	width: 20%; 
+  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.dlgDialog .dflColumns.dflColumns1 .cFormEditorDisplay .rf_labelInFrontOfInput .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry), 
+.dlgDialog .dflColumns .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry),
+.dlgDialog .dflColumns .cFormEditorPreview .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
+	min-width: 100%; 
+ 	width: 100%; 
+  	padding-right: 0px;
+}
+
+.dlgDialog .dflColumns:not(.dflColumns0):not(.dflColumns1) .cFormEditorPreview .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
+  	min-width: 50%;
+ 	width: 50%; 
+  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+/* form editor icons */
+[data-tool=true] > .attribute .type-image > .tool {
+	background-color: var(--BUTTON_COLOR);
+	width: 10px;
+	height: 10px;
+	display: inline-block;
+}
+
+[data-tool=true] > .attribute:hover .type-image > .tool {
+	background-color: var(--BUTTON_COLOR_HOVER);
+}
+
+.cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover > .rf_frame,
+.cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover > .rf_container {
+	margin-left: 20px;
+	min-width: calc(100% - 20px);
+}
+
+.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover,
+.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover {
+	background-image: var(--FORM_EDITOR_BUTTON_MOVE);
+	background-repeat: no-repeat;
+	background-position: left center; 
+}
+
+.rf_frame.showBorder {
+	border: 1px solid #DFE6F0;
+}
+
+.cFormEditorPreview.rf_highlighted .rf_inputCellOneLine,  
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
+	border: 1px dotted grey;
+}
+
+/* disable default drag and drop for images because icons and labels can be splitted in this case */
+.rf_dropTarget img {
+	user-drag: none; 
+	-webkit-user-drag: none;
+}
+
+.rf_dropTarget img, .cFormEditorDisplay.edit {
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+}
+
+.cFormEditorDisplay .rf_dragElement,
+.cFormEditorDisplay .rf_dragElement label,
+.cFormEditorDisplay .rf_dragElement input,
+.cFormEditorDisplay .rf_dragElement textarea,
+.cFormEditorElement label,
+.cFormEditorElement input,
+.cFormEditorElement textarea,
+*[draggable=true] {
+	cursor: pointer;
+	cursor: grab;
+}
+
+.cFormEditorDisplay .rf_dragElement.rf_dragged {
+	cursor: move;
+	cursor: grabbing;
+}
+
+.cFormEditorDisplay .input-image {
+	cursor: pointer;
+}
+
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_content,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_container {
+	border: 1px dashed #7695C3;
+	background: #FAFCFE;
+}
+
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_dropTarget.rf_parent {
+	border: 1px dashed #7695C3;
+	background: #dceaf8;
+}
+
+/* do not mark locked areas */
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_content,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_container,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_dropTarget.rf_parent,
+.rf_highlighted .rf_dragged .locked .rf_container,
+.rf_dropArea .locked,
+.cFormEditorPreview.rf_highlighted .locked .rf_inputCellOneLine,  
+.cFormEditorPreview.rf_highlighted .locked .rf_dragElement .rf_table {
+	border: inherit;
+	background: var(--BODY_BACK);
+}
+
+.rf_highlighted .rf_dragged .rf_container/*,
+.cFormEditorDisplay.edit .rf_container:hover*/ {
+	border: 1px solid #DFE6F0;
+	border-radius: var(--GROUP_RADIUS);
+}
+
+.rf_editor .cFormEditorPreview.rf_highlighted .cFormEditorElement.rf_dragged .rf_content {
+	border: 0px;
+	background: #FFF;
+}
+
+.rf_dropArea {
+	border: 1px dashed #7695C3;
+	box-sizing: border-box;
+	height: 100%;
+	width: 100%;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	background: rgba(250, 252, 254, .5);
+}
+
+.rf_dropText {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.cFormEditorToolbar .cFormEditorElement.rf_dragElement.rf_line {
+	width: auto;
+}
+
+
+/*
+****					****
+****	Input styles	****
+****					****
+*/
+/* Calendar styles */
+div.cal_root {
+	/* Viewport for animations. */
+	overflow: hidden;	
+}
+
+div.cal_root, div.cal_view {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	bottom: 0px;
+	right:  0px;
+	display: flex;
+	flex-direction: column;
+}
+
+.cal_titlebar {
+	display: flex;
+	justify-content: space-around;
+}
+
+.cal_titlebar a {
+	color: var(--icon-primary);
+}
+
+.cal_leftNav {
+	order: 1;
+	align-self: center;
+}
+
+.cal_header {
+	order: 2;
+	align-self: center;
+}
+
+.cal_rightNav {
+	order: 3;
+	align-self: center;
+}
+
+div.cal_content, table.cal_fixed {
+	height: 100%;
+}
+
+.cCalendar {
+	background-color: var(--layer); 
+}
+
+div.cal_content {
+	background: var(--layer);
+}
+
+table.cal_table {
+	border-width: 0px;
+	width: 100%;
+}
+
+td.cal_cell {
+	vertical-align: middle;
+	text-align: center;
+	cursor: pointer;
+	margin: 0;
+	padding: 0;
+}
+
+td.cal_cell:hover {
+	background-color: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+td.cal_cell a {
+	/* Without display block, tab navigation through `cal_range` tables does not work. */
+	display: block;
+	color: inherit;
+}
+
+/* Weekday */
+td.cal_wd {	
+	color: var(--text-primary);
+}
+
+/* Selected day */
+td.cal_sel {
+	background-color: var(--background-brand);
+  	color: var(--text-on-color);
+}
+
+/* Weekends */
+td.cal_we {
+	color: var(--text-placeholder);
+}
+
+/* Number of Week */
+td.cal_wn, td.cal_wn:hover {
+	background-color: var(--layer-accent-active);
+	color: var(--text-on-color);
+}
+
+/* Days of past or next month */
+td.cal_om {
+	color: var(--text-placeholder);
+}
+
+span.cal_range {
+	display: table;
+	margin: auto;
+}
+
+span.cal_rangePart {
+	display: table-row;
+	text-align: left;
+}
+
+div.cal_animation {
+	display: none;
+}
+
+div.cal_nextAnimation, div.cal_previousAnimation {
+    -webkit-animation: cal_slideAnimationFrames 0.3s; /* Chrome, Safari, Opera */
+    animation: cal_slideAnimationFrames 0.3s;
+    
+    -webkit-animation-fill-mode: forwards; /* Chrome, Safari, Opera */
+    animation-fill-mode: forwards;
+}
+
+@keyframes cal_slideAnimationFrames {
+	0% {
+	}
+    100% {
+    	left: 0px;
+    }
+}
+
+@-webkit-keyframes cal_slideAnimationFrames {
+	0% {
+	}
+    100% {
+    	left: 0px;
+    }
+}
+
+div.cal_zoom_outAnimation {
+    -webkit-animation: cal_zoom_outAnimationFrames 0.3s; /* Chrome, Safari, Opera */
+    animation: cal_zoom_outAnimationFrames 0.3s;
+    
+    -webkit-animation-fill-mode: forwards; /* Chrome, Safari, Opera */
+    animation-fill-mode: forwards;
+}
+
+@keyframes cal_zoom_outAnimationFrames {
+	0% {
+	}
+    100% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+    }
+}
+
+@-webkit-keyframes cal_zoom_outAnimationFrames {
+	0% {
+	}
+    100% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+    }
+}
+
+div.cal_zoom_inAnimation {
+    -webkit-animation: cal_zoom_inAnimationFrames 0.3s; /* Chrome, Safari, Opera */
+    animation: cal_zoom_inAnimationFrames 0.3s;
+    
+    -webkit-animation-fill-mode: forwards; /* Chrome, Safari, Opera */
+    animation-fill-mode: forwards;
+}
+
+@keyframes cal_zoom_inAnimationFrames {
+	0% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+	}
+    100% {
+    	transform: scale(1, 1);
+    	opacity: 1.0;
+    }
+}
+
+@-webkit-keyframes cal_zoom_inAnimationFrames {
+	0% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+	}
+    100% {
+    	transform: scale(1, 1);
+    	opacity: 1.0;
+    }
+}
+
+.cDateInput, .cTimeInput {
+	display: flex;
+	align-items: center;
+}
+
+.cDatetime {
+	display: flex;
+	align-items: center;
+	gap: 2rem;
+}
+
+.cIntegerInput.num {
+	display: flex;
+	align-items: stretch;
+}
+
+.cIntegerInput.num input {
+	color: var(--text-primary);
+	background: var(--field);
+	border: none;
+	padding: 0 var(--spacing-03);
+	height: 2.5rem;
+}
+
+.cIntegerInput.num.disabled input {
+	color: var(--text-disabled);
+}
+
+.cIntegerInput.num input:focus {
+	outline: none;
+	border: none;
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.cIntegerInput.num.error input {
+	box-shadow: inset 0px 0px 0px 1px var(--support-danger),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.cError .error i {
+	color: var(--support-danger);
+}
+
+.cDecoratedCell,.cExpandableTextInput ,.cBlockTextInput, .cPopupSelect {
+	display: flex;
+}
+
+.cIntegerInput.num .lFixedRight {
+	display: flex;
+	align-items: stretch;
+	color: var(--icon-primary);
+	background: var(--field);
+}
+
+.lFixedRight {
+	display: flex;
+	align-items: stretch;
+	color: var(--icon-primary);
+	background: var(--field);
+}
+
+.lFixedRight a:not(.lFlexible),
+.lFixedRight span:not(.lFlexible),
+.lFixedRight span span:not(.lFlexible),
+.lFixedRight .fChoose:not(.lFlexible) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--icon-primary);
+    height: 2.5rem;
+    width: 2.5rem;
+}
+
+.lFixedRight a i,
+.lFixedRight span span i,
+.lFixedRight .fChoose i {
+	font-size: 1rem;
+}
+
+.lFixedRight .button_minus {
+	position: relative;
+}
+
+.lFixedRight .button_minus::after {
+	content: "";
+	position: absolute;
+	top: 0.5;
+	left: 0;
+	height: 50%;
+	border-left: 1px solid var(--border-subtle);
+}
+
+.lFixedRight a:hover {
+	background: var(--field-hover);
+}
+
+.lFixedRight a:focus-within,
+.lFixedRight .button_minus:focus-within::after {
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	border-left: none;
+}
+
+.lFixedRight a.disabled,
+.lFixedRight .fChoose.disabled,
+.lFixedRight span.disabled,
+.lFixedRight span span.disabled,
+span.cIconSelect .input-image.cannot-edit i {
+	color: var(--icon-disabled);
+}
+
+.lFixedRight a.disabled:hover {
+	background: none;
+}
+
+.lFixedRight a.disabled:focus,
+.lFixedRight .button_minus:focus::after {
+	box-shadow: none;
+}
+
+.cTextInput input,
+.cTextInput textarea,
+.cExpandableTextInput input,
+.cBlockTextInput input,
+.cPopupSelect input,
+.cDateInput input,
+.cTimeInput input {
+	color: var(--text-primary);
+	background: var(--field);
+	border: none;
+	padding: 0 var(--spacing-03);
+	height: 2.5rem;
+}
+
+.cTextInput textarea {
+	padding-top: var(--spacing-02);
+	padding-bottom: var(--spacing-02);
+}
+
+.cTextInput input::placeholder,
+.cTextInput textarea::placeholder,
+.cExpandableTextInput input::placeholder,
+.cBlockTextInput input::placeholder,
+.cPopupSelect input::placeholder,
+.cDateInput input,
+.cTimeInput input {
+	color: var(--text-placeholder);
+}
+
+.cTextInput input:focus,
+.cTextInput.error input:focus,
+.cTextInput textarea:focus,
+.cTextInput.error textarea:focus,
+.cExpandableTextInput input:focus,
+.cBlockTextInput input:focus,
+.cExpandableTextInput.error input:focus,
+.cBlockTextInput.error input:focus,
+.cPopupSelect input:focus,
+.cPopupSelect.error input:focus,
+.cDropdownSelect select:focus,
+.cDropdownSelect.error select:focus,
+.cDateInput input:focus,
+.cDateInput.error input:focus,
+.cTimeInput input:focus,
+.cTimeInput.error input:focus {
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	outline: none;
+}
+
+.cTextInput.error input,
+.cTextInput.error textarea,
+.cExpandableTextInput.error input,
+.cBlockTextInput.error input,
+.cPopupSelect.error input,
+.cDropdownSelect.error select,
+.cDateInput.error input,
+.cTimeInput.error input {
+	box-shadow: inset 0px 0px 0px 1px var(--support-danger),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.cTextInput.disabled input,
+.cTextInput.disabled textarea,
+.cExpandableTextInput.disabled input,
+.cBlockTextInput.disabled input,
+.cPopupSelect.disabled input,
+.cDropdownSelect.disabled select,
+.cDateInput.disabled input,
+.cTimeInput.disabled input {
+	color: var(--text-disabled);
+}
+
+.cTextInput.disabled input::placeholder,
+.cTextInput.disabled textarea::placeholder,
+.cExpandableTextInput.disabled input:placeholder,
+.cBlockTextInput.disabled input:placeholder,
+.cPopupSelect.disabled input::placeholder {
+	color: var(--text-disabled);
+}
+
+select:not([multiple="multiple"]) {
+	-webkit-appearance: none;
+	appearance: none;
+	background: var(--field);
+	color: var(--text-primary);
+	padding-left: var(--spacing-03);
+	padding-right: var(--spacing-06);
+	height: 2.5rem;
+	background-image: url("../themes/core/chevron-down.svg");
+	background-repeat: no-repeat;
+	background-position: right calc(1rem + 1px) center; /* Icon in der Mitte rechts positionieren mit Abstand zum rechten Rand */	
+	background-size: 1rem 1rem;
+}
+
+select:not([multiple="multiple"]):disabled {
+	background-color: var(--text-disabled);
+    -webkit-mask-image: url("../themes/core/chevron-down.svg");
+    mask-image: url("../themes/core/chevron-down.svg");
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+}
+
+/* Time input control */
+/*!Don't remove this!
+ * jQuery MDTimePicker v1.0 plugin
+ * 
+ * Author: Dionlee Uy
+ * Email: dionleeuy@gmail.com
+ *
+ * Date: Tuesday, August 28 2017
+ */
+ 
+.mdtimepicker {
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	width: 240px;
+	height: 240px;
+	box-shadow: 0px 1px 10px #888;
+	border: 1px solid var(--border-subtle);
+    background-color: var(--layer);
+}
+
+.mdtimepicker.hidden { display: none; }
+.mdtimepicker.animate { background-color: transparent; }
+.mdtp__wrapper {
+	position: absolute;
+	top: 0px;
+	display: flex;
+	flex-direction: column;
+	min-width: 240px;
+	opacity: 1;
+	user-select: none;
+	transform: scale(1);
+	transition: transform .28s ease, opacity .28s ease;
+	overflow: hidden;
+}
+
+.mdtp__wrapper.animate {
+	transform: translateX(-50%) scale(1);
+	opacity: 0;
+}
+
+.mdtp__time_holder {
+	height: 30px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+	color: var(--text-primary);
+	text-align: center;
+	background: var(--layer-accent);
+	/* background-color: rgba(0, 0, 0, 0); */
+	background-position-x: 0%;
+	background-position-y: 0%;
+	background-repeat: repeat;
+	background-attachment: scroll;
+	background-image: var(--layer-accent);
+	background-size: auto auto;
+	background-origin: padding-box;
+	background-clip: border-box;
+}
+
+.mdtp__time_holder > span {
+	display: inline-block;
+	line-height: 48px;
+	cursor: default;
+}
+
+.mdtp__time_holder > span:not(.mdtp__timedots):not(.mdtp__ampm) {
+	cursor: pointer;
+	margin: 0 4px;
+}
+
+.mdtp__time_holder .mdtp__time_h.active, .mdtp__time_holder .mdtp__time_m.active { color: #fff; }
+.mdtp__time_holder .mdtp__ampm { font-size: 12px; }
+.mdtp__clock_holder {
+	position: relative;
+	background-color: var(--layer);
+}
+
+.mdtp__clock_holder .mdtp__clock {
+    position: relative;
+    left: calc(50% - 100px);
+    width: 200px;
+    height: 200px;
+    margin-top: 4px;
+    border-radius: 50%;
+    background-color: var(--background);
+    border: 1px solid var(--border-subtle);
+}
+
+.mdtp__time_holder .mdtp__am, .mdtp__time_holder .mdtp__pm {
+	display: block;
+	position: absolute;
+	top: 0px;
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	text-align: center;
+	font-weight: bold;
+	cursor: pointer;
+	border: 0px solid rgba(0,0,0,.1);
+	transition: background-color .2s ease, color .2s;
+	z-index: 3;
+}
+
+.mdtp__time_holder .mdtp__am { left: 0px; }
+.mdtp__time_holder .mdtp__pm { right: 0px; }
+.mdtp__time_holder .mdtp__am:hover, .mdtp__time_holder .mdtp__pm:hover { background-color: rgba(0,0,0,.1); }
+.mdtp__time_holder .mdtp__am.active, .mdtp__time_holder .mdtp__pm.active {
+	color: #fff;
+	background: rgba(0,0,0,.1);
+}
+	
+.mdtp__clock .mdtp__clock_dot {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+	padding: 4px;
+	background-color: var(--layer-accent);
+	border-radius: 50%;
+}
+
+.mdtp__clock .mdtp__hour_holder,
+.mdtp__clock .mdtp__minute_holder {
+	position: absolute;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 1;
+	transform: scale(1);
+	transition: transform .35s cubic-bezier(0.4, 0.0, 0.2, 1), opacity .35s ease;
+	overflow: hidden;
+}
+
+.mdtp__clock .mdtp__hour_holder.animate {
+	transform: scale(1.2);
+	opacity: 0;
+}
+
+.mdtp__clock .mdtp__minute_holder.animate {
+	transform: scale(.8);
+	opacity: 0;
+}
+
+.mdtp__clock .mdtp__hour_holder.hidden, .mdtp__clock .mdtp__minute_holder.hidden { display: none; }
+.mdtp__clock .mdtp__digit {
+	position: absolute;
+	width: calc(50% - 1px);
+	top: 50%;
+	left: 0;
+	margin-left: 1px;
+	margin-top: -16px;
+	transform-origin: right center;
+	z-index: 1;
+}
+	
+.mdtp__clock .mdtp__digit .outer,
+.mdtp__clock .mdtp__digit .inner,
+.mdtp__clock .mdtp__digit span {
+	display: inline-block;
+	width: 29px;
+	height: 29px;
+	line-height: 29px;
+	margin-left: 0px;
+	text-align: center;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background-color .28s, color .14s;
+}
+
+.mdtp__clock .mdtp__digit .inner {
+	font-size: 10px;
+}
+	
+.mdtp__digit .outer.active,
+.mdtp__digit .inner.active,
+.mdtp__digit.active .hour,
+.mdtp__digit.active .minute,
+.mdtp__clock .mdtp__digit span:hover {
+	background: var(--layer-hover);
+	background-color: rgba(0, 0, 0, 0);
+	background-position-x: 0%;
+	background-position-y: 0%;
+	background-repeat: repeat;
+	background-attachment: scroll;
+	background-image: var(--layer-hover);
+	background-size: auto auto;
+	background-origin: padding-box;
+	background-clip: border-box;
+	color: #584B1E;
+	z-index: 2;
+}
+
+.mdtp__digit .minute:not(.minute_small) {
+    z-index: 3;
+}
+
+.mdtp__digit .minute.minute_small {
+    z-index: 2;
+    opacity: 0;
+    padding: 0px;
+}
+
+.mdtp__digit .minute_small:hover {
+	opacity: 1;
+  	width: 12px;
+	height: 12px;
+	line-height: 12px;
+	margin-left: 0px;
+	text-align: left;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background-color .28s, color .14s;
+}	
+
+.mdtp__digit.active > .minute_small {
+	opacity: 1;
+}
+	
+.mdtp__digit.active:before {
+	content: '';
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	right: 0;
+	height: 2px;
+	width: calc(100% - 29px);
+	background-color: var(--layer-accent);
+	z-index: -1;
+}
+
+.mdtp__clock .mdtp__minute_holder .mdtp__digit { font-size: 12px; }
+.mdtp__clock .mdtp__minute_holder .mdtp__digit:not(.marker) {
+	margin-top: -6px;
+	height: 12px;
+}
+
+.mdtp__clock .mdtp__minute_holder .mdtp__digit:not(.marker) span {
+	width: 12px;
+	height: 12px;
+	line-height: 14px;
+}
+
+.mdtp__clock .mdtp__minute_holder .mdtp__digit .minute {
+	margin-left: 16px;	
+}
+
+.mdtp__clock .mdtp__minute_holder .mdtp__digit:not(.marker).active:before { width: calc(100% - 26px); }
+
+
+.mdtp__clock .mdtp__minute_holder .mdtp__digit.marker { margin-top: -12px; }
+.mdtp__clock .mdtp__minute_holder .mdtp__digit.marker.active:before { width: calc(100% - 34px); }
+.mdtp__clock .mdtp__minute_holder .mdtp__digit.marker span {
+	width: 24px;
+	height: 24px;
+	line-height: 24px;
+	margin-left: 10px;	
+}
+
+.mdtp__digit.rotate-6 { transform: rotate(6deg); } .mdtp__digit.rotate-6 span { transform: rotate(-6deg); }
+.mdtp__digit.rotate-12 { transform: rotate(12deg); } .mdtp__digit.rotate-12 span { transform: rotate(-12deg); }
+.mdtp__digit.rotate-18 { transform: rotate(18deg); } .mdtp__digit.rotate-18 span { transform: rotate(-18deg); }
+.mdtp__digit.rotate-24 { transform: rotate(24deg); } .mdtp__digit.rotate-24 span { transform: rotate(-24deg); }
+.mdtp__digit.rotate-30 { transform: rotate(30deg); } .mdtp__digit.rotate-30 span { transform: rotate(-30deg); }
+.mdtp__digit.rotate-36 { transform: rotate(36deg); } .mdtp__digit.rotate-36 span { transform: rotate(-36deg); }
+.mdtp__digit.rotate-42 { transform: rotate(42deg); } .mdtp__digit.rotate-42 span { transform: rotate(-42deg); }
+.mdtp__digit.rotate-48 { transform: rotate(48deg); } .mdtp__digit.rotate-48 span { transform: rotate(-48deg); }
+.mdtp__digit.rotate-54 { transform: rotate(54deg); } .mdtp__digit.rotate-54 span { transform: rotate(-54deg); }
+.mdtp__digit.rotate-60 { transform: rotate(60deg); } .mdtp__digit.rotate-60 span { transform: rotate(-60deg); }
+.mdtp__digit.rotate-66 { transform: rotate(66deg); } .mdtp__digit.rotate-66 span { transform: rotate(-66deg); }
+.mdtp__digit.rotate-72 { transform: rotate(72deg); } .mdtp__digit.rotate-72 span { transform: rotate(-72deg); }
+.mdtp__digit.rotate-78 { transform: rotate(78deg); } .mdtp__digit.rotate-78 span { transform: rotate(-78deg); }
+.mdtp__digit.rotate-84 { transform: rotate(84deg); } .mdtp__digit.rotate-84 span { transform: rotate(-84deg); }
+.mdtp__digit.rotate-90 { transform: rotate(90deg); } .mdtp__digit.rotate-90 span { transform: rotate(-90deg); }
+.mdtp__digit.rotate-96 { transform: rotate(96deg); } .mdtp__digit.rotate-96 span { transform: rotate(-96deg); }
+.mdtp__digit.rotate-102 { transform: rotate(102deg); } .mdtp__digit.rotate-102 span { transform: rotate(-102deg); }
+.mdtp__digit.rotate-108 { transform: rotate(108deg); } .mdtp__digit.rotate-108 span { transform: rotate(-108deg); }
+.mdtp__digit.rotate-114 { transform: rotate(114deg); } .mdtp__digit.rotate-114 span { transform: rotate(-114deg); }
+.mdtp__digit.rotate-120 { transform: rotate(120deg); } .mdtp__digit.rotate-120 span { transform: rotate(-120deg); }
+.mdtp__digit.rotate-126 { transform: rotate(126deg); } .mdtp__digit.rotate-126 span { transform: rotate(-126deg); }
+.mdtp__digit.rotate-132 { transform: rotate(132deg); } .mdtp__digit.rotate-132 span { transform: rotate(-132deg); }
+.mdtp__digit.rotate-138 { transform: rotate(138deg); } .mdtp__digit.rotate-138 span { transform: rotate(-138deg); }
+.mdtp__digit.rotate-144 { transform: rotate(144deg); } .mdtp__digit.rotate-144 span { transform: rotate(-144deg); }
+.mdtp__digit.rotate-150 { transform: rotate(150deg); } .mdtp__digit.rotate-150 span { transform: rotate(-150deg); }
+.mdtp__digit.rotate-156 { transform: rotate(156deg); } .mdtp__digit.rotate-156 span { transform: rotate(-156deg); }
+.mdtp__digit.rotate-162 { transform: rotate(162deg); } .mdtp__digit.rotate-162 span { transform: rotate(-162deg); }
+.mdtp__digit.rotate-168 { transform: rotate(168deg); } .mdtp__digit.rotate-168 span { transform: rotate(-168deg); }
+.mdtp__digit.rotate-174 { transform: rotate(174deg); } .mdtp__digit.rotate-174 span { transform: rotate(-174deg); }
+.mdtp__digit.rotate-180 { transform: rotate(180deg); } .mdtp__digit.rotate-180 span { transform: rotate(-180deg); }
+.mdtp__digit.rotate-186 { transform: rotate(186deg); } .mdtp__digit.rotate-186 span { transform: rotate(-186deg); }
+.mdtp__digit.rotate-192 { transform: rotate(192deg); } .mdtp__digit.rotate-192 span { transform: rotate(-192deg); }
+.mdtp__digit.rotate-198 { transform: rotate(198deg); } .mdtp__digit.rotate-198 span { transform: rotate(-198deg); }
+.mdtp__digit.rotate-204 { transform: rotate(204deg); } .mdtp__digit.rotate-204 span { transform: rotate(-204deg); }
+.mdtp__digit.rotate-210 { transform: rotate(210deg); } .mdtp__digit.rotate-210 span { transform: rotate(-210deg); }
+.mdtp__digit.rotate-216 { transform: rotate(216deg); } .mdtp__digit.rotate-216 span { transform: rotate(-216deg); }
+.mdtp__digit.rotate-222 { transform: rotate(222deg); } .mdtp__digit.rotate-222 span { transform: rotate(-222deg); }
+.mdtp__digit.rotate-228 { transform: rotate(228deg); } .mdtp__digit.rotate-228 span { transform: rotate(-228deg); }
+.mdtp__digit.rotate-234 { transform: rotate(234deg); } .mdtp__digit.rotate-234 span { transform: rotate(-234deg); }
+.mdtp__digit.rotate-240 { transform: rotate(240deg); } .mdtp__digit.rotate-240 span { transform: rotate(-240deg); }
+.mdtp__digit.rotate-246 { transform: rotate(246deg); } .mdtp__digit.rotate-246 span { transform: rotate(-246deg); }
+.mdtp__digit.rotate-252 { transform: rotate(252deg); } .mdtp__digit.rotate-252 span { transform: rotate(-252deg); }
+.mdtp__digit.rotate-258 { transform: rotate(258deg); } .mdtp__digit.rotate-258 span { transform: rotate(-258deg); }
+.mdtp__digit.rotate-264 { transform: rotate(264deg); } .mdtp__digit.rotate-264 span { transform: rotate(-264deg); }
+.mdtp__digit.rotate-270 { transform: rotate(270deg); } .mdtp__digit.rotate-270 span { transform: rotate(-270deg); }
+.mdtp__digit.rotate-276 { transform: rotate(276deg); } .mdtp__digit.rotate-276 span { transform: rotate(-276deg); }
+.mdtp__digit.rotate-282 { transform: rotate(282deg); } .mdtp__digit.rotate-282 span { transform: rotate(-282deg); }
+.mdtp__digit.rotate-288 { transform: rotate(288deg); } .mdtp__digit.rotate-288 span { transform: rotate(-288deg); }
+.mdtp__digit.rotate-294 { transform: rotate(294deg); } .mdtp__digit.rotate-294 span { transform: rotate(-294deg); }
+.mdtp__digit.rotate-300 { transform: rotate(300deg); } .mdtp__digit.rotate-300 span { transform: rotate(-300deg); }
+.mdtp__digit.rotate-306 { transform: rotate(306deg); } .mdtp__digit.rotate-306 span { transform: rotate(-306deg); }
+.mdtp__digit.rotate-312 { transform: rotate(312deg); } .mdtp__digit.rotate-312 span { transform: rotate(-312deg); }
+.mdtp__digit.rotate-318 { transform: rotate(318deg); } .mdtp__digit.rotate-318 span { transform: rotate(-318deg); }
+.mdtp__digit.rotate-324 { transform: rotate(324deg); } .mdtp__digit.rotate-324 span { transform: rotate(-324deg); }
+.mdtp__digit.rotate-330 { transform: rotate(330deg); } .mdtp__digit.rotate-330 span { transform: rotate(-330deg); }
+.mdtp__digit.rotate-336 { transform: rotate(336deg); } .mdtp__digit.rotate-336 span { transform: rotate(-336deg); }
+.mdtp__digit.rotate-342 { transform: rotate(342deg); } .mdtp__digit.rotate-342 span { transform: rotate(-342deg); }
+.mdtp__digit.rotate-348 { transform: rotate(348deg); } .mdtp__digit.rotate-348 span { transform: rotate(-348deg); }
+.mdtp__digit.rotate-354 { transform: rotate(354deg); } .mdtp__digit.rotate-354 span { transform: rotate(-354deg); }
+.mdtp__digit.rotate-360 { transform: rotate(360deg); } .mdtp__digit.rotate-360 span { transform: rotate(-360deg); }
+
+
+
+/*
+****							****
+****	ChoiceControl styles	****
+****							****
+*/
+/* 		Radio Buttons styles	*/
+/* Resetting the browser's radio style */
+input[type="radio"] {
+	-webkit-appearance: none;
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	cursor: pointer;
+}
+
+.cChoice-horizontal {
+	display: flex;
+	gap: var(--spacing-03);
+}
+
+.cChoice-vertical {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-02);
+}
+
+.cChoice-option {
+	display: flex;
+	gap: var(--spacing-02);
+}
+
+.cChoice-option label {
+	color: var(--text-primary);
+	cursor: pointer;
+}
+
+.cChoice-horizontal.disabled label,
+.cChoice-vertical.disabled label{
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+input[type="radio"] {
+	align-self: center;
+	display: grid;
+	place-content: center;
+	position: relative;
+	height: 1rem;
+	width: 1rem;
+	border-radius: 50%;
+	border: 1px solid var(--icon-primary);
+}
+
+input[type="radio"]::before {
+ 	content: '';
+ 	position: absolute;
+ 	top: 50%;
+ 	left: 50%;
+ 	height: 0.5rem;
+ 	width: 0.5rem;
+ 	border-radius: 50%;
+ 	background-color: var(--background);
+	transform: scale(0);
+}
+
+input[type="radio"]:checked::before {
+ 	background-color: var(--icon-primary);
+	transform: scale(1) translate(-50%, -50%);
+}
+
+input[type="radio"]:focus {
+	box-shadow: inset 0 0 0 1px var(--focus);;
+}
+
+.cChoice-horizontal.disabled, .cChoice-vertical.disabled {
+	color: var(--text-disabled);
+}
+
+.cChoice-horizontal.disabled input[type="radio"], .cChoice-vertical.disabled input[type="radio"]{
+	border: 1px solid  var(--icon-disabled);
+}
+
+.cChoice-horizontal.disabled input[type="radio"]:checked::before,
+.cChoice-vertical.disabled input[type="radio"]:checked::before{
+	background-color: var(--icon-disabled);
+}
+
+/* 		Check Box styles	*/
+input[type="checkbox"] {
+	-webkit-appearance: none;
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	cursor: pointer;
+}
+
+input[type="checkbox"] {
+    display: grid;
+	align-self: center;
+    place-content: center;
+    position: relative;
+    height: 1rem;
+    width: 1rem;
+    border-radius: 1px;
+    border: 1px solid var(--icon-primary);
+}
+
+input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    transform: translateY(-50%);
+    height: 100%;
+    width: 100%;
+    border-radius: 1px;
+    background-color: var(--background);
+    transform: scaleX(0);
+}
+
+input[type="checkbox"]:checked::before {
+	content: '\f633';
+	font-family: "bootstrap-icons";
+	font-size: .8rem;
+	color: white;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--icon-primary);
+	transform: scaleX(1);
+}
+
+input[type="checkbox"]:checked:focus::before {
+	box-shadow: inset 0px 0px 0px .8px var(--focus),inset 0px 0px 0px 1.3px var(--focus-inset);
+}
+
+input[type="checkbox"]:focus {
+	box-shadow: inset 0px 0px 0px .8px var(--focus),inset 0px 0px 0px 1.3px var(--focus-inset);
+}
+
+.cChoice-horizontal.disabled, .cChoice-vertical.disabled {
+	color: var(--text-disabled);
+}
+
+.cChoice-horizontal.disabled input[type="checkbox"], .cChoice-vertical.disabled input[type="checkbox"],
+.cCheckbox.cannot-edit input[type="checkbox"] {
+	border: 1px solid  var(--icon-disabled);
+	cursor: default;
+}
+
+.cChoice-horizontal.disabled input[type="checkbox"]:checked::before,
+.cChoice-vertical.disabled input[type="checkbox"]:checked::before{
+	background-color: var(--icon-disabled);
+	cursor: default;
+}
+
+
+

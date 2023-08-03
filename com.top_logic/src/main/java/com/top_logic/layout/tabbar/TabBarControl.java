@@ -495,6 +495,23 @@ public class TabBarControl extends AbstractVisibleControl implements TabBarListe
 		HTMLUtil.endScriptAfterRendering(out);
 	}
 
+	/**
+	 * 
+	 * Writes a script that handles the scrolling effect when not all tabs have space in the browser
+	 * window. The function handles scrolling with the mouse as well as with the arrow buttons.
+	 * 
+	 * @param out
+	 *        Writes tabs.
+	 * @throws IOException
+	 *         If an I/O error occurs.
+	 */
+	@TemplateVariable("tabScrollBehaviour")
+	public void writeScrollButtonScript(TagWriter out) throws IOException {
+		out.append("services.viewport.tabScrollBehaviour(");
+		out.append(getID());
+		out.append(");");
+	}
+
 	private void writeJSONViewportReferences(Appendable out) throws IOException {
 		String controlID = getID();
 		out.append("{");

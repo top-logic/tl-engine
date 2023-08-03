@@ -704,5 +704,143 @@ services.viewport = {
 	
 	getSpaceHolderContainer: function(viewportReferences) {
 		return document.getElementById(viewportReferences.buttonSpaceHolderContainer);
+	},
+	
+	tabScrollBehaviour: function(element) {
+		const elementID = element.id;
+		const tabLayout = document.getElementById(elementID);
+		const scrollContainer = tabLayout.querySelector('.tlTabScrollContainer');
+		const scrollLeftButton = tabLayout.querySelector('.tlTabScrollLeft');
+		const scrollRightButton = tabLayout.querySelector('.tlTabScrollRight');
+		let isScrolling = false;
+		const scrollAmount = 70;
+		
+		if (scrollContainer.scrollWidth > scrollContainer.clientWidth) {
+	      scrollLeftButton.style.display = 'flex';
+	      scrollRightButton.style.display = 'flex';
+	    } else {
+	      scrollLeftButton.style.display = 'none';
+	      scrollRightButton.style.display = 'none';
+	    }
+	    
+		function scrollLeft() {
+		  scrollContainer.scrollBy({
+		    left: -scrollAmount,
+		    behavior: 'smooth'
+		  });
+		  if (isScrolling) {
+		    setTimeout(scrollLeft, 100);
+		  }
+		}
+		
+		function scrollRight() {
+		  scrollContainer.scrollBy({
+		    left: scrollAmount,
+		    behavior: 'smooth'
+		  });
+		  if (isScrolling) {
+		    setTimeout(scrollRight, 100);
+		  }
+		}
+	    	    
+	    scrollLeftButton.addEventListener('mousedown', function() {
+		  isScrolling = true;
+		  scrollLeft();
+		});
+		
+		scrollRightButton.addEventListener('mousedown', function() {
+		  isScrolling = true;
+		  scrollRight();
+		});
+		
+		scrollLeftButton.addEventListener('mouseup', function() {
+		  isScrolling = false;
+		});
+		
+		scrollRightButton.addEventListener('mouseup', function() {
+		  isScrolling = false;
+		});
+		
+		scrollContainer.addEventListener("mousedown", function() {
+			isScrolling = true;
+		});
+		
+		scrollContainer.addEventListener("mousemove", function(e) {
+			if (!isScrolling) return;
+		  	scrollContainer.classList.add("scrolling");
+		  	scrollContainer.scrollLeft -= e.movementX;
+		});
+		
+		document.addEventListener("mouseup", function() {
+		  isScrolling = false;
+		  scrollContainer.classList.remove("scrolling");
+		});
+	  
+	},
+	
+	buttonComponentResizing: function(element) {
+		const elementID = element.id;
+	  	const buttonComponentParent = document.getElementById(elementID);
+		const buttonScrollContainer = buttonComponentParent.querySelector('.tlButtonScrollContainer');
+		const buttons = Array.from(buttonScrollContainer.querySelectorAll('.containerButton:not(.tlDropdownContent .containerButton)'));
+		const buttonsSize = buttons.length;
+		let buttonsClone = [];
+	  	let currButton;
+	  	let dropdown = buttonScrollContainer.querySelector('.tlDropdown');
+	  	let dropdownButton = buttonScrollContainer.querySelector('.tlDropdownButton');
+	  	let dropdownContent = buttonScrollContainer.querySelector('.tlDropdownContent');
+	  	let dropdownHtml = '';
+	  	dropdown.style.display = 'none';
+	  	dropdownContent.style.display = 'none';
+	  	for (let i = 0; i < buttonsSize; i++) {
+	    	buttonsClone[i] = buttons[i].cloneNode(true);
+	    	buttons[i].style.display = 'inline-block';
+	  	}
+	  	
+	  	for(let i = 0; i < buttonsSize; i++) {
+	    	if(buttons[i].offsetLeft < 1) {
+	      	dropdown.style.display = 'inline-block';
+	      	currButton = buttonsClone[i].firstElementChild;
+	      	currButton.classList = "tlInDropdown"
+	      	dropdownHtml += currButton.outerHTML;
+	      	buttons[i].style.display = 'none';
+	    	}
+	  	}
+	  	dropdownContent.innerHTML = dropdownHtml;
+	},
+	
+	openButtonComponentsDropdown: function(dropdownButton) {
+		const dropdownContent = dropdownButton.nextElementSibling;
+	  	if (dropdownContent.style.display === 'none') {
+	    	dropdownContent.style.display = 'block';
+	    	// Finds the button with the biggest width. Dropdown Content's width depends on that,
+	    	// because normally an element grows in the right direction but this dropdown menu should 
+	    	// grow in the left direction.
+	    	let maxWidth = 0;
+	    	const labels = dropdownContent.querySelectorAll('a .tlButtonLabel');
+			for (let i = 0; i < labels.length; i++) {
+			  const label = labels[i];
+			  let width = label.getBoundingClientRect().width;
+			  const nextSibling = label.nextElementSibling;
+  			  if (nextSibling) {
+				  width += nextSibling.getBoundingClientRect().width;
+				  width += parseFloat(getComputedStyle(nextSibling).getPropertyValue('padding-right'));
+  			  }
+			  maxWidth = Math.max(maxWidth, width);
+			}
+			const anchors = dropdownContent.querySelectorAll('a');
+			const buttonPadding = getComputedStyle(anchors[0]);
+			const paddingLeft = parseFloat(buttonPadding.getPropertyValue('padding-left'));
+			const paddingRight = parseFloat(buttonPadding.getPropertyValue('padding-right'));
+			dropdownContent.style.width = `${maxWidth + paddingLeft + paddingRight}px`;
+	  	} else {
+	    	dropdownContent.style.display = 'none';
+	  	}
+	  	// Dropdown-Fenster schliessen, wenn man woanders klickt
+	  	document.addEventListener('click', function(event) {
+	    	if (!dropdownButton.contains(event.target) && !dropdownContent.contains(event.target)) {
+	      		dropdownContent.style.display = 'none';
+	    	}
+	  	});
 	}
 };

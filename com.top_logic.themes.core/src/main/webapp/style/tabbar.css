@@ -1,0 +1,212 @@
+/*
+****					****
+****	Tabbar syles	****
+****					****
+*/
+.mainTabBar, .tabBar {
+	display: flex;
+	flex-wrap: nowrap;
+	margin-right: .625rem;
+}
+
+.tlTabScrollContainer {
+	display: flex;
+	flex-wrap: nowrap;
+	height: 2.5rem;
+  	overflow-x: auto;
+	scrollbar-width: none;	/* Hides the scrollbar. */
+}
+
+/* Hides the scrollbar in Chrome, Safari, and Opera */
+.tlTabScrollContainer::-webkit-scrollbar {
+  	display: none;
+}
+
+.tlTabScrollContainer.scrolling .tab,
+.tlTabScrollContainer.scrolling .activeTab {
+	pointer-events: none;
+}
+
+.tlTabScrollLeft, .tlTabScrollRight {
+	display: flex;
+  	justify-content: center;
+ 	align-items: center;
+ 	flex-shrink: 0;
+	cursor: pointer;
+  	font-size: 16px;
+  	width: 2.5rem;
+  	height: 2.5rem;
+}
+
+/* Line tabs */
+.mainTabBar .activeTab {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	flex-shrink: 0;
+	cursor: pointer;
+  	height: 2.5rem;
+	padding: var(--spacing-02) var(--spacing-03);
+	background: transparent;
+	width: auto;
+	border-top: none;
+	border-right: none;
+	border-left: none;
+	border-bottom: 2px solid var(--border-interactive);
+}
+
+.mainTabBar .tab {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	flex-shrink: 0;
+	cursor: pointer;
+  	height: 2.5rem;
+	padding: var(--spacing-02) var(--spacing-03);
+	background: transparent;
+	border-top: none;
+	border-right: none;
+	border-left: none;
+	border-bottom: 2px solid var(--border-subtle);
+}
+
+.mainTabBar .activeTabLabel {
+	color: var(--text-primary);
+	font-size: .875rem;
+	font-weight: 600;
+}
+
+.mainTabBar .tabLabel {
+	color: var(--text-secondary);
+	font-size: .875rem;
+	font-weight: 400;
+}
+
+.mainTabBar .activeTab:hover,
+.mainTabBar .tab:hover {
+	border-bottom: 2px solid var(--border-strong);
+}
+
+.mainTabBar .activeTab:hover .activeTabLabel,
+.mainTabBar .tab:hover .tabLabel{
+	color: var(--text-primary);
+}
+
+.mainTabBar .activeTab:hover .tabIcon i,
+.mainTabBar .tab:hover .tabIcon i{
+	color: var(--icon-primary);
+}
+
+.mainTabBar .activeTab:focus,
+.mainTabBar .tab:focus {
+	box-shadow: inset 0 0 0 1px var(--focus);
+	border-bottom: 1px solid var(--focus);
+}
+
+.mainTabBar .activeTab:disabled,
+.mainTabBar .tab:disabled {
+	border-bottom: 2px solid var(--border-disabled);
+}
+
+.mainTabBar .activeTab:disabled .activeTabLabel,
+.mainTabBar .tab:disabled .tabLabel {
+	color: var(--text-disabled);
+	font-weight: 400;
+}
+
+.mainTabBar .activeTab:disabled .tabIcon i,
+.mainTabBar .tab:disabled .tabIcon i {
+	color: var(--icon-disabled);
+}
+
+
+/* Contained tabs */
+.tabBar .activeTab {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	flex-shrink: 0;
+	padding: var(--spacing-02) var(--spacing-03);
+	height: 2.5rem;
+	background: var(--layer-selected);
+	border: none;
+	cursor: pointer;
+}
+
+.tabBar .tab {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	flex-shrink: 0;
+	padding: var(--spacing-02) var(--spacing-03);
+	height: 2.5rem;
+	background: var(--layer);
+	border: none;
+	cursor: pointer;
+}
+
+.tabBar .activeTabLabel {
+	color: var(--text-interactive);
+	font-size: .875rem;
+	font-weight: 600;
+}
+
+.tabBar .tabLabel {
+	color: var(--text-secondary);
+	font-size: .875rem;
+	font-weight: 400;
+}
+
+.tabIcon i {
+	color: var(--icon-secondary);
+	padding-left: var(--spacing-02);
+  	font-size: 1rem;
+}
+
+.tabBar .activeTab .tabIcon i {
+	color: var(--icon-interactive);
+}
+
+.tabBar .tab .tabIcon i {
+	color: var(--icon-secondary);
+}
+
+.tabBar .tab:not(:last-child) {
+	border-right: 1px solid var(--border-subtle);
+}
+
+.tabBar .activeTab:hover .activeTabLabel,
+.tabBar .tab:hover .tabLabel{
+	color: var(--text-primary);
+}
+
+.tabBar .activeTab:hover .tabIcon i,
+.tabBar .tab:hover .tabIcon i{
+	color: var(--icon-primary);
+}
+
+.tabBar .activeTab:hover,
+.tabBar .tab:hover {
+	background: var(--layer-hover);
+}
+
+.tabBar .tab:focus {
+	box-shadow: inset 0 0 0 1px var(--focus);
+}
+
+/* disabled tabs */
+.tabBar .activeTab:disabled,
+.tabBar .tab:disabled {
+	background: var(--layer-disabled);
+}
+
+.tabBar .activeTab:disabled .activeTabLabel,
+.tabBar .tab:disabled .tabLabel {
+	color: var(--text-disabled);
+	font-weight: 400;
+}
+
+.tabBar .activeTab:disabled .tabIcon i,
+.tabBar .tab:disabled .tabIcon i {
+	color: var(--icon-disabled);
+}

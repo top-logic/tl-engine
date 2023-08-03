@@ -47,13 +47,21 @@ public class ContextMenuUtil {
 	 * @see CommandHandler#getClique()
 	 */
 	public static Menu toContextMenu(Stream<ComponentCommandModel> buttonsStream) {
-		return Menu.create(buttonsStream
+		return Menu.create(groupAndSort(buttonsStream).collect(Collectors.toList()));
+	}
+
+	/**
+	 * Creates a stream based on the given buttons that delivers content grouped by their command
+	 * cliques.
+	 */
+	public static Stream<List<? extends ComponentCommandModel>> groupAndSort(
+			Stream<ComponentCommandModel> buttons) {
+		return buttons
 			.collect(Collectors.groupingBy(ContextMenuUtil::groupButtons, LinkedHashMap::new, Collectors.toList()))
 			.entrySet()
 			.stream()
 			.sorted(CommandHandlerFactory.getInstance().getCliqueToolBarOrder())
-			.map(Entry::getValue)
-			.collect(Collectors.toList()));
+			.map(Entry::getValue);
 	}
 
 	/**

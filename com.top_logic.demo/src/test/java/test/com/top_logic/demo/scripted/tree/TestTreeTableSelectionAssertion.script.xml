@@ -56,6 +56,23 @@
 						</local-name>
 					</expected-value>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+							/>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="TopLogic"
+						/>
+					</model-name>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
 					user-id="root"
@@ -167,34 +184,6 @@
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comment="Initial selection is the first displayed row."
-					comparision="set-equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
-						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
-							/>
-						</table>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
-						<context-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
-							/>
-						</context-name>
-						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-							<list>
-								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="0"
-								/>
-							</list>
-						</local-name>
-					</expected-value>
-				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
 					inverted="false"

@@ -45,6 +45,11 @@
 							label-path="Demo"
 						/>
 					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
 					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
 						expand="true"
 					>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<theme id="core"
+	config:interface="com.top_logic.gui.config.ThemeConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	state="enabled"
+>
+	<styles>
+		<style name="/style/core.css"/>
+		<style name="/style/corebuttons.css"/>
+		<style name="/style/tabbar.css"/>
+		<style name="/style/form.css"/>
+		<style name="/style/bootstrap-icons.css"/>
+		<style name="/style/inter-fonts.css"/>
+	</styles>
+</theme>

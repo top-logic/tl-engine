@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="renderer"
+			optional="true"
+		/>
+	</params>
+
+	<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
+		name="adminTab"
+		renderer="${renderer}"
+	>
+		<commandConfiguration class="com.top_logic.layout.component.configuration.TabSwitchCommandModelConfiguration"
+			tabName="adminView"
+		/>
+	</view>
+</template>

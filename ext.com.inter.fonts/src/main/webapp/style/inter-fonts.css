@@ -1,0 +1,13 @@
+@font-face {
+	font-family: "Inter-Regular";
+	src: url("../themes/core/fonts/Inter-Regular.otf") format("otf"),
+		 url("../themes/core/fonts/Inter-Regular.woff") format("woff"),
+		 url("../themes/core/fonts/Inter-Regular.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Inter-SemiBold";
+	src: url("../themes/core/fonts/Inter-SemiBold.otf") format("otf"),
+		 url("../themes/core/fonts/Inter-SemiBold.woff") format("woff"),
+		 url("../themes/core/fonts/Inter-SemiBold.ttf") format("truetype");
+}

@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.IdentifierUtil;
-import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -66,9 +65,6 @@ import com.top_logic.tool.boundsec.CommandHandler;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<ForeignObjects> {
-
-	private static final NamedConstant DUMMY_COMMAND_TARGET_MODEL =
-		new NamedConstant("Dummy model used as modle for commands in design mode.");
 
 	private static final ImageProvider IMAGE_PROVIDER =
 		ImageProvider.constantImageProvider(Icons.FORM_EDITOR__REFERENCE);
@@ -167,14 +163,14 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 			ConfigKey derivedKey = ConfigKey.derived(personalizationKey, itemID);
 			Member content = member(innerGroup, contentTemplate);
 			FieldSetBoxTemplate finalTemplate = Templates.fieldsetBoxWrap(legend, content, derivedKey);
-			addButtons(finalTemplate, item);
+			addButtons(finalTemplate, item, false);
 			templates[index] = finalTemplate;
 			index++;
 		}
 		return contentBox(div(templates));
 	}
 
-	private void addButtons(AbstractGroupSettings<?> template, Object targetModel) {
+	private void addButtons(AbstractGroupSettings<?> template, TLObject targetModel, boolean designMode) {
 		List<CommandHandler> buttons = TypedConfigUtil.createInstanceList(getConfig().getButtons());
 		if (buttons.isEmpty()) {
 			return;
@@ -186,7 +182,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		Map<String, Object> args = ContextMenuUtil.createArguments(targetModel);
 		Stream<ComponentCommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(component, args, buttons);
 		Menu menu;
-		if (targetModel == DUMMY_COMMAND_TARGET_MODEL) {
+		if (designMode) {
 			List<List<? extends CommandModel>> deactivated = ContextMenuUtil.groupAndSort(buttonsStream)
 				.map(DeactivatedCommandModel::deactivateCommands)
 				.collect(Collectors.toList());
@@ -247,7 +243,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		/* Lock content of the preview fieldset box. It must not be possible to drop elements in the
 		 * box. */
 		finalTemplate.setCssClass("locked");
-		addButtons(finalTemplate, DUMMY_COMMAND_TARGET_MODEL);
+		addButtons(finalTemplate, null, true);
 		return finalTemplate;
 	}
 

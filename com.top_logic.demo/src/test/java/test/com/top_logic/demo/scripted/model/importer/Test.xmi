@@ -4,7 +4,7 @@
     <visibility>public</visibility>
     <URI nil="true"/>
     <identifier nil="true"/>
-    <name>Test</name>
+    <name>test.XMI</name>
     <templateParameter nil="true"/>
     <packagedElement xmi:id="92be49f1-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49f1-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Association">
       <isFinalSpecialization>false</isFinalSpecialization>

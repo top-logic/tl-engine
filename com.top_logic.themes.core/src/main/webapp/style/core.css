@@ -1,0 +1,1325 @@
+
+/* Style-sheet for the TopLogic core theme. */
+
+body {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	letter-spacing: var(--body-02-letter-spacing);
+}
+
+h5 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-01-font-size);
+	line-height: var(--heading-compact-01-line-height);
+	letter-spacing: var(--heading-compact-01-letter-spacing);
+}
+
+h4 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+}
+
+h3 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
+}
+
+h2 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	letter-spacing: var(--heading-04-letter-spacing);
+}
+
+h1 {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-05-font-size);
+	line-height: var(--heading-05-line-height);
+	letter-spacing: var(--heading-05-letter-spacing);
+}
+
+div.layoutHorizontalAdjustmentGrabber {
+  background: var(--layer-selected);
+  cursor: e-resize;
+}
+
+/*
+****					      ****
+****	Code-Editor Styles	  ****
+****					      ****
+*/
+.ace-eclipse .ace_active-line {
+    background: var(--layer-selected);
+	border: 1px solid var(--border-subtle);
+}
+
+.ace-eclipse .ace_marker-layer .ace_selection {
+    background: var(--layer-selected);
+}
+
+.ace_line {
+	padding-left: 10px;
+}
+
+/* Zeilenhöhe für den gesamten Ace Editor anpassen */
+.ace_editor {
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+}
+
+/* Zeilenhöhe für den Textbereich des Editors anpassen */
+.ace_content {
+	ffont-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+}
+
+/*
+****					****
+****	Popup Styles	****
+****					****
+*/
+
+/*.pdlgWindow, .pdlgContent, div, popupMenupopupMenupopupMenu, 
+.pdlgWindow .pdlgContent div {
+	display: flex;
+	flex-direction: column;
+} */
+
+.pdlgWindow, .dlgWindow ,.dlgBackground, #pdlgPopupDialogPane, #waitPane {
+	/*
+	 * Popup dialogs has to be stacked upon the current view. Because the table header has z-index 1, 
+	 * the popup dialogs should have at least z-index 2 to be stacked upon table headers.
+	 *
+	 * z-index kann only be set on positioned elements.
+	 *
+	 * This cause not a problem for nesting (popup)-dialogs, because setting a z-index
+	 * sets the stack level of this element in the current stacking context. It also
+	 * establishes a local stacking context. This means that the z-indexes of descendants are not compared 
+	 * to the z-indexes of elements outside this element.
+	 *
+	 * Details: https://developer.mozilla.org/en-US/docs/Web/CSS/z-index
+	 */
+	z-index: 2;
+}
+
+.pdlgPopupDialogPane_visible {
+  	position: absolute;
+  	width: 100%;
+  	height: 100%;
+  	background-color: #FFF;
+  	opacity: 0;
+  	cursor: wait;
+}
+
+.pdlgWindow {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	border-top-style: none;
+	overflow: hidden;
+	box-shadow:0 2px 6px 0 rgba(0,0,0,0.32);
+}
+
+.pdlgContent {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	background-color: var(--background);
+}
+
+.pdlgTitleBar {
+	position: relative;
+	display: flex;
+	flex-direction: row-reverse;
+	justify-content: space-between;
+	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
+	padding-left: 2px;
+	background-color: var(--layer-accent);
+}
+
+.pdlgToolbar {
+	display: flex;
+	align-self: center;
+	cursor: pointer;
+}
+
+.pdlgToolbar > span {
+	display: flex;
+	align-self: center;
+	gap: var(--spacing-02);
+	margin-right: var(--spacing-02);
+}
+
+.pdlgToolbar a {
+	color: var(--icon-primary);
+}
+
+.pdlgTitle {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	padding: 0 3px;
+	align-self: center;
+}
+
+.fltGlobalContainer {
+	width: 100%;
+	height: 100%;
+}
+
+.fltSettings {
+	position: relative;
+	overflow: auto;
+	max-height: calc(100% - var(--TABLE_FILTER_BUTTON_BAR_HEIGHT));
+	max-width: 100%;
+}
+
+.fltCommandContent {
+	text-align: center;
+	box-sizing: border-box;
+}
+
+.fltButtons {
+	display: flex;
+	justify-content: space-around;
+	margin: var(--spacing-02) 0;
+}
+
+.fltButtons .cButton {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	gap: var(--spacing-02);
+	height: 1.3rem;
+	padding: var(--spacing-01) var(--spacing-01);
+	border-radius: .25rem;
+}
+
+.fltSubContent {
+	margin: 0px;
+	padding-bottom: var(--spacing-01);
+	overflow: auto;
+}
+
+.fltMenu {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+}
+
+.fltSubContent > hr {
+	border-top: 1px solid var(--border-subtle);
+}
+
+.fltList {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+}
+
+.fltList > div {
+    padding: 0 var(--spacing-03);
+    display: flex;
+    gap: var(--spacing-02);
+}
+
+.defaultFilterContainer .cPopupSelect, .defaultFilterContainer .cTextSelect, .defaultFilterContainer .cExpandableTextInput, .defaultFilterContainer .cTextInput, .defaultFilterContainer .cDatetime, .defaultFilterContainer .cDateInput, .defaultFilterContainer .cIntegerInput, .defaultFilterContainer .cTimeInput {
+	display: table;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.defaultFilterContainer .lFlexible {
+	display: table-cell;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 2px;
+}
+
+.defaultFilterContainer .lFlexible input {
+	width: 100%;
+	padding: 2px;
+}
+
+.defaultFilterContainer span.cError img {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
+.popupMenu {
+	border-collapse: collapse;
+}
+
+.popupMenu {
+	border-collapse: collapse;
+	width: 100%;
+	display: table;
+}
+
+.popupMenu ~ .popupMenu {
+	border-top: 1px solid var(--border-subtle);
+}
+
+.cMenuButton {
+	line-height: 2em;
+	display: table-row;
+}
+
+.cMenuButton i {
+	padding-left: 1px;
+	padding-right: 1px;
+	font-size: 20px;
+}
+
+.menuEntryEnabled, .menuEntryDisabled {
+	padding-top: 1px;
+	padding-bottom: 1px;
+}
+
+.menuEntryCell:first-child, .menuEntryCell img.menuEntryImage {
+	width: 27px;
+}
+
+.menuEntryCell {
+	padding: 0.2em;
+	white-space: nowrap;
+	display: table-cell;
+}
+
+.menuEntryImage {
+	vertical-align: middle;
+}
+
+.popupMenu a {
+	color: var(--text-secondary);
+	background-color: var(--layer);
+}
+
+.popupMenu a .menuEntryCell .menuEntryImage {
+	color: var(--icon-secondary);
+}
+
+.popupMenu a.tlInApp {
+	background-color: var(--debug);
+}
+
+.popupMenu a.tlInApp:hover {
+	background-color: var(--debug-hover);
+}
+
+.popupMenu a:hover {
+	color: var(--text-primary);
+	background-color: var(--layer-hover);
+}
+
+.popupMenu a:hover .menuEntryCell .menuEntryImage {
+	color: var(--icon-primary);
+}
+
+.popupMenu a:focus {
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+/* New */
+
+#dlgDialogs {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 0;
+	height: 0;
+}
+
+#dlgDialogs.dialogOpened {
+	width: 100%;
+	height: 100%;
+}
+
+#dlgDialogs.noDialogOpened {
+	width: 0;
+	height: 0;
+}
+
+.dlgDialog {
+	visibility: hidden;
+}
+
+div.dlgWindow {
+	position: absolute;
+	left: 10px;
+	top: 10px;
+	width: 600px;
+	height: 400px;
+	display: flex;
+	flex-direction: column;
+	position: absolute;
+	background-color: var(--background);
+	filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.32));
+	box-shadow: var(--shadow-menu);
+}
+
+div.dlgMaximized {
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+div.dlgMaximized .dlgBorder,
+div.dlgMaximized .dlgResizeNW,
+div.dlgMaximized .dlgResizeNE,
+div.dlgMaximized .input-image.dlgMaximize {
+	display: none;
+}
+
+div.dlgMaximized span.dlgTitle, div.dlgMaximized span.dlgToolbar {
+	padding-left: 5px;
+	padding-right: 3px;
+}
+
+.dlgToolbar .input-image.dlgRestore {
+	display: none;
+}
+
+div.dlgMaximized .input-image.dlgRestore {
+	display: inline-block;
+}
+
+/* end New */
+
+.dlgBackground {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	cursor: wait;
+	background-image: var(--overlay);
+}
+
+.dlgTitleBar {
+	position: absolute;
+	display: flex;
+	width: 100%;
+	cursor: move;
+	height: var(--DIALOG_TITLE_HEIGHT);
+	background-color: var(--layer-accent);
+}
+
+.dlgBorderNW.dlgResizeNW {
+	order: 1;
+}
+
+.tlDlgToolbarContainer {
+	display: flex;
+	flex-direction: row-reverse;
+	justify-content: space-between;
+	align-self: center;
+	flex-grow: 2;
+	order: 2;
+	overflow: hidden;
+}
+
+.dlgTitle {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: flex;
+	align-self: center;
+}
+
+.dlgToolbar {
+	display: flex;
+	align-self: center;
+	gap: var(--spacing-02);
+	margin-right: var(--spacing-02);
+}
+
+.dlgToolbar a {
+	color: var(--icon-primary);
+}
+
+.dlgBorderNE.dlgResizeNE {
+	order: 3;
+}
+
+.tlDlgContent {
+	display: flex;
+	flex-direction: row;
+	flex-grow: 2;
+}
+
+.dlgContent {
+	display: flex;
+	flex-grow: 2;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+.dlgContent > div:first-child {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 2;
+	justify-content: space-between;
+}
+
+.lcAuto {
+	overflow: auto
+}
+
+.dlgBorderNW, .dlgBorderSW {
+	float: left;
+}
+
+.dlgBorderNE, .dlgBorderSE {
+	float: right;
+}
+
+.dlgBorderNW, .dlgBorderSW, .dlgBorderNE, .dlgBorderSE {
+	width: 10px;
+	height: 10px;
+
+	/* For debugging: */
+	background-color: red;
+}
+
+.dlgResizeNW {
+	cursor: nw-resize;
+}
+.dlgResizeNE {
+	cursor: ne-resize;
+}
+.dlgResizeSW {
+	cursor: sw-resize;
+}
+.dlgResizeSE {
+	cursor: se-resize;
+}
+.dlgResizeW {
+	cursor: w-resize;
+	width: 10px;
+}
+.dlgResizeE {
+	cursor: e-resize;
+	width: 10px;
+}
+.dlgResizeS {
+	cursor: s-resize;
+	height: 10px;
+}
+
+.dlgRightBorder {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+}
+
+.dlgLeftBorder {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+.dlgBottomBorder {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	width: 100%;
+	height: var(--DIALOG_BOTTOM_BORDER_HEIGHT);
+	font-size: 1px
+}
+
+div.dlgMinimized {
+	display: none;
+}
+
+iframe.dlgContent {
+	width: 100%;
+	height: 100%;
+}
+
+/*
+ * Element covering the whole viewport. This is neccessary to capture all
+ * mouse events even from frame and iframe regions.
+ */
+div.dlgCapture {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+
+	/* Workaround: A div element only captures mouse events over iframe elements
+	 * in IE, if it has "some" background.
+	 */
+	background-color: #EEEEEE;
+	filter: alpha(opacity=0);
+	-moz-opacity: 0;
+	/*
+	 * since Firefox 3.5
+	 */
+	opacity: 0;
+}
+
+/*
+****					****
+****	Tooltip Styles	****
+****					****
+*/
+.tooltip {
+	color: var(--text-secondary);
+	background-color: var(--layer);
+	max-width: 240px;
+	height: auto;
+	/* padding: var(--spacing-02); */
+}
+
+.tooltipCaption {
+	color: var(--TOOLTIP_CAPTION_FONT_COLOR);
+	background-color: var(--layer);
+	max-width: 240px;
+	height: auto;
+	/* padding: var(--spacing-02); */
+}
+
+/* Classes used for configured tooltips: see ConfiguredAttributedTooltipProvider */
+span.configuredTooltipValue {
+	color: var(--text-secondary);
+	background-color: var(--layer);
+	max-width: 240px;
+	/* padding: var(--spacing-02); */
+}
+
+span.configuredTooltipLabel {
+	font-weight: bold;
+}
+
+/* Indent label for derived resources, e.g. for the label of the input field for the tooltip. */
+.additional-resource .rf_label {
+	padding-left: 7px;
+	box-sizing: border-box;
+}
+
+/* Indent label for derived resources, e.g. for the label of the input field for the tooltip. */
+.additional-resource.with-spacing div:last-child {
+	margin-bottom: 20px;
+}
+/* Styles for display help for TLScript.*/
+
+div.tlScriptDoc {
+	max-width: 500px;
+	overflow: auto;
+}
+
+div.ace_tooltip {
+	white-space: normal;
+	max-height: 50vh;
+	overflow: auto;
+}
+
+div.ace_tooltip>code {
+	white-space: pre;
+}
+
+div.ace_tooltip>code.inlineCode {
+	white-space: normal;
+}
+
+
+/*
+****					****
+****	Error Styles	****
+****					****
+*/
+.errorFragmentContainer {
+	cursor: default;
+	margin: 5px;
+	padding: 2px 5px;
+	color: red;
+	font-weight: bold;
+	border-style: solid;
+	border-color: red;
+	border-width: 1px;
+	background-color: var(--BODY_BACK);
+	display: flex;
+	align-items: baseline;
+}
+
+.errorFragmentImage {
+	margin-right: 3px;
+	height: 1em;
+}
+
+.infoService {
+	position: absolute;
+	top: var(--spacing-03);
+	right: var(--spacing-03);
+	width: 25rem;
+	max-height: 100%;
+	max-width: 100%;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.pinnedInfoService {
+	/* Marker class */
+}
+
+.hideInfoService {
+	animation-name: hideInfoService;
+	animation-duration: 1s;
+}
+
+.infoServiceItem {
+	position: relative;
+	margin: var(--spacing-03) 3px 0px;
+	padding: 0 var(--spacing-03) var(--spacing-02) var(--spacing-03);
+	/* border: 2px solid rgba(247, 223, 68, 0); */
+	border-radius: 10px;
+	box-shadow: 0px 1px 5px #888;
+	overflow-y: hidden;
+	overflow-x: auto;
+	/* margin-top: var(--spacing-03); */
+}
+
+/* Start new code */
+
+.infoServiceItem.infoServiceError {
+	background-color: var(--notification-danger-background);
+}
+
+.infoServiceItem.infoServiceWarning {
+	background-color: var(--notification-warning-background);
+}
+
+.infoServiceItem.infoServiceInfo {
+	background-color: var(--notification-info-background);
+}
+
+.infoServiceError .infoServiceItemMessageHeader span i:not(.infoServiceItemCloseButton i) {
+	color: var(--support-danger);
+}
+
+.infoServiceWarning .infoServiceItemMessageHeader span i:not(.infoServiceItemCloseButton i) {
+	color: var(--support-warning);
+}
+
+.infoServiceInfo .infoServiceItemMessageHeader span i:not(.infoServiceItemCloseButton i) {
+	color: var(--support-info);
+}
+
+.infoLogTime {
+	color: var(--text-helper);
+}
+
+.infoServiceItem p {
+    /* display: block; */
+    /* margin-block-end: 1rem; */
+}
+
+/* end new code */
+
+.infoServiceItem {
+}
+
+.pinnedInfoServiceItem, .pinnedInfoService .pinnedInfoServiceItem {
+	animation-name: pinnedInfoServiceItem;
+	animation-duration: 0.5s;
+}
+
+.infoServiceItem:last-child {
+	margin-bottom: 3px;
+}
+
+.showInfoServiceItem {
+	animation-name: showInfoServiceItem;
+	animation-duration: 0.2s;
+}
+
+.showPinnedInfoServiceItem {
+	animation-name: showPinnedInfoServiceItem;
+	animation-duration: 0.2s;
+}
+
+.pinnedInfoService .hideInfoServiceItem {
+	animation-name: hideInfoServiceItem;
+	animation-duration: 0.2s;
+}
+
+.infoServiceItemCloseButton {
+	cursor: pointer;
+	padding-left: var(--spacing-03);
+}
+
+.infoServiceItemMessageHeader {
+	display: flex;
+	align-items: center;
+	flex-grow: 2;
+	gap: .5rem;
+	padding: var(--spacing-03) 0;
+}
+
+.infoServiceItemMessageHeaderText {
+	display: flex;
+	flex-grow: 2;
+	justify-content: space-between;
+	align-items: center;
+	padding-right: 20px;
+}
+
+.errorIcon {
+	padding-right: 7px;
+}
+
+.infoServiceItemTypeMessage {
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+}
+
+.infoServiceItemMessage {
+	max-height: 400px;
+	overflow-y: auto;
+}
+
+.infoServiceItemDetailMessageHeader {
+	cursor: pointer;
+}
+
+.infoServiceItemDetailExpandButton {
+	display: inline-block;
+	margin-top: -1px;
+	margin-left: 5px;
+}
+
+.rotatedInfoServiceItemDetailExpandButton {
+	animation-name: rotatedInfoServiceItemDetailExpandButton;
+	animation-duration: 0.2s;
+	animation-fill-mode: forwards;
+}
+
+.regularInfoServiceItemDetailExpandButton {
+	animation-name: regularInfoServiceItemDetailExpandButton;
+	animation-duration: 0.2s;
+	animation-fill-mode: forwards;
+}
+
+.infoServiceItemDetailMessageHidden,
+.hideInfoServiceItemDetailMessage,
+.showInfoServiceItemDetailMessage {
+	margin-bottom: var(--spacing-02);
+	overflow: hidden;
+}
+
+.infoServiceItemDetailMessageHidden {
+	height: 0;
+}
+
+.hideInfoServiceItemDetailMessage {
+	animation-name: hideInfoServiceItemDetailMessage;
+	animation-duration: 0.2s;
+	animation-fill-mode: forwards;
+}
+
+.showInfoServiceItemDetailMessage {
+	animation-name: showInfoServiceItemDetailMessage;
+	animation-duration: 0.2s;
+	animation-fill-mode: forwards;
+}
+
+.infoServiceItemDetailMessageTextContainer {
+	overflow-x: auto;
+}
+
+p.infoServiceItemDetailMessageNoBottom {
+	margin-bottom: 0px;
+	/* margin-top: 0px; */
+	margin-block-start: .5rem;
+	margin-block-end: 1em;
+	margin-inline-start: 0px;
+	margin-inline-end: 0px;
+}
+
+span.cLogoutTimer {
+	display: none;
+	font-weight: bold;
+	color: red;
+}
+
+span.cLogoutTimer input {
+	vertical-align: sub;
+	display: none;
+}
+
+span.ltcCounting {
+	display: block;
+}
+
+span.ltcCounting input {
+	display: inline;
+}
+
+@keyframes showInfoServiceItem {
+    0% {opacity: 0;}
+    100% {opacity: 0.9; margin-top: 3px;}
+}
+
+@keyframes showPinnedInfoServiceItem {
+    0% {opacity: 0;}
+    100% {opacity: 1; margin-top: 3px;}
+}
+
+@keyframes hideInfoServiceItem {
+    0% {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+@keyframes hideInfoService {
+    from {opacity: 1;}
+    to {opacity: 0;}
+}
+
+@keyframes pinnedInfoServiceItem {
+    from {border-color: rgba(247, 223, 68, 0);}
+    to {border-color: rgba(247, 223, 68, 1);}
+}
+
+@keyframes showInfoServiceItemDetailMessage {
+    0% {height: 0;}
+    100% {height: auto;}
+}
+
+@keyframes hideInfoServiceItemDetailMessage {
+    0% {height: auto;}
+    100% {height: 0;}
+}
+
+@keyframes rotatedInfoServiceItemDetailExpandButton {
+    from {transform: rotateZ(0deg);}
+    to {transform: rotateZ(90deg);}
+}
+
+@keyframes regularInfoServiceItemDetailExpandButton {
+    from {transform: rotateZ(90deg);}
+    to {transform: rotateZ(0deg);}
+}
+
+
+/*
+****					****
+****	Tiles Styles	****
+****					****
+*/
+.tileRow {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	background: var(--background);
+	border: 1px solid var(--border-subtle);
+	margin: var(--spacing-02) var(--spacing-03);
+	padding: var(--spacing-02) var(--spacing-03);
+	min-width: 0px;
+	word-wrap: break-word;
+	background-clip: border-box;
+	border-radius: .25rem;
+	height: 25.4rem;
+	width: 21rem;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.card:hover {
+	box-shadow: 0 2px 6px 0 rgba(0,0,0,0.32);
+}
+
+.previewBoxOuter {
+    order: 1;
+    width: 100%;
+    height: 0;
+    padding-bottom: 75%; /* Adjust the aspect ratio to your desired value */
+    position: relative;
+    overflow: hidden;
+}
+
+.previewBoxOuter .previewBoxInner {
+	position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.previewBoxOuter .previewBoxInner img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	background: transparent;
+}
+
+h5.card-title {
+	order: 2;
+	margin: var(--spacing-03) 0 0 0;
+}
+
+h5.card-title a {
+	color: var(--text-primary);
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
+	margin: var(--spacing-03) 0 0 0;
+}
+
+.card-text {
+	order: 3;
+	color: var(--text-primary);
+	font-family: 'Inter-Regular';
+	font-size: var(--body-01-font-size);
+	line-height: var(--body-01-line-height);
+	letter-spacing: var(--body-01-letter-spacing);
+}
+
+
+/*
+****					****
+****	Table Styles	****
+****					****
+*/
+.tblPager {
+	background-color: var(--layer);
+	border-top: 1px solid var(--border-subtle);
+	padding: 0 var(--spacing-03);
+	width: 100%;
+}
+
+.tblPager .cTextInput {
+
+}
+
+
+/*
+****					****
+****	Toolrow styles	****
+****					****
+*/
+.ToolBarContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    height: inherit;
+}
+
+.ToolContainer {
+	display: flex;
+}
+
+.ToolBarContainer .IconContainer {
+	display: flex;
+	margin-right: var(--spacing-02);
+}
+
+.ToolBarContainer .IconContainer ul {
+	display: flex;
+	align-items: center;
+	list-style-type: none;
+	margin: 0;
+	padding-inline-start: 0px;
+}
+
+.ToolBarContainer .IconContainer > ul > li {
+	padding-left: var(--spacing-03);
+}
+
+.ToolContainerRight {
+    display: flex;
+}
+
+.system_message {
+	display: flex;
+	flex-direction: column;
+}
+
+.ToolBarContainer .IconContainer .cButton,
+.ToolBarContainer .IconContainer .trbEntry {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	height: 2.5rem;
+	width: 2.5rem;
+	border-radius: .25rem;
+}
+
+.tlUser a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--icon-on-color);
+	height: inherit;
+	width: inherit;
+}
+
+.tlUser a i {
+	font-size: 1.5rem;
+}
+
+.ToolBarContainer .IconContainer .cButton a,
+.ToolBarContainer .IconContainer .trbEntry a {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-shrink: 0;
+	height: 2.5rem;
+	width: 2.5rem;
+	border-radius: .25rem;
+}
+
+.ToolBarContainer .IconContainer .cButton a i,
+.ToolBarContainer .IconContainer .trbEntry a i {
+	font-size: 1.5rem;
+}
+
+.quickSearch {
+	display: flex;
+	align-items: center;
+}
+
+.quickSearch .cButton.quickSearchButton
+, .mtbGroup .cButton {
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+}
+
+.quickSearch .cButton.quickSearchButton a,
+.mtbGroup .cButton a,
+.mtbGroup .trbEntry a,
+.cButton a[alt="Administration"] {
+	color: var(--icon-secondary);
+	padding: inherit;
+}
+
+.quickSearch .cButton.quickSearchButton a:hover,
+.mtbGroup .cButton a:hover,
+.mtbGroup .trbEntry a:hover,
+.cButton a:hover[alt="Administration"] {
+	background: var(--background-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--background-hover);
+}
+
+.quickSearch .cButton.quickSearchButton a:focus,
+.mtbGroup .cButton a:focus,
+.mtbGroup .trbEntry a:focus,
+.cButton a:focus[alt="Administration"] {
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	background: transparent;
+}
+
+.quickSearch .cButton.quickSearchButton a:active,
+.mtbGroup .cButton a:active,
+.mtbGroup .trbEntry a:active,
+.cButton a:active[alt="Administration"] {
+	background: var(--background-active);
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+
+/*
+****						****
+****	Breadcrump syles	****
+****						****
+*/
+.lcAuto.lcNavigation {
+	overflow: hidden;
+	background: var(--layer);
+}
+
+.BreadCrumbOuter .Left {
+	float: left;
+	padding: var(--spacing-02);
+	height: 35px;
+}
+
+.BreadCrumbOuter .Right {
+	float: right;
+	padding: .5rem;
+}
+
+.breadcrumb {
+	display: flex;
+	padding: 0 var(--spacing-02);
+	gap: var(--spacing-02);
+}
+
+.breadcrumb .treeNode, .breadcrumb .hover {
+	display: flex;
+	gap: var(--spacing-02);
+	align-items: center;
+}
+
+/*
+****					****
+****	Tree syles		****
+****					****
+*/
+.treeBody {
+	background-color: var(--layer);
+}
+
+.tcrNode .treeNode {
+	display: flex;
+	align-items: center;
+	position:relative;
+	height: 2rem;
+	padding-right: var(--spacing-03);
+	padding-left: var(--spacing-03);
+}
+
+.tcrNode .treeNode::after,
+.tcrNode .treeNode.treeSelected::after {
+	height:100%;
+	content:"";
+    position:absolute;
+    transform:translateX(-100%);
+    width:100%;
+}
+
+.treeChildren {
+	padding-left: var(--spacing-03);
+}
+
+.tcrLink {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-01-font-size);
+	line-height: var(--body-01-line-height);
+	letter-spacing: var(--body-01-letter-spacing);
+	color: var(--text-secodnary);
+}
+
+.fToggle.tcrToggle, .tlLeafIcon,
+.tcrNode .treeNode span {
+	color: var(--icon-secondary);
+	margin-right: var(--spacing-02);
+	height: 1rem;
+	width: 1rem;
+}
+
+.treeNode .input-image.fToggle.disabled {
+	height: 1rem;
+	width: 1rem;
+}
+
+.treeSelected .tcrLink {
+	color: var(--interactive);
+}
+
+.tcrNode .treeSelected .fToggle.tcrToggle,
+.tcrNode .treeNode.treeSelected span {
+	color: var(--icon-interactive);
+}
+
+.tcrNode .treeNode:hover,
+.tcrNode .treeNode:hover::after {
+	background: var(--layer-hover);
+}
+
+.tcrNode .treeNode.treeSelected,
+.tcrNode .treeNode.treeSelected::after{
+	background: var(--layer-selected);
+}
+
+.tcrNode .treeNode.treeSelected:hover,
+.tcrNode .treeNode.treeSelected:hover::after{
+	background: var(--layer-selected-hover);
+}
+
+.tcrNode .treeNode a:focus {
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+/*
+****						****
+****	Toolrow syles		****
+****						****
+*/
+.cCollapsibleHeader {
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+	justify-content: space-between;
+	background-color: var(--layer-accent);
+	height: inherit;
+	gap: var(--spacing-02);
+}
+
+.cCollapsibleTitle {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-01-font-size);
+	line-height: var(--body-01-line-height);
+	letter-spacing: var(--body-01-letter-spacing);
+	color: var(--text-primary);
+	padding-left: var(--spacing-03);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.cCollapsibleToolbar, .cToolbar, 
+.cCollapsibleToolbar .tbGroup, .cCollapsibleButtons {
+	display: flex;
+	gap: var(--spacing-02);
+}
+
+.cToolbar {
+	margin-right: var(--spacing-02);
+}
+
+.cCollapsibleButtons {
+	padding-right: var(--spacing-03);
+}
+
+.cCollapsibleToolbar a {
+	color: var(--icon-primary);
+}
+
+/*
+****					****
+****	Anchor syles	****
+****					****
+*/
+a:link {
+	text-decoration: var(--ANCHOR_TEXT_DECORATION_LINK);
+}
+
+a:visited, a.gotoLink:visited {
+	text-decoration: var(--ANCHOR_TEXT_DECORATION_VISITED);
+}
+
+a:hover {
+	text-decoration: var(--ANCHOR_TEXT_DECORATION_HOOVER);
+}
+
+a:active {
+	text-decoration: var(--ANCHOR_TEXT_DECORATION_ACTIVE);
+}
+
+a.gotoLink, a.cmdLink, a.cmdLink:visited{
+    text-decoration: var(--ANCHOR_TEXT_DECORATION_GOTO_LINK);
+	cursor:          pointer;
+}
+

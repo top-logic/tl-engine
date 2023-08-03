@@ -5,18 +5,23 @@
  */
 package com.top_logic.layout.formeditor.parts;
 
+import java.util.List;
+
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.layout.formeditor.FormTypeProperty;
+import com.top_logic.layout.editor.config.ButtonTemplateParameters;
 import com.top_logic.layout.editor.config.TypeTemplateParameters;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 
 /**
  * {@link FormElement} to display a form for each of a list of foreign objects.
@@ -29,9 +34,11 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 	ForeignObjects.ITEMS,
 	ForeignObjects.READ_ONLY,
 	ForeignObjects.LAYOUT,
+	ForeignObjects.BUTTONS,
 })
 @TagName("foreign-objects")
-public interface ForeignObjects extends FormElement<ForeignObjectsTemplateProvider>, TypeTemplateParameters {
+public interface ForeignObjects
+		extends FormElement<ForeignObjectsTemplateProvider>, TypeTemplateParameters, ButtonTemplateParameters {
 
 	/** Configuration name for {@link #getItems()}. */
 	String ITEMS = "items";
@@ -84,5 +91,13 @@ public interface ForeignObjects extends FormElement<ForeignObjectsTemplateProvid
 	@Name(READ_ONLY)
 	@Label("Display item attributes read-only")
 	Expr getReadOnly();
+
+	/**
+	 * Commands that can be executed on the individual objects.
+	 * 
+	 * @see com.top_logic.layout.editor.config.ButtonTemplateParameters#getButtons()
+	 */
+	@Override
+	List<ConfigBase<? extends CommandHandler>> getButtons();
 }
 

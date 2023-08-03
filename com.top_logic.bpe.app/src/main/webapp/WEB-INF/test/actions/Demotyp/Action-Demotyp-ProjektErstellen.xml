@@ -58,7 +58,7 @@
 							/>
 						</context-model>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="Business Process Engine > Prozesse"
+							name="Prozesse"
 						/>
 					</model-name>
 				</action>

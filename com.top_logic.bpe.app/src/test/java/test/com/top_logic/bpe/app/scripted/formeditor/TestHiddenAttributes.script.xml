@@ -38,7 +38,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="Business Process Engine > Workflow-Durchführung"
+							name="Workflow-Durchführung"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -340,7 +340,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="Business Process Engine > Workflow-Durchführung"
+							name="Workflow-Durchführung"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

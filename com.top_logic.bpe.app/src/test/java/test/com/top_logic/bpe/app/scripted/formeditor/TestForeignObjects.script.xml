@@ -939,7 +939,7 @@
 									/>
 								</context-model>
 								<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Business Process Engine > Workflow-Durchführung"
+									name="Workflow-Durchführung"
 								/>
 							</model-name>
 						</action>
@@ -957,7 +957,7 @@
 									/>
 								</context-model>
 								<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Business Process Engine > Prozess-Instanz"
+									name="Prozess-Instanz"
 								/>
 							</model-name>
 						</action>

@@ -5,6 +5,7 @@ package com.top_logic.element.layout.meta;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.MetaElementTreeModelBuilder.ModuleContainer;
+import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResourceProvider;
@@ -38,7 +39,12 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
-public class MetaElementTreeResourceProvider implements ResourceProvider {
+public class MetaElementTreeResourceProvider extends AbstractResourceProvider {
+
+	/**
+	 * Singleton {@link MetaElementTreeResourceProvider} instance.
+	 */
+	public static final MetaElementTreeResourceProvider INSTANCE = new MetaElementTreeResourceProvider();
 
 	@Override
 	public String getLabel(Object object) {
@@ -57,7 +63,7 @@ public class MetaElementTreeResourceProvider implements ResourceProvider {
 			return TLPartScopedResourceProvider.INSTANCE.getType(object);
 		}
 
-		return null;
+		return super.getType(object);
 	}
 
 	@Override
@@ -66,7 +72,7 @@ public class MetaElementTreeResourceProvider implements ResourceProvider {
 			return TLPartScopedResourceProvider.INSTANCE.getTooltip(object);
 		}
 
-		return null;
+		return super.getTooltip(object);
 	}
 
 	@Override
@@ -75,7 +81,7 @@ public class MetaElementTreeResourceProvider implements ResourceProvider {
 			return TLPartScopedResourceProvider.INSTANCE.getImage(object, flavor);
 		}
 
-		return null;
+		return super.getImage(object, flavor);
 	}
 
 	@Override
@@ -84,7 +90,7 @@ public class MetaElementTreeResourceProvider implements ResourceProvider {
 			return TLPartScopedResourceProvider.INSTANCE.getLink(context, object);
 		}
 
-		return null;
+		return super.getLink(context, object);
 	}
 
 	@Override
@@ -93,7 +99,7 @@ public class MetaElementTreeResourceProvider implements ResourceProvider {
 			return TLPartScopedResourceProvider.INSTANCE.getCssClass(object);
 		}
 
-		return null;
+		return super.getCssClass(object);
 	}
 
 }

@@ -5243,6 +5243,7 @@ div.dfEntryTitle label {
 	margin-right: 0.5em;
 }
 
+.rf_header > .rf_menu,
 .dfModeFull span.dfListCommands {
 	position: absolute;
 	right: 0px;

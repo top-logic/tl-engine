@@ -3,7 +3,7 @@
 </code>
 </pre>
 <h2>Beschreibung</h2>
-<p>In einen mehsprachigen Text können dynamische Werte eingebettet werden. Die Syntax hierfür ist definiert über das <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html" target="_blank">Java-Message-Format</a>. Enthält ein mehrsprachiger Text solche Platzhalter (<code class="hljs inlineCode">{0}</code>, <code class="hljs inlineCode">{1}</code>,…), könenn diese über die Funktion <code class="hljs inlineCode">fill</code> belegt werden.</p>
+<p>In einen mehrsprachigen Text können dynamische Werte eingebettet werden. Die Syntax hierfür ist definiert über das <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html" target="_blank">Java-Message-Format</a>. Enthält ein mehrsprachiger Text solche Platzhalter (<code class="hljs inlineCode">{0}</code>, <code class="hljs inlineCode">{1}</code>,…), können diese über die Funktion <code class="hljs inlineCode">fill</code> belegt werden.</p>
 <p>Werden durch den Aufruf von <code class="hljs inlineCode">fill</code> nicht alle Parameter belegt, enthält das Ergebnis noch offene Parameter, die in einem weiteren Aufruf von <code class="hljs inlineCode">fill</code> belegt werden können. Das heißt, die beiden folgenden Ausdrücke sind äquivalent:</p>
 <pre><code>$res-key.fill($value1, $value2).fill($value3, $value4)
 
@@ -23,7 +23,7 @@ $res-key.fill($value1, $value2, $value3, $value4)</code></pre>
   <tr>
    <td>res-key</td>
    <td>Fachobjekt</td>
-   <td>Ein Resource-Key mit mindestens einem Parameter, der dynamische befüllt werden kann.</td>
+   <td>Ein Resource-Key mit mindestens einem Parameter, der dynamisch befüllt werden kann.</td>
    <td>ja</td>
    <td></td>
   </tr>
@@ -38,7 +38,7 @@ $res-key.fill($value1, $value2, $value3, $value4)</code></pre>
 </table>
 <h2>Rückgabewert</h2>
 <p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p>
-<p>Ein mehsprachiger Text mit eingesetzten Parametern.</p>
+<p>Ein mehrsprachiger Text mit eingesetzten Parametern.</p>
 <h2>Beispiele</h2>
 <pre><code>#("Die Antwort lautet {0}."@de, "{0} is the answer."@en).fill(42)</code></pre>
 <p><strong><span style="color:#3498db">Ausgabe Deutsch:</span></strong> Die Antwort lautet 42.</p>

@@ -626,13 +626,13 @@ public abstract class ThemeSetting extends AbstractConfiguredInstance<ThemeSetti
 			/**
 			 * Regular expression for an integer.
 			 */
-			String INT_PATTERN = "-?[1-9][0-9]*|0";
+			String NUMBER_PATTERN = "-?(?:[1-9][0-9]*(?:\\.[0-9]+)?|0(?:\\.[0-9]+)?)";
 
 			/**
 			 * Regular expression describing {@link #getValue()}.
 			 */
 			String DIM_PATTERN =
-				"(?:" + INT_PATTERN + ")" + "(?:" + "cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax|%" + ")?";
+				"(?:" + NUMBER_PATTERN + ")" + "(?:" + "cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax|%" + ")?";
 
 			@Override
 			@RegexpConstraint(value = DIM_PATTERN)

@@ -38,7 +38,7 @@
 	<icon name="IMAGES_CLOSE_BTN"
 		value="/images/close_btn.png"
 	/>
-	<icon name="com.top_logic.themes.modern.layout.renderer.Icons.PERSON"
+	<icon name="USER_MENU_ICON"
 		value="css:bi bi-person-fill"
 	/>
 	<icon name="IMAGE_BUTTONS_ADMINISTRATION22"
@@ -130,7 +130,7 @@
 		value="css:bi bi-pencil-fill"
 	/>
 	<icon name="ICONS_BUTTON_EDIT_DISABLED"
-		value="%ICONS_BUTTON_EDIT%"
+		expr="%ICONS_BUTTON_EDIT%"
 	/>
 	<icon name="ICONS_EDIT48"
 		value="css:bi bi-pencil"
@@ -147,13 +147,13 @@
 	<icon name="ICONS_ADD_BUTTON"
 		value="css:bi bi-plus-lg"
 	/>
-	<icon name="com.top_logic.layout.editor.commands.AddDialogCommand.image"
+	<icon name="com.top_logic.layout.Icons.DELETE_COMPONENT_COMMAND"
 		value="css:bi bi-plus-lg"
 	/>
-	<icon name="com.top_logic.layout.editor.commands.AddTabCommand.image"
+	<icon name="theme:com.top_logic.layout.Icons.ADD_TAB_COMMAND"
 		value="css:bi bi-plus-lg"
 	/>
-	<icon name="com.top_logic.layout.editor.commands.AddComponentCommand.image"
+	<icon name="com.top_logic.layout.Icons.ADD_COMPONENT_COMMAND"
 		value="css:bi bi-plus-lg"
 	/>
 	<icon name="ICON_PLUS"
@@ -163,13 +163,7 @@
 		value="css:bi bi-plus-lg"
 	/>
 	<icon name="ICONS_ADD_BUTTON_DISABLED"
-		value="%ICONS_ADD_BUTTON%"
-	/>
-	<icon name="com.top_logic.layout.Icons.CANCEL_BUTTON"
-		value="css:bi bi-x-lg"
-	/>
-	<icon name="com.top_logic.layout.Icons.CANCEL_BUTTON_DISABLED"
-		expr="%com.top_logic.layout.Icons.CANCEL_BUTTON%"
+		expr="%ICONS_ADD_BUTTON%"
 	/>
 	<icon name="com.top_logic.layout.Icons.OK_BUTTON"
 		value="css:bi bi-check-square-fill"
@@ -177,26 +171,38 @@
 	<icon name="com.top_logic.layout.Icons.OK_BUTTON_DISABLED"
 		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
 	/>
+	<img name="com.top_logic.layout.buttonbar.Icons.SLIDER_IMG"
+		value="/images/slider/Slider.gif"
+	/>
+	<img name="com.top_logic.layout.image.gallery.Icons.NO_PREVIEW_IMAGE"
+		value="/images/noPreviewImage.png"
+	/>
 	<icon name="ICONS_BUTTON_SAVE"
 		value="css:bi bi-save-fill"
 	/>
 	<icon name="ICONS_BUTTON_SAVE_DISABLED"
-		value="%ICONS_BUTTON_SAVE%"
+		expr="%ICONS_BUTTON_SAVE%"
 	/>
 	<icon name="ICONS_SAVE_BUTTON_ICON"
-		value="%ICONS_BUTTON_SAVE%"
+		expr="%ICONS_BUTTON_SAVE%"
 	/>
 	<icon name="ICONS_SAVE_BUTTON_ICON_DISABLED"
-		value="%ICONS_BUTTON_SAVE%"
+		expr="%ICONS_BUTTON_SAVE%"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON"
-		value="%ICONS_BUTTON_SAVE%"
+		expr="%ICONS_BUTTON_SAVE%"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON_DISABLED"
-		value="%ICONS_BUTTON_SAVE%"
+		expr="%ICONS_BUTTON_SAVE%"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_MODIFIED"
 		value="css:bi bi-save2"
+	/>
+	<icon name="ICONS_CANCEL_BUTTON"
+		value="css:bi bi-x-lg"
+	/>
+	<icon name="ICONS_CANCEL_BUTTON_DISABLED"
+		value="css:bi bi-x-lg"
 	/>
 	<icon name="ICON_GLOBE"
 		value="css:bi bi-globe"
@@ -235,6 +241,24 @@
 		value="css:bi bi bi-funnel-fill"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER_DISABLED"
+		value="css:bi bi bi-funnel-fill"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORTABLE"
+		value="css:bi bi-arrow-down-up"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_DESC"
+		value="css:bi bi-arrow-down"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_ASC"
+		value="css:bi bi-arrow-up"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_ASC_SMALL"
+		value="css:bi bi-arrow-up-short"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_DESC_SMALL"
+		value="css:bi bi-arrow-down-short"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
 		value="css:bi bi bi-funnel"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.FORM_EDITOR__FRAME"

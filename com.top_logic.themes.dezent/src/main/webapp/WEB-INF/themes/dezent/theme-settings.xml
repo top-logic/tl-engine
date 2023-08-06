@@ -503,6 +503,9 @@
 		expr=""
 		value="colored:tl-icon dashboard"
 	/>
+	<icon name="IMAGE_DEBUG_22"
+		value="css:fas fa-bug"
+	/>
 	<icon name="IMAGE_BUTTONS_GUI_INSPECTOR22"
 		expr=""
 		value="colored:tl-icon pointer-chevron"

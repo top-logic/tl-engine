@@ -489,8 +489,9 @@ div.dlgMaximized .input-image.dlgRestore {
 	width: 10px;
 	height: 10px;
 
-	/* For debugging: */
+	/* For debugging:
 	background-color: red;
+	*/
 }
 
 .dlgResizeNW {
@@ -1280,7 +1281,8 @@ h5.card-title a {
 }
 
 .cCollapsibleToolbar, .cToolbar, 
-.cCollapsibleToolbar .tbGroup, .cCollapsibleButtons {
+.cCollapsibleToolbar .tbGroup, .cCollapsibleButtons,
+.tl-table__title-toolbar {
 	display: flex;
 	gap: var(--spacing-02);
 }
@@ -1293,7 +1295,8 @@ h5.card-title a {
 	padding-right: var(--spacing-03);
 }
 
-.cCollapsibleToolbar a {
+.cCollapsibleToolbar a,
+.tl-table__title-toolbar a {
 	color: var(--icon-primary);
 }
 

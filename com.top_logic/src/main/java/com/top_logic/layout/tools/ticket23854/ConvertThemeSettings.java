@@ -48,7 +48,7 @@ public class ConvertThemeSettings extends XMain {
 
 	private static final Pattern COLOR_PATTERN = Pattern.compile("#[a-fA-f0-9]{3}(?:[a-fA-f0-9]{3})?");
 
-	private static final Pattern INT_PATTERN = Pattern.compile(DimSetting.Config.INT_PATTERN);
+	private static final Pattern NUMBER_PATTERN = Pattern.compile(DimSetting.Config.NUMBER_PATTERN);
 
 	private static final Pattern DIM_PATTERN = Pattern.compile(DimSetting.Config.DIM_PATTERN);
 
@@ -151,7 +151,7 @@ public class ConvertThemeSettings extends XMain {
 
 	private Class<? extends ThemeSetting.Config<?>> guessType(Properties settingsProperties, String value) {
 		Class<? extends ThemeSetting.Config<?>> type;
-		if (INT_PATTERN.matcher(value).matches()) {
+		if (NUMBER_PATTERN.matcher(value).matches()) {
 			type = ThemeSetting.IntSetting.Config.class;
 		} else if (DIM_PATTERN.matcher(value).matches()) {
 			type = ThemeSetting.DimSetting.Config.class;

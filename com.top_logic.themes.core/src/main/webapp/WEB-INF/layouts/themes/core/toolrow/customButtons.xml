@@ -8,7 +8,26 @@
 		<param name="entryRenderer"
 			optional="true"
 		/>
+		<param name="resPrefix"
+			value="layouts.themes.modern.ToolRowView"
+		/>
 	</params>
 
-	<!-- Hook to be filled by the application. -->
+	<group>
+		<views>
+			<include name="toolrow/modelSearchButtons.xml"
+				entryRenderer="${entryRenderer}"
+				renderer="${renderer}"
+			/>
+
+			<view class="com.top_logic.layout.component.configuration.ExternalLinkViewConfiguration"
+				image="theme:layouts.demo.tlHome"
+				label-key="${resPrefix}.tlHome"
+				link="https://www.top-logic.com/"
+				name="tlHome"
+				renderer="${entryRenderer}"
+				tooltip-key="${resPrefix}.tlHome.tooltip"
+			/>
+		</views>
+	</group>
 </template>

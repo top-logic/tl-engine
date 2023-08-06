@@ -17,7 +17,7 @@
 	</params>
 
 	<view class="com.top_logic.layout.component.configuration.PopupViewConfiguration"
-		cssClass="tlUser"
+		cssClass="tlUser tlButton tlPrimaryButton"
 		horizontalPosition="${horizontalPosition}"
 		icon="theme:USER_MENU_ICON"
 		label="layouts.themes.default.toolrow.homeButton"

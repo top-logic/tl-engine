@@ -15,7 +15,7 @@
 
 	<view class="com.top_logic.layout.component.configuration.PopupViewConfiguration"
 		horizontalPosition="${horizontalPosition}"
-		icon="css:fas fa-bug"
+		icon="theme:IMAGE_DEBUG_22"
 		label="layouts.themes.default.toolrow.scriptingButtons"
 		name="developerButtons"
 		renderer="${renderer}"

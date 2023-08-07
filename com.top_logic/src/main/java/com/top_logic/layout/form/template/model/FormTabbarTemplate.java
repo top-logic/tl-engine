@@ -19,6 +19,7 @@ import com.top_logic.layout.form.template.model.internal.TemplateRenderer;
 import com.top_logic.layout.template.WithProperties;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.Card;
+import com.top_logic.model.form.ReactiveFormCSS;
 
 /**
  * Template displaying a tabbar.
@@ -51,7 +52,7 @@ public class FormTabbarTemplate implements Template {
 		DeckField deckField = (DeckField) TemplateRenderer.resolveMember(properties, getName());
 
 		out.beginBeginTag(HTMLConstants.DIV);
-		out.writeAttribute(HTMLConstants.CLASS_ATTR, "locked");
+		out.writeAttribute(HTMLConstants.CLASS_ATTR, ReactiveFormCSS.RF_LOCKED);
 		out.endBeginTag();
 		TemplateRenderer.renderControl(displayContext, out, DeckField.CP.INSTANCE.createControl(deckField));
 		out.endTag(HTMLConstants.DIV);

@@ -10,11 +10,14 @@ import java.util.List;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.layout.formeditor.FormTypeProperty;
+import com.top_logic.element.layout.meta.HideActiveIf;
 import com.top_logic.layout.editor.config.ButtonTemplateParameters;
 import com.top_logic.layout.editor.config.TypeTemplateParameters;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.model.form.definition.FormDefinition;
@@ -33,6 +36,7 @@ import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 	ForeignObjects.ITEMS,
 	ForeignObjects.LABEL,
 	ForeignObjects.READ_ONLY,
+	ForeignObjects.NO_SEPARATE_GROUP,
 	ForeignObjects.LAYOUT,
 	ForeignObjects.BUTTONS,
 })
@@ -52,6 +56,9 @@ public interface ForeignObjects
 	/** Configuration name for {@link #getLayout()}. */
 	String READ_ONLY = "read-only";
 
+	/** Configuration name for {@link #isNoSeparateGroup()}. */
+	String NO_SEPARATE_GROUP = "no-separate-group";
+
 	/**
 	 * The items to display forms for.
 	 */
@@ -65,6 +72,7 @@ public interface ForeignObjects
 	 * of the form group.
 	 */
 	@Name(LABEL)
+	@DynamicMode(fun = HideActiveIf.class, args = @Ref(NO_SEPARATE_GROUP))
 	Expr getLabel();
 
 	/**
@@ -99,5 +107,12 @@ public interface ForeignObjects
 	 */
 	@Override
 	List<ConfigBase<? extends CommandHandler>> getButtons();
+
+	/**
+	 * Defines that no separate groups should be displayed for the individual objects. In this case
+	 * the elements are displayed inline in the outer form.
+	 */
+	@Name(NO_SEPARATE_GROUP)
+	boolean isNoSeparateGroup();
 }
 

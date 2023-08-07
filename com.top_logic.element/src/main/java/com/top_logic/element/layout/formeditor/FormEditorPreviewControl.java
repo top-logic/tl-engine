@@ -173,7 +173,7 @@ public class FormEditorPreviewControl extends FormEditorAbstractControl {
 				}
 
 				FormEditorElementFactory.openDialog(context, def, createOkHandleEditGroup(def),
-					createDialogClosedListener(), getResPrefix().key("title"));
+					createDialogClosedListener(), _preview.getType());
 			}
 		}
 	}
@@ -229,7 +229,7 @@ public class FormEditorPreviewControl extends FormEditorAbstractControl {
 				if (ContentDefinitionUtil.hasMandatoryAttributes(descriptor) || openDialog) {
 					// open a dialog
 					return FormEditorElementFactory.openDialog(commandContext, element, okHandle, dialogCloseListener,
-						getResPrefix().key("title"));
+						_preview.getType());
 				} else {
 					// no visible, mandatory attributes -> no dialog
 					addElement(parent, element, sibling);

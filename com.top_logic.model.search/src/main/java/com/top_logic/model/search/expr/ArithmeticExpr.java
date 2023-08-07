@@ -5,9 +5,16 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.util.List;
+import java.util.Locale;
+
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey.Builder;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.util.Resources;
 
 /**
  * {@link BinaryOperation} implementing an arithmetic operation.
@@ -84,8 +91,13 @@ public class ArithmeticExpr extends BinaryOperation implements WithFlatMapSemant
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object leftResult, Object rightResult) {
-		if (_op == Op.ADD && (leftResult instanceof CharSequence || rightResult instanceof CharSequence)) {
-			return addString(leftResult, rightResult);
+		if (_op == Op.ADD) {
+			if (leftResult instanceof ResKey || rightResult instanceof ResKey) {
+				return addResKey(leftResult, rightResult);
+			}
+			if (leftResult instanceof CharSequence || rightResult instanceof CharSequence) {
+				return addString(leftResult, rightResult);
+			}
 		}
 
 		if (leftResult == null) {
@@ -120,6 +132,34 @@ public class ArithmeticExpr extends BinaryOperation implements WithFlatMapSemant
 			return left;
 		}
 		return ToString.toString(left) + ToString.toString(right);
+	}
+
+	private Object addResKey(Object left, Object right) {
+		if (left == null) {
+			return right;
+		}
+		if (right == null) {
+			return left;
+		}
+		Builder builder = ResKey.builder();
+		List<Locale> locales = ResourcesModule.getInstance().getSupportedLocales();
+		for (Locale locale : locales) {
+			Resources instance = Resources.getInstance(locale);
+			String leftPart;
+			if (left instanceof ResKey) {
+				leftPart = instance.getString((ResKey) left);
+			} else {
+				leftPart = ToString.toString(left);
+			}
+			String rightPart;
+			if (right instanceof ResKey) {
+				rightPart = instance.getString((ResKey) right);
+			} else {
+				rightPart = ToString.toString(right);
+			}
+			builder.add(locale, leftPart + rightPart);
+		}
+		return builder.build();
 	}
 
 	@Override

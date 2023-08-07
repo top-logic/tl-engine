@@ -203,7 +203,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 				
 				if(isDropTarget(event.target)) {
 					if(!isDescendant(dragged, event.target)) {
-						if(!findCssClassUp(event.target, "locked")) {
+						if(!findCssClassUp(event.target, "rf_locked")) {
 							// append to an empty dropTarget
 							var dropTarget = findInnerTarget(event.target);
 							dropTarget.appendChild(dragged);
@@ -225,7 +225,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 						if(lastTarget != dragElement.id || insertBefore != insertBeforeNew) {
 							var parent = dragElement.parentNode;
 
-							if(parent && !findCssClassUp(parent, "locked")) {			
+							if(parent && !findCssClassUp(parent, "rf_locked")) {			
 								// check if the dragged is parent of the element which should be its parent
 								if(!isDescendant(dragged, parent)) {
 									var sibling = insertBeforeNew ? dragElement : dragElement.nextSibling;								

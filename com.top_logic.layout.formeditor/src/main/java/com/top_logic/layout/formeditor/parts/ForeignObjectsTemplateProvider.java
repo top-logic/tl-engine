@@ -6,6 +6,7 @@
 package com.top_logic.layout.formeditor.parts;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
+import static com.top_logic.model.form.ReactiveFormCSS.*;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -246,7 +247,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		FieldSetBoxTemplate finalTemplate = Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none());
 		/* Lock content of the preview fieldset box. It must not be possible to drop elements in the
 		 * box. */
-		finalTemplate.setCssClass("locked");
+		finalTemplate.setCssClass(RF_LOCKED);
 		addButtons(finalTemplate, null, true);
 		return finalTemplate;
 	}

@@ -84,7 +84,7 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 		if (formMode == FormMode.DESIGN) {
 			HTMLTemplateFragment result =
 				GroupDefinitionTemplateProvider.wrapFieldSet(config, getID(), Templates.empty(), ConfigKey.none())
-					.setCssClass(CssUtil.joinCssClasses("locked", config.getCssClass()));
+					.setCssClass(CssUtil.joinCssClasses(ReactiveFormCSS.RF_LOCKED, config.getCssClass()));
 			return result;
 		} else {
 			List<HTMLTemplateFragment> otherAttributeTemplates = new ArrayList<>();

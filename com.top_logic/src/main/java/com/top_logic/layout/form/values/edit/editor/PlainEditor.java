@@ -94,7 +94,11 @@ public class PlainEditor extends AbstractEditor {
 		return field;
 	}
 
-	private ConfigurationValueProvider<?> getValueProvider(final PropertyDescriptor property) {
+	/**
+	 * Determines a {@link ConfigurationValueProvider} for the given {@link PropertyDescriptor
+	 * property}.
+	 */
+	protected ConfigurationValueProvider<?> getValueProvider(PropertyDescriptor property) {
 		ConfigurationValueProvider<?> valueProvider = property.getValueProvider();
 		if (valueProvider == null) {
 			ConfigurationValueBinding<?> xmlBinding = property.getValueBinding();

@@ -6,7 +6,6 @@
 package com.top_logic.layout.formeditor.parts;
 
 import static com.top_logic.layout.form.template.model.Templates.*;
-import static com.top_logic.model.form.ReactiveFormCSS.*;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -51,6 +50,7 @@ import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormDefinitionTemplateProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
@@ -59,6 +59,7 @@ import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.util.css.CssUtil;
 
 /**
  * {@link AbstractFormElementProvider} for {@link ForeignObjects}.
@@ -128,6 +129,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		FormContainer contentGroup = context.getContentGroup();
 		ConfigKey personalizationKey = ConfigKey.field(contentGroup);
 		personalizationKey = ConfigKey.derived(personalizationKey, "foreignObjects");
+		boolean noSeparateGroup = getConfig().isNoSeparateGroup();
 		int index = 0;
 		for (Object obj : objects) {
 			TLObject item = SearchExpression.asTLObjectNonNull(itemsExpr.getSearch(), obj);
@@ -163,8 +165,14 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 			}
 			ConfigKey derivedKey = ConfigKey.derived(personalizationKey, itemID);
 			Member content = member(innerGroup, contentTemplate);
-			FieldSetBoxTemplate finalTemplate = Templates.fieldsetBoxWrap(legend, content, derivedKey);
-			addButtons(finalTemplate, item, false);
+			HTMLTemplateFragment finalTemplate;
+			if (noSeparateGroup) {
+				finalTemplate = content;
+			} else {
+				FieldSetBoxTemplate fieldsetBox = Templates.fieldsetBoxWrap(legend, content, derivedKey);
+				addButtons(fieldsetBox, item, false);
+				finalTemplate = fieldsetBox;
+			}
 			templates[index] = finalTemplate;
 			index++;
 		}
@@ -244,11 +252,20 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 				.build();
 			contentTemplate = layout.createContentTemplate(context);
 		}
-		FieldSetBoxTemplate finalTemplate = Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none());
-		/* Lock content of the preview fieldset box. It must not be possible to drop elements in the
-		 * box. */
-		finalTemplate.setCssClass(RF_LOCKED);
-		addButtons(finalTemplate, null, true);
+		boolean noSeparateGroup = getConfig().isNoSeparateGroup();
+		HTMLTemplateFragment finalTemplate;
+		if (noSeparateGroup) {
+			finalTemplate =
+				div(css(CssUtil.joinCssClasses(ReactiveFormCSS.RF_LOCKED, ReactiveFormCSS.RF_WRAPPER)),
+				div(css(ReactiveFormCSS.RF_CONTAINER), contentTemplate));
+		} else {
+			FieldSetBoxTemplate boxTemplate = Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none());
+			/* Lock content of the preview fieldset box. It must not be possible to drop elements in
+			 * the box. */
+			boxTemplate.setCssClass(ReactiveFormCSS.RF_LOCKED);
+			addButtons(boxTemplate, null, true);
+			finalTemplate = boxTemplate;
+		}
 		return finalTemplate;
 	}
 
@@ -259,6 +276,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
 		Collection<?> objects = SearchExpression.asCollection(itemsExpr.execute(renderContext.getModel()));
 		QueryExecutor labelExpr = QueryExecutor.compileOptional(getConfig().getLabel());
+		boolean noSeparateGroup = getConfig().isNoSeparateGroup();
 		for (Object obj : objects) {
 			TLObject item = SearchExpression.asTLObjectNonNull(itemsExpr.getSearch(), obj);
 			FormElementTemplateProvider layout;
@@ -280,17 +298,22 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 					.build();
 			}
 
-			HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_EXPORT_CSS);
+			if (noSeparateGroup) {
+				layout.renderPDFExport(context, out, innerContext);
+			} else {
+				HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_EXPORT_CSS);
 
-			HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_HEADER_CSS);
-			out.writeText(label(labelExpr, item));
-			out.endTag(HTMLConstants.DIV);
+				HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_HEADER_CSS);
+				out.writeText(label(labelExpr, item));
+				out.endTag(HTMLConstants.DIV);
 
-			HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_CONTENT_CSS);
-			layout.renderPDFExport(context, out, innerContext);
-			out.endTag(HTMLConstants.DIV);
+				HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_CONTENT_CSS);
+				layout.renderPDFExport(context, out, innerContext);
+				out.endTag(HTMLConstants.DIV);
 
-			out.endTag(HTMLConstants.DIV);
+				out.endTag(HTMLConstants.DIV);
+			}
+
 		}
 	}
 

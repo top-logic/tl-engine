@@ -52,10 +52,6 @@ public class SimpleEditContext implements EditContext {
 				return editObject;
 			}
 
-			@Override
-			public TLStructuredType getType() {
-				return getObject().tType();
-			}
 		};
 	}
 
@@ -162,7 +158,10 @@ public class SimpleEditContext implements EditContext {
 
 	@Override
 	public TLStructuredType getType() {
-		return null;
+		if (getObject() == null) {
+			return null;
+		}
+		return getObject().tType();
 	}
 
 	@Override

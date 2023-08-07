@@ -1319,17 +1319,17 @@ public class AttributeOperations {
 	 * 
 	 * @param attribute
 	 *        The attribute to get label position for.
-	 * @param update
-	 *        Pending attribute updates container.
+	 * @param context
+	 *        Context in which the attribute is edited.
 	 * 
 	 * @return The {@link LabelPosition position} where the label is rendered.
 	 */
-	public static LabelPosition labelPosition(TLStructuredTypePart attribute, AttributeUpdate update) {
-		if (update != null) {
-			return labelPosition(attribute, update.getAnnotation(LabelPositionAnnotation.class));
+	public static LabelPosition labelPosition(TLStructuredTypePart attribute, EditContext context) {
+		if (context != null) {
+			return labelPosition(attribute, context.getAnnotation(LabelPositionAnnotation.class));
 		}
 
-		return LabelPosition.DEFAULT;
+		return labelPosition(attribute);
 	}
 
 	/**

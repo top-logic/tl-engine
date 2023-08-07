@@ -47,7 +47,6 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.template.model.AbstractMember;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.provider.LabelProviderService;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.model.TableConfig;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
@@ -382,58 +381,58 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 			return;
 		}
 
+		SimpleEditContext editContext = new LocalAnnotationsEditContext(renderContext.getModel(), part, getConfig());
+
 		HTMLUtil.beginDiv(out, "field");
-		LabelPosition labelPosition = AttributeOperations.labelPosition(part);
+		LabelPosition labelPosition = AttributeOperations.labelPosition(part, editContext);
 		switch (labelPosition) {
 			case DEFAULT:
 				HTMLUtil.beginDiv(out, "label");
-				renderLabel(out, part, true);
+				renderLabel(context, out, editContext, true);
 				HTMLUtil.endDiv(out);
 
 				HTMLUtil.beginDiv(out, "value");
-				renderValue(context, out, renderContext.getModel(), part);
+				renderValue(context, out, editContext);
 				HTMLUtil.endDiv(out);
 				break;
 			case AFTER_VALUE:
 				HTMLUtil.beginSpan(out, "value");
-				renderValue(context, out, renderContext.getModel(), part);
+				renderValue(context, out, editContext);
 				HTMLUtil.endSpan(out);
 
 				HTMLUtil.beginSpan(out, "label");
-				renderLabel(out, part, false);
+				renderLabel(context, out, editContext, false);
 				HTMLUtil.endSpan(out);
 				break;
 			case HIDE_LABEL:
 				HTMLUtil.beginSpan(out, "value");
-				renderValue(context, out, renderContext.getModel(), part);
+				renderValue(context, out, editContext);
 				HTMLUtil.endSpan(out);
 				break;
 		}
 		HTMLUtil.endDiv(out);
 	}
 
-	private void renderValue(DisplayContext context, TagWriter out, TLObject model, TLStructuredTypePart part)
-			throws IOException {
-		Object value = model.tValue(part);
-		if (!part.isMultiple()) {
-			writeValue(context, out, model, part, value);
+	private void renderValue(DisplayContext context, TagWriter out, SimpleEditContext editContext) throws IOException {
+		Object value = editContext.getObject().tValue(editContext.getAttribute());
+		if (!editContext.isMultiple()) {
+			writeValue(context, out, editContext, value);
 		} else {
-			ReferencePresentation presentation =
-				AttributeOperations.getPresentation(SimpleEditContext.createContext(model, part));
+			ReferencePresentation presentation = AttributeOperations.getPresentation(editContext);
 			switch (presentation) {
 				case DROP_DOWN:
 				case POP_UP:
 				case RADIO:
 				case RADIO_INLINE:
-					writeValue(context, out, model, part, value);
+					writeValue(context, out, editContext, value);
 					break;
 				case TABLE:
 					if (value instanceof Collection<?>) {
 						List<?> rows = CollectionUtil.toList((Collection<?>) value);
-						TableConfigurationProvider table = tableDefinition(model, part);
+						TableConfigurationProvider table = tableDefinition(editContext);
 						new SimplePDFTableFragment(table, rows).write(context, out);
 					} else {
-						writeValue(context, out, model, part, value);
+						writeValue(context, out, editContext, value);
 					}
 					break;
 				default:
@@ -443,20 +442,22 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		}
 	}
 
-	private void writeValue(DisplayContext context, TagWriter out, TLObject contextObject, TLStructuredTypePart part, Object value) throws IOException {
-		PDFRendererAnnotation rendererAnnotation = part.getAnnotation(PDFRendererAnnotation.class);
+	private void writeValue(DisplayContext context, TagWriter out, SimpleEditContext editContext, Object value)
+			throws IOException {
+		PDFRendererAnnotation rendererAnnotation = editContext.getAnnotation(PDFRendererAnnotation.class);
 		PDFRenderer renderer;
 		if (rendererAnnotation != null) {
 			renderer = TypedConfigUtil.createInstance(rendererAnnotation.getImpl());
 		} else {
 			renderer = LabelProviderService.getInstance().getPDFRenderer(value);
 		}
-		renderer.write(context, out, contextObject, value);
+		renderer.write(context, out, editContext.getObject(), value);
 	}
 
-	private TableConfigurationProvider tableDefinition(TLObject model, TLStructuredTypePart part) {
+	private TableConfigurationProvider tableDefinition(SimpleEditContext editContext) {
 		TableConfigurationProvider tableConfigurationProvider =
-			AbstractWrapperFieldProvider.getTableConfigurationProvider(SimpleEditContext.createContext(model, part));
+			AbstractWrapperFieldProvider.getTableConfigurationProvider(editContext);
+		TLStructuredTypePart part = editContext.getAttribute();
 		if (tableConfigurationProvider == DefaultTableConfigurationProvider.INSTANCE) {
 			FieldProvider fieldProvider = AttributeOperations.getFieldProvider(part);
 			if (fieldProvider instanceof TableSupportingComplexFieldProvider) {
@@ -475,8 +476,8 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 			SimplePDFTableFragment.removeNonExportColumns());
 	}
 
-	private void renderLabel(TagWriter out, TLStructuredTypePart part, boolean useColon) {
-		out.writeText(MetaLabelProvider.INSTANCE.getLabel(part));
+	private void renderLabel(DisplayContext context, TagWriter out, EditContext editContext, boolean useColon) {
+		out.writeText(context.getResources().getString(editContext.getLabelKey()));
 		if (useColon) {
 			out.writeText(LabelControl.COLON);
 		}
@@ -486,9 +487,22 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 
 		private AnnotationLookup _fieldAnnotations;
 
+		private TLObject _model;
+
 		LocalAnnotationsEditContext(TLStructuredTypePart attribute, AnnotationLookup localAnnotations) {
 			super(attribute);
 			_fieldAnnotations = localAnnotations;
+		}
+
+		LocalAnnotationsEditContext(TLObject object, TLStructuredTypePart attribute,
+				AnnotationLookup localAnnotations) {
+			this(attribute, localAnnotations);
+			_model = object;
+		}
+
+		@Override
+		public TLObject getObject() {
+			return _model;
 		}
 
 		@Override

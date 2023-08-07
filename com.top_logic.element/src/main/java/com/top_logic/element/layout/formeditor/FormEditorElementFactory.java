@@ -17,9 +17,12 @@ import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormElement;
+import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormEditorElementTemplateProvider;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
+import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -47,9 +50,12 @@ public class FormEditorElementFactory {
 	 */
 	public static HandlerResult openDialog(DisplayContext commandContext, FormElement<?> def,
 			Function<? super FormElement<?>, HandlerResult> okHandle, DialogClosedListener dialogCloseListener,
-			ResKey dialogTitle) {
+			TLStructuredType editedType) {
 
 		FormElementTemplateProvider formElement = TypedConfigUtil.createInstance(def);
+
+		ResKey dialogTitle = dialogTitle(formElement, editedType);
+
 		CreateConfigurationDialog<? extends FormElement<?>> dialog =
 			formElement.createConfigDialog(dialogTitle, okHandle);
 
@@ -62,6 +68,16 @@ public class FormEditorElementFactory {
 		dialog.getDialogModel().addListener(DialogModel.CLOSED_PROPERTY, dialogCloseListener);
 
 		return dialog.open(commandContext);
+	}
+
+	private static ResKey dialogTitle(FormElementTemplateProvider formElement, TLStructuredType editedType) {
+		FormEditorContext formEditorContext = new FormEditorContext.Builder()
+			.formMode(FormMode.CREATE)
+			.formType(editedType)
+			.build();
+
+		ResKey label = formElement.getLabel(formEditorContext);
+		return I18NConstants.DIALOG_TITLE_EDIT_FORM_ELEMENT__ELEMENT.fill(label);
 	}
 
 }

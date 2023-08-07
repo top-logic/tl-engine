@@ -8,8 +8,8 @@ package com.top_logic.element.layout.meta;
 import com.top_logic.layout.form.model.FieldMode;
 
 /**
- * {@link ModeSwitch} between {@link FieldMode#IMMUTABLE} (<code>false</code>) and
- * {@link FieldMode#INVISIBLE} (<code>true</code>).
+ * {@link ModeSwitch} between {@link FieldMode#IMMUTABLE} (<code>true</code>) and
+ * {@link FieldMode#INVISIBLE} (<code>false</code>).
  * 
  * @see HideImmutableIf
  * 
@@ -19,12 +19,12 @@ public class HideImmutableIfNot extends ModeSwitch {
 
 	@Override
 	protected FieldMode trueMode() {
-		return FieldMode.INVISIBLE;
+		return FieldMode.IMMUTABLE;
 	}
 
 	@Override
 	protected FieldMode falseMode() {
-		return FieldMode.IMMUTABLE;
+		return FieldMode.INVISIBLE;
 	}
 
 }

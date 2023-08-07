@@ -30,8 +30,8 @@ import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
  */
 @DisplayOrder({
 	ForeignObjects.TYPE,
-	ForeignObjects.LABEL,
 	ForeignObjects.ITEMS,
+	ForeignObjects.LABEL,
 	ForeignObjects.READ_ONLY,
 	ForeignObjects.LAYOUT,
 	ForeignObjects.BUTTONS,

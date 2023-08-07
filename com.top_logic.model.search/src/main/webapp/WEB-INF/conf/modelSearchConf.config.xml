@@ -636,9 +636,58 @@
 			</type-systems>
 		</config>
 		
+		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
+			<customizations>
+				<type name="com.top_logic.layout.ScriptFunction0">
+					<annotations>
+						<property-editor value="com.top_logic.model.search.form.ScriptFunction0Impl$Editor"/>
+						<control-provider value="com.top_logic.model.search.ui.TLScriptCodeEditorControl$PlainCP"/>
+					</annotations>
+				</type>
+				<type name="com.top_logic.layout.ScriptFunction1">
+					<annotations>
+						<property-editor value="com.top_logic.model.search.form.ScriptFunction1Impl$Editor"/>
+						<control-provider value="com.top_logic.model.search.ui.TLScriptCodeEditorControl$PlainCP"/>
+					</annotations>
+				</type>
+				<type name="com.top_logic.layout.ScriptFunction2">
+					<annotations>
+						<property-editor value="com.top_logic.model.search.form.ScriptFunction2Impl$Editor"/>
+						<control-provider value="com.top_logic.model.search.ui.TLScriptCodeEditorControl$PlainCP"/>
+					</annotations>
+				</type>
+				<type name="com.top_logic.layout.ScriptFunction3">
+					<annotations>
+						<property-editor value="com.top_logic.model.search.form.ScriptFunction3Impl$Editor"/>
+						<control-provider value="com.top_logic.model.search.ui.TLScriptCodeEditorControl$PlainCP"/>
+					</annotations>
+				</type>
+				<type name="com.top_logic.layout.ScriptFunction4">
+					<annotations>
+						<property-editor value="com.top_logic.model.search.form.ScriptFunction4Impl$Editor"/>
+						<control-provider value="com.top_logic.model.search.ui.TLScriptCodeEditorControl$PlainCP"/>
+					</annotations>
+				</type>
+			</customizations>
+		</config>
 	</configs>
 	
 	<defaults>
+		<config interface="com.top_logic.layout.ScriptFunction0">
+			<property name="class" value="com.top_logic.model.search.form.ScriptFunction0Impl"/>
+		</config>
+		<config interface="com.top_logic.layout.ScriptFunction1">
+			<property name="class" value="com.top_logic.model.search.form.ScriptFunction1Impl"/>
+		</config>
+		<config interface="com.top_logic.layout.ScriptFunction2">
+			<property name="class" value="com.top_logic.model.search.form.ScriptFunction2Impl"/>
+		</config>
+		<config interface="com.top_logic.layout.ScriptFunction3">
+			<property name="class" value="com.top_logic.model.search.form.ScriptFunction3Impl"/>
+		</config>
+		<config interface="com.top_logic.layout.ScriptFunction4">
+			<property name="class" value="com.top_logic.model.search.form.ScriptFunction4Impl"/>
+		</config>
 	</defaults>
 	
 </application>

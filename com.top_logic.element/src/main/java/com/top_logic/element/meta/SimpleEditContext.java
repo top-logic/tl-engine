@@ -18,6 +18,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.DynamicLabel;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.util.TLModelI18N;
@@ -80,7 +81,15 @@ public class SimpleEditContext implements EditContext {
 
 	@Override
 	public ResKey getLabelKey() {
-		return TLModelI18N.getI18NKey(getAttribute());
+		TLStructuredTypePart attribute = getAttribute();
+		ResKey defaultLabelKey = TLModelI18N.getI18NKey(attribute);
+		if (getObject() != null) {
+			DynamicLabel annotation = getAnnotation(DynamicLabel.class);
+			if(annotation != null) {
+				return annotation.getLabel().impl().apply(getObject(), defaultLabelKey, attribute);
+			}
+		}
+		return defaultLabelKey;
 	}
 
 	@Override

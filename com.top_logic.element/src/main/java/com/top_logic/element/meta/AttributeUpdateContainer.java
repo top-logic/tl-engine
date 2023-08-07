@@ -27,7 +27,6 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.util.Resources;
 
 /**
@@ -626,7 +625,7 @@ public class AttributeUpdateContainer {
 					((FormField) field).setError(
 						Resources.getInstance().getString(
 							I18NConstants.CONSTRAINT_FAILURE__ATTRIBUTE_MESSAGE
-								.fill(TLModelI18N.getI18NKey(update.getAttribute()), ex.getErrorKey())));
+								.fill(update.getLabelKey(), ex.getErrorKey())));
 					ok = false;
 				}
 			}

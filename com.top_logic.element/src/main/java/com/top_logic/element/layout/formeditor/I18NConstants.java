@@ -41,6 +41,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey UNSUITABLE_BUILDER_ERROR;
 
+	/**
+	 * @en Edit "{0}"...
+	 */
+	public static ResKey1 DIALOG_TITLE_EDIT_FORM_ELEMENT__ELEMENT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

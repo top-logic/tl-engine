@@ -54,7 +54,7 @@ public class FormDefinitionTemplateProvider extends AbstractFormContainerProvide
 
 	@Override
 	public ResKey getLabel(FormEditorContext editorContext) {
-		return null;
+		return I18NConstants.FORM_DEFINITION_LABEL;
 	}
 
 	@Override

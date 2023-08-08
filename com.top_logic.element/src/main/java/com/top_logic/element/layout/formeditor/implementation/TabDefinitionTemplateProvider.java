@@ -69,7 +69,7 @@ public class TabDefinitionTemplateProvider extends AbstractFormContainerProvider
 
 	@Override
 	public ResKey getLabel(FormEditorContext context) {
-		return null;
+		return I18NConstants.TAB_LABEL;
 	}
 
 	@Override

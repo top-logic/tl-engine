@@ -15,6 +15,7 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.SelectFieldUtils;
+import com.top_logic.layout.form.model.utility.TreeOptionModel;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.scripting.action.ActionFactory;
 import com.top_logic.layout.scripting.action.assertion.GuiAssertion;
@@ -36,6 +37,10 @@ public class FieldOptionsAssertionPlugin extends FieldAssertionPlugin<SelectFiel
 	 */
 	public FieldOptionsAssertionPlugin(SelectField model) {
 		super(model, false, "fieldOptions");
+		if (model.getOptionModel() instanceof TreeOptionModel<?>) {
+			throw new IllegalArgumentException(
+				"Assertion for options of tree-options field not supported: " + model.getName());
+		}
 	}
 
 	@Override
@@ -60,10 +65,13 @@ public class FieldOptionsAssertionPlugin extends FieldAssertionPlugin<SelectFiel
 	protected GuiAssertion buildAssertion(ModelName fieldModelName) {
 		SelectFieldOptionsName fieldModelOptionName = TypedConfiguration.newConfigItem(SelectFieldOptionsName.class);
 		fieldModelOptionName.setFormMember(fieldModelName);
-		List options = getExpectedValueField().getOptions();
-		Maybe<? extends ModelName> optionsName = ModelResolver.buildModelNameIfAvailable(options);
+		if (!getExpectedValueField().hasValue()) {
+			throw new ApplicationAssertion("Expected options can not be determined.");
+		}
+		List<?> expectedOptions = getExpectedValueField().getSelection();
+		Maybe<? extends ModelName> optionsName = ModelResolver.buildModelNameIfAvailable(expectedOptions);
 		if (!optionsName.hasValue()) {
-			throw new ApplicationAssertion("Unable to get name for options: " + options);
+			throw new ApplicationAssertion("Unable to get name for options: " + expectedOptions);
 		}
 		return ActionFactory.valueAssertion(optionsName.get(), fieldModelOptionName, getComment());
 	}

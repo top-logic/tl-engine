@@ -9,6 +9,10 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.DropDownControl;
 import com.top_logic.layout.form.control.SelectControl;
+import com.top_logic.layout.form.control.SelectionControl;
+import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.SelectFieldUtils;
+import com.top_logic.layout.form.model.utility.TreeOptionModel;
 import com.top_logic.layout.form.template.ControlProvider;
 
 /**
@@ -36,7 +40,14 @@ public class SelectControlProvider implements ControlProvider {
 
 	@Override
 	public Control createControl(Object model, String style) {
-		return new DropDownControl((FormField) model, _preventClear);
+		FormField field = (FormField) model;
+		if ((field instanceof SelectField) && (SelectFieldUtils.getOptionModel(field) instanceof TreeOptionModel<?>)) {
+			SelectionControl result = new SelectionControl((SelectField) field);
+			result.setClearButton(!_preventClear && !field.isMandatory());
+			return result;
+		} else {
+			return new DropDownControl(field, _preventClear);
+		}
 	}
 
 }

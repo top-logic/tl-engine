@@ -256,10 +256,10 @@
 		value="css:bi bi-arrow-up"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_ASC_SMALL"
-		value="css:bi bi-arrow-up-short"
+		value="css:bi bi-arrow-up"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_DESC_SMALL"
-		value="css:bi bi-arrow-down-short"
+		value="css:bi bi-arrow-down"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
 		value="css:bi bi bi-funnel"

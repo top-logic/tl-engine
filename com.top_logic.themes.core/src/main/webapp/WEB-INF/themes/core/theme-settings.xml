@@ -90,6 +90,9 @@
 	<icon name="BREADCRUMB_ROOT_ICON"
 		value="css:bi bi-house"
 	/>
+	<icon name="ICON_HOME"
+		value="css:bi bi-house"
+	/>
 	<icon name="READ_ONLY_NAVIGATION_SEPARATOR_ICON"
 		value="css:bi bi-chevron-right"
 	/>
@@ -346,6 +349,42 @@
 		value="css:bi bi-caret-right-fill"
 	/>
 	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PS"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.LL"
+		value="/tree/table/ll.png"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.LF"
+		value="/tree/table/lf.png"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.LNL"
+		value="/tree/table/lnl.png"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.LS"
+		value="/tree/table/ls.png"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.MF"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.ML"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.MNL"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.MS"
+		value="css:bi bi-caret-down-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PF"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PL"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PNL"
+		value="css:bi bi-caret-right-fill"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PS"
 		value="css:bi bi-caret-right-fill"
 	/>
 	<icon name="TILES_CONFIGURE_GROUP_ICON"

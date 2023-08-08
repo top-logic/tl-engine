@@ -59,6 +59,7 @@ import com.top_logic.layout.form.model.SelectionTableField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.form.model.TreeField;
+import com.top_logic.layout.form.model.utility.TreeOptionModel;
 import com.top_logic.layout.form.tag.TableTag;
 import com.top_logic.layout.form.template.model.internal.TemplateControl;
 import com.top_logic.layout.image.gallery.GalleryControl;
@@ -201,7 +202,7 @@ public class DefaultFormFieldControlProvider extends AbstractFormFieldControlPro
 
 	@Override
 	public Control visitSelectField(SelectField member, Void arg) {
-		if (member.isMultiple()) {
+		if (member.isMultiple() || member.getOptionModel() instanceof TreeOptionModel<?>) {
 			return new SelectionControl(member);
 		} else {
 			return new DropDownControl(member);

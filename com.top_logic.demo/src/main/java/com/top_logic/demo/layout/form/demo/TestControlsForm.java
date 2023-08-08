@@ -169,7 +169,6 @@ import com.top_logic.layout.form.control.DropDownControl;
 import com.top_logic.layout.form.control.FractionSelectControl;
 import com.top_logic.layout.form.control.IntegerInputControl;
 import com.top_logic.layout.form.control.OpenCalendarControl.OpenCalendar;
-import com.top_logic.layout.form.control.SelectControl;
 import com.top_logic.layout.form.control.SelectionPartControl;
 import com.top_logic.layout.form.control.TextInputControl;
 import com.top_logic.layout.form.control.TextPopupControl;
@@ -228,6 +227,7 @@ import com.top_logic.layout.provider.DateTimeLabelProvider;
 import com.top_logic.layout.provider.DefaultLabelProvider;
 import com.top_logic.layout.provider.LabelResourceProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.layout.provider.SelectControlProvider;
 import com.top_logic.layout.resources.NestedResourceView;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.DefaultPopupDialogModel;
@@ -2616,13 +2616,7 @@ public class TestControlsForm extends FormComponent {
 		SelectFieldUtils.setOptionLabelProvider(result, BooleanLabelProvider.INSTANCE);
 		SelectFieldUtils.setOptionComparator(result, Equality.INSTANCE);
 
-		result.setControlProvider(new ControlProvider() {
-			@Override
-			public Control createControl(Object model, String style) {
-				return new SelectControl((FormField) model, true);
-			}
-		});
-
+		result.setControlProvider(SelectControlProvider.INSTANCE_WITHOUT_CLEAR);
 		return result;
 	}
 

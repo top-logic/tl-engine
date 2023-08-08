@@ -854,10 +854,19 @@
 	<!-- End of demo configurations -->
 	
 	
+	<size name="TABLE_TITLE_HEIGHT"
+		value="22px"
+	/>
+	<string name="FROZEN_TABLE_ROW_SMALL_STYLE"
+		value="height: 22px;"
+	/>
+	
+	
 	<!-- DELETE THIS (test icon for tree view) -->
 	<icon name="model.DemoTypes.A"
 		value="css:bi bi-alarm-fill"
 	/>
+	
 	
 	<!-- Color Tokens -->
 	<color name="background"

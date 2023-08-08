@@ -134,6 +134,7 @@ div.fptIconBar > span.fptIconOverlay > i {
 
 .rf_label .cLabel label {
 	color: var(--text-secondary);
+	word-break: break-all;
 }
 
 .rf_label {
@@ -242,6 +243,7 @@ div.layoutControl.dflColumns .rf_columnsLayout.keep > .rf_inputCell {
 .rf_cell {
     min-height: 1.5rem;
     margin: var(--spacing-02) 0;
+  	word-wrap: break-word;
 }
 
 /* columns layout */

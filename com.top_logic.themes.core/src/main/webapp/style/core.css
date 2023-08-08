@@ -1364,6 +1364,29 @@ h5.card-title a {
 	white-space: nowrap;
 }
 
+.cCollapsibleHorizontal .cCollapsibleHeader {
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: unset;
+}
+
+.cCollapsibleHorizontal .cCollapsibleTitle {
+	display: block;
+	transform: rotate(90deg);
+	overflow: visible;
+	padding-left: var(--spacing-01);
+}
+
+.cCollapsibleHorizontal .cCollapsibleToolbar {
+	padding-top: var(--spacing-03);
+    justify-content: center;
+    align-items: center;
+}
+
+.cCollapsibleHorizontal .cCollapsibleButtons {
+    padding-right: 0;
+}
+
 .cCollapsibleToolbar a:hover,
 .cToolbar a:hover,
 .cCollapsibleToolbar .tbGroup a:hover,

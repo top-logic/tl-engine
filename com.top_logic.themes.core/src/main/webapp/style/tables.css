@@ -36,16 +36,17 @@ a.tl-table__title:visited {
 
 .tl-table__title {
 	/* For legacy browsers.*/
-	background: var(--layer);
-	color:           var(--TABLE_TBL_TITLE_COLOR);
-	font-size:        13px;
-	font-weight:      normal;
-	line-height: var(--TABLE_TITLE_HEIGHT);
+	background: var(--layer-accent);
+	color:           var(--text-primary);
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
 	padding-top: 0px;
 	padding-bottom: 0px;
 	padding-left: 2px;
 	padding-right: 2px;
-	border-color:     #555555;
+	border-color:     var(--border-strong);
 	border-width: 1px;
 	border-top-style: none;
 	border-right-style: none;
@@ -56,12 +57,14 @@ th.tblTitleRight {
 	/* For legacy browsers. */
 	background-color: var(--FRAME_BACK);
 
-	background: var(--layer);
+	background: var(--layer-accent);
 	color:            var(--text-primary);
-	font-size:        13px;
-	font-weight:      normal;
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	letter-spacing: var(--heading-03-letter-spacing);
 	padding:          2px;
-	border-color:     #555555;
+	border-color:     var(--border-strong);
 	text-align:       right;
 	border-left:      none;
 }
@@ -115,7 +118,7 @@ span.tblButton input {
 
 th.tblCounterNoBorder {
 	padding:2px;
-	border-top-color:gray;
+	border-top-color: var(--border-subtle);;
 	border-top-style:solid;
 	border-width:0px;
 	color:black;
@@ -152,15 +155,15 @@ th.tl-table__cell, th.cal_th {
 	letter-spacing: 	 var(--heading-compact-02-letter-spacing);
     white-space:         nowrap;
 	padding:             0px;
-	border-bottom-color: gray;
+	border-bottom-color: var(--border-subtle);
 	border-bottom-style: solid;
-	border-bottom-width: var(--TABLE_HEADER_BORDER_BOTTOM_WIDTH);
+	border-bottom-width: 1px;
 	border-top-style:    none;
 	border-right-style:  none;
   
     /* mri */
    /*  border-color: white; */
-	border-color: #f0f0f0;
+	border-color: var(--border-subtle);
 	
     font-size:           12px;
     font-weight:         bold;
@@ -196,7 +199,7 @@ th.tblTHNoBorder {
 	font-weight:         normal;
     white-space:         nowrap;
 	padding:             2px;
-	border-bottom-color: gray;
+	border-bottom-color: var(--border-subtle);;
 	border-bottom-style: solid;
 	border-width:        0px;
 	color:               black;
@@ -209,7 +212,7 @@ th.tblTHRight {
 	font-weight:         normal;
     white-space:         nowrap;
 	padding:             2px;
-	border-bottom-color: gray;
+	border-bottom-color: var(--border-subtle);;
 	border-bottom-style: solid;
 	border-bottom-width: 1px;
 	border-right-width:  0px;
@@ -246,7 +249,7 @@ td.tl-table__cell--selectable {
 
 td.tl-table__cell {
 	border-bottom-style: solid;
-	border-bottom-width:   var(--TABLE_COLUMN_BORDER_WIDTH);
+	border-bottom-width: 1px;
 }
 
 td.tl-table__cell,
@@ -362,7 +365,8 @@ td.tl-table__cell--selected {
     white-space:      nowrap;
 	padding:          0px;
 	color:            var(--text-primary);
-	background-color: var(--layer-selected);
+    background-color: var(--layer-selected);
+    border-color:     var(--border-subtle);
 }
 
 td.tl-table__cell--selected a {
@@ -449,7 +453,7 @@ th.regTitle {
 	font-size:        13px;
 	font-weight:      normal;
 	padding:          2px;
-	border-color:     #555555;
+	border-color:     var(--border-strong);
 	border-style:     solid;
 }
 
@@ -461,7 +465,7 @@ th.regTH {
 	font-weight:      normal;
     white-space:      nowrap;
 	padding:          2px;
-	border-color:     #555555;
+	border-color:     var(--border-strong);
 	color:            black;
 	background-color: var(--layer);
 }
@@ -479,7 +483,7 @@ td.regTD {
     white-space:    nowrap;
 	padding:        0px;
 	vertical-align: top;
-	border-color:   #555555;
+	border-color:     var(--border-strong);
 	border-style:   outset;
 	color:          black;
 }
@@ -490,7 +494,7 @@ td.regTDStrong {
     white-space:    nowrap;
 	padding:        0px;
 	vertical-align: top;
-	border-color:   #555555;
+	border-color:     var(--border-strong);
 	color:          black;
 }
 
@@ -498,7 +502,7 @@ td.regTDwrap {
 	font-size:      10px;
 	padding:        0px;
 	vertical-align: top;
-	border-color:   #555555;
+	border-color:     var(--border-strong);
 	color:          black;
 }
 
@@ -508,7 +512,7 @@ td.regTDCenter {
     white-space:    nowrap;
 	padding:        0px;
 	vertical-align: top;
-	border-color:   #555555;
+	border-color:     var(--border-strong);
 	color:          black;
 }
 
@@ -518,7 +522,7 @@ td.regTDRight {
     white-space:    nowrap;
 	padding:        0px;
 	vertical-align: top;
-	border-color:   #555555;
+	border-color:     var(--border-strong);
 	color:          black;
 }
 
@@ -527,7 +531,7 @@ td.regTD100 {
     white-space:    nowrap;
 	padding:        0px;
 	vertical-align: top;
-	border-color:   #555555;
+	border-color:     var(--border-strong);
 	color:          black;
 	width:          100%;
 }
@@ -543,7 +547,7 @@ td.regTDselected {
     white-space:      nowrap;
 	padding:          0px;
 	vertical-align:   top;
-	border-color:     #555555;
+	border-color:     var(--border-strong);
 	border-style:     outset;
 }
 
@@ -553,8 +557,8 @@ td.regTDselectedStrong {
     white-space:      nowrap;
 	padding:          0px;
 	vertical-align:   top;
-	border-color:     #555555;
-	color:            black;
+	border-color:     var(--border-strong);
+	color:            var(--text-primary);
 	background-color: #ADAEAD;
 }
 
@@ -564,8 +568,8 @@ td.regTDselected100 {
     white-space:      nowrap;
 	padding:          0px;
 	vertical-align:   top;
-	border-color:     #555555;
-	color:            black;
+	border-color:     var(--border-strong);
+	color:            var(--text-primary);
 	background-color: #ADAEAD;
 	width:          100%;
 }
@@ -581,7 +585,7 @@ div.movingheader{
 	font-weight:         normal;
     white-space:         nowrap;
 	padding:             0px;
-	border-bottom-color: gray;
+	border-bottom-color: var(--border-subtle);;
 	border-bottom-style: solid;
 	border-bottom-width: 0px;
 	border-right-width:  0px;
@@ -1478,18 +1482,8 @@ div.dirtyHandlingDialog .changes {
 	border-collapse: separate !important;
 	border-spacing: 0px;
 	margin: 0px;
-	background-color: var(--layer-selected);
-	/*
 	border-top: solid 1px var(--border-strong);
-	*/
 }
-
-/*
-.tl-table__header .tl-table__cell.tl-position--sticky,
-.tl-table__header .tl-table__cell.tl-table__cell {
-	border-top: solid 1px var(--border-subtle);
-}
-*/
 
 .tl-table--fixed {
 	table-layout: fixed;
@@ -1777,11 +1771,19 @@ td.treeTableTd span {
 *****************************************************************************/
 td.tl-table__cell--selected {
     white-space:      nowrap;
-    color:            var(--TD_TBLSELECT_COLOR);
-    background-color: var(--TABLE_SELECT_BACKGROUND_COLOR);
-    border-color:     var(--TABLE_SELECT_BACKGROUND_COLOR);
+    color:            var(--text-primary);
+    background-color: var(--layer-selected);
+    border-color:     var(--border-subtle);
 }
 
 td.tl-table__cell--selected a {
 	color: #7695C3;
+}
+
+.tblSelected.tl-table__row:hover {
+	background-color: var(--layer-selected-hover)
+}
+
+.tl-table__row:not(.tblSelected):hover > td {
+	background-color: var(--layer-hover);
 }

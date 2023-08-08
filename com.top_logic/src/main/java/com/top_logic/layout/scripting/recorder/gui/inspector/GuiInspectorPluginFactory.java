@@ -17,6 +17,7 @@ import com.top_logic.layout.form.decorator.DecorateInfo;
 import com.top_logic.layout.form.decorator.DecorateService;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.utility.TreeOptionModel;
 import com.top_logic.layout.scripting.recorder.gui.AssertionTreeNode;
 import com.top_logic.layout.scripting.recorder.gui.TableCell;
 import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.AssertionPlugin;
@@ -110,7 +111,10 @@ public class GuiInspectorPluginFactory {
 	public static void createFieldAssertions(InspectorModel inspector, FormField model) {
 		inspector.add(new FieldValueAssertionPlugin(model));
 		if (model instanceof SelectField) {
-			inspector.add(new FieldOptionsAssertionPlugin((SelectField) model));
+			SelectField select = (SelectField) model;
+			if (!(select.getOptionModel() instanceof TreeOptionModel<?>)) {
+				inspector.add(new FieldOptionsAssertionPlugin(select));
+			}
 		}
 		inspector.add(new FieldValidityAssertionPlugin(model));
 		inspector.add(new FieldErrorAssertionPlugin(model));

@@ -49,6 +49,48 @@ div.layoutHorizontalAdjustmentGrabber {
 }
 
 /*
+****					****
+****	Anchor syles	****
+****					****
+*/
+a {
+	cursor: pointer;
+	color: var(--link-primary);
+	text-decoration: none;
+}
+
+a:link {
+	cursor: pointer;
+	text-decoration: none;
+}
+
+a:hover {
+	color: var(--link-primary-hover);
+	text-decoration: underline;
+}
+
+a:active {
+	color: var(--text-primary);
+	text-decoration: underline;
+}
+
+a:focus {
+    color: var(--link-primary-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+a:visited, a.gotoLink:visited,
+a.cmdLink:visited {
+    color: var(--link-visited);
+}
+
+.cmdLinkDisabled {
+    text-decoration: none;
+    cursor: default;
+    color: var(--text-disabled);
+}
+
+/*
 ****					      ****
 ****	Code-Editor Styles	  ****
 ****					      ****
@@ -316,6 +358,7 @@ div.layoutHorizontalAdjustmentGrabber {
 
 .popupMenu a:hover {
 	color: var(--text-primary);
+	text-decoration: none;
 	background-color: var(--layer-hover);
 }
 
@@ -1076,6 +1119,14 @@ h5.card-title a {
 	width: inherit;
 }
 
+.tlUser a:hover,
+.tlUser a:active,
+.tlUser a:focus {
+	color: var(--icon-on-color);
+	text-decoration: none;
+	box-shadow: none;
+}
+
 .tlUser a i {
 	font-size: 1.5rem;
 }
@@ -1167,10 +1218,39 @@ h5.card-title a {
 	gap: var(--spacing-02);
 }
 
-.breadcrumb .treeNode, .breadcrumb .hover {
+.breadcrumb .treeNode, .breadcrumb .hover,
+.breadcrumb .treeNode a, .breadcrumb .hover a {
 	display: flex;
 	gap: var(--spacing-02);
 	align-items: center;
+}
+
+.breadcrumb .treeSelected .tcrLink {
+    color: var(--link-primary);
+}
+
+.breadcrumb .treeSelected .tcrLink:hover,
+.breadcrumb .hover {
+    color: var(--link-primary-hover);
+	text-decoration: underline;
+}
+
+.breadcrumb .treeSelected .tcrLink:active,
+.breadcrumb .hover:active {
+    color: var(--text-primary);
+	text-decoration: underline;
+}
+
+.breadcrumb .treeSelected .tcrLink:focus,
+.breadcrumb .hover:focus {
+    color: var(--link-primary-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.breadcrumb span.hover,
+.breadcrumb span.hover:active {
+	text-decoration: none;
+	color: var(--text-primary);
 }
 
 /*
@@ -1180,6 +1260,10 @@ h5.card-title a {
 */
 .treeBody {
 	background-color: var(--layer);
+}
+
+.treeBody a:hover {
+	text-decoration: none;
 }
 
 .tcrNode .treeNode {
@@ -1280,6 +1364,24 @@ h5.card-title a {
 	white-space: nowrap;
 }
 
+.cCollapsibleToolbar a:hover,
+.cToolbar a:hover,
+.cCollapsibleToolbar .tbGroup a:hover,
+.cCollapsibleButtons a:hover,
+.tl-table__title-toolbar a:hover {
+	color: var(--icon-primary);
+	text-decoration: none;
+}
+
+.cCollapsibleToolbar a:focus,
+.cToolbar a:focus,
+.cCollapsibleToolbar .tbGroup a:focus,
+.cCollapsibleButtons a:focus,
+.tl-table__title-toolbar a:focus {
+	color: var(--icon-primary);
+	box-shadow: none;
+}
+
 .cCollapsibleToolbar, .cToolbar, 
 .cCollapsibleToolbar .tbGroup, .cCollapsibleButtons,
 .tl-table__title-toolbar {
@@ -1300,29 +1402,4 @@ h5.card-title a {
 	color: var(--icon-primary);
 }
 
-/*
-****					****
-****	Anchor syles	****
-****					****
-*/
-a:link {
-	text-decoration: var(--ANCHOR_TEXT_DECORATION_LINK);
-}
-
-a:visited, a.gotoLink:visited {
-	text-decoration: var(--ANCHOR_TEXT_DECORATION_VISITED);
-}
-
-a:hover {
-	text-decoration: var(--ANCHOR_TEXT_DECORATION_HOOVER);
-}
-
-a:active {
-	text-decoration: var(--ANCHOR_TEXT_DECORATION_ACTIVE);
-}
-
-a.gotoLink, a.cmdLink, a.cmdLink:visited{
-    text-decoration: var(--ANCHOR_TEXT_DECORATION_GOTO_LINK);
-	cursor:          pointer;
-}
 

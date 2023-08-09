@@ -59,7 +59,7 @@ import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
-import com.top_logic.layout.messagebox.SimpleFormDialog;
+import com.top_logic.layout.messagebox.SimpleTemplateDialog;
 import com.top_logic.layout.table.AbstractCellRenderer;
 import com.top_logic.layout.table.RowObjectCreator;
 import com.top_logic.layout.table.RowObjectRemover;
@@ -627,14 +627,20 @@ public class CompositionFieldProvider extends AbstractFieldProvider {
 
 				return createRow(aControl, valueType);
 			} else {
-				SimpleFormDialog dialog =
-					new SimpleFormDialog(I18NConstants.CREATE_COMPOSITION_ROW, DisplayDimension.px(350),
-						DisplayDimension.px(180)) {
+				SimpleTemplateDialog dialog =
+					new SimpleTemplateDialog(I18NConstants.CREATE_COMPOSITION_ROW_DIALOG_TITLE,
+						I18NConstants.CREATE_COMPOSITION_ROW_DIALOG_HEADER,
+						I18NConstants.CREATE_COMPOSITION_ROW_DIALOG_MESSAGE,
+						DisplayDimension.px(350), DisplayDimension.px(180)) {
+
 						private SelectField _selectField;
 
 						@Override
 						protected void fillFormContext(FormContext context) {
 							_selectField = FormFactory.newSelectField(INPUT_FIELD, rowTypes);
+							_selectField.setLabel(
+								Resources.getInstance()
+									.getString(I18NConstants.CREATE_COMPOSITION_ROW_DIALOG_FIELD_LABEL));
 							_selectField.setMandatory(true);
 							context.addMember(_selectField);
 						}
@@ -651,6 +657,7 @@ public class CompositionFieldProvider extends AbstractFieldProvider {
 							}));
 						}
 					};
+
 				dialog.open(DefaultDisplayContext.getDisplayContext());
 				return null;
 			}

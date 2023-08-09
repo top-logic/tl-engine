@@ -370,6 +370,28 @@ a.cmdLink:visited {
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 }
 
+a.cMenuButton.menuEntryDisabled {
+	color: var(--text-disabled);
+}
+
+a.cMenuButton.menuEntryDisabled i {
+	color: var(--icon-disabled);
+}
+
+a.cMenuButton.menuEntryDisabled:hover {
+	color: var(--text-disabled);
+	background: var(--layer);
+}
+
+a.cMenuButton.menuEntryDisabled:hover i {
+	color: var(--icon-disabled);
+	background: var(--layer);
+}
+
+a.cMenuButton.menuEntryDisabled:focus {
+	box-shadow: none;
+}
+
 /* New */
 
 #dlgDialogs {
@@ -1315,6 +1337,7 @@ h5.card-title a {
 	color: var(--text-secodnary);
 }
 
+.treeNode .fToggle,
 .fToggle.tcrToggle, .tlLeafIcon,
 .tcrNode .treeNode span {
 	color: var(--icon-secondary);

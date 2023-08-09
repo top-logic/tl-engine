@@ -6460,22 +6460,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 /* Form editor */
 
-.cFormEditorElement .rf_columnsLayout,
-.cFormEditorElement .rf_columnsLayout.rf_line,
-.cFormEditorElement .rf_content {
-	margin-left: 0px;
-}
-
-.cFormEditorElement .rf_columnsLayout > *:not(body),
-.cFormEditorElement .rf_content > *:not(body) {
-	margin-left: 0px;
-  	padding-right: 0px;
-}
-
-.cFormEditorElement .rf_columnsLayout > .rf_groupCell {
-  	margin-left: -2px; /* 2px for the border */
-}
-
 .cFormEditorDisplay .hidden, 
 .hidden { 
 	display: none; 
@@ -6525,62 +6509,15 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	background-position: left center, right center; 
 }
 
-div.cFormEditorToolbox [data-tool=true] > .attribute {
+.cFormEditorToolbox [data-tool=true] > .attribute {
 	text-overflow: ellipsis;
 	overflow: hidden;
-	width: 100px;
 	box-sizing: border-box;
 }
 
-/* overwritten layout selectors */
-.cFormEditorPreview .rf_columnsLayout > .rf_line,
-.cFormEditorPreview .rf_columnsLayout > *:not(body),
-.cFormEditorPreview .rf_columnsLayout.cols1 > *:not(body),
-.cMediaQuery.dflSize0 .cFormEditorPreview .rf_columnsLayout > *:not(body),
-.cMediaQuery.dflSize1 .cFormEditorPreview .rf_columnsLayout > *:not(body),
-.cMediaQuery.dflSize2 .cFormEditorPreview .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout:not([class*="cols"]) > *:not(.dfListEntry),
-.cMediaQuery.dflSize3 .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout:not([class*="cols"]) > *:not(.dfListEntry),
-.cMediaQuery.dflSize1 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize2 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery .cFormEditorPreview .rf_inputCell.is-control > .rf_cell .rf_columnsLayout > *:not(body),
-.cMediaQuery .cFormEditorPreview .rf_groupCell .rf_content .rf_groupCell .rf_content .rf_columnsLayout {
-	min-width: 100%;
-  	width: 100%;
-  	padding-right: 0px;
-}
- 
-.dflSize2 .cFormEditorPreview .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .cFormEditorPreview .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cFormEditorPreview .rf_columnsLayout.cols2 > *:not(.rf_line),
-.cMediaQuery.dflSize1 .cFormEditorPreview .rf_columnsLayout.cols2 > *:not(.rf_line)  { 
-  	min-width: 50%; 
- 	width: 50%; 
-  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
-}
-
-.cMediaQuery.dflSize3 .cFormEditorPreview .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .cFormEditorPreview .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
-.cMediaQuery.dflSize3 .cFormEditorPreview .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .cFormEditorPreview .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .cFormEditorPreview .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
-  	min-width: 33.3%; 
- 	width: 33.3%; 
-  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
-}
-
-.cMediaQuery.dflSize3 .cFormEditorPreview .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .cFormEditorPreview .rf_columnsLayout.cols4 > *:not(.rf_line):not(.rf_line) { 
-  	min-width: 25%; 
- 	width: 25%; 
-  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
-}
-
-.cMediaQuery.dflSize3 .cFormEditorPreview .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cMediaQuery.dflSize3 .cFormEditorPreview .rf_columnsLayout.cols5 > *:not(.rf_line):not(.rf_line) { 
-  	min-width: 20%; 
- 	width: 20%; 
-  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+.cFormEditorToolbox div.rf_buttons > * {
+	min-width: 50%;
+	width: 50%;
 }
 
 /* form editor icons */
@@ -6700,10 +6637,6 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 	left: 50%;
 	top: 50%;
 	transform: translate(-50%, -50%);
-}
-
-.cFormEditorToolbar .cFormEditorElement.rf_dragElement.rf_line {
-	width: auto;
 }
 
 /* for demo: display number of columns */

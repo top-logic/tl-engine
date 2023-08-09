@@ -24,6 +24,7 @@ import com.top_logic.element.config.annotation.TLReadOnlyColumns;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdate.StoreAlgorithm;
 import com.top_logic.element.meta.AttributeUpdateContainer;
+import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
@@ -96,7 +97,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
+public class CompositionFieldProvider extends AbstractFieldProvider {
 
 	/**
 	 * Name of the {@link TableField} in the created {@link #getFormField(EditContext, String)

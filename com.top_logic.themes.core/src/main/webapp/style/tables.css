@@ -37,17 +37,13 @@ a.tl-table__title:visited {
 .tl-table__title {
 	/* For legacy browsers.*/
 	background: var(--layer-accent);
-	color:           var(--text-primary);
+	color: var(--text-primary);
 	font-family: 'Inter-SemiBold';
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
-	padding-top: 0px;
-	padding-bottom: 0px;
-	padding-left: 2px;
-	padding-right: 2px;
-	border-color:     var(--border-strong);
-	border-width: 1px;
+	padding: 0 2px;
+	border: var(--border-strong) solid 1px;
 	border-top-style: none;
 	border-right-style: none;
 	border-left-style: none;
@@ -109,19 +105,19 @@ span.tblButton input {
 
 .tl-table__footer-counter {
 	padding:2px;
-	border-top: solid 1px var(--border-subtle);
+	border-top: 1px solid var(--border-subtle);
 	color: var(--text-primary);
 	background-color:var(--layer-accent);
-	text-align:right;
-	white-space:nowrap;
+	text-align: right;
+	white-space: nowrap;
 }
 
 th.tblCounterNoBorder {
-	padding:2px;
-	border-top-color: var(--border-subtle);;
-	border-top-style:solid;
-	border-width:0px;
-	color:black;
+	padding: 2px;
+	border-top-color: var(--border-subtle);
+	border-top-style: solid;
+	border-width: 0px;
+	color: black;
 	text-align: right;
 	background-color:var(--layer);
 }
@@ -155,9 +151,7 @@ th.tl-table__cell, th.cal_th {
 	letter-spacing: 	 var(--heading-compact-02-letter-spacing);
     white-space:         nowrap;
 	padding:             0px;
-	border-bottom-color: var(--border-subtle);
-	border-bottom-style: solid;
-	border-bottom-width: 1px;
+	border-bottom: 		 1px solid var(--border-subtle);
 	border-top-style:    none;
 	border-right-style:  none;
   
@@ -199,7 +193,7 @@ th.tblTHNoBorder {
 	font-weight:         normal;
     white-space:         nowrap;
 	padding:             2px;
-	border-bottom-color: var(--border-subtle);;
+	border-bottom-color: var(--border-subtle);
 	border-bottom-style: solid;
 	border-width:        0px;
 	color:               black;
@@ -212,7 +206,7 @@ th.tblTHRight {
 	font-weight:         normal;
     white-space:         nowrap;
 	padding:             2px;
-	border-bottom-color: var(--border-subtle);;
+	border-bottom-color: var(--border-subtle);
 	border-bottom-style: solid;
 	border-bottom-width: 1px;
 	border-right-width:  0px;
@@ -239,17 +233,12 @@ tr.tblSelected {
 td.tl-table__cell {
     white-space:    nowrap;
 	padding:        0px;
-	border-bottom:  1px solid var(--border-subtle);
+	border-bottom:  var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
 	overflow:		hidden; 
 }
 
 td.tl-table__cell--selectable {
 	cursor: pointer;
-}
-
-td.tl-table__cell {
-	border-bottom-style: solid;
-	border-bottom-width: 1px;
 }
 
 td.tl-table__cell,
@@ -297,7 +286,7 @@ td.tblTDNoPadding {
     white-space:    nowrap;
 	padding:        0px;
 	border-color:   transparent;
-	color:          var(--text-primary);;
+	color:          var(--text-primary);
 	border-width:   0px;
 }
 
@@ -305,7 +294,7 @@ td.tblTDNoBorder {
     white-space:    nowrap;
 	border-color:   transparent;
 	border-width:   0px;
-	color:          var(--text-primary);;
+	color:          var(--text-primary);
 	border-width:   0px;
 	border-style:	solid;
 }
@@ -325,13 +314,13 @@ td.tblTDStrong {
     white-space:    nowrap;
 	padding:        2px;
 	border-color:   transparent;
-	color:          var(--text-primary);;
+	color:          var(--text-primary);
 }
 
 td.tblTDwrap {
 	padding:        2px;
 	border-color:   transparent;
-	color:          var(--text-primary);;
+	color:          var(--text-primary);
 }
 
 td.tblTDCenter {
@@ -339,7 +328,7 @@ td.tblTDCenter {
     white-space:    nowrap;
 	padding:        2px;
 	border-color:   transparent;
-	color:          var(--text-primary);;
+	color:          var(--text-primary);
 	border-width:   0px;
 }
 
@@ -348,7 +337,7 @@ td.tblTDRight {
     white-space:    nowrap;
 	padding:        2px;
 	border-color:   transparent;
-	color:          var(--text-primary);;
+	color:          var(--text-primary);
 	border-width:   0px;
 }
 
@@ -585,7 +574,7 @@ div.movingheader{
 	font-weight:         normal;
     white-space:         nowrap;
 	padding:             0px;
-	border-bottom-color: var(--border-subtle);;
+	border-bottom-color: var(--border-subtle);
 	border-bottom-style: solid;
 	border-bottom-width: 0px;
 	border-right-width:  0px;
@@ -716,11 +705,11 @@ div.fltButtons button {
 }
 
 .patternBox {
-	height: 25px;
+	height: 50px;
 }
 
 .patternBoxExpanded {
-	height: 50px;
+	height: 75px;
 }
 
 .operatorBox {
@@ -888,16 +877,11 @@ div.fltButtons button {
 
 table.tblFrozen {
     table-layout: fixed;
-    margin: 0px;
-    padding: 0px;
-    
-    border-spacing: 0px;
-    border-left: 0px;
-    border-top: 0px;
-    border-right-style: solid;
-    border-right-width: 1px;
-    border-bottom: 0px;
-    border-color: var(--border-subtle);
+    margin: 0;
+    padding: 0;
+    border-spacing: 0;
+    border: 0;
+    border-right: var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
     border-collapse: collapse;
 }
 
@@ -958,9 +942,6 @@ tr.tblFilterIndirectMatch td img,
 tr.tblFilterIndirectMatch td select,
 tr.tblFilterIndirectMatch td input {
 	opacity: 0.6;
-	
-	/* IE8 */
-	filter: alpha(opacity=60);
 }
 
 tr.tblFilterNotValidated {
@@ -995,11 +976,6 @@ div.tblColumnAdjustmentPane {
 	width: 100%;
 	height: 100%;
 	background-color: white;
-	
-	/*IE6 und IE7 */
-	filter: alpha(opacity=0);
-
-	/*other (css)*/
 	opacity: 0;
 }
 
@@ -1014,11 +990,6 @@ div.tblColumnAdjustmentGrabber {
 	border-width: 0px;
 	margin: 0px;
 	padding: 0px;
-	
-	/*IE6 und IE7 */
-	filter: alpha(opacity=0);
-
-	/*other (css)*/
 	opacity: 0;
 }
 
@@ -1028,7 +999,7 @@ div.tblCellAdjustment {
 	width:100%;
 	padding: 0px;
 	margin: 0px;
-	border-width:0px;
+	border-width: 0px;
 	overflow: hidden;
 	white-space: nowrap;
 }
@@ -1051,7 +1022,6 @@ div.tblCellAdjustment {
 
 div.tblFrozen th.treeTableTh, div.tblFrozen td.treeTableTd, div.tblFrozen td.treeTableTdFirst {
 	padding: 0px;
-	border: solid 1px 0 0 1px;
 }
 
 div.tblSeperator, div.tblSeperatorLine {
@@ -1061,11 +1031,6 @@ div.tblSeperator, div.tblSeperatorLine {
 
 div.tblSeperatorLine {
 	position: absolute;
-	
-	/*IE6 und IE7 */
-	filter: alpha(opacity=60);
-
-	/*other (css)*/
 	opacity: 60;
 }
 
@@ -1104,7 +1069,7 @@ table td span.cExpandableTextInput,
 table td span.cTextInput,
 table td .cDataItem,
 table td span.downloadControl {
-	display: table;
+	display: flex;
 	width: 100%;
 	height: 100%;
 }
@@ -1209,11 +1174,6 @@ table td span.lFlexible > input:not([type="image"]) {
  frozen tables (e.g. needed for gallery edit dialog). */
 .tl-table__title span.lFlexible input {
 	width: auto;
-}
-
-table td span.lFixedLeft,
-table td span.lFixedRight {
-	display: table-cell;
 }
 
 table td span.cDatetime span.timePart {
@@ -1539,9 +1499,7 @@ div.dirtyHandlingDialog .changes {
 
 .tl-table__cell:not(:last-child),
 .tl-table-overlay__column:not(.tl-table-overlay__columns-container > :last-child) {
-	border-right-style:   solid;
-	border-right-width:   var(--TABLE_COLUMN_BORDER_WIDTH);
-	border-right-color:   var(--border-subtle);
+	border-right: var(--border-subtle) solid var(--TABLE_COLUMN_BORDER_WIDTH);
 }
 
 .tl-table__cell:hover .tl-table__cell-resizer {
@@ -1699,8 +1657,8 @@ td.tl-table__cell {
 }
 
 .tl-table__cell {
-    border-left: 0px solid #fff;
-    border-bottom: 0px solid #fff;
+    border-left: 0px solid var(--border-subtle);
+    border-bottom: 0px solid var(--border-subtle);
 }
 
 tr.tl-table__row:last-child > td, .tl-table__header tr {
@@ -1716,29 +1674,20 @@ table.tl-table--fixed td.tl-table__cell--selected.treeTableTd {
 }
 
 th.treeTableTh {
-    white-space:         nowrap;
-    color:               var(--text-primary);
-    
-    font-size:           12px; 
-    font-weight:         bold;
-    background-color:    #CFD1D3;
-    white-space:         nowrap;     
-	
-	font-size:           12px;
-    font-weight:         bold;
-    color:               var(--TABLE_TH_COLOR);
-    border-width: 1px;
-    border-color: white;
-    border-style: solid;
-    background:var(--TABLE_TH_BACKGROUND);
+    color: var(--text-primary);
+    font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+    white-space: nowrap;     
+    border: var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
+    background: var(--layer-accent);
     background-position-y: bottom;
 }
 
 td.treeTableTdFirst {
-    background-color:var(--TD_TREETABLE_FIRST_BACKGROUND);
-    border-width: var(--TABLE_COLUMN_BORDER_WIDTH);
-    border-color: white;
-    border-style: solid;
+    background-color:var(--layer);
+    border: var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
     overflow: hidden;
 }
 
@@ -1752,10 +1701,8 @@ tr.treeSelected td.treeTableTdFirst {
 }
 
 td.treeTableTd {
-    background-color:#F5F5F5;
-    border-width: var(--TABLE_COLUMN_BORDER_WIDTH);
-    border-color: white;
-    border-style: solid;
+    background-color:var(--background);
+    border: var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
     overflow: hidden;
 }
 

@@ -1386,6 +1386,16 @@ select:not([multiple="multiple"]):disabled {
 	mask-repeat: no-repeat;
 }
 
+.fptSubtitleContent select {
+	height: 1.3rem;
+	border: none;
+	background: var(--background);
+	background-image: url(../themes/core/chevron-down.svg);
+    background-repeat: no-repeat;
+    background-position: right calc(1rem + 1px) center;
+    background-size: 1rem 1rem
+}
+
 /* Time input control */
 /*!Don't remove this!
  * jQuery MDTimePicker v1.0 plugin

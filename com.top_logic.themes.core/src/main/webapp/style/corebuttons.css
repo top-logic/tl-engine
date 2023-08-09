@@ -31,6 +31,10 @@
   display: block;
 }
 
+.cButton:hover, .tlButton:hover {
+	text-decoration: none;
+}
+
 /*
 ****					****
 ****	Button styles	****
@@ -378,6 +382,7 @@
 
 .tlDropdownContent a:hover {
   	background: var(--layer-hover);
+  	text-decoration: none;
 }
 
 .tlDropdownContent a:hover .tlButtonLabel {
@@ -386,6 +391,7 @@
 
 .tlDropdownContent a:hover .cmdImg {
   	color: var(--icon-primary);
+  	text-decoration: none;
 }
 
 .tlDropdownContent a:focus {

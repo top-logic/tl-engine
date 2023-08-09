@@ -4,6 +4,11 @@
 ****					****
 */
 .mainTabBar, .tabBar {
+	position: absolute;
+	top: 50%;  /* Start in the middle of the parent element */
+	transform: translateY(-50%); /* Drag back 50% of its own height to center it in the parent element */
+	left: 0;
+	right: 0;
 	display: flex;
 	flex-wrap: nowrap;
 	margin-right: .625rem;

@@ -996,14 +996,19 @@ span.ltcCounting input {
 	word-wrap: break-word;
 	background-clip: border-box;
 	border-radius: .25rem;
-	height: 25.4rem;
-	width: 21rem;
+	height: 21rem;
+	width: 16rem;
 	overflow: hidden;
 	cursor: pointer;
 }
 
 .card:hover {
 	box-shadow: 0 2px 6px 0 rgba(0,0,0,0.32);
+	background-color: var(--layer-active);
+}
+
+.card:hover .previewBoxOuter {
+	background-color: var(--background-active);
 }
 
 .previewBoxOuter {

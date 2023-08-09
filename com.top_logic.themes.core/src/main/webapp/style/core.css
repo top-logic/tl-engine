@@ -81,7 +81,7 @@ a:focus {
 
 a:visited, a.gotoLink:visited,
 a.cmdLink:visited {
-    color: var(--link-visited);
+    color: var(--link-primary);
 }
 
 .cmdLinkDisabled {
@@ -179,7 +179,7 @@ a.cmdLink:visited {
 	display: flex;
 	flex-direction: row-reverse;
 	justify-content: space-between;
-	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
+	height: var(--POPUP_TITLE_HEIGHT);
 	padding-left: 2px;
 	background-color: var(--layer-accent);
 }
@@ -727,17 +727,13 @@ div.ace_tooltip>code.inlineCode {
 
 .infoServiceItem {
 	position: relative;
-	margin: var(--spacing-03) 3px 0px;
-	padding: 0 var(--spacing-03) var(--spacing-02) var(--spacing-03);
-	/* border: 2px solid rgba(247, 223, 68, 0); */
+	margin: var(--spacing-03) 3px 0 0;
+	padding: var(--spacing-02) var(--spacing-03);
 	border-radius: 10px;
 	box-shadow: 0px 1px 5px #888;
 	overflow-y: hidden;
 	overflow-x: auto;
-	/* margin-top: var(--spacing-03); */
 }
-
-/* Start new code */
 
 .infoServiceItem.infoServiceError {
 	background-color: var(--notification-danger-background);
@@ -763,8 +759,10 @@ div.ace_tooltip>code.inlineCode {
 	color: var(--support-info);
 }
 
-.infoLogTime {
+.infoServiceLogTime {
 	color: var(--text-helper);
+	/* padding: 0 20px; */
+	white-space: nowrap;
 }
 
 .infoServiceItem p {
@@ -772,33 +770,8 @@ div.ace_tooltip>code.inlineCode {
     /* margin-block-end: 1rem; */
 }
 
-/* end new code */
-
-.infoServiceItem {
-}
-
-.pinnedInfoServiceItem, .pinnedInfoService .pinnedInfoServiceItem {
-	animation-name: pinnedInfoServiceItem;
-	animation-duration: 0.5s;
-}
-
 .infoServiceItem:last-child {
 	margin-bottom: 3px;
-}
-
-.showInfoServiceItem {
-	animation-name: showInfoServiceItem;
-	animation-duration: 0.2s;
-}
-
-.showPinnedInfoServiceItem {
-	animation-name: showPinnedInfoServiceItem;
-	animation-duration: 0.2s;
-}
-
-.pinnedInfoService .hideInfoServiceItem {
-	animation-name: hideInfoServiceItem;
-	animation-duration: 0.2s;
 }
 
 .infoServiceItemCloseButton {
@@ -806,24 +779,45 @@ div.ace_tooltip>code.inlineCode {
 	padding-left: var(--spacing-03);
 }
 
-.infoServiceItemMessageHeader {
+.infoServiceHeader {
 	display: flex;
+	flex-direction: row-reverse;
 	align-items: center;
+	justify-content: flex-end;
+}
+
+.infoServiceItemMessageHeader:not(.infoServiceItem .infoServiceHeader .infoServiceItemMessageHeader) {
+	display: flex;
 	flex-grow: 2;
-	gap: .5rem;
-	padding: var(--spacing-03) 0;
+	/* margin-top: var(--spacing-02); */
+	align-items: center;
+}
+
+.infoServiceItemMessageHeader {
+  	display: flex;
+  	flex-grow: 2;
+  	justify-content: space-between;
+}
+
+.infoServiceItemMessageHeader span i {
+  	display: flex;
+  	align-items: center;
 }
 
 .infoServiceItemMessageHeaderText {
 	display: flex;
 	flex-grow: 2;
 	justify-content: space-between;
-	align-items: center;
-	padding-right: 20px;
+	line-break: anywhere;
 }
 
 .errorIcon {
-	padding-right: 7px;
+	padding-right: var(--spacing-02);
+}
+
+.infoServiceItemMessageHeader .errorIcon {
+	display: block;
+	align-self: center;
 }
 
 .infoServiceItemTypeMessage {
@@ -846,6 +840,26 @@ div.ace_tooltip>code.inlineCode {
 	display: inline-block;
 	margin-top: -1px;
 	margin-left: 5px;
+}
+
+.pinnedInfoServiceItem, .pinnedInfoService .pinnedInfoServiceItem {
+	animation-name: pinnedInfoServiceItem;
+	animation-duration: 0.5s;
+}
+
+.showInfoServiceItem {
+	animation-name: showInfoServiceItem;
+	animation-duration: 0.2s;
+}
+
+.showPinnedInfoServiceItem {
+	animation-name: showPinnedInfoServiceItem;
+	animation-duration: 0.2s;
+}
+
+.pinnedInfoService .hideInfoServiceItem {
+	animation-name: hideInfoServiceItem;
+	animation-duration: 0.2s;
 }
 
 .rotatedInfoServiceItemDetailExpandButton {

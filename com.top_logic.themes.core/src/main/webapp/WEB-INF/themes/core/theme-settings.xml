@@ -108,6 +108,30 @@
 	<boolean name="LOGOUT_TIMER"
 		value="true"
 	/>
+	
+	
+	<size name="TABLE_TITLE_HEIGHT"
+		value="32px"
+	/>
+	<string name="FROZEN_TABLE_ROW_SMALL_STYLE"
+		value="height: 22px;"
+	/>
+	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_FOOTER_HEIGHT"
+		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
+	/>
+	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_HEADER_ROW_HEIGHT"
+		value="32px"
+	/>
+	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_ROW_HEIGHT"
+		value="32px"
+	/>
+	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT"
+		expr="%TABLE_TITLE_HEIGHT%"
+	/>
+	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TREE_TABLE_TITLE_HEIGHT"
+		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
+	/>
+	
 	<icon name="com.top_logic.layout.structure.Icons.BUTTON_INSPECTOR"
 		value="css:bi bi-binoculars"
 	/>
@@ -156,7 +180,7 @@
 	<icon name="com.top_logic.layout.Icons.DELETE_COMPONENT_COMMAND"
 		value="css:bi bi-plus-lg"
 	/>
-	<icon name="theme:com.top_logic.layout.Icons.ADD_TAB_COMMAND"
+	<icon name="com.top_logic.layout.Icons.ADD_TAB_COMMAND"
 		value="css:bi bi-plus-lg"
 	/>
 	<icon name="com.top_logic.layout.Icons.ADD_COMPONENT_COMMAND"
@@ -855,14 +879,6 @@
 		value="css:bi bi-house-fill"
 	/>
 	<!-- End of demo configurations -->
-	
-	
-	<size name="TABLE_TITLE_HEIGHT"
-		value="22px"
-	/>
-	<string name="FROZEN_TABLE_ROW_SMALL_STYLE"
-		value="height: 22px;"
-	/>
 	
 	
 	<!-- DELETE THIS (test icon for tree view) -->

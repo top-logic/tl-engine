@@ -39,7 +39,8 @@
 }
 
 /* Line tabs */
-.mainTabBar .activeTab {
+.mainTabBar .activeTab,
+.mainTabBar .tab {
 	display: flex;
 	flex-wrap: nowrap;
 	align-items: center;
@@ -52,21 +53,13 @@
 	border-top: none;
 	border-right: none;
 	border-left: none;
-	border-bottom: 2px solid var(--border-interactive);
+}
+
+.mainTabBar .activeTab {
+	border-bottom: 2px solid var(--border-interactive);	
 }
 
 .mainTabBar .tab {
-	display: flex;
-	flex-wrap: nowrap;
-	align-items: center;
-	flex-shrink: 0;
-	cursor: pointer;
-  	height: 2.5rem;
-	padding: var(--spacing-02) var(--spacing-03);
-	background: transparent;
-	border-top: none;
-	border-right: none;
-	border-left: none;
 	border-bottom: 2px solid var(--border-subtle);
 }
 
@@ -87,16 +80,6 @@
 	border-bottom: 2px solid var(--border-strong);
 }
 
-.mainTabBar .activeTab:hover .activeTabLabel,
-.mainTabBar .tab:hover .tabLabel{
-	color: var(--text-primary);
-}
-
-.mainTabBar .activeTab:hover .tabIcon i,
-.mainTabBar .tab:hover .tabIcon i{
-	color: var(--icon-primary);
-}
-
 .mainTabBar .activeTab:focus,
 .mainTabBar .tab:focus {
 	box-shadow: inset 0 0 0 1px var(--focus);
@@ -108,31 +91,9 @@
 	border-bottom: 2px solid var(--border-disabled);
 }
 
-.mainTabBar .activeTab:disabled .activeTabLabel,
-.mainTabBar .tab:disabled .tabLabel {
-	color: var(--text-disabled);
-	font-weight: 400;
-}
-
-.mainTabBar .activeTab:disabled .tabIcon i,
-.mainTabBar .tab:disabled .tabIcon i {
-	color: var(--icon-disabled);
-}
-
 
 /* Contained tabs */
-.tabBar .activeTab {
-	display: flex;
-	flex-wrap: nowrap;
-	align-items: center;
-	flex-shrink: 0;
-	padding: var(--spacing-02) var(--spacing-03);
-	height: 2.5rem;
-	background: var(--layer-selected);
-	border: none;
-	cursor: pointer;
-}
-
+.tabBar .activeTab,
 .tabBar .tab {
 	display: flex;
 	flex-wrap: nowrap;
@@ -140,9 +101,16 @@
 	flex-shrink: 0;
 	padding: var(--spacing-02) var(--spacing-03);
 	height: 2.5rem;
-	background: var(--layer);
 	border: none;
 	cursor: pointer;
+}
+
+.tabBar .activeTab{
+	background: var(--layer-selected);
+}
+
+.tabBar .tab {
+	background: var(--layer);
 }
 
 .tabBar .activeTabLabel {
@@ -175,16 +143,6 @@
 	border-right: 1px solid var(--border-subtle);
 }
 
-.tabBar .activeTab:hover .activeTabLabel,
-.tabBar .tab:hover .tabLabel{
-	color: var(--text-primary);
-}
-
-.tabBar .activeTab:hover .tabIcon i,
-.tabBar .tab:hover .tabIcon i{
-	color: var(--icon-primary);
-}
-
 .tabBar .activeTab:hover,
 .tabBar .tab:hover {
 	background: var(--layer-hover);
@@ -194,19 +152,28 @@
 	box-shadow: inset 0 0 0 1px var(--focus);
 }
 
-/* disabled tabs */
 .tabBar .activeTab:disabled,
 .tabBar .tab:disabled {
 	background: var(--layer-disabled);
 }
 
-.tabBar .activeTab:disabled .activeTabLabel,
-.tabBar .tab:disabled .tabLabel {
+.activeTab:hover .activeTabLabel,
+.tab:hover .tabLabel{
+	color: var(--text-primary);
+}
+
+.activeTab:hover .tabIcon i,
+.tab:hover .tabIcon i {
+	color: var(--icon-primary);
+}
+
+.activeTab:disabled .activeTabLabel,
+.tab:disabled .tabLabel {
 	color: var(--text-disabled);
 	font-weight: 400;
 }
 
-.tabBar .activeTab:disabled .tabIcon i,
-.tabBar .tab:disabled .tabIcon i {
+.activeTab:disabled .tabIcon i,
+.tab:disabled .tabIcon i {
 	color: var(--icon-disabled);
 }

@@ -33,8 +33,8 @@
 	background: var(--layer-hover);
 }
 
-.rf_header a:focus {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+.rf_header a:hover {
+	text-decoration: none;
 }
 
 div.fptPage {
@@ -148,6 +148,10 @@ div.fptIconBar > span.fptIconOverlay > i {
 .frmGroupExpand a {
 	color: var(--icon);
 	font-size: 1rem;
+}
+
+.frmGroupExpand a:hover {
+	text-decoration: none;
 }
 
 .frmBody {
@@ -982,6 +986,10 @@ div.cal_root, div.cal_view {
 	color: var(--icon-primary);
 }
 
+.cal_titlebar a:hover {
+	text-decoration: none;
+}
+
 .cal_leftNav {
 	order: 1;
 	align-self: center;
@@ -1031,6 +1039,10 @@ td.cal_cell a {
 	/* Without display block, tab navigation through `cal_range` tables does not work. */
 	display: block;
 	color: inherit;
+}
+
+td.cal_cell a:hover {
+	text-decoration: none;
 }
 
 /* Weekday */
@@ -1247,6 +1259,7 @@ div.cal_zoom_inAnimation {
 
 .lFixedRight a:hover {
 	background: var(--field-hover);
+	text-decoration: none;
 }
 
 .lFixedRight a:focus-within,

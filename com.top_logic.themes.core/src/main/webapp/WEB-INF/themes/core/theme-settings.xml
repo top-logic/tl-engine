@@ -20,14 +20,17 @@
 	<string name="MAIN_TAB_BAR_CSS"
 		value="mainTabBar"
 	/>
-	<int name="MAIN_TAB_BAR_HEIGHT"
-		value="60"
-	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
 		value="35"
 	/>
 	<int name="TOOL_ROW_HEIGHT"
 		value="70"
+	/>
+	<int name="MAIN_TAB_BAR_HEIGHT"
+		value="60"
+	/>
+	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
+		value="50"
 	/>
 	<icon name="ICONS_BUTTON_SEARCH"
 		value="css:bi bi-search"
@@ -722,7 +725,7 @@
 		value="css:bi bi-x-lg"
 	/>
 	<size name="TABLE_FILTER_BUTTON_BAR_HEIGHT"
-		value="32px"
+		value="50px"
 	/>
 	
 	<!-- Form spacings  -->

@@ -12,13 +12,14 @@
     display: none;
 }
 
-.tlButtonScrollContainer {
+.tlButtonScrollContainer, .cmdButtons {
  	display: flex;
  	justify-content: flex-end;
 }
 
-.tlButtonScrollContainer .tlButton {
-  margin-right: 0.5rem;
+.cmdButtons .cButton,
+.tlButtonScrollContainer .cButton {
+	margin-right: 0.5rem;
 }
 
 .buttonSpaceHolder {
@@ -40,7 +41,7 @@
 ****	Button styles	****
 ****					****
 */
-
+.cmdButtons .cButton,
 .containerButton .cButton.cmdButton,
 .containerButton .cButton.cmdButtonDisabled,
 .tlButtonScrollContainer .tlDropdownButton {

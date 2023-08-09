@@ -42,6 +42,8 @@ import com.top_logic.layout.Renderer;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.VetoException;
+import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.Command.CommandChain;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.FormContainer;
@@ -648,13 +650,28 @@ public class CompositionFieldProvider extends AbstractFieldProvider {
 						@Override
 						protected void fillButtons(List<CommandModel> buttons) {
 							addCancel(buttons);
-							buttons.add(MessageBox.button(ButtonType.OK, context -> {
-								TLClass selection = (TLClass) _selectField.getSingleSelection();
-								TLObject newRow = createRow(aControl, selection);
-								((TableListControl) aControl).addNewRow(newRow);
-								getDialogModel().getCloseAction().executeCommand(context);
-								return HandlerResult.DEFAULT_RESULT;
-							}));
+							buttons.add(MessageBox.button(ButtonType.OK, new CommandChain(
+								checkContextCommand(),
+								this::addRow,
+								getDialogModel().getCloseAction())
+							));
+						}
+
+						/**
+						 * Adds a new row.
+						 * 
+						 * @implNote Same API as {@link Command#executeCommand(DisplayContext)} to
+						 *           use method as {@link Command} implementation.
+						 * 
+						 * @param context
+						 *        See {@link Command#executeCommand(DisplayContext)}
+						 * @return See {@link Command#executeCommand(DisplayContext)}
+						 */
+						private HandlerResult addRow(DisplayContext context) {
+							TLClass selection = (TLClass) _selectField.getSingleSelection();
+							TLObject newRow = createRow(aControl, selection);
+							((TableListControl) aControl).addNewRow(newRow);
+							return HandlerResult.DEFAULT_RESULT;
 						}
 					};
 

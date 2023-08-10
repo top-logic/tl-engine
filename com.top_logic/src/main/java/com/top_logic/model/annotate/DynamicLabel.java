@@ -34,12 +34,12 @@ public interface DynamicLabel extends TLAttributeAnnotation {
 	 * 
 	 * <p>
 	 * The first argument for the label expression is the base object, the second argument is the
-	 * default label, and the third object the annotated {@link TLStructuredTypePart}. The return
-	 * value must be a {@link ResKey}.
+	 * default label, and the third object the annotated {@link TLStructuredTypePart}. The returned
+	 * value can be e.g. a {@link ResKey} or a {@link String}.
 	 * </p>
 	 */
 	@Mandatory
 	@Name(LABEL)
-	ScriptFunction3<ResKey, TLObject, ResKey, TLStructuredTypePart> getLabel();
+	ScriptFunction3<Object, TLObject, ResKey, TLStructuredTypePart> getLabel();
 
 }

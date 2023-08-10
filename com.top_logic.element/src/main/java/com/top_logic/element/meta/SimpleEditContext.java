@@ -14,6 +14,7 @@ import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -82,7 +83,17 @@ public class SimpleEditContext implements EditContext {
 		if (getObject() != null) {
 			DynamicLabel annotation = getAnnotation(DynamicLabel.class);
 			if(annotation != null) {
-				return annotation.getLabel().impl().apply(getObject(), defaultLabelKey, attribute);
+				Object dynamicLabel = annotation.getLabel().impl().apply(getObject(), defaultLabelKey, attribute);
+				if (dynamicLabel instanceof ResKey) {
+					return (ResKey) dynamicLabel;
+				}
+				String labelString;
+				if (dynamicLabel instanceof String) {
+					labelString = (String) dynamicLabel;
+				} else {
+					labelString = MetaLabelProvider.INSTANCE.getLabel(dynamicLabel);
+				}
+				return ResKey.text(labelString);
 			}
 		}
 		return defaultLabelKey;

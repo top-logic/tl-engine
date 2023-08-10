@@ -5,26 +5,15 @@
  */
 package com.top_logic.layout.formeditor.parts;
 
-import java.util.List;
-
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.element.layout.formeditor.FormTypeProperty;
-import com.top_logic.element.layout.meta.HideActiveIf;
-import com.top_logic.layout.editor.config.ButtonTemplateParameters;
-import com.top_logic.layout.editor.config.TypeTemplateParameters;
-import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
-import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.tool.boundsec.CommandHandler;
-import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 
 /**
  * {@link FormElement} to display a form for each of a list of foreign objects.
@@ -41,23 +30,10 @@ import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 	ForeignObjects.BUTTONS,
 })
 @TagName("foreign-objects")
-public interface ForeignObjects
-		extends FormElement<ForeignObjectsTemplateProvider>, TypeTemplateParameters, ButtonTemplateParameters {
+public interface ForeignObjects extends FormElement<ForeignObjectsTemplateProvider>, InlineDisplayedObjectsConfig {
 
 	/** Configuration name for {@link #getItems()}. */
 	String ITEMS = "items";
-
-	/** Configuration name for {@link #getLayout()}. */
-	String LAYOUT = "layout";
-
-	/** Configuration name for {@link #getLayout()}. */
-	String LABEL = "label";
-
-	/** Configuration name for {@link #getLayout()}. */
-	String READ_ONLY = "read-only";
-
-	/** Configuration name for {@link #isNoSeparateGroup()}. */
-	String NO_SEPARATE_GROUP = "no-separate-group";
 
 	/**
 	 * Expression that computes the objects to display. The single input element is the base object.
@@ -68,52 +44,5 @@ public interface ForeignObjects
 	@Label("Objects")
 	Expr getItems();
 
-	/**
-	 * Expression that computes the label from the base object. It may also compute the object which
-	 * is used to display in the group title.
-	 */
-	@Name(LABEL)
-	@DynamicMode(fun = HideActiveIf.class, args = @Ref(NO_SEPARATE_GROUP))
-	Expr getLabel();
-
-	/**
-	 * Definition of the layout that is used to display the single objects.
-	 */
-	@Name(LAYOUT)
-	@FormTypeProperty(TYPE)
-	@ItemDisplay(ItemDisplayType.VALUE)
-	FormDefinition getLayout();
-
-	/**
-	 * Expression that is used for each of the items to compute, whether the form elements must be
-	 * displayed read-only instead of editable.
-	 * 
-	 * <p>
-	 * The first argument for the evaluation is the displayed item, the second is the base object,
-	 * e.g. the expression 'true' displays all attributes read-only.
-	 * </p>
-	 * 
-	 * <p>
-	 * When nothing is configured, no attribute is explicitly set to read-only.
-	 * </p>
-	 */
-	@Name(READ_ONLY)
-	@Label("Display item attributes read-only")
-	Expr getReadOnly();
-
-	/**
-	 * Commands that can be executed on the individual objects.
-	 * 
-	 * @see com.top_logic.layout.editor.config.ButtonTemplateParameters#getButtons()
-	 */
-	@Override
-	List<ConfigBase<? extends CommandHandler>> getButtons();
-
-	/**
-	 * Defines that no separate groups should be displayed for the individual objects. In this case
-	 * the elements are displayed inline in the outer form.
-	 */
-	@Name(NO_SEPARATE_GROUP)
-	boolean isNoSeparateGroup();
 }
 

@@ -4,7 +4,7 @@
 	<modules>
 		<module name="SearchExpressionStructure">
 			<annotations>
-				<display-name value="tl.search"/>
+				<display-group value="tl"/>
 				<package-binding
 					implementation-package="com.top_logic.model.search.persistency.expressions.impl"
 					interface-package="com.top_logic.model.search.persistency.expressions"

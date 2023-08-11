@@ -4,7 +4,7 @@
 	<modules>
 		<module name="mandatorStructure">
 			<annotations>
-				<display-name value="tl.mandator"/>
+				<display-group value="tl"/>
 				<singletons>
 					<singleton type="RootElement"/>
 				</singletons>

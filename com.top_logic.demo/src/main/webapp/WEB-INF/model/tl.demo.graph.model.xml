@@ -3,7 +3,7 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.demo.graph">
 		<annotations>
-			<display-name value="demo.graph"/>
+			<display-group value="demo"/>
 			<singletons>
 				<singleton type="R"/>
 			</singletons>

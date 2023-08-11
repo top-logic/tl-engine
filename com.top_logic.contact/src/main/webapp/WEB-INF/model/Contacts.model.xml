@@ -4,7 +4,7 @@
 	<modules>
 		<module name="Contacts">
 			<annotations>
-				<display-name value="tl.contact.internal"/>
+				<display-group value="tl.contact"/>
 			</annotations>
 			<types>
 				<interface name="Contact.all">

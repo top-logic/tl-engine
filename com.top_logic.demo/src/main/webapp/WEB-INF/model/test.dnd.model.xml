@@ -3,7 +3,7 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="test.dnd">
 		<annotations>
-			<display-name value="test.dnd.ordered"/>
+			<display-group value="test.dnd"/>
 			<singletons>
 				<singleton type="Root"/>
 				<singleton name="LIBRARY"

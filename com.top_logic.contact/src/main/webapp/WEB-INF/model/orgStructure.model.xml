@@ -4,7 +4,7 @@
 	<modules>
 		<module name="orgStructure">
 			<annotations>
-				<display-name value="tl.organization"/>
+				<display-group value="tl"/>
 				<singletons>
 					<singleton type="OrgRoot"/>
 				</singletons>

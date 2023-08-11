@@ -23,7 +23,7 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
-import com.top_logic.model.annotate.TLModuleDisplayName;
+import com.top_logic.model.annotate.TLModuleDisplayGroup;
 
 /**
  * Builds the meta elements tree model.
@@ -31,7 +31,7 @@ import com.top_logic.model.annotate.TLModuleDisplayName;
  * <p>
  * For each module, starting from the root node, a subtree with the following structure is created.
  * For this purpose, the name of the module is determined. If the module is annotated with
- * {@link TLModuleDisplayName}, this value, otherwise the technical name of the module is used.
+ * {@link TLModuleDisplayGroup}, this value, otherwise the technical name of the module is used.
  * </p>
  * 
  * <p>
@@ -50,7 +50,7 @@ import com.top_logic.model.annotate.TLModuleDisplayName;
  * {@link ModuleContainer}.
  * </p>
  * 
- * @see TLModuleDisplayName
+ * @see TLModuleDisplayGroup
  * @see ModuleContainer
  * @see MetaElementTreeResourceProvider
  * 
@@ -222,20 +222,24 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 		}
 	}
 
-	private List<Object> getModuleParts(Object parent, TLModel model, String prefix) {
+	private List<Object> getModuleParts(Object parent, TLModel model, String name) {
 		List<Object> filteredModules = new ArrayList<>();
 		Set<String> moduleContainerNames = new HashSet<>();
 
 		for (TLModule module : model.getModules()) {
-			String name = getName(module);
+			String containerName = getContainerName(module);
 
-			if (hasPartWithPrefix(name, prefix)) {
-				int partAfterPrefixIndex = name.indexOf(".", prefix.length() + 1);
+			if (containerName.equals(name)) {
+				filteredModules.add(module);
+			} else if (containerName.startsWith(name)) {
+				if (isSubtreeModule(name, containerName)) {
+					int index = containerName.indexOf(".", name.length() + 1);
 
-				if (partAfterPrefixIndex >= 0) {
-					moduleContainerNames.add(name.substring(0, partAfterPrefixIndex));
-				} else {
-					filteredModules.add(module);
+					if (index > 1) {
+						moduleContainerNames.add(containerName.substring(0, index));
+					} else {
+						moduleContainerNames.add(containerName);
+					}
 				}
 			}
 		}
@@ -247,21 +251,27 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 		return filteredModules;
 	}
 
-	private boolean hasPartWithPrefix(String name, String prefix) {
-		if (name.startsWith(prefix)) {
-			return "".equals(prefix) || (name.length() > prefix.length() && name.charAt(prefix.length()) == '.');
-		} else {
-			return false;
-		}
+	private boolean isSubtreeModule(String name, String containerName) {
+		return name.isEmpty() || containerName.length() > name.length() && containerName.charAt(name.length()) == '.';
 	}
 
-	private String getName(TLModule module) {
-		TLModuleDisplayName displayName = module.getAnnotation(TLModuleDisplayName.class);
+	private String getContainerName(TLModule module) {
+		TLModuleDisplayGroup displayName = module.getAnnotation(TLModuleDisplayGroup.class);
 
 		if (displayName != null) {
 			return displayName.getValue();
 		} else {
-			return module.getName();
+			return getContainerNameInternal(module.getName());
+		}
+	}
+
+	private String getContainerNameInternal(String moduleName) {
+		int index = moduleName.lastIndexOf(".");
+
+		if (index > -1) {
+			return moduleName.substring(0, index);
+		} else {
+			return StringServices.EMPTY_STRING;
 		}
 	}
 

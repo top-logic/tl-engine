@@ -8,17 +8,17 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.config.TLModuleAnnotation;
 
 /**
- * {@link TLModuleAnnotation} to define the modules display name.
+ * {@link TLModuleAnnotation} to set an object name to group the underlying module in.
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 @InApp
-@TagName(TLModuleDisplayName.TAG_NAME)
-public interface TLModuleDisplayName extends TLModuleAnnotation, StringAnnotation {
+@TagName(TLModuleDisplayGroup.TAG_NAME)
+public interface TLModuleDisplayGroup extends TLModuleAnnotation, StringAnnotation {
 
 	/**
-	 * Custom tag to create a {@link TLModuleDisplayName} annotation.
+	 * Custom tag to create a {@link TLModuleDisplayGroup} annotation.
 	 */
-	String TAG_NAME = "display-name";
+	String TAG_NAME = "display-group";
 
 }

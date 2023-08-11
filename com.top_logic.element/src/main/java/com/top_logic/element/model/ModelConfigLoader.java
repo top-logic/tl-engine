@@ -29,7 +29,7 @@ import com.top_logic.element.config.ObjectTypeConfig;
 import com.top_logic.element.config.RoleAssignment;
 import com.top_logic.element.config.SingletonConfig;
 import com.top_logic.element.model.DynamicModelService.Config;
-import com.top_logic.model.annotate.TLModuleDisplayName;
+import com.top_logic.model.annotate.TLModuleDisplayGroup;
 import com.top_logic.model.config.TLModuleAnnotation;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.v5.transform.ModelLayout;
@@ -121,8 +121,8 @@ public class ModelConfigLoader {
 	private void createLegacyEnumModule() throws IOException, ConfigurationException {
 		ModuleConfig legacyEnumModuleConfig = TypedConfiguration.newConfigItem(ModuleConfig.class);
 		legacyEnumModuleConfig.setName(ModelLayout.TL5_ENUM_MODULE);
-		TLModuleDisplayName name = TypedConfiguration.newConfigItem(TLModuleDisplayName.class);
-		name.setValue("tl.enum");
+		TLModuleDisplayGroup name = TypedConfiguration.newConfigItem(TLModuleDisplayGroup.class);
+		name.setValue("tl");
 		legacyEnumModuleConfig.getAnnotations().add(name);
 
 		ListInitializationUtil.loadLegacyEnums(legacyEnumModuleConfig, _serviceConfig.getClassifications().values());

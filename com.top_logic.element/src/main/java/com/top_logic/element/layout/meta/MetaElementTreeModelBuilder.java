@@ -97,21 +97,21 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 		}
 
 		/**
-		 * Returns the business object of its tree parent node.
+		 * The business object of its tree parent node.
 		 */
 		public Object getParent() {
 			return _parent;
 		}
 
 		/**
-		 * Returns the enclosing {@link TLModel} of which this module container is part.
+		 * The enclosing {@link TLModel} of which this module container is a part.
 		 */
 		public TLModel getModel() {
 			return _model;
 		}
 
 		/**
-		 * Returns the technical name.
+		 * The technical name.
 		 */
 		public String getName() {
 			return _name;
@@ -133,26 +133,7 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 	@Override
 	public Collection<? extends Object> getParents(LayoutComponent contextComponent, Object node) {
 		if (node instanceof TLModelPart) {
-			switch (kind(node)) {
-				case CLASS: {
-					TLClass type = (TLClass) node;
-					List<TLClass> generalizationsInSameModule =
-						FilterUtil.filterList(new InModule(type.getModule()), type.getGeneralizations());
-					if (generalizationsInSameModule.isEmpty()) {
-						return Collections.singletonList(type.getModule());
-					} else {
-						return generalizationsInSameModule;
-					}
-				}
-				case MODULE: {
-					return Collections.singleton(((TLModule) node).getModel());
-				}
-				case ENUMERATION:
-					return Collections.singleton(((TLEnumeration) node).getModule());
-				default: {
-					return Collections.emptyList();
-				}
-			}
+			return getModelPartParents((TLModelPart) node);
 		} else if (node instanceof ModuleContainer) {
 			return Collections.singleton(((ModuleContainer) node).getParent());
 		} else {
@@ -160,22 +141,49 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 		}
 	}
 
+	private Collection<? extends Object> getModelPartParents(TLModelPart part) {
+		switch (kind(part)) {
+			case CLASS: {
+				TLClass type = (TLClass) part;
+				List<TLClass> generalizationsInSameModule =
+					FilterUtil.filterList(new InModule(type.getModule()), type.getGeneralizations());
+				if (generalizationsInSameModule.isEmpty()) {
+					return Collections.singletonList(type.getModule());
+				} else {
+					return generalizationsInSameModule;
+				}
+			}
+			case MODULE: {
+				return Collections.singleton(((TLModule) part).getModel());
+			}
+			case ENUMERATION:
+				return Collections.singleton(((TLEnumeration) part).getModule());
+			default: {
+				return Collections.emptyList();
+			}
+		}
+	}
+
 	@Override
 	public boolean supportsNode(LayoutComponent contextComponent, Object node) {
 		if (node instanceof TLModelPart) {
-			switch (kind(node)) {
-				case MODEL:
-				case MODULE:
-				case CLASS:
-				case ENUMERATION:
-					return true;
-				default:
-					return false;
-			}
+			return isSupportedModelPartKind(kind(node));
 		} else if (node instanceof ModuleContainer) {
 			return true;
 		} else {
 			return false;
+		}
+	}
+
+	private boolean isSupportedModelPartKind(ModelKind kind) {
+		switch (kind) {
+			case MODEL:
+			case MODULE:
+			case CLASS:
+			case ENUMERATION:
+				return true;
+			default:
+				return false;
 		}
 	}
 
@@ -191,34 +199,40 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 	@Override
 	public Iterator<? extends Object> getChildIterator(Object node) {
 		if (node instanceof TLModelPart) {
-			switch (kind(node)) {
-				case MODEL: {
-					TLModel model = (TLModel) node;
-
-					return getModuleParts(model, model, StringServices.EMPTY_STRING).iterator();
-				}
-				case MODULE: {
-					return getTypes((TLModule) node).iterator();
-				}
-				case CLASS: {
-					TLClass clazz = (TLClass) node;
-					Iterator<TLClass> specializations = clazz.getSpecializations().iterator();
-
-					return FilterUtil.filterIterator(new InModule(clazz.getModule()), specializations);
-				}
-				default: {
-					return Collections.emptyIterator();
-				}
-			}
+			return getModelPartChildIterator((TLModelPart) node);
 		} else if (node instanceof ModuleContainer) {
-			ModuleContainer moduleContainer = (ModuleContainer) node;
-
-			String name = moduleContainer.getName();
-			TLModel model = moduleContainer.getModel();
-
-			return getModuleParts(moduleContainer, model, name).iterator();
+			return getModuleContainerChildIterator((ModuleContainer) node);
 		} else {
 			return Collections.emptyIterator();
+		}
+	}
+
+	private Iterator<? extends Object> getModuleContainerChildIterator(ModuleContainer moduleContainer) {
+		String name = moduleContainer.getName();
+		TLModel model = moduleContainer.getModel();
+
+		return getModuleParts(moduleContainer, model, name).iterator();
+	}
+
+	private Iterator<? extends Object> getModelPartChildIterator(TLModelPart part) {
+		switch (kind(part)) {
+			case MODEL: {
+				TLModel model = (TLModel) part;
+
+				return getModuleParts(model, model, StringServices.EMPTY_STRING).iterator();
+			}
+			case MODULE: {
+				return getTypes((TLModule) part).iterator();
+			}
+			case CLASS: {
+				TLClass clazz = (TLClass) part;
+				Iterator<TLClass> specializations = clazz.getSpecializations().iterator();
+
+				return FilterUtil.filterIterator(new InModule(clazz.getModule()), specializations);
+			}
+			default: {
+				return Collections.emptyIterator();
+			}
 		}
 	}
 

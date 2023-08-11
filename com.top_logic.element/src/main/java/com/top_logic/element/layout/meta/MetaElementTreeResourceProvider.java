@@ -48,13 +48,15 @@ public class MetaElementTreeResourceProvider extends AbstractResourceProvider {
 
 	@Override
 	public String getLabel(Object object) {
-		if (object instanceof MetaElementTreeModelBuilder.ModuleContainer) {
+		if (object instanceof TLModelPart) {
+			return TLPartScopedResourceProvider.INSTANCE.getLabel(object);
+		} else if (object instanceof MetaElementTreeModelBuilder.ModuleContainer) {
 			String name = ((MetaElementTreeModelBuilder.ModuleContainer) object).getName();
 			ResKey key = ResKey.fallback(TLModelNamingConvention.modelPartNameKey(name), ResKey.text(name));
 			return Resources.getInstance().getString(key);
-		} else {
-			return TLPartScopedResourceProvider.INSTANCE.getLabel(object);
 		}
+
+		return super.getLabel(object);
 	}
 
 	@Override

@@ -203,7 +203,11 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		return readOnly;
 	}
 
-	private String label(QueryExecutor labelExpr, TLObject item) {
+	private static String label(QueryExecutor labelExpr, TLObject item) {
+		return StringServices.nonNull(labelRaw(labelExpr, item));
+	}
+
+	private static String labelRaw(QueryExecutor labelExpr, TLObject item) {
 		if (labelExpr == null) {
 			return MetaLabelProvider.INSTANCE.getLabel(item);
 		} else {

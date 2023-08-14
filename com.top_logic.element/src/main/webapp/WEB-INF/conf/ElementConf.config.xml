@@ -65,7 +65,7 @@
                 <resource-providers>
 					<provider kind="CODE" type="com.top_logic.element.structured.StructuredElement" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor$WrapperFavoriteState" implementation="com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor$WrapperFavoriteStateResourceProvider" />
-					
+		            <provider kind="CODE" type="com.top_logic.element.layout.meta.MetaElementTreeModelBuilder$ModuleContainer" implementation="com.top_logic.element.layout.meta.ModuleContainerResourceProvider" />
                 </resource-providers>
             </instance>
         </config>

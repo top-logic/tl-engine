@@ -80,7 +80,15 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey CALENDAR_SHOW_TODAY;
 
-	public static ResKey FORM_EDITOR__ATTRIBUTES;
+	/**
+	 * @en Attributes
+	 */
+	public static ResKey FORM_EDITOR_ATTRIBUTES;
+
+	/**
+	 * @en Attributes of {0}
+	 */
+	public static ResKey1 FORM_EDITOR_ATTRIBUTES__TYPE;
 
 	public static ResKey FORM_EDITOR__EDIT_ELEMENT;
 

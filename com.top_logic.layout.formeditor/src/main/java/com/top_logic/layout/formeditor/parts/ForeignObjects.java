@@ -27,6 +27,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 	ForeignObjects.READ_ONLY,
 	ForeignObjects.NO_SEPARATE_GROUP,
 	ForeignObjects.LAYOUT,
+	ForeignObjects.LAYOUT_SPECIALIZATIONS,
 	ForeignObjects.BUTTONS,
 })
 @TagName("foreign-objects")

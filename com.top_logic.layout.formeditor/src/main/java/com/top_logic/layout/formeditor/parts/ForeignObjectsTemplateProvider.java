@@ -17,10 +17,12 @@ import java.util.stream.Stream;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
+import com.top_logic.element.layout.formeditor.builder.TypedFormDefinition;
 import com.top_logic.element.layout.formeditor.implementation.GroupDefinitionTemplateProvider;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayContext;
@@ -51,6 +53,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormDefinitionTemplateProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
@@ -58,6 +61,8 @@ import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.util.css.CssUtil;
 
@@ -118,8 +123,6 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 	}
 
 	private HTMLTemplateFragment displayTemplate(FormEditorContext context) {
-		TLClass targetType = OptionalTypeTemplateParameters.resolve(getConfig());
-		FormDefinitionTemplateProvider globalLayout = TypedConfigUtil.createInstance(getConfig().getLayout());
 		QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
 		QueryExecutor readOnlyExpr = QueryExecutor.compileOptional(getConfig().getReadOnly());
 		TLObject model = context.getModel();
@@ -142,26 +145,28 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 
 			HTMLTemplateFragment legend = text(label(labelExpr, item));
 			HTMLTemplateFragment contentTemplate;
-			FormEditorContext innerContext;
-			if (globalLayout != null) {
-				innerContext = new FormEditorContext.Builder(context)
-					.formType(targetType)
-					.concreteType(null)
+			TypedFormDefinition configuredForm = configuredForm(item);
+			if (configuredForm != null) {
+				FormDefinitionTemplateProvider localLayout =
+					TypedConfigUtil.createInstance(configuredForm.getFormDefinition());
+				FormEditorContext innerContext = new FormEditorContext.Builder(context)
+					.formType(OptionalTypeTemplateParameters.resolve(configuredForm))
+					.concreteType(item.tType())
 					.model(item)
 					.contentGroup(innerGroup)
 					.build();
-				contentTemplate = globalLayout.createContentTemplate(innerContext);
+				contentTemplate = localLayout.createContentTemplate(innerContext);
 			} else {
 				TypedForm typedForm = TypedForm.lookup(null, item);
-				FormDefinitionTemplateProvider localLayout =
+				FormDefinitionTemplateProvider globalLayout =
 					TypedConfigUtil.createInstance(typedForm.getFormDefinition());
-				innerContext = new FormEditorContext.Builder(context)
+				FormEditorContext innerContext = new FormEditorContext.Builder(context)
 					.formType(typedForm.getFormType())
 					.concreteType(typedForm.getDisplayedType())
 					.model(item)
 					.contentGroup(innerGroup)
 					.build();
-				contentTemplate = localLayout.createContentTemplate(innerContext);
+				contentTemplate = globalLayout.createContentTemplate(innerContext);
 			}
 			ConfigKey derivedKey = ConfigKey.derived(personalizationKey, itemID);
 			Member content = member(innerGroup, contentTemplate);
@@ -177,6 +182,33 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 			index++;
 		}
 		return contentBox(div(templates));
+	}
+
+	private TypedFormDefinition configuredForm(TLObject item) {
+		Map<TLModelPartRef, TypedFormDefinition> specializedLayouts = getConfig().getLayoutSpecializations();
+		if (specializedLayouts.isEmpty()) {
+			return fromConfig();
+		}
+		TLStructuredType type = item.tType();
+		while (type != null) {
+			TypedFormDefinition specializedLayout = specializedLayouts.get(TLModelPartRef.ref(type));
+			if (specializedLayout != null) {
+				return specializedLayout;
+			}
+			type = TLModelUtil.getPrimaryGeneralization(type);
+		}
+		return fromConfig();
+	}
+
+	private TypedFormDefinition fromConfig() {
+		FormDefinition form = getConfig().getLayout();
+		if (form == null) {
+			return null;
+		}
+		TypedFormDefinition result = TypedConfiguration.newConfigItem(TypedFormDefinition.class);
+		result.setType(getConfig().getType());
+		result.setFormDefinition(form);
+		return result;
 	}
 
 	private void addButtons(AbstractGroupSettings<?> template, TLObject targetModel, boolean designMode) {
@@ -271,8 +303,6 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 
 	@Override
 	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
-		TLClass targetType = OptionalTypeTemplateParameters.resolve(getConfig());
-		FormElementTemplateProvider globalLayout = TypedConfigUtil.createInstance(getConfig().getLayout());
 		QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
 		Collection<?> objects = SearchExpression.asCollection(itemsExpr.execute(renderContext.getModel()));
 		QueryExecutor labelExpr = QueryExecutor.compileOptional(getConfig().getLabel());
@@ -281,13 +311,14 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 			TLObject item = SearchExpression.asTLObjectNonNull(itemsExpr.getSearch(), obj);
 			FormElementTemplateProvider layout;
 			FormEditorContext innerContext;
-			if (globalLayout != null) {
+			TypedFormDefinition configuredForm = configuredForm(item);
+			if (configuredForm != null) {
+				layout = TypedConfigUtil.createInstance(configuredForm.getFormDefinition());
 				innerContext = new FormEditorContext.Builder(renderContext)
-					.formType(targetType)
-					.concreteType(null)
+					.formType(OptionalTypeTemplateParameters.resolve(configuredForm))
+					.concreteType(item.tType())
 					.model(item)
 					.build();
-				layout = globalLayout;
 			} else {
 				TypedForm typedForm = TypedForm.lookup(null, item);
 				layout = TypedConfigUtil.createInstance(typedForm.getFormDefinition());

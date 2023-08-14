@@ -267,6 +267,8 @@
 		            <provider kind="CODE" type="com.top_logic.layout.component.TabComponent$TabbedLayoutComponent" implementation="com.top_logic.layout.tabbar.TabbedLayoutComponentResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.mig.html.layout.tiles.component.ContainerComponentTile" implementation="com.top_logic.mig.html.layout.tiles.component.ComponentTileResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.basic.module.BasicRuntimeModule" implementation="com.top_logic.layout.admin.component.TLServiceResourceProvider" />
+		            
+		            <provider kind="CODE" type="com.top_logic.element.layout.meta.MetaElementTreeModelBuilder$ModuleContainer" implementation="com.top_logic.element.layout.meta.ModuleContainerResourceProvider" />
 				</resource-providers>
 				
 				<renderers>

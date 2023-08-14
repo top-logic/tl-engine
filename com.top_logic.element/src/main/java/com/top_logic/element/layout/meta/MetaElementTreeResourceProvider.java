@@ -3,7 +3,6 @@
  */
 package com.top_logic.element.layout.meta;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.MetaElementTreeModelBuilder.ModuleContainer;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.DisplayContext;
@@ -12,8 +11,6 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.resources.TLPartScopedResourceProvider;
-import com.top_logic.model.util.TLModelNamingConvention;
-import com.top_logic.util.Resources;
 
 /**
  * {@link ResourceProvider} for the model editor meta elements.
@@ -51,9 +48,7 @@ public class MetaElementTreeResourceProvider extends AbstractResourceProvider {
 		if (object instanceof TLModelPart) {
 			return TLPartScopedResourceProvider.INSTANCE.getLabel(object);
 		} else if (object instanceof MetaElementTreeModelBuilder.ModuleContainer) {
-			String name = ((MetaElementTreeModelBuilder.ModuleContainer) object).getName();
-			ResKey key = ResKey.fallback(TLModelNamingConvention.modelPartNameKey(name), ResKey.text(name));
-			return Resources.getInstance().getString(key);
+			return ModuleContainerResourceProvider.INSTANCE.getLabel(object);
 		}
 
 		return super.getLabel(object);
@@ -63,6 +58,8 @@ public class MetaElementTreeResourceProvider extends AbstractResourceProvider {
 	public String getType(Object object) {
 		if (object instanceof TLModelPart) {
 			return TLPartScopedResourceProvider.INSTANCE.getType(object);
+		} else if (object instanceof MetaElementTreeModelBuilder.ModuleContainer) {
+			return ModuleContainerResourceProvider.INSTANCE.getType(object);
 		}
 
 		return super.getType(object);
@@ -72,6 +69,8 @@ public class MetaElementTreeResourceProvider extends AbstractResourceProvider {
 	public String getTooltip(Object object) {
 		if (object instanceof TLModelPart) {
 			return TLPartScopedResourceProvider.INSTANCE.getTooltip(object);
+		} else if (object instanceof MetaElementTreeModelBuilder.ModuleContainer) {
+			return ModuleContainerResourceProvider.INSTANCE.getTooltip(object);
 		}
 
 		return super.getTooltip(object);
@@ -81,6 +80,8 @@ public class MetaElementTreeResourceProvider extends AbstractResourceProvider {
 	public ThemeImage getImage(Object object, Flavor flavor) {
 		if (object instanceof TLModelPart) {
 			return TLPartScopedResourceProvider.INSTANCE.getImage(object, flavor);
+		} else if (object instanceof MetaElementTreeModelBuilder.ModuleContainer) {
+			return ModuleContainerResourceProvider.INSTANCE.getImage(object, flavor);
 		}
 
 		return super.getImage(object, flavor);
@@ -90,6 +91,8 @@ public class MetaElementTreeResourceProvider extends AbstractResourceProvider {
 	public String getLink(DisplayContext context, Object object) {
 		if (object instanceof TLModelPart) {
 			return TLPartScopedResourceProvider.INSTANCE.getLink(context, object);
+		} else if (object instanceof MetaElementTreeModelBuilder.ModuleContainer) {
+			return ModuleContainerResourceProvider.INSTANCE.getLink(context, object);
 		}
 
 		return super.getLink(context, object);
@@ -99,6 +102,8 @@ public class MetaElementTreeResourceProvider extends AbstractResourceProvider {
 	public String getCssClass(Object object) {
 		if (object instanceof TLModelPart) {
 			return TLPartScopedResourceProvider.INSTANCE.getCssClass(object);
+		} else if (object instanceof MetaElementTreeModelBuilder.ModuleContainer) {
+			return ModuleContainerResourceProvider.INSTANCE.getCssClass(object);
 		}
 
 		return super.getCssClass(object);

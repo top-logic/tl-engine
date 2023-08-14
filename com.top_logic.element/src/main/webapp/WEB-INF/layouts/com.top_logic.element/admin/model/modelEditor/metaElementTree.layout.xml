@@ -156,6 +156,7 @@
 		<button id="configExport"
 			class="com.top_logic.element.model.export.ui.ModelExportCommand"
 			clique="exportButtons"
+			executability="com.top_logic.tool.execution.IsModelPart"
 			image="theme:ICONS_BUTTON_XML_EXPORT"
 		/>
 		<button id="importModel"

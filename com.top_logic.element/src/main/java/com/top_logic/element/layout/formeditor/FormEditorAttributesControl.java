@@ -14,11 +14,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationChange.Kind;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.FormEditorEditorControl.RepaintTrigger;
 import com.top_logic.element.layout.formeditor.definition.FieldDefinition;
@@ -77,8 +79,19 @@ public class FormEditorAttributesControl extends FormEditorDisplayControl {
 		Control ctrl = createControl(formContext);
 		GroupCellControl groupAttributes =
 			new GroupCellControl(ctrl, new DefaultExpansionModel(false), new DefaultGroupSettings());
-		groupAttributes.setTitle(Fragments.message(I18NConstants.FORM_EDITOR__ATTRIBUTES));
+		groupAttributes.setTitle(title());
 		groupAttributes.write(context, out);
+	}
+
+	private HTMLFragment title() {
+		TLStructuredType type = getType();
+		ResKey key;
+		if (type != null) {
+			key = I18NConstants.FORM_EDITOR_ATTRIBUTES__TYPE.fill(type);
+		} else {
+			key = I18NConstants.FORM_EDITOR_ATTRIBUTES;
+		}
+		return Fragments.message(key);
 	}
 
 	private List<String> filterAttributes(List<String> fieldNames) {

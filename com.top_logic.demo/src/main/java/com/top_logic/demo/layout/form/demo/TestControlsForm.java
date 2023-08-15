@@ -2017,7 +2017,7 @@ public class TestControlsForm extends FormComponent {
 	private void addOpenCalendarControl(FormGroup controlsGroup) {
 		Date initialDate = null;
 		ComplexField displayField = FormFactory.newDateField("displayDate", initialDate, FormFactory.IMMUTABLE);
-		displayField.setLabel(Resources.getInstance().getString(I18NConstants.DISPLAY_SELECTED_DATE));
+		displayField.setLabel(I18NConstants.DISPLAY_SELECTED_DATE);
 		displayField.setControlProvider(ValueDisplay.INSTANCE);
 		ComplexField editField = FormFactory.newDateField("openCalendar", initialDate, !FormFactory.IMMUTABLE);
 		editField.setControlProvider(OpenCalendar.INSTANCE);

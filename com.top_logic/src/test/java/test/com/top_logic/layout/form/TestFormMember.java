@@ -113,14 +113,14 @@ public class TestFormMember extends BasicTestCase {
 		assertTrue("Name of age member is internationalised in TestMessages.", formMemberAge.hasLabel());
 		formMemberAge.setLabel("Age");
 		assertTrue("Label is set direct.", formMemberAge.hasLabel());
-		formMemberAge.setLabel(null);
+		formMemberAge.setLabel((String) null);
 		assertTrue("deleting direct set label re-installs default which is internationalisation.",
 			formMemberAge.hasLabel());
 
 		assertFalse("Name of married member is not internationalised in TestMessages.", formMemberMarried.hasLabel());
 		formMemberMarried.setLabel("Married");
 		assertTrue("Label is set direct.", formMemberMarried.hasLabel());
-		formMemberMarried.setLabel(null);
+		formMemberMarried.setLabel((String) null);
 		assertFalse("Label is deleted.", formMemberMarried.hasLabel());
 	}
 

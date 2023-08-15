@@ -13,6 +13,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.SetBuilder;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.listener.EventType;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.IdentifierSource;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.basic.Focusable;
@@ -24,6 +25,7 @@ import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.scripting.recorder.ref.NamedModel;
 import com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef;
+import com.top_logic.util.Resources;
 
 
 /**
@@ -359,6 +361,16 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	 */
 	public String setLabel(String label);
 	
+	/**
+	 * Explicitly sets a label for this member.
+	 * 
+	 * @implNote Service method to translate given {@link ResKey} with
+	 *           {@link Resources#getInstance()} and setting it as {@link #setLabel(String) label}.
+	 */
+	default void setLabel(ResKey label) {
+		setLabel(Resources.getInstance().getString(label));
+	}
+
 	/**
 	 * Whether this {@link FormMember} has an explicitly set label or the default mechanism leads to
 	 * an internationalised text.

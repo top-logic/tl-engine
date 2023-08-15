@@ -2243,7 +2243,7 @@ public class GridComponent extends EditComponent implements
 			if (isTransient(rowObject)) {
 				HiddenField changeMarker = FormFactory.newHiddenField(NEW_OBJECT_MARKER_FIELD, 1);
 				changeMarker.setDefaultValue(0);
-				changeMarker.setLabel(Resources.getInstance().getString(I18NConstants.NEW_OBJECT_MARKER));
+				changeMarker.setLabel(I18NConstants.NEW_OBJECT_MARKER);
 				row.addMember(changeMarker);
 			}
             

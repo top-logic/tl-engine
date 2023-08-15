@@ -40,7 +40,6 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
@@ -102,8 +101,7 @@ public class TabbarDefinitionTemplateProvider extends AbstractFormElementProvide
 				tabGroup = new FormGroup(tabName, contentGroup.getResources());
 				deckField.addMember(tabGroup);
 			}
-			tabGroup.setLabel(Resources.getInstance().getString(tabDef.getLabel()));
-
+			tabGroup.setLabel(tabDef.getLabel());
 			TabDefinitionTemplateProvider tabProvider = TypedConfigUtil.createInstance(tabDef);
 			context = new FormEditorContext.Builder(context).contentGroup(tabGroup).build();
 			HTMLTemplateFragment tabTemplate = tabProvider.createTemplate(context);

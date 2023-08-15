@@ -207,7 +207,7 @@ public class ConfigureGroupCommand extends AbstractCommandHandler {
 		List<TileLayout> options = getOptions(tileContainer, selection);
 		SelectField selectField =
 			FormFactory.newSelectField("selectTiles", options, FormFactory.MULTIPLE, selection, !FormFactory.IMMUTABLE);
-		selectField.setLabel(aContext.getResources().getString(I18NConstants.CONFIGURE_TILE_GROUP));
+		selectField.setLabel(I18NConstants.CONFIGURE_TILE_GROUP);
 
 		/* Do not record setting the value of the field, because no owner can be found. Configuring
 		 * the tiles is recorded explicit. */

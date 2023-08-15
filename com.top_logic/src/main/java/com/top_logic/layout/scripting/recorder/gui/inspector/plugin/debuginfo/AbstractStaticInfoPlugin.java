@@ -18,7 +18,6 @@ import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.provider.ImageButtonControlProvider;
 import com.top_logic.mig.html.layout.MainLayout;
-import com.top_logic.util.Resources;
 
 /**
  * {@link DebugInfoPlugin} that simply displays its {@link #getModel()}.
@@ -52,11 +51,9 @@ public abstract class AbstractStaticInfoPlugin<M> extends DebugInfoPlugin<M> {
 	@Override
 	protected FormMember createInformationField(String name) {
 		M model = getModel();
-		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		FormGroup content = new FormGroup(name, getI18nPrefix());
 		// Make label of group explicit to be able to set same label for actual content field
-		String groupLabel = displayContext.getResources().getString(getI18nPrefix().key(name));
-		content.setLabel(groupLabel);
+		content.setLabel(getI18nPrefix().key(name));
 
 		FormMember valueField;
 		if (model == null) {
@@ -69,6 +66,7 @@ public abstract class AbstractStaticInfoPlugin<M> extends DebugInfoPlugin<M> {
 		}
 		content.addMember(valueField);
 
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		MainLayout ml = displayContext.getLayoutContext().getMainLayout();
 		CommandField inspectButton = createInspectButton(getI18nPrefix(), ml, _inspectModel);
 		if (inspectButton != null) {
@@ -103,7 +101,7 @@ public abstract class AbstractStaticInfoPlugin<M> extends DebugInfoPlugin<M> {
 
 		ResKey detailLabelKey =
 			ResKey.fallback(buttonPrefix.key(inspectButton.getName()), I18NConstants.SHOW_DETAIL_COMMAND);
-		inspectButton.setLabel(Resources.getInstance().getString(detailLabelKey));
+		inspectButton.setLabel(detailLabelKey);
 		return inspectButton;
 	}
 

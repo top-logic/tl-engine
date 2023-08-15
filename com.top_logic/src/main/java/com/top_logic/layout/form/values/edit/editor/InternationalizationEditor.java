@@ -259,10 +259,10 @@ public class InternationalizationEditor implements Editor {
 		button.setInheritDeactivation(false);
 		Resources resources = Resources.getInstance();
 		if (initiallyVisible) {
-			button.setLabel(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES));
+			button.setLabel(I18NConstants.HIDE_DERIVED_RESOURCES);
 			button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltip(), null));
 		} else {
-			button.setLabel(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES));
+			button.setLabel(I18NConstants.DISPLAY_DERIVED_RESOURCES);
 			button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltip(), null));
 		}
 

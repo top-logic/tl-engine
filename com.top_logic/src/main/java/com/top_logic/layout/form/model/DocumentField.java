@@ -78,14 +78,14 @@ public class DocumentField extends CompositeField {
 		template.setImmutable(true);
 
 		CommandField lock = FormFactory.newCommandField(LOCK_FIELD, lockAction);
-		lock.setLabel(null);
+		lock.setLabel((String) null);
 		lock.setImage(Icons.DOC_LOCKED);
 		lock.setNotExecutableImage(Icons.DOC_LOCKED_DISABLED);
 		lock.setCssClasses(FormConstants.FIXED_RIGHT_CSS_CLASS);
 		addMember(lock);
 
 		CommandField unlock = FormFactory.newCommandField(UNLOCK_FIELD, unlockAction);
-		unlock.setLabel(null);
+		unlock.setLabel((String) null);
 		unlock.setImage(Icons.DOC_UNLOCK);
 		unlock.setNotExecutableImage(Icons.DOC_UNLOCK_DISABLED);
 		unlock.setCssClasses(FormConstants.FIXED_RIGHT_CSS_CLASS);

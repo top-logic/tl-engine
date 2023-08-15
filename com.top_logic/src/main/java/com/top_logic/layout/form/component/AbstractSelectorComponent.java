@@ -59,7 +59,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLTypeRefsFormat;
-import com.top_logic.util.Resources;
 
 /**
  * Base class for components presenting a single {@link SelectField} providing options to be used as
@@ -229,7 +228,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		SelectField selectField =
 			FormFactory.newSelectField(getSelectFieldName(), options, multiple(), null, false);
 		selectField.setTransient(true);
-		selectField.setLabel(Resources.getInstance().getString(getTitleKey()));
+		selectField.setLabel(getTitleKey());
 		selectField.setControlProvider(getSelectControlProvider());
 		selectField.setOptionComparator(Equality.INSTANCE);
 		selectField.setOptionLabelProvider(getOptionLabelProvider());

@@ -160,7 +160,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			}
 		};
 		String targetFieldLabel = _targetSelectField.getLabel();
-		title.setLabel(resources.getString(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel)));
+		title.setLabel(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel));
 		addMember(title);
 
 	}

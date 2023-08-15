@@ -46,7 +46,6 @@ import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolBarGroup;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * {@link Control}, that provides a separate view to table column filters.
@@ -224,7 +223,7 @@ public class TableFilterOverviewControl extends AbstractConstantControl {
 				return columnNames;
 			}
 		});
-		filterChooser.setLabel(Resources.getInstance().getString(TL_SIDEBAR_FILTER_CHOOSER));
+		filterChooser.setLabel(TL_SIDEBAR_FILTER_CHOOSER);
 		sidebarContext.addMember(filterChooser);
 
 		return filterChooser;
@@ -247,7 +246,7 @@ public class TableFilterOverviewControl extends AbstractConstantControl {
 		});
 		command.setImage(Icons.BUTTON_REFRESH);
 		command.setNotExecutableImage(Icons.BUTTON_REFRESH_DISABLED);
-		command.setLabel(Resources.getInstance().getString(TL_SIDEBAR_FILTER_REFRESH));
+		command.setLabel(TL_SIDEBAR_FILTER_REFRESH);
 		command.setNotExecutableReasonKey(TL_SIDEBAR_FILTER_REFRESH_DISABLED);
 		sidebarContext.addMember(command);
 
@@ -287,7 +286,7 @@ public class TableFilterOverviewControl extends AbstractConstantControl {
 		});
 		command.setImage(enabledImage);
 		command.setNotExecutableImage(disabledImage);
-		command.setLabel(Resources.getInstance().getString(labelKey));
+		command.setLabel(labelKey);
 		sidebarContext.addMember(command);
 		return command;
 	}
@@ -308,7 +307,7 @@ public class TableFilterOverviewControl extends AbstractConstantControl {
 		ScriptingRecorder.annotateAsDontRecord(command);
 
 		command.setImage(Icons.SELECT_FILTER);
-		command.setLabel(Resources.getInstance().getString(TL_SIDEBAR_FILTER_SELECT));
+		command.setLabel(TL_SIDEBAR_FILTER_SELECT);
 		sidebarContext.addMember(command);
 		return command;
 	}

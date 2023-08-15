@@ -251,7 +251,6 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 	protected void init() {
 		final Filter<Object> selectableOptionsFilter = getSelectableOptionsFilter(targetSelectField);
 		
-		Resources resources = Resources.getInstance();
 		String targetFieldLabel = targetSelectField.getLabel();
 		
 		// Create a renderer that only renders plain labels, even if the
@@ -267,7 +266,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 			new DefaultRestrictedListSelectionModel(displayedSelection, selectableOptionsFilter);
 		selectionList = FormFactory.newListField(SELECTION_FIELD_NAME, displayedSelection, selectedSelection);
 		selectionList.setItemRenderer(optionLabelRenderer);
-		selectionList.setLabel(resources.getString(I18NConstants.POPUP_SELECT_SELECTED__FIELD.fill(targetFieldLabel)));
+		selectionList.setLabel(I18NConstants.POPUP_SELECT_SELECTED__FIELD.fill(targetFieldLabel));
 		
 		// Ensure that the list of selected options uses the same sort order
 		// as the list of all options. This is necessary to have a newly
@@ -310,8 +309,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 			new DefaultStructureTreeUIModel<>(optionsAsTree.getBaseModel(), optionsAsTree.showRootNode());
 
 		TreeField optionTree = FormFactory.newTreeField(OPTIONS_FIELD_NAME, treeModel, selectionModel, renderer);
-		optionTree.setLabel(
-			Resources.getInstance().getString(I18NConstants.POPUP_SELECT_OPTIONS__FIELD.fill(targetSelectField.getLabel())));
+		optionTree.setLabel(I18NConstants.POPUP_SELECT_OPTIONS__FIELD.fill(targetSelectField.getLabel()));
 		ScriptingRecorder.annotateAsDontRecord(optionTree);
 		// Markup referenced selection in option tree
 		List<?> currentSelection = (List<?>) FormFieldInternals.getStoredValue(targetSelectField);
@@ -409,8 +407,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 
 	private void createPatternField(String targetFieldLabel) {
 		this.pattern = FormFactory.newStringField(PATTERN_FIELD_NAME);
-		Resources resources = Resources.getInstance();
-		pattern.setLabel(resources.getString(I18NConstants.POPUP_SELECT_FILTER__FIELD.fill(targetFieldLabel)));
+		pattern.setLabel(I18NConstants.POPUP_SELECT_FILTER__FIELD.fill(targetFieldLabel));
 		addMember(pattern);
 	}
 

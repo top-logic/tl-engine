@@ -229,7 +229,7 @@ public class FilterOptionsUtil {
 			boolean includeParentsImmutable = !viewModel.isFiniteTree();
 			BooleanField includeParentsField = FormFactory.newBooleanField(INCLUDE_PARENTS_FIELD_NAME,
 				includeParentsValue, includeParentsImmutable);
-			includeParentsField.setLabel(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS));
+			includeParentsField.setLabel(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS);
 			if (viewModel.isFiniteTree()) {
 				includeParentsField.setTooltip(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS_TOOLTIP));
 			} else {

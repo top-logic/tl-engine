@@ -96,7 +96,7 @@ public class ConfigureTabsCommand extends AbstractCommandHandler {
 		selectField.setFixedOptions(getNotRecreatableComponents(main, tabBarModel));
 		selectField.addValueListener(createStoreTabsListener(component, tabComponent));
 		selectField.setCustomOrder(true);
-		selectField.setLabel(aContext.getResources().getString(I18NConstants.CONFIGURE_TABS_DIALOG_LABEL));
+		selectField.setLabel(I18NConstants.CONFIGURE_TABS_DIALOG_LABEL);
 
 		return SelectionControl.openSelectorPopup(aContext, aContext.getWindowScope(), selectField);
 	}

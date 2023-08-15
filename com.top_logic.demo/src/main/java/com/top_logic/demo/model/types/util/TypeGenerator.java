@@ -458,15 +458,13 @@ public class TypeGenerator {
 
 		@Override
 		protected void fillFormContext(FormContext context) {
-			Resources resources = Resources.getInstance();
-
 			_rootName = FormFactory.newStringField(ROOT_NAME_FIELD, "Generated Root", false);
-			_rootName.setLabel(resources.getString(I18NConstants.TYPE_GENERATOR_DIALOG.key(ROOT_NAME_FIELD)));
+			_rootName.setLabel(I18NConstants.TYPE_GENERATOR_DIALOG.key(ROOT_NAME_FIELD));
 			_rootName.setControlProvider(ValueBelowLabel.INSTANCE);
 			
 			_numberChildren = FormFactory.newIntField(NUMBER_CHILDREN_FIELD, NUMBER_OF_CHILDREN, false);
 			_numberChildren
-				.setLabel(resources.getString(I18NConstants.TYPE_GENERATOR_DIALOG.key(NUMBER_CHILDREN_FIELD)));
+				.setLabel(I18NConstants.TYPE_GENERATOR_DIALOG.key(NUMBER_CHILDREN_FIELD));
 			_numberChildren.setControlProvider(ValueBelowLabel.INSTANCE);
 			_numberChildren.addConstraint(
 				new RangeConstraint(1, Integer.MAX_VALUE)

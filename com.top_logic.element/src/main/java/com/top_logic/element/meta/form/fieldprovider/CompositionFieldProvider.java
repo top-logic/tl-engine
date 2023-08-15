@@ -155,8 +155,7 @@ public class CompositionFieldProvider extends AbstractFieldProvider {
 
 		/* Set label explicit, because generic just sets the label for the wrapping group. */
 		ResKey labelKey = update.getLabelKey();
-		tableField.setLabel(Resources.getInstance()
-			.getString(I18NConstants.COMPOSITE_FIELD_LABEL__ATTRIBUTE.fill(labelKey)));
+		tableField.setLabel(I18NConstants.COMPOSITE_FIELD_LABEL__ATTRIBUTE.fill(labelKey));
 		Composite result =
 			new Composite(update, fieldName, resources, tableModel, tableField);
 		result.addMember(tableField);
@@ -640,9 +639,7 @@ public class CompositionFieldProvider extends AbstractFieldProvider {
 						@Override
 						protected void fillFormContext(FormContext context) {
 							_selectField = FormFactory.newSelectField(INPUT_FIELD, rowTypes);
-							_selectField.setLabel(
-								Resources.getInstance()
-									.getString(I18NConstants.CREATE_COMPOSITION_ROW_DIALOG_FIELD_LABEL));
+							_selectField.setLabel(I18NConstants.CREATE_COMPOSITION_ROW_DIALOG_FIELD_LABEL);
 							_selectField.setMandatory(true);
 							context.addMember(_selectField);
 						}

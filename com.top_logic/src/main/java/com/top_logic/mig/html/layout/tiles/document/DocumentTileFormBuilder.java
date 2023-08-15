@@ -55,7 +55,6 @@ import com.top_logic.tool.boundsec.wrap.PersBoundChecker;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -287,7 +286,7 @@ public class DocumentTileFormBuilder extends AbstractConfiguredInstance<Document
 	}
 
 	private void setLabel(FormMember field) {
-		field.setLabel(Resources.getInstance().getString(getConfig().getResPrefix().key(field.getName())));
+		field.setLabel(getConfig().getResPrefix().key(field.getName()));
 	}
 
 	private AbstractBoundWrapper getSelectedContext() {

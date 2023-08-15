@@ -167,8 +167,7 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 			this.pageLabels = this.optionLabels;
 		}
 		this.pattern = FormFactory.newStringField(PATTERN_FIELD_NAME);
-		Resources resources = Resources.getInstance();
-		pattern.setLabel(resources.getString(I18NConstants.POPUP_SELECT_FILTER__FIELD.fill(targetFieldLabel)));
+		pattern.setLabel(I18NConstants.POPUP_SELECT_FILTER__FIELD.fill(targetFieldLabel));
 		addMember(pattern);
 
 		init(targetSelectField, optionsPerPage);
@@ -178,15 +177,16 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 		if (multiSelect) {
 			assert SELECTION_FIELD_NAME.equals(selectionList.getName());
 			addMember(selectionList);
-			selectionList.setLabel(resources.getString(I18NConstants.POPUP_SELECT_SELECTED__FIELD.fill(targetFieldLabel)));
+			selectionList.setLabel(I18NConstants.POPUP_SELECT_SELECTED__FIELD.fill(targetFieldLabel));
 		}
 		assert PAGE_FIELD_NAME.equals(optionPages.getName());
 		addMember(optionPages);
 
 		assert OPTIONS_FIELD_NAME.equals(optionList.getName());
 		addMember(optionList);
-		optionList.setLabel(resources.getString(I18NConstants.POPUP_SELECT_OPTIONS__FIELD.fill(targetFieldLabel)));
+		optionList.setLabel(I18NConstants.POPUP_SELECT_OPTIONS__FIELD.fill(targetFieldLabel));
 		
+		Resources resources = Resources.getInstance();
 		if (multiSelect) {
 			String rightArrowLabel = resources.getString(I18NConstants.SELECT_ARROW_RIGHT, HTMLConstants.RIGHT_ARROW);
 			String rightArrowDoubleLabel =
@@ -248,7 +248,7 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 				return v.visitFormMember(this, arg);
 			}
 		};
-		title.setLabel(resources.getString(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel)));
+		title.setLabel(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel));
 		addMember(title);
 
 		pattern.addKeyListener(new KeyEventListener(PATTERN_KEYS) {

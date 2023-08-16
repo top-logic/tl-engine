@@ -285,7 +285,7 @@ private static final int HISTORY_LENGTH = 256;
 										Statement:
 									</b>
 								</p>
-								<p>
+								<div>
 									<%
 									// add statement field
 									FormContext context = new FormContext(component);
@@ -303,7 +303,7 @@ private static final int HISTORY_LENGTH = 256;
 									control.write(displayContext, tagWriter);
 									tagWriter.flushBuffer();
 									%>
-								</p>
+								</div>
 
 								<p>
 									<%

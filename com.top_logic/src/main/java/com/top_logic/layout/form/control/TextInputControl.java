@@ -287,7 +287,7 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 	}
 
 	/**
-	 * The <tt>JavaScript</tt> function to invoke when the value of the field changes.
+	 * The JavaScript function to invoke when the value of the field changes.
 	 */
 	@TemplateVariable("onchange")
 	public void writeOnChangeContent(TagWriter out) throws IOException {
@@ -300,7 +300,8 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 	}
 
 	/**
-	 * Create JavaScript command to execute on blur event in input field
+	 * Specifies a JavaScript command that is executed when the input field loses focus (onblur
+	 * event).
 	 */
 	@TemplateVariable("onblur")
 	public void writeOnBlurContent(TagWriter out) throws IOException {
@@ -314,7 +315,7 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 	}
 
 	/**
-	 * Create JavaScript command to execute on key up event in input field
+	 * Creates a JavaScript command that is executed when a key is pressed in the input field.
 	 */
 	@TemplateVariable("oninput")
 	public void writeOnInputContent(DisplayContext context, TagWriter out) throws IOException {
@@ -346,7 +347,7 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 	}
 
 	/**
-	 * Create JavaScript command to execute on focus event in input field
+	 * Specifies a JavaScript command that is executed when the input field receives focus.
 	 */
 	@TemplateVariable("onfocus")
 	public void writeOnFocusContent(DisplayContext context, TagWriter out) throws IOException {

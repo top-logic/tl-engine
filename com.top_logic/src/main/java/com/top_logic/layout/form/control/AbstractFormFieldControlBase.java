@@ -188,7 +188,7 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 	}
 
 	/**
-	 * The key data to interpret on the client-side.
+	 * Keyboard controls definition for this control.
 	 * 
 	 * @see HTMLConstants#TL_KEY_SELECTORS
 	 */
@@ -241,8 +241,9 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
     }
 
     /**
-     * The CSS style attribute of this control's input element.
-     */
+	 * Provides the ability to further customize the appearance of this control beyond the CSS
+	 * stylesheet.
+	 */
 	@TemplateVariable("inputStyle")
 	public final String getInputStyle() {
     	return this.inputStyle;

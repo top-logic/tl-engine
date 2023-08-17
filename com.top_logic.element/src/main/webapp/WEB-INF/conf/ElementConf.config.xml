@@ -11,6 +11,7 @@
 		           <module key="com.top_logic.element.structured.util.NumberHandlerFactory$Module" value="true"/>
 			       <module key="com.top_logic.util.model.CompatibilityService$Module" value="true" />
 			       <module key="com.top_logic.element.boundsec.attribute.AttributeClassifierManager$Module" value="true" />
+			       <module key="com.top_logic.element.meta.form.fieldprovider.ReferenceFieldProviders$Module" value="true" />
 				</modules>
 			</instance>
 		</config>

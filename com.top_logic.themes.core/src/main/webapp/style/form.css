@@ -1522,8 +1522,6 @@ select:not([multiple="multiple"]):disabled {
 
 .mdtp__clock .mdtp__hour_holder,
 .mdtp__clock .mdtp__minute_holder {
-	position: absolute;
-	top: 0;
 	width: 100%;
 	height: 100%;
 	opacity: 1;
@@ -1578,7 +1576,6 @@ select:not([multiple="multiple"]):disabled {
 .mdtp__digit.active .minute,
 .mdtp__clock .mdtp__digit span:hover {
 	background: var(--layer-hover);
-	background-color: rgba(0, 0, 0, 0);
 	background-position-x: 0%;
 	background-position-y: 0%;
 	background-repeat: repeat;
@@ -1720,46 +1717,14 @@ select:not([multiple="multiple"]):disabled {
 
 
 
-/*
-****							****
-****	ChoiceControl styles	****
-****							****
-*/
 /* 		Radio Buttons styles	*/
-/* Resetting the browser's radio style */
+/* Resets browser's default radio style. */
 input[type="radio"] {
 	-webkit-appearance: none;
 	appearance: none;
 	margin: 0;
 	padding: 0;
 	cursor: pointer;
-}
-
-.cChoice-horizontal {
-	display: flex;
-	gap: var(--spacing-03);
-}
-
-.cChoice-vertical {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-02);
-}
-
-.cChoice-option {
-	display: flex;
-	gap: var(--spacing-02);
-}
-
-.cChoice-option label {
-	color: var(--text-primary);
-	cursor: pointer;
-}
-
-.cChoice-horizontal.disabled label,
-.cChoice-vertical.disabled label{
-	color: var(--text-disabled);
-	cursor: default;
 }
 
 input[type="radio"] {
@@ -1794,20 +1759,8 @@ input[type="radio"]:focus {
 	box-shadow: inset 0 0 0 1px var(--focus);;
 }
 
-.cChoice-horizontal.disabled, .cChoice-vertical.disabled {
-	color: var(--text-disabled);
-}
-
-.cChoice-horizontal.disabled input[type="radio"], .cChoice-vertical.disabled input[type="radio"]{
-	border: 1px solid  var(--icon-disabled);
-}
-
-.cChoice-horizontal.disabled input[type="radio"]:checked::before,
-.cChoice-vertical.disabled input[type="radio"]:checked::before{
-	background-color: var(--icon-disabled);
-}
-
 /* 		Check Box styles	*/
+/* Resets browser's default checkbox styling. */
 input[type="checkbox"] {
 	-webkit-appearance: none;
 	appearance: none;
@@ -1817,14 +1770,17 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"] {
+    /*
     display: grid;
 	align-self: center;
     place-content: center;
+    */
     position: relative;
     height: 1rem;
     width: 1rem;
     border-radius: 1px;
     border: 1px solid var(--icon-primary);
+    align-self: center;
 }
 
 input[type="checkbox"]::before {
@@ -1858,21 +1814,135 @@ input[type="checkbox"]:focus {
 	box-shadow: inset 0px 0px 0px .8px var(--focus),inset 0px 0px 0px 1.3px var(--focus-inset);
 }
 
+/*
+****										****
+****	ChoiceControl, bbc-option styles	****
+****										****
+*/
+.cBooleanChoice, .cChoice-horizontal {
+    display: flex;
+    gap: var(--spacing-03);
+}
+
+span.bcc-option, .cChoice-option {
+    display: flex;
+    gap: var(--spacing-02);
+}
+
+.cChoice-vertical {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-02);
+}
+
+.cChoice-option label {
+	color: var(--text-primary);
+	cursor: pointer;
+}
+
+.cChoice-horizontal.disabled label,
+.cChoice-vertical.disabled label{
+	color: var(--text-disabled);
+	cursor: default;
+}
+
 .cChoice-horizontal.disabled, .cChoice-vertical.disabled {
 	color: var(--text-disabled);
 }
 
-.cChoice-horizontal.disabled input[type="checkbox"], .cChoice-vertical.disabled input[type="checkbox"],
+.cChoice-horizontal.disabled input[type="radio"], 
+.cChoice-vertical.disabled input[type="radio"],
+.cBooleanChoice.disabled input[type="radio"] {
+	border: 1px solid  var(--icon-disabled);
+}
+
+.cChoice-horizontal.disabled input[type="radio"]:checked::before,
+.cChoice-vertical.disabled input[type="radio"]:checked::before,
+.cBooleanChoice.disabled input[type="radio"]:checked::before {
+	background-color: var(--icon-disabled);
+}
+
+.cChoice-horizontal.disabled, .cChoice-vertical.disabled,
+.cBooleanChoice.disabled {
+	color: var(--text-disabled);
+}
+
+.cChoice-horizontal.disabled input[type="checkbox"], 
+.cChoice-vertical.disabled input[type="checkbox"],
 .cCheckbox.cannot-edit input[type="checkbox"] {
 	border: 1px solid  var(--icon-disabled);
 	cursor: default;
 }
 
 .cChoice-horizontal.disabled input[type="checkbox"]:checked::before,
-.cChoice-vertical.disabled input[type="checkbox"]:checked::before{
+.cChoice-vertical.disabled input[type="checkbox"]:checked::before {
 	background-color: var(--icon-disabled);
 	cursor: default;
 }
 
+/* ==================================== */
+/* ======    Color Chooser css    ===== */
+/* ==================================== */
 
+span.cColorDisplay {
+	border-style: solid;
+	border-color: black;
+	border-width: 1px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-right: 40px;
+}
+
+span.cColorDisplay.noColor {
+	background-image: var(--COLORCHOOSER_NO_COLOR);	
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+span.cColorDisplay.canDrag {
+	cursor: pointer;
+}
+
+div.DNDmouseMarker span.cColorDisplay {
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-right: 20px;
+}
+
+div.cColorPalette div.row {
+	clear: both;	
+}
+
+div.cColorPalette span.cColorDisplay {
+	display: block;
+	float: left;
+	width: 30px;
+	height: 30px;
+	padding: 0px;
+	margin: 2px;
+}
+
+/* ColorChooserSelectionControl */
+
+div.cColorComposer td {
+	vertical-align: top;
+}
+
+div.cColorComposer tr.spacer {
+	height: 3px;
+}
+
+.colorDialog {
+	padding: 3px;
+}
+
+.colorCell {
+    cursor:pointer;
+    height:30px;
+    width:30px;
+}
+
+.mandatory > .ColorChooser {
+	border:thick solid var(--MANDATORY_FIELD_BG);
+}
 

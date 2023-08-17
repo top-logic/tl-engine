@@ -214,6 +214,11 @@ a.cmdLink:visited {
 	height: 100%;
 }
 
+div.fltHeader {
+	margin: 3px;
+	font-weight: bold;
+}
+
 .fltSettings {
 	position: relative;
 	overflow: auto;
@@ -221,12 +226,31 @@ a.cmdLink:visited {
 	max-width: 100%;
 }
 
+/*
+
+div.fltCommandContent {
+	box-sizing: border-box;
+	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
+	text-align: right;
+	margin: 0px;
+	padding-top: 8px;
+	background-color: var(--TABLE_FILTER_BACKGROUND_COLOR);
+}
+
+*/
 .fltCommandContent {
 	text-align: center;
 	box-sizing: border-box;
 }
 
 .fltButtons {
+	/* 
+	img.fltButton {
+		position: absolute;
+		right: 0px;
+		top: 0px;
+	}
+	 */
 	display: flex;
 	justify-content: space-around;
 	margin: var(--spacing-02) 0;
@@ -259,7 +283,13 @@ a.cmdLink:visited {
 	border-top: 1px solid var(--border-subtle);
 }
 
-.fltList {
+ul.fltList {
+	list-style-type : none;
+	margin: 3px;
+	padding: 0px;
+}
+
+div.fltList {
 	position: relative;
 	width: 100%;
 	overflow: hidden;
@@ -269,6 +299,10 @@ a.cmdLink:visited {
     padding: 0 var(--spacing-03);
     display: flex;
     gap: var(--spacing-02);
+}
+
+.filterBox {
+	margin: 2px 2px;
 }
 
 .defaultFilterContainer .cPopupSelect, .defaultFilterContainer .cTextSelect, .defaultFilterContainer .cExpandableTextInput, .defaultFilterContainer .cTextInput, .defaultFilterContainer .cDatetime, .defaultFilterContainer .cDateInput, .defaultFilterContainer .cIntegerInput, .defaultFilterContainer .cTimeInput {
@@ -293,6 +327,151 @@ a.cmdLink:visited {
 	position: absolute;
 	top: 0;
 	right: 0;
+}
+
+.operatorBox, .patternBox, .patternBoxExpanded {
+	position: relative;
+	overflow: hidden;	
+}
+
+.patternBox, .patternBoxExpanded {
+	min-width: 70px;
+}
+
+.patternBox {
+	height: 50px;
+}
+
+.patternBoxExpanded {
+	height: 75px;
+}
+
+.operatorBox {
+	vertical-align: top;
+	margin-right: 5px;
+	float: left;
+}
+
+.firstPattern, .secondPattern, .pushDownForeground, .pushDownBackground, .pullUpForeground, .pullUpBackground {
+	position: absolute;
+	overflow: hidden;
+}
+
+.firstPattern, .pullUpForeground, .pullUpBackground {
+	top: 0;
+	left: 0;
+}
+
+.secondPattern, .pushDownForeground, .pushDownBackground {
+	top: 25px;
+	left: 0;
+}
+
+.pushDownForeground, .pushDownBackground, .pullUpForeground, .pullUpBackground {
+	animation-duration: 0.3s;
+	animation-direction: reverse;
+}
+
+.pushDownForeground {
+	animation-name: reversePushDownForeground;
+}
+
+.pushDownBackground {
+	animation-name: reversePushDownBackground;
+}
+
+.pullUpForeground {
+	animation-name: reversePullUpForeground;
+}
+
+.pullUpBackground {
+	animation-name: reversePullUpBackground;
+}
+
+@keyframes reversePushDownForeground {
+    0%   {z-index: 1;}
+    50%  {z-index: 3; transform: scale(1.1)}
+    100% {z-index: 1; top: 0; left: 0}
+}
+
+@keyframes reversePushDownBackground {
+    50%  {transform: scale(0.9)}
+    100% {top: 0; left: 0}
+}
+
+@keyframes reversePullUpForeground {
+    0%   {z-index: 1;}
+    50%  {z-index: 3; transform: scale(1.1)}
+    100% {z-index: 1; top: 25px; left: 0}
+}
+
+@keyframes reversePullUpBackground {
+    50%  {transform: scale(0.9)}
+    100% {top: 25px; left: 0}
+}
+
+.filterGroupTitle {
+	margin: 2px 2px 5px;
+	font-weight: bold;
+}
+
+.defaultFilterContainer {
+	margin-top: 5px;
+}
+
+.defaultFilterContainer .cPopupSelect,
+.defaultFilterContainer .cTextSelect,
+.defaultFilterContainer .cExpandableTextInput,
+.defaultFilterContainer .cTextInput,
+.defaultFilterContainer .cDatetime,
+.defaultFilterContainer .cDateInput,
+.defaultFilterContainer .cIntegerInput,
+.defaultFilterContainer .cTimeInput {
+	display: table;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.defaultFilterContainer .lFlexible {
+	display: table-cell;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 2px;
+}
+
+.defaultFilterContainer .lFixedRight {
+	display: table-cell;
+	padding: 2px 2px 2px 0;
+}
+
+.defaultFilterContainer .lFlexible > input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.defaultFilterContainer span.cError img {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
+.checkboxMultiSelectContainer {
+	/* No special settings */
+}
+
+.sidebarFilterContainer .checkboxMultiSelectContainer {
+	max-height: none;
+}
+
+.checkboxMultiSelectEntry {
+	margin: 0;
+	padding: 0;
+}
+
+.checkboxMultiSelectNoEntries {
+	font-style: italic;
+	text-align: center;
+	white-space: nowrap;
 }
 
 .popupMenu {
@@ -392,8 +571,6 @@ a.cMenuButton.menuEntryDisabled:focus {
 	box-shadow: none;
 }
 
-/* New */
-
 #dlgDialogs {
 	position: absolute;
 	left: 0;
@@ -456,8 +633,6 @@ div.dlgMaximized span.dlgTitle, div.dlgMaximized span.dlgToolbar {
 div.dlgMaximized .input-image.dlgRestore {
 	display: inline-block;
 }
-
-/* end New */
 
 .dlgBackground {
 	position: absolute;
@@ -681,6 +856,7 @@ span.configuredTooltipLabel {
 .additional-resource.with-spacing div:last-child {
 	margin-bottom: 20px;
 }
+
 /* Styles for display help for TLScript.*/
 
 div.tlScriptDoc {

@@ -142,25 +142,26 @@ th.tblCounterNoBorder {
 	color: var(--icon-primary);
 }
 
-th.tl-table__cell, th.cal_th {
-    color:               var(--text-primary);
-    background:			 var(--layer);
-	font-family: 		 'Inter-SemiBold';
-	font-size:			 var(--heading-compact-02-font-size);
-	line-height:		 var(--heading-compact-02-line-height);
-	letter-spacing: 	 var(--heading-compact-02-letter-spacing);
-    white-space:         nowrap;
-	padding:             0px;
-	border-bottom: 		 1px solid var(--border-subtle);
-	border-top-style:    none;
-	border-right-style:  none;
-  
-    /* mri */
-   /*  border-color: white; */
+.tl-table__cell {
+	color: var(--text-secondary);
+    white-space: nowrap;
+	padding: 0px;
 	border-color: var(--border-subtle);
-	
-    font-size:           12px;
-    font-weight:         bold;
+    border-left: 0px solid var(--border-subtle);
+    border-bottom:  var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
+}
+
+th.tl-table__cell {
+    color: var(--text-primary);
+	font-family: 'Inter-SemiBold';
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+    background: var(--layer);
+}
+
+td.tl-table__cell {
+	overflow: hidden; 
 }
 
 .tl-table__row.header .tl-table__cell:focus {
@@ -185,7 +186,7 @@ th.tl-table__cell, th.cal_th {
 
 th.tl-table__group-cell {
 	text-align: center;
-	border-bottom-width: 0px;
+	border-bottom-width: 1px;
 }
 
 th.tblTHNoBorder {
@@ -230,22 +231,8 @@ tr.tblSelected {
     background: var(--layer-selected);
 }
 
-td.tl-table__cell {
-    white-space:    nowrap;
-	padding:        0px;
-	border-bottom:  var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
-	overflow:		hidden; 
-}
-
 td.tl-table__cell--selectable {
 	cursor: pointer;
-}
-
-td.tl-table__cell,
-td.tl-table__cell i,
-.BreadCrumbOuter .Right
-{
-    line-height: var(--FORM_LINE_HEIGHT);
 }
 
 div.frmBody > div.dropPane {
@@ -348,18 +335,6 @@ td.tblTD100 {
 	color:          var(--text-primary);
 	width:          100%;
 	border-width:   0px;
-}
-
-td.tl-table__cell--selected {
-    white-space:      nowrap;
-	padding:          0px;
-	color:            var(--text-primary);
-    background-color: var(--layer-selected);
-    border-color:     var(--border-subtle);
-}
-
-td.tl-table__cell--selected a {
-	color: var(--text-primary);
 }
 
 tr.treeSelected td.tl-table__cell--selected {
@@ -622,222 +597,8 @@ div.tl-table__filter-sort-container {
 	height: 100%;
 	cursor: pointer;
 	min-width: 1.5em;
-	display:flex;
+	display: flex;
 	align-items: center;
-}
-
-img.fltButton {
-	position: absolute;
-	right: 0px;
-	top: 0px;
-}
-
-div.fltGlobalContainer {
-	width: 100%;
-	height: 100%;
-}
-
-div.fltSettings {
-	position: relative;
-	overflow: auto;
-	max-height: calc(100% - var(--TABLE_FILTER_BUTTON_BAR_HEIGHT));
-	max-width: 100%;
-}
-
-div.fltMenu {
-	position: relative;
-	width: 100%;
-	overflow: hidden;
-}
-
-div.fltHeader {
-	margin: 3px;
-	font-weight: bold;
-}
-
-ul.fltList {
-	list-style-type : none;
-	margin: 3px;
-	padding: 0px;
-}
-
-div.fltList {
-	position: relative;
-	width: 100%;
-	overflow: hidden;
-}
-
-div.fltSubContent {
-	margin: 0px;
-	padding-bottom: 5px;
-	background-color: var(--TABLE_FILTER_BACKGROUND_COLOR);
-	overflow: auto;
-}
-
-div.fltCommandContent {
-	box-sizing: border-box;
-	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
-	text-align: right;
-	margin: 0px;
-	padding-top: 8px;
-	background-color: var(--TABLE_FILTER_BACKGROUND_COLOR);
-}
-
-div.fltButtons {
-	margin: 0px;
-}
-
-div.fltButtons button {
-	margin: 3px;
-}
-
-.filterBox {
-	margin: 2px 2px;
-}
-
-.operatorBox, .patternBox, .patternBoxExpanded {
-	position: relative;
-	overflow: hidden;	
-}
-
-.patternBox, .patternBoxExpanded {
-	min-width: 70px;
-}
-
-.patternBox {
-	height: 50px;
-}
-
-.patternBoxExpanded {
-	height: 75px;
-}
-
-.operatorBox {
-	vertical-align: top;
-	margin-right: 5px;
-	float: left;
-}
-
-.firstPattern, .secondPattern, .pushDownForeground, .pushDownBackground, .pullUpForeground, .pullUpBackground {
-	position: absolute;
-	overflow: hidden;
-}
-
-.firstPattern, .pullUpForeground, .pullUpBackground {
-	top: 0;
-	left: 0;
-}
-
-.secondPattern, .pushDownForeground, .pushDownBackground {
-	top: 25px;
-	left: 0;
-}
-
-.pushDownForeground, .pushDownBackground, .pullUpForeground, .pullUpBackground {
-	animation-duration: 0.3s;
-	animation-direction: reverse;
-}
-
-.pushDownForeground {
-	animation-name: reversePushDownForeground;
-}
-
-.pushDownBackground {
-	animation-name: reversePushDownBackground;
-}
-
-.pullUpForeground {
-	animation-name: reversePullUpForeground;
-}
-
-.pullUpBackground {
-	animation-name: reversePullUpBackground;
-}
-
-@keyframes reversePushDownForeground {
-    0%   {z-index: 1;}
-    50%  {z-index: 3; transform: scale(1.1)}
-    100% {z-index: 1; top: 0; left: 0}
-}
-
-@keyframes reversePushDownBackground {
-    50%  {transform: scale(0.9)}
-    100% {top: 0; left: 0}
-}
-
-@keyframes reversePullUpForeground {
-    0%   {z-index: 1;}
-    50%  {z-index: 3; transform: scale(1.1)}
-    100% {z-index: 1; top: 25px; left: 0}
-}
-
-@keyframes reversePullUpBackground {
-    50%  {transform: scale(0.9)}
-    100% {top: 25px; left: 0}
-}
-
-.filterGroupTitle {
-	margin: 2px 2px 5px;
-	font-weight: bold;
-}
-
-.defaultFilterContainer {
-	margin-top: 5px;
-}
-
-.defaultFilterContainer .cPopupSelect,
-.defaultFilterContainer .cTextSelect,
-.defaultFilterContainer .cExpandableTextInput,
-.defaultFilterContainer .cTextInput,
-.defaultFilterContainer .cDatetime,
-.defaultFilterContainer .cDateInput,
-.defaultFilterContainer .cIntegerInput,
-.defaultFilterContainer .cTimeInput {
-	display: table;
-	width: 100%;
-	box-sizing: border-box;
-}
-
-.defaultFilterContainer .lFlexible {
-	display: table-cell;
-	box-sizing: border-box;
-	width: 100%;
-	padding: 2px;
-}
-
-.defaultFilterContainer .lFixedRight {
-	display: table-cell;
-	padding: 2px 2px 2px 0;
-}
-
-.defaultFilterContainer .lFlexible > input {
-	width: 100%;
-	box-sizing: border-box;
-}
-
-.defaultFilterContainer span.cError img {
-	position: absolute;
-	top: 0;
-	right: 0;
-}
-
-.checkboxMultiSelectContainer {
-	/* No special settings */
-}
-
-.sidebarFilterContainer .checkboxMultiSelectContainer {
-	max-height: none;
-}
-
-.checkboxMultiSelectEntry {
-	margin: 0;
-	padding: 0;
-}
-
-.checkboxMultiSelectNoEntries {
-	font-style: italic;
-	text-align: center;
-	white-space: nowrap;
 }
 
 .sidebarFilterContainer {
@@ -1646,19 +1407,8 @@ div.dirtyHandlingDialog .changes {
 	overflow-x: auto;
 }
 
-
-
 th.cal_th {
 	border-style: none;
-}
-
-td.tl-table__cell {
-    border-color: var(--border-subtle);
-}
-
-.tl-table__cell {
-    border-left: 0px solid var(--border-subtle);
-    border-bottom: 0px solid var(--border-subtle);
 }
 
 tr.tl-table__row:last-child > td, .tl-table__header tr {
@@ -1724,7 +1474,7 @@ td.tl-table__cell--selected {
 }
 
 td.tl-table__cell--selected a {
-	color: #7695C3;
+	color: var(--text-primary);
 }
 
 .tblSelected.tl-table__row:hover {

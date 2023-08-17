@@ -60,16 +60,17 @@ public interface ForeignObjects
 	String NO_SEPARATE_GROUP = "no-separate-group";
 
 	/**
-	 * The items to display forms for.
+	 * Expression that computes the objects to display. The single input element is the base object.
 	 */
 	@Name(ITEMS)
 	@ItemDisplay(ItemDisplayType.VALUE)
 	@Mandatory
+	@Label("Objects")
 	Expr getItems();
 
 	/**
-	 * Expression that is used to compute the label of the single form groups, from the base object
-	 * of the form group.
+	 * Expression that computes the label from the base object. It may also compute the object which
+	 * is used to display in the group title.
 	 */
 	@Name(LABEL)
 	@DynamicMode(fun = HideActiveIf.class, args = @Ref(NO_SEPARATE_GROUP))

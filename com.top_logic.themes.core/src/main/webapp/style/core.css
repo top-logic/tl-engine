@@ -886,21 +886,15 @@ div.ace_tooltip>code.inlineCode {
 */
 .errorFragmentContainer {
 	cursor: default;
-	margin: 5px;
 	padding: 2px 5px;
-	color: red;
-	font-weight: bold;
-	border-style: solid;
-	border-color: red;
-	border-width: 1px;
-	background-color: var(--BODY_BACK);
-	display: flex;
-	align-items: baseline;
+	color: var(--support-danger);
+	border: 1px solid var(--support-danger);
+	background-color: var(--background);
+	display: inline-block;
 }
 
 .errorFragmentImage {
-	margin-right: 3px;
-	height: 1em;
+	padding-right: var(--spacing-02);
 }
 
 .infoService {

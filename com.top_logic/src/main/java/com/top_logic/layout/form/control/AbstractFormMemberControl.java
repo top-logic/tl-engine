@@ -129,8 +129,10 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 	}
 
 	/**
-	 * Hook for adding additional computed styles when writing the application defined
-	 * {@link #getCustomStyle()}.
+	 * Provides the ability to further customize the appearance of this control beyond the CSS
+	 * stylesheet.
+	 * 
+	 * @see #getCustomStyle()
 	 */
 	@TemplateVariable("style")
 	public void writeStyleContent(TagWriter out) throws IOException {

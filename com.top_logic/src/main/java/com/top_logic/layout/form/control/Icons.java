@@ -250,10 +250,11 @@ public class Icons extends IconsBase {
 	 * The template to render values that consist of a text input and one or more appended buttons.
 	 * 
 	 * <p>
-	 * Available properties are all of {@link #TEXT_INPUT_EDIT_SINGLE_TEMPLATE} with an additional
+	 * Available properties are all of TEXT_INPUT_EDIT_SINGLE_TEMPLATE with an additional
 	 * {@value TextInputControl#BUTTONS_PROPERTY} property that renders the additional buttons.
 	 * </p>
 	 * 
+	 * @see #TEXT_INPUT_EDIT_SINGLE_TEMPLATE
 	 * @see DateInputControl
 	 * @see TimeInputControl
 	 */

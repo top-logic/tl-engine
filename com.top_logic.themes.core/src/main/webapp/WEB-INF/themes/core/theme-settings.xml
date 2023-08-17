@@ -814,7 +814,24 @@
 	<icon name="com.top_logic.layout.provider.Icons.FALSE_DISABLED"
 		value="css:bi bi-dash-lg"
 	/>
-	
+	<icon name="com.top_logic.layout.form.control.Icons.TRANSPARENT_BACKGROUND"
+		value="/colorchooser/transparentBackground.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.CIRCLE"
+		value="/colorchooser/circle.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.COLORLINE"
+		value="/colorchooser/colorline.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.LINE"
+		value="/colorchooser/line.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.RESET_COLORS"
+		value="css:bi bi bi-trash3"
+	/>
+	<string name="COLORCHOOSER_NO_COLOR"
+		value="url(/colorchooser/noColor.png)"
+	/>
 	<icon name="ICON_VALIDATE_PAGE"
 		value="css:bi bi-check"
 	/>

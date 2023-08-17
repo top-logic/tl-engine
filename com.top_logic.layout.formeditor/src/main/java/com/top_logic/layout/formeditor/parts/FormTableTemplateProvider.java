@@ -125,7 +125,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			Wrapper rowType = (Wrapper) aModel;
 			boolean isDisabled = false;
 			FormMember field =
-				FormEditorUtil.createAnotherMetaAttributeForEdit(_formContext, _contentGroup, _part, rowType,
+				FormEditorUtil.fieldForEdit(_formContext, _contentGroup, _part, rowType,
 					isDisabled, AnnotationContainer.EMPTY);
 			FormVisibility visibility = _col.getVisibility();
 			visibility.applyTo(field);

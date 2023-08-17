@@ -43,7 +43,6 @@ import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.boxes.reactive_tag.AttributeImageProvider;
 import com.top_logic.layout.form.control.LabelControl;
-import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.template.model.AbstractMember;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.provider.LabelProviderService;
@@ -180,15 +179,13 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 
 	@Override
 	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
-		TLStructuredType type = context.getFormType();
 		TLStructuredTypePart part = attribute(context);
 		if (part != null) {
 			createImageProvider(part);
 			FieldDefinition fieldDefinition = getConfig();
 			FormVisibility visibility = calculateVisibility(part, fieldDefinition.getVisibility(), context.getFormMode());
 			if(visibility != null) {
-				FormMember member = addMember(context.getFormContext(), context.getContentGroup(), context.getModel(),
-					type, part, context.getDomain(), visibility, fieldDefinition);
+				FormMember member = addMember(context, part, visibility, fieldDefinition);
 				if (member != null) {
 					HTMLTemplateFragment result =
 						createFieldTemplate(context, member, part, AttributeFormFactory.getAttributeUpdate(member),
@@ -200,6 +197,7 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				
 			return contentBox(Templates.empty());
 		} else {
+			TLStructuredType type = context.getFormType();
 			return noSuchAttributeError(type, getConfig().getAttribute());
 		}
 	}
@@ -233,26 +231,51 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		return I18NConstants.NO_SUCH_ATTRIBUTE__TYPE__ATTRIBUTE.fill(type, attribute);
 	}
 
-	static FormMember addMember(FormContext formContext, FormContainer contentGroup, TLObject model,
-			TLStructuredType type, TLStructuredTypePart part, String domain, FormVisibility visibility,
-			AnnotationLookup annotations) {
-		AttributeFormContext attributeContext = (AttributeFormContext) formContext;
-		FormMember member = createFormMember(attributeContext, contentGroup, type, part, model, domain, annotations);
+	static FormMember addMember(FormEditorContext context, TLStructuredTypePart part,
+			FormVisibility visibility, AnnotationLookup annotations) {
+
+		FormContainer contentGroup = context.getContentGroup();
+		TLObject model = context.getModel();
+		
+		AttributeFormContext attributeContext = (AttributeFormContext) context.getFormContext();
+		TLFormObject overlay;
+		if (model != null) {
+			if (model instanceof TLFormObject) {
+				overlay = (TLFormObject) model;
+			} else {
+				overlay = attributeContext.editObject(model);
+			}
+		} else {
+			TLStructuredType type = context.getConcreteType();
+			if (type == null) {
+				type = context.getFormType();
+			}
+			overlay = attributeContext.createObject(type, null);			
+		}
+		
+		FormMember member;
+		if (overlay.isCreate()) {
+			member =
+				FormEditorUtil.addFieldForCreate(attributeContext, contentGroup, overlay, part, annotations);
+		} else {
+			member =
+				FormEditorUtil.addFieldForEdit(attributeContext, contentGroup, part, model, false, annotations);
+		}
 
 		// Note: It makes no sense to adjust edit mode of fields for historic objects.
 		if (member != null && visibility != null
-			&& (model == null || model.tHistoryContext() == Revision.CURRENT_REV)) {
+				&& (overlay.tHistoryContext() == Revision.CURRENT_REV)) {
 
 			visibility.applyTo(member);
 
 			switch (visibility) {
 				case EDITABLE:
 				case MANDATORY: {
-					setDisabled(attributeContext, type, part, model, false);
+					setDisabled(part, overlay, false);
 					break;
 				}
 				case READ_ONLY: {
-					setDisabled(attributeContext, type, part, model, true);
+					setDisabled(part, overlay, true);
 					break;
 				}
 				case DEFAULT:
@@ -263,10 +286,7 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		return member;
 	}
 
-	private static void setDisabled(AttributeFormContext attributeContext, TLStructuredType type,
-			TLStructuredTypePart part, TLObject model, boolean disabled) {
-		TLFormObject overlay =
-			model == null ? attributeContext.createObject(type, null) : attributeContext.editObject(model);
+	private static void setDisabled(TLStructuredTypePart part, TLFormObject overlay, boolean disabled) {
 		AttributeUpdate update = overlay.getUpdate(part);
 		if (update != null) {
 			update.setDisabled(disabled);
@@ -290,16 +310,6 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				}
 		}
 		throw LabelPosition.noSuchPosition(labelPosition);
-	}
-
-	private static FormMember createFormMember(AttributeFormContext formContext, FormContainer contentGroup,
-			TLStructuredType type, TLStructuredTypePart part, TLObject model, String domain,
-			AnnotationLookup annotations) {
-		if (model != null) {
-			return FormEditorUtil.addAnotherMetaAttribute(formContext, contentGroup, part, model, false, annotations);
-		} else {
-			return FormEditorUtil.addAnotherMetaAttribute(formContext, contentGroup, type, part, domain, annotations);
-		}
 	}
 
 	static FormVisibility calculateVisibility(TLStructuredTypePart part, FormVisibility formVisibility,

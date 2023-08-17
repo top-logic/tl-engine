@@ -11,10 +11,10 @@ import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.element.layout.meta.I18NConstants;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
-import com.top_logic.element.meta.AttributeUpdateFactory;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.MetaControlProvider;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -54,19 +54,17 @@ public class FormEditorUtil {
 	 *        The form context to create the {@link FormMember}, must not be <code>null</code>.
 	 * @param contentGroup
 	 *        The group in the from to add new fields to.
-	 * @param type
-	 *        The type to display a form for.
+	 * @param overlay
+	 *        The {@link TLFormObject} defining the object that is currently created.
 	 * @param attribute
 	 *        The meta attribute to be appended, must not be <code>null</code>.
-	 * @param domain
-	 *        Optional additional identifier to the newly created member. May be <code>null</code>.
 	 * @param annotations
 	 *        Custom attribute annotations.
 	 * @return The created {@link FormMember}.
 	 */
-	public static FormMember createAnotherMetaAttribute(AttributeFormContext formContext, FormContainer contentGroup,
-			TLStructuredType type, TLStructuredTypePart attribute, String domain,
-			AnnotationLookup annotations) {
+	public static FormMember fieldForCreate(AttributeFormContext formContext, FormContainer contentGroup,
+			TLFormObject overlay, TLStructuredTypePart attribute, AnnotationLookup annotations) {
+		String domain = overlay.getDomain();
 		String attributeId = MetaAttributeGUIHelper.getAttributeIDCreate(attribute, domain);
 
 		if (contentGroup.hasMember(attributeId)) {
@@ -77,8 +75,7 @@ public class FormEditorUtil {
 			member.set(AbstractMember.RENDER_WHOLE_LINE, renderWholeLine);
 			return member;
 		} else {
-			AttributeUpdate update = AttributeUpdateFactory
-				.createAttributeUpdateForCreate(formContext.getAttributeUpdateContainer(), type, attribute, domain);
+			AttributeUpdate update = overlay.newCreateUpdate(attribute);
 			update.setLocalAnnotations(annotations);
 			return createMember(formContext, attribute, update);
 		}
@@ -124,7 +121,7 @@ public class FormEditorUtil {
 	 *        Custom attribute annotations.
 	 * @return The created {@link FormMember}.
 	 */
-	public static FormMember createAnotherMetaAttributeForEdit(AttributeFormContext formContext,
+	public static FormMember fieldForEdit(AttributeFormContext formContext,
 			FormContainer contentGroup, TLStructuredTypePart aMA, TLObject anAttributed, boolean isDisabled,
 			AnnotationLookup annotations) {
 		String name = MetaAttributeGUIHelper.getAttributeID(aMA, anAttributed);
@@ -149,20 +146,17 @@ public class FormEditorUtil {
 	 *        The form context to append the update to, must not be <code>null</code>.
 	 * @param contentGroup
 	 *        The group in the from to add new fields to.
-	 * @param type
-	 *        The type to display a form for.
+	 * @param overlay
+	 *        The {@link TLFormObject} defining the object that is currently created.
 	 * @param attribute
 	 *        The meta attribute to be appended, must not be <code>null</code>.
-	 * @param domain
-	 *        Optional additional identifier to the newly created member. May be <code>null</code>.
 	 * @param annotations
 	 *        Custom attribute annotations.
 	 * @return The created {@link FormMember}.
 	 */
-	public static FormMember addAnotherMetaAttribute(AttributeFormContext aContext, FormContainer contentGroup,
-			TLStructuredType type, TLStructuredTypePart attribute, String domain,
-			AnnotationLookup annotations) {
-		FormMember member = createAnotherMetaAttribute(aContext, contentGroup, type, attribute, domain, annotations);
+	public static FormMember addFieldForCreate(AttributeFormContext aContext, FormContainer contentGroup,
+			TLFormObject overlay, TLStructuredTypePart attribute, AnnotationLookup annotations) {
+		FormMember member = fieldForCreate(aContext, contentGroup, overlay, attribute, annotations);
 		addMember(contentGroup, member);
 
 		return contentGroup.getMember(member.getName());
@@ -185,11 +179,10 @@ public class FormEditorUtil {
 	 *        Custom attribute annotations.
 	 * @return The created {@link FormMember}.
 	 */
-	public static FormMember addAnotherMetaAttribute(AttributeFormContext aContext, FormContainer contentGroup,
+	public static FormMember addFieldForEdit(AttributeFormContext aContext, FormContainer contentGroup,
 			TLStructuredTypePart aMA, TLObject anAttributed, boolean isDisabled,
 			AnnotationLookup annotations) {
-		FormMember member =
-			createAnotherMetaAttributeForEdit(aContext, contentGroup, aMA, anAttributed, isDisabled, annotations);
+		FormMember member = fieldForEdit(aContext, contentGroup, aMA, anAttributed, isDisabled, annotations);
 		if (member == null) {
 			return null;
 		}

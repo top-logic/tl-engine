@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.meta.form.fieldprovider;
 
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
@@ -19,19 +18,13 @@ import com.top_logic.layout.form.FormMember;
  */
 public class ReferenceFieldProvider extends AbstractFieldProvider {
 
-	private final FieldProvider _compositionProvider =
-		TypedConfigUtil.newConfiguredInstance(CompositionFieldProvider.class);
-
-	private final FieldProvider _defaultProvider =
-		TypedConfigUtil.newConfiguredInstance(WrapperFieldProvider.class);
-
 	@Override
 	public FormMember getFormField(EditContext editContext, String fieldName) {
 		return delegate(editContext).getFormField(editContext, fieldName);
 	}
 
 	private FieldProvider delegate(EditContext editContext) {
-		return editContext.isComposition() ? _compositionProvider : _defaultProvider;
+		return ReferenceFieldProviders.Module.INSTANCE.getImplementationInstance().delegate(editContext);
 	}
 
 	@Override

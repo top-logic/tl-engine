@@ -842,6 +842,9 @@
 	<icon name="com.top_logic.util.error.Icons.INFO"
 		value="css:bi bi-info-circle-fill"
 	/>
+	<icon name="com.top_logic.layout.basic.Icons.RENDERING_ERROR_NORMAL"
+		value="css:bi bi-exclamation-triangle-fill"
+	/>
 	<icon name="com.top_logic.util.error.Icons.ERROR"
 		value="css:bi bi-exclamation-triangle-fill"
 	/>

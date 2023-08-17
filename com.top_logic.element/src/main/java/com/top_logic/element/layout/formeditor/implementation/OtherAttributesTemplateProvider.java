@@ -104,8 +104,7 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 						// Hidden.
 						continue;
 					}
-					FormMember member = addMember(formContext, contentGroup, model, context.getFormType(), part,
-						context.getDomain(), visibility, AnnotationContainer.EMPTY);
+					FormMember member = addMember(context, part, visibility, AnnotationContainer.EMPTY);
 					if (member != null) {
 						AttributeUpdate update = AttributeFormFactory.getAttributeUpdate(member);
 						LabelPlacement labelPlacement = context.getLabelPlacement();

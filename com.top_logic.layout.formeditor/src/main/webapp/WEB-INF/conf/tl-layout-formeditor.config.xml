@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
 				<bundles>
-					<bundle name="tl-layout-formeditor.messages" />
+					<bundle name="tl-layout-formeditor.messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -15,9 +15,9 @@
 		<config config:interface="com.top_logic.element.layout.formeditor.DisplayFormEditorBuilder$GlobalConfig">
 			<buttons>
 				<button value="com.top_logic.layout.formeditor.parts.FormTableDefinition"/>
-				<button value="com.top_logic.layout.formeditor.parts.MacroPart" />
-				<button value="com.top_logic.layout.formeditor.parts.ForeignAttributeDefinition" />
-				<button value="com.top_logic.layout.formeditor.parts.ForeignObjects" />
+				<button value="com.top_logic.layout.formeditor.parts.MacroPart"/>
+				<button value="com.top_logic.layout.formeditor.parts.ForeignAttributeDefinition"/>
+				<button value="com.top_logic.layout.formeditor.parts.ForeignObjects"/>
 			</buttons>
 		</config>
 	</configs>

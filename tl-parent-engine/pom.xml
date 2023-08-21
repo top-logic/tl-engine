@@ -117,6 +117,7 @@
  		<module>../com.top_logic.service.openapi.common</module>
  		<module>../com.top_logic.service.openapi.client</module>
 		<module>../com.top_logic.service.openapi.server</module>
+		<module>../tl-service-jms</module>
 
 		<!-- Migration utilities -->
 		<module>../com.top_logic.migrate.tl</module>

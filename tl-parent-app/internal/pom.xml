@@ -21,6 +21,10 @@
 
 	<packaging>pom</packaging>
 	
+	<properties>
+		<bos-settings.version>7.6.0-SNAPSHOT</bos-settings.version>
+	</properties>
+
 	<dependencies>
 		<!-- Alternative databases for test. -->
 
@@ -161,19 +165,19 @@
 			    <dependency>
 					<groupId>com.top-logic</groupId>
 					<artifactId>tl-license-professional</artifactId>
-					<version>${tl.version}</version>
+					<version>${tl-license.version}</version>
 			    </dependency>
 
 			    <dependency>
 					<groupId>com.top-logic</groupId>
 					<artifactId>bos-deepl</artifactId>
-					<version>${tl.version}</version>
+					<version>${bos-settings.version}</version>
 			    </dependency>
 
 			    <dependency>
 			      <groupId>com.top-logic</groupId>
 			      <artifactId>bos-ldap</artifactId>
-			      <version>${tl.version}</version>
+			      <version>${bos-settings.version}</version>
 			    </dependency>
 	  		</dependencies>
 	  	</profile>

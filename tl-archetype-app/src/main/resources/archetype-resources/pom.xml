@@ -55,7 +55,7 @@
 		<dependency>
 		    <groupId>com.top-logic</groupId>
 		    <artifactId>tl-license-professional</artifactId>
-		    <version>\${tl.version}</version>
+		    <version>${tl-license.version}</version>
 		</dependency>
 #else
 		<!-- Using TopLogic OpenSource Edition. AGPL license conditions apply. -->
@@ -64,7 +64,7 @@
 		<dependency>
 		    <groupId>com.top-logic</groupId>
 		    <artifactId>tl-license-professional</artifactId>
-		    <version>\${tl.version}</version>
+		    <version>${tl-license.version}</version>
 		</dependency>
 		-->
 #end

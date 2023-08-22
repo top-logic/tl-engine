@@ -25,6 +25,14 @@
 				</modules>
 			</instance>
 		</config>
+		
+		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance class="com.top_logic.model.search.expr.config.SearchBuilder">
+				<methods>
+					<method name="jmsSend" class="com.top_logic.services.jms.script.JMSSend$Builder"/>
+				</methods>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

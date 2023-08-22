@@ -1,7 +1,11 @@
 package com.top_logic.services.jms;
 
+import java.util.HashMap;
 import java.util.Map;
 
+import javax.jms.JMSException;
+
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Encrypted;
@@ -14,6 +18,7 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
+
 	public interface Config extends ConfiguredManagedClass.Config<JMSService> {
 		@Key(TargetQueueConfig.NAME_ATTRIBUTE)
 		Map<String, TargetQueueConfig> getTargetQueueConfigs();
@@ -22,8 +27,8 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	@DisplayOrder({ TargetQueueConfig.NAME_ATTRIBUTE,
 		TargetQueueConfig.HOST,
 		TargetQueueConfig.PORT,
-		TargetQueueConfig.QUEUE_MANAGER,
 		TargetQueueConfig.CHANNEL,
+		TargetQueueConfig.QUEUE_MANAGER,
 		TargetQueueConfig.QUEUE_NAME,
 		TargetQueueConfig.USER,
 		TargetQueueConfig.PASSWORD })
@@ -71,6 +76,8 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		String getQueueName();
 	}
 
+	private Map<String, Producer> _producers = new HashMap<>();
+
 	public JMSService(InstantiationContext context, Config config) {
 		super(context, config);
 	}
@@ -78,13 +85,31 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	@Override
 	protected void startUp() {
 		super.startUp();
-		getConfig().getTargetQueueConfigs();
+		for (TargetQueueConfig config : getConfig().getTargetQueueConfigs().values()) {
+			try {
+				Producer prod = new Producer(config);
+				_producers.put(config.getName(), prod);
+			} catch (JMSException ex) {
+				Logger.error("Unable to create Producer: " + config, ex, JMSService.class);
+			}
+		}
 	}
 
 	@Override
 	protected void shutDown() {
-
+		for (Producer prod : _producers.values()) {
+			prod.close();
+		}
 		super.shutDown();
+	}
+
+	/**
+	 * @param name
+	 *        Name of the Producer
+	 * @return The requested Producer
+	 */
+	public Producer getProducer(String name) {
+		return _producers.get(name);
 	}
 
 	/**

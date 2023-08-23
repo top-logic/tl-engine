@@ -4,20 +4,15 @@
 			<instance>
 				<pools>
 					<pool name="testImportPool">
-						<sql-dialect class="com.top_logic.basic.sql.Oracle12Helper"
+						<sql-dialect class="com.top_logic.basic.sql.H2Helper"
 							adjust-from-connection="true"
-							charset="AL32UTF8"
 						/>
 						<data-source>
-							<driver-class>com.top_logic.basic.sql.OracleDataSourceProxy</driver-class>
+							<driver-class>com.top_logic.basic.sql.H2DataSourceProxy</driver-class>
 							<options>
-								<!-- The URL must be in a schema like "jdbc:oracle:thin:@hostname:1521:xe". -->
-								<option name="URL" value="jdbc:oracle:thin:@localhost:1521:xe" />
-								<option name="user" value="SYSSOLLANA1" />
-								<encrypted-option name="password" value="unencrypted:bup" />
-								
-								<option name="implicitCachingEnabled" value="true" />
-								<option name="oracle.net.ssl_cipher_suites" value="(SSL_DH_anon_WITH_3DES_EDE_CBC_SHA, SSL_DH_anon_WITH_RC4_128_MD5, SSL_DH_anon_WITH_DES_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA256)" />
+								<option name="url" value="jdbc:h2:%APP_ROOT%/WEB-INF/database/testDdlImport" />
+								<option name="user" value="user" />
+								<encrypted-option name="password" value="unencrypted:password" />
 							</options>
 						</data-source>
 					</pool>

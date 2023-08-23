@@ -1484,3 +1484,5 @@ td.tl-table__cell--selected a {
 .tl-table__row:not(.tblSelected):hover > td {
 	background-color: var(--layer-hover);
 }
+
+

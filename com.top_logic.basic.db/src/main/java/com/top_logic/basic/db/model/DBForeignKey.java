@@ -12,6 +12,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.sql.DBConstraintType;
+import com.top_logic.basic.sql.DBDeferability;
 
 /**
  * Definition of a foreign key constraint on a {@link DBTable}.
@@ -151,5 +152,15 @@ public interface DBForeignKey extends DBTablePart {
 	 * Sets the {@link #getOnUpdate()} property.
 	 */
 	void setOnUpdate(DBConstraintType value);
+
+	/**
+	 * Whether checking of the constraint is deferred.
+	 */
+	DBDeferability getDeferability();
+
+	/**
+	 * @see #getDeferability()
+	 */
+	void setDeferability(DBDeferability value);
 
 }

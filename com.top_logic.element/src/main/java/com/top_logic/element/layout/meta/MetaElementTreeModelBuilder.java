@@ -6,12 +6,15 @@ package com.top_logic.element.layout.meta;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.Named;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.layout.tree.component.AbstractTreeModelBuilder;
@@ -58,6 +61,8 @@ import com.top_logic.model.annotate.TLModuleDisplayGroup;
  */
 public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object> {
 
+	private static final char GROUP_NAME_DELIMITER = '.';
+
 	private static final class InModule implements Filter<TLType> {
 		private final TLModule _module;
 
@@ -79,7 +84,7 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 	 *
 	 * @author <a href=mailto:sfo@top-logic.com>sfo</a>
 	 */
-	public static final class ModuleContainer {
+	public static final class ModuleContainer implements Named {
 
 		private final Object _parent;
 
@@ -113,6 +118,7 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 		/**
 		 * The technical name.
 		 */
+		@Override
 		public String getName() {
 			return _name;
 		}
@@ -208,10 +214,7 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 	}
 
 	private Iterator<? extends Object> getModuleContainerChildIterator(ModuleContainer moduleContainer) {
-		String name = moduleContainer.getName();
-		TLModel model = moduleContainer.getModel();
-
-		return getModuleParts(moduleContainer, model, name).iterator();
+		return getModules(moduleContainer, moduleContainer.getModel()).iterator();
 	}
 
 	private Iterator<? extends Object> getModelPartChildIterator(TLModelPart part) {
@@ -219,10 +222,15 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 			case MODEL: {
 				TLModel model = (TLModel) part;
 
-				return getModuleParts(model, model, StringServices.EMPTY_STRING).iterator();
+				return getModules(model, model).iterator();
 			}
 			case MODULE: {
-				return getTypes((TLModule) part).iterator();
+				TLModule module = (TLModule) part;
+
+				List<Object> types = getTypes(module);
+				List<Object> modules = getModules(module, module.getModel());
+
+				return CollectionUtil.concat(types, modules).iterator();
 			}
 			case CLASS: {
 				TLClass clazz = (TLClass) part;
@@ -236,62 +244,88 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 		}
 	}
 
-	private List<Object> getModuleParts(Object parent, TLModel model, String name) {
-		List<Object> filteredModules = new ArrayList<>();
-		Set<String> moduleContainerNames = new HashSet<>();
+	private List<Object> getModules(Object parent, TLModel model) {
+		List<Object> modules = new ArrayList<>();
+
+		for (String name : getModuleNames(parent, model)) {
+			TLModule module = model.getModule(name);
+
+			if (module != null) {
+				modules.add(module);
+			} else {
+				modules.add(new ModuleContainer(parent, model, name));
+			}
+		}
+
+		return modules;
+	}
+
+	private Set<String> getModuleNames(Object parent, TLModel model) {
+		Set<String> names = new LinkedHashSet<>();
+		String name = getDisplayGroup(parent);
 
 		for (TLModule module : model.getModules()) {
-			String containerName = getContainerName(module);
+			String nameToGroupIn = getNameToGroupIn(module);
 
-			if (containerName.equals(name)) {
-				filteredModules.add(module);
-			} else if (containerName.startsWith(name)) {
-				if (isSubtreeModule(name, containerName)) {
-					int index = containerName.indexOf(".", name.length() + 1);
+			if (nameToGroupIn.equals(name)) {
+				names.add(module.getName());
+			} else if (nameToGroupIn.startsWith(name)) {
+				if (isSubgroup(name, nameToGroupIn, GROUP_NAME_DELIMITER)) {
+					int index = nameToGroupIn.indexOf(GROUP_NAME_DELIMITER, name.length() + 1);
 
 					if (index > 1) {
-						moduleContainerNames.add(containerName.substring(0, index));
+						names.add(nameToGroupIn.substring(0, index));
 					} else {
-						moduleContainerNames.add(containerName);
+						names.add(nameToGroupIn);
 					}
 				}
 			}
 		}
 
-		for (String moduleContainerName : moduleContainerNames) {
-			filteredModules.add(new ModuleContainer(parent, model, moduleContainerName));
+		return names;
+	}
+
+	private String getDisplayGroup(Object object) {
+		if (object instanceof TLModel) {
+			return getModelDisplayGroup();
+		} else if (object instanceof Named) {
+			return ((Named) object).getName();
+		} else {
+			throw new UnreachableAssertion("Only TLModelPart's and module containers are grouped into each other.");
 		}
-
-		return filteredModules;
 	}
 
-	private boolean isSubtreeModule(String name, String containerName) {
-		return name.isEmpty() || containerName.length() > name.length() && containerName.charAt(name.length()) == '.';
+	private String getModelDisplayGroup() {
+		return StringServices.EMPTY_STRING;
 	}
 
-	private String getContainerName(TLModule module) {
+	private boolean isSubgroup(String name1, String name2, char delimiter) {
+		return name1.isEmpty() || name2.length() > name1.length() && name2.charAt(name1.length()) == delimiter;
+	}
+
+	private String getNameToGroupIn(TLModule module) {
 		TLModuleDisplayGroup displayName = module.getAnnotation(TLModuleDisplayGroup.class);
 
 		if (displayName != null) {
 			return displayName.getValue();
 		} else {
-			return getContainerNameInternal(module.getName());
+			return getNameToGroupInInternal(module.getName());
 		}
 	}
 
-	private String getContainerNameInternal(String moduleName) {
-		int index = moduleName.lastIndexOf(".");
+	private String getNameToGroupInInternal(String name) {
+		int index = name.lastIndexOf(GROUP_NAME_DELIMITER);
 
 		if (index > -1) {
-			return moduleName.substring(0, index);
+			return name.substring(0, index);
 		} else {
-			return StringServices.EMPTY_STRING;
+			return getModelDisplayGroup();
 		}
 	}
 
-	private List<TLType> getTypes(TLModule module) {
+	private List<Object> getTypes(TLModule module) {
 		List<TLType> types = FilterUtil.filterList(TopLevelClasses.INSTANCE, module.getTypes());
 		types.addAll(module.getEnumerations());
-		return types;
+		return CollectionUtil.dynamicCastView(Object.class, types);
 	}
 }

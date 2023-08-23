@@ -814,6 +814,149 @@ div.dlgCapture {
 }
 
 /*
+****						****
+****	Selector Styles		****
+****						****
+*/
+.updating {
+    background: #AAAAAA;
+    filter: alpha(opacity =   30);
+    -moz-opacity: 0.3;
+    /*
+     * since Firefox 3.5
+     */
+    opacity: 0.3;
+}
+
+div.selectbox {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+    background-color: white;
+    border-style: solid;
+    border-width: 2px;
+    border-style: ridge;
+    border-color: threeddarkshadow threedlightshadow threedlightshadow
+        threeddarkshadow;
+}
+
+div.selectbox ul {
+	display: table;
+	width: 100%;
+    margin: 0;
+    padding-left: 0;
+    /*
+        The height is a strange hack for IE8. Incremental updates will update the
+        DOM element of IE8, but the GUI will not be updated, i.e. if there are two
+        elements and one is inserted then there are still just two elements visible.
+    */
+    height: 0px;
+}
+
+div.cListControl li,
+div.selectbox li,
+div.selectbox .treeNode {
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+div.selectbox li {
+	display: table-row;
+}
+
+div.selectbox li > span,
+div.selectbox li > a
+ {
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+div.selectbox li.focus {
+    border-style: dotted;
+    border-width: 1px;
+    border-color: white;
+}
+
+div.cListControl li.selected,
+div.cListControl .fixed,
+div.selectbox li.selected,
+div.selectbox .fixed,
+div.selectbox .treeNode.treeSelected,
+div.selectbox .treeNode.treeNodeReferencedSelected {
+    cursor: default;
+}
+
+div.cListControl li.selected span,
+div.cListControl li.selected a,
+div.selectbox li.selected, 
+div.selectbox li.selected span,
+div.selectbox li.selected a,
+div.selectbox .treeNode.treeSelected, 
+div.selectbox .treeNode.treeSelected a,
+div.selectbox .treeNode.treeSelected span {
+    color: white;
+    background-color: highlight;
+}
+
+div.cListControl li.selected.fixedSelectable span,
+div.cListControl li.selected.fixedSelectable a,
+div.selectbox li.selected.fixedSelectable, 
+div.selectbox li.selected.fixedSelectable span,
+div.selectbox li.selected.fixedSelectable a {
+    background-color: var(--HIGHLIGHT_SECONDARY);
+}
+
+div.selectbox .treeNode.treeNodeReferencedSelected {
+    background-color: var(--TREE_SELECTION_BG_HOVER);
+}
+
+div.selectbox li.tableSeparator {
+	font-size: 5px;
+	background-color: #ccc;
+}
+
+div.selectbox li.tableSeparator.selected, 
+div.selectbox li.tableSeparator.selected a{
+	background-color: #666;
+}
+
+.selectbox .treeBody {
+	height: 100%;
+}
+
+button {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+td.leftList {
+    vertical-align: top;
+    padding-right: 7px;
+}
+
+td.rightList {
+    vertical-align: top;
+    padding-left: 7px;
+}
+
+.fixed,
+.fixedSelectable a:link {
+    color: graytext;
+}
+
+button.moveOption {
+	width: 100%;
+}
+
+span.moveOption {
+	/* Since button control spans are displayed inline-block, they must be explicitly expanded. */
+	width: 100%;
+}
+
+/*
 ****					****
 ****	Tooltip Styles	****
 ****					****
@@ -1250,24 +1393,6 @@ h5.card-title a {
 	letter-spacing: var(--body-01-letter-spacing);
 }
 
-
-/*
-****					****
-****	Table Styles	****
-****					****
-*/
-.tblPager {
-	background-color: var(--layer);
-	border-top: 1px solid var(--border-subtle);
-	padding: 0 var(--spacing-03);
-	width: 100%;
-}
-
-.tblPager .cTextInput {
-
-}
-
-
 /*
 ****					****
 ****	Toolrow styles	****
@@ -1335,7 +1460,6 @@ h5.card-title a {
 .tlUser a:focus {
 	color: var(--icon-on-color);
 	text-decoration: none;
-	box-shadow: none;
 }
 
 .tlUser a i {

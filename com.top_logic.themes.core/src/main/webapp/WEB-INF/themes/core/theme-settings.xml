@@ -888,18 +888,6 @@
 		value="css:bi bi-chevron-up"
 	/>
 	
-	<!-- What to do with these demos configurations? -->
-	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_WARNING"
-		value="css:bi bi-x-octagon-fill"
-	/>
-	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_INFORMATION"
-		value="css:bi bi-info-circle-fill"
-	/>
-	<icon name="layouts.demo.tlHome"
-		value="css:bi bi-house-fill"
-	/>
-	<!-- End of demo configurations -->
-	
 	
 	<!-- DELETE THIS (test icon for tree view) -->
 	<icon name="model.DemoTypes.A"

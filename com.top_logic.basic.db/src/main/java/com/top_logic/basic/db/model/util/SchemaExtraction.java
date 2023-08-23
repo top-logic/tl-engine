@@ -105,61 +105,77 @@ public class SchemaExtraction {
 			}
 		}
 
-		try (ResultSet crossReference =
-			metaData.getCrossReference(catalog, schemaName, "%", catalog, schemaName, "%")) {
-			// parent key table catalog (may be null)
-			final int PKTABLE_CAT = 1;
-			// parent key table schema (may be null)
-			final int PKTABLE_SCHEM = 2;
-			// parent key table name
-			final int PKTABLE_NAME = 3;
-			// parent key column name
-			final int PKCOLUMN_NAME = 4;
+		for (DBTable table : schema.getTables()) {
+			addForeignKeys(catalog, schemaName, table);
+		}
+	}
 
-			// foreign key table catalog (may be null) being exported (may be null)
-			final int FKTABLE_CAT = 5;
-			// foreign key table schema (may be null) being exported (may be null)
-			final int FKTABLE_SCHEM = 6;
-			// foreign key table name being exported
-			final int FKTABLE_NAME = 7;
-			// foreign key column name being exported
-			final int FKCOLUMN_NAME = 8;
+	// parent key table catalog (may be null)
+	static final int XREF_PKTABLE_CAT = 1;
 
-			// sequence number within foreign key (a value of 1 represents the first column of the
-			// foreign key, a value of 2 would represent the second column within the foreign key).
-			final int KEY_SEQ = 9;
+	// parent key table schema (may be null)
+	static final int XREF_PKTABLE_SCHEM = 2;
 
-			// What happens to foreign key when parent key is updated:
-			final int UPDATE_RULE = 10;
-			// What happens to the foreign key when parent key is deleted.
-			final int DELETE_RULE = 11;
+	// parent key table name
+	static final int PKTABLE_NAME = 3;
 
-			// foreign key name (may be null)
-			final int FK_NAME = 12;
-			// parent key name (may be null)
-			final int PK_NAME = 13;
+	// parent key column name
+	static final int XREF_PKCOLUMN_NAME = 4;
 
-			// can the evaluation of foreign key constraints be deferred until commit
-			final int DEFERRABILITY = 14;
+	// foreign key table catalog (may be null) being exported (may be null)
+	static final int XREF_FKTABLE_CAT = 5;
 
+	// foreign key table schema (may be null) being exported (may be null)
+	static final int XREF_FKTABLE_SCHEM = 6;
+
+	// foreign key table name being exported
+	static final int XREF_FKTABLE_NAME = 7;
+
+	// foreign key column name being exported
+	static final int XREF_FKCOLUMN_NAME = 8;
+
+	// sequence number within foreign key (a value of 1 represents the first column of the
+	// foreign key, a value of 2 would represent the second column within the foreign key).
+	static final int XREF_KEY_SEQ = 9;
+
+	// What happens to foreign key when parent key is updated:
+	static final int XREF_UPDATE_RULE = 10;
+
+	// What happens to the foreign key when parent key is deleted.
+	static final int XREF_DELETE_RULE = 11;
+
+	// foreign key name (may be null)
+	static final int XREF_FK_NAME = 12;
+
+	// parent key name (may be null)
+	static final int XREF_PK_NAME = 13;
+
+	// can the evaluation of foreign key constraints be deferred until commit
+	static final int XREF_DEFERRABILITY = 14;
+
+	private void addForeignKeys(String catalog, String schemaName, DBTable table) throws SQLException {
+		String tableName = table.getDBName();
+		try (ResultSet crossReference = metaData.getImportedKeys(catalog, schemaName, tableName)) {
 			while (crossReference.next()) {
-				int seq = crossReference.getInt(KEY_SEQ);
+				int seq = crossReference.getInt(XREF_KEY_SEQ);
 				if (seq != 1) {
 					// Composed foreign keys not supported.
 					continue;
 				}
 
-				String fkTableName = crossReference.getString(FKTABLE_NAME);
+				String fkTableName = crossReference.getString(XREF_FKTABLE_NAME);
 				String pkTableName = crossReference.getString(PKTABLE_NAME);
-				String fkColumnName = crossReference.getString(FKCOLUMN_NAME);
-				String pkColumnName = crossReference.getString(PKCOLUMN_NAME);
-				String fkName = crossReference.getString(FK_NAME);
+				String fkColumnName = crossReference.getString(XREF_FKCOLUMN_NAME);
+				String pkColumnName = crossReference.getString(XREF_PKCOLUMN_NAME);
+				String fkName = crossReference.getString(XREF_FK_NAME);
 
-				DBConstraintType onUpdate = type(crossReference.getShort(UPDATE_RULE));
-				DBConstraintType onDelete = type(crossReference.getShort(DELETE_RULE));
-				DBDeferability deferability = deferability(crossReference.getShort(DEFERRABILITY));
+				assert tableName.equals(fkTableName) : "Unexpected table name: " + fkTableName + ", expected: "
+					+ tableName;
 
-				DBTable table = schema.getTable(fkTableName);
+				DBConstraintType onUpdate = type(crossReference.getShort(XREF_UPDATE_RULE));
+				DBConstraintType onDelete = type(crossReference.getShort(XREF_DELETE_RULE));
+				DBDeferability deferability = deferability(crossReference.getShort(XREF_DEFERRABILITY));
+
 				DBForeignKey key = TypedConfiguration.newConfigItem(DBForeignKey.class);
 
 				key.setName(fkName);

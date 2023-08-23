@@ -8,23 +8,50 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.db.model.DBColumn;
+import com.top_logic.basic.db.model.DBColumnRef;
+import com.top_logic.basic.db.model.DBForeignKey;
+import com.top_logic.basic.db.model.DBPrimary;
 import com.top_logic.basic.db.model.DBSchema;
+import com.top_logic.basic.db.model.DBTable;
 import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.element.config.ModelConfig;
+import com.top_logic.element.meta.schema.ElementSchemaConstants;
+import com.top_logic.element.model.export.ModelConfigExtractor;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLAssociation;
+import com.top_logic.model.TLAssociationEnd;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassProperty;
+import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModule;
+import com.top_logic.model.TLPrimitive.Kind;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.Visibility;
+import com.top_logic.model.builtin.TLCore;
+import com.top_logic.model.config.ModelPartConfig;
+import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -60,45 +87,177 @@ public class DDLImporter extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
 
-		ConnectionPool pool = ConnectionPoolRegistry.getConnectionPool(((Config) getConfig()).getPoolName());
+		deliverModel(aContext);
+
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private void deliverModel(DisplayContext aContext) {
+		TLModel model = synthesizeModel();
+
+		BinaryDataSource xml = new BinaryDataSource() {
+			@Override
+			public String getName() {
+				return "schema.xml";
+			}
+
+			@Override
+			public long getSize() {
+				return -1;
+			}
+
+			@Override
+			public String getContentType() {
+				return "application/xml";
+			}
+
+			@Override
+			public void deliverTo(OutputStream out) throws IOException {
+				try (OutputStreamWriter w = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+					ModelPartConfig config = model.visit(new ModelConfigExtractor(), null);
+					TypedConfiguration.minimize(config);
+
+					ConfigurationWriter writer = new ConfigurationWriter(w);
+					writer.write(ElementSchemaConstants.ROOT_ELEMENT, ModelConfig.class, config);
+				} catch (XMLStreamException ex) {
+					Logger.error("Cannot write schema.", ex, DDLImporter.class);
+				}
+			}
+		};
+
+		aContext.getWindowScope().deliverContent(xml);
+	}
+
+	private TLModel synthesizeModel() {
+		String poolName = ((Config) getConfig()).getPoolName();
+		ConnectionPool pool = ConnectionPoolRegistry.getConnectionPool(poolName);
 		PooledConnection connection = pool.borrowReadConnection();
 		try {
 			DBSchema schema = DBSchemaUtils.extractSchema(pool);
 
-			BinaryDataSource xml = new BinaryDataSource() {
-				@Override
-				public String getName() {
-					return "schema.xml";
-				}
+			TLModel model = getModel();
 
-				@Override
-				public long getSize() {
-					return -1;
-				}
+			TLModule module = model.addModule(model, schema.getName());
 
-				@Override
-				public String getContentType() {
-					return "application/xml";
-				}
+			for (DBTable table : schema.getTables()) {
+				createClass(model, module, table);
+			}
 
-				@Override
-				public void deliverTo(OutputStream out) throws IOException {
-					try (OutputStreamWriter w = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
-						ConfigurationWriter writer = new ConfigurationWriter(w);
-						writer.write("schema", DBSchema.class, schema);
-					} catch (XMLStreamException ex) {
-						Logger.error("Cannot write schema.", ex, DDLImporter.class);
+			for (DBTable table : schema.getTables()) {
+				TLClass type = (TLClass) module.getType(table.getName());
+
+				DBPrimary primaryKey = table.getPrimaryKey();
+				if (primaryKey != null) {
+					// Hide (probably technical) primary key columns.
+					for (DBColumnRef pkColumn : primaryKey.getColumnRefs()) {
+						String pkColumnName = pkColumn.getName();
+						TLStructuredTypePart keyProperty = type.getPart(pkColumnName);
+						keyProperty.setAnnotation(DisplayAnnotations.newVisibility(Visibility.HIDDEN));
 					}
 				}
-			};
-			aContext.getWindowScope().deliverContent(xml);
+
+				for (DBForeignKey foreinKey : table.getForeignKeys()) {
+					String targetTable = foreinKey.getTargetTableRef().getName();
+					TLClass targetType = (TLClass) module.getType(targetTable);
+
+					DBColumn sourceColumn = foreinKey.getSourceColumns().get(0);
+					String refName = sourceColumn.getName();
+
+					TLAssociation association = model.addAssociation(module, module, type.getName() + "$" + refName);
+					@SuppressWarnings("unused")
+					TLAssociationEnd selfEnd = model.addAssociationEnd(association, "_self", type);
+					TLAssociationEnd targetEnd = model.addAssociationEnd(association, refName, targetType);
+					TLReference reference = model.addReference(type, refName, targetEnd);
+
+					if (sourceColumn.isMandatory()) {
+						reference.setMandatory(true);
+					}
+				}
+			}
+
+			return model;
 		} catch (SQLException ex) {
 			throw new RuntimeException(ex);
 		} finally {
 			pool.releaseReadConnection(connection);
 		}
+	}
 
-		return HandlerResult.DEFAULT_RESULT;
+	/**
+	 * The model to import the DDL schema to.
+	 */
+	protected TLModelImpl getModel() {
+		TLModelImpl result = new TLModelImpl();
+		result.addCoreModule();
+		return result;
+	}
+
+	private void createClass(TLModel model, TLModule module, DBTable table) {
+		TLClass type = model.addClass(module, module, table.getName());
+
+		Set<String> fkColumns = new HashSet<>();
+		for (DBForeignKey fk : table.getForeignKeys()) {
+			for (DBColumnRef col : fk.getSourceColumnRefs()) {
+				fkColumns.add(col.getName());
+			}
+		}
+
+		for (DBColumn column : table.getColumns()) {
+			String columnName = column.getName();
+			if (fkColumns.contains(columnName)) {
+				// Will result in a reference later on.
+				continue;
+			}
+
+			TLClassProperty property = model.addClassProperty(type, columnName, columnType(model, column));
+			if (column.isMandatory()) {
+				property.setMandatory(true);
+			}
+		}
+	}
+
+	private TLType columnType(TLModel model, DBColumn column) {
+		switch (column.getType()) {
+			case BOOLEAN:
+				return TLCore.getPrimitiveType(model, Kind.BOOLEAN);
+
+			case BLOB:
+			case BYTE:
+				return TLCore.getPrimitiveType(model, Kind.BINARY);
+
+			case CLOB:
+			case CHAR:
+			case STRING:
+				return TLCore.getPrimitiveType(model, Kind.STRING);
+
+			case DATE:
+				// TODO: "Day"
+				return TLCore.getPrimitiveType(model, Kind.DATE);
+			case TIME:
+				// TODO: "Time"
+				return TLCore.getPrimitiveType(model, Kind.DATE);
+			case DATETIME:
+				return TLCore.getPrimitiveType(model, Kind.DATE);
+
+			case FLOAT:
+			case DOUBLE:
+				return TLCore.getPrimitiveType(model, Kind.FLOAT);
+			case DECIMAL:
+				if (column.getPrecision() > 0) {
+					return TLCore.getPrimitiveType(model, Kind.FLOAT);
+				} else {
+					return TLCore.getPrimitiveType(model, Kind.INT);
+				}
+
+			case INT:
+			case SHORT:
+			case LONG:
+				return TLCore.getPrimitiveType(model, Kind.INT);
+
+			case ID:
+				return TLCore.getPrimitiveType(model, Kind.INT);
+		}
+		throw new UnreachableAssertion("No such DB type: " + column.getType());
 	}
 
 }

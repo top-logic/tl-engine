@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments>
+		<name key="dynamic.d69b3a8c-e1de-4a8d-97f9-0fa6eb191e2d">
+			<de>Import</de>
+		</name>
+		<buttons>
+			<button id="ID_1a37f334_94eb_41b8_97ae_7ca3060973d6"
+				class="com.top_logic.element.model.ddlimporter.DDLImporter"
+				image="css:fas fa-database"
+				poolName="testImportPool"
+			>
+				<resourceKey key="dynamic.b2116027-977a-422c-acb0-c559bca763a6">
+					<en>Import DB</en>
+					<de>Datenbank importieren</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

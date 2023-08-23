@@ -3,11 +3,17 @@
  */
 package com.top_logic.services.jms.script;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.List;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.translation.TranslationService;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
@@ -46,13 +52,31 @@ public class JMSSend extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+		if (!JMSService.Module.INSTANCE.isActive()) {
+			throw new TopLogicException(I18NConstants.ERROR_JMS_SERVICE_NOT_STARTED__EXPR.fill(this));
+		}
 		JMSService jmsService = JMSService.Module.INSTANCE.getImplementationInstance();
 		String connectionName = asString(arguments[0]);
 		Producer producer = jmsService.getProducer(connectionName);
 		if (producer == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_CONNECTION__NAME_EXPR.fill(connectionName, this));
 		}
-		producer.send(ToString.toString(arguments[1]));
+		Object rawData = arguments[1];
+		if (rawData instanceof HTMLFragment) {
+			StringWriter sw = new StringWriter();
+			TagWriter tw = new TagWriter(sw);
+			HTMLFragment html = (HTMLFragment) rawData;
+			try {
+				html.write(DefaultDisplayContext.getDisplayContext(), tw);
+			} catch (IOException ex) {
+				throw new TopLogicException(I18NConstants.ERROR_WRITING_XML, ex);
+			}
+			producer.send(sw.toString());
+		} else if (rawData instanceof BinaryDataSource) {
+			producer.send((BinaryDataSource) rawData);
+		} else {
+			producer.send(ToString.toString(rawData));
+		}
 		return null;
 	}
 

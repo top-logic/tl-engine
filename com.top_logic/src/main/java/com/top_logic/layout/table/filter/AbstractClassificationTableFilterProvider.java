@@ -68,15 +68,7 @@ public abstract class AbstractClassificationTableFilterProvider implements Table
 	protected static List<TLEnumeration> loadClassifications(List<String> names) {
 		List<TLEnumeration> result = new ArrayList<>(names.size());
 		for (String name : names) {
-			result.add(resolveClassification(name));
-		}
-		return result;
-	}
-
-	private static TLEnumeration resolveClassification(String name) {
-		TLEnumeration result = resolveEnumeration(name);
-		if (result == null) {
-			throw new IllegalArgumentException("There is no such enumeration: " + name);
+			result.add(resolveEnumeration(name));
 		}
 		return result;
 	}

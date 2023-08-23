@@ -15,13 +15,19 @@ import java.util.List;
 
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.db.model.DBColumn;
+import com.top_logic.basic.db.model.DBColumnRef;
+import com.top_logic.basic.db.model.DBForeignKey;
 import com.top_logic.basic.db.model.DBIndex;
 import com.top_logic.basic.db.model.DBIndex.Kind;
 import com.top_logic.basic.db.model.DBPrimary;
 import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBSchemaFactory;
 import com.top_logic.basic.db.model.DBTable;
+import com.top_logic.basic.db.model.DBTableRef;
+import com.top_logic.basic.sql.DBConstraintType;
+import com.top_logic.basic.sql.DBDeferability;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 
@@ -81,10 +87,10 @@ public class SchemaExtraction {
 	 *         If access to the source database fails.
 	 */
 	public void addTables(DBSchema schema) throws SQLException {
-		String sourceCatalog = metaData.getConnection().getCatalog();
-		String sourceSchema = sqlDialect.getCurrentSchema(metaData.getConnection());
+		String catalog = metaData.getConnection().getCatalog();
+		String schemaName = sqlDialect.getCurrentSchema(metaData.getConnection());
 		String[] types = {"TABLE"};
-		try (ResultSet tables = metaData.getTables(sourceCatalog, sourceSchema, "%", types)) {
+		try (ResultSet tables = metaData.getTables(catalog, schemaName, "%", types)) {
 			int TABLE_NAME = 3;
 			int REMARKS = 5;
 			
@@ -96,8 +102,112 @@ public class SchemaExtraction {
 				table.setComment(comment);
 			}
 		}
+
+		try (ResultSet crossReference =
+			metaData.getCrossReference(catalog, schemaName, "%", catalog, schemaName, "%")) {
+			// parent key table catalog (may be null)
+			final int PKTABLE_CAT = 1;
+			// parent key table schema (may be null)
+			final int PKTABLE_SCHEM = 2;
+			// parent key table name
+			final int PKTABLE_NAME = 3;
+			// parent key column name
+			final int PKCOLUMN_NAME = 4;
+
+			// foreign key table catalog (may be null) being exported (may be null)
+			final int FKTABLE_CAT = 5;
+			// foreign key table schema (may be null) being exported (may be null)
+			final int FKTABLE_SCHEM = 6;
+			// foreign key table name being exported
+			final int FKTABLE_NAME = 7;
+			// foreign key column name being exported
+			final int FKCOLUMN_NAME = 8;
+
+			// sequence number within foreign key (a value of 1 represents the first column of the
+			// foreign key, a value of 2 would represent the second column within the foreign key).
+			final int KEY_SEQ = 9;
+
+			// What happens to foreign key when parent key is updated:
+			final int UPDATE_RULE = 10;
+			// What happens to the foreign key when parent key is deleted.
+			final int DELETE_RULE = 11;
+
+			// foreign key name (may be null)
+			final int FK_NAME = 12;
+			// parent key name (may be null)
+			final int PK_NAME = 13;
+
+			// can the evaluation of foreign key constraints be deferred until commit
+			final int DEFERRABILITY = 14;
+
+			while (crossReference.next()) {
+				int seq = crossReference.getInt(KEY_SEQ);
+				if (seq != 1) {
+					// Composed foreign keys not supported.
+					continue;
+				}
+
+				String fkTableName = crossReference.getString(FKTABLE_NAME);
+				String pkTableName = crossReference.getString(PKTABLE_NAME);
+				String fkColumnName = crossReference.getString(FKCOLUMN_NAME);
+				String pkColumnName = crossReference.getString(PKCOLUMN_NAME);
+				String fkName = crossReference.getString(FK_NAME);
+
+				DBConstraintType onUpdate = type(crossReference.getShort(UPDATE_RULE));
+				DBConstraintType onDelete = type(crossReference.getShort(DELETE_RULE));
+				DBDeferability deferability = deferability(crossReference.getShort(DEFERRABILITY));
+
+				DBTable table = schema.getTable(fkTableName);
+				DBForeignKey key = TypedConfiguration.newConfigItem(DBForeignKey.class);
+
+				key.setName(fkName);
+				key.setOnUpdate(onUpdate);
+				key.setOnDelete(onDelete);
+				key.setDeferability(deferability);
+
+				DBTableRef targetTableRef = TypedConfiguration.newConfigItem(DBTableRef.class);
+				targetTableRef.setName(pkTableName);
+				key.setTargetTableRef(targetTableRef);
+
+				DBColumnRef sourceRef = TypedConfiguration.newConfigItem(DBColumnRef.class);
+				sourceRef.setName(fkColumnName);
+				key.getSourceColumnRefs().add(sourceRef);
+
+				DBColumnRef targetRef = TypedConfiguration.newConfigItem(DBColumnRef.class);
+				targetRef.setName(pkColumnName);
+				key.getTargetColumnRefs().add(targetRef);
+
+				table.getForeignKeys().add(key);
+			}
+		}
 	}
 	
+	private static DBDeferability deferability(short value) {
+		switch (value) {
+			case DatabaseMetaData.importedKeyInitiallyDeferred:
+				return DBDeferability.DEFERRED;
+			case DatabaseMetaData.importedKeyInitiallyImmediate:
+				return DBDeferability.IMMEDIATE;
+			case DatabaseMetaData.importedKeyNotDeferrable:
+				return DBDeferability.STRICT;
+		}
+		return DBDeferability.DEFERRED;
+	}
+
+	private static DBConstraintType type(short value) {
+		switch (value) {
+			case DatabaseMetaData.importedKeyRestrict:
+				return DBConstraintType.RESTRICT;
+			case DatabaseMetaData.importedKeyCascade:
+				return DBConstraintType.CASCADE;
+			case DatabaseMetaData.importedKeyNoAction:
+			case DatabaseMetaData.importedKeySetDefault:
+			case DatabaseMetaData.importedKeySetNull:
+				return DBConstraintType.CLEAR;
+		}
+		return DBConstraintType.RESTRICT;
+	}
+
 	/**
 	 * Extract the definition of the table with the given name from the
 	 * underlying meta data and adds it to the given {@link DBSchema}.
@@ -251,27 +361,6 @@ public class SchemaExtraction {
 				currentIndex.getColumnRefs().add(ref(column));
 			}
 		}
-		
-		// TODO: Import foreign keys.
-		// TODO: Import after all relevant tables have been imported (that are referenced in foreign keys).
-		//
-//		ResultSet crossReference = metaData.getCrossReference(sourceCatalog, sourceSchema, "%", sourceCatalog, sourceSchema, tableName);
-//		try {
-//			final int PKTABLE_NAME = 3; 
-//			final int PKCOLUMN_NAME = 4; 
-//			final int FKTABLE_CAT = 5;
-//			final int FKTABLE_SCHEM = 6; 
-//			final int FKTABLE_NAME = 7; 
-//			final int FKCOLUMN_NAME = 8; 
-//			final int KEY_SEQ = 9; 
-//			final int UPDATE_RULE = 10; 
-//			final int DELETE_RULE = 11; 
-//			final int FK_NAME = 12; 
-//			final int PK_NAME = 13;
-//			
-//		} finally {
-//			crossReference.close();
-//		}
 		schema.getTables().add(table);
 		
 		return table;

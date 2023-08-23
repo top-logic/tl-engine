@@ -358,7 +358,7 @@ public class TLScriptAutoCompletionCommand extends ControlCommand implements TLS
 	}
 
 	private Optional<TLType> getTLType(String moduleName, String typeName) {
-		return Optional.ofNullable(TLModelUtil.findType(moduleName, typeName));
+		return Optional.ofNullable(TLModelUtil.findTypeOptional(moduleName, typeName));
 	}
 
 	private Optional<TLModule> getTLModule(String moduleName) {

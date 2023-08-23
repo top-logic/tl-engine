@@ -18,6 +18,7 @@
 			<layout-reference resource="com.top_logic.demo/reporting/index.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/chartJS/index.layout.xml"/>
 			<layout-reference resource="admin/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/importTest/tabLayout.layout.xml"/>
 		</components>
 		<dialogs>
 			<layout-reference resource="com.top_logic.monitoring/admin/technical/logs/logLines.sessionDialog.layout.xml"/>

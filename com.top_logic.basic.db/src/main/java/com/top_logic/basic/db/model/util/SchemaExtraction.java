@@ -99,7 +99,9 @@ public class SchemaExtraction {
 				String comment = tables.getString(REMARKS);
 				
 				DBTable table = addTable(schema, tableName);
-				table.setComment(comment);
+				if (!StringServices.isEmpty(comment)) {
+					table.setComment(comment);
+				}
 			}
 		}
 
@@ -256,7 +258,9 @@ public class SchemaExtraction {
 				}
 	
 				column.setMandatory(nullable == DatabaseMetaData.columnNoNulls);
-				column.setComment(comment);
+				if (!StringServices.isEmpty(comment)) {
+					column.setComment(comment);
+				}
 				
 				if (dbType.sizeParam) {
 					column.setSize(size);

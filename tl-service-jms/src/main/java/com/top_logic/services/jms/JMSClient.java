@@ -13,10 +13,10 @@ import com.ibm.msg.client.wmq.WMQConstants;
 import com.top_logic.services.jms.JMSService.TargetQueueConfig;
 import com.top_logic.util.Resources;
 
+/**
+ * The parent class for every jms producer and consumer
+ */
 public class JMSClient implements Closeable {
-
-	// System exit status value (assume unset value to be 1)
-	private static int status = 1;
 
 	private JmsFactoryFactory _ff;
 
@@ -52,56 +52,15 @@ public class JMSClient implements Closeable {
 	}
 
 	/**
-	 * Record this run as successful.
+	 * @return the jmscontext
 	 */
-	private static void recordSuccess() {
-		System.out.println("SUCCESS");
-		status = 0;
-		return;
-	}
-
-	/**
-	 * Record this run as failure.
-	 *
-	 * @param ex
-	 *        desc
-	 */
-	private static void recordFailure(Exception ex) {
-		if (ex != null) {
-			if (ex instanceof JMSException) {
-				processJMSException((JMSException) ex);
-			} else {
-				System.out.println(ex);
-			}
-		}
-		System.out.println("FAILURE");
-		status = -1;
-		return;
-	}
-
-	/**
-	 * Process a JMSException and any associated inner exceptions.
-	 *
-	 * @param jmsex
-	 *        desc
-	 */
-	private static void processJMSException(JMSException jmsex) {
-		System.out.println(jmsex);
-		Throwable innerException = jmsex.getLinkedException();
-		if (innerException != null) {
-			System.out.println("Inner exception(s):");
-		}
-		while (innerException != null) {
-			System.out.println(innerException);
-			innerException = innerException.getCause();
-		}
-		return;
-	}
-
 	protected JMSContext getContext() {
 		return _context;
 	}
 
+	/**
+	 * @return the destination
+	 */
 	protected Destination getDestination() {
 		return _destination;
 	}

@@ -1,0 +1,28 @@
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<pool name="testImportPool">
+						<sql-dialect class="com.top_logic.basic.sql.Oracle12Helper"
+							adjust-from-connection="true"
+							charset="AL32UTF8"
+						/>
+						<data-source>
+							<driver-class>com.top_logic.basic.sql.OracleDataSourceProxy</driver-class>
+							<options>
+								<!-- The URL must be in a schema like "jdbc:oracle:thin:@hostname:1521:xe". -->
+								<option name="URL" value="jdbc:oracle:thin:@localhost:1521:xe" />
+								<option name="user" value="SYSSOLLANA1" />
+								<encrypted-option name="password" value="unencrypted:bup" />
+								
+								<option name="implicitCachingEnabled" value="true" />
+								<option name="oracle.net.ssl_cipher_suites" value="(SSL_DH_anon_WITH_3DES_EDE_CBC_SHA, SSL_DH_anon_WITH_RC4_128_MD5, SSL_DH_anon_WITH_DES_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA256)" />
+							</options>
+						</data-source>
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

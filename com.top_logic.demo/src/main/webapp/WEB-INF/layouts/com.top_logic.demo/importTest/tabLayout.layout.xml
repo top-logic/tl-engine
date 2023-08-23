@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_eff7d0c4_118b_4973_8091_4100fd687978">
+		<tabLabel key="dynamic.58baec8d-ff72-46d9-a529-2804a789990c">
+			<en>Import test</en>
+			<de>Import-Test</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/importTest/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

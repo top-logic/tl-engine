@@ -89,6 +89,9 @@ public class SchemaExtraction {
 	public void addTables(DBSchema schema) throws SQLException {
 		String catalog = metaData.getConnection().getCatalog();
 		String schemaName = sqlDialect.getCurrentSchema(metaData.getConnection());
+
+		schema.setName(schemaName);
+
 		String[] types = {"TABLE"};
 		try (ResultSet tables = metaData.getTables(catalog, schemaName, "%", types)) {
 			int TABLE_NAME = 3;

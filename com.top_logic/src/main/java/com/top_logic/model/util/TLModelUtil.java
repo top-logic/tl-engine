@@ -1171,10 +1171,60 @@ public class TLModelUtil {
 	}
 
 	/**
-	 * Resolves the type with the given name in the {@link TLModule} with the given name.
+	 * Resolves the type with the given name in the {@link TLModule} with the given name from the
+	 * application model.
+	 * 
+	 * @throws TopLogicException
+	 *         If the requested type does not exist.
+	 * 
+	 * @see #findTypeOptional(String, String)
 	 */
 	public static TLType findType(String moduleName, String typeName) {
-		TLModel model = model();
+		return findType(model(), moduleName, typeName);
+	}
+
+	/**
+	 * Resolves the type with the given name in the {@link TLModule} with the given name.
+	 * 
+	 * @throws TopLogicException
+	 *         If the requested type does not exist.
+	 * 
+	 * @see #findTypeOptional(TLModel, String, String)
+	 */
+	public static TLType findType(TLModel model, String moduleName, String typeName) {
+		TLModule module = model.getModule(moduleName);
+		if (module == null) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_NO_SUCH_MODULE__NAME.fill(moduleName));
+		}
+		TLType result = module.getType(typeName);
+		if (result == null) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_NO_SUCH_TYPE__MODULE_NAME.fill(moduleName, typeName));
+		}
+		return result;
+	}
+
+	/**
+	 * Resolves the type with the given name in the {@link TLModule} with the given name from the
+	 * application model.
+	 * 
+	 * @return The requested type, or <code>null</code>, if no such type exists.
+	 * 
+	 * @see #findType(String, String)
+	 */
+	public static TLType findTypeOptional(String moduleName, String typeName) {
+		return findType(model(), moduleName, typeName);
+	}
+
+	/**
+	 * Resolves the type with the given name in the {@link TLModule} with the given name.
+	 * 
+	 * @return The requested type, or <code>null</code>, if no such type exists.
+	 * 
+	 * @see #findType(TLModel, String, String)
+	 */
+	public static TLType findTypeOptional(TLModel model, String moduleName, String typeName) {
 		TLModule module = model.getModule(moduleName);
 		if (module == null) {
 			return null;

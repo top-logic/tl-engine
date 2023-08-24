@@ -16,7 +16,12 @@
 		>
 			<decorator class="com.top_logic.layout.tree.renderer.NavigationDecorator"
 				logoutTimer="%LOGOUT_TIMER%"
-			/>
+			>
+				<logoutView class="com.top_logic.layout.component.configuration.LogoutView"
+					image="theme:IMAGE_BUTTONS_LOGOUT22"
+					name="titleLogoutButton"
+				/>
+			</decorator>
 			<contentRenderer class="com.top_logic.layout.tree.renderer.ReadOnlyNavigationRenderer"
 				root-icon="theme:BREADCRUMB_ROOT_ICON"
 				root-label="navigation.breadcrumb.rootLabel"

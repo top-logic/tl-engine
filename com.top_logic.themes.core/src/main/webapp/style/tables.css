@@ -35,7 +35,9 @@ a.tl-table__title:visited {
 }
 
 .tl-table__title {
-	/* For legacy browsers.*/
+	display: flex;
+	justify-content: space-between;
+    align-items: center;
 	background: var(--layer-accent);
 	color: var(--text-primary);
 	font-family: 'Inter-SemiBold';
@@ -50,9 +52,6 @@ a.tl-table__title:visited {
 }
 
 th.tblTitleRight {
-	/* For legacy browsers. */
-	background-color: var(--FRAME_BACK);
-
 	background: var(--layer-accent);
 	color:            var(--text-primary);
 	font-family: 'Inter-SemiBold';
@@ -1485,4 +1484,6 @@ td.tl-table__cell--selected a {
 	background-color: var(--layer-hover);
 }
 
-
+.i18nStringTable.tl-table {
+	border: none;
+}

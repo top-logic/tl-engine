@@ -110,10 +110,6 @@ a.cmdLink:visited {
     background: var(--layer-selected);
 }
 
-.ace_line {
-	padding-left: 10px;
-}
-
 /* Zeilenhöhe für den gesamten Ace Editor anpassen */
 .ace_editor {
 	font-size: var(--body-02-font-size);
@@ -190,7 +186,7 @@ div.ace_tooltip>code.inlineCode {
 	top: 0px;
 	border-top-style: none;
 	overflow: hidden;
-	box-shadow:0 2px 6px 0 rgba(0,0,0,0.32);
+	box-shadow:var(--shadow-menu);
 }
 
 .pdlgContent {
@@ -1070,7 +1066,7 @@ span.configuredTooltipLabel {
 */
 .errorFragmentContainer {
 	cursor: default;
-	padding: 2px 5px;
+	padding: var(--spacing-01) var(--spacing-02);
 	color: var(--support-danger);
 	border: 1px solid var(--support-danger);
 	background-color: var(--background);
@@ -1106,8 +1102,7 @@ span.configuredTooltipLabel {
 	margin: var(--spacing-02) var(--spacing-01) 0 0;
 	padding: 0 var(--spacing-03) var(--spacing-02) var(--spacing-03);
 	border-radius: 10px;
-	box-shadow:var(--shadow-menu);
-	/* box-shadow: 0px 1px 5px #888; */
+	box-shadow: var(--shadow-menu);
 	overflow-y: hidden;
 	overflow-x: auto;
 }
@@ -1358,7 +1353,7 @@ span.ltcCounting input {
 }
 
 .card:hover {
-	box-shadow: 0 2px 6px 0 rgba(0,0,0,0.32);
+	box-shadow: var(--shadow-menu);
 	background-color: var(--layer-active);
 }
 

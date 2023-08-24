@@ -25,8 +25,18 @@
 			</instance>
 		</config>
 
+		<config service-class="com.top_logic.kafka.services.producer.KafkaProducerService">
+			<instance>
+				<dependencies>
+					<dependency key="com.top_logic.kafka.server.module.KafkaModule$Module" value="true"/>
+				</dependencies>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.kafka.services.consumer.KafkaConsumerService">
 			<instance join-timeout="15000">
+				<dependencies>
+					<dependency key="com.top_logic.kafka.server.module.KafkaModule$Module" value="true"/>
+				</dependencies>
 				<consumers>
 					<consumer name="KB-Data-Change-Consumer">
 						<processors config:override="true">

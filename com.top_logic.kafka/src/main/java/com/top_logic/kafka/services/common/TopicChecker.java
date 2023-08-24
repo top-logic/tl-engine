@@ -29,6 +29,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
@@ -46,6 +47,10 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 	/** {@link ConfigurationItem} for the {@link TopicChecker}. */
 	public interface Config extends PolymorphicConfiguration<TopicChecker> {
 
+		@Override
+		@ClassDefault(TopicChecker.class)
+		Class<? extends TopicChecker> getImplementationClass();
+
 		/**
 		 * The timeout in milliseconds when waiting for the server response with the list of topics.
 		 * <p>
@@ -61,6 +66,15 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 		/** Whether missing topics should be created. */
 		@BooleanDefault(true)
 		boolean shouldCreateTopics();
+
+		/**
+		 * Whether the check should be disabled.
+		 * <p>
+		 * Developers might want to disable the checks to start an application which uses Kafka
+		 * without having to start Kafka.
+		 * </p>
+		 */
+		boolean isDisabled();
 
 	}
 
@@ -103,6 +117,9 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 	private static boolean checkTopicExists(InstantiationContext context, CommonClientConfig<?, ?> foreignConfig,
 			Set<String> topics) {
 		Config ownConfig = ApplicationConfig.getInstance().getConfig(Config.class);
+		if (ownConfig.isDisabled()) {
+			return true;
+		}
 		TopicChecker checker = context.getInstance(ownConfig);
 		checker.init(context, foreignConfig, topics);
 		return checker.checkTopicExists();

@@ -10,4 +10,7 @@
 	<icon name="layouts.demo.tlHome"
 		value="css:bi bi-house-fill"
 	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_QUESTION"
+		value="css:bi bi-info-square"
+	/>
 </settings>

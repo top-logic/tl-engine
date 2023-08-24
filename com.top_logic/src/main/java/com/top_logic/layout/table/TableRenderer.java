@@ -359,17 +359,6 @@ public interface TableRenderer<C extends TableRenderer.Config<?>> extends ITable
 	 */
     public void writeFooter(DisplayContext context, TagWriter out, RenderState state, int aNumber) throws IOException;
 
-    /**
-	 * Write a footer for switching through the table content.
-	 */
-    public void writePagingFooter(DisplayContext context, TagWriter out, RenderState state, boolean usePagingFooter) throws IOException;
-
-    /**
-     * Write a default footer for empty Lists, in case none is configured.
-     */
-    public void writeEmptyFooter(TagWriter out, RenderState state, boolean usePagingFooter)
-        throws IOException;
-
 	/**
 	 * Additional CSS class rendered to the table control tag.
 	 * 

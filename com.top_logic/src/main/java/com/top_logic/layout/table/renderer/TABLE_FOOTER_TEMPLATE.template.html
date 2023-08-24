@@ -1,0 +1,22 @@
+<div class="tl-table__footer">
+	<tl:choose>
+		<tl:when test="isPagination">
+			<div class="tl-table__footer-pager" style="background:orange;{styles}" align="left">
+				{firstPageButton}
+				{previousPageButton}
+				{currentPage}
+				{nextPageButton}
+				{lastPageButton}
+				<span>
+					{pageSize}
+				</span>
+				<span>
+					{pageInfo}
+				</span>
+			</div>
+		</tl:when>
+		<tl:otherwise>
+			<div class="tl-table__footer-counter" style="{styles}">{numberOfRowsText}</div>
+		</tl:otherwise>
+	</tl:choose>
+</div>

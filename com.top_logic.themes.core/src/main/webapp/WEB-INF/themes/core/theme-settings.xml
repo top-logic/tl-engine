@@ -871,7 +871,12 @@
 	<icon name="com.top_logic.util.error.Icons.SYSTEM_FAILURE"
 		value="css:bi bi-x-octagon-fill"
 	/>
-	
+	<icon name="ICONS_DIALOG_QUESTION"
+		value="css:bi bi-info-square"
+	/>
+	<icon name="com.top_logic.util.error.Icons.QUESTION"
+		value="css:bi bi-info-square"
+	/>
 	<icon name="com.top_logic.event.infoservice.Icons.CLOSE_INFO_SERVICE_ITEM"
 		value="css:bi bi-x-lg"
 	/>

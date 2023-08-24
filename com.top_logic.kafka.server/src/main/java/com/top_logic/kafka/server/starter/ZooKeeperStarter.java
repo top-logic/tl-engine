@@ -28,7 +28,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.kafka.server.module.ZooKeeperModule;
 
 /**
  * Starter for the {@link ZooKeeper}
@@ -175,7 +174,7 @@ public class ZooKeeperStarter implements Starter {
 	}
 
 	private void errorRegisterShutdownHandler(Throwable ex) {
-		Logger.error("Unable to register ZooKeeperServerShutdownHandler.", ex, ZooKeeperModule.class);
+		Logger.error("Unable to register ZooKeeperServerShutdownHandler.", ex, ZooKeeperStarter.class);
 	}
 
 	private void closeLog() {
@@ -183,7 +182,7 @@ public class ZooKeeperStarter implements Starter {
 			try {
 				_txnLog.close();
 			} catch (IOException ex) {
-				Logger.error("Unable to close file log.", ex, ZooKeeperModule.class);
+				Logger.error("Unable to close file log.", ex, ZooKeeperStarter.class);
 			}
 		}
 	}

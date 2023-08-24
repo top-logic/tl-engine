@@ -919,7 +919,7 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 .cFormEditorPreview.rf_highlighted .locked .rf_inputCellOneLine,  
 .cFormEditorPreview.rf_highlighted .locked .rf_dragElement .rf_table {
 	border: inherit;
-	background: var(--BODY_BACK);
+	background: var(--background);
 }
 
 .rf_highlighted .rf_dragged .rf_container/*,
@@ -1944,5 +1944,151 @@ div.cColorComposer tr.spacer {
 
 .mandatory > .ColorChooser {
 	border:thick solid var(--MANDATORY_FIELD_BG);
+}
+
+.cBeacon {
+	display: flex;
+	flex-direction: row;
+	height: 100%;
+}
+
+.cBeacon > span{
+	display: flex;
+	align-items: center;
+}
+
+.cBeacon input {
+	width: 16px;
+	height: 16px;
+}
+
+div.layoutHorizontalAdjustmentGrabber {
+  background: var(--layer-selected);
+  cursor: e-resize;
+}
+
+div.sizeContainer, div.imageContainer {
+  position: absolute;
+  text-align: center;
+  left: 2px;
+  top: 2px;
+  right: 2px;
+  bottom: 2px;
+}
+
+/* ==================================== */
+/* ======     DataItemControl     ===== */
+/* ==================================== */
+
+.cDataItem input {
+	margin-left: 2px;
+}
+
+.cDataItem input.first {
+	margin-left: 0px;
+}
+
+.cDataItem input {
+    background-color: var(--background);
+}
+
+.cDataItem input[type="file"] {
+	display: none;
+}
+
+.cDataItem label {
+	display: inline-block;
+	cursor: pointer;
+	color: var(--text-on-color);
+	padding: var(--spacing-02) 0 var(--spacing-02) var(--spacing-03);
+	border-radius: .25rem;
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
+}
+
+.cDataItem label .cmdImg {
+	padding-right: var(--spacing-02);
+}
+
+.cDataItem label .cmdLabel {
+	padding-right: var(--spacing-03);
+}
+
+.cDataItem label:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover);
+}
+
+.cDataItem label:focus {
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.cDataItem label:active {
+	background: var(--button-primary-active);
+}
+
+.cDataItem label.cmdButtonDisabled {
+	background: var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+}
+
+.cDataItem label.cmdButtonDisabled .cmdLabel {
+	color: var(--text-on-color-disabled);
+}
+
+.cDataItem label.cmdButtonDisabled .cmdImg {
+	color: var(--icon-on-color-disabled);
+}
+
+/* Display inline when shown in a table cell. */
+td.tl-table__cell .cDataItem ul,
+td.tl-table__cell .cDataItem li {
+	display: inline;
+}
+
+/* Display as table when multiple files are uploaded. */
+.cDataItem ul {
+	margin-top: 0px;
+	margin-bottom: 0px;
+	margin-left: 2px;
+	padding: 0;
+	
+	display: table;
+	border-spacing: 0px;
+}
+
+.cDataItem li {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	
+	display: table-row-group;
+}
+
+.cDataItem li .cDownload {
+	display: table-row;
+}
+
+.cDataItem li .cDownload .lFlexible,
+.cDataItem li .cDownload .lFixedRight  {
+	display: table-cell;
+	padding-bottom: 8px;
+	padding-right: 8px;
+}
+
+/* ==================================== */
+/* ======     DownloadControl     ===== */
+/* ==================================== */
+
+.downloadControl input {
+	margin-left: 2px;
+}
+
+.downloadControl input.first {
+	margin-left: 0px;
+}
+
+.downloadControl input {
+    background-color: var(--background);
 }
 

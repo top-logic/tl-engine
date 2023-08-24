@@ -105,6 +105,9 @@
 	<string name="BREADCRUMB_SEPARATOR_LABEL"
 		value=""
 	/>
+	<icon name="IMAGE_BUTTONS_LOGOUT22"
+		value="css: bi bi-box-arrow-right"
+	/>
 	<boolean name="LOGOUT_TIMER"
 		value="true"
 	/>
@@ -201,8 +204,11 @@
 	<icon name="com.top_logic.layout.Icons.OK_BUTTON_DISABLED"
 		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
 	/>
+	<icon name="MISC_SLIDER"
+		value="/images/Slider.gif"
+	/>
 	<img name="com.top_logic.layout.buttonbar.Icons.SLIDER_IMG"
-		value="/images/slider/Slider.gif"
+		value="/images/Slider.gif"
 	/>
 	<img name="com.top_logic.layout.image.gallery.Icons.NO_PREVIEW_IMAGE"
 		value="/images/noPreviewImage.png"
@@ -541,7 +547,56 @@
 		value="css:bi bi-calendar-check"
 	/>
 	
-
+	
+	<icon name="BEACON_BALLS_GREEN"
+		value="/beacon/balls/Green.png"
+	/>
+	<icon name="BEACON_BALLS_RED"
+		value="/beacon/balls/Red.png"
+	/>
+	<icon name="BEACON_BALLS_WHITE"
+		value="/beacon/balls/White.png"
+	/>
+	<icon name="BEACON_BALLS_YELLOW"
+		value="/beacon/balls/Yellow.png"
+	/>
+	<icon name="bea3_1"
+		value="/beacon/green.svg"
+	/>
+	<icon name="bea3_2"
+		value="/beacon/yellow.svg"
+	/>
+	<icon name="bea3_3"
+		value="/beacon/red.svg"
+	/>
+	<icon name="bea3_EMPTY"
+		value="/beacon/empty.svg"
+	/>
+	<int name="bea3_NUM"
+		value="3"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.SYSTEMSTATE_GREEN"
+		value="/beacon/green.png"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.GREEN"
+		value="/beacon/balls/Green.png"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.RED_CROSS"
+		value="/beacon/balls/RedCross.png"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.YELLOW"
+		value="/beacon/balls/Yellow.png"
+	/>
+	
+	<icon name="mime.image/bmp"
+		value="css: bi bi-image"
+	/>
+	<icon name="mime.image/gif"
+		value="css: bi bi-image"
+	/>
+	<icon name="mime.image/png"
+		value="css: bi bi-image"
+	/>
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_DOWN"
 		value="css:bi bi-chevron-down"
 	/>

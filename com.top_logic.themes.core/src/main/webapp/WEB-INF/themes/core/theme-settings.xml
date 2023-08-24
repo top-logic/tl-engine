@@ -1173,5 +1173,8 @@
 	<string name="heading-05-letter-spacing"
 		value="0px"
 	/>
+	<string name="shadow-menu"
+		value=" 0 2px 6px 0 rgba(0,0,0,0.32)"
+	/>
 </settings>
 

@@ -957,6 +957,43 @@ span.moveOption {
 }
 
 /*
+****							****
+****	Message Boxes Styles	****
+****							****
+*/
+div.mboxImage img,
+div.mboxImage i {
+	margin-right: 5px; 
+	margin-bottom: 5px;
+}
+
+div.mboxImage i {
+	font-size: 32px; 
+}
+
+div.mboxImage {
+	float: left; 
+}
+
+div.mboxContent {
+	margin: 5px;
+}
+
+div.mboxHeader {
+    font-weight: bold; 
+    font-size: larger;
+}
+
+div.mboxMessage {
+	margin-top: 5px;
+}
+
+div.mboxInput {
+	margin-top: 5px;
+	padding-left: 10px;
+}
+
+/*
 ****					****
 ****	Tooltip Styles	****
 ****					****

@@ -48,6 +48,12 @@ div.layoutHorizontalAdjustmentGrabber {
   cursor: e-resize;
 }
 
+.noSelection {
+	position: relative; 
+	top: 40%; 
+	text-align: center
+}
+
 /*
 ****					****
 ****	Anchor syles	****
@@ -118,6 +124,26 @@ a.cmdLink:visited {
 .ace_content {
 	ffont-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
+}
+
+/* Styles for display help for TLScript.*/
+div.tlScriptDoc {
+	max-width: 500px;
+	overflow: auto;
+}
+
+div.ace_tooltip {
+	white-space: normal;
+	max-height: 50vh;
+	overflow: auto;
+}
+
+div.ace_tooltip>code {
+	white-space: pre;
+}
+
+div.ace_tooltip>code.inlineCode {
+	white-space: normal;
 }
 
 /*
@@ -1037,28 +1063,6 @@ span.configuredTooltipLabel {
 	margin-bottom: 20px;
 }
 
-/* Styles for display help for TLScript.*/
-
-div.tlScriptDoc {
-	max-width: 500px;
-	overflow: auto;
-}
-
-div.ace_tooltip {
-	white-space: normal;
-	max-height: 50vh;
-	overflow: auto;
-}
-
-div.ace_tooltip>code {
-	white-space: pre;
-}
-
-div.ace_tooltip>code.inlineCode {
-	white-space: normal;
-}
-
-
 /*
 ****					****
 ****	Error Styles	****
@@ -1077,7 +1081,7 @@ div.ace_tooltip>code.inlineCode {
 	padding-right: var(--spacing-02);
 }
 
-.infoService {
+.tl-info-service {
 	position: absolute;
 	top: var(--spacing-03);
 	right: var(--spacing-03);
@@ -1088,198 +1092,177 @@ div.ace_tooltip>code.inlineCode {
 	overflow-x: hidden;
 }
 
-.pinnedInfoService {
+.tl-info-service_pinned {
 	/* Marker class */
 }
 
-.hideInfoService {
+.tl-info-service-item__hide-info-service_animation {
 	animation-name: hideInfoService;
 	animation-duration: 1s;
 }
 
-.infoServiceItem {
+.tl-info-service-item {
 	position: relative;
-	margin: var(--spacing-03) 3px 0 0;
-	padding: var(--spacing-02) var(--spacing-03);
+	margin: var(--spacing-02) var(--spacing-01) 0 0;
+	padding: 0 var(--spacing-03) var(--spacing-02) var(--spacing-03);
 	border-radius: 10px;
-	box-shadow: 0px 1px 5px #888;
+	box-shadow:var(--shadow-menu);
+	/* box-shadow: 0px 1px 5px #888; */
 	overflow-y: hidden;
 	overflow-x: auto;
 }
 
-.infoServiceItem.infoServiceError {
+.tl-info-service-item.tl-info-service-item__error {
 	background-color: var(--notification-danger-background);
 }
 
-.infoServiceItem.infoServiceWarning {
+.tl-info-service-item.tl-info-service-item__warning {
 	background-color: var(--notification-warning-background);
 }
 
-.infoServiceItem.infoServiceInfo {
+.tl-info-service-item.tl-info-service-item__info {
 	background-color: var(--notification-info-background);
 }
 
-.infoServiceError .infoServiceItemMessageHeader span i:not(.infoServiceItemCloseButton i) {
+.tl-info-service-item__error .tl-info-service-item__header-message span i:not(.tl-info-service-item__close-button i) {
 	color: var(--support-danger);
 }
 
-.infoServiceWarning .infoServiceItemMessageHeader span i:not(.infoServiceItemCloseButton i) {
+.tl-info-service-item__warning .tl-info-service-item__header-message span i:not(.tl-info-service-item__close-button i) {
 	color: var(--support-warning);
 }
 
-.infoServiceInfo .infoServiceItemMessageHeader span i:not(.infoServiceItemCloseButton i) {
+.tl-info-service-item__info .tl-info-service-item__header-message span i:not(.tl-info-service-item__close-button i) {
 	color: var(--support-info);
 }
 
-.infoServiceLogTime {
-	color: var(--text-helper);
-	/* padding: 0 20px; */
-	white-space: nowrap;
-}
-
-.infoServiceItem p {
-    /* display: block; */
-    /* margin-block-end: 1rem; */
-}
-
-.infoServiceItem:last-child {
-	margin-bottom: 3px;
-}
-
-.infoServiceItemCloseButton {
-	cursor: pointer;
-	padding-left: var(--spacing-03);
-}
-
-.infoServiceHeader {
+.tl-info-service-item__header {
 	display: flex;
 	flex-direction: row-reverse;
 	align-items: center;
 	justify-content: flex-end;
+	margin-top: var(--spacing-02);
 }
 
-.infoServiceItemMessageHeader:not(.infoServiceItem .infoServiceHeader .infoServiceItemMessageHeader) {
+.tl-info-service-item__header-message:not(.tl-info-service-item .tl-info-service-item__header .tl-info-service-item__header-message) {
 	display: flex;
 	flex-grow: 2;
-	/* margin-top: var(--spacing-02); */
 	align-items: center;
+	margin-top: var(--spacing-02);
 }
 
-.infoServiceItemMessageHeader {
+.tl-info-service-item__header-message {
   	display: flex;
   	flex-grow: 2;
   	justify-content: space-between;
 }
 
-.infoServiceItemMessageHeader span i {
+.tl-info-service-item__header-message span i {
   	display: flex;
   	align-items: center;
 }
 
-.infoServiceItemMessageHeaderText {
+.tl-info-service-item__header-message-text {
 	display: flex;
 	flex-grow: 2;
 	justify-content: space-between;
+	padding-left: var(--spacing-02);
 	line-break: anywhere;
 }
 
-.errorIcon {
-	padding-right: var(--spacing-02);
-}
-
-.infoServiceItemMessageHeader .errorIcon {
-	display: block;
-	align-self: center;
-}
-
-.infoServiceItemTypeMessage {
+.tl-info-service-item__header-type-message {
 	font-family: 'Inter-SemiBold';
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
+	margin-left: var(--spacing-02);
 }
 
-.infoServiceItemMessage {
+.tl-info-service-item__header-message .tl-info-service-item__error-icon {
+	display: block;
+	align-self: center;
+}
+
+.tl-info-service-item__header-message .tl-info-service-item__error-icon span {
+	display: inline-block
+}
+
+.tl-info-service-item__message p {
+	margin: 0;
+}
+
+.tl-info-service-item__message {
 	max-height: 400px;
 	overflow-y: auto;
+	word-break: break-word;
+	margin: var(--spacing-02) 0;
 }
 
-.infoServiceItemDetailMessageHeader {
+.tl-info-service-item__log-time {
+	color: var(--text-helper);
+	padding-left: var(--spacing-02)
+	white-space: nowrap;
+}
+
+.tl-info-service-item__details summary,
+.tl-info-service-item__close-button {
 	cursor: pointer;
 }
 
-.infoServiceItemDetailExpandButton {
-	display: inline-block;
-	margin-top: -1px;
-	margin-left: 5px;
+.tl-info-service-item__close-button {
+	padding-left: var(--spacing-03);
 }
 
-.pinnedInfoServiceItem, .pinnedInfoService .pinnedInfoServiceItem {
-	animation-name: pinnedInfoServiceItem;
-	animation-duration: 0.5s;
-}
-
-.showInfoServiceItem {
-	animation-name: showInfoServiceItem;
-	animation-duration: 0.2s;
-}
-
-.showPinnedInfoServiceItem {
-	animation-name: showPinnedInfoServiceItem;
-	animation-duration: 0.2s;
-}
-
-.pinnedInfoService .hideInfoServiceItem {
-	animation-name: hideInfoServiceItem;
-	animation-duration: 0.2s;
-}
-
-.rotatedInfoServiceItemDetailExpandButton {
-	animation-name: rotatedInfoServiceItemDetailExpandButton;
-	animation-duration: 0.2s;
-	animation-fill-mode: forwards;
-}
-
-.regularInfoServiceItemDetailExpandButton {
-	animation-name: regularInfoServiceItemDetailExpandButton;
-	animation-duration: 0.2s;
-	animation-fill-mode: forwards;
-}
-
-.infoServiceItemDetailMessageHidden,
-.hideInfoServiceItemDetailMessage,
-.showInfoServiceItemDetailMessage {
-	margin-bottom: var(--spacing-02);
-	overflow: hidden;
-}
-
-.infoServiceItemDetailMessageHidden {
-	height: 0;
-}
-
-.hideInfoServiceItemDetailMessage {
-	animation-name: hideInfoServiceItemDetailMessage;
-	animation-duration: 0.2s;
-	animation-fill-mode: forwards;
-}
-
-.showInfoServiceItemDetailMessage {
-	animation-name: showInfoServiceItemDetailMessage;
-	animation-duration: 0.2s;
-	animation-fill-mode: forwards;
-}
-
-.infoServiceItemDetailMessageTextContainer {
+.tl-info-service-item__details {
 	overflow-x: auto;
+	margin-top: var(--spacing-03);
 }
 
-p.infoServiceItemDetailMessageNoBottom {
+.tl-info-service-item__details-message {
+	padding-top: var(--spacing-02);
+}
+
+p.tl-info-service-item__details-message-no-bottom {
 	margin-bottom: 0px;
-	/* margin-top: 0px; */
-	margin-block-start: .5rem;
-	margin-block-end: 1em;
-	margin-inline-start: 0px;
-	margin-inline-end: 0px;
+}
+
+.infoServiceItem:last-child {
+	margin-bottom: var(--spacing-01);
+}
+
+.tl-info-service-item__show-info_animation {
+	animation-name: tl-info-service-item__show-info_animation;
+	animation-duration: 0.2s;
+}
+
+.tl-info-service-item__show-pinned-info_animation {
+	animation-name: tl-info-service-item__show-pinned-info_animation;
+	animation-duration: 0.2s;
+}
+
+.tl-info-service_pinned .tl-info-service-item__hide-info_animation {
+	animation-name: tl-info-service-item__hide-info_animation;
+	animation-duration: 0.2s;
+}
+
+@keyframes tl-info-service-item__show-info_animation {
+    0% {opacity: 0;}
+    100% {opacity: 0.9; margin-top: 3px;}
+}
+
+@keyframes tl-info-service-item__show-pinned-info_animation {
+    0% {opacity: 0;}
+    100% {opacity: 1; margin-top: 3px;}
+}
+
+@keyframes tl-info-service-item__hide-info_animation {
+    0% {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+@keyframes tl-info-service-item__hide-info-service_animation {
+    from {opacity: 1;}
+    to {opacity: 0;}
 }
 
 span.cLogoutTimer {

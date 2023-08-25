@@ -7,25 +7,26 @@
 >
 	<arguments>
 		<name key="dynamic.d69b3a8c-e1de-4a8d-97f9-0fa6eb191e2d">
-			<de>Import</de>
+			<de>JDBC Import Test</de>
+			<en>JDBC Import Test</en>
 		</name>
 		<buttons>
 			<button id="importSchema"
-				class="com.top_logic.element.model.ddlimporter.DDLImporter"
+				class="com.top_logic.element.model.jdbcBinding.JdbcSchemaImporter"
 				image="css:fas fa-database"
 				poolName="testImportPool"
 			>
-				<resourceKey key="dynamic.b2116027-977a-422c-acb0-c559bca763a6">
+				<resourceKey>
 					<en>Import schema</en>
 					<de>Schema importieren</de>
 				</resourceKey>
 			</button>
 			<button id="importData"
-				class="com.top_logic.element.model.ddlimporter.JdbcDataImporter"
+				class="com.top_logic.element.model.jdbcBinding.JdbcDataImporter"
 				poolName="testImportPool"
 				module="test.JdbcImport"
 			>
-				<resourceKey key="dynamic.b2116027-977a-422c-acb0-c559bca763a6">
+				<resourceKey>
 					<en>Import Data</en>
 					<de>Daten importieren</de>
 				</resourceKey>

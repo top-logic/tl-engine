@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
  */
-package com.top_logic.element.model.ddlimporter;
+package com.top_logic.element.model.jdbcBinding;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,10 +38,10 @@ import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.meta.schema.ElementSchemaConstants;
-import com.top_logic.element.model.ddlimporter.api.annotate.TLColumnBinding;
-import com.top_logic.element.model.ddlimporter.api.annotate.TLForeignKeyBinding;
-import com.top_logic.element.model.ddlimporter.api.annotate.TLTableBinding;
 import com.top_logic.element.model.export.ModelConfigExtractor;
+import com.top_logic.element.model.jdbcBinding.api.annotate.TLColumnBinding;
+import com.top_logic.element.model.jdbcBinding.api.annotate.TLForeignKeyBinding;
+import com.top_logic.element.model.jdbcBinding.api.annotate.TLTableBinding;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.ModelKind;
@@ -65,14 +65,14 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * {@link AbstractCommandHandler} importing a model from an existing database.
+ * {@link AbstractCommandHandler} importing a model from an existing database schema.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DDLImporter extends AbstractCommandHandler {
+public class JdbcSchemaImporter extends AbstractCommandHandler {
 
 	/**
-	 * Configuration options for {@link DDLImporter}.
+	 * Configuration options for {@link JdbcSchemaImporter}.
 	 */
 	public interface Config extends AbstractCommandHandler.Config {
 
@@ -86,9 +86,9 @@ public class DDLImporter extends AbstractCommandHandler {
 	}
 
 	/**
-	 * Creates a {@link DDLImporter}.
+	 * Creates a {@link JdbcSchemaImporter}.
 	 */
-	public DDLImporter(InstantiationContext context, Config config) {
+	public JdbcSchemaImporter(InstantiationContext context, Config config) {
 		super(context, config);
 	}
 
@@ -129,7 +129,7 @@ public class DDLImporter extends AbstractCommandHandler {
 					ConfigurationWriter writer = new ConfigurationWriter(w);
 					writer.write(ElementSchemaConstants.ROOT_ELEMENT, ModelConfig.class, config);
 				} catch (XMLStreamException ex) {
-					Logger.error("Cannot write schema.", ex, DDLImporter.class);
+					Logger.error("Cannot write schema.", ex, JdbcSchemaImporter.class);
 				}
 			}
 		};

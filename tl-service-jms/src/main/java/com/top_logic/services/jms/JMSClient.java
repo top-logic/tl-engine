@@ -18,7 +18,7 @@ import com.top_logic.services.jms.JMSService.Type;
 import com.top_logic.util.Resources;
 
 /**
- * The parent class for every jms producer and consumer
+ * The parent class for every jms producer and consumer.
  */
 public class JMSClient implements Closeable {
 

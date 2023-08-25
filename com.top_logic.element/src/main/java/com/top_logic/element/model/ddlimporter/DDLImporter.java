@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -233,7 +234,6 @@ public class DDLImporter extends AbstractCommandHandler {
 
 		TLTableBinding tableBinding = TypedConfiguration.newConfigItem(TLTableBinding.class);
 		tableBinding.setName(tableName);
-		type.setAnnotation(tableBinding);
 
 		Set<String> fkColumns = new HashSet<>();
 		for (DBForeignKey fk : table.getForeignKeys()) {
@@ -244,10 +244,16 @@ public class DDLImporter extends AbstractCommandHandler {
 		// Primary key columns are always required.
 		DBPrimary key = table.getPrimaryKey();
 		if (key != null) {
+			List<String> primaryKeyColumns = new ArrayList<>();
 			for (DBColumnRef col : key.getColumnRefs()) {
-				fkColumns.remove(col.getName());
+				String keyColumnName = col.getName();
+				fkColumns.remove(keyColumnName);
+				primaryKeyColumns.add(keyColumnName);
 			}
+
+			tableBinding.setPrimaryKey(primaryKeyColumns);
 		}
+		type.setAnnotation(tableBinding);
 
 		for (DBColumn column : table.getColumns()) {
 			String columnName = column.getName();

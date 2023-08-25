@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
  */
-package com.top_logic.element.model.ddlimporter.api.annotate;
+package com.top_logic.element.model.jdbcBinding.api.annotate;
 
 import java.util.List;
 

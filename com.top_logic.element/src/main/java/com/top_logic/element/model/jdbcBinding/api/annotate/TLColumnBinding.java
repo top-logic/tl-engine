@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
  */
-package com.top_logic.element.model.ddlimporter.api.annotate;
+package com.top_logic.element.model.jdbcBinding.api.annotate;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.element.model.ddlimporter.api.ColumnFormat;
-import com.top_logic.element.model.ddlimporter.api.ColumnParser;
+import com.top_logic.element.model.jdbcBinding.api.ColumnFormat;
+import com.top_logic.element.model.jdbcBinding.api.ColumnParser;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 

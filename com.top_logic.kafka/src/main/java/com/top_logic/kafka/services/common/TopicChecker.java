@@ -38,7 +38,7 @@ import com.top_logic.kafka.services.consumer.ConsumerDispatcherConfiguration;
 import com.top_logic.kafka.services.producer.TLKafkaProducer;
 
 /**
- * Checks whether topics exists on a Kafka server and creates missing topics.
+ * Checks whether topics exist on a Kafka server and creates missing topics.
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */

@@ -14,7 +14,6 @@ import java.util.Properties;
 
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.config.SaslConfigs;
@@ -432,7 +431,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	PolymorphicConfiguration<KafkaLogWriter<V>> getLogWriter();
 
 	/**
-	 * The Kafka {@link Properties} to be used for {@link KafkaConsumer} instantiation. A new,
+	 * The Kafka {@link Properties} to be used for {@link KafkaCommonClient} instantiation. A new,
 	 * mutable and resizable {@link Map}.
 	 */
 	default Map<String, Object> getAllProperties() {
@@ -449,7 +448,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * value.
 	 * </p>
 	 * 
-	 * @return The Kafka {@link Properties} to be used for {@link KafkaConsumer} instantiation. A
+	 * @return The Kafka {@link Properties} to be used for {@link KafkaCommonClient} instantiation. A
 	 *         new, mutable and resizable {@link Map}.
 	 */
 	default Map<String, Object> getTypedProperties() {

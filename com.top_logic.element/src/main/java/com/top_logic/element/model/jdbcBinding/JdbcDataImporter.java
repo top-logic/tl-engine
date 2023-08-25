@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
  */
-package com.top_logic.element.model.ddlimporter;
+package com.top_logic.element.model.jdbcBinding;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
@@ -32,13 +32,13 @@ import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
-import com.top_logic.element.model.ddlimporter.api.ColumnParser;
-import com.top_logic.element.model.ddlimporter.api.ImportRow;
-import com.top_logic.element.model.ddlimporter.api.RowReader;
-import com.top_logic.element.model.ddlimporter.api.TypeSelector;
-import com.top_logic.element.model.ddlimporter.api.annotate.TLColumnBinding;
-import com.top_logic.element.model.ddlimporter.api.annotate.TLForeignKeyBinding;
-import com.top_logic.element.model.ddlimporter.api.annotate.TLTableBinding;
+import com.top_logic.element.model.jdbcBinding.api.ColumnParser;
+import com.top_logic.element.model.jdbcBinding.api.ImportRow;
+import com.top_logic.element.model.jdbcBinding.api.RowReader;
+import com.top_logic.element.model.jdbcBinding.api.TypeSelector;
+import com.top_logic.element.model.jdbcBinding.api.annotate.TLColumnBinding;
+import com.top_logic.element.model.jdbcBinding.api.annotate.TLForeignKeyBinding;
+import com.top_logic.element.model.jdbcBinding.api.annotate.TLTableBinding;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;

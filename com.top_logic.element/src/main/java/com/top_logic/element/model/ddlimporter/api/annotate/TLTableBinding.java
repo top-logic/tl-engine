@@ -47,6 +47,11 @@ public interface TLTableBinding extends TLTypeAnnotation {
 	List<String> getPrimaryKey();
 
 	/**
+	 * @see #getPrimaryKey()
+	 */
+	void setPrimaryKey(List<String> value);
+
+	/**
 	 * Optional type lookup for a polymorphic binding.
 	 * 
 	 * <p>

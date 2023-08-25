@@ -11,7 +11,7 @@ import com.top_logic.services.jms.JMSService.DestinationConfig;
 import com.top_logic.services.jms.JMSService.Type;
 
 /**
- * Class for a jms consumer (fetches messages from a queue)
+ * Class for a jms consumer (fetches messages from a queue).
  */
 public class Consumer extends JMSClient {
 

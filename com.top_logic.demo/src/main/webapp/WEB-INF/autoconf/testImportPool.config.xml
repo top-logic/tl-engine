@@ -10,7 +10,7 @@
 						<data-source>
 							<driver-class>com.top_logic.basic.sql.H2DataSourceProxy</driver-class>
 							<options>
-								<option name="url" value="jdbc:h2:%APP_ROOT%/WEB-INF/database/testDdlImport" />
+								<option name="url" value="jdbc:h2:%APP_ROOT%/WEB-INF/database/testDdlImport;ACCESS_MODE_DATA=r" />
 								<option name="user" value="user" />
 								<encrypted-option name="password" value="unencrypted:password" />
 							</options>
@@ -23,7 +23,7 @@
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
 				<declarations>
-					<declaration file="/WEB-INF/model/testJdbcImport.model.xml"/>
+					<declaration file="/WEB-INF/model/test.JdbcImport.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

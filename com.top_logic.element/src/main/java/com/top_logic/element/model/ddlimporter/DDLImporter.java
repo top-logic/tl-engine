@@ -9,8 +9,10 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -28,15 +30,20 @@ import com.top_logic.basic.db.model.DBPrimary;
 import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBTable;
 import com.top_logic.basic.db.model.util.DBSchemaUtils;
+import com.top_logic.basic.generate.CodeUtil;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.meta.schema.ElementSchemaConstants;
+import com.top_logic.element.model.ddlimporter.api.annotate.TLColumnBinding;
+import com.top_logic.element.model.ddlimporter.api.annotate.TLForeignKeyBinding;
+import com.top_logic.element.model.ddlimporter.api.annotate.TLTableBinding;
 import com.top_logic.element.model.export.ModelConfigExtractor;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
@@ -45,6 +52,7 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive.Kind;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
@@ -144,7 +152,8 @@ public class DDLImporter extends AbstractCommandHandler {
 			}
 
 			for (DBTable table : schema.getTables()) {
-				TLClass type = (TLClass) module.getType(table.getName());
+				String tableName = table.getName();
+				TLClass type = (TLClass) module.getType(tableName);
 
 				DBPrimary primaryKey = table.getPrimaryKey();
 				if (primaryKey != null) {
@@ -163,7 +172,14 @@ public class DDLImporter extends AbstractCommandHandler {
 					DBColumn sourceColumn = foreinKey.getSourceColumns().get(0);
 					String refName = sourceColumn.getName();
 
-					TLAssociation association = model.addAssociation(module, module, type.getName() + "$" + refName);
+					if (type.getPart(refName) != null) {
+						// The property already exists. This can happen, if a primary key is also a
+						// foreign key.
+						refName = refName + "Ref";
+					}
+
+					TLAssociation association = model.addAssociation(module, module,
+						CodeUtil.toCamelCase(type.getName()) + "$" + CodeUtil.toCamelCase(refName));
 					@SuppressWarnings("unused")
 					TLAssociationEnd selfEnd = model.addAssociationEnd(association, "_self", type);
 					TLAssociationEnd targetEnd = model.addAssociationEnd(association, refName, targetType);
@@ -171,6 +187,20 @@ public class DDLImporter extends AbstractCommandHandler {
 
 					if (sourceColumn.isMandatory()) {
 						reference.setMandatory(true);
+					}
+
+					TLForeignKeyBinding foreignKeyBinding = TypedConfiguration.newConfigItem(TLForeignKeyBinding.class);
+					foreignKeyBinding.setColumns(names(foreinKey.getSourceColumnRefs()));
+					reference.setAnnotation(foreignKeyBinding);
+				}
+			}
+
+			for (TLType type : module.getTypes()) {
+				if (type.getModelKind() == ModelKind.CLASS) {
+					type.setName(CodeUtil.toCamelCaseFromAllUpperCase(type.getName()));
+
+					for (TLStructuredTypePart part : ((TLStructuredType) type).getLocalParts()) {
+						part.setName(CodeUtil.toLowerCaseStart(CodeUtil.toCamelCaseFromAllUpperCase(part.getName())));
 					}
 				}
 			}
@@ -183,6 +213,10 @@ public class DDLImporter extends AbstractCommandHandler {
 		}
 	}
 
+	private List<String> names(List<DBColumnRef> refs) {
+		return refs.stream().map(ref -> ref.getName()).collect(Collectors.toList());
+	}
+
 	/**
 	 * The model to import the DDL schema to.
 	 */
@@ -193,12 +227,25 @@ public class DDLImporter extends AbstractCommandHandler {
 	}
 
 	private void createClass(TLModel model, TLModule module, DBTable table) {
-		TLClass type = model.addClass(module, module, table.getName());
+		String tableName = table.getName();
+
+		TLClass type = model.addClass(module, module, tableName);
+
+		TLTableBinding tableBinding = TypedConfiguration.newConfigItem(TLTableBinding.class);
+		tableBinding.setName(tableName);
+		type.setAnnotation(tableBinding);
 
 		Set<String> fkColumns = new HashSet<>();
 		for (DBForeignKey fk : table.getForeignKeys()) {
 			for (DBColumnRef col : fk.getSourceColumnRefs()) {
 				fkColumns.add(col.getName());
+			}
+		}
+		// Primary key columns are always required.
+		DBPrimary key = table.getPrimaryKey();
+		if (key != null) {
+			for (DBColumnRef col : key.getColumnRefs()) {
+				fkColumns.remove(col.getName());
 			}
 		}
 
@@ -213,6 +260,10 @@ public class DDLImporter extends AbstractCommandHandler {
 			if (column.isMandatory()) {
 				property.setMandatory(true);
 			}
+
+			TLColumnBinding columnBinding = TypedConfiguration.newConfigItem(TLColumnBinding.class);
+			columnBinding.setName(columnName);
+			property.setAnnotation(columnBinding);
 		}
 	}
 
@@ -226,6 +277,7 @@ public class DDLImporter extends AbstractCommandHandler {
 				return TLCore.getPrimitiveType(model, Kind.BINARY);
 
 			case CLOB:
+				// TODO: "Text"
 			case CHAR:
 			case STRING:
 				return TLCore.getPrimitiveType(model, Kind.STRING);

@@ -10,14 +10,24 @@
 			<de>Import</de>
 		</name>
 		<buttons>
-			<button id="ID_1a37f334_94eb_41b8_97ae_7ca3060973d6"
+			<button id="importSchema"
 				class="com.top_logic.element.model.ddlimporter.DDLImporter"
 				image="css:fas fa-database"
 				poolName="testImportPool"
 			>
 				<resourceKey key="dynamic.b2116027-977a-422c-acb0-c559bca763a6">
-					<en>Import DB</en>
-					<de>Datenbank importieren</de>
+					<en>Import schema</en>
+					<de>Schema importieren</de>
+				</resourceKey>
+			</button>
+			<button id="importData"
+				class="com.top_logic.element.model.ddlimporter.JdbcDataImporter"
+				poolName="testImportPool"
+				module="testJdbcImport"
+			>
+				<resourceKey key="dynamic.b2116027-977a-422c-acb0-c559bca763a6">
+					<en>Import Data</en>
+					<de>Daten importieren</de>
 				</resourceKey>
 			</button>
 		</buttons>

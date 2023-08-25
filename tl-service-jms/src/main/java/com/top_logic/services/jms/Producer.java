@@ -20,13 +20,15 @@ import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.services.jms.JMSService.DestinationConfig;
 
 /**
- * Class for a jms producer (sends messages to a queue)
+ * Class for a jms producer (sends messages to a queue).
  */
 public class Producer extends JMSClient {
 	
 	private JMSProducer _producer;
 	
 	/**
+	 * Constructor for a producer that sets the config and creates an Producer on the context.
+	 * 
 	 * @param config
 	 *        The config for the connection to the queue
 	 * @throws JMSException
@@ -38,6 +40,8 @@ public class Producer extends JMSClient {
 	}
 
 	/**
+	 * Method to send a string (or XML) message to a queue or a topic.
+	 * 
 	 * @param text
 	 *        The message to be sent as string
 	 */
@@ -47,6 +51,8 @@ public class Producer extends JMSClient {
 	}
 
 	/**
+	 * Method to send a binary message to a queue or a topic.
+	 * 
 	 * @param data
 	 *        Binary message to be sent
 	 */
@@ -90,10 +96,8 @@ public class Producer extends JMSClient {
 			message.setStringProperty(WMQConstants.JMS_IBM_CHARACTER_SET,
 				new MimeType(data.getContentType()).getParameter("charset"));
 		} catch (JMSException ex) {
-			// TODO Auto-generated catch block
 			ex.printStackTrace();
 		} catch (MimeTypeParseException ex) {
-			// TODO Auto-generated catch block
 			ex.printStackTrace();
 		}
 		_producer.send(getDestination(), message);

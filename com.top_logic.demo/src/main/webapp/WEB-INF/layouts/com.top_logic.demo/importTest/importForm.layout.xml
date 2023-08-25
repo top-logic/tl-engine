@@ -23,7 +23,7 @@
 			<button id="importData"
 				class="com.top_logic.element.model.ddlimporter.JdbcDataImporter"
 				poolName="testImportPool"
-				module="testJdbcImport"
+				module="test.JdbcImport"
 			>
 				<resourceKey key="dynamic.b2116027-977a-422c-acb0-c559bca763a6">
 					<en>Import Data</en>

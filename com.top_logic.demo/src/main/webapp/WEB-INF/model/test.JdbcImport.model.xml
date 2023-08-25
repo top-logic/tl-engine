@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 <model xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<module name="testJdbcImport">
+	<module name="test.JdbcImport">
 		<class name="A">
 			<annotations>
-				<table-binding name="A"></table-binding>
+				<table-binding name="A" primary-key="ID"></table-binding>
 			</annotations>
 			<attributes>
 				<property name="int" type="tl.core:Integer">
@@ -26,7 +26,7 @@
 		</class>
 		<class name="B">
 			<annotations>
-				<table-binding name="B"></table-binding>
+				<table-binding name="B" primary-key="MYID"></table-binding>
 			</annotations>
 			<attributes>
 				<property mandatory="true" name="myid"

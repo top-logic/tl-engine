@@ -19,5 +19,13 @@
 				</pools>
 			</instance>
 		</config>
+		
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/testJdbcImport.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
 	</services>
 </application>

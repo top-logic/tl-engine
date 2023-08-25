@@ -21,23 +21,28 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.event.infoservice.InfoService;
 
 /**
- * 
+ * The TopLogic Service to set the config for a connection and establish this connection to a JMS
+ * Message System. In this case the connection is tuned to the IBM MQ system.
  */
 public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 
 	/**
-	 * 
+	 * Interface for the Service, that collects all destination configurations to establish
+	 * connactions.
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<JMSService> {
 		/**
-		 * @return a map of multiple TargetQueueConfigs with their name
+		 * A map of all created destination configurations.
+		 * 
+		 * @return a map of String name to {@link DestinationConfig}
 		 */
 		@Key(DestinationConfig.NAME_ATTRIBUTE)
 		Map<String, DestinationConfig> getDestinationConfigs();
 	}
 
 	/**
-	 * A TargetQueueConfig contains all relevant properties that are needed for a connection
+	 * A {@link DestinationConfig} contains all relevant properties that are needed for a
+	 * connection.
 	 */
 	@DisplayOrder({ DestinationConfig.NAME_ATTRIBUTE,
 		DestinationConfig.HOST,
@@ -146,15 +151,17 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	}
 
 	/**
-	 * 
+	 * The type of the destination, that can be a queue or a topic.
 	 */
 	public enum Type {
 		/**
-		 * 
+		 * A queue is a point-to-point connection between a producer and a consumer.
 		 */
 		QUEUE,
+
 		/**
-		 * 
+		 * A topic is a publish/subscribe connection so multiple subscribed consumers can receive
+		 * messages simultaneously from a topic.
 		 */
 		TOPIC;
 	}
@@ -162,6 +169,8 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	private Map<String, Producer> _producers = new HashMap<>();
 
 	/**
+	 * Constructor for the service that establishes connections with the given config.
+	 * 
 	 * @param context
 	 *        The context which can be used to instantiate inner configurations.
 	 * @param config
@@ -197,6 +206,8 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	}
 
 	/**
+	 * Gets and returns the producer from all producers for the given name.
+	 * 
 	 * @param name
 	 *        Name of the Producer
 	 * @return The requested Producer

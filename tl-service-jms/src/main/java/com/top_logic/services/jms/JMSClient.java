@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
+ */
 package com.top_logic.services.jms;
 
 import java.io.Closeable;
@@ -10,7 +13,8 @@ import com.ibm.msg.client.jms.JmsConnectionFactory;
 import com.ibm.msg.client.jms.JmsFactoryFactory;
 import com.ibm.msg.client.wmq.WMQConstants;
 
-import com.top_logic.services.jms.JMSService.TargetQueueConfig;
+import com.top_logic.services.jms.JMSService.DestinationConfig;
+import com.top_logic.services.jms.JMSService.Type;
 import com.top_logic.util.Resources;
 
 /**
@@ -30,7 +34,7 @@ public class JMSClient implements Closeable {
 	 * Constructor for every JMSClient (producer and consumer) that initializes the connection
 	 * factory.
 	 */
-	public JMSClient(TargetQueueConfig config) throws JMSException {
+	public JMSClient(DestinationConfig config) throws JMSException {
 		_ff = JmsFactoryFactory.getInstance(WMQConstants.WMQ_PROVIDER);
 		_cf = _ff.createConnectionFactory();
 		// Set the properties
@@ -44,14 +48,20 @@ public class JMSClient implements Closeable {
 		_cf.setBooleanProperty(WMQConstants.USER_AUTHENTICATION_MQCSP, true);
 		_cf.setStringProperty(WMQConstants.USERID, config.getUser());
 		_cf.setStringProperty(WMQConstants.PASSWORD, config.getPassword());
-		// cf.setStringProperty(WMQConstants.WMQ_SSL_CIPHER_SUITE, "*TLS12ORHIGHER");
 
 		// Create JMS objects
 		_context = _cf.createContext();
-		_destination = getContext().createQueue("queue:///" + config.getQueueName());
+		System.out.println(config.getType());
+		if (config.getType() == Type.TOPIC) {
+			_destination = getContext().createTopic(config.getDestName());
+		} else {
+			_destination = getContext().createQueue(config.getDestName());
+		}
 	}
 
 	/**
+	 * This method returns the jms context that is used to create producer and consumer.
+	 * 
 	 * @return the jmscontext
 	 */
 	protected JMSContext getContext() {
@@ -59,6 +69,8 @@ public class JMSClient implements Closeable {
 	}
 
 	/**
+	 * This method returns the destination of the jms Connection that is either a queue or a topic.
+	 * 
 	 * @return the destination
 	 */
 	protected Destination getDestination() {

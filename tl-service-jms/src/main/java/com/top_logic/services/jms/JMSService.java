@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
+ */
 package com.top_logic.services.jms;
 
 import java.util.HashMap;
@@ -29,22 +32,23 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		/**
 		 * @return a map of multiple TargetQueueConfigs with their name
 		 */
-		@Key(TargetQueueConfig.NAME_ATTRIBUTE)
-		Map<String, TargetQueueConfig> getTargetQueueConfigs();
+		@Key(DestinationConfig.NAME_ATTRIBUTE)
+		Map<String, DestinationConfig> getDestinationConfigs();
 	}
 
 	/**
 	 * A TargetQueueConfig contains all relevant properties that are needed for a connection
 	 */
-	@DisplayOrder({ TargetQueueConfig.NAME_ATTRIBUTE,
-		TargetQueueConfig.HOST,
-		TargetQueueConfig.PORT,
-		TargetQueueConfig.CHANNEL,
-		TargetQueueConfig.QUEUE_MANAGER,
-		TargetQueueConfig.QUEUE_NAME,
-		TargetQueueConfig.USER,
-		TargetQueueConfig.PASSWORD })
-	public interface TargetQueueConfig extends NamedConfigMandatory {
+	@DisplayOrder({ DestinationConfig.NAME_ATTRIBUTE,
+		DestinationConfig.HOST,
+		DestinationConfig.PORT,
+		DestinationConfig.CHANNEL,
+		DestinationConfig.QUEUE_MANAGER,
+		DestinationConfig.DEST_NAME,
+		DestinationConfig.TYPE,
+		DestinationConfig.USER,
+		DestinationConfig.PASSWORD })
+	public interface DestinationConfig extends NamedConfigMandatory {
 
 		/**
 		 * Configuration name for {@link #getHost()}.
@@ -77,9 +81,14 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		String PASSWORD = "password";
 
 		/**
-		 * Configuration name for {@link #getQueueName()}.
+		 * Configuration name for {@link #getDestName()}.
 		 */
-		String QUEUE_NAME = "queue-name";
+		String DEST_NAME = "dest-name";
+
+		/**
+		 * Configuration name for {@link #getType()}
+		 */
+		String TYPE = "type";
 
 		/**
 		 * The host of the target queue.
@@ -123,11 +132,31 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		String getPassword();
 
 		/**
-		 * The queue name that is the destination of the connection.
+		 * The name that is the destination of the connection.
 		 */
-		@Name(QUEUE_NAME)
+		@Name(DEST_NAME)
 		@Mandatory
-		String getQueueName();
+		String getDestName();
+
+		/**
+		 * The type the destination of the connection has.
+		 */
+		@Name(TYPE)
+		Type getType();
+	}
+
+	/**
+	 * 
+	 */
+	public enum Type {
+		/**
+		 * 
+		 */
+		QUEUE,
+		/**
+		 * 
+		 */
+		TOPIC;
 	}
 
 	private Map<String, Producer> _producers = new HashMap<>();
@@ -145,7 +174,7 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	@Override
 	protected void startUp() {
 		super.startUp();
-		for (TargetQueueConfig config : getConfig().getTargetQueueConfigs().values()) {
+		for (DestinationConfig config : getConfig().getDestinationConfigs().values()) {
 			try {
 				Producer prod = new Producer(config);
 				_producers.put(config.getName(), prod);

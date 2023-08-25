@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Business Operation Systems GmbH. All Rights Reserved.
+ * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
  */
 package com.top_logic.services.jms;
 

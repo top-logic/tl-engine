@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2023 Business Operation Systems GmbH. All Rights Reserved.
+ */
 package com.top_logic.services.jms;
 
 import java.io.IOError;
@@ -14,7 +17,7 @@ import javax.jms.TextMessage;
 import com.ibm.msg.client.wmq.WMQConstants;
 
 import com.top_logic.basic.io.binary.BinaryDataSource;
-import com.top_logic.services.jms.JMSService.TargetQueueConfig;
+import com.top_logic.services.jms.JMSService.DestinationConfig;
 
 /**
  * Class for a jms producer (sends messages to a queue)
@@ -29,7 +32,7 @@ public class Producer extends JMSClient {
 	 * @throws JMSException
 	 *         Exception if something is not jms conform
 	 */
-	public Producer(TargetQueueConfig config) throws JMSException {
+	public Producer(DestinationConfig config) throws JMSException {
 		super(config);
 		_producer = getContext().createProducer();
 	}

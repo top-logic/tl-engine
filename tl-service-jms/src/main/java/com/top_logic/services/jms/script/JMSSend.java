@@ -57,6 +57,7 @@ public class JMSSend extends GenericMethod {
 		}
 		JMSService jmsService = JMSService.Module.INSTANCE.getImplementationInstance();
 		String connectionName = asString(arguments[0]);
+
 		Producer producer = jmsService.getProducer(connectionName);
 		if (producer == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_CONNECTION__NAME_EXPR.fill(connectionName, this));
@@ -77,6 +78,7 @@ public class JMSSend extends GenericMethod {
 		} else {
 			producer.send(ToString.toString(rawData));
 		}
+		
 		return null;
 	}
 

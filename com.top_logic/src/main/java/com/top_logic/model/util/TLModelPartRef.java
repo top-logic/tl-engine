@@ -23,6 +23,7 @@ import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.config.AbstractModelPartMapping;
@@ -85,14 +86,26 @@ public class TLModelPartRef {
 	}
 
 	/**
-	 * Resolves a referenced type.
+	 * Resolves a referenced {@link TLModule}.
+	 * 
+	 * <p>
+	 * Note: A property that should reference a {@link TLModule} must use
+	 * {@link ModuleRefValueProvider} annotated as {@link Format}.
+	 * </p>
+	 */
+	public TLModule resolveModule() {
+		return TLModelUtil.findModule(qualifiedName());
+	}
+
+	/**
+	 * Resolves a referenced {@link TLType}.
 	 */
 	public TLType resolveType() throws ConfigurationException {
 		return TLModelUtil.findType(qualifiedName());
 	}
 
 	/**
-	 * Resolves a referenced type.
+	 * Resolves a referenced {@link TLTypePart}.
 	 */
 	public TLTypePart resolvePart() throws ConfigurationException {
 		return TLModelUtil.findPart(qualifiedName());
@@ -148,6 +161,23 @@ public class TLModelPartRef {
 		private TypePartRefValueProvider() {
 			super(Pattern.compile(TLModelUtil.TYPE_NAME_PATTERN_SRC),
 				I18NConstants.ERROR_INVALID_PART_REFERENCE__VALUE);
+		}
+
+	}
+
+	/**
+	 * {@link ConfigurationValueProvider} for {@link TLModelPartRef}s referencing {@link TLModule}s.
+	 */
+	public static class ModuleRefValueProvider extends AbstractRefValueProvider {
+
+		/**
+		 * Singleton {@link ModuleRefValueProvider} instance.
+		 */
+		public static final ModuleRefValueProvider INSTANCE = new ModuleRefValueProvider();
+
+		private ModuleRefValueProvider() {
+			super(Pattern.compile(TLModelUtil.MODULE_NAME_PATTERN_SRC),
+				I18NConstants.ERROR_NO_SUCH_MODULE__NAME);
 		}
 
 	}

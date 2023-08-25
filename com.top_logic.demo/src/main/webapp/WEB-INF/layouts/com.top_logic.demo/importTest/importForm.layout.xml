@@ -23,8 +23,8 @@
 			</button>
 			<button id="importData"
 				class="com.top_logic.element.model.jdbcBinding.JdbcDataImporter"
-				poolName="testImportPool"
 				module="test.JdbcImport"
+				poolName="testImportPool"
 			>
 				<resourceKey>
 					<en>Import Data</en>

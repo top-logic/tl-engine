@@ -1,0 +1,54 @@
+<?xml version="1.0" ?>
+<model xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<module name="testJdbcImport">
+		<class name="A">
+			<annotations>
+				<table-binding name="A"></table-binding>
+			</annotations>
+			<attributes>
+				<property name="int" type="tl.core:Integer">
+					<annotations>
+						<column-binding name="int"></column-binding>
+					</annotations>
+				</property>
+				<property name="str" type="tl.core:String">
+					<annotations>
+						<column-binding name="STR"></column-binding>
+					</annotations>
+				</property>
+				<property mandatory="true" name="id" type="tl.core:Integer">
+					<annotations>
+						<column-binding name="ID"></column-binding>
+						<visibility value="hidden"></visibility>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="B">
+			<annotations>
+				<table-binding name="B"></table-binding>
+			</annotations>
+			<attributes>
+				<property mandatory="true" name="myid"
+					type="tl.core:Integer">
+					<annotations>
+						<column-binding name="MYID"></column-binding>
+						<visibility value="hidden"></visibility>
+					</annotations>
+				</property>
+				<reference name="aref" type="A" navigate="true"
+					kind="forwards">
+					<annotations>
+						<foreign-key-binding columns="AREF"></foreign-key-binding>
+					</annotations>
+				</reference>
+				<reference name="other" type="B" navigate="true"
+					kind="forwards">
+					<annotations>
+						<foreign-key-binding columns="OTHER"></foreign-key-binding>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

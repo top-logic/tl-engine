@@ -38,7 +38,10 @@ public class CodeUtil {
 		return result.toString();
 	}
 
-	private static String[] simpleNameParts(String name) {
+	/**
+	 * Splits the given name into its parts separated by separator characters.
+	 */
+	public static String[] simpleNameParts(String name) {
 		return name.split("[-\\._/]");
 	}
 

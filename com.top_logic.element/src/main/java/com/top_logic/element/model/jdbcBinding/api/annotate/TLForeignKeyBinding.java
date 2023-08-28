@@ -5,6 +5,7 @@ package com.top_logic.element.model.jdbcBinding.api.annotate;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -23,6 +24,7 @@ import com.top_logic.model.annotate.TLAttributeAnnotation;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@InApp
 @TagName("foreign-key-binding")
 public interface TLForeignKeyBinding extends TLAttributeAnnotation {
 
@@ -38,5 +40,21 @@ public interface TLForeignKeyBinding extends TLAttributeAnnotation {
 	 * @see #getColumns()
 	 */
 	void setColumns(List<String> value);
+
+	/**
+	 * Whether the {@link #getColumns()} are defined on the target table and point back to the
+	 * primary key of the annotated type.
+	 * 
+	 * <p>
+	 * A backwards foreign key binding produces a reference with potentially multiple values, where
+	 * the target objects can only be referenced by a single source object.
+	 * </p>
+	 */
+	boolean isBackwards();
+
+	/**
+	 * @see #isBackwards()
+	 */
+	void setBackwards(boolean value);
 
 }

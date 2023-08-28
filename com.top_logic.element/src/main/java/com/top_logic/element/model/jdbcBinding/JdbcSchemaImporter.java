@@ -9,7 +9,9 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -135,11 +137,12 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 
 	private void deliverModel(DisplayContext aContext) {
 		TLModel model = synthesizeModel();
+		model.getModules().remove(model.getModule(TLCore.TL_CORE));
 
 		BinaryDataSource xml = new BinaryDataSource() {
 			@Override
 			public String getName() {
-				return "schema.xml";
+				return model.getModules().iterator().next().getName() + ".model.xml";
 			}
 
 			@Override
@@ -159,6 +162,7 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 					TypedConfiguration.minimize(config);
 
 					ConfigurationWriter writer = new ConfigurationWriter(w);
+					writer.setNamespace("", ElementSchemaConstants.MODEL_6_NS);
 					writer.write(ElementSchemaConstants.ROOT_ELEMENT, ModelConfig.class, config);
 				} catch (XMLStreamException ex) {
 					Logger.error("Cannot write schema.", ex, JdbcSchemaImporter.class);
@@ -244,18 +248,20 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 	}
 
 	private void fixModelNames(TLModule module) {
-		TokenSplitter tokenSplitter = new TokenSplitter(readGlossary());
+		Map<String, List<String>> glossary = readGlossary();
+
+		TokenSplitter tokenSplitter = new TokenSplitter(glossary);
 
 		Map<String, Integer> typeClashes = new HashMap<>();
 		for (TLType type : module.getTypes()) {
 			if (type.getModelKind() == ModelKind.CLASS) {
-				type.setName(makeUnique(typeClashes, modelName(tokenSplitter, type.getName())));
+				type.setName(makeUnique(typeClashes, modelName(glossary, tokenSplitter, type.getName())));
 
 				Map<String, Integer> propertyClashes = new HashMap<>();
 				for (TLStructuredTypePart part : ((TLStructuredType) type).getLocalParts()) {
 					part.setName(
 						CodeUtil.toLowerCaseStart(
-							makeUnique(propertyClashes, modelName(tokenSplitter, part.getName()))));
+							makeUnique(propertyClashes, modelName(glossary, tokenSplitter, part.getName()))));
 				}
 			}
 		}
@@ -271,10 +277,10 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 		return newName;
 	}
 
-	private Map<String, String> readGlossary() {
+	private Map<String, List<String>> readGlossary() {
 		String contents = config().getGlossary();
 
-		Map<String, String> glossary = new HashMap<>();
+		Map<String, List<String>> glossary = new HashMap<>();
 		for (String line : contents.split("\\r?\\n")) {
 			String trimmedLine = line.trim();
 			String[] tokens = trimmedLine.split("\\t");
@@ -291,20 +297,40 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 			} else {
 				replacement = tokens[1];
 			}
-			glossary.put(token, replacement);
+			if ("-".equals(replacement)) {
+				glossary.put(token, Collections.emptyList());
+			} else {
+				glossary.put(token, Arrays.asList(CodeUtil.simpleNameParts(replacement)));
+			}
 		}
 		return glossary;
 	}
 
-	private String modelName(TokenSplitter tokenSplitter, String dbName) {
+	private String modelName(Map<String, List<String>> glossary, TokenSplitter tokenSplitter, String dbName) {
+		// Test whole match first.
+		List<String> replacement = glossary.get(dbName);
+		if (replacement != null) {
+			if (!replacement.isEmpty()) {
+				StringBuffer result = new StringBuffer();
+				appendParts(result, replacement);
+				return result.toString();
+			}
+		} else if (glossary.containsKey(dbName)) {
+			return dbName;
+		}
+
+		// Match parts.
 		StringBuffer result = new StringBuffer();
 		for (String part : CodeUtil.simpleNameParts(dbName)) {
-			for (String subpart : tokenSplitter.split(part)) {
-				result.append(CodeUtil.toUpperCaseStart(subpart.toLowerCase()));
-			}
+			appendParts(result, tokenSplitter.split(part));
 		}
-		
 		return result.toString();
+	}
+
+	private void appendParts(StringBuffer result, List<String> parts) {
+		for (String subpart : parts) {
+			result.append(CodeUtil.toUpperCaseStart(subpart.toLowerCase()));
+		}
 	}
 
 	private List<String> names(List<DBColumnRef> refs) {

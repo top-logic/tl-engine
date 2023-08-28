@@ -5,7 +5,9 @@ package test.com.top_logic.basic.generate;
 
 import static test.com.top_logic.basic.BasicTestCase.*;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.TestCase;
@@ -21,12 +23,12 @@ import com.top_logic.basic.generate.TokenSplitter;
 public class TestTokenSplitter extends TestCase {
 
 	public void testSplit() {
-		Map<String, String> glossary = new HashMap<>();
-		glossary.put("A", "-");
-		glossary.put("ABK", "ABKUERZUNG");
-		glossary.put("ID", "IDENTIFIER");
+		Map<String, List<String>> glossary = new HashMap<>();
+		glossary.put("A", Collections.emptyList());
+		glossary.put("ABK", Collections.singletonList("ABKUERZUNG"));
+		glossary.put("ID", Collections.singletonList("IDENTIFIER"));
 		glossary.put("USER", null);
-		glossary.put("PASSWD", "PASSWORD");
+		glossary.put("PASSWD", Collections.singletonList("PASSWORD"));
 		TokenSplitter splitter = new TokenSplitter(glossary);
 
 		assertEquals(list("FOOBAR"), splitter.split("FOOBAR"));

@@ -3,6 +3,7 @@
  */
 package com.top_logic.element.model.jdbcBinding.api.annotate;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -30,6 +31,7 @@ import com.top_logic.model.annotate.TLAttributeAnnotation;
 	TLColumnBinding.PARSER,
 	TLColumnBinding.FORMAT,
 })
+@InApp
 public interface TLColumnBinding extends TLAttributeAnnotation {
 
 	/**

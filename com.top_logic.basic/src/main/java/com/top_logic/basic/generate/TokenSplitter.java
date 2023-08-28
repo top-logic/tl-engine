@@ -19,12 +19,13 @@ import java.util.regex.Pattern;
 public class TokenSplitter {
 
 	private static final Pattern NUMBER = Pattern.compile("^([0-9]+)");
-	private Map<String, String> _glossary;
+
+	private Map<String, List<String>> _glossary;
 
 	/**
 	 * Creates a {@link TokenSplitter}.
 	 */
-	public TokenSplitter(Map<String, String> glossary) {
+	public TokenSplitter(Map<String, List<String>> glossary) {
 		_glossary = glossary;
 	}
 
@@ -78,20 +79,18 @@ public class TokenSplitter {
 	 * Adds the replacement for the given token to the given token list.
 	 */
 	protected void addReplacement(List<String> tokens, String token) {
-		String replacement = getGlossaryEntry(token);
+		List<String> replacement = getGlossaryEntry(token);
 		if (replacement == null) {
 			tokens.add(0, token);
-		} else if ("-".equals(replacement)) {
-			// Drop part.
 		} else {
-			tokens.add(0, replacement);
+			tokens.addAll(0, replacement);
 		}
 	}
 
 	/**
 	 * Retrieves the entry for the given token from the glossary.
 	 */
-	protected String getGlossaryEntry(String token) {
+	protected List<String> getGlossaryEntry(String token) {
 		return _glossary.get(token);
 	}
 

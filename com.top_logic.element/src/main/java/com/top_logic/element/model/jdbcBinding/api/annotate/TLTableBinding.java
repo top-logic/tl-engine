@@ -5,6 +5,7 @@ package com.top_logic.element.model.jdbcBinding.api.annotate;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -34,6 +35,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
 	TLTableBinding.ROW_READER,
 	TLTableBinding.ROW_WRITER,
 })
+@InApp
 @TagName("table-binding")
 public interface TLTableBinding extends TLTypeAnnotation {
 

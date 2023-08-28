@@ -9,10 +9,13 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
@@ -22,8 +25,11 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.format.RegExpValueProvider;
 import com.top_logic.basic.db.model.DBColumn;
 import com.top_logic.basic.db.model.DBColumnRef;
 import com.top_logic.basic.db.model.DBForeignKey;
@@ -32,6 +38,7 @@ import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBTable;
 import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.generate.CodeUtil;
+import com.top_logic.basic.generate.TokenSplitter;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
@@ -83,6 +90,31 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 		@Name("poolName")
 		String getPoolName();
 
+		/**
+		 * Regular expression matching table names that should not be imported.
+		 */
+		@Name("excludeTablePattern")
+		@Format(RegExpValueProvider.class)
+		Pattern getExcludeTablePattern();
+
+		/**
+		 * Regular expression matching column names that should not be imported.
+		 */
+		@Name("excludeColumnPattern")
+		@Format(RegExpValueProvider.class)
+		Pattern getExcludeColumnPattern();
+
+		/**
+		 * Whether primary key columns should receive an annotation that hides them from the UI by
+		 * default.
+		 */
+		@BooleanDefault(true)
+		boolean getHidePrimaryKeyColumns();
+
+		/**
+		 * Tab separated values defining tokens and their replacement during import.
+		 */
+		String getGlossary();
 	}
 
 	/**
@@ -138,7 +170,7 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 	}
 
 	private TLModel synthesizeModel() {
-		String poolName = ((Config) getConfig()).getPoolName();
+		String poolName = config().getPoolName();
 		ConnectionPool pool = ConnectionPoolRegistry.getConnectionPool(poolName);
 		PooledConnection connection = pool.borrowReadConnection();
 		try {
@@ -148,21 +180,26 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 
 			TLModule module = model.addModule(model, schema.getName());
 
-			for (DBTable table : schema.getTables()) {
+			Collection<DBTable> tables = getClassTables(schema);
+
+			for (DBTable table : tables) {
 				createClass(model, module, table);
 			}
 
-			for (DBTable table : schema.getTables()) {
+			boolean hidePrimaryKeyColumns = config().getHidePrimaryKeyColumns();
+			for (DBTable table : tables) {
 				String tableName = table.getName();
 				TLClass type = (TLClass) module.getType(tableName);
 
 				DBPrimary primaryKey = table.getPrimaryKey();
-				if (primaryKey != null) {
-					// Hide (probably technical) primary key columns.
-					for (DBColumnRef pkColumn : primaryKey.getColumnRefs()) {
-						String pkColumnName = pkColumn.getName();
-						TLStructuredTypePart keyProperty = type.getPart(pkColumnName);
-						keyProperty.setAnnotation(DisplayAnnotations.newVisibility(Visibility.HIDDEN));
+				if (hidePrimaryKeyColumns) {
+					if (primaryKey != null) {
+						// Hide (probably technical) primary key columns.
+						for (DBColumnRef pkColumn : primaryKey.getColumnRefs()) {
+							String pkColumnName = pkColumn.getName();
+							TLStructuredTypePart keyProperty = type.getPart(pkColumnName);
+							keyProperty.setAnnotation(DisplayAnnotations.newVisibility(Visibility.HIDDEN));
+						}
 					}
 				}
 
@@ -196,15 +233,7 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 				}
 			}
 
-			for (TLType type : module.getTypes()) {
-				if (type.getModelKind() == ModelKind.CLASS) {
-					type.setName(CodeUtil.toCamelCaseFromAllUpperCase(type.getName()));
-
-					for (TLStructuredTypePart part : ((TLStructuredType) type).getLocalParts()) {
-						part.setName(CodeUtil.toLowerCaseStart(CodeUtil.toCamelCaseFromAllUpperCase(part.getName())));
-					}
-				}
-			}
+			fixModelNames(module);
 
 			return model;
 		} catch (SQLException ex) {
@@ -212,6 +241,70 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 		} finally {
 			pool.releaseReadConnection(connection);
 		}
+	}
+
+	private void fixModelNames(TLModule module) {
+		TokenSplitter tokenSplitter = new TokenSplitter(readGlossary());
+
+		Map<String, Integer> typeClashes = new HashMap<>();
+		for (TLType type : module.getTypes()) {
+			if (type.getModelKind() == ModelKind.CLASS) {
+				type.setName(makeUnique(typeClashes, modelName(tokenSplitter, type.getName())));
+
+				Map<String, Integer> propertyClashes = new HashMap<>();
+				for (TLStructuredTypePart part : ((TLStructuredType) type).getLocalParts()) {
+					part.setName(
+						CodeUtil.toLowerCaseStart(
+							makeUnique(propertyClashes, modelName(tokenSplitter, part.getName()))));
+				}
+			}
+		}
+	}
+
+	private String makeUnique(Map<String, Integer> clashes, String newName) {
+		Integer clash = clashes.put(newName, Integer.valueOf(1));
+		if (clash != null) {
+			int nextId = clash.intValue() + 1;
+			newName = newName + nextId;
+			clashes.put(newName, Integer.valueOf(nextId));
+		}
+		return newName;
+	}
+
+	private Map<String, String> readGlossary() {
+		String contents = config().getGlossary();
+
+		Map<String, String> glossary = new HashMap<>();
+		for (String line : contents.split("\\r?\\n")) {
+			String trimmedLine = line.trim();
+			String[] tokens = trimmedLine.split("\\t");
+			if (tokens.length == 0) {
+				continue;
+			}
+			String token = tokens[0];
+			if (token.isEmpty()) {
+				continue;
+			}
+			String replacement;
+			if (tokens.length < 2) {
+				replacement = token;
+			} else {
+				replacement = tokens[1];
+			}
+			glossary.put(token, replacement);
+		}
+		return glossary;
+	}
+
+	private String modelName(TokenSplitter tokenSplitter, String dbName) {
+		StringBuffer result = new StringBuffer();
+		for (String part : CodeUtil.simpleNameParts(dbName)) {
+			for (String subpart : tokenSplitter.split(part)) {
+				result.append(CodeUtil.toUpperCaseStart(subpart.toLowerCase()));
+			}
+		}
+		
+		return result.toString();
 	}
 
 	private List<String> names(List<DBColumnRef> refs) {
@@ -255,7 +348,9 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 		}
 		type.setAnnotation(tableBinding);
 
-		for (DBColumn column : table.getColumns()) {
+		List<DBColumn> columns = getPropertyColumns(table);
+
+		for (DBColumn column : columns) {
 			String columnName = column.getName();
 			if (fkColumns.contains(columnName)) {
 				// Will result in a reference later on.
@@ -271,6 +366,30 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 			columnBinding.setName(columnName);
 			property.setAnnotation(columnBinding);
 		}
+	}
+
+	private Collection<DBTable> getClassTables(DBSchema schema) {
+		Pattern excludeTablePattern = config().getExcludeTablePattern();
+		Collection<DBTable> allTables = schema.getTables();
+		if (excludeTablePattern == null) {
+			return allTables;
+		}
+		return allTables.stream()
+			.filter(t -> !excludeTablePattern.matcher(t.getDBName()).matches()).collect(Collectors.toList());
+	}
+
+	private List<DBColumn> getPropertyColumns(DBTable table) {
+		Pattern excludeColumnPattern = config().getExcludeColumnPattern();
+		List<DBColumn> allColumns = table.getColumns();
+		if (excludeColumnPattern == null) {
+			return allColumns;
+		}
+		return allColumns.stream().filter(c -> !excludeColumnPattern.matcher(c.getDBName()).matches())
+			.collect(Collectors.toList());
+	}
+
+	private Config config() {
+		return (Config) getConfig();
 	}
 
 	private TLType columnType(TLModel model, DBColumn column) {

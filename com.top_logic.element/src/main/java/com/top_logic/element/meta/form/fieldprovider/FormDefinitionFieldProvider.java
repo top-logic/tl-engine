@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.listener.EventType.Bubble;
-import com.top_logic.element.layout.formeditor.ClearFormCommandModel;
+import com.top_logic.element.layout.formeditor.ClearFormCommand;
 import com.top_logic.element.layout.formeditor.DiscardChangesCommandModel;
 import com.top_logic.element.layout.formeditor.FormDefinitionTemplate;
 import com.top_logic.element.layout.formeditor.GUIEditorDialog;
@@ -112,7 +112,7 @@ public abstract class FormDefinitionFieldProvider extends AbstractFieldProvider 
 			}
 
 			private CommandModel newClearFormCommand(FormDefinition formDefintionGui) {
-				return new ClearFormCommandModel(formDefintionGui);
+				return ClearFormCommand.newClearFormCommandModel(formDefintionGui);
 			}
 		};
 		// setting of a FormDefinition is recorded as block

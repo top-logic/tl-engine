@@ -29,8 +29,6 @@ public class DiscardChangesCommandModel extends AbstractCommandModel {
 
 	private FormDefinition _tmp;
 
-	private static final String LABEL = Resources.getInstance().getString(I18NConstants.DISCARD_CHANGES);
-
 	/**
 	 * 
 	 * Creates a {@link DiscardChangesCommandModel}.
@@ -44,7 +42,7 @@ public class DiscardChangesCommandModel extends AbstractCommandModel {
 		_origin = origin;
 		_tmp = tmp;
 
-		setLabel(LABEL);
+		setLabel(Resources.getInstance().getString(I18NConstants.DISCARD_CHANGES));
 		setImage(Icons.DISCARD_CHANGES);
 		setNotExecutableImage(Icons.DISCARD_CHANGES_DISABLED);
 	}

@@ -51,7 +51,6 @@ public class JMSClient implements Closeable {
 
 		// Create JMS objects
 		_context = _cf.createContext();
-		System.out.println(config.getType());
 		if (config.getType() == Type.TOPIC) {
 			_destination = getContext().createTopic(config.getDestName());
 		} else {

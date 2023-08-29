@@ -14,12 +14,12 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 
 /**
- * {@link TLAttributeAnnotation} for a {@link TLReference} that identifies the target objects by the
+ * {@link TLAttributeAnnotation} for a {@link TLReference} that identifies the target object by the
  * values in the given columns.
  * 
  * <p>
  * The target object is found by comparing the values in the given columns with the values of the
- * {@link TLTableBinding#getPrimaryKey() primary key} properties of the target table.
+ * {@link TLTableBinding#getPrimaryKey() primary key} columns of the target table.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -40,21 +40,5 @@ public interface TLForeignKeyBinding extends TLAttributeAnnotation {
 	 * @see #getColumns()
 	 */
 	void setColumns(List<String> value);
-
-	/**
-	 * Whether the {@link #getColumns()} are defined on the target table and point back to the
-	 * primary key of the annotated type.
-	 * 
-	 * <p>
-	 * A backwards foreign key binding produces a reference with potentially multiple values, where
-	 * the target objects can only be referenced by a single source object.
-	 * </p>
-	 */
-	boolean isBackwards();
-
-	/**
-	 * @see #isBackwards()
-	 */
-	void setBackwards(boolean value);
 
 }

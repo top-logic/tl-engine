@@ -1,8 +1,11 @@
 <h2>Syntax</h2>
-<pre>	<code>myFunction(a, b, c)</code>
+<pre>	<code>jmsSend($destination, $message)</code>
 </pre>
 <h2>Description</h2>
-<p>A description of the function jms</p>
+<p>This function is used to send messages to a queue or a topic. The Java internal <strong>JMS API </strong>(Java Message Service / Jakarta Messaging) is used for this purpose, which allows messages to be sent to a server and retrieved synchronously or asynchronously from the server.</p>
+<p>In order for a message to be sent, a target configuration must be created in the JMS service. The queue manager defined in the configuration must be reachable at the specified address in order to succeed in sending, otherwise an error is issued. IBM MQ can be used as the server here. This must have been created and started separately.</p>
+<p>All target configurations can be viewed, created, edited and deleted under <strong>Administration &gt; Development &gt; Service Editor &gt; JMS Service </strong>, provided the user has the appropriate permissions.</p>
+<p></p>
 <h2>Parameters</h2>
 <table class="tlDocTable">
  <thead>
@@ -16,35 +19,55 @@
  </thead>
  <tbody>
   <tr>
-   <td>Parameter 1</td>
-   <td>Number/string/truth value/object/quantity/function</td>
-   <td>Parameter description</td>
-   <td>yes/no</td>
-   <td></td>
+   <td>destination</td>
+   <td>Character string (target configuration)</td>
+   <td>Name of a target configuration in the JMS service</td>
+   <td>yes</td>
+   <td>-</td>
   </tr>
   <tr>
-   <td>Parameter 2</td>
-   <td>Number/string/truth value/subject/quantity/function</td>
-   <td>Description of the parameter</td>
-   <td>yes/no</td>
-   <td></td>
+   <td>message</td>
+   <td>number/string/binary data/XML</td>
+   <td>message to be sent to a queue or topic</td>
+   <td>yes</td>
+   <td>-</td>
   </tr>
  </tbody>
 </table>
-<h2>Return value</h2>
-<p><span style="color:#3498db"><strong>Type:</strong></span> Number/string/truth value/subject object/quantity.</p>
-<p>A description of what is returned.</p>
+<h2>return value</h2>
+<p>null - since no return is made when sending a message.</p>
 <h2>Examples</h2>
-<h3>Example 1</h3>
-<pre>	<code>myFunction(a, b, c);
+<h3>String message (Topic)</h3>
+<pre>	<code>jmsSend("Topic1", "Hello Subscribers!");
 </code>
 </pre>
-<p><span style="color:#3498db"><strong>Output:</strong></span> Hello world!</p>
-<p>If necessary here is an explanation of the example</p>
-<h3>Example 2</h3>
-<pre>	<code>myFunction(a, b, c);
+<p><span style="color:#3498db"></span><strong><span style="color:#3498db">New message</span> </strong>(in the topic of the queue manager)<span style="color:#3498db"><strong>:</strong></span> <code class="hljs inlineCode">Hello Subscribers!</code></p>
+<p>This expression sends the message <code class="hljs inlineCode">Hello Subscribers!</code> to the topic set in the configuration with the name "Topic1".</p>
+<p></p>
+<h3>String Message (Queue)</h3>
+<pre>	<code>jmsSend("Queue1", "Hello World!");
 </code>
 </pre>
-<p><span style="color:#3498db"><strong>Output:</strong></span> Hello world!</p>
-<p>If necessary, here is an explanation of the example</p>
+<p><strong>New message </strong>(in the queue of the queue manager<strong>)</strong>: <code class="hljs inlineCode">Hello world!</code></p>
+<p>This expression sends the message <code class="hljs inlineCode">Hello World!</code> to the queue specified in the configuration with the name "Queue1".</p>
+<p></p>
+<h3>XML Message (Queue)</h3>
+<pre>	<code>jmsSend("Queue1", {{{&lt;div&gt;Hello World!&lt;/div&gt;}}});
+</code>
+</pre>
+<p><strong><span style="color:#3498db">New message</span> </strong>(in the queue of the queue manager).<span style="color:#3498db"><strong>:</strong></span> <code class="hljs inlineCode">&lt;div&gt;Hello World!&lt;/div&gt;</code></p>
+<p>This expression sends the XML expression <code class="hljs inlineCode">&lt;div&gt;Hello World!&lt;/div&gt;</code> to the queue specified in the configuration with the name "Queue1".</p>
+<p></p>
+<h3>Binary data message (queue)</h3>
+<pre>	<code>jmsSend("Queue1", binary(
+    name: "hello.txt",
+    data: "Hello Wörld!",
+    contentType: "text/plain",
+    encoding: "iso-8859-1"
+));
+</code>
+</pre>
+<p><strong><span style="color:#3498db">New message</span> </strong>(in the queue of the queue manager).<span style="color:#3498db"><strong>:</strong></span> <code class="hljs inlineCode">Binärnachricht</code></p>
+<p>This expression sends the binary data <code class="hljs inlineCode">binary(name: "hello.txt", data: "Hello Wörld!", contentType: "text/plain", encoding: "iso-8859-1")</code> to the queue specified in the configuration with the name "Queue1".</p>
+<p></p>
 <p></p>

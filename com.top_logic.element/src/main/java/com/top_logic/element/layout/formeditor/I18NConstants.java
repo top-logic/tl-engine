@@ -21,7 +21,15 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix FORM_EDITOR_DIALOG;
 
+	/**
+	 * @en Delete
+	 */
 	public static ResKey DELETE_FORM;
+
+	/**
+	 * @en The form has no content.
+	 */
+	public static ResKey DELETE_FORM_DISABLED;
 
 	public static ResKey DISCARD_CHANGES;
 

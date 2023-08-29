@@ -136,7 +136,7 @@ public class FormDefinitionEditor implements Editor {
 			}
 
 			private CommandModel newClearFormCommand(FormDefinition formDefintionGui) {
-				return new ClearFormCommandModel(formDefintionGui);
+				return ClearFormCommand.newClearFormCommandModel(formDefintionGui);
 			}
 		};
 		// setting of a FormDefinition is recorded as block

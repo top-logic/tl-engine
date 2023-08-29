@@ -6061,7 +6061,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .rf_columnsLayout > .rf_line,
 .cMediaQuery.dflSize0 .rf_columnsLayout > *:not(.rf_line),
-.cMediaQuery:is(.dflSize0, .dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_cell .rf_columnsLayout > *:not(.rf_line),
+.cMediaQuery:is(.dflSize0, .dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) *:not(.rf_line) > .rf_cell .rf_columnsLayout > *:not(.rf_line),
 .cMediaQuery:is(.dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols1 > *:not(.rf_line) {
 	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
   	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));

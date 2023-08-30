@@ -1182,28 +1182,6 @@ div.cal_zoom_inAnimation {
 	align-items: stretch;
 }
 
-.cIntegerInput.num input {
-	color: var(--text-primary);
-	background: var(--field);
-	border: none;
-	padding: 0 var(--spacing-03);
-	height: 2.5rem;
-}
-
-.cIntegerInput.num.disabled input {
-	color: var(--text-disabled);
-}
-
-.cIntegerInput.num input:focus {
-	outline: none;
-	border: none;
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
-}
-
-.cIntegerInput.num.error input {
-	box-shadow: inset 0px 0px 0px 1px var(--support-danger),inset 0px 0px 0px 2px var(--focus-inset);
-}
-
 .cError .error i {
 	color: var(--support-danger);
 }
@@ -1287,6 +1265,7 @@ span.cIconSelect .input-image.cannot-edit i {
 
 .cTextInput input,
 .cTextInput textarea,
+.cIntegerInput.num input,
 .cExpandableTextInput input,
 .cBlockTextInput input,
 .cPopupSelect input,
@@ -1297,6 +1276,8 @@ span.cIconSelect .input-image.cannot-edit i {
 	border: none;
 	padding: 0 var(--spacing-03);
 	height: 2.5rem;
+	box-sizing: border-box;
+	max-width: 100%;
 }
 
 .cTextInput textarea {
@@ -1334,8 +1315,16 @@ span.cIconSelect .input-image.cannot-edit i {
 	outline: none;
 }
 
+.cIntegerInput.num input:focus,
+.cIntegerInput.num.error input:focus {
+	outline: none;
+	border: none;
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
 .cTextInput.error input,
 .cTextInput.error textarea,
+.cIntegerInput.num.error input,
 .cExpandableTextInput.error input,
 .cBlockTextInput.error input,
 .cPopupSelect.error input,
@@ -1347,6 +1336,7 @@ span.cIconSelect .input-image.cannot-edit i {
 
 .cTextInput.disabled input,
 .cTextInput.disabled textarea,
+.cIntegerInput.num.disabled input,
 .cExpandableTextInput.disabled input,
 .cBlockTextInput.disabled input,
 .cPopupSelect.disabled input,
@@ -1372,6 +1362,8 @@ select:not([multiple="multiple"]) {
 	padding-left: var(--spacing-03);
 	padding-right: var(--spacing-06);
 	height: 2.5rem;
+	max-width: 100%;
+	box-sizing: border-box;
 	background-image: url("../themes/core/chevron-down.svg");
 	background-repeat: no-repeat;
 	background-position: right calc(1rem + 1px) center; /* Icon in der Mitte rechts positionieren mit Abstand zum rechten Rand */	
@@ -2000,7 +1992,7 @@ div.sizeContainer, div.imageContainer {
 	display: inline-block;
 	cursor: pointer;
 	color: var(--text-on-color);
-	padding: var(--spacing-02) 0 var(--spacing-02) var(--spacing-03);
+	padding-left: var(--spacing-02);
 	border-radius: .25rem;
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 1px var(--button-primary);

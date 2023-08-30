@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import com.top_logic.element.model.jdbcBinding.api.RowReader;
 import com.top_logic.element.model.jdbcBinding.api.TypeSelector;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLColumnBinding;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLForeignKeyBinding;
+import com.top_logic.element.model.jdbcBinding.api.annotate.TLLinkTableBinding;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLReverseForeignKeyBinding;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLTableBinding;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -156,6 +158,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		Set<String> columns = new LinkedHashSet<>();
 		Map<Object, TLObject> typeIndex = context.typeIndex(tableName);
 		List<RowReader> readers = new ArrayList<>();
+		List<TypeLoader> subLoaders = new ArrayList<>();
 		for (TLStructuredTypePart property : ((TLClass) type).getAllParts()) {
 			TLColumnBinding columnBinding = property.getAnnotation(TLColumnBinding.class);
 			if (columnBinding != null) {
@@ -178,6 +181,63 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 					for (String keyColumnName : keyColumns) {
 						columns.add(keyColumnName);
 					}
+				}
+			}
+			
+			TLLinkTableBinding linkBinding = property.getAnnotation(TLLinkTableBinding.class);
+			if (linkBinding != null) {
+				TLReference reference = (TLReference) property;
+
+				List<String> sourceKey = linkBinding.getSourceColumns();
+				List<String> destinationKey = linkBinding.getDestinationColumns();
+				
+				List<SQLColumnDefinition> linkColumns = new ArrayList<>();
+				linkColumns.addAll(columnDefs(sourceKey));
+				linkColumns.addAll(columnDefs(destinationKey));
+				String orderColumn = linkBinding.getOrderColumn();
+				boolean isOrdered = orderColumn != null && reference.isOrdered();
+				if (isOrdered) {
+					linkColumns.add(columnDef(orderColumn));
+				}
+				SQLSelect select = select(linkColumns, table(linkBinding.getLinkTable()));
+				CompiledStatement linkRows = query(select).toSql(context.getSqlDialect());
+				
+				TLType targetType = property.getType();
+				TLTableBinding targetBinding = targetType.getAnnotation(TLTableBinding.class);
+				if (targetBinding == null) {
+					// TODO: Warning.
+				} else {
+					String destTableName = targetBinding.getName();
+					Map<Object, TLObject> destIndex = context.typeIndex(destTableName);
+					subLoaders.add((PooledConnection connection) -> {
+						try (ResultSet links = linkRows.executeQuery(connection)) {
+							ImportRow linkCursor = cursor(links);
+							while (links.next()) {
+								Object sourceId = readId(linkCursor, sourceKey);
+								Object destId = readId(linkCursor, destinationKey);
+
+								if (isOrdered) {
+									Object orderValue = linkCursor.getValue(orderColumn);
+									context.reference(tableName, sourceId, reference).addOrderedDefered(destIndex,
+										destId, orderValue);
+								} else {
+									context.addResolver(() -> {
+										TLObject source = typeIndex.get(sourceId);
+										if (source == null) {
+											// TODO: Warning.
+										} else {
+											TLObject dest = destIndex.get(destId);
+											if (dest == null) {
+												// TODO: Warning.
+											} else {
+												source.tAdd(reference, dest);
+											}
+										}
+									});
+								}
+							}
+						}
+					});
 				}
 			}
 		}
@@ -245,9 +305,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 			readers.add(rowReader);
 		}
 
-		List<SQLColumnDefinition> selectColumns =
-			columns.stream().map(SQLFactory::columnDef).collect(Collectors.toList());
-		SQLSelect select = select(selectColumns, table(tableName));
+		SQLSelect select = select(columnDefs(columns), table(tableName));
 		CompiledStatement allRows = query(select).toSql(context.getSqlDialect());
 		TLFactory factory = context.getFactory();
 
@@ -272,7 +330,15 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 					}
 				}
 			}
+
+			for (TypeLoader subLoader : subLoaders) {
+				subLoader.load(connection);
+			}
 		};
+	}
+
+	private List<SQLColumnDefinition> columnDefs(Collection<String> columns) {
+		return columns.stream().map(SQLFactory::columnDef).collect(Collectors.toList());
 	}
 
 	private TypeSelector typeSelector(TLClass type, TLTableBinding tableBinding) {

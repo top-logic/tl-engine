@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <settings>
-	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_WARNING"
-		value="css:bi bi-x-octagon-fill"
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_QUESTION"
+		value="css:bi bi-info-square"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_INFORMATION"
 		value="css:bi bi-info-circle-fill"
 	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_WARNING"
+		value="css:bi bi-exclamation-triangle-fill"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_ERROR"
+		value="css:bi bi-x-octagon-fill"
+	/>
 	<icon name="layouts.demo.tlHome"
 		value="css:bi bi-house-fill"
-	/>
-	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_QUESTION"
-		value="css:bi bi-info-square"
 	/>
 </settings>

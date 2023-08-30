@@ -20,6 +20,9 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.util.model.ModelService;
 
@@ -45,6 +48,8 @@ public class ImportContext {
 
 	private List<Runnable> _resolvers;
 
+	private Map<TLType, List<TLStructuredTypePart>> _referers = new HashMap<>();
+
 	/**
 	 * Creates an {@link ImportContext}.
 	 */
@@ -59,6 +64,14 @@ public class ImportContext {
 		_objectByTableAndId = new HashMap<>();
 		_referenceByTableReferenceAndId = new HashMap<>();
 		_resolvers = new ArrayList<>();
+
+		for (TLType type : module.getTypes()) {
+			if (type instanceof TLStructuredType) {
+				for (TLStructuredTypePart part : ((TLStructuredType) type).getLocalParts()) {
+					_referers.computeIfAbsent(part.getType(), x -> new ArrayList<>()).add(part);
+				}
+			}
+		}
 	}
 
 	/**
@@ -173,9 +186,7 @@ public class ImportContext {
 			public int compareTo(RefEntry o) {
 				return Objects.compare(_orderValue, o._orderValue, ComparableComparator.INSTANCE);
 			}
-
 		}
-
 	}
 
 	public ReferencePromise reference(String table, Object idRef, TLReference reference) {
@@ -183,6 +194,13 @@ public class ImportContext {
 			.computeIfAbsent(table, x -> new HashMap<>())
 			.computeIfAbsent(idRef, x -> new HashMap<>())
 			.computeIfAbsent(reference, x -> new ReferencePromise());
+	}
+
+	/**
+	 * TODO
+	 */
+	public List<TLStructuredTypePart> referers(TLType type) {
+		return _referers.getOrDefault(type, Collections.emptyList());
 	}
 
 }

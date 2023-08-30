@@ -157,10 +157,17 @@ public class ImportContext {
 		private final List<RefEntry> _entries = new ArrayList<>();
 
 		/**
+		 * Adds the ID of a value object with an order value to the reference.
+		 */
+		public void addOrderedDefered(Map<Object, TLObject> index, Object destId, Object orderValue) {
+			_entries.add(new DeferredRefEntry(index, destId, orderValue));
+		}
+
+		/**
 		 * Adds a value object with an order value to the reference.
 		 */
 		public void addOrdered(TLObject target, Object orderValue) {
-			_entries.add(new RefEntry(target, orderValue));
+			_entries.add(new DirectRefEntry(target, orderValue));
 		}
 
 		/**
@@ -171,31 +178,65 @@ public class ImportContext {
 			source.tUpdate(reference, _entries.stream().map(e -> e.getTarget()).collect(Collectors.toList()));
 		}
 
-		private static class RefEntry implements Comparable<RefEntry> {
-
-			private final TLObject _target;
+		private static abstract class RefEntry implements Comparable<RefEntry> {
+			/**
+			 * Creates a {@link RefEntry}.
+			 */
+			public RefEntry(Object orderValue) {
+				_orderValue = orderValue;
+			}
 
 			private final Object _orderValue;
 
 			/**
-			 * Creates a {@link RefEntry}.
-			 */
-			public RefEntry(TLObject target, Object orderValue) {
-				_target = target;
-				_orderValue = orderValue;
-			}
-
-			/**
 			 * The target object to store.
 			 */
-			public TLObject getTarget() {
-				return _target;
-			}
+			public abstract TLObject getTarget();
 
 			@Override
 			public int compareTo(RefEntry o) {
 				return Objects.compare(_orderValue, o._orderValue, ComparableComparator.INSTANCE);
 			}
+		}
+
+		private static class DirectRefEntry extends RefEntry {
+
+			private final TLObject _target;
+
+			/**
+			 * Creates a {@link RefEntry}.
+			 */
+			public DirectRefEntry(TLObject target, Object orderValue) {
+				super(orderValue);
+				_target = target;
+			}
+
+			@Override
+			public TLObject getTarget() {
+				return _target;
+			}
+		}
+
+		private static class DeferredRefEntry extends RefEntry {
+
+			private Map<Object, TLObject> _index;
+
+			private Object _targetId;
+
+			/**
+			 * Creates a {@link RefEntry}.
+			 */
+			public DeferredRefEntry(Map<Object, TLObject> index, Object targetId, Object orderValue) {
+				super(orderValue);
+				_index = index;
+				_targetId = targetId;
+			}
+
+			@Override
+			public TLObject getTarget() {
+				return _index.get(_targetId);
+			}
+
 		}
 	}
 

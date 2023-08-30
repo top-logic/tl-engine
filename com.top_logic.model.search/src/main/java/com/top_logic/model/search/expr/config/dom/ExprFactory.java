@@ -23,6 +23,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.html.AttributeChecker;
+import com.top_logic.basic.html.HTMLChecker;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.mig.html.HTMLConstants;
@@ -259,7 +260,7 @@ public class ExprFactory {
 		}
 		List<HtmlContent> safeContent = new ArrayList<>();
 		Stack<String> opened = new Stack<>();
-		SafeHTML safeHtml = SafeHTML.getInstance();
+		HTMLChecker safeHtml = SafeHTML.getInstance();
 		for (HtmlContent content : html.getContents()) {
 			try {
 				checkContent(safeHtml, opened, content, safeContent);
@@ -286,7 +287,7 @@ public class ExprFactory {
 		throw new TopLogicException(errorKeyWithLocation, ex).initSeverity(ErrorSeverity.WARNING);
 	}
 
-	private void checkContent(SafeHTML safeHtml, Stack<String> opened, HtmlContent content,
+	private void checkContent(HTMLChecker safeHtml, Stack<String> opened, HtmlContent content,
 			List<HtmlContent> safeContent) throws I18NException {
 		if (content instanceof StartTag) {
 			StartTag start = (StartTag) content;
@@ -361,7 +362,7 @@ public class ExprFactory {
 		return SafeHTML.TEXT_TLSSCRIPT_TYPE.equals(value);
 	}
 
-	private void checkAttribute(SafeHTML safeHtml, String tag, Attribute attribute) {
+	private void checkAttribute(HTMLChecker safeHtml, String tag, Attribute attribute) {
 		String attributeName = attribute.getName();
 
 		try {

@@ -1881,6 +1881,13 @@ span.bcc-option, .cChoice-option {
 /* ==================================== */
 /* ======    Color Chooser css    ===== */
 /* ==================================== */
+.ColorChooser {
+	height: 1.5rem;
+	width: 1.5rem;
+	padding: 0;
+	border: 1px solid var(--border-strong);
+	border-radius: .25rem;
+}
 
 span.cColorDisplay {
 	border-style: solid;
@@ -1972,6 +1979,174 @@ div.sizeContainer, div.imageContainer {
   top: 2px;
   right: 2px;
   bottom: 2px;
+}
+
+/* ==================================== */
+/* ======    Icon Chooser css     ===== */
+/* ==================================== */
+.cIconChooser .input-image {
+	height: 1.5rem;
+	width: 1.5rem;
+	padding: 0;
+	border: 1px solid var(--border-strong);
+	border-radius: .25rem;
+}
+
+.cIconChooser div.header .searchTextField input.is-input {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+	width: calc(96% - 67px);
+	padding-left: 23px;
+	height: 22px;
+}
+
+.cIconChooser div.header .expertTextField input.is-input {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+	width: calc(96% - 67px);
+	height: 22px;
+}
+
+.cIconChooser div.header a {
+	border: 0px;
+}
+
+.cIconChooser div.header .inputfield {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+}
+
+.cIconChooser div.header .resetButton,
+.cIconChooser div.header .okButton {
+	position: absolute;
+	bottom: 5px;
+	right: 35px;
+}
+
+.cIconChooser div.header .toggleExpertButton {
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
+}
+
+.cIconChooser .searchTextField .search {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	color: #DCDCDC;
+}
+
+.cIconChooser .fptBodyContent .displayedIcons {
+	position: relative;
+	display: inline-block;
+    margin-bottom: 5px;
+    margin-right: 5px;
+	width: 30px;
+	height: 30px;
+	border: 1px solid #7A7A7A;
+}
+
+.cIconChooser a,
+.cIconChooser .input-image {
+	display: table-cell;
+	text-align: center;	
+	vertical-align: middle;
+}
+
+.cIconChooser div.header .toggleExpertButton a,
+.cIconChooser div.header .resetButton a,
+.cIconChooser div.header .okButton a,
+.cIconChooser .fptBodyContent .displayedIcons a {
+	width: 30px;
+	height: 30px;
+}
+
+.cIconChooser .fptBodyContent input {
+    position: absolute;
+    top: 50%;
+    right: 50%;
+    transform: translate(50%,-50%);
+	max-width: 30px;
+	max-height: 30px;
+}
+
+.cIconChooser .fptBodyContent .displayedIcons {
+	background-color: var(--layer-accent);
+}
+
+.cIconChooser .fptBodyContent .displayedIcons.selected {
+	background-color: var(--layer-accent-selected);
+}
+
+.cIconChooser .fptBodyContent .displayedIcons:hover {
+	background-color: var(--layer-hover);
+}
+
+.cIconChooser i.fab, 
+.cIconChooser i.far,
+.cIconChooser i.fas,
+.cIconChooser i.tl-icon {
+    font-size: 1.5em;
+}
+
+.cIconChooser div.header {
+	position: absolute;
+	left: 0px; 
+	top: 0px; 
+	height: 42px;
+	width: 100%;
+}
+
+.cIconChooser div.fptBody {
+ 	position: absolute; 
+	left: 0px; 
+	right: 0px; 
+	bottom: 0px; 
+	top: 42px;
+	bottom: 0px; 
+}
+
+.cIconChooser div.fptBodyContent {
+	padding-top: 0px;
+}
+
+.cIconChooser .cannot-edit .is-input, 
+.cIconChooser .disabled .is-input {
+	display: inline-block;
+}
+
+.cIconChooser .input-image:hover {
+	background-color: var(--layer-hover);
+}
+
+.cIconChooser .input-image.disabled,
+.cIconChooser .input-image.disabled:hover {
+	background-color: var(--icon-disabled);
+}
+
+.cIconChooser .gray {
+	color: #AAAAAA;
+}
+
+.cIconChooser .preview i.fab, 
+.cIconChooser .preview i.far,
+.cIconChooser .preview i.fas {
+    font-size: 1.2em;
+}
+
+.cIconChooser, 
+.cIconChooser img {
+	display: inline-block;
+	min-height: 20px;
+	min-width: 20px;
+}
+
+.cIconChooser input.is-action {
+	margin: 0px;
 }
 
 /* ==================================== */
@@ -2088,5 +2263,15 @@ td.tl-table__cell .cDataItem li {
 
 .downloadControl input {
     background-color: var(--background);
+}
+
+a.input-image.tristate .bi-x-octagon-fill,
+a.input-image.tristate .bi-exclamation-triangle-fill {
+	color: var(--support-danger);
+}
+
+a.input-image.tristate .bi-info-circle-fill,
+a.input-image.tristate . bi bi-info-square{
+	color: var(--support-info);
 }
 

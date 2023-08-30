@@ -10,6 +10,7 @@ import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
@@ -22,8 +23,8 @@ import com.top_logic.model.annotate.TLAttributeAnnotation;
  */
 @DisplayOrder({
 	TLLinkTableBinding.LINK_TABLE,
-	TLLinkTableBinding.SOURCE_KEY,
-	TLLinkTableBinding.DESTINATION_KEY,
+	TLLinkTableBinding.SOURCE_COLUMNS,
+	TLLinkTableBinding.DESTINATION_COLUMNS,
 })
 @InApp
 @TagName("link-table-binding")
@@ -35,14 +36,14 @@ public interface TLLinkTableBinding extends TLAttributeAnnotation {
 	final String LINK_TABLE = "link-table";
 
 	/**
-	 * @see #getSourceKey()
+	 * @see #getSourceColumns()
 	 */
-	final String SOURCE_KEY = "source-key";
+	final String SOURCE_COLUMNS = "source-columns";
 
 	/**
-	 * @see #getDestinationKey()
+	 * @see #getDestinationColumns()
 	 */
-	final String DESTINATION_KEY = "destination-key";
+	final String DESTINATION_COLUMNS = "destination-columns";
 
 	/**
 	 * The name of the link table.
@@ -57,28 +58,40 @@ public interface TLLinkTableBinding extends TLAttributeAnnotation {
 	void setLinkTable(String value);
 
 	/**
-	 * Specifies the foreign key of the link table that references the source object defining the
-	 * annotated reference.
+	 * Specifies the foreign key columns of the link table that reference the source object defining
+	 * the annotated reference.
 	 */
-	@Name(SOURCE_KEY)
+	@Name(SOURCE_COLUMNS)
 	@Format(CommaSeparatedStrings.class)
-	List<String> getSourceKey();
+	List<String> getSourceColumns();
 
 	/**
-	 * @see #getSourceKey()
+	 * @see #getSourceColumns()
 	 */
-	void setSourceKey(List<String> value);
+	void setSourceColumns(List<String> value);
 
 	/**
-	 * Specifies the foreign key of the link table that references the values of the reference.
+	 * Specifies the foreign key columns of the link table that reference the values of the
+	 * reference.
 	 */
-	@Name(DESTINATION_KEY)
+	@Name(DESTINATION_COLUMNS)
 	@Format(CommaSeparatedStrings.class)
-	List<String> getDestinationKey();
+	List<String> getDestinationColumns();
 
 	/**
-	 * @see #getDestinationKey()
+	 * @see #getDestinationColumns()
 	 */
-	void setDestinationKey(List<String> value);
+	void setDestinationColumns(List<String> value);
+
+	/**
+	 * The optional order attribute to create an ordered reference.
+	 */
+	@Nullable
+	String getOrderColumn();
+
+	/**
+	 * @see #getOrderColumn()
+	 */
+	void setOrderColumn(String value);
 
 }

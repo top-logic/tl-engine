@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.format.MillisFormat;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.kafka.knowledge.service.KafkaExportImportConfiguration;
 import com.top_logic.knowledge.event.ChangeSet;
@@ -623,9 +624,14 @@ public class TypeFilterRewriter implements EventRewriter {
 	}
 
 	private Object mapValue(ObjectKey attributeId, Object value) {
-		String attributeName = _exportConfig.getAttributeName(attributeId);
-		ObjectKey attributeOwnerId = _exportConfig.getAttributeOwnerId(attributeId);
-		return mapValue(attributeOwnerId, attributeName, value);
+		try {
+			String attributeName = _exportConfig.getAttributeName(attributeId);
+			ObjectKey attributeOwnerId = _exportConfig.getAttributeOwnerId(attributeId);
+			return mapValue(attributeOwnerId, attributeName, value);
+		} catch (RuntimeException exception) {
+			String message = "Failed to map value of attribute " + attributeId + ". Value: " + Utils.debug(value);
+			throw new RuntimeException(message, exception);
+		}
 	}
 
 	/**
@@ -635,11 +641,17 @@ public class TypeFilterRewriter implements EventRewriter {
 	 * @return Is allowed to be null.
 	 */
 	private Object mapValue(ObjectKey ownerTypeId, String tlAttribute, Object value) {
-		Function<Object, ?> valueMapping = getValueMapping(ownerTypeId, tlAttribute);
-		if (valueMapping == null) {
-			return value;
+		try {
+			Function<Object, ?> valueMapping = getValueMapping(ownerTypeId, tlAttribute);
+			if (valueMapping == null) {
+				return value;
+			}
+			return valueMapping.apply(value);
+		} catch (RuntimeException exception) {
+			String message = "Failed to map value of attribute " + tlAttribute + " on type " + ownerTypeId + ". Value: "
+				+ Utils.debug(value);
+			throw new RuntimeException(message, exception);
 		}
-		return valueMapping.apply(value);
 	}
 
 	private Function<Object, ?> getValueMapping(ObjectKey ownerTypeId, String tlAttribute) {

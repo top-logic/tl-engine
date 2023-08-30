@@ -30,6 +30,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.shared.collection.map.MappedCollection;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.MOPrimitive;
@@ -636,21 +637,27 @@ public class TTypeRewriter extends ConfiguredRewritingEventVisitor<TTypeRewriter
 	}
 
 	private Object mapValue(String qualifiedOwnerTypeName, String tlAttribute, Object value) {
-		Function<Object, ?> valueMapping = getValueMapping(qualifiedOwnerTypeName, tlAttribute);
-		if (valueMapping == null) {
-			return value;
+		try {
+			Function<Object, ?> valueMapping = getValueMapping(qualifiedOwnerTypeName, tlAttribute);
+			if (valueMapping == null) {
+				return value;
+			}
+			if (value instanceof ExtReference) {
+				logError("It is not supported to map an ExtReference."
+					+ "Value mappings are used to convert a value in a different form"
+					+ " that contains the necessary data to reconstruct it."
+					+ " But ExtReferences don't contain any data."
+					+ " Therefore, it does not make sense to map an ExtReference."
+					+ " Type: " + qualifiedOwnerTypeName + ". Attribute: " + tlAttribute + ". Value: " + value);
+				/* Don't break the transmission, just drop the value. */
+				return null;
+			}
+			return valueMapping.apply(value);
+		} catch (RuntimeException exception) {
+			String message = "Failed to map value of attribute " + tlAttribute + " on type " + qualifiedOwnerTypeName
+				+ ". Value: " + Utils.debug(value);
+			throw new RuntimeException(message, exception);
 		}
-		if (value instanceof ExtReference) {
-			logError("It is not supported to map an ExtReference."
-				+ "Value mappings are used to convert a value in a different form"
-				+ " that contains the necessary data to reconstruct it."
-				+ " But ExtReferences don't contain any data."
-				+ " Therefore, it does not make sense to map an ExtReference."
-				+ " Type: " + qualifiedOwnerTypeName + ". Attribute: " + tlAttribute + ". Value: " + value);
-			/* Don't break the transmission, just drop the value. */
-			return null;
-		}
-		return valueMapping.apply(value);
 	}
 
 	private Function<Object, ?> getValueMapping(String qualifiedOwnerTypeName, String tlAttribute) {

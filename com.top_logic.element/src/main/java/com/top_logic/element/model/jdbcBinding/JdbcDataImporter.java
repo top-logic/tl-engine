@@ -49,7 +49,6 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.factory.TLFactory;
-import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelPartRef.ModuleRefValueProvider;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -181,58 +180,62 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 					}
 				}
 			}
+		}
 
-			// All references with the currently imported type as target type.
-			for (TLObject referenceObject : type.tReferers(TlModelFactory.getTypeTLTypePartAttr())) {
-				if (referenceObject instanceof TLReference) {
-					TLReference reference = (TLReference) referenceObject;
-					TLReverseForeignKeyBinding reverseForeignKeyBinding =
-						reference.getAnnotation(TLReverseForeignKeyBinding.class);
-					if (reverseForeignKeyBinding != null) {
-						TLStructuredTypePart sourceType = reference.getDefinition();
+		// All references with the currently imported type as target type.
+		for (TLObject referenceObject : context.referers(type)) {
+			if (referenceObject instanceof TLReference) {
+				TLReference reference = (TLReference) referenceObject;
+				TLReverseForeignKeyBinding reverseForeignKeyBinding =
+					reference.getAnnotation(TLReverseForeignKeyBinding.class);
+				if (reverseForeignKeyBinding != null) {
+					TLClass sourceType = reference.getOwner();
 
-						TLTableBinding sourceBinding = sourceType.getAnnotation(TLTableBinding.class);
-						if (sourceBinding == null) {
-							// TODO: Warning.
+					TLTableBinding sourceBinding = sourceType.getAnnotation(TLTableBinding.class);
+					if (sourceBinding == null) {
+						// TODO: Warning.
+					} else {
+						String sourceTableName = sourceBinding.getName();
+
+						List<String> targetColumns = reverseForeignKeyBinding.getTargetColumns();
+						String orderColumn = reverseForeignKeyBinding.getOrderColumn();
+
+						boolean multiple = reference.isMultiple();
+
+						columns.addAll(targetColumns);
+						if (multiple && reference.isOrdered() && orderColumn != null) {
+							columns.add(orderColumn);
+
+							readers.add((TLObject target, ImportRow cursor) -> {
+								Object idRef = readId(cursor, targetColumns);
+								if (idRef != null) {
+									Object orderValue = cursor.getValue(orderColumn);
+									context.reference(sourceTableName, idRef, reference).addOrdered(target, orderValue);
+								}
+							});
 						} else {
-							String sourceTableName = sourceBinding.getName();
-
-							List<String> targetColumns = reverseForeignKeyBinding.getTargetColumns();
-							String orderColumn = reverseForeignKeyBinding.getOrderColumn();
-
 							Map<Object, TLObject> sourceIndex = context.typeIndex(sourceTableName);
-							boolean multiple = reference.isMultiple();
 
-							if (multiple && reference.isOrdered() && orderColumn != null) {
-								readers.add((TLObject target, ImportRow cursor) -> {
-									Object idRef = readId(cursor, targetColumns);
-									if (idRef != null) {
-										Object orderValue = cursor.getValue(orderColumn);
-										context.reference(tableName, idRef, reference).addOrdered(target, orderValue);
-									}
-								});
-							} else {
-								readers.add((TLObject target, ImportRow cursor) -> {
-									Object idRef = readId(cursor, targetColumns);
-									if (idRef != null) {
-										context.addResolver(() -> {
-											TLObject source = sourceIndex.get(idRef);
-											if (source == null) {
-												// TODO: Warning.
+							readers.add((TLObject target, ImportRow cursor) -> {
+								Object idRef = readId(cursor, targetColumns);
+								if (idRef != null) {
+									context.addResolver(() -> {
+										TLObject source = sourceIndex.get(idRef);
+										if (source == null) {
+											// TODO: Warning.
+										} else {
+											if (multiple) {
+												source.tAdd(reference, target);
 											} else {
-												if (multiple) {
-													source.tAdd(reference, target);
-												} else {
-													source.tUpdate(reference, target);
-												}
+												source.tUpdate(reference, target);
 											}
-										});
-									}
-								});
-							}
+										}
+									});
+								}
+							});
 						}
-
 					}
+
 				}
 			}
 		}

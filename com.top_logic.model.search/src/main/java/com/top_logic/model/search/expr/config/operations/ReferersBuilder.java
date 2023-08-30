@@ -8,11 +8,11 @@ package com.top_logic.model.search.expr.config.operations;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.search.expr.DynamicReferers;
+import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.Referers;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.Literal;
 
 /**
  * {@link MethodBuilder} creating {@link Referers} or {@link DynamicReferers} expressions.

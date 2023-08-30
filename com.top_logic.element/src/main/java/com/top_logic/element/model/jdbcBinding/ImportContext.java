@@ -134,29 +134,39 @@ public class ImportContext {
 		}
 	}
 
+	/**
+	 * Looks up the index mapping a primary key value to an imported object of the given table.
+	 */
 	public Map<Object, TLObject> typeIndex(String tableName) {
 		return _objectByTableAndId.computeIfAbsent(tableName, x -> new HashMap<>());
 	}
 
+	/**
+	 * Adds a resolver action running after all data has been read.
+	 */
 	public void addResolver(Runnable action) {
 		_resolvers.add(action);
 	}
 
+	/**
+	 * Collected data for synthesizing a multiple reference from target objects with foreign key
+	 * references.
+	 */
 	public static class ReferencePromise {
 
 		private final List<RefEntry> _entries = new ArrayList<>();
 
 		/**
-		 * TODO
+		 * Adds a value object with an order value to the reference.
 		 */
 		public void addOrdered(TLObject target, Object orderValue) {
 			_entries.add(new RefEntry(target, orderValue));
 		}
 
 		/**
-		 * TODO
+		 * Called after all data has been read to actually create the reference value.
 		 */
-		public void resolve(TLObject source, TLReference reference) {
+		protected void resolve(TLObject source, TLReference reference) {
 			Collections.sort(_entries);
 			source.tUpdate(reference, _entries.stream().map(e -> e.getTarget()).collect(Collectors.toList()));
 		}
@@ -189,6 +199,17 @@ public class ImportContext {
 		}
 	}
 
+	/**
+	 * Creates a reference value collector.
+	 *
+	 * @param table
+	 *        The table from where the objects are imported that have the reference.
+	 * @param idRef
+	 *        The primary key value of the object whose reference is built.
+	 * @param reference
+	 *        The reference that should be set.
+	 * @return A builder for a (multiple) reference value.
+	 */
 	public ReferencePromise reference(String table, Object idRef, TLReference reference) {
 		return _referenceByTableReferenceAndId
 			.computeIfAbsent(table, x -> new HashMap<>())
@@ -197,7 +218,7 @@ public class ImportContext {
 	}
 
 	/**
-	 * TODO
+	 * Resolve references that have the given type as target type.
 	 */
 	public List<TLStructuredTypePart> referers(TLType type) {
 		return _referers.getOrDefault(type, Collections.emptyList());

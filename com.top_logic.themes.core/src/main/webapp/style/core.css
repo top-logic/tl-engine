@@ -1502,8 +1502,8 @@ h5.card-title a {
 	align-items: center;
 }
 
-.quickSearch .cButton.quickSearchButton
-, .mtbGroup .cButton {
+.quickSearch .cButton.quickSearchButton,
+.mtbGroup .cButton {
 	background: transparent;
 	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
 }
@@ -1538,6 +1538,30 @@ h5.card-title a {
 .cButton a:active[alt="Administration"] {
 	background: var(--background-active);
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+/* ACTIVE STATES */
+.mtbGroup .cButton.cmdLinkActive,
+.cButton.cmdLinkActive [alt="Administration"] {
+	background: var(--layer-accent-active);
+	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+}
+
+.mtbGroup .cButton.cmdLinkActive a:hover,
+.cButton.cmdLinkActive a:hover[alt="Administration"]{
+	background: var(--layer-accent-active);
+	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+}
+
+.mtbGroup .cButton.cmdLinkActive a:focus,
+.cButton.cmdLinkActive a:focus[alt="Administration"]{
+	background: var(--layer-accent-active);
+	box-shadow: inset 0px 0px 0px 1px var(--focus-inset);
+}
+
+.mtbGroup .cButton.cmdLinkActive a,
+.cButton.cmdLinkActive a[alt="Administration"] {
+	color: var(--text-on-color);
 }
 
 

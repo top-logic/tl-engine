@@ -279,6 +279,15 @@ public class TestTLMetaModel extends TestPersistentModelPart {
 		assertConfigEquals(expectedAnnotations, annotationsByReflection);
 	}
 
+	public void testReferers() {
+		assertEquals(
+			"`test.com.top_logic.element.meta.TestTLMetaModel:A#ref` has `test.com.top_logic.element.meta.TestTLMetaModel:B` as target type",
+			_typeB, _reference.tValue(TlModelFactory.getTypeTLReferenceAttr()));
+		assertEquals(
+			"`test.com.top_logic.element.meta.TestTLMetaModel:A#ref` has `test.com.top_logic.element.meta.TestTLMetaModel:B` as target type",
+			set(_reference), _typeB.tReferers(TlModelFactory.getTypeTLReferenceAttr()));
+	}
+
 	/**
 	 * @return a cumulative {@link Test} for all Tests in {@link TestTLMetaModel}.
 	 */

@@ -214,7 +214,7 @@
 		value="/images/noPreviewImage.png"
 	/>
 	<icon name="ICONS_BUTTON_SAVE"
-		value="css:bi bi-save-fill"
+		value="css:bi bi-save2"
 	/>
 	<icon name="ICONS_BUTTON_SAVE_DISABLED"
 		expr="%ICONS_BUTTON_SAVE%"
@@ -232,7 +232,7 @@
 		expr="%ICONS_BUTTON_SAVE%"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_MODIFIED"
-		value="css:bi bi-save2"
+		value="css:bi bi-save-fill"
 	/>
 	<icon name="ICONS_CANCEL_BUTTON"
 		value="css:bi bi-x-lg"
@@ -586,6 +586,12 @@
 	/>
 	<icon name="com.top_logic.util.monitor.Icons.YELLOW"
 		value="/beacon/balls/Yellow.png"
+	/>
+	<icon name="ICONS_BUTTON_OK"
+		value="css: bi bi-check-lg"
+	/>
+	<icon name="ICONS_BUTTON_OK_DISABLED"
+		value="css: bi bi-check-lg"
 	/>
 	
 	<icon name="mime.image/bmp"

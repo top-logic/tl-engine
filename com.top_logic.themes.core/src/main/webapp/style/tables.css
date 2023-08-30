@@ -907,7 +907,9 @@ table td a.cDownload {
 table.tl-table td span.lFlexible,
 table.tl-table td span.lFlexibleCustom {
 	display: table-cell;
+	/*
 	position:relative;
+	*/
 	width: 100%;
 }
 
@@ -1487,3 +1489,36 @@ td.tl-table__cell--selected a {
 .i18nStringTable.tl-table {
 	border: none;
 }
+
+.bodyFix .cTextInput input, 
+.bodyFix .cTextInput textarea, 
+.bodyFix .cIntegerInput.num input, 
+.bodyFix .cExpandableTextInput input, 
+.bodyFix .cBlockTextInput input, 
+.bodyFix .cPopupSelect input, 
+.bodyFix .cDateInput input, 
+.bodyFix .cTimeInput input,
+.bodyFlex .cTextInput input, 
+.bodyFlex .cTextInput textarea, 
+.bodyFlex .cIntegerInput.num input, 
+.bodyFlex .cExpandableTextInput input, 
+.bodyFlex .cBlockTextInput input, 
+.bodyFlex .cPopupSelect input, 
+.bodyFlex .cDateInput input, 
+.bodyFlex .cTimeInput input {
+    height: 1.5rem;
+}
+
+.bodyFix .lFixedRight a:not(.lFlexible), 
+.bodyFix .lFixedRight span:not(.lFlexible), 
+.bodyFix .lFixedRight span span:not(.lFlexible), 
+.bodyFix .lFixedRight .fChoose:not(.lFlexible),
+.bodyFlex .lFixedRight a:not(.lFlexible), 
+.bodyFlex .lFixedRight span:not(.lFlexible), 
+.bodyFlex .lFixedRight span span:not(.lFlexible), 
+.bodyFlex .lFixedRight .fChoose:not(.lFlexible) {
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+

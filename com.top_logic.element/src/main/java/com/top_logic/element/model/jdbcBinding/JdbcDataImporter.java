@@ -9,7 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +29,6 @@ import com.top_logic.basic.db.sql.SQLFactory;
 import com.top_logic.basic.db.sql.SQLSelect;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
-import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.model.jdbcBinding.api.ColumnParser;
 import com.top_logic.element.model.jdbcBinding.api.ImportRow;
@@ -38,6 +36,7 @@ import com.top_logic.element.model.jdbcBinding.api.RowReader;
 import com.top_logic.element.model.jdbcBinding.api.TypeSelector;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLColumnBinding;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLForeignKeyBinding;
+import com.top_logic.element.model.jdbcBinding.api.annotate.TLReverseForeignKeyBinding;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLTableBinding;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -46,14 +45,15 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelPartRef.ModuleRefValueProvider;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.model.ModelService;
 
 /**
  * {@link AbstractCommandHandler} importing a model from an existing database.
@@ -112,7 +112,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 			DBSchema schema = DBSchemaUtils.extractSchema(pool);
 			TLModule module = config.getModule().resolveModule();
 
-			loadData(connection, schema, module);
+			loadData(new ImportContext(connection, schema, module));
 		} catch (SQLException ex) {
 			throw new RuntimeException(ex);
 		} finally {
@@ -120,40 +120,31 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		}
 	}
 
-	private void loadData(PooledConnection connection, DBSchema schema, TLModule module) throws SQLException {
-		DBHelper sqlDialect = connection.getSQLDialect();
-		TLFactory factory = ModelService.getInstance().getFactory();
-
-		Map<String, Map<Object, TLObject>> objectByTableAndId = new HashMap<>();
-		List<Runnable> resolvers = new ArrayList<>();
-
-		for (TLType type : module.getTypes()) {
+	private void loadData(ImportContext context) throws SQLException {
+		for (TLType type : context.getModule().getTypes()) {
 			TypeLoader loader =
-				typeLoader(schema, sqlDialect, factory, objectByTableAndId, resolvers, type);
+				typeLoader(context, type);
 
 			if (loader != null) {
-				loader.load(connection);
+				loader.load(context.getConnection());
 			}
 		}
 
-		for (Runnable resolver : resolvers) {
-			resolver.run();
-		}
+		context.resolve();
 	}
 
 	interface TypeLoader {
 		void load(PooledConnection connection) throws SQLException;
 	}
 
-	private TypeLoader typeLoader(DBSchema schema, DBHelper sqlDialect, TLFactory factory,
-			Map<String, Map<Object, TLObject>> objectByTableAndId, List<Runnable> resolvers, TLType type) {
+	private TypeLoader typeLoader(ImportContext context, TLType type) {
 		TLTableBinding tableBinding = type.getAnnotation(TLTableBinding.class);
 		if (tableBinding == null) {
 			return null;
 		}
 
 		String tableName = tableBinding.getName();
-		DBTable table = schema.getTable(tableName);
+		DBTable table = context.getSchema().getTable(tableName);
 		if (table == null) {
 			// TODO: Warning.
 			return null;
@@ -164,7 +155,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		List<String> primaryKey = tableBinding.getPrimaryKey();
 
 		Set<String> columns = new LinkedHashSet<>();
-		Map<Object, TLObject> typeIndex = typeIndex(objectByTableAndId, tableName);
+		Map<Object, TLObject> typeIndex = context.typeIndex(tableName);
 		List<RowReader> readers = new ArrayList<>();
 		for (TLStructuredTypePart property : ((TLClass) type).getAllParts()) {
 			TLColumnBinding columnBinding = property.getAnnotation(TLColumnBinding.class);
@@ -183,11 +174,64 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 					// TODO: Warning.
 				} else {
 					String targetTableName = targetBinding.getName();
-					readers.add(foreinKeyLoader(objectByTableAndId, resolvers, property, keyColumns,
-						targetTableName));
+					readers.add(foreinKeyLoader(context, property, keyColumns, targetTableName));
 
 					for (String keyColumnName : keyColumns) {
 						columns.add(keyColumnName);
+					}
+				}
+			}
+
+			// All references with the currently imported type as target type.
+			for (TLObject referenceObject : type.tReferers(TlModelFactory.getTypeTLTypePartAttr())) {
+				if (referenceObject instanceof TLReference) {
+					TLReference reference = (TLReference) referenceObject;
+					TLReverseForeignKeyBinding reverseForeignKeyBinding =
+						reference.getAnnotation(TLReverseForeignKeyBinding.class);
+					if (reverseForeignKeyBinding != null) {
+						TLStructuredTypePart sourceType = reference.getDefinition();
+
+						TLTableBinding sourceBinding = sourceType.getAnnotation(TLTableBinding.class);
+						if (sourceBinding == null) {
+							// TODO: Warning.
+						} else {
+							String sourceTableName = sourceBinding.getName();
+
+							List<String> targetColumns = reverseForeignKeyBinding.getTargetColumns();
+							String orderColumn = reverseForeignKeyBinding.getOrderColumn();
+
+							Map<Object, TLObject> sourceIndex = context.typeIndex(sourceTableName);
+							boolean multiple = reference.isMultiple();
+
+							if (multiple && reference.isOrdered() && orderColumn != null) {
+								readers.add((TLObject target, ImportRow cursor) -> {
+									Object idRef = readId(cursor, targetColumns);
+									if (idRef != null) {
+										Object orderValue = cursor.getValue(orderColumn);
+										context.reference(tableName, idRef, reference).addOrdered(target, orderValue);
+									}
+								});
+							} else {
+								readers.add((TLObject target, ImportRow cursor) -> {
+									Object idRef = readId(cursor, targetColumns);
+									if (idRef != null) {
+										context.addResolver(() -> {
+											TLObject source = sourceIndex.get(idRef);
+											if (source == null) {
+												// TODO: Warning.
+											} else {
+												if (multiple) {
+													source.tAdd(reference, target);
+												} else {
+													source.tUpdate(reference, target);
+												}
+											}
+										});
+									}
+								});
+							}
+						}
+
 					}
 				}
 			}
@@ -201,7 +245,8 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		List<SQLColumnDefinition> selectColumns =
 			columns.stream().map(SQLFactory::columnDef).collect(Collectors.toList());
 		SQLSelect select = select(selectColumns, table(tableName));
-		CompiledStatement allRows = query(select).toSql(sqlDialect);
+		CompiledStatement allRows = query(select).toSql(context.getSqlDialect());
+		TLFactory factory = context.getFactory();
 
 		return (PooledConnection connection) -> {
 			try (ResultSet resultSet = allRows.executeQuery(connection)) {
@@ -235,14 +280,14 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		return typeSelector;
 	}
 
-	private RowReader foreinKeyLoader(Map<String, Map<Object, TLObject>> objectByTableAndId,
-			List<Runnable> resolvers, TLStructuredTypePart property, List<String> keyColumns, String targetTableName) {
-		Map<Object, TLObject> targetIndex = typeIndex(objectByTableAndId, targetTableName);
+	private RowReader foreinKeyLoader(ImportContext context, TLStructuredTypePart property, List<String> keyColumns,
+			String targetTableName) {
+		Map<Object, TLObject> targetIndex = context.typeIndex(targetTableName);
 
 		return (TLObject object, ImportRow cursor) -> {
 			Object idRef = readId(cursor, keyColumns);
 			if (idRef != null) {
-				resolvers.add(() -> {
+				context.addResolver(() -> {
 					TLObject target = targetIndex.get(idRef);
 					if (target == null) {
 						// TODO: Warning.
@@ -273,10 +318,6 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		}
 
 		return value -> value;
-	}
-
-	private Map<Object, TLObject> typeIndex(Map<String, Map<Object, TLObject>> objectByTableAndId, String tableName) {
-		return objectByTableAndId.computeIfAbsent(tableName, x -> new HashMap<>());
 	}
 
 	private Object readId(ImportRow cursor, List<String> columns) {

@@ -22,6 +22,11 @@
 						<visibility value="hidden"></visibility>
 					</annotations>
 				</property>
+				<reference name="cs" type="C" navigate="true" multiple="true" ordered="true" kind="forwards">
+					<annotations>
+						<reverse-foreign-key-binding target-columns="A" order-column="ORDER"/>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 		<class name="B">
@@ -48,6 +53,19 @@
 						<foreign-key-binding columns="OTHER"></foreign-key-binding>
 					</annotations>
 				</reference>
+			</attributes>
+		</class>
+		<class name="C">
+			<annotations>
+				<table-binding name="C"></table-binding>
+			</annotations>
+			<attributes>
+				<property name="value"
+					type="tl.core:String">
+					<annotations>
+						<column-binding name="VAL"></column-binding>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 	</module>

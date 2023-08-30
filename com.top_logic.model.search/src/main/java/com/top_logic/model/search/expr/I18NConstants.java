@@ -24,6 +24,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 ERROR_NOT_A_TL_OBJECT__VAL_EXPR;
 
+	/**
+	 * @en The value "{0}" is not a type in expression: {1}
+	 */
+	public static ResKey2 ERROR_NOT_A_TYPE__VAL_EXPR;
+
 	public static ResKey3 ERROR_INVALID_DATE_FORMAT__VAL_EXPR_MSG;
 
 	public static ResKey3 ERROR_INVALID_FORMAT__STR_EXPR_MSG;

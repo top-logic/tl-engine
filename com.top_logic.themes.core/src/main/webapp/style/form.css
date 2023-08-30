@@ -139,10 +139,16 @@ div.fptIconBar > span.fptIconOverlay > i {
 
 .rf_label {
 	margin: var(--spacing-02) 0;
+	white-space: nowrap;
 }
 
-.rf_label .cLabel label.disabled {
+.rf_label .cLabel label.disabled,
+label.disabled  {
 	color: var(--text-disabled);
+}
+
+.mandatory.can-edit label:after {
+    content: "*";
 }
 
 .frmGroupExpand a {

@@ -86,6 +86,8 @@ public interface HTMLChecker {
 	void checkAttributeName(String tag, String attribute) throws I18NException;
 
 	/**
+	 * Whether the given tag name is allowed.
+	 * 
 	 * @param tag
 	 *        To be checked tag name.
 	 * @return TRUE if this tag is allowed, otherwise false.
@@ -93,6 +95,8 @@ public interface HTMLChecker {
 	boolean isAllowedTagName(String tag);
 
 	/**
+	 * Whether an attribute with the given name can be used.
+	 * 
 	 * @param attribute
 	 *        To be checked attribute name.
 	 * @return TRUE if this attribute is allowed, otherwise false.

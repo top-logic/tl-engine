@@ -845,16 +845,22 @@
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_NULL_DISABLED"
 		value="css:bi bi-slash-circle"
 	/>
-	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE"
-		value="css:bi bi-check-lg"
-	/>
-	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE_DISABLED"
-		value="css:bi bi-check-lg"
-	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE"
 		value="css:bi bi-check-lg"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE_DISABLED"
+		value="css:bi bi-check-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE"
+		value="css:bi bi-dash-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE_DISABLED"
+		value="css:bi bi-dash-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE"
+		value="css:bi bi-check-lg"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE_DISABLED"
 		value="css:bi bi-check-lg"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TRUE_DISABLED"
@@ -864,12 +870,6 @@
 		value="css:bi bi-dash-lg"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_FALSE_DISABLED"
-		value="css:bi bi-dash-lg"
-	/>
-	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE"
-		value="css:bi bi-dash-lg"
-	/>
-	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE_DISABLED"
 		value="css:bi bi-dash-lg"
 	/>
 	<icon name="com.top_logic.layout.provider.Icons.FALSE_DISABLED"
@@ -892,6 +892,24 @@
 	/>
 	<string name="COLORCHOOSER_NO_COLOR"
 		value="url(/colorchooser/noColor.png)"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.EMPTY_ICON"
+		value="css:"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__EXPERT_MODE_BUTTON"
+		value="css:fas fa-keyboard gray"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__OK_BUTTON"
+		value="css:fas fa-check gray"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__RESET_BUTTON"
+		value="css:fas fa-trash-alt gray"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH"
+		value="css:fas fa-search search"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ICON_CHOOSER__SEARCH_MODE_BUTTON"
+		value="css:fas fa-search gray"
 	/>
 	<icon name="ICON_VALIDATE_PAGE"
 		value="css:bi bi-check"

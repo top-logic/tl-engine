@@ -34,7 +34,7 @@ import com.top_logic.basic.xml.XMLStreamUtil;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class SafeHTML extends ManagedClass {
+public class SafeHTML extends ManagedClass implements HTMLChecker {
 
 	/** Name of a script tag */
 	public static final String SCRIPT_TAG = "script";
@@ -97,6 +97,48 @@ public class SafeHTML extends ManagedClass {
 
 	private static final Pattern ENTITY_PATTERN = Pattern.compile("&([a-zA-Z]+);");
 
+	private static final HTMLChecker NO_CHECK = new HTMLChecker() {
+		@Override
+		public boolean isAllowedTagName(String tag) {
+			return true;
+		}
+
+		@Override
+		public boolean isAllowedAttributeName(String attribute) {
+			return true;
+		}
+
+		@Override
+		public AttributeChecker getAttributeChecker(String attribute) {
+			return null;
+		}
+
+		@Override
+		public void checkTag(String tag) throws I18NException {
+			// Ignore.
+		}
+
+		@Override
+		public void checkAttributeValue(String attribute, String value) throws I18NException {
+			// Ignore.
+		}
+
+		@Override
+		public void checkAttributeName(String tag, String attribute) throws I18NException {
+			// Ignore.
+		}
+
+		@Override
+		public void checkAttribute(String tag, String attribute, String value) throws I18NException {
+			// Ignore.
+		}
+
+		@Override
+		public void check(String html) throws I18NException {
+			// Ignore.
+		}
+	};
+
 	/**
 	 * @param context
 	 *        {@link InstantiationContext} to instantiate sub configurations.
@@ -123,21 +165,7 @@ public class SafeHTML extends ManagedClass {
 		_allowedAttributeNames = new HashSet<>(config.getAllowedAttributes());
 	}
 
-	/**
-	 * Checks the given HTML fragment to contain only safe contents.
-	 * 
-	 * <p>
-	 * HTML content is safe, if it cannot be used to generate a cross-site-scripting attack when
-	 * injected into the UI of an arbitrary user. Save content must be a well-formed XML fragment
-	 * (XML without necessarily having a single root tag) consisting only of tags, text and
-	 * comments. Only certain tag and attribute names are allow in safe content.
-	 * </p>
-	 * 
-	 * @param html
-	 *        The HTML string to be checked.
-	 * @throws I18NException
-	 *         If the given HTML contains content that is not guaranteed to be safe.
-	 */
+	@Override
 	public void check(String html) throws I18NException {
 		try {
 			XMLStreamReader in =
@@ -196,49 +224,20 @@ public class SafeHTML extends ManagedClass {
 		}
 	}
 
-	/**
-	 * Checks the given tag name.
-	 * 
-	 * @param tag
-	 *        The name of the tag.
-	 * @throws I18NException
-	 *         if the given tag is not allowed.
-	 */
+	@Override
 	public void checkTag(String tag) throws I18NException {
 		if (!isAllowedTagName(tag)) {
 			throw new UnsafeHTMLException(I18NConstants.INVALID_TAG_NAME.fill(tag));
 		}
 	}
 
-	/**
-	 * Checks the given attribute name and value.
-	 * 
-	 * @param tag
-	 *        The tag in which the attribute occurs.
-	 * @param attribute
-	 *        The name of the attribute.
-	 * @param value
-	 *        The value of the attribute.
-	 * @throws I18NException
-	 *         if the given attribute value is not allowed.
-	 */
+	@Override
 	public void checkAttribute(String tag, String attribute, String value) throws I18NException {
 		checkAttributeName(tag, attribute);
 		checkAttributeValue(attribute, value);
 	}
 
-	/**
-	 * Checks the given attribute value.
-	 * 
-	 * @param attribute
-	 *        The name of the attribute.
-	 * @param value
-	 *        The value of the attribute.
-	 * @throws I18NException
-	 *         if the given attribute value is not allowed.
-	 * 
-	 * @see #checkAttribute(String, String, String)
-	 */
+	@Override
 	public void checkAttributeValue(String attribute, String value) throws I18NException {
 		AttributeChecker attributeChecker = getAttributeChecker(attribute);
 		if (attributeChecker != null) {
@@ -246,24 +245,12 @@ public class SafeHTML extends ManagedClass {
 		}
 	}
 
-	/**
-	 * The {@link AttributeChecker} for the given attribute name or <code>null</code>, if no checker
-	 * is configured for this attribute.
-	 */
+	@Override
 	public AttributeChecker getAttributeChecker(String attribute) {
 		return _attributeChecker.get(attribute);
 	}
 
-	/**
-	 * Checks whether the given attribute is allowed.
-	 * 
-	 * @param tag
-	 *        The tag in which the attribute occurs.
-	 * @param attribute
-	 *        The name of the attribute.
-	 * @throws I18NException
-	 *         if the given attribute is not allowed.
-	 */
+	@Override
 	public void checkAttributeName(String tag, String attribute) throws I18NException {
 		if (!isAllowedAttributeName(attribute)) {
 			throw new UnsafeHTMLException(I18NConstants.INVALID_ATTRIBUTE_NAME.fill(attribute, tag));
@@ -299,24 +286,20 @@ public class SafeHTML extends ManagedClass {
 	 * 
 	 * @return The requested {@link SafeHTML} instance.
 	 */
-	public static SafeHTML getInstance() {
-		return Module.INSTANCE.getImplementationInstance();
+	public static HTMLChecker getInstance() {
+		if (Module.INSTANCE.isActive()) {
+			return Module.INSTANCE.getImplementationInstance();
+		} else {
+			return NO_CHECK;
+		}
 	}
 
-	/**
-	 * @param tag
-	 *        To be checked tag name.
-	 * @return TRUE if this tag is allowed, otherwise false.
-	 */
+	@Override
 	public boolean isAllowedTagName(String tag) {
 		return _allowedTagNames.contains(tag);
 	}
 
-	/**
-	 * @param attribute
-	 *        To be checked attribute name.
-	 * @return TRUE if this attribute is allowed, otherwise false.
-	 */
+	@Override
 	public boolean isAllowedAttributeName(String attribute) {
 		return _allowedAttributeNames.contains(attribute);
 	}

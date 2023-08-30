@@ -589,11 +589,19 @@ public class TypeFilterRewriter implements EventRewriter {
 			if (exportValue == null && !values.containsKey(moAttrName)) {
 				continue;
 			}
+			handleAttribute(objectType, newValues, resolveRevision, tlAttrName, exportValue, result);
+		}
+		return result;
+	}
+
+	private void handleAttribute(ObjectKey objectType, GetValues newValues, long resolveRevision, String tlAttrName,
+			Object exportValue, Map<String, Object> result) {
+		try {
 			if (exportValue instanceof ObjectKey) {
 				Object mappedValue = mapValue(objectType, tlAttrName, exportValue);
 				if (!(mappedValue instanceof ObjectKey)) {
 					result.put(tlAttrName, mappedValue);
-					continue;
+					return;
 				}
 				// Replace by reference later
 				getCallbacks(resolveRevision, (ObjectKey) mappedValue).add(resolvedReference -> {
@@ -619,8 +627,10 @@ public class TypeFilterRewriter implements EventRewriter {
 				Object mappedValue = mapValue(objectType, tlAttrName, exportValue);
 				result.put(tlAttrName, mappedValue);
 			}
+		} catch (RuntimeException exception) {
+			String message = "Failed to handle attribute " + tlAttrName + " on type " + objectType + ". Value: " + exportValue;
+			throw new RuntimeException(message, exception);
 		}
-		return result;
 	}
 
 	private Object mapValue(ObjectKey attributeId, Object value) {

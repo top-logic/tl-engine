@@ -27,6 +27,11 @@
 						<reverse-foreign-key-binding target-columns="A" order-column="ORDER"/>
 					</annotations>
 				</reference>
+				<reference name="bs" type="B" navigate="true" multiple="true" kind="forwards">
+					<annotations>
+						<link-table-binding link-table="LINK" source-columns="A" destination-columns="B"/>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 		<class name="B">

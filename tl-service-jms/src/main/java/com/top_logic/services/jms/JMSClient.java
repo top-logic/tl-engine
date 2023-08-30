@@ -45,7 +45,7 @@ public class JMSClient implements Closeable {
 		_cf.setStringProperty(WMQConstants.WMQ_QUEUE_MANAGER, config.getQueueManager());
 		_cf.setStringProperty(WMQConstants.WMQ_APPLICATIONNAME,
 			Resources.getSystemInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
-		_cf.setBooleanProperty(WMQConstants.USER_AUTHENTICATION_MQCSP, true);
+//		_cf.setBooleanProperty(WMQConstants.USER_AUTHENTICATION_MQCSP, true);
 		_cf.setStringProperty(WMQConstants.USERID, config.getUser());
 		_cf.setStringProperty(WMQConstants.PASSWORD, config.getPassword());
 

@@ -597,6 +597,9 @@ public class TTypeRewriter extends ConfiguredRewritingEventVisitor<TTypeRewriter
 		List<Entry<String, Object>> additionalEntries = null;
 		for (Iterator<Entry<String, Object>> it = values.entrySet().iterator(); it.hasNext();) {
 			Entry<String, Object> additionalEntry = handleAttribute(values, it, sourceTypeName);
+			if (additionalEntry == null) {
+				continue;
+			}
 			if (additionalEntries == null) {
 				additionalEntries = new ArrayList<>();
 			}

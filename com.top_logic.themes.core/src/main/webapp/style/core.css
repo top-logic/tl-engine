@@ -87,7 +87,7 @@ a:focus {
 
 a:visited, a.gotoLink:visited,
 a.cmdLink:visited {
-    color: var(--link-primary);
+    /* color: var(--link-primary); */
 }
 
 .cmdLinkDisabled {
@@ -246,6 +246,7 @@ div.fltHeader {
 	overflow: auto;
 	max-height: calc(100% - var(--TABLE_FILTER_BUTTON_BAR_HEIGHT));
 	max-width: 100%;
+	padding: 0 var(--spacing-03);
 }
 
 /*
@@ -289,16 +290,16 @@ div.fltCommandContent {
 	border-radius: .25rem;
 }
 
-.fltSubContent {
-	margin: 0px;
-	padding-bottom: var(--spacing-01);
-	overflow: auto;
-}
-
 .fltMenu {
 	position: relative;
 	width: 100%;
 	overflow: hidden;
+}
+
+.fltSubContent {
+	margin: 0px;
+	padding-bottom: var(--spacing-01);
+	overflow: auto;
 }
 
 .fltSubContent > hr {
@@ -318,9 +319,26 @@ div.fltList {
 }
 
 .fltList > div {
-    padding: 0 var(--spacing-03);
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-02);
+}
+
+.checkboxMultiSelectEntry {
     display: flex;
     gap: var(--spacing-02);
+}
+
+.fltList span {
+	margin-left: 0 !important;
+}
+
+.fltList div .cLabel {
+	padding-left: 0;
+}
+
+.fltList .cLabel {
+	padding: 0 var(--spacing-02);
 }
 
 .filterBox {
@@ -438,7 +456,7 @@ div.fltList {
 }
 
 .defaultFilterContainer {
-	margin-top: 5px;
+	margin-top: var(--spacing-02);
 }
 
 .defaultFilterContainer .cPopupSelect,
@@ -485,15 +503,24 @@ div.fltList {
 	max-height: none;
 }
 
+.sidebarFilterEntry.collapsibleFilterEntry:hover {
+	background: var(--layer-hover);
+}
+
 .checkboxMultiSelectEntry {
-	margin: 0;
+	cursor: default;
+	margin: 0 0 var(--spacing-01) 0;
 	padding: 0;
 }
 
 .checkboxMultiSelectNoEntries {
-	font-style: italic;
-	text-align: center;
-	white-space: nowrap;
+    font-family: 'Inter-SemiBold';
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
+    text-align: center;
+    white-space: nowrap;
+    margin-bottom: var(--spacing-03);
 }
 
 .popupMenu {
@@ -593,6 +620,8 @@ a.cMenuButton.menuEntryDisabled:focus {
 	box-shadow: none;
 }
 
+
+/* Dialog Window Styles */
 #dlgDialogs {
 	position: absolute;
 	left: 0;
@@ -1071,6 +1100,7 @@ span.configuredTooltipLabel {
 	border: 1px solid var(--support-danger);
 	background-color: var(--background);
 	display: inline-block;
+	align-self: center;
 }
 
 .errorFragmentImage {
@@ -1643,19 +1673,19 @@ h5.card-title a {
 .tcrNode .treeNode {
 	display: flex;
 	align-items: center;
-	position:relative;
-	height: 2rem;
+	position: relative;
+	min-height: 2rem;
 	padding-right: var(--spacing-03);
 	padding-left: var(--spacing-03);
 }
 
 .tcrNode .treeNode::after,
 .tcrNode .treeNode.treeSelected::after {
-	height:100%;
-	content:"";
-    position:absolute;
-    transform:translateX(-100%);
-    width:100%;
+	height: 100%;
+	content: "";
+    position: absolute;
+    transform: translateX(-100%);
+    width: 100%;
 }
 
 .treeChildren {
@@ -1668,6 +1698,7 @@ h5.card-title a {
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
 	color: var(--text-secodnary);
+	word-break: break-all;
 }
 
 .treeNode .fToggle,
@@ -1675,8 +1706,6 @@ h5.card-title a {
 .tcrNode .treeNode span {
 	color: var(--icon-secondary);
 	margin-right: var(--spacing-02);
-	height: 1rem;
-	width: 1rem;
 }
 
 .treeNode .input-image.fToggle.disabled {

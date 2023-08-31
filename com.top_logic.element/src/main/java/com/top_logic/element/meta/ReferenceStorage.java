@@ -17,17 +17,7 @@ import com.top_logic.model.TLReference;
  */
 public interface ReferenceStorage extends StorageImplementation {
 
-	/**
-	 * Find the set of all {@link TLObject objects} that reference the given object through the
-	 * given reference.
-	 * 
-	 * @param self
-	 *        The object that searched for in all attribute values of this attribute.
-	 * @param reference
-	 *        The reference that is navigated backwards.
-	 * @return The set of {@link TLObject} objects that refer to the given object by having it set
-	 *         as value in this attribute.
-	 */
+	@Override
 	Set<? extends TLObject> getReferers(TLObject self, TLReference reference);
 
 }

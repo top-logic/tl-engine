@@ -71,8 +71,7 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<implementation 
-										class="com.top_logic.element.meta.kbbased.storage.AnnotationConfigsStorage" 
+									<implementation class="com.top_logic.element.meta.kbbased.storage.AnnotationConfigsStorage"
 										db-attribute="annotations"
 									/>
 								</storage-algorithm>
@@ -229,8 +228,14 @@
 									<derived-storage>
 										<expression-evaluation>
 											<chain>
-												<get-value attribute="module"/>
-												<get-value attribute="model"/>
+												<get-value
+													attribute="module"
+													type="tl.model:TLType"
+												/>
+												<get-value
+													attribute="model"
+													type="tl.model:TLModule"
+												/>
 											</chain>
 										</expression-evaluation>
 									</derived-storage>
@@ -396,8 +401,14 @@
 									<derived-storage>
 										<expression-evaluation>
 											<chain>
-												<get-value attribute="owner"/>
-												<get-value attribute="model"/>
+												<get-value
+													attribute="owner"
+													type="tl.model:TLTypePart"
+												/>
+												<get-value
+													attribute="model"
+													type="tl.model:TLType"
+												/>
 											</chain>
 										</expression-evaluation>
 									</derived-storage>
@@ -555,8 +566,14 @@
 									<derived-storage>
 										<expression-evaluation>
 											<chain>
-												<get-value attribute="end"/>
-												<get-value attribute="type"/>
+												<get-value
+													attribute="end"
+													type="tl.model:TLReference"
+												/>
+												<get-value
+													attribute="type"
+													type="tl.model:TLAssociationEnd"
+												/>
 											</chain>
 										</expression-evaluation>
 									</derived-storage>
@@ -572,8 +589,14 @@
 									<derived-storage>
 										<expression-evaluation>
 											<chain>
-												<get-value attribute="end"/>
-												<get-value attribute="mandatory"/>
+												<get-value
+													attribute="end"
+													type="tl.model:TLReference"
+												/>
+												<get-value
+													attribute="mandatory"
+													type="tl.model:TLAssociationEnd"
+												/>
 											</chain>
 										</expression-evaluation>
 									</derived-storage>
@@ -589,8 +612,14 @@
 									<derived-storage>
 										<expression-evaluation>
 											<chain>
-												<get-value attribute="end"/>
-												<get-value attribute="multiple"/>
+												<get-value
+													attribute="end"
+													type="tl.model:TLReference"
+												/>
+												<get-value
+													attribute="multiple"
+													type="tl.model:TLAssociationEnd"
+												/>
 											</chain>
 										</expression-evaluation>
 									</derived-storage>
@@ -606,8 +635,14 @@
 									<derived-storage>
 										<expression-evaluation>
 											<chain>
-												<get-value attribute="end"/>
-												<get-value attribute="bag"/>
+												<get-value
+													attribute="end"
+													type="tl.model:TLReference"
+												/>
+												<get-value
+													attribute="bag"
+													type="tl.model:TLAssociationEnd"
+												/>
 											</chain>
 										</expression-evaluation>
 									</derived-storage>
@@ -623,8 +658,14 @@
 									<derived-storage>
 										<expression-evaluation>
 											<chain>
-												<get-value attribute="end"/>
-												<get-value attribute="historyType"/>
+												<get-value
+													attribute="end"
+													type="tl.model:TLReference"
+												/>
+												<get-value
+													attribute="historyType"
+													type="tl.model:TLAssociationEnd"
+												/>
 											</chain>
 										</expression-evaluation>
 									</derived-storage>
@@ -640,8 +681,14 @@
 									<derived-storage>
 										<expression-evaluation>
 											<chain>
-												<get-value attribute="end"/>
-												<get-value attribute="ordered"/>
+												<get-value
+													attribute="end"
+													type="tl.model:TLReference"
+												/>
+												<get-value
+													attribute="ordered"
+													type="tl.model:TLAssociationEnd"
+												/>
 											</chain>
 										</expression-evaluation>
 									</derived-storage>
@@ -722,7 +769,10 @@
 									<derived-storage>
 										<expression-evaluation>
 											<chain>
-												<get-value attribute="owner"/>
+												<get-value
+													attribute="owner"
+													type="tl.model:TLClassifier"
+												/>
 											</chain>
 										</expression-evaluation>
 									</derived-storage>

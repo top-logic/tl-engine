@@ -132,11 +132,6 @@ public class AttributeOperations {
 	private static final StorageImplementation NO_STORAGE = new StorageImplementation() {
 
 		@Override
-		public boolean supportsLiveCollections() {
-			return false;
-		}
-
-		@Override
 		public boolean isReadOnly() {
 			return true;
 		}

@@ -5,8 +5,12 @@
  */
 package com.top_logic.element.meta.kbbased.filtergen;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.element.config.annotation.LocatorNameFormat;
+import com.top_logic.model.TLObject;
 
 /**
  * Generic algorithm for finding derived values based on some start object.
@@ -20,12 +24,27 @@ import com.top_logic.element.config.annotation.LocatorNameFormat;
 @Format(LocatorNameFormat.class)
 public interface AttributeValueLocator {
 
-	/** 
-	 * Get the basic data source config
-	 * @param anObject	the attributed
+	/**
+	 * Get the value for the given object.
 	 * 
-	 * @return the data source config
+	 * @param anObject
+	 *        the attributed
+	 * 
+	 * @return The value for the given object.
 	 */
 	public Object locateAttributeValue(Object anObject);
+
+	/**
+	 * Searches for the {@link TLObject}s whose {@link #locateAttributeValue(Object) value} is the
+	 * given <code>value</code>.
+	 * 
+	 * @param value
+	 *        Not <code>null</code>.
+	 * @return The {@link TLObject}s that have the given object as value, or empty set when it is
+	 *         not possible to determine referers.
+	 */
+	default Set<? extends TLObject> locateReferers(Object value){
+		return Collections.emptySet();
+	}
 
 }

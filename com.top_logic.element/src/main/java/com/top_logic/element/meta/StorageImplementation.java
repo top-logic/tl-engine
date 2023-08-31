@@ -8,10 +8,13 @@ package com.top_logic.element.meta;
 import static com.top_logic.model.util.TLModelUtil.*;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.export.PreloadOperation;
@@ -190,6 +193,21 @@ public interface StorageImplementation extends StorageDetail, Unimplementable {
 	default Collection<?> getLiveCollection(TLObject object, TLStructuredTypePart attribute) {
 		throw new UnsupportedOperationException(
 			"There is no live-collection for attribute " + qualifiedName(attribute) + ".");
+	}
+
+	/**
+	 * Find the set of all {@link TLObject objects} that reference the given object through the
+	 * given reference.
+	 * 
+	 * @param self
+	 *        The object that searched for in all attribute values of this attribute.
+	 * @param reference
+	 *        The reference that is navigated backwards.
+	 * @return The set of {@link TLObject} objects that refer to the given object by having it set
+	 *         as value in this attribute.
+	 */
+	default Set<? extends TLObject> getReferers(TLObject self, TLReference reference) {
+		return Collections.emptySet();
 	}
 
 }

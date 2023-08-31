@@ -5,7 +5,10 @@
  */
 package com.top_logic.element.meta.expr.internal;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfiguredInstance;
@@ -16,6 +19,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.meta.kbbased.filtergen.AbstractAttributeValueLocator;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
+import com.top_logic.model.TLObject;
 
 /**
  * {@link AttributeValueLocator} that delegates to a chain of {@link AttributeValueLocator}s.
@@ -73,6 +77,26 @@ public class Chain extends AbstractAttributeValueLocator implements ConfiguredIn
 			value = locator.locateAttributeValue(value);
 		}
 		return value;
+	}
+
+	@Override
+	public Set<? extends TLObject> locateReferers(Object value) {
+		if (_steps.isEmpty()) {
+			return Collections.emptySet();
+		}
+		Set<? extends TLObject> sources = _steps.get(_steps.size() - 1).locateReferers(value);
+
+		for (int i = _steps.size() - 2; i >= 0; i--) {
+			if (sources.isEmpty()) {
+				return sources;
+			}
+			AttributeValueLocator step = _steps.get(i);
+			sources = sources.stream()
+				.map(step::locateReferers)
+				.collect(HashSet::new, HashSet::addAll, HashSet::addAll);
+		}
+
+		return sources;
 	}
 
 	@Override

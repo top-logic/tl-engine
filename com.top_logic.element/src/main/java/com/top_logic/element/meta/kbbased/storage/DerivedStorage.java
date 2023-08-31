@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.meta.kbbased.storage;
 
+import java.util.Set;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -18,6 +20,7 @@ import com.top_logic.element.meta.MetaAttributeAlgorithm;
 import com.top_logic.element.meta.expr.ExpressionEvaluationAlgorithm;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -80,6 +83,14 @@ public class DerivedStorage<C extends DerivedStorage.Config<?>> extends Abstract
 			return _algorithm.calculate((Wrapper) object);
 		}
 		throw new AttributeException("No algorithm defined for calculating attribute '" + attribute + "'.");
+	}
+
+	@Override
+	public Set<? extends TLObject> getReferers(TLObject self, TLReference reference) {
+		if (_algorithm != null) {
+			return _algorithm.getReferers(self);
+		}
+		throw new AttributeException("No algorithm defined for calculating referers of '" + reference + "'.");
 	}
 
 }

@@ -1144,7 +1144,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="boolean"/>
+										<get-value
+											attribute="boolean"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1160,7 +1163,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="booleanNullable"/>
+										<get-value
+											attribute="booleanNullable"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1177,7 +1183,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="booleanMandatory"/>
+										<get-value
+											attribute="booleanMandatory"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1194,7 +1203,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="booleanRadio"/>
+										<get-value
+											attribute="booleanRadio"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1211,7 +1223,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="booleanRadioNullable"/>
+										<get-value
+											attribute="booleanRadioNullable"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1229,7 +1244,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="booleanRadioMandatory"/>
+										<get-value
+											attribute="booleanRadioMandatory"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1246,7 +1264,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="booleanSelect"/>
+										<get-value
+											attribute="booleanSelect"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1263,7 +1284,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="booleanSelectNullable"/>
+										<get-value
+											attribute="booleanSelectNullable"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1281,7 +1305,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="booleanSelectMandatory"/>
+										<get-value
+											attribute="booleanSelectMandatory"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1297,7 +1324,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="booleanWithAttributeSecurity"/>
+										<get-value
+											attribute="booleanWithAttributeSecurity"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1314,7 +1344,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="createdBy"/>
+										<get-value
+											attribute="createdBy"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1331,7 +1364,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="modifiedBy"/>
+										<get-value
+											attribute="modifiedBy"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1348,7 +1384,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="createdDate"/>
+										<get-value
+											attribute="createdDate"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1365,7 +1404,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="modifiedDate"/>
+										<get-value
+											attribute="modifiedDate"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1382,7 +1424,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="checklist"/>
+										<get-value
+											attribute="checklist"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1398,7 +1443,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="checklistSingle"/>
+										<get-value
+											attribute="checklistSingle"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1415,7 +1463,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="checklistMulti"/>
+										<get-value
+											attribute="checklistMulti"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1431,7 +1482,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="classificationSingle"/>
+										<get-value
+											attribute="classificationSingle"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1448,7 +1502,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="classificationMulti"/>
+										<get-value
+											attribute="classificationMulti"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1464,7 +1521,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="classificationSinglePopup"/>
+										<get-value
+											attribute="classificationSinglePopup"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1481,7 +1541,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="classificationMultiDropdown"/>
+										<get-value
+											attribute="classificationMultiDropdown"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1498,7 +1561,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="classificationUnorderedMulti"/>
+										<get-value
+											attribute="classificationUnorderedMulti"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1514,7 +1580,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="classificationUnorderedSingle"/>
+										<get-value
+											attribute="classificationUnorderedSingle"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1530,7 +1599,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="classificationUnorderedSinglePopup"/>
+										<get-value
+											attribute="classificationUnorderedSinglePopup"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1547,7 +1619,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="classificationUnorderedMultiDropdown"/>
+										<get-value
+											attribute="classificationUnorderedMultiDropdown"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1564,7 +1639,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="collection"/>
+										<get-value
+											attribute="collection"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1580,7 +1658,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="complexCountry"/>
+										<get-value
+											attribute="complexCountry"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1596,7 +1677,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="complexLanguage"/>
+										<get-value
+											attribute="complexLanguage"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1612,7 +1696,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="complexUnit"/>
+										<get-value
+											attribute="complexUnit"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1629,7 +1716,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="comments"/>
+										<get-value
+											attribute="comments"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1645,7 +1735,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="date"/>
+										<get-value
+											attribute="date"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1662,7 +1755,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="date2"/>
+										<get-value
+											attribute="date2"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1678,7 +1774,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="dateTime"/>
+										<get-value
+											attribute="dateTime"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1694,7 +1793,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="binary"/>
+										<get-value
+											attribute="binary"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1710,7 +1812,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="document"/>
+										<get-value
+											attribute="document"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1726,7 +1831,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="encryptedLong"/>
+										<get-value
+											attribute="encryptedLong"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1743,7 +1851,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="float"/>
+										<get-value
+											attribute="float"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1760,7 +1871,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="floatPercent"/>
+										<get-value
+											attribute="floatPercent"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1781,7 +1895,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="floatConstraint"/>
+										<get-value
+											attribute="floatConstraint"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1797,7 +1914,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="floatDefault"/>
+										<get-value
+											attribute="floatDefault"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1813,7 +1933,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="historicWrapper"/>
+										<get-value
+											attribute="historicWrapper"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1829,7 +1952,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="html"/>
+										<get-value
+											attribute="html"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1845,7 +1971,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="inlineReference"/>
+										<get-value
+											attribute="inlineReference"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1864,7 +1993,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="list"/>
+										<get-value
+											attribute="list"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1883,7 +2015,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="priorityTable"/>
+										<get-value
+											attribute="priorityTable"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1899,7 +2034,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="long"/>
+										<get-value
+											attribute="long"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1919,7 +2057,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="longConstraint"/>
+										<get-value
+											attribute="longConstraint"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1935,7 +2076,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="responsible"/>
+										<get-value
+											attribute="responsible"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1953,7 +2097,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="stringSet"/>
+										<get-value
+											attribute="stringSet"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1969,7 +2116,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="string"/>
+										<get-value
+											attribute="string"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -1985,7 +2135,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="stringWithAttributeSecurity"/>
+										<get-value
+											attribute="stringWithAttributeSecurity"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2002,7 +2155,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="text"/>
+										<get-value
+											attribute="text"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2019,7 +2175,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="stringLengthConstraint"/>
+										<get-value
+											attribute="stringLengthConstraint"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2036,7 +2195,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="stringHidden"/>
+										<get-value
+											attribute="stringHidden"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2053,7 +2215,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="structure"/>
+										<get-value
+											attribute="structure"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2070,7 +2235,10 @@
 									<chain>
 										<config-reference name="parent"/>
 										<type-of type="DemoTypes:DemoTypes.A"/>
-										<get-value attribute="singleStructure"/>
+										<get-value
+											attribute="singleStructure"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2088,7 +2256,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="typedSetOrdered"/>
+										<get-value
+											attribute="typedSetOrdered"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2105,7 +2276,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="typedSetUnordered"/>
+										<get-value
+											attribute="typedSetUnordered"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2121,7 +2295,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="webFolder"/>
+										<get-value
+											attribute="webFolder"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2137,7 +2314,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="typedWrapperC"/>
+										<get-value
+											attribute="typedWrapperC"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2153,7 +2333,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="typedWrapper"/>
+										<get-value
+											attribute="typedWrapper"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2172,7 +2355,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="typedWrapperFiltered"/>
+										<get-value
+											attribute="typedWrapperFiltered"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2188,7 +2374,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="typedWrapperGenerated"/>
+										<get-value
+											attribute="typedWrapperGenerated"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2204,7 +2393,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="untypedWrapper"/>
+										<get-value
+											attribute="untypedWrapper"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2220,7 +2412,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="person"/>
+										<get-value
+											attribute="person"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2239,7 +2434,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="gallery"/>
+										<get-value
+											attribute="gallery"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2255,7 +2453,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="i18NStringNormal"/>
+										<get-value
+											attribute="i18NStringNormal"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2271,7 +2472,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="i18NStringShortLength"/>
+										<get-value
+											attribute="i18NStringShortLength"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2288,7 +2492,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="i18NStringMultiLine"/>
+										<get-value
+											attribute="i18NStringMultiLine"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>
@@ -2305,7 +2512,10 @@
 								<expression-evaluation>
 									<chain>
 										<config-reference name="parent"/>
-										<get-value attribute="i18NHTMLNormal"/>
+										<get-value
+											attribute="i18NHTMLNormal"
+											type="DemoTypes:DemoTypes.A"
+										/>
 									</chain>
 								</expression-evaluation>
 							</derived-storage>

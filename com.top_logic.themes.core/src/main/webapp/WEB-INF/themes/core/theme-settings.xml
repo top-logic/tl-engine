@@ -225,6 +225,12 @@
 	<icon name="ICONS_SAVE_BUTTON_ICON_DISABLED"
 		expr="%ICONS_BUTTON_SAVE%"
 	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.OPEN_DETAIL"
+		value="css:bi bi-pencil-square"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.OPEN_DETAIL_DISABLED"
+		value="css:bi bi-pencil-square"
+	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON"
 		expr="%ICONS_BUTTON_SAVE%"
 	/>
@@ -973,12 +979,7 @@
 	/>
 	
 	
-	<!-- DELETE THIS (test icon for tree view) -->
-	<icon name="model.DemoTypes.A"
-		value="css:bi bi-alarm-fill"
-	/>
-	
-	
+	<!-- Style Tokens -->
 	<!-- Color Tokens -->
 	<color name="background"
 		value="#ffffff"

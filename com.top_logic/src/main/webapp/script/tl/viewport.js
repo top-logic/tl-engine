@@ -710,17 +710,19 @@ services.viewport = {
 		const elementID = element.id;
 		const tabLayout = document.getElementById(elementID);
 		const scrollContainer = tabLayout.querySelector('.tlTabScrollContainer');
+		const tabBar = scrollContainer.parentElement;
 		const scrollLeftButton = tabLayout.querySelector('.tlTabScrollLeft');
 		const scrollRightButton = tabLayout.querySelector('.tlTabScrollRight');
 		let isScrolling = false;
 		const scrollAmount = 70;
-		
-		if (scrollContainer.scrollWidth > scrollContainer.clientWidth) {
-	      scrollLeftButton.style.display = 'flex';
-	      scrollRightButton.style.display = 'flex';
+		 
+		if (tabBar.clientWidth > scrollContainer.scrollWidth || 
+		scrollContainer.scrollWidth < scrollContainer.clientWidth) {
+	        scrollLeftButton.style.display = 'none';
+	        scrollRightButton.style.display = 'none';
 	    } else {
-	      scrollLeftButton.style.display = 'none';
-	      scrollRightButton.style.display = 'none';
+	        scrollLeftButton.style.display = 'flex';
+	        scrollRightButton.style.display = 'flex';
 	    }
 	    
 		function scrollLeft() {
@@ -762,20 +764,37 @@ services.viewport = {
 		});
 		
 		scrollContainer.addEventListener("mousedown", function() {
-			isScrolling = true;
+    		isScrolling = true;
+    		document.addEventListener("mousemove", onMouseMove);
 		});
 		
-		scrollContainer.addEventListener("mousemove", function(e) {
-			if (!isScrolling) return;
-		  	scrollContainer.classList.add("scrolling");
-		  	scrollContainer.scrollLeft -= e.movementX;
+		scrollContainer.addEventListener("mouseup", function() {
+			isScrolling = false;
+		  	scrollContainer.classList.remove("scrolling");
+		  	document.removeEventListener("mousemove", onMouseMove);
 		});
 		
 		document.addEventListener("mouseup", function() {
-		  isScrolling = false;
-		  scrollContainer.classList.remove("scrolling");
+			isScrolling = false;
+		    scrollContainer.classList.remove("scrolling");
+		    document.removeEventListener("mousemove", onMouseMove);
 		});
-	  
+		
+		function onMouseMove(e) {
+			if (!isScrolling) return;
+		    scrollContainer.classList.add("scrolling");
+		    scrollContainer.scrollLeft -= e.movementX;
+		}
+		
+		// Makes scolling with CTRL or SHIFT + mouse wheel possible.
+		scrollContainer.addEventListener('wheel', function(event) {
+        	if (event.ctrlKey) {
+            	scrollContainer.scrollLeft += event.deltaY;
+            	// Prevents the default browser action (e.g. zooming)
+            	event.preventDefault();
+       		}
+        });
+        
 	},
 	
 	buttonComponentResizing: function(element) {
@@ -797,7 +816,7 @@ services.viewport = {
 	    	buttons[i].style.display = 'inline-block';
 	  	}
 	  	
-	  	for(let i = 0; i < buttonsSize; i++) {
+	  	for (let i = 0; i < buttonsSize; i++) {
 	    	if(buttons[i].offsetLeft < 1) {
 	      	dropdown.style.display = 'inline-block';
 	      	currButton = buttonsClone[i].firstElementChild;
@@ -836,7 +855,7 @@ services.viewport = {
 	  	} else {
 	    	dropdownContent.style.display = 'none';
 	  	}
-	  	// Dropdown-Fenster schliessen, wenn man woanders klickt
+	  	// Closes dropdown when user clicks somewhere else outside the dropdown.
 	  	document.addEventListener('click', function(event) {
 	    	if (!dropdownButton.contains(event.target) && !dropdownContent.contains(event.target)) {
 	      		dropdownContent.style.display = 'none';

@@ -7,6 +7,7 @@ package com.top_logic.element.meta.expr;
 
 
 import java.io.StringReader;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
@@ -29,6 +30,7 @@ import com.top_logic.element.meta.expr.parser.ExpressionParser;
 import com.top_logic.element.meta.expr.parser.ParseException;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
 
 /**
  * Default {@link MetaAttributeAlgorithm} that evaluates a configurable generic expression.
@@ -130,6 +132,11 @@ public class ExpressionEvaluationAlgorithm extends MetaAttributeAlgorithm {
 	@Override
 	public Object calculate(Wrapper obj) throws AttributeException {
 		return _locator.locateAttributeValue(obj);
+	}
+
+	@Override
+	public Set<? extends TLObject> getReferers(TLObject value) throws AttributeException {
+		return _locator.locateReferers(value);
 	}
 
 }

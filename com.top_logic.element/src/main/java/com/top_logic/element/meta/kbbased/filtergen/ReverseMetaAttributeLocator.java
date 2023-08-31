@@ -5,8 +5,10 @@
  */
 package com.top_logic.element.meta.kbbased.filtergen;
 
+import java.util.Collection;
 import java.util.Set;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementFactory;
@@ -14,6 +16,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -67,6 +70,17 @@ public class ReverseMetaAttributeLocator extends BackReferenceAttributeValueLoca
             return null;
         }
     }
+
+	@Override
+	public Set<? extends TLObject> locateReferers(Object value) {
+		TLObject baseObject = (TLObject) value;
+		Object referenceValue = AttributeOperations.getAttributeValue(baseObject, this.getMetaAttribute());
+		if (referenceValue instanceof Collection<?>) {
+			return CollectionUtil.toSet((Collection<? extends TLObject>) referenceValue);
+		} else {
+			return CollectionUtil.singletonOrEmptySet((TLObject) referenceValue);
+		}
+	}
 
 	@Override
 	protected boolean isCollection() {

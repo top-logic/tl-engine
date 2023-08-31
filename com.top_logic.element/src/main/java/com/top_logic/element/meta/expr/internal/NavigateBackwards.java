@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -185,6 +187,18 @@ public final class NavigateBackwards extends BackReferenceAttributeValueLocator 
 		TLObject baseObject = (TLObject) obj;
 		TLReference ref = getReference(baseObject);
 		return baseObject.tReferers(ref);
+	}
+
+	@Override
+	public Set<? extends TLObject> locateReferers(Object value) {
+		TLObject baseObject = (TLObject) value;
+		TLReference ref = getReference(baseObject);
+		Object referenceValue = baseObject.tValue(ref);
+		if (referenceValue instanceof Collection<?>) {
+			return CollectionUtil.toSet((Collection<? extends TLObject>) referenceValue);
+		} else {
+			return CollectionUtil.singletonOrEmptySet((TLObject) referenceValue);
+		}
 	}
 
 	private TLReference getReference(TLObject context) {

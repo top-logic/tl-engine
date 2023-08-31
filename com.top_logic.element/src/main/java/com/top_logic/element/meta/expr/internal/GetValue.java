@@ -5,7 +5,11 @@
  */
 package com.top_logic.element.meta.expr.internal;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -17,6 +21,11 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
 import com.top_logic.element.meta.kbbased.filtergen.CustomSingleSourceValueLocator;
 import com.top_logic.knowledge.wrap.ValueProvider;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * {@link AttributeValueLocator} that invokes the {@link ValueProvider#getValue(String) getValue()
@@ -49,6 +58,19 @@ public final class GetValue extends CustomSingleSourceValueLocator implements Co
 		 */
 		void setAttribute(String value);
 
+		/**
+		 * The owner type of {@link #getAttribute()}.
+		 * 
+		 * @implNote The value must be set to be able to {@link GetValue#locateReferers(Object)
+		 *           locate referers} for a given value.
+		 */
+		TLModelPartRef getType();
+
+		/**
+		 * Setter for {@link #getType()}.
+		 */
+		void setType(TLModelPartRef value);
+
 	}
 
 	/**
@@ -63,9 +85,25 @@ public final class GetValue extends CustomSingleSourceValueLocator implements Co
 		return config;
 	}
 
+	/**
+	 * Creates a {@link GetValue} configuration.
+	 * 
+	 * @param attribute
+	 *        The attribute to access.
+	 */
+	public static PolymorphicConfiguration<? extends AttributeValueLocator> newInstance(
+			TLStructuredTypePart attribute) {
+		Config config = TypedConfiguration.newConfigItem(Config.class);
+		config.setAttribute(attribute.getName());
+		config.setType(TLModelPartRef.ref(attribute.getOwner()));
+		return config;
+	}
+
 	private final String _attribute;
 
 	private final Config _config;
+
+	private TLReference _reference;
 
 	/**
 	 * Creates a {@link GetValue} from configuration.
@@ -79,6 +117,31 @@ public final class GetValue extends CustomSingleSourceValueLocator implements Co
 	public GetValue(InstantiationContext context, Config config) {
 		_config = config;
 		_attribute = config.getAttribute();
+		_reference = resolveReference(context);
+	}
+
+	private TLReference resolveReference(InstantiationContext context) {
+		TLModelPartRef type = getConfig().getType();
+		if (type == null) {
+			return null;
+		}
+		TLClass owner;
+		try {
+			owner = type.resolveClass();
+		} catch (ConfigurationException ex) {
+			context.error(type + " can not be resolved to a class in " + this + ".", ex);
+			return null;
+		}
+		TLStructuredTypePart part = owner.getPart(_attribute);
+		if (part == null) {
+			context.error(_attribute + " is not an attribute of type " + owner + " in " + this + ".");
+			return null;
+		}
+
+		if (part instanceof TLReference) {
+			return (TLReference) part;
+		}
+		return null;
 	}
 
 	@Override
@@ -99,6 +162,17 @@ public final class GetValue extends CustomSingleSourceValueLocator implements Co
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public Set<? extends TLObject> locateReferers(Object value) {
+		if (_reference == null) {
+			return Collections.emptySet();
+		}
+		if (!(value instanceof TLObject)) {
+			return Collections.emptySet();
+		}
+		return ((TLObject) value).tReferers(_reference);
 	}
 
 	@Override

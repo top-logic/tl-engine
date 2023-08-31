@@ -5,12 +5,16 @@
  */
 package com.top_logic.element.meta.expr.internal;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
 import com.top_logic.element.meta.kbbased.filtergen.CustomSingleSourceValueLocator;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.model.TLObject;
 
 /**
@@ -58,6 +62,15 @@ public class AsData extends CustomSingleSourceValueLocator {
 
 		TLObject wrapper = (TLObject) obj;
 		return wrapper.tHandle();
+	}
+
+	@Override
+	public Set<? extends TLObject> locateReferers(Object value) {
+		if (!(value instanceof KnowledgeItem)) {
+			return Collections.emptySet();
+		}
+		KnowledgeItem ki = (KnowledgeItem) value;
+		return Collections.singleton(ki.getWrapper());
 	}
 
 }

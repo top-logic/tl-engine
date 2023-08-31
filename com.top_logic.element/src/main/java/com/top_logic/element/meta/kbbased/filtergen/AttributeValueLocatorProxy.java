@@ -5,6 +5,10 @@
  */
 package com.top_logic.element.meta.kbbased.filtergen;
 
+import java.util.Set;
+
+import com.top_logic.model.TLObject;
+
 /**
  * Proxy for an {@link AbstractAttributeValueLocator}.
  * 
@@ -35,6 +39,11 @@ public abstract class AttributeValueLocatorProxy extends AbstractAttributeValueL
 	@Override
 	protected String getReverseEndSpec() {
 		return impl().getReverseEndSpec();
+	}
+
+	@Override
+	public Set<? extends TLObject> locateReferers(Object value) {
+		return impl().locateReferers(value);
 	}
 
 	/**

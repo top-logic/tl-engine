@@ -6,10 +6,14 @@
 package com.top_logic.element.meta;
 
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.config.algorithm.GenericAlgorithmConfig;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
 
 /**
  * This interface defines how an algorithm has to be implemented
@@ -43,5 +47,24 @@ public abstract class MetaAttributeAlgorithm {
      */
     public abstract Object calculate(Wrapper anAttributedObject) throws AttributeException;
     
+	/**
+	 * Determines the {@link TLObject} that have the given {@link TLObject} as value in
+	 * {@link #calculate(Wrapper)}.
+	 * 
+	 * <p>
+	 * Sources for <code>null</code> can not be found.
+	 * </p>
+	 * 
+	 * @param value
+	 *        The value to get {@link #calculate(Wrapper) sources} for. Must not be
+	 *        <code>null</code>.
+	 * @return The {@link TLObject}s for which the given value would be calculated.
+	 * @throws AttributeException
+	 *         when the performing of the algorithm is unsuccessful
+	 */
+	public Set<? extends TLObject> getReferers(TLObject value) throws AttributeException {
+		return Collections.emptySet();
+	}
+
 }
 

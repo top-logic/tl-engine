@@ -5,12 +5,10 @@
  */
 package com.top_logic.element.meta.kbbased;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.element.meta.ReferenceStorage;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.event.Modification;
@@ -111,12 +109,7 @@ public class PersistentReference extends ConfiguredAttributeImpl implements TLRe
 	@Override
 	public Set<? extends TLObject> getReferers(TLObject element) {
 		StorageImplementation storageImplementation = getStorageImplementation();
-		if (!(storageImplementation instanceof ReferenceStorage)) {
-			// Cannot navigate backwards.
-			return Collections.emptySet();
-		}
-		ReferenceStorage refStorage = (ReferenceStorage) storageImplementation;
-		return refStorage.getReferers(element, this);
+		return storageImplementation.getReferers(element, this);
 	}
 
 	/**

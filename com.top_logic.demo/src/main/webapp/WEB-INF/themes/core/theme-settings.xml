@@ -16,4 +16,7 @@
 	<icon name="layouts.demo.tlHome"
 		value="css:bi bi-house-fill"
 	/>
+	<icon name="model.DemoTypes.A"
+		value="css:bi bi-alarm-fill"
+	/>
 </settings>

@@ -66,6 +66,55 @@
 	border-radius: .25rem;
 }
 
+.tlAdditionalRightContent .cButton.cImageButton {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 1.5rem;
+	width: 1.5rem;
+	padding: var(--spacing-02) var(--spacing-02);
+	border-radius: .25rem;
+}
+
+.tlAdditionalRightContent .cButton.cImageButton a {
+	padding: inherit;
+}
+
+.tlAdditionalRightContent .cButton.cImageButton {
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
+}
+
+.tlAdditionalRightContent .cButton.cImageButton a {
+	color: var(--icon-on-color);
+}
+
+.tlAdditionalRightContent .cButton.cImageButton:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover);
+}
+
+.tlAdditionalRightContent .cButton.cImageButton:focus {
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.tlAdditionalRightContent .cButton.cImageButton a:focus {
+	box-shadow: none;
+}
+
+.tlAdditionalRightContent .cButton.cImageButton:active {
+	background: var(--button-primary-active);
+}
+
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled {
+	background: var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
+}
+
+.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled a {
+	color: var(--icon-on-color-disabled);
+}
+
 .tlButtonLabel {
 	font-weight: 600;
 }

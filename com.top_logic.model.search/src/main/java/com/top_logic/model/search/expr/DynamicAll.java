@@ -59,6 +59,13 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 		return All.all(this, (TLStructuredType) singletonValue);
 	}
 
+	@Override
+	public boolean isSideEffectFree() {
+		// Not really a side-effect, but access to global state, therefore, must not do constant
+		// folding.
+		return false;
+	}
+
 	/**
 	 * {@link AbstractSimpleMethodBuilder} creating {@link DynamicAll}.
 	 */

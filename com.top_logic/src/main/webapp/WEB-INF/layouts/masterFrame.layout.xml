@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<include name="templates/masterFrame.xml">
+<include name="templates/masterFrame.xml"
+	closeDialogOnBackgroundClick="true"
+>
 	<components>
 		<layout-reference resource="masterContent.layout.xml"/>
 	</components>

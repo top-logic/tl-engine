@@ -9,6 +9,7 @@ import java.awt.Dimension;
 import java.io.IOException;
 import java.util.Map;
 
+import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -25,11 +26,13 @@ import com.top_logic.layout.basic.ControlRenderer;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.XMLTag;
+import com.top_logic.layout.basic.component.ControlComponent.DispatchAction;
 import com.top_logic.layout.component.configuration.OpenGuiInspectorFragment;
 import com.top_logic.layout.component.configuration.ToolRowCommandRenderer;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.tag.js.JSBoolean;
 import com.top_logic.layout.form.tag.js.JSObject;
+import com.top_logic.layout.form.tag.js.JSString;
 import com.top_logic.layout.layoutRenderer.DialogRenderer;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolbarControl;
@@ -174,6 +177,21 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 	 */
 	public final DialogModel getDialogModel() {
 		return (DialogModel) getWindowModel();
+	}
+
+	/**
+	 * Writes the handler to close the underlying dialog when the user clicks on the background.
+	 */
+	@TemplateVariable("closeDialogOnBackgroundClick")
+	public void closeDialogOnBackgroundClick(DisplayContext context, TagWriter out) throws IOException {
+		if (MainLayout.getMainLayout(context).closeDialogOnBackgroundClick() && getDialogModel().hasCloseButton()) {
+			JSObject args = new JSObject();
+
+			args.addProperty(DispatchAction.CONTROL_COMMAND_PARAM, new JSString(CloseDialogCommand.COMMAND));
+			args.addProperty(ControlCommand.CONTROL_ID_PARAM, new JSString(getID()));
+
+			AJAXCommandHandler.appendInvokeExpression(out, DispatchAction.COMMAND_NAME, args);
+		}
 	}
 
 	/**

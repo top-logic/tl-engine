@@ -2,10 +2,12 @@
 
 <template>
 	<params>
+		<param name="closeDialogOnBackgroundClick"/>
 		<param name="components"/>
 	</params>
 
 	<component class="%MAIN_LAYOUT_CLASS%"
+		closeDialogOnBackgroundClick="${closeDialogOnBackgroundClick}"
 		horizontal="true"
 		icon="/images/shortcut.ico"
 		name="masterFrame"

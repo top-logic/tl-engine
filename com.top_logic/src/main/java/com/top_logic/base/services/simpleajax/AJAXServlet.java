@@ -365,7 +365,7 @@ public class AJAXServlet extends TopLogicServlet {
 				out.flushBuffer();
 				}
 			} finally {
-				unlock(lock, key, ajaxRequest, rootHandler);
+				unlock(lock, key, ajaxRequest, rxSequence, rootHandler, sessionId, userAgent);
 			}
 		} catch (FatalXMLError ex) {
 			Logger.error("IOException or TagException during evaluating result actions. (session: " + sessionId
@@ -560,11 +560,17 @@ public class AJAXServlet extends TopLogicServlet {
 		writer.endResponse();
 	}
 
-	private void unlock(RequestLock lock, Integer key, AJAXRequest ajaxRequest, SubsessionHandler rootHandler) {
+	private void unlock(RequestLock lock, Integer key, AJAXRequest ajaxRequest, Integer rxSequence,
+			SubsessionHandler rootHandler, String sessionId, UserAgent userAgent) {
 		if (mustRunSingleThreaded(ajaxRequest)) {
 			rootHandler.enableUpdate(false);
 
-			lock.exitWriter(key);
+			boolean timeout = lock.exitWriter(key);
+			if (timeout) {
+				Logger.warn(enhanceLogMessage(
+					"A different request was canceled after timeout when executing writer with key '" + key + "'.",
+					ajaxRequest, rxSequence, sessionId, userAgent), AJAXServlet.class);
+			}
 		} else {
 			lock.exitReader(key, ajaxRequest.getSource());
 		}

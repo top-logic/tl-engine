@@ -384,7 +384,17 @@ public final class RequestLock {
 				do {
 					long endWaitingTime = System.currentTimeMillis();
 					if (endWaitingTime > abortTime) {
-						String message = "Write request '" + Thread.currentThread() + "' with sequence number '" + key + "' (next key is '" + waitingRequests.peek() + "') waiting to execute has timed out after " + (endWaitingTime - startWaitingTime) + "ms.";
+						StringBuilder warning = new StringBuilder();
+						warning.append("Write request '");
+						warning.append(Thread.currentThread());
+						warning.append("' with sequence number '");
+						warning.append(key);
+						warning.append("' waiting to execute has timed out after ");
+						warning.append(endWaitingTime - startWaitingTime);
+						warning.append("ms. Currently executed write request has key '");
+						warning.append(waitingRequests.peek());
+						warning.append("'.");
+						String message = warning.toString();
 						Logger.warn(message, RequestLock.class);
 						throw new RequestTimeoutException(message);
 					}
@@ -429,11 +439,13 @@ public final class RequestLock {
 	 * Exit this lock as a writer.
 	 * 
 	 * <p>
-	 * This method must be called by the thread that previously called
-	 * {@link #enterWriter(Integer)} with the same argument.
+	 * This method must be called by the thread that previously called {@link #enterWriter(Integer)}
+	 * with the same argument.
 	 * </p>
+	 * 
+	 * @return Whether a timeout occurred during procession of the writer with the given key.
 	 */
-	public synchronized void exitWriter(Integer key) {
+	public synchronized boolean exitWriter(Integer key) {
 		assert key.equals(waitingRequests.peek());
 
 		waitingRequests.remove(key);
@@ -442,6 +454,8 @@ public final class RequestLock {
 		assert writerCnt >= 0;
 		
 		notifyAll();
+
+		return timeout;
 	}
 	
 	/**

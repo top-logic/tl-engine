@@ -310,7 +310,7 @@ public class AJAXServlet extends TopLogicServlet {
 					store.acknowledge(ajaxRequest.getAcks());
 				}
 
-				Response handle = store.createResponse(rxSequence);
+				try (Response handle = store.createResponse(rxSequence)) {
 				TagWriter out = handle.open(displayContext);
 				UpdateWriter writer = new UpdateWriter(displayContext, out, encoding, rxSequence, sourceReference);
 				boolean processExternalModelEvents = false;
@@ -363,7 +363,7 @@ public class AJAXServlet extends TopLogicServlet {
 				addInfoServiceItems(displayContext, writer);
 				writer.endResponse();
 				out.flushBuffer();
-				handle.close();
+				}
 			} finally {
 				unlock(lock, key, ajaxRequest, rootHandler);
 			}

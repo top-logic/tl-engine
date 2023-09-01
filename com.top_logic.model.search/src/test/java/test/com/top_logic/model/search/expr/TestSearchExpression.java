@@ -1223,6 +1223,22 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		execute(search("null.delete()"));
 	}
 
+	public void testBulkDelete() throws ParseException {
+		List<?> search = (List<?>) execute(search(
+			"list('a1', 'a2').map(n -> {x=new(`TestSearchExpression:A`); $x.set(`TestSearchExpression:A#name`, $n); $x})"));
+		assertNotNull(search);
+		assertEquals(2, search.size());
+
+		for (var x : search) {
+			assertTrue(((TLObject) x).tValid());
+		}
+
+		execute(search("x -> $x.delete()"), search);
+		for (var x : search) {
+			assertFalse(((TLObject) x).tValid());
+		}
+	}
+
 	public void testCreateWithContext() throws ParseException {
 		Object context = execute(search(
 			"{result = new(`TestSearchExpression:DefaultProvidingContext`); $result.set(`TestSearchExpression:DefaultProvidingContext#contextValue`, 'my-context'); $result}"));

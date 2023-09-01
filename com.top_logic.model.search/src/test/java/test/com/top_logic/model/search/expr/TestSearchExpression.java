@@ -162,10 +162,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		TLObject a0 = scenario.getObject("a0");
 		assertEquals(list(a0),
 			eval(
-				"{ a0 = all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == 'a0'); $a0 }"));
+				"{ a0 = all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == 'A0'); $a0 }"));
 		assertEquals(list(a0),
 			eval(
-				"{ a0 = all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == 'a0'); $a0; }"));
+				"{ a0 = all(true ? `TestSearchExpression:A` : null).filter(x -> $x.get(`TestSearchExpression:A#name`) == 'A0'); $a0; }"));
 	}
 
 	private void testRefereres(XMLInstanceImporter scenario) throws ParseException, ConfigurationException {
@@ -216,6 +216,19 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 			assertEquals(null, eval("x -> $x.containerReference()", b4));
 		});
 
+	}
+
+	public void testDynamicAll() {
+		with("TestSearchExpression-testDynamicGet.scenario.xml",
+			scenario -> {
+				assertEquals(list("A0"), eval(
+					"all("
+						+ "`TestSearchExpression`"
+						+ ".get(`tl.model:TLModule#types`)"
+						+ ".filter(c -> $c.get(`tl.model:TLClass#name`) == 'A'))"
+					+ ".filter(x -> $x.get(`TestSearchExpression:A#str`) == 'foo')"
+					+ ".map(x -> $x.get(`TestSearchExpression:A#name`))"));
+			});
 	}
 
 	public void testDynamicGet() {

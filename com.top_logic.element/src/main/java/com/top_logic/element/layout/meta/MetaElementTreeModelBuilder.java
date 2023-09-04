@@ -6,6 +6,7 @@ package com.top_logic.element.layout.meta;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -247,7 +248,7 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 	private List<Object> getModules(Object parent, TLModel model) {
 		List<Object> modules = new ArrayList<>();
 
-		for (String name : getModuleNames(parent, model)) {
+		for (String name : removeExtendingElements(getModuleNames(parent, model))) {
 			TLModule module = model.getModule(name);
 
 			if (module != null) {
@@ -258,6 +259,27 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 		}
 
 		return modules;
+	}
+
+	private Set<String> removeExtendingElements(Set<String> strings) {
+		Set<String> result = new HashSet<>();
+
+		for (String string : strings) {
+			boolean isExtending = false;
+
+			for (String other : strings) {
+				if (!other.equals(string) && string.startsWith(other)) {
+					isExtending = true;
+					break;
+				}
+			}
+
+			if (!isExtending) {
+				result.add(string);
+			}
+		}
+
+		return result;
 	}
 
 	private Set<String> getModuleNames(Object parent, TLModel model) {
@@ -271,13 +293,7 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 				names.add(module.getName());
 			} else if (nameToGroupIn.startsWith(name)) {
 				if (isSubgroup(name, nameToGroupIn, GROUP_NAME_DELIMITER)) {
-					int index = nameToGroupIn.indexOf(GROUP_NAME_DELIMITER, name.length() + 1);
-
-					if (index > 1) {
-						names.add(nameToGroupIn.substring(0, index));
-					} else {
-						names.add(nameToGroupIn);
-					}
+					names.add(nameToGroupIn);
 				}
 			}
 		}

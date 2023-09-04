@@ -37,6 +37,7 @@ import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.implementation.FormDefinitionTemplateProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.util.Resources;
 
 /**
@@ -198,10 +199,12 @@ public class FormEditorUtil {
 	}
 
 	private static FormField createPlaceholder(TLStructuredTypePart aMA) {
-		FormField field = FormFactory.newStringField(aMA.getName() + aMA.tId());
+		Resources resources = Resources.getInstance();
+		String value = resources
+			.getString(I18NConstants.FORM_EDITOR__NO_ATTRIBUTED_OBJECT__ATTRIBUTE.fill(TLModelI18N.getI18NKey(aMA)));
+
+		FormField field = FormFactory.newStringField(aMA.getName() + aMA.tId(), value, true);
 		field.setLabel(MetaLabelProvider.INSTANCE.getLabel(aMA));
-		field.setValue(Resources.getInstance().getString(I18NConstants.FORM_EDITOR__NO_ATTRIBUTED_OBJECT));
-		field.setImmutable(true);
 
 		return field;
 	}

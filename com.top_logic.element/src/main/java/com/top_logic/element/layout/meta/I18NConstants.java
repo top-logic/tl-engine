@@ -47,7 +47,10 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 ERROR_DELETE_TYPE_USED_BY_TYPEPART__TYPE_TYPEPART;
 
-	public static ResKey FORM_EDITOR__NO_ATTRIBUTED_OBJECT;
+	/**
+	 * @en Attribute ''{0}'' cannot be displayed without an associated business object.
+	 */
+	public static ResKey1 FORM_EDITOR__NO_ATTRIBUTED_OBJECT__ATTRIBUTE;
 
 	static {
 		initConstants(I18NConstants.class);

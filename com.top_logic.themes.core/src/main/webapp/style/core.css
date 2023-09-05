@@ -1532,6 +1532,20 @@ h5.card-title a {
 	align-items: center;
 }
 
+.quickSearch .cButton.quickSearchButton {
+	height: 2rem;
+    width: 2rem;
+}
+
+.quickSearch .cButton.quickSearchButton a {
+	height: 2rem;
+    width: 2rem;
+}
+
+.quickSearch .cButton.quickSearchButton a i {
+	font-size: 1rem;
+}
+
 .quickSearch .cButton.quickSearchButton,
 .mtbGroup .cButton {
 	background: transparent;

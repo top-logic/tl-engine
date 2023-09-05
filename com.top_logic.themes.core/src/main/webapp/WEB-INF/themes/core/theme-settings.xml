@@ -123,10 +123,10 @@
 		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
 	/>
 	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_HEADER_ROW_HEIGHT"
-		value="32px"
+		value="40px"
 	/>
 	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_ROW_HEIGHT"
-		value="32px"
+		value="40px"
 	/>
 	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT"
 		expr="%TABLE_TITLE_HEIGHT%"
@@ -599,7 +599,6 @@
 	<icon name="ICONS_BUTTON_OK_DISABLED"
 		value="css: bi bi-check-lg"
 	/>
-	
 	<icon name="mime.image/bmp"
 		value="css: bi bi-image"
 	/>
@@ -669,9 +668,7 @@
 	/>
 	<icon name="ICONS_MOVE_ROW_TO_TOP_DISABLED"
 		value="css:bi bi-chevron-double-up"
-	/>
-	
-	
+	/>	
 	<icon name="com.top_logic.layout.form.control.Icons.ARROW_LEFT"
 		value="css:bi bi-chevron-left"
 	/>
@@ -687,7 +684,6 @@
 	<icon name="com.top_logic.layout.form.control.Icons.FAST_FORWARD"
 		value="css:bi bi-chevron-double-right"
 	/>
-
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_FIRST"
 		value="css:bi bi-chevron-double-left"
 	/>
@@ -711,8 +707,7 @@
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_PREV_DISABLED"
 		value="css:bi bi-chevron-left"
-	/>
-	
+	/>	
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.DELETE_MENU_DISABLED"
 		value="css:bi bi-x-lg"
 	/>
@@ -734,9 +729,6 @@
 	<icon name="com.top_logic.layout.table.control.Icons.MOVE_ROW_UP_DISABLED"
 		value="css:bi bi-chevron-up"
 	/>
-	
-	
-
 	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON"
 		value="css:bi bi-x-lg"
 	/>
@@ -977,7 +969,9 @@
 	<icon name="com.top_logic.event.infoservice.Icons.INFO_SERVICE_DETAIL_EXPANDER"
 		value="css:bi bi-chevron-up"
 	/>
-	
+	<int name="com.top_logic.layout.form.selection.Icons.SELECTION_CONTROL_FIELD_HEIGHT"
+		value="40"
+	/>
 	
 	<!-- Style Tokens -->
 	<!-- Color Tokens -->

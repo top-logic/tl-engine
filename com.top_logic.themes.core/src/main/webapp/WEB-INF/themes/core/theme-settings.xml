@@ -632,7 +632,6 @@
 	<icon name="com.top_logic.layout.table.control.Icons.ICONS_MOVE_ROW_UP_DISABLED"
 		value="css:bi bi-chevron-up"
 	/>
-	
 	<icon name="ICONS_BUTTON_BACKWARD"
 		value="css:bi bi-chevron-double-left"
 	/>	

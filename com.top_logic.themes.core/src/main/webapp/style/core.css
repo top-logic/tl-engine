@@ -54,18 +54,24 @@ div.layoutHorizontalAdjustmentGrabber {
 	text-align: center
 }
 
+span.can-edit {
+	display: block;
+	width: inherit;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 /*
 ****					****
 ****	Anchor syles	****
 ****					****
 */
 a {
-	cursor: pointer;
 	color: var(--link-primary);
-	text-decoration: none;
 }
 
-a:link {
+a, a:link {
 	cursor: pointer;
 	text-decoration: none;
 }
@@ -870,13 +876,7 @@ div.dlgCapture {
 ****						****
 */
 .updating {
-    background: #AAAAAA;
-    filter: alpha(opacity =   30);
-    -moz-opacity: 0.3;
-    /*
-     * since Firefox 3.5
-     */
-    opacity: 0.3;
+	background: var(--overlay);
 }
 
 div.selectbox {
@@ -886,12 +886,8 @@ div.selectbox {
     left: 0;
     right: 0;
     overflow: auto;
-    background-color: white;
-    border-style: solid;
-    border-width: 2px;
-    border-style: ridge;
-    border-color: threeddarkshadow threedlightshadow threedlightshadow
-        threeddarkshadow;
+    background-color: var(--background);
+    border: 1px solid var(--border-strong);
 }
 
 div.selectbox ul {
@@ -899,12 +895,6 @@ div.selectbox ul {
 	width: 100%;
     margin: 0;
     padding-left: 0;
-    /*
-        The height is a strange hack for IE8. Incremental updates will update the
-        DOM element of IE8, but the GUI will not be updated, i.e. if there are two
-        elements and one is inserted then there are still just two elements visible.
-    */
-    height: 0px;
 }
 
 div.cListControl li,
@@ -919,16 +909,15 @@ div.selectbox li {
 }
 
 div.selectbox li > span,
-div.selectbox li > a
- {
-	padding-left: 5px;
-	padding-right: 5px;
+div.selectbox li > a {
+	padding: 0 var(--spacing-02);
 }
 
-div.selectbox li.focus {
-    border-style: dotted;
-    border-width: 1px;
-    border-color: white;
+div.cListControl li span,
+div.cListControl li a,
+div.selectbox li span,
+div.selectbox li a {
+	text-decoration: none;
 }
 
 div.cListControl li.selected,
@@ -938,6 +927,7 @@ div.selectbox .fixed,
 div.selectbox .treeNode.treeSelected,
 div.selectbox .treeNode.treeNodeReferencedSelected {
     cursor: default;
+	text-decoration: none;
 }
 
 div.cListControl li.selected span,
@@ -948,20 +938,23 @@ div.selectbox li.selected a,
 div.selectbox .treeNode.treeSelected, 
 div.selectbox .treeNode.treeSelected a,
 div.selectbox .treeNode.treeSelected span {
-    color: white;
-    background-color: highlight;
+	color: var(--text-primary);
+	cursor: default;
+	text-decoration: none;
 }
 
+div.cListControl li.selected span,
+div.cListControl li.selected a,
+div.selectbox li.selected, 
+div.selectbox li.selected span,
+div.selectbox li.selected a,
 div.cListControl li.selected.fixedSelectable span,
 div.cListControl li.selected.fixedSelectable a,
 div.selectbox li.selected.fixedSelectable, 
 div.selectbox li.selected.fixedSelectable span,
-div.selectbox li.selected.fixedSelectable a {
-    background-color: var(--HIGHLIGHT_SECONDARY);
-}
-
+div.selectbox li.selected.fixedSelectable a,
 div.selectbox .treeNode.treeNodeReferencedSelected {
-    background-color: var(--TREE_SELECTION_BG_HOVER);
+    background-color: var(--layer-selected);
 }
 
 div.selectbox li.tableSeparator {
@@ -970,7 +963,7 @@ div.selectbox li.tableSeparator {
 }
 
 div.selectbox li.tableSeparator.selected, 
-div.selectbox li.tableSeparator.selected a{
+div.selectbox li.tableSeparator.selected a {
 	background-color: #666;
 }
 
@@ -978,32 +971,28 @@ div.selectbox li.tableSeparator.selected a{
 	height: 100%;
 }
 
-button {
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
 td.leftList {
     vertical-align: top;
-    padding-right: 7px;
+    padding-right: var(--spacing-02);
 }
 
 td.rightList {
     vertical-align: top;
-    padding-left: 7px;
+    padding-left: var(--spacing-02);
 }
 
 .fixed,
 .fixedSelectable a:link {
-    color: graytext;
+    color: var(--text-disabled);
+}
+
+.cDefaultButton button {
+	border: none;
+	border-radius: .25rem;
+	cursor: pointer;
 }
 
 button.moveOption {
-	width: 100%;
-}
-
-span.moveOption {
-	/* Since button control spans are displayed inline-block, they must be explicitly expanded. */
 	width: 100%;
 }
 

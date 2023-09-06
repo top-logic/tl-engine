@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.form.selection;
 
+import com.top_logic.gui.ThemeVar;
+import com.top_logic.layout.basic.DefaultValue;
 import com.top_logic.layout.basic.IconsBase;
 import com.top_logic.layout.basic.ThemeImage;
 
@@ -15,5 +17,8 @@ import com.top_logic.layout.basic.ThemeImage;
  */
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
+
+	@DefaultValue("25")
+	public static ThemeVar<Integer> SELECTION_CONTROL_FIELD_HEIGHT;
 
 }

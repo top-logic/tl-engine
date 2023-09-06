@@ -66,6 +66,17 @@
 	border-radius: .25rem;
 }
 
+.cDefaultButton button {
+	display: inline-flex;
+    align-items: center;
+    justify-content: center;
+	height: 1.4rem;
+	padding: var(--spacing-02) var(--spacing-03);
+	border: none;
+	border-radius: .25rem;
+	cursor: pointer;
+}
+
 .tlAdditionalRightContent .cButton.cImageButton {
 	display: flex;
 	justify-content: center;
@@ -115,16 +126,16 @@
 	color: var(--icon-on-color-disabled);
 }
 
-.tlButtonLabel {
+.tlButtonLabel, .cDefaultButton button {
 	font-weight: 600;
 }
 
-.tlButton {
+.tlButton, .cDefaultButton button {
 	background: transparent;
 	box-shadow: inset 0px 0px 0px 1px var(--button-secondary);
 }
 
-.tlButton .tlButtonLabel {
+.tlButton .tlButtonLabel, .cDefaultButton button {
 	color: var(--text-interactive);
 }
 
@@ -132,12 +143,14 @@
 	color: var(--icon-interactive);
 }
 
-.tlButton:hover {
+.tlButton:hover,
+.cDefaultButton button:hover {
 	background: var(--button-secondary-hover);
 	box-shadow: inset 0px 0px 0px 1px var(--button-secondary-hover);
 }
 
-.tlButton:hover .tlButtonLabel {
+.tlButton:hover .tlButtonLabel,
+.cDefaultButton button:hover {
 	color: var(--text-on-color);
 }
 
@@ -145,12 +158,14 @@
 	color: var(--icon-on-color);
 }
 
-.tlButton:focus {
+.tlButton:focus,
+.cDefaultButton button:focus {
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 	background: var(--button-secondary-hover);
 }
 
-.tlButton:focus .tlButtonLabel {
+.tlButton:focus .tlButtonLabel,
+.cDefaultButton button:focus {
 	color: var(--text-on-color);
 }
 
@@ -158,12 +173,14 @@
 	color: var(--icon-on-color);
 }
 
-.tlButton:active {
+.tlButton:active
+.cDefaultButton button: active {
 	background: var(--button-secondary-active);
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 }
 
-.tlButton:active .tlButtonLabel {
+.tlButton:active .tlButtonLabel,
+.cDefaultButton button:active {
 	color: var(--text-on-color);
 }
 
@@ -171,7 +188,12 @@
 	color: var(--icon-on-color);
 }
 
-.tlButton.cmdButtonDisabled {
+.cDefaultButton button:disabled {
+	cursor: default;
+}
+
+.tlButton.cmdButtonDisabled,
+.cDefaultButton button:disabled {
 	background: none;
 	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
 }
@@ -180,7 +202,8 @@
 	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
 }
 
-.tlButton.cmdButtonDisabled .tlButtonLabel {
+.tlButton.cmdButtonDisabled .tlButtonLabel,
+.cDefaultButton button:disabled {
 	color: var(--text-disabled);
 }
 

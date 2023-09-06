@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.selection;
 
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.form.model.SelectField;
 
 /**
@@ -111,7 +112,8 @@ public class MultiSelectTemplateBuilder extends SelectTemplateBuilder {
 	}
 
 	private void appendPatternField() {
-		layoutVerticalPixel(25);
+		int height = ThemeFactory.getTheme().getValue(Icons.SELECTION_CONTROL_FIELD_HEIGHT);
+		layoutVerticalPixel(height);
 		{
 			// Anchor for selectFirst()
 			append("<form action='#' onsubmit='return false;'>");
@@ -131,7 +133,8 @@ public class MultiSelectTemplateBuilder extends SelectTemplateBuilder {
 
 	private void appendPageField() {
 		if (isLarge()) {
-			layoutVerticalPixel(25);
+			int height = ThemeFactory.getTheme().getValue(Icons.SELECTION_CONTROL_FIELD_HEIGHT);
+			layoutVerticalPixel(height);
 			{
 				field(SelectorContext.PAGE_FIELD_NAME);
 			}

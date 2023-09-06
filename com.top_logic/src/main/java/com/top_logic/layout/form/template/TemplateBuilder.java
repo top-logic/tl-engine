@@ -157,7 +157,10 @@ public abstract class TemplateBuilder implements Provider<Document> {
 	 *        The name of the field.
 	 */
 	protected final void label(String name) {
+		append("<span class='tl-field-label'");
+		append(">");
 		append("<p:field name='").append(name).append("' style='label' />");
+		append("</span>");
 	}
 
 	/**

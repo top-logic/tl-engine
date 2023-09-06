@@ -2310,6 +2310,10 @@ a.input-image.tristate . bi bi-info-square{
 }
 
 .ddwttDropBtn {
+	font-family: 'Inter-Regular';
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	letter-spacing: var(--body-02-letter-spacing);
 	width: fit-content;
 	max-width: 100%;
 	height: 2rem;
@@ -2318,17 +2322,28 @@ a.input-image.tristate . bi bi-info-square{
 	align-items: center;
 	color: var(--text-primary);
 	background: var(--field);
+	padding: 0 var(--spacing-03);
 }
 
 .ddwttDropBtn > span {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+	
 }
 
 span.disabled .ddwttDropBtn {
 	background: var(--field);
 	color: var(--text-disabled);
+}
+
+.ddwttContainer.error .ddwttDropBtn {
+	box-shadow: inset 0px 0px 0px 1px var(--support-danger),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.ddwttDropBtn:focus,
+.error.ddwttDropBtnActive .ddwttDropBtn{
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 }
 
 .ddwttChevron::after {
@@ -2340,8 +2355,8 @@ span.disabled .ddwttDropBtn {
 	height: 0.5em;
 	width: 0.5em;
 	transform: rotate(45deg);
-	margin-left: 0.5em;
-	color: var(--ICON_COLOR_BASIC);
+	margin-left: var(--spacing-03);
+	color: var(--icon-primary);
 	flex-shrink: 0;
 }
 
@@ -2353,6 +2368,10 @@ span.disabled .ddwttDropBtn {
 .ddwttChevron.down:after {
 	top: -0.125em;
 	transform: rotate(135deg);
+}
+
+span.disabled .ddwttChevron::after {
+	color: var(--icon-disabled);
 }
 
 /* DropDown */
@@ -2370,12 +2389,12 @@ span.disabled .ddwttDropBtn {
 
 .ddwttDDBox span {
 	margin: 0;
-	line-height: 1.5rem;
-	/* line-height: 2em !important; */ /* estimated setting for new design-theme */
+	line-height: 2rem;
 }
 
-.ddwttDropBtnActive .ddwttDropBtn {
-	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+.ddwttDropBtnActive .ddwttDDBox,
+.error .ddwttDDBox {
+	border: 1px solid var(--focus);
 }
 
 .ddwttDropBtnActive .ddwttDDBox {
@@ -2392,10 +2411,15 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttSearch {
-	height: 1.5rem;
+	font-family: 'Inter-Regular';
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	letter-spacing: var(--body-02-letter-spacing);
+	height: 2rem;
 	border: none;
 	border-radius: initial;
 	background: var(--field);
+	padding: 0 var(--spacing-03);
 }
 
 .ddwttSearch:focus-visible {
@@ -2436,19 +2460,54 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttItemLabel {
-	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
-	padding: 0.2em 8px;
 	display: block;
+	padding: 0 var(--spacing-03);
+}
+
+.ddwttTagLoc {
+	padding-right: var(--spacing-02);
+}
+
+.ddwttTagLoc, .ddwttTag {
+	display: inline-flex;
+	width: fit-content;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-02);
+}
+
+.ddwttTag {
+	border: 1px solid var(--border-subtle);
+	transition: 0.3s;
+	gap: var(--spacing-01);
+	padding: 0 var(--spacing-02);
+	height: 2rem;
+}
+
+.ddwttTag:hover {
+	text-decoration: line-through var(--border-strong) 1px;
+}
+
+.ddwttTagX {
+	width: .875rem;
+	height: 0.875rem;
+	/* Style from .fClear */
+	transform: scale(0.8);
+	display: inline-flex;
+	align-items: center;
+}
+
+.ddwttTagX i {
+	color: var(--icon-primary);
 }
 
 /* Tooltip */
 .ddwttTooltip {
 	min-width: 200px;
 	max-width: 500px;
-	background-color: #464646;
-	border-radius: 1em;
+	background-color: var(--layer);
 	position: fixed;
-	box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+	box-shadow: var(--shadow-menu);
 	display: none;
 	z-index: 9999999999999999;
 }
@@ -2466,7 +2525,7 @@ span.disabled .ddwttDropBtn {
 	height: var(--ttArrow-dim);
 	top: var(--ttArrow-top);
 	transform: var(--ttArrow-trans);
-	background-color: #464646;
+	background-color: var(--layer);
 	--ttArrow-dim: 18px;
 }
 
@@ -2487,55 +2546,22 @@ span.disabled .ddwttDropBtn {
 	white-space: normal;
 	overflow-wrap: break-word;
 	max-height: calc(100vh - (var(--ttPadding) * 4));
-	--ttPadding: 8px;
+	--ttPadding: var(--spacing-02);;
 	padding: var(--ttPadding) 12px;
 	line-height: 1.5 !important;
-	color: white;
+	color: var(--text-secondary);
 }
 
 .ddwttTooltipContent * {
 	margin: 0;
-	color: white;
+	color: var(--text-secondary);
 	line-height: 1.5 !important;
 	padding: 0 !important;
 }
 
 .ddwttTooltipContent :is(h1, h2, h3, h4, h5, h6) {
-    text-align: center;
     clear: both;
-	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
-	margin-bottom: 8px;
+	margin-bottom: var(--spacing-01);
 }
 
-.ddwttTagLoc, .ddwttTag {
-	display: inline-block;
-    width: fit-content;
-    text-align: left;
-}
 
-.ddwttTagX {
-	padding: 0;
-	/* Style from .input-image */
-	background-color: var(--LAYOUT_MAIN_COLOR);
-	background: var(--IMAGE_BUTTON_BACKGROUND);
-	border: var(--IMAGE_BUTTON_BACKGROUND_BORDER);
-	box-shadow: var(--IMAGE_BUTTON_BACKGROUND_BOXSHADOW);
-	display: inline-block;
-	width: var(--ICON_SIZE_NORMAL);
-	height: var(--ICON_SIZE_NORMAL);
-	/* Style from .fClear */
-	transform: scale(0.7);
-	margin-right: 5px;
-	margin-left: -2px;
-	margin-top: -2px;
-}
-
-.ddwttTagX i {
-	/* Style from .input-image i */
-	color: var(--ICON_COLOR_BUTTON_BASIC);
-	font-size: 14px;
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-}

@@ -2280,3 +2280,262 @@ a.input-image.tristate . bi bi-info-square{
 	color: var(--support-info);
 }
 
+
+/* ============================================= */
+/* ========== DropDown with Tooltip  =========== */
+/* ============================================= */
+
+/* 	The CSS-Class prefix "ddwtt" uniquely identifies elements from DropDownControl.
+	The prefix stands for "DropDown With ToolTip". */
+.ddwttContainer {
+	position: relative;
+	text-align: center;
+	cursor: default;
+	margin: 0 !important;
+}
+
+.dfContent .ddwttContainer::before, .dfContent .ddwttContainer::after {
+	content: " ";
+}
+
+.rf_header .ddwttDropBtn {
+	background-color: unset;
+	border: 1px solid var(--border-subtle);
+	color: var(--GROUP_LABEL_COLOR);
+	height: 20px;
+}
+
+.rf_header .ddwttChevron::after {
+	color: var(--GROUP_LABEL_COLOR);
+}
+
+.ddwttDropBtn {
+	width: fit-content;
+	max-width: 100%;
+	height: 2rem;
+	border: 1px solid var(--border-subtle);
+	display: inline-flex;
+	align-items: center;
+	color: var(--text-primary);
+	background: var(--field);
+}
+
+.ddwttDropBtn > span {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+span.disabled .ddwttDropBtn {
+	background: var(--field);
+	color: var(--text-disabled);
+}
+
+.ddwttChevron::after {
+	border-style: solid;
+	border-width: 0.2em 0.2em 0 0;
+	content: '';
+	position: relative;
+	display: inline-block;
+	height: 0.5em;
+	width: 0.5em;
+	transform: rotate(45deg);
+	margin-left: 0.5em;
+	color: var(--ICON_COLOR_BASIC);
+	flex-shrink: 0;
+}
+
+.ddwttChevron.up:after {
+	top: 0.125em;
+	transform: rotate(-45deg);
+}
+
+.ddwttChevron.down:after {
+	top: -0.125em;
+	transform: rotate(135deg);
+}
+
+/* DropDown */
+.ddwttDDBox {
+	display: none;
+	position: fixed;
+	width: fit-content;
+	z-index: 10;
+	background-color: var(--field);
+	border: 1px solid var(--border-subtle);
+	color: var(--text-secondary);
+	box-sizing: border-box;
+	box-shadow: var(--shadow-menu);
+}
+
+.ddwttDDBox span {
+	margin: 0;
+	line-height: 1.5rem;
+	/* line-height: 2em !important; */ /* estimated setting for new design-theme */
+}
+
+.ddwttDropBtnActive .ddwttDropBtn {
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.ddwttDropBtnActive .ddwttDDBox {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	cursor: pointer;
+}
+
+.ddwttDDList {
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+}
+
+.ddwttSearch {
+	height: 1.5rem;
+	border: none;
+	border-radius: initial;
+	background: var(--field);
+}
+
+.ddwttSearch:focus-visible {
+	color: var(--text-primary);
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+	outline: none;
+}
+
+.ddwttHide {
+	position: absolute;
+	clip-path: circle(0);
+	top: 0;
+	left: 0;
+}
+
+.ddwttSelectedItem {
+	display: none;
+}
+
+.ddwttItem {
+	position: relative;
+	text-align: left;
+}
+
+.ddwttActiveItem {
+	color: var(--text-primary);
+	background-color: var(--layer-hover);
+	outline: none;
+}
+
+.ddwttActiveItem:focus{
+	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
+}
+
+.ddwttImmutableItem {
+	display: inline;
+	text-align: left;
+}
+
+.ddwttItemLabel {
+	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
+	padding: 0.2em 8px;
+	display: block;
+}
+
+/* Tooltip */
+.ddwttTooltip {
+	min-width: 200px;
+	max-width: 500px;
+	background-color: #464646;
+	border-radius: 1em;
+	position: fixed;
+	box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+	display: none;
+	z-index: 9999999999999999;
+}
+
+.ddwttActiveItem .ddwttTooltip {
+	display: flex;
+	flex-direction: column;
+}
+
+/* tooltip Arrow */
+.ddwttTooltip::after {
+	content: '';
+	position: absolute;
+	width: var(--ttArrow-dim);
+	height: var(--ttArrow-dim);
+	top: var(--ttArrow-top);
+	transform: var(--ttArrow-trans);
+	background-color: #464646;
+	--ttArrow-dim: 18px;
+}
+
+.ddwttTtArrowLeft::after {
+	left: 2px;
+	--ttArrow-trans: translate(-50%, -50%);
+	clip-path: polygon(50% 0%, 0% 50%, 50% 100%);
+}
+
+.ddwttTtArrowRight::after {
+	right: 2px;
+	--ttArrow-trans: translate(50%, -50%);
+	clip-path: polygon(50% 0%, 100% 50%, 50% 100%);
+}
+
+.ddwttTooltipContent {
+	overflow-y: auto;
+	white-space: normal;
+	overflow-wrap: break-word;
+	max-height: calc(100vh - (var(--ttPadding) * 4));
+	--ttPadding: 8px;
+	padding: var(--ttPadding) 12px;
+	line-height: 1.5 !important;
+	color: white;
+}
+
+.ddwttTooltipContent * {
+	margin: 0;
+	color: white;
+	line-height: 1.5 !important;
+	padding: 0 !important;
+}
+
+.ddwttTooltipContent :is(h1, h2, h3, h4, h5, h6) {
+    text-align: center;
+    clear: both;
+	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
+	margin-bottom: 8px;
+}
+
+.ddwttTagLoc, .ddwttTag {
+	display: inline-block;
+    width: fit-content;
+    text-align: left;
+}
+
+.ddwttTagX {
+	padding: 0;
+	/* Style from .input-image */
+	background-color: var(--LAYOUT_MAIN_COLOR);
+	background: var(--IMAGE_BUTTON_BACKGROUND);
+	border: var(--IMAGE_BUTTON_BACKGROUND_BORDER);
+	box-shadow: var(--IMAGE_BUTTON_BACKGROUND_BOXSHADOW);
+	display: inline-block;
+	width: var(--ICON_SIZE_NORMAL);
+	height: var(--ICON_SIZE_NORMAL);
+	/* Style from .fClear */
+	transform: scale(0.7);
+	margin-right: 5px;
+	margin-left: -2px;
+	margin-top: -2px;
+}
+
+.ddwttTagX i {
+	/* Style from .input-image i */
+	color: var(--ICON_COLOR_BUTTON_BASIC);
+	font-size: 14px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}

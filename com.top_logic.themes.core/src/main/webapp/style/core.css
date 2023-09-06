@@ -55,7 +55,6 @@ div.layoutHorizontalAdjustmentGrabber {
 }
 
 span.can-edit {
-	display: block;
 	width: inherit;
     overflow: hidden;
     white-space: nowrap;
@@ -879,6 +878,10 @@ div.dlgCapture {
 	background: var(--overlay);
 }
 
+.tl-field-label span.can-edit {
+	display: block;
+}
+
 div.selectbox {
 	position: absolute;
     top: 0;
@@ -1038,43 +1041,99 @@ div.mboxInput {
 ****	Tooltip Styles	****
 ****					****
 */
-.tooltip {
-	color: var(--text-secondary);
-	background-color: var(--layer);
-	max-width: 240px;
-	height: auto;
-	/* padding: var(--spacing-02); */
-}
-
 .tooltipCaption {
 	color: var(--TOOLTIP_CAPTION_FONT_COLOR);
-	background-color: var(--layer);
-	max-width: 240px;
-	height: auto;
-	/* padding: var(--spacing-02); */
+	background-color: var(--TOOLTIP_CAPTION_BACKGROUND_COLOR);
+	padding: calc(var(--ttPadding) / 2) 12px;
+	line-height: 1.5 !important;
+	border-radius: 1em 1em 0 0;
 }
 
-/* Classes used for configured tooltips: see ConfiguredAttributedTooltipProvider */
-span.configuredTooltipValue {
-	color: var(--text-secondary);
-	background-color: var(--layer);
-	max-width: 240px;
-	/* padding: var(--spacing-02); */
+.tooltip {
+	max-width: 500px;
+	max-height: calc(100vh - (var(--ttPadding) * 2));
+	background-color: #464646;
+	border-radius: 1em;
+	position: fixed;
+	box-shadow: 0 1px 8px rgba(0,0,0,0.5);
+	z-index: 9999999999999999;
+	--ttPadding: 8px;
+	font-weight: normal;
+	cursor: default;
+	display: flex;
+	flex-direction: column;
+	margin: 0 !important;
+	padding: 0 !important;
 }
 
-span.configuredTooltipLabel {
-	font-weight: bold;
+/* Tooltip Arrow */
+.tooltip::after {
+	content: '';
+	position: absolute;
+	width: var(--ttArrow-dim);
+	height: var(--ttArrow-dim);
+	top: var(--ttArrow-top);
+	transform: var(--ttArrow-trans);
+	background-color: #464646;
+	--ttArrow-dim: 18px;
 }
 
-/* Indent label for derived resources, e.g. for the label of the input field for the tooltip. */
-.additional-resource .rf_label {
-	padding-left: 7px;
-	box-sizing: border-box;
+.ttVerticalArrowBottom::after {
+	bottom: 2px;
+	--ttArrow-trans: translate(0%, 50%);
+	clip-path: polygon(0% 50%, 100% 50%, 50% 100%);
 }
 
-/* Indent label for derived resources, e.g. for the label of the input field for the tooltip. */
-.additional-resource.with-spacing div:last-child {
-	margin-bottom: 20px;
+.ttVerticalArrowTop::after {
+	top: 2px;
+	--ttArrow-trans: translate(0%, -50%);
+	clip-path: polygon(0% 50%, 100% 50%, 50% 0%);
+}
+
+.ttVerticalArrowLeft::after {
+	left: calc(var(--ttArrow-dim) / 2);
+}
+
+.ttVerticalArrowRight::after {
+	right: calc(var(--ttArrow-dim) / 2);
+}
+
+.ttHorizontalArrowLeft::after {
+	left: 2px;
+	--ttArrow-trans: translate(-50%, -50%);
+	clip-path: polygon(50% 0%, 0% 50%, 50% 100%);
+}
+
+.ttHorizontalArrowRight::after {
+	right: 2px;
+	--ttArrow-trans: translate(50%, -50%);
+	clip-path: polygon(50% 0%, 100% 50%, 50% 100%);
+}
+
+/* Tooltip Content */
+.tooltipContent {
+	overflow-y: auto;
+	white-space: normal;
+	overflow-wrap: break-word;
+	padding: var(--ttPadding) 12px;
+	line-height: 1.5 !important;
+	color: white;
+	text-align: left;
+	font-size: 12px;
+	cursor: text;
+}
+
+.tooltipContent * {
+	margin: 0;
+	color: white;
+	line-height: 1.5 !important;
+	padding: 0 !important;
+}
+
+.tooltipContent :is(h1, h2, h3, h4, h5, h6) {
+	text-align: center;
+	clear: both;
+	margin-bottom: 8px;
 }
 
 /*

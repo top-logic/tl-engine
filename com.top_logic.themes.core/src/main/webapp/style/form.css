@@ -107,8 +107,8 @@ div.fptSubtitle {
 
 div.fptSubtitleContent {
     padding-left: var(--spacing-03);
-    padding-top: 5px;
-    padding-bottom: 5px;
+    display: flex;
+    align-items: center;
 }
 
 .fptIcon, .fptIconWithOverlay, .fptIconOverlay {
@@ -1389,16 +1389,6 @@ select:not([multiple="multiple"]):disabled {
 	mask-repeat: no-repeat;
 }
 
-.fptSubtitleContent select {
-	height: 1.3rem;
-	border: none;
-	background: var(--background);
-	background-image: url(../themes/core/chevron-down.svg);
-    background-repeat: no-repeat;
-    background-position: right calc(1rem + 1px) center;
-    background-size: 1rem 1rem
-}
-
 /* Time input control */
 /*!Don't remove this!
  * jQuery MDTimePicker v1.0 plugin
@@ -2346,6 +2336,10 @@ span.disabled .ddwttDropBtn {
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 }
 
+.fptSubtitleContent .ddwttDropBtn {
+	height: 1.4rem;
+}
+
 .ddwttChevron::after {
 	border-style: solid;
 	border-width: 0.2em 0.2em 0 0;
@@ -2507,7 +2501,7 @@ span.disabled .ddwttChevron::after {
 	max-width: 500px;
 	background-color: var(--layer);
 	position: fixed;
-	box-shadow: var(--shadow-menu);
+	filter: drop-shadow(var(--shadow-menu));
 	display: none;
 	z-index: 9999999999999999;
 }

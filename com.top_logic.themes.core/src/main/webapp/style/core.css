@@ -6,6 +6,7 @@ body {
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 	letter-spacing: var(--body-02-letter-spacing);
+	outline: none;
 }
 
 h5 {
@@ -191,7 +192,7 @@ div.ace_tooltip>code.inlineCode {
 	top: 0px;
 	border-top-style: none;
 	overflow: hidden;
-	box-shadow:var(--shadow-menu);
+	box-shadow: var(--shadow-menu);
 }
 
 .pdlgContent {
@@ -1053,7 +1054,7 @@ div.mboxInput {
 	max-height: calc(100vh - (var(--ttPadding) * 2));
 	background-color: var(--layer);
 	position: fixed;
-	box-shadow: var(--shadow-menu);
+	filter: drop-shadow(var(--shadow-menu));
 	z-index: 9999999999999999;
 	--ttPadding: var(--spacing-02);
 	font-weight: normal;
@@ -1710,10 +1711,25 @@ h5.card-title a {
 	box-shadow: inset 0px 0px 0px 1px var(--focus),inset 0px 0px 0px 2px var(--focus-inset);
 }
 
+/* 
+Is needes as long as the data-hover class exist.
+If they're delete, this can be deleted too
+*/
 .breadcrumb span.hover,
 .breadcrumb span.hover:active {
-	text-decoration: none;
 	color: var(--text-primary);
+	text-decoration: none;
+	cursor: default;
+}
+
+/* Disable the anchor effects of the last (active) breadcrumb */
+.breadcrumb > span .selectableNode.tcrLink:last-child:hover {
+	text-decoration: none;
+	cursor: default;
+}
+
+.breadcrumb > span .selectableNode.tcrLink:last-child:focus {
+	box-shadow: none;
 }
 
 /*

@@ -1,79 +1,79 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$list.groupBy($key-fun)
 
 $list.groupBy($key-fun, $map-fun)</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Gruppiert eine Liste nach Schlüsselwerten, die durch eine Schlüsselfunktion berechnet werden. Falls eine Abbildungsfunktion angegeben wird, wird diese anschließend auf jede Gruppe ausgeführt.</p> 
-<p>Die Werte der Liste werden entsprechend der Schlüsselfunktion gefiltert und in einem Wörterbuch gespeichert. Wenn man sich nur für einen bestimmten Schüsselwert interessiert, ist eine einfache <a class="tlObject" data-custom="true" href="?page=filter&amp;uuid=9db99671-644d-4dfd-bd1b-694c57ed9588">Filterung</a> ausreichend. Eine Gruppierung nutzt man nur dann, wenn wenn das Gruppierungsergebnis mehrfach verwendet wird, d.h. auf viele Schlüssel zugegriffen wird.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th style="width:70px">Name</th> 
-   <th style="width:35px">Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td style="width:70px">list</td> 
-   <td style="width:35px">Menge</td> 
-   <td>Eine Liste, die gruppiert werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td style="width:70px">key-fun</td> 
-   <td style="width:35px">Funktion</td> 
-   <td>Schlüsselfunktion, die für einen Wert aus <code class="hljs inlineCode">list</code> einen Schlüsselwert bestimmt. Der Schlüsselwert bestimmt die Gruppe, in die der Wert aus der <code class="hljs inlineCode">list</code> einsortiert wird.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td style="width:70px">map-fun</td> 
-   <td style="width:35px">Funktion</td> 
-   <td>Abbildungsfunktion, welche auf jede erstellte Wertegruppe angewendet wird.</td> 
-   <td>nein</td> 
-   <td>keine Abbildungsfunktion wird auseführt</td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
-<p>Ein Wörterbuch, das pro berechneten Schlüsselwert eine Liste der dazugehörigen Elemente von <code class="hljs inlineCode">list</code> enthält.</p> 
-<h2>Beispiele</h2> 
-<h3>Gruppierung von Namen nach Anfangsbuchstaben</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Gruppiert eine Liste nach Schlüsselwerten, die durch eine Schlüsselfunktion berechnet werden. Falls eine Abbildungsfunktion angegeben wird, wird diese anschließend auf jede Gruppe ausgeführt.</p>
+<p>Die Werte der Liste werden entsprechend der Schlüsselfunktion gefiltert und in einem Wörterbuch gespeichert. Wenn man sich nur für einen bestimmten Schüsselwert interessiert, ist eine einfache <a class="tlObject" data-custom="false" href="?page=filter&amp;uuid=9db99671-644d-4dfd-bd1b-694c57ed9588">Filterung</a> ausreichend. Eine Gruppierung nutzt man nur dann, wenn wenn das Gruppierungsergebnis mehrfach verwendet wird, d.h. auf viele Schlüssel zugegriffen wird.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th style="width:70px">Name</th>
+   <th style="width:35px">Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td style="width:70px">list</td>
+   <td style="width:35px">Menge</td>
+   <td>Eine Liste, die gruppiert werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td style="width:70px">key-fun</td>
+   <td style="width:35px">Funktion</td>
+   <td>Schlüsselfunktion, die für einen Wert aus <code class="hljs inlineCode">list</code> einen Schlüsselwert bestimmt. Der Schlüsselwert bestimmt die Gruppe, in die der Wert aus der <code class="hljs inlineCode">list</code> einsortiert wird.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td style="width:70px">map-fun</td>
+   <td style="width:35px">Funktion</td>
+   <td>Abbildungsfunktion, welche auf jede erstellte Wertegruppe angewendet wird.</td>
+   <td>nein</td>
+   <td>keine Abbildungsfunktion wird auseführt</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Ein Wörterbuch, das pro berechneten Schlüsselwert eine Liste der dazugehörigen Elemente von <code class="hljs inlineCode">list</code> enthält.</p>
+<h2>Beispiele</h2>
+<h3>Gruppierung von Namen nach Anfangsbuchstaben</h3>
 <pre><code>list("Joe", "Tom", "Jane", "Tylor", "Erik")
-  .groupBy(name -&gt; $name.subString(0, 1))</code></pre> 
-<p><span style="color:#3498db"></span></p> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ein Wörterbuch mit folgenden Werten:</p> 
+  .groupBy(name -&gt; $name.subString(0, 1))</code></pre>
+<p><span style="color:#3498db"></span></p>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ein Wörterbuch mit folgenden Werten:</p>
 <pre><code class="language-json">{
   "J": ["Joe", "Jane"], 
   "T": ["Tom", "Tylor"],
   "E": ["Erik"]
-}</code></pre> 
-<p>Eine Liste von Namen soll nach dem Anfangsbuchstaben gruppiert werden. Die Eingangsliste enthält die Zeichenketten <code class="hljs inlineCode">"Joe"</code>, <code class="hljs inlineCode">"Tom"</code>, <code class="hljs inlineCode">"Jane"</code>, <code class="hljs inlineCode">"Tylor"</code>, und <code class="hljs inlineCode">"Erik"</code>. Die Gruppierungsfunktion <code class="hljs inlineCode">name -&gt; $name.subString(0, 1)</code> ordnet jedem Namen seinen Anfangsbuchstaben zu. Das Ergebnis ist ein Wörterbuch, in dem unter einem Anfangsbuchstaben alle Namen der Eingangsliste verzeichnet sind, die mit diesem Buchstaben anfangen.</p> 
-<h3>Zugriff auf Gruppierungen</h3> 
+}</code></pre>
+<p>Eine Liste von Namen soll nach dem Anfangsbuchstaben gruppiert werden. Die Eingangsliste enthält die Zeichenketten <code class="hljs inlineCode">"Joe"</code>, <code class="hljs inlineCode">"Tom"</code>, <code class="hljs inlineCode">"Jane"</code>, <code class="hljs inlineCode">"Tylor"</code>, und <code class="hljs inlineCode">"Erik"</code>. Die Gruppierungsfunktion <code class="hljs inlineCode">name -&gt; $name.subString(0, 1)</code> ordnet jedem Namen seinen Anfangsbuchstaben zu. Das Ergebnis ist ein Wörterbuch, in dem unter einem Anfangsbuchstaben alle Namen der Eingangsliste verzeichnet sind, die mit diesem Buchstaben anfangen.</p>
+<h3>Zugriff auf Gruppierungen</h3>
 <pre><code>{
   myGroup = 
     list("Joe", "Tom", "Jane", "Tylor", "Erik")
       .groupBy(name -&gt; $name.subString(0, 1));
   $myGroup["J"];
-}</code></pre> 
-<p>​<span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit den Werten ["Joe", "Jane"]</p> 
-<p>Da eine Gruppierung ein Wörterbuch als Ergebnis hat, erfolgt der Zugriff entsprechend. Der obige Ausdruck wertet sich zu der Liste derjenigen Namen aus, die mit dem Buchstaben "J" anfangen (<code class="hljs inlineCode">"Joe"</code>, <code class="hljs inlineCode">"Jane"</code>):</p> 
-<p>Alternativ kann hier auch eine einfache Filterung durchgeführt werden:</p> 
+}</code></pre>
+<p>​<span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit den Werten ["Joe", "Jane"]</p>
+<p>Da eine Gruppierung ein Wörterbuch als Ergebnis hat, erfolgt der Zugriff entsprechend. Der obige Ausdruck wertet sich zu der Liste derjenigen Namen aus, die mit dem Buchstaben "J" anfangen (<code class="hljs inlineCode">"Joe"</code>, <code class="hljs inlineCode">"Jane"</code>):</p>
+<p>Alternativ kann hier auch eine einfache Filterung durchgeführt werden:</p>
 <pre><code>list("Joe", "Tom", "Jane", "Tylor", "Erik")
-  .filter(name -&gt; $name.subString(0, 1) == "J")</code></pre> 
-<h3>​Gruppierung mit Abbildungsfunktion</h3> 
+  .filter(name -&gt; $name.subString(0, 1) == "J")</code></pre>
+<h3>​Gruppierung mit Abbildungsfunktion</h3>
 <pre><code>list(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-  .groupBy(number -&gt; $number % 2, number -&gt; $number / 2)</code></pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ein Wörterbuch mit folgenden Werten:</p> 
+  .groupBy(number -&gt; $number % 2, number -&gt; $number / 2)</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ein Wörterbuch mit folgenden Werten:</p>
 <pre><code class="language-json">{
   1.0: [0.5, 1.5, 2.5, 3.5, 4.5], 
   0.0: [1.0, 2.0, 3.0, 4.0, 5.0]
-}</code></pre> 
+}</code></pre>
 <p>​Die Funktion gruppiert zunächst alle Zahlen der Liste nach geraden und ungeraden Zahlen. Anschließend werden diese durch 2 geteilt.</p>

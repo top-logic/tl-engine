@@ -1,51 +1,52 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>numberFormat($pattern)</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Konstruiert ein Zahlenformat mit dem angegebenen Muster für entweder <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe.</p> 
-<p>Siehe <a href="https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormat.html">DecimalFormat</a>.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>pattern</td> 
-   <td>Zeichenkette</td> 
-   <td> <p>Das Pattern in dem formatiert werden soll. Es wird wie folgt angegeben:</p> 
-    <ul> 
-     <li>0 – eine Zahl, falls vorhanden, sonst 0</li> 
-     <li># – eine Zahl, falls vorhanden, sonst nichts</li> 
-     <li>. - Gibt an, wo das Dezimalstrennzeichen platziert werden soll</li> 
-     <li>, - Gibt an, wo das Gruppierungstrennzeichen platziert werden soll</li> 
-     <li>für weitere Symbole siehe <a href="https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormat.html">DecimalFormat</a></li> 
-    </ul> </td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
-<p>Ein Zahlenformat, das nun für <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe verwendet werden kann.</p> 
-<h2>Beispiele</h2> 
-<h3>Format mit #</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Konstruiert ein Zahlenformat mit dem angegebenen Muster für entweder <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe.</p>
+<p>Siehe <a href="https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormat.html">DecimalFormat</a>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>pattern</td>
+   <td>Zeichenkette</td>
+   <td>
+    <p>Das Pattern in dem formatiert werden soll. Es wird wie folgt angegeben:</p>
+    <ul>
+     <li>0 – eine Zahl, falls vorhanden, sonst 0</li>
+     <li># – eine Zahl, falls vorhanden, sonst nichts</li>
+     <li>. - Gibt an, wo das Dezimalstrennzeichen platziert werden soll</li>
+     <li>, - Gibt an, wo das Gruppierungstrennzeichen platziert werden soll</li>
+     <li>für weitere Symbole siehe <a href="https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormat.html">DecimalFormat</a></li>
+    </ul></td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Ein Zahlenformat, das nun für <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe verwendet werden kann.</p>
+<h2>Beispiele</h2>
+<h3>Format mit #</h3>
 <pre>	<code>numberFormat("###,###.###").format(123456.59874)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 123.456,599</p> 
-<h3>Format mit # und 0</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 123.456,599</p>
+<h3>Format mit # und 0</h3>
 <pre>	<code>numberFormat("###,###.000").format(123456.5)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 123.456,500</p> 
-<h3>Weniger Zeichen</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 123.456,500</p>
+<h3>Weniger Zeichen</h3>
 <pre>	<code>numberFormat("###,###.###").format(123456.5)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 123.456,5</p> 
-<p> </p>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 123.456,5</p>
+<p></p>

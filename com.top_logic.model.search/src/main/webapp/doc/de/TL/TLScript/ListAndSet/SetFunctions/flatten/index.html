@@ -1,48 +1,48 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$setOfSets.flatten()</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Berechnet eine Menge, die alle Elemente aus allen Element-Mengen in der Menge <code class="hljs inlineCode">setOfSets</code> enthält.</p> 
-<p>Zweidimensionalle Mengen (also Mengen, die als Elemente wieder Mengen beinhalten), werden nicht als Endergebnis unterstützt. Daher müssen alle Elemente in den inneren Mengen ausgepackt und stattdessen als Elemente der äußeren Menge abgespeichert werden. Man benötigt <code class="hljs inlineCode">flatten</code><code class="hljs inlineCode">()</code> daher zum Beispiel wenn $<code class="hljs inlineCode">set.map($func)</code> (siehe <a class="tlObject" data-custom="true" href="?page=map&amp;uuid=c382824b-adb0-468c-8508-c4297b61bb3d">Abbildung</a>) aufgerufen wird und <code class="hljs inlineCode">func</code> selbst eine Menge zurückgibt.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>setOfSets</td> 
-   <td>Menge</td> 
-   <td>Eine zweidimensionale Menge (Menge mit Mengen als Elemente).</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p> 
-<p>Eine Menge, die alle Einzelelemente der ursprünglichen Mengenelemente beinhaltet.</p> 
-<h2>Beispiele</h2> 
-<h3>Einfache zweidiemnsionale Menge</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Berechnet eine Menge, die alle Elemente aus allen Element-Mengen in der Menge <code class="hljs inlineCode">setOfSets</code> enthält.</p>
+<p>Zweidimensionalle Mengen (also Mengen, die als Elemente wieder Mengen beinhalten), werden nicht als Endergebnis unterstützt. Daher müssen alle Elemente in den inneren Mengen ausgepackt und stattdessen als Elemente der äußeren Menge abgespeichert werden. Man benötigt <code class="hljs inlineCode">flatten</code><code class="hljs inlineCode">()</code> daher zum Beispiel wenn $<code class="hljs inlineCode">set.map($func)</code> (siehe <a class="tlObject" data-custom="false" href="?page=map&amp;uuid=c382824b-adb0-468c-8508-c4297b61bb3d">Abbildung</a>) aufgerufen wird und <code class="hljs inlineCode">func</code> selbst eine Menge zurückgibt.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>setOfSets</td>
+   <td>Menge</td>
+   <td>Eine zweidimensionale Menge (Menge mit Mengen als Elemente).</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p>
+<p>Eine Menge, die alle Einzelelemente der ursprünglichen Mengenelemente beinhaltet.</p>
+<h2>Beispiele</h2>
+<h3>Einfache zweidiemnsionale Menge</h3>
 <pre>	<code>list(1, 4, 9)
   .map(x -&gt; concat($x, 2, 3))
   .flatten()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> Eine Mengemit den Elementen [1, 2, 3, 4, 2, 3, 9, 2, 3].</p> 
-<p>Die Elemente der drei Ergebnismengen [1, 2, 3], [4, 2, 3] und [9, 2, 3] werden ausgepackt und als Elemente einer einzigen Menge eingefügt.</p> 
-<h3>Mengenwertige Referenzattribute</h3> 
-<p>Wenn man annimmt, dass der Typ <code class="hljs inlineCode">my.module:MyTyp</code> ein mengenwertiges Referenzattribut <code class="hljs inlineCode">others</code> besitzt, dann würde der Ausdruck</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> Eine Mengemit den Elementen [1, 2, 3, 4, 2, 3, 9, 2, 3].</p>
+<p>Die Elemente der drei Ergebnismengen [1, 2, 3], [4, 2, 3] und [9, 2, 3] werden ausgepackt und als Elemente einer einzigen Menge eingefügt.</p>
+<h3>Mengenwertige Referenzattribute</h3>
+<p>Wenn man annimmt, dass der Typ <code class="hljs inlineCode">my.module:MyTyp</code> ein mengenwertiges Referenzattribut <code class="hljs inlineCode">others</code> besitzt, dann würde der Ausdruck</p>
 <pre><code>all(`my.module:MyType`)
   .map(x -&gt; $x.get(`my.module:MyType#others`)
-</code></pre> 
-<p>eine Menge von Mengen mit allen in <code class="hljs inlineCode">others</code> referenzierten Objekten liefern, was als Endergebnis z.B. einer Suche nicht unterstützt ist. Daher muss die Ergebnismenge geglättet werden:</p> 
+</code></pre>
+<p>eine Menge von Mengen mit allen in <code class="hljs inlineCode">others</code> referenzierten Objekten liefern, was als Endergebnis z.B. einer Suche nicht unterstützt ist. Daher muss die Ergebnismenge geglättet werden:</p>
 <pre><code>all(`my.module:MyType`)
   .map(x -&gt; $x.get(`my.module:MyType#others`)
-  .flatten()</code></pre> 
-<p> </p>
+  .flatten()</code></pre>
+<p></p>

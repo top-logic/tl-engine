@@ -1,55 +1,55 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$e1 &gt; $e2
 
 $e1.gt($e2)
 </code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Boolescher Ausdruck, der zu "wahr" ausgewertet wird, wenn das Ergebnis der Auswertung von <code class="hljs inlineCode">e1</code> größer ist als das Ergebnis der Auswertung von <code class="hljs inlineCode">e2</code>. Siehe <a class="tlObject" data-custom="false" href="?page=isGreater&amp;uuid=dce4c0f8-f8fd-4ace-abfe-2ee64bd87102">isGreater</a> für alternative Funktionen.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>e1</td> 
-   <td>Zahl/Zeichenkette/Menge</td> 
-   <td>Objekt, das mit <code class="hljs inlineCode">e2</code> verglichen werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>e2</td> 
-   <td>Zahl/Zeichenkette/Menge</td> 
-   <td>Objekt, das mit <code class="hljs inlineCode">e1</code> verglichen werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong> </span>Wahrheitswert</p> 
-<p><code class="hljs inlineCode">true</code>, wenn das Ergebnis der Auswertung besagt, dass <code class="hljs inlineCode">e1</code> größer als <code class="hljs inlineCode">e2</code> ist.</p> 
-<h2>Beispiele</h2> 
-<h3>Zahlen</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Boolescher Ausdruck, der zu "wahr" ausgewertet wird, wenn das Ergebnis der Auswertung von <code class="hljs inlineCode">e1</code> größer ist als das Ergebnis der Auswertung von <code class="hljs inlineCode">e2</code>. Siehe <a class="tlObject" data-custom="false" href="?page=isGreater&amp;uuid=dce4c0f8-f8fd-4ace-abfe-2ee64bd87102">isGreater</a> für alternative Funktionen.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>e1</td>
+   <td>Zahl/Zeichenkette/Menge</td>
+   <td>Objekt, das mit <code class="hljs inlineCode">e2</code> verglichen werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>e2</td>
+   <td>Zahl/Zeichenkette/Menge</td>
+   <td>Objekt, das mit <code class="hljs inlineCode">e1</code> verglichen werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Wahrheitswert</p>
+<p><code class="hljs inlineCode">true</code>, wenn das Ergebnis der Auswertung besagt, dass <code class="hljs inlineCode">e1</code> größer als <code class="hljs inlineCode">e2</code> ist.</p>
+<h2>Beispiele</h2>
+<h3>Zahlen</h3>
 <pre>	<code>2 &gt; 1
 </code>
-</pre> 
-<p><strong><span style="color:#3498db">Ausgabe:</span> </strong>true</p> 
-<h3>Ungleiche Mengen</h3> 
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong>true</p>
+<h3>Ungleiche Mengen</h3>
 <pre>	<code>list(1, 2, 4).gt(list(1, 2, 3))</code>
-</pre> 
-<p><strong><span style="color:#3498db">Ausgabe:</span> </strong>true</p> 
-<p>Da Mengen elementweise miteinander verglichen werden, ist die erste Menge größer als die zweite, denn die Zahl 4 ist größer als die Zahl 3 (siehe <a class="tlObject" data-custom="true" href="?page=Comparisons&amp;uuid=a9117c9d-c941-44d9-bdc1-00f4a25e8a7a">Vergleichsoperatoren</a>).</p> 
-<h3>Gleiche Mengen</h3> 
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong>true</p>
+<p>Da Mengen elementweise miteinander verglichen werden, ist die erste Menge größer als die zweite, denn die Zahl 4 ist größer als die Zahl 3 (siehe <a class="tlObject" data-custom="false" href="?page=Comparisons&amp;uuid=a9117c9d-c941-44d9-bdc1-00f4a25e8a7a">Vergleichsoperatoren</a>).</p>
+<h3>Gleiche Mengen</h3>
 <pre>	<code>list(1, 2, 3).gt(list(1, 2, 3))</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>false</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>false</p>
 <p>Die Mengen sind gleich groß.</p>

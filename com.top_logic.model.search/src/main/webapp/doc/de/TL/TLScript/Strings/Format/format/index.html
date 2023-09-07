@@ -1,53 +1,53 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$format.format($value1,...)</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Formattiert die gegebenen Objekte in dem angegebenen Format. Falls mehr als ein Wert angegeben ist, wird das Format aufgerufen mit einem Array dieser Werte als Argument (nützlich für <a class="tlObject" data-custom="true" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">messageFormat()</a>).</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>format</td> 
-   <td>Fachobjekt</td> 
-   <td>Das Format, das verwendet werden soll (z.B. <a class="tlObject" data-custom="true" href="?page=numberFormat&amp;uuid=2599fdcc-824c-4b7c-9006-d873d50f753e">Zahlenformat</a>, <a class="tlObject" data-custom="true" href="?page=dateFormat&amp;uuid=387a7e6c-78f9-46df-812c-e8ef66b29d85">Datumsformat</a>, <a class="tlObject" data-custom="true" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">Nachrichtenformat</a>)</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>value</td> 
-   <td>Fachobjekt</td> 
-   <td>Das Objekt, das formattiert werden soll. </td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p> 
-<p>Eine Zeichenkette, die das Objekt in dem gegebenen Format repräsentiert.</p> 
-<h2>Beispiele</h2> 
-<h3>Zahlenformat</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Formattiert die gegebenen Objekte in dem angegebenen Format. Falls mehr als ein Wert angegeben ist, wird das Format aufgerufen mit einem Array dieser Werte als Argument (nützlich für <a class="tlObject" data-custom="true" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">messageFormat()</a>).</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>format</td>
+   <td>Fachobjekt</td>
+   <td>Das Format, das verwendet werden soll (z.B. <a class="tlObject" data-custom="false" href="?page=numberFormat&amp;uuid=2599fdcc-824c-4b7c-9006-d873d50f753e">Zahlenformat</a>, <a class="tlObject" data-custom="false" href="?page=dateFormat&amp;uuid=387a7e6c-78f9-46df-812c-e8ef66b29d85">Datumsformat</a>, <a class="tlObject" data-custom="false" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">Nachrichtenformat</a>)</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>value</td>
+   <td>Fachobjekt</td>
+   <td>Das Objekt, das formattiert werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p>
+<p>Eine Zeichenkette, die das Objekt in dem gegebenen Format repräsentiert.</p>
+<h2>Beispiele</h2>
+<h3>Zahlenformat</h3>
 <pre>	<code>numberFormat("###,###.###").format(123456.59874)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 123.456,599</p> 
-<p>Siehe <a class="tlObject" data-custom="true" href="?page=numberFormat&amp;uuid=2599fdcc-824c-4b7c-9006-d873d50f753e">Zahlenformat</a></p> 
-<h3>Datumsformat</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 123.456,599</p>
+<p>Siehe <a class="tlObject" data-custom="false" href="?page=numberFormat&amp;uuid=2599fdcc-824c-4b7c-9006-d873d50f753e">Zahlenformat</a></p>
+<h3>Datumsformat</h3>
 <pre>	<code>dateFormat("dd-MM-yy").format(date(2012, 11, 5))</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 05-12-2012</p> 
-<p>Siehe <a class="tlObject" data-custom="true" href="?page=dateFormat&amp;uuid=387a7e6c-78f9-46df-812c-e8ef66b29d85">Datumsformat</a></p> 
-<h3>Nachrichtenformat</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 05-12-2012</p>
+<p>Siehe <a class="tlObject" data-custom="false" href="?page=dateFormat&amp;uuid=387a7e6c-78f9-46df-812c-e8ef66b29d85">Datumsformat</a></p>
+<h3>Nachrichtenformat</h3>
 <pre>	<code>messageFormat("Good {0}, {1}! Today we have {2} degrees.").format("Morning", "Sir", 19)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Good Morning Sir! Today we have 19 degrees.</p> 
-<p>Hier werden mehrere Werte für <a class="tlObject" data-custom="true" href="?page=Format&amp;uuid=9a36ef1f-15ce-4b88-8ea9-73c7ae4f8ab6">format()</a> mitgegeben, sodass diese alle in die Platzhalte im MessageFormat eingesetzt werden können. Siehe <a class="tlObject" data-custom="true" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">Nachrichtenformat</a>.</p> 
-<p> </p>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Good Morning Sir! Today we have 19 degrees.</p>
+<p>Hier werden mehrere Werte für <a class="tlObject" data-custom="true" href="?page=Format&amp;uuid=9a36ef1f-15ce-4b88-8ea9-73c7ae4f8ab6">format()</a> mitgegeben, sodass diese alle in die Platzhalte im MessageFormat eingesetzt werden können. Siehe <a class="tlObject" data-custom="false" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">Nachrichtenformat</a>.</p>
+<p></p>

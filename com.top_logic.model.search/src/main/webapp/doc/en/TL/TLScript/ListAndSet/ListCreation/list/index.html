@@ -1,45 +1,45 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>[$e1, ..., $eN]
 
 list($e1,... $eN)</code>
-</pre> 
-<h2>Description</h2> 
-<p>Creates a fixed length list from the evaluations of the given expressions <code class="hljs inlineCode">e1,... eN</code>. The first short form is known from JSON list notation, the second form reads better as a function call. Lists are ordered and may contain an element multiple times.</p> 
-<p>A list cannot be modified afterwards. To add new elements, for example, <a class="tlObject" data-custom="false" href="?page=concat&amp;uuid=70e1f13f-218d-47ad-9cdb-4860efd5d762">Concatenation</a> can be used to create a new list.</p> 
-<h2>Parameters</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>e</td> 
-   <td>Number/string/boolean/Business object/set</td> 
-   <td>A single value to be inserted into the list. Any number of single values can be inserted.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p> 
-<p>A set with the given scalar values.</p> 
-<h2>Examples</h2> 
-<h3>List of strings</h3> 
+</pre>
+<h2>Description</h2>
+<p>Creates a fixed length list from the evaluations of the given expressions <code class="hljs inlineCode">e1,... eN</code>. The first short form is known from JSON list notation, the second form reads better as a function call. Lists are ordered and may contain an element multiple times.</p>
+<p>A list cannot be modified afterwards. To add new elements, for example, <a class="tlObject" data-custom="true" href="?page=concat&amp;uuid=70e1f13f-218d-47ad-9cdb-4860efd5d762">Concatenation</a> can be used to create a new list.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>e</td>
+   <td>Number/string/boolean/Business object/set</td>
+   <td>A single value to be inserted into the list. Any number of single values can be inserted.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p>
+<p>A set with the given scalar values.</p>
+<h2>Examples</h2>
+<h3>List of strings</h3>
 <pre>	<code>["hello", "how", "are", "you"]</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output: </strong></span>A list with the elements ["hello", "how", "are", "you"].<span style="color:#3498db"></span></p> 
-<h3>List of numbers</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span>A list with the elements ["hello", "how", "are", "you"].<span style="color:#3498db"></span></p>
+<h3>List of numbers</h3>
 <pre>	<code>list(1, 2, 3, 4, 5)</code>
-</pre> 
-<p><strong><span style="color:#3498db">Output:</span> </strong>A list with the elements [1, 2, 3, 4, 5].</p> 
-<h3>List of different data types</h3> 
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong>A list with the elements [1, 2, 3, 4, 5].</p>
+<h3>List of different data types</h3>
 <pre>	<code>list(1, "hello", true, date(2021, 9, 21))</code>
-</pre> 
+</pre>
 <p><strong><span style="color:#3498db">Output:</span> </strong>A set with the elements [1, "hello", true, date(2021, 9, 21)]</p>

@@ -1,45 +1,45 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$object.type()</code>
-</pre> 
-<h2>Description</h2> 
-<p>Returns the type of the <code class="hljs inlineCode">object</code>.</p> 
-<h2>Parameters</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>object</td> 
-   <td>Business object</td> 
-   <td>The object whose type is to be determined.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>type:</strong></span> Business object</p> 
-<p>The type of the <code class="hljs inlineCode">object</code>.</p> 
-<h2>Examples</h2> 
-<h3>Simple type query</h3> 
+</pre>
+<h2>Description</h2>
+<p>Returns the type of the <code class="hljs inlineCode">object</code>.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Business object</td>
+   <td>The object whose type is to be determined.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>type:</strong></span> Business object</p>
+<p>The type of the <code class="hljs inlineCode">object</code>.</p>
+<h2>Examples</h2>
+<h3>Simple type query</h3>
 <pre>	<code>{
    object= new(`my.module:MyClass`);
    $object.type();
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> my.module:MyType</p> 
-<h3>Type comparison</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> my.module:MyType</p>
+<h3>Type comparison</h3>
 <pre>	<code>{
    object= new(`my.module:MyClass`);
    $object.type() == `my.module:MySuperClass`;
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">false</code></p> 
-<p>Unlike <a class="tlObject" data-custom="false" href="?page=instanceOf&amp;uuid=51c1a363-2163-471f-a558-145792d57a68">Instance of</a>, comparing with == only yields <code class="hljs inlineCode">true</code>, if <code class="hljs inlineCode">object</code> is exactly of type <code class="hljs inlineCode">my.module:MyType</code> and not if it is just a subtype of it.</p>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">false</code></p>
+<p>Unlike <a class="tlObject" data-custom="true" href="?page=instanceOf&amp;uuid=51c1a363-2163-471f-a558-145792d57a68">Instance of</a>, comparing with == only yields <code class="hljs inlineCode">true</code>, if <code class="hljs inlineCode">object</code> is exactly of type <code class="hljs inlineCode">my.module:MyType</code> and not if it is just a subtype of it.</p>

@@ -1,45 +1,45 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>[$e1, ..., $eN]
 
 list($e1,... $eN)</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Erstellt eine Liste fester Länge aus den Auswertungen der gegebenen Ausdrücke <code class="hljs inlineCode">e1,... eN</code>. Die erste Kurzform ist aus der JSON-Listennotation bekannt, die zweite Form liest sich besser als Funktionsaufruf. Listen sind geordnet und können ein Element mehrfach enthalten.</p> 
-<p>Eine Liste kann nicht nachträglich verändert werden. Um neue Elemente hinzuzufügen kann zum Beispiel die <a class="tlObject" data-custom="true" href="?page=concat&amp;uuid=70e1f13f-218d-47ad-9cdb-4860efd5d762">Verkettung</a> genutzt werden, um eine neue Liste zu erzeugen.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>e</td> 
-   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td> 
-   <td>Ein Eizelwert, der in die Liste eingefügt werden soll. Es können beliebig viele Einzelwerte eingefügt werden.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p> 
-<p>Eine Menge mit den gegebenen Einzelwerten.</p> 
-<h2>Beispiele</h2> 
-<h3>Liste aus Zeichenketten</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Erstellt eine Liste fester Länge aus den Auswertungen der gegebenen Ausdrücke <code class="hljs inlineCode">e1,... eN</code>. Die erste Kurzform ist aus der JSON-Listennotation bekannt, die zweite Form liest sich besser als Funktionsaufruf. Listen sind geordnet und können ein Element mehrfach enthalten.</p>
+<p>Eine Liste kann nicht nachträglich verändert werden. Um neue Elemente hinzuzufügen kann zum Beispiel die <a class="tlObject" data-custom="false" href="?page=concat&amp;uuid=70e1f13f-218d-47ad-9cdb-4860efd5d762">Verkettung</a> genutzt werden, um eine neue Liste zu erzeugen.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>e</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+   <td>Ein Eizelwert, der in die Liste eingefügt werden soll. Es können beliebig viele Einzelwerte eingefügt werden.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p>
+<p>Eine Menge mit den gegebenen Einzelwerten.</p>
+<h2>Beispiele</h2>
+<h3>Liste aus Zeichenketten</h3>
 <pre>	<code>["hello", "how", "are", "you"]</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>Eine Liste mit den Elementen ["hello", "how", "are", "you"]<span style="color:#3498db"></span></p> 
-<h3>Liste aus Zahlen</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>Eine Liste mit den Elementen ["hello", "how", "are", "you"]<span style="color:#3498db"></span></p>
+<h3>Liste aus Zahlen</h3>
 <pre>	<code>list(1, 2, 3, 4, 5)</code>
-</pre> 
-<p><strong><span style="color:#3498db">Ausgabe:</span> </strong>Eine Liste mit den Elementen [1, 2, 3, 4, 5]</p> 
-<h3>Liste aus underschiedlichen Datentypen</h3> 
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong>Eine Liste mit den Elementen [1, 2, 3, 4, 5]</p>
+<h3>Liste aus underschiedlichen Datentypen</h3>
 <pre>	<code>list(1, "hello", true, date(2021, 9, 21))</code>
-</pre> 
+</pre>
 <p><strong><span style="color:#3498db">Ausgabe:</span> </strong>Eine Menge mit den Elementen [1, "hello", true, date(2021, 9, 21)]</p>

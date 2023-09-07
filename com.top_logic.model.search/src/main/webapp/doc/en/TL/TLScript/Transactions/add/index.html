@@ -1,66 +1,68 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre><code>$object.add(`$attr`, $value)
 
 $object.add(`$attr`, $index, $value)
-</code></pre> 
-<h2>Description</h2> 
-<p>Appends a <code class="hljs inlineCode">value</code> to a set attribute <code class="hljs inlineCode">attr</code> of an <code class="hljs inlineCode">object</code>.</p> 
-<p>Can also be done with the <a class="tlObject" data-custom="true" href="?page=set&amp;uuid=f4e10c43-7a04-45ba-b5b6-f20c8bc3b70e">set()</a> function by concatinating the old set of attributes with the new value:</p> 
-<pre><code>$object.set(`$attr`, concat(object.get(`$attr`).subList(0, $index), $value, object.get(`$attr`).subList($index)))</code></pre> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>object</td> 
-   <td>Business object</td> 
-   <td>The object to which a new value in an attribute should be added.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>attr</td> 
-   <td>String</td> 
-   <td>The attribute literal of the attribute to which a value is to be added. The attribute must be a set. Attributes with only single values will generate an error message, since nothing can be added, only set (cf. <a class="tlObject" data-custom="false" href="?page=set&amp;uuid=f4e10c43-7a04-45ba-b5b6-f20c8bc3b70e">Set attribute value</a>).</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>index</td> 
-   <td>number</td> 
-   <td>The position in the set attribute where the new value is to be inserted.</td> 
-   <td>no</td> 
-   <td> <p><code class="hljs inlineCode">index = object.get(`$attr`).size()</code></p> <p>In this case the new value will be inserted at the end of the set.</p> </td> 
-  </tr> 
-  <tr> 
-   <td>value</td> 
-   <td>Number/string/boolean/business object/set</td> 
-   <td>The new value to add to the object's attribute.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Examples</h2> 
-<h3>Insert new child</h3> 
+</code></pre>
+<h2>Description</h2>
+<p>Appends a <code class="hljs inlineCode">value</code> to a set attribute <code class="hljs inlineCode">attr</code> of an <code class="hljs inlineCode">object</code>.</p>
+<p>Can also be done with the <a class="tlObject" data-custom="true" href="?page=set&amp;uuid=f4e10c43-7a04-45ba-b5b6-f20c8bc3b70e">set()</a> function by concatinating the old set of attributes with the new value:</p>
+<pre><code>$object.set(`$attr`, concat(object.get(`$attr`).subList(0, $index), $value, object.get(`$attr`).subList($index)))</code></pre>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Business object</td>
+   <td>The object to which a new value in an attribute should be added.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>attr</td>
+   <td>String</td>
+   <td>The attribute literal of the attribute to which a value is to be added. The attribute must be a set. Attributes with only single values will generate an error message, since nothing can be added, only set (cf. <a class="tlObject" data-custom="true" href="?page=set&amp;uuid=f4e10c43-7a04-45ba-b5b6-f20c8bc3b70e">Set attribute value</a>).</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>index</td>
+   <td>number</td>
+   <td>The position in the set attribute where the new value is to be inserted.</td>
+   <td>no</td>
+   <td>
+    <p><code class="hljs inlineCode">index = object.get(`$attr`).size()</code></p>
+    <p>In this case the new value will be inserted at the end of the set.</p></td>
+  </tr>
+  <tr>
+   <td>value</td>
+   <td>Number/string/boolean/business object/set</td>
+   <td>The new value to add to the object's attribute.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Examples</h2>
+<h3>Insert new child</h3>
 <pre>	<code>{
    parent = new(`my.module:MyType`);
    child = new(`my.module:MyType`);
    $parent.add(`my.module:MyType#children`, $child);
    $parent.get(`my.module:MyType#children`);
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> A set with the element [child].</p> 
-<p>After two objects have been created, one object has been added to the other as a child.</p> 
-<h3>Insert new child at index</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> A set with the element [child].</p>
+<p>After two objects have been created, one object has been added to the other as a child.</p>
+<h3>Insert new child at index</h3>
 <pre>	<code>{
    parent = new(`my.module:MyType`);
    child1 = new(`my.module:MyType`);
@@ -71,6 +73,6 @@ $object.add(`$attr`, $index, $value)
    $parent.add(`my.module:MyType#children`, 1, $child2);
    $parent.get(`my.module:MyType#children`);
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> A set with the elements [child1, child2, child3].</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> A set with the elements [child1, child2, child3].</p>
 <p>The object <code class="hljs inlineCode">child2</code> is inserted by specifying the index between <code class="hljs inlineCode">child1</code> and <code class="hljs inlineCode">child3</code>.</p>

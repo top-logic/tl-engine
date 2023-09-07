@@ -1,29 +1,29 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>{
   var1 = $expr1;
   var2 = $expr2;
 
   $result-expression-using-var1-and-var2; 
 }</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Werte können in einer Variable gespeichert werden. Das kann dann sinnvoll sein, wenn ein Wert für mehrere Berechnungen notwendig ist. Wichtig dabei ist, dass eine "Variable" in TL-Skript ihren Wert niemals ändern kann, nachdem sie definiert wurde.</p> 
-<p>Variablen können als Funktionsargumente übergeben (siehe <a class="tlObject" data-custom="true" href="?page=Functions&amp;uuid=8f4a805f-125a-4905-8df3-65aa54e20947">Funktionen</a>) oder auch explizit selbst wie oben gezeigt definiert werden. Obiges Beispiel weist den Variablen <code class="hljs inlineCode">var1</code> und <code class="hljs inlineCode">var2</code> das Ergebnis der Auswertungen der Ausdrücke <code class="hljs inlineCode">expr1</code> und <code class="hljs inlineCode">expr2</code> zu. Das Ergebnis des Gesamtausdrucks ist die Auswertung von <code class="hljs inlineCode">result-expression-using-var1-and-var2</code>. Dieser Ausdruck kann auf die oben definierten Variablen <code class="hljs inlineCode">$var1</code> und <code class="hljs inlineCode">$var2</code> zugreifen.</p> 
-<p>Auf eine definierte Variable <code class="hljs inlineCode">var = ...;</code> kann mit <code class="hljs inlineCode">$var</code> zugegriffen werden. Die Variable ist nur in dem Block sichtbar, in dem sie definiert wurde.</p> 
-<h2>Beispiele</h2> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Werte können in einer Variable gespeichert werden. Das kann dann sinnvoll sein, wenn ein Wert für mehrere Berechnungen notwendig ist. Wichtig dabei ist, dass eine "Variable" in TL-Skript ihren Wert niemals ändern kann, nachdem sie definiert wurde.</p>
+<p>Variablen können als Funktionsargumente übergeben (siehe <a class="tlObject" data-custom="false" href="?page=Functions&amp;uuid=8f4a805f-125a-4905-8df3-65aa54e20947">Funktionen</a>) oder auch explizit selbst wie oben gezeigt definiert werden. Obiges Beispiel weist den Variablen <code class="hljs inlineCode">var1</code> und <code class="hljs inlineCode">var2</code> das Ergebnis der Auswertungen der Ausdrücke <code class="hljs inlineCode">expr1</code> und <code class="hljs inlineCode">expr2</code> zu. Das Ergebnis des Gesamtausdrucks ist die Auswertung von <code class="hljs inlineCode">result-expression-using-var1-and-var2</code>. Dieser Ausdruck kann auf die oben definierten Variablen <code class="hljs inlineCode">$var1</code> und <code class="hljs inlineCode">$var2</code> zugreifen.</p>
+<p>Auf eine definierte Variable <code class="hljs inlineCode">var = ...;</code> kann mit <code class="hljs inlineCode">$var</code> zugegriffen werden. Die Variable ist nur in dem Block sichtbar, in dem sie definiert wurde.</p>
+<h2>Beispiele</h2>
 <pre>	<code>{
    x = 5;
    y = 6;
 
    $x * $y;
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> 30</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> 30</p>
 <pre>	<code>{
    x = "Hello";
    y = ", how are you?";
 
    toString($x, $y);
 }</code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Ausgabe: </strong></span> "Hello, how are you?"</p>

@@ -1,65 +1,65 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$start.recursion($fun)
 
 $start.recursion($fun, $min-depth, $max-depth)
 </code>
-</pre> 
-<h2>Description</h2> 
-<p>Creates a list by applying the function <code class="hljs inlineCode">fun</code> to each element of the set <code class="hljs inlineCode">start</code> and recursively to all its function results. The recursion ends when the function <code class="hljs inlineCode">null</code>, or a previous result is regenerated. Only the elements resulting from recursion depths between <code class="hljs inlineCode">min-depth</code> (inclusive) and <code class="hljs inlineCode">max-depth</code> (exclusive) are returned in the evaluation result.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>start</td> 
-   <td>number/string/boolean/business object/set</td> 
-   <td>The start value, or the start values of the recursion if specified in a set.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>fun</td> 
-   <td>Function</td> 
-   <td>A function to be executed recursively on <code class="hljs inlineCode">start</code> and the resulting results.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>min-depth</td> 
-   <td>Number</td> 
-   <td>The minimum recursion depth (inclusive).</td> 
-   <td>no</td> 
-   <td>0</td> 
-  </tr> 
-  <tr> 
-   <td>max-depth</td> 
-   <td>Number</td> 
-   <td>The maximum recursion depth (exclusive).</td> 
-   <td>no</td> 
-   <td>-1 (infinite)</td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p> 
-<p>A set consisting of <code class="hljs inlineCode">start</code> and all function results from a minimum to a maximum recursion depth.</p> 
-<h2>Examples</h2> 
-<h3>Count up</h3> 
+</pre>
+<h2>Description</h2>
+<p>Creates a list by applying the function <code class="hljs inlineCode">fun</code> to each element of the set <code class="hljs inlineCode">start</code> and recursively to all its function results. The recursion ends when the function <code class="hljs inlineCode">null</code>, or a previous result is regenerated. Only the elements resulting from recursion depths between <code class="hljs inlineCode">min-depth</code> (inclusive) and <code class="hljs inlineCode">max-depth</code> (exclusive) are returned in the evaluation result.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>start</td>
+   <td>number/string/boolean/business object/set</td>
+   <td>The start value, or the start values of the recursion if specified in a set.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>fun</td>
+   <td>Function</td>
+   <td>A function to be executed recursively on <code class="hljs inlineCode">start</code> and the resulting results.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>min-depth</td>
+   <td>Number</td>
+   <td>The minimum recursion depth (inclusive).</td>
+   <td>no</td>
+   <td>0</td>
+  </tr>
+  <tr>
+   <td>max-depth</td>
+   <td>Number</td>
+   <td>The maximum recursion depth (exclusive).</td>
+   <td>no</td>
+   <td>-1 (infinite)</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p>
+<p>A set consisting of <code class="hljs inlineCode">start</code> and all function results from a minimum to a maximum recursion depth.</p>
+<h2>Examples</h2>
+<h3>Count up</h3>
 <pre>	<code>1.recursion(x -&gt; $x + 1, 0, 9)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> A set with values [1, 2, 3, 4, 5, 6, 7, 8, 9].</p> 
-<p>Starting from 1, the function that increments a value by 1 is applied 9 times. All results are returned in the result list.</p> 
-<p>Note: The same result can be achieved much easier and more efficiently using the expression <code class="hljs inlineCode">count(1, 10)</code>, see <a class="tlObject" data-custom="false" href="?page=count&amp;uuid=f4890fe5-430b-4adc-a0d9-a8d4f9a147e4">Count</a>.</p> 
-<h3>Paths</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> A set with values [1, 2, 3, 4, 5, 6, 7, 8, 9].</p>
+<p>Starting from 1, the function that increments a value by 1 is applied 9 times. All results are returned in the result list.</p>
+<p>Note: The same result can be achieved much easier and more efficiently using the expression <code class="hljs inlineCode">count(1, 10)</code>, see <a class="tlObject" data-custom="true" href="?page=count&amp;uuid=f4890fe5-430b-4adc-a0d9-a8d4f9a147e4">Count</a>.</p>
+<h3>Paths</h3>
 <pre>	<code>$x.recursion(node -&gt; $node.get(`my:Type#parent`), 1)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> The path starting from an element in the variable <code class="hljs inlineCode">x</code> to the root of a tree along the parent attribute <code class="hljs inlineCode">my:Type#parent</code>.</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> The path starting from an element in the variable <code class="hljs inlineCode">x</code> to the root of a tree along the parent attribute <code class="hljs inlineCode">my:Type#parent</code>.</p>
 <p>The path starts with the direct parent of <code class="hljs inlineCode">x</code>. The value of <code class="hljs inlineCode">x</code> is not itself included in the path because the minimum depth (number of function applications) is set to <code class="hljs inlineCode">1</code>.</p>

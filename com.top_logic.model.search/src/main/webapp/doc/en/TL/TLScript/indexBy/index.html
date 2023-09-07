@@ -1,74 +1,74 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$list.indexBy($key-fun)
 
 $list.indexBy($key-fun, $clash-fun)</code>
-</pre> 
-<h2>Description</h2> 
-<p>Assigns a key value to each value in the list.</p> 
-<p>Unlike <a class="tlObject" data-custom="false" href="?page=groupBy&amp;uuid=0ceea055-4867-461a-9a86-d6ed56272dd8">Grouping</a>, the values in the resulting dictionary are not lists, but individual elements. Therefore the calculated key values must be unique for the elements of the input set. Key conflicts can be resolved by specifying an optional <code class="hljs inlineCode">clash-fun</code>.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>list</td> 
-   <td>Set</td> 
-   <td>A list to be indexed.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>key-fun</td> 
-   <td>Function</td> 
-   <td>Key function according to which the indexes are to be displayed.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>clash-fun</td> 
-   <td>Function</td> 
-   <td>Clash function after which key duplicates can be resolved. Without this function duplicates will generate error messages.</td> 
-   <td>no</td> 
-   <td>No resolution of duplicates.</td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p> 
-<p>A dictionary in which all values in the list are assigned to an index.</p> 
-<h2>Examples</h2> 
-<h3>Indexing by name shortcut</h3> 
+</pre>
+<h2>Description</h2>
+<p>Assigns a key value to each value in the list.</p>
+<p>Unlike <a class="tlObject" data-custom="true" href="?page=groupBy&amp;uuid=0ceea055-4867-461a-9a86-d6ed56272dd8">Grouping</a>, the values in the resulting dictionary are not lists, but individual elements. Therefore the calculated key values must be unique for the elements of the input set. Key conflicts can be resolved by specifying an optional <code class="hljs inlineCode">clash-fun</code>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>list</td>
+   <td>Set</td>
+   <td>A list to be indexed.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>key-fun</td>
+   <td>Function</td>
+   <td>Key function according to which the indexes are to be displayed.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>clash-fun</td>
+   <td>Function</td>
+   <td>Clash function after which key duplicates can be resolved. Without this function duplicates will generate error messages.</td>
+   <td>no</td>
+   <td>No resolution of duplicates.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p>
+<p>A dictionary in which all values in the list are assigned to an index.</p>
+<h2>Examples</h2>
+<h3>Indexing by name shortcut</h3>
 <pre>	<code>list("Smith Joe", "Parker Jane", "Taylor Tom", "Black Tyler", "Brown Erik")
    .indexBy(name -&gt; $name.subString(0, 3))</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> A dictionary with the values:</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> A dictionary with the values:</p>
 <pre><code>{
    "Smi":  "Smith Joe",
    "Par":  "Parker Jane",
    "Tay":  "Taylor Tom", 
    "Bla":  "Black Tyler",
    "Bro":  "Brown Erik"
-}</code></pre> 
-<p>From each name, the first 3 letters are used as an index.</p> 
-<h3>Indexing by name shortcut with clash function</h3> 
+}</code></pre>
+<p>From each name, the first 3 letters are used as an index.</p>
+<h3>Indexing by name shortcut with clash function</h3>
 <pre>	<code>list("Smith Joe", "Parker Jane", "Brown Erik", "Taylor Tom", "Black Tyler", "Brook Ashley", "Browning Dave")
    .indexBy(name -&gt; $name.subString(0, 3), name1 -&gt; name2 -&gt; $name1 + " and " + $name2)
 </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> A dictionary with the values:</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> A dictionary with the values:</p>
 <pre><code>{
    "Smi":  "Smith Joe",
    "Par":  "Parker Jane",
    "Tay":  "Taylor Tom", 
    "Bla":  "Black Tyler",
    "Bro":  "Brown Erik and Brook Ashley and Browning Dave"
-}</code></pre> 
+}</code></pre>
 <p>The three names "Brown Erik", "Brook Ashley", "Browning Dave" get the same keys by the key function. Without clash function an error message would come out. In this case the names for the key are put together.</p>

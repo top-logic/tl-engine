@@ -1,65 +1,65 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$start.recursion($fun)
 
 $start.recursion($fun, $min-depth, $max-depth)
 </code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Erstellt eine Liste, indem die Funktion <code class="hljs inlineCode">fun</code> auf jedes Element der Menge <code class="hljs inlineCode">start</code> angewendet wird und rekursiv auf alle ihre Funktionsergebnisse. Die Rekursion endet, wenn die Funktion <code class="hljs inlineCode">null</code>, oder ein vorheriges Ergebnis erneut erzeugt. Im Auswertungsergebnis werden nur die Elemente zurückgegeben, die sich aus Rekursionstiefen zwischen <code class="hljs inlineCode">min-depth</code> (inklusive) und <code class="hljs inlineCode">max-depth</code> (exklusiv) ergeben.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>start</td> 
-   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td> 
-   <td>Der Startwert, bzw. die Startwerte der Rekurssion, wenn sie in einer Menge angegeben werden.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>fun</td> 
-   <td>Funktion</td> 
-   <td>Eine Funktion, die rekursiv auf <code class="hljs inlineCode">start</code> und die daraus resultierenden Ergebnisse ausgeführt werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>min-depth</td> 
-   <td>Zahl</td> 
-   <td>Die minimale Rekursionstiefe (inklusiv).</td> 
-   <td>nein</td> 
-   <td>0</td> 
-  </tr> 
-  <tr> 
-   <td>max-depth</td> 
-   <td>Zahl</td> 
-   <td>Die maximale Rekursionstiefe (exklusiv).</td> 
-   <td>nein</td> 
-   <td>-1 (unendlich)</td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p> 
-<p>Eine Menge bestehend aus <code class="hljs inlineCode">start</code> und allen Funktionsergebnissen ab einer minimalen bis zu einer maximalen Rekursionstiefe.</p> 
-<h2>Beispiele</h2> 
-<h3>Hochzählen</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Erstellt eine Liste, indem die Funktion <code class="hljs inlineCode">fun</code> auf jedes Element der Menge <code class="hljs inlineCode">start</code> angewendet wird und rekursiv auf alle ihre Funktionsergebnisse. Die Rekursion endet, wenn die Funktion <code class="hljs inlineCode">null</code>, oder ein vorheriges Ergebnis erneut erzeugt. Im Auswertungsergebnis werden nur die Elemente zurückgegeben, die sich aus Rekursionstiefen zwischen <code class="hljs inlineCode">min-depth</code> (inklusive) und <code class="hljs inlineCode">max-depth</code> (exklusiv) ergeben.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>start</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+   <td>Der Startwert, bzw. die Startwerte der Rekurssion, wenn sie in einer Menge angegeben werden.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>fun</td>
+   <td>Funktion</td>
+   <td>Eine Funktion, die rekursiv auf <code class="hljs inlineCode">start</code> und die daraus resultierenden Ergebnisse ausgeführt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>min-depth</td>
+   <td>Zahl</td>
+   <td>Die minimale Rekursionstiefe (inklusiv).</td>
+   <td>nein</td>
+   <td>0</td>
+  </tr>
+  <tr>
+   <td>max-depth</td>
+   <td>Zahl</td>
+   <td>Die maximale Rekursionstiefe (exklusiv).</td>
+   <td>nein</td>
+   <td>-1 (unendlich)</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p>
+<p>Eine Menge bestehend aus <code class="hljs inlineCode">start</code> und allen Funktionsergebnissen ab einer minimalen bis zu einer maximalen Rekursionstiefe.</p>
+<h2>Beispiele</h2>
+<h3>Hochzählen</h3>
 <pre>	<code>1.recursion(x -&gt; $x + 1, 0, 9)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Menge mit den Werten [1, 2, 3, 4, 5, 6, 7, 8, 9].</p> 
-<p>Ausgehend von 1 wird die Funktion, die einen Wert um 1 erhöht 9 mal angewendet. Alle Ergebnisse werden in der Ergebnisliste zurückgegeben.</p> 
-<p>Achtung: Dasselbe Ergebnis kann über den Ausdruck <code class="hljs inlineCode">count(1, 10)</code> wesentlich einfacher und effizienter erreicht werden, siehe <a class="tlObject" data-custom="true" href="?page=count&amp;uuid=f4890fe5-430b-4adc-a0d9-a8d4f9a147e4">Aufzählung</a>.</p> 
-<h3>Pfade</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Menge mit den Werten [1, 2, 3, 4, 5, 6, 7, 8, 9].</p>
+<p>Ausgehend von 1 wird die Funktion, die einen Wert um 1 erhöht 9 mal angewendet. Alle Ergebnisse werden in der Ergebnisliste zurückgegeben.</p>
+<p>Achtung: Dasselbe Ergebnis kann über den Ausdruck <code class="hljs inlineCode">count(1, 10)</code> wesentlich einfacher und effizienter erreicht werden, siehe <a class="tlObject" data-custom="false" href="?page=count&amp;uuid=f4890fe5-430b-4adc-a0d9-a8d4f9a147e4">Aufzählung</a>.</p>
+<h3>Pfade</h3>
 <pre>	<code>$x.recursion(node -&gt; $node.get(`my:Type#parent`), 1)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Der Pfad ausgehend von einem Element in der Variablen <code class="hljs inlineCode">x</code> bis zur Wurzel eines Baumes entlang des Elternattributs <code class="hljs inlineCode">my:Type#parent</code>.</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Der Pfad ausgehend von einem Element in der Variablen <code class="hljs inlineCode">x</code> bis zur Wurzel eines Baumes entlang des Elternattributs <code class="hljs inlineCode">my:Type#parent</code>.</p>
 <p>Der Pfad beginnt mit dem direkten Elternteil von <code class="hljs inlineCode">x</code>. Der Wert von <code class="hljs inlineCode">x</code> ist selbst nicht im Pfad enthalten, weil die minimale Tiefe (Anzahl der Funktionsanwendungen) auf <code class="hljs inlineCode">1</code> eingestellt ist.</p>

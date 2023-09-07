@@ -1,66 +1,68 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre><code>$object.add(`$attr`, $value)
 
 $object.add(`$attr`, $index, $value)
-</code></pre> 
-<h2>​Beschreibung</h2> 
-<p>Hängt einen Wert <code class="hljs inlineCode">value</code> an ein mengenwertiges Attribut <code class="hljs inlineCode">attr</code> des Objekts <code class="hljs inlineCode">object</code> an.</p> 
-<p>Kann auch mit der Funktion <a class="tlObject" data-custom="true" href="?page=set&amp;uuid=f4e10c43-7a04-45ba-b5b6-f20c8bc3b70e">set()</a> durchgeführt werden, indem die alte Menge der Attributs mit dem neuen Wert konkatiniert wird:</p> 
-<pre><code>$object.set(`$attr`, concat(object.get(`$attr`).subList(0, $index), $value, object.get(`$attr`).subList($index)))</code></pre> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>object</td> 
-   <td>Fachobjekt</td> 
-   <td>Das Objekt, dem ein neuer Wert in einem Attribut angefügt werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>attr</td> 
-   <td>Zeichenkette</td> 
-   <td>Das Attribut-Literal des Attributs, dem ein Wert hinzugefügt werden soll. Das Attribut muss eine Liste sein. Attribute mit nur Einzelwerten erzeugen eine Fehlermeldung, da nichts hinzugefügt, sondern nur gesetzt werden kann (vgl. <a class="tlObject" data-custom="true" href="?page=set&amp;uuid=f4e10c43-7a04-45ba-b5b6-f20c8bc3b70e">Attributwert setzen</a>)</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>index</td> 
-   <td>Zahl</td> 
-   <td>Die Position im mengenwertigen Attribut, an der der neue Wert eingefügt werden soll.</td> 
-   <td>nein</td> 
-   <td> <p><code class="hljs inlineCode">index = object.get(`$attr`).size()</code></p> <p>In dem Fall wird der neue Wert an das Ende der Menge eingefügt.</p> </td> 
-  </tr> 
-  <tr> 
-   <td>value</td> 
-   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td> 
-   <td>Der neue Wert, der dem Attribut des Objekts hinzugefügt werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Beispiele</h2> 
-<h3>Neues Kind einfügen</h3> 
+</code></pre>
+<h2>​Beschreibung</h2>
+<p>Hängt einen Wert <code class="hljs inlineCode">value</code> an ein mengenwertiges Attribut <code class="hljs inlineCode">attr</code> des Objekts <code class="hljs inlineCode">object</code> an.</p>
+<p>Kann auch mit der Funktion <a class="tlObject" data-custom="true" href="?page=set&amp;uuid=f4e10c43-7a04-45ba-b5b6-f20c8bc3b70e">set()</a> durchgeführt werden, indem die alte Menge der Attributs mit dem neuen Wert konkatiniert wird:</p>
+<pre><code>$object.set(`$attr`, concat(object.get(`$attr`).subList(0, $index), $value, object.get(`$attr`).subList($index)))</code></pre>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Fachobjekt</td>
+   <td>Das Objekt, dem ein neuer Wert in einem Attribut angefügt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>attr</td>
+   <td>Zeichenkette</td>
+   <td>Das Attribut-Literal des Attributs, dem ein Wert hinzugefügt werden soll. Das Attribut muss eine Liste sein. Attribute mit nur Einzelwerten erzeugen eine Fehlermeldung, da nichts hinzugefügt, sondern nur gesetzt werden kann (vgl. <a class="tlObject" data-custom="false" href="?page=set&amp;uuid=f4e10c43-7a04-45ba-b5b6-f20c8bc3b70e">Attributwert setzen</a>)</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>index</td>
+   <td>Zahl</td>
+   <td>Die Position im mengenwertigen Attribut, an der der neue Wert eingefügt werden soll.</td>
+   <td>nein</td>
+   <td>
+    <p><code class="hljs inlineCode">index = object.get(`$attr`).size()</code></p>
+    <p>In dem Fall wird der neue Wert an das Ende der Menge eingefügt.</p></td>
+  </tr>
+  <tr>
+   <td>value</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+   <td>Der neue Wert, der dem Attribut des Objekts hinzugefügt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Beispiele</h2>
+<h3>Neues Kind einfügen</h3>
 <pre>	<code>{
    parent = new(`my.module:MyType`);
    child = new(`my.module:MyType`);
    $parent.add(`my.module:MyType#children`, $child);
    $parent.get(`my.module:MyType#children`);
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit dem Element [child].</p> 
-<p>Nachdem zwei Objekte erstellt wurden, wurde ein Objekt dem anderen als Kind hinzugefügt.</p> 
-<h3>Neues Kind an Index einfügen</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit dem Element [child].</p>
+<p>Nachdem zwei Objekte erstellt wurden, wurde ein Objekt dem anderen als Kind hinzugefügt.</p>
+<h3>Neues Kind an Index einfügen</h3>
 <pre>	<code>{
    parent = new(`my.module:MyType`);
    child1 = new(`my.module:MyType`);
@@ -71,6 +73,6 @@ $object.add(`$attr`, $index, $value)
    $parent.add(`my.module:MyType#children`, 1, $child2);
    $parent.get(`my.module:MyType#children`);
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit den Elementen [child1, child2, child3]</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit den Elementen [child1, child2, child3]</p>
 <p>Das Objekt <code class="hljs inlineCode">child2</code> wird durch die Angabe des Indizes zwischen <code class="hljs inlineCode">child1</code> und <code class="hljs inlineCode">child3</code> eingefügt.</p>

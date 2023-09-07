@@ -1,75 +1,80 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$object.copy()
 
 $object.copy($context, $filter, $constructor)</code>
-</pre> 
-<h2>Description</h2> 
-<p>Creates a deep copy of the <code class="hljs inlineCode">object</code> or a simple copy of the value <code class="hljs inlineCode">object</code>.</p> 
-<ul> 
-</ul> 
-<p>In a deep copy of an object, all objects reachable via composition references are also copied. Other references in the copied object graph are transposed to objects in the new graph if they pointed in the original graph to an object that was copied along with the copy operation.</p> 
-<h2>Parameters</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>object</td> 
-   <td>Number/string/boolean/business object/set</td> 
-   <td>The object or value to be copied.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>context</td> 
-   <td>Business object</td> 
-   <td>The context object that will be passed when creating the top-level copy (from <code class="hljs inlineCode">object</code>).</td> 
-   <td>no</td> 
-   <td>null</td> 
-  </tr> 
-  <tr> 
-   <td>filter</td> 
-   <td>Function</td> 
-   <td> <p>Decides whether a particular property should be copied along from the source graph. The filter function receives three arguments.</p> 
-    <ul> 
-     <li>The attribute to copy.</li> 
-     <li>The instance to copy from the source graph.</li> 
-     <li>The context instance where the attribute to be copied is defined.</li> 
-    </ul> <p>If the decision is <code class="hljs inlineCode">true</code>, the attribute is copied from the source object to the target object. If the attribute is a primitive property, the value is copied directly to the target object. If the attribute is a reference, that reference is either copied directly, or rewritten into the target graph, depending on whether the source object was copied in the copy operation or not. If the attribute is a composition, a deep copy of the origin object is made.</p> <p>If the decision is <code class="hljs inlineCode">false</code>, the attribute remains uninitialized in the target object. In this case, the constructor function could calculate a default value for this attribute and set it together with the construction.</p> </td> 
-   <td>no</td> 
-   <td><code class="hljs inlineCode">attribute -&gt; orig -&gt; context -&gt; true</code></td> 
-  </tr> 
-  <tr> 
-   <td>constructor</td> 
-   <td>Function</td> 
-   <td> <p>A function that takes an object from the source graph and returns an (uninitialized) copy of that object. The function receives three arguments:</p> 
-    <ul> 
-     <li>The original object to be copied.</li> 
-     <li>The context reference by which the original object is linked to its context (<code class="hljs inlineCode">null</code>, for the top-level copy).</li> 
-     <li>The original context object that holds the original object to be copied in its context reference.</li> 
-    </ul> <p>If the constructor function returns <code class="hljs inlineCode">null</code>, an object of the same type as the original is created.</p> </td> 
-   <td>no</td> 
-   <td><code class="hljs inlineCode">orig -&gt; reference -&gt; context -&gt; null</code></td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Number/string/boolean/business object/set</p> 
-<p>Depending on the type of <code class="hljs inlineCode">x</code>, the following is returned by the function:</p> 
-<ul> 
- <li><strong>Reference to a business object</strong>: a deep copy of this object.</li> 
- <li><strong>list:</strong> a list in which all compartment objects are replaced by deep copies.</li> 
- <li><strong>all other values: </strong>the value itself.</li> 
-</ul> 
-<h2>Examples</h2> 
-<h3>Object copy</h3> 
+</pre>
+<h2>Description</h2>
+<p>Creates a deep copy of the <code class="hljs inlineCode">object</code> or a simple copy of the value <code class="hljs inlineCode">object</code>.</p>
+<ul>
+</ul>
+<p>In a deep copy of an object, all objects reachable via composition references are also copied. Other references in the copied object graph are transposed to objects in the new graph if they pointed in the original graph to an object that was copied along with the copy operation.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Number/string/boolean/business object/set</td>
+   <td>The object or value to be copied.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>context</td>
+   <td>Business object</td>
+   <td>The context object that will be passed when creating the top-level copy (from <code class="hljs inlineCode">object</code>).</td>
+   <td>no</td>
+   <td>null</td>
+  </tr>
+  <tr>
+   <td>filter</td>
+   <td>Function</td>
+   <td>
+    <p>Decides whether a particular property should be copied along from the source graph. The filter function receives three arguments.</p>
+    <ul>
+     <li>The attribute to copy.</li>
+     <li>The instance to copy from the source graph.</li>
+     <li>The context instance where the attribute to be copied is defined.</li>
+    </ul>
+    <p>If the decision is <code class="hljs inlineCode">true</code>, the attribute is copied from the source object to the target object. If the attribute is a primitive property, the value is copied directly to the target object. If the attribute is a reference, that reference is either copied directly, or rewritten into the target graph, depending on whether the source object was copied in the copy operation or not. If the attribute is a composition, a deep copy of the origin object is made.</p>
+    <p>If the decision is <code class="hljs inlineCode">false</code>, the attribute remains uninitialized in the target object. In this case, the constructor function could calculate a default value for this attribute and set it together with the construction.</p></td>
+   <td>no</td>
+   <td><code class="hljs inlineCode">attribute -&gt; orig -&gt; context -&gt; true</code></td>
+  </tr>
+  <tr>
+   <td>constructor</td>
+   <td>Function</td>
+   <td>
+    <p>A function that takes an object from the source graph and returns an (uninitialized) copy of that object. The function receives three arguments:</p>
+    <ul>
+     <li>The original object to be copied.</li>
+     <li>The context reference by which the original object is linked to its context (<code class="hljs inlineCode">null</code>, for the top-level copy).</li>
+     <li>The original context object that holds the original object to be copied in its context reference.</li>
+    </ul>
+    <p>If the constructor function returns <code class="hljs inlineCode">null</code>, an object of the same type as the original is created.</p></td>
+   <td>no</td>
+   <td><code class="hljs inlineCode">orig -&gt; reference -&gt; context -&gt; null</code></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Number/string/boolean/business object/set</p>
+<p>Depending on the type of <code class="hljs inlineCode">x</code>, the following is returned by the function:</p>
+<ul>
+ <li><strong>Reference to a business object</strong>: a deep copy of this object.</li>
+ <li><strong>list:</strong> a list in which all compartment objects are replaced by deep copies.</li>
+ <li><strong>all other values: </strong>the value itself.</li>
+</ul>
+<h2>Examples</h2>
+<h3>Object copy</h3>
 <pre>	<code>{
    a = new(`my.module:MyClass`);
    $a.set(`my.module:MyClass#name`, "orig");
@@ -77,22 +82,22 @@ $object.copy($context, $filter, $constructor)</code>
    $b.set(`my.module:MyClass#name`, "copy");
    list($a, $b);
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> Outputs a list with the original and the copied object: [orig, copy]</p> 
-<h3>Object list copy</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> Outputs a list with the original and the copied object: [orig, copy]</p>
+<h3>Object list copy</h3>
 <pre>	<code>{
    a = new(`my.module:MyClass`);
    b = new(`my.module:MyClass`);
    list = list($a, $b);
    $list.copy();
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> A list with copies of the objects <code class="hljs inlineCode">a</code> and <code class="hljs inlineCode">b</code>.</p> 
-<h3>Value copy</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> A list with copies of the objects <code class="hljs inlineCode">a</code> and <code class="hljs inlineCode">b</code>.</p>
+<h3>Value copy</h3>
 <pre>	<code>{
    a = 5;
    b = $a.copy();
    list($a, $b);
 }</code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span> A list with the values [5, 5] - one time the original number and one time the copied one.</p>

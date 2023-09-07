@@ -1,35 +1,35 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$date.toUserCalendar()</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Transformiert einen Datumswert zu einen Benutzerkalender um auf Felder wie Jahr, Monat, etc. <a class="tlObject" data-custom="true" href="?page=DateAccess&amp;uuid=59e99702-43c0-4a6e-b46a-73b407076167">zugreifen </a>und diese <a class="tlObject" data-custom="true" href="?page=DateManipulation&amp;uuid=2a87e65f-37d4-4c35-8177-e6215c33f8f0">manipulieren </a>zu können.</p> 
-<p>Es wird erwartet dass der Datumswert vom Typ <code class="hljs inlineCode">tl.core:DateTime</code> ist.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>date</td> 
-   <td>Fachobjekt</td> 
-   <td>Ein Datumswert, der durch den Kalender repräsentiert werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
-<p>Ein Benutzerkalender, der das Datum von <code class="hljs inlineCode">date</code> repräsentiert.</p> 
-<h2>Beispiele</h2> 
-<p><strong>Hinweis: </strong>Die Ausgabe kann abhängig von der Zeitzone des Kalenders abweichen.</p> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Transformiert einen Datumswert zu einen Benutzerkalender um auf Felder wie Jahr, Monat, etc. <a class="tlObject" data-custom="true" href="?page=DateAccess&amp;uuid=59e99702-43c0-4a6e-b46a-73b407076167">zugreifen </a>und diese <a class="tlObject" data-custom="true" href="?page=DateManipulation&amp;uuid=2a87e65f-37d4-4c35-8177-e6215c33f8f0">manipulieren </a>zu können.</p>
+<p>Es wird erwartet dass der Datumswert vom Typ <code class="hljs inlineCode">tl.core:DateTime</code> ist.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>date</td>
+   <td>Fachobjekt</td>
+   <td>Ein Datumswert, der durch den Kalender repräsentiert werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Ein Benutzerkalender, der das Datum von <code class="hljs inlineCode">date</code> repräsentiert.</p>
+<h2>Beispiele</h2>
+<p><strong>Hinweis: </strong>Die Ausgabe kann abhängig von der Zeitzone des Kalenders abweichen.</p>
 <pre>	<code>toUserCalendar(date(2012, 5, 5))</code>
-</pre> 
+</pre>
 <p><strong><span style="color:#3498db">Ausgabe:</span></strong> (Benutzer-) Kalenderobjekt</p>

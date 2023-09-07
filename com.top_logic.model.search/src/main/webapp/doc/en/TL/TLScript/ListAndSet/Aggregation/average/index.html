@@ -1,53 +1,53 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>average($num1, ..., $numN)
 
 $set.average()</code>
-</pre> 
-<h2>Description</h2> 
-<p>Calculates the average value of all given values. All values must be numbers. The function can be called either with multiple arguments or with a set or list of numbers as arguments. <code class="hljs inlineCode">null</code> values are filtered out and have no influence on the result.</p> 
-<h2>Parameters</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>number</td> 
-   <td>Number</td> 
-   <td>A number to be included in the calculation of the average.</td> 
-   <td colspan="1" rowspan="2">One of them must be defined.</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>set</td> 
-   <td>Set</td> 
-   <td>A set of numbers to include in the calculation of the average.</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Number</p> 
-<p>The average of the specified numbers.</p> 
-<h2>Examples</h2> 
-<h3>Simple average</h3> 
+</pre>
+<h2>Description</h2>
+<p>Calculates the average value of all given values. All values must be numbers. The function can be called either with multiple arguments or with a set or list of numbers as arguments. <code class="hljs inlineCode">null</code> values are filtered out and have no influence on the result.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>number</td>
+   <td>Number</td>
+   <td>A number to be included in the calculation of the average.</td>
+   <td colspan="1" rowspan="2">One of them must be defined.</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>set</td>
+   <td>Set</td>
+   <td>A set of numbers to include in the calculation of the average.</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Number</p>
+<p>The average of the specified numbers.</p>
+<h2>Examples</h2>
+<h3>Simple average</h3>
 <pre>	<code>average(1, 2, 3, 4)
 </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> 2,5</p> 
-<h3>Average with a list</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 2,5</p>
+<h3>Average with a list</h3>
 <pre>	<code>list(1, 2, 3, 4).average()
 </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> 2,5</p> 
-<h3>Average with null</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 2,5</p>
+<h3>Average with null</h3>
 <pre>	<code>list(1, 2, 3, 4, null).average()
 </code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span> 2,5</p>

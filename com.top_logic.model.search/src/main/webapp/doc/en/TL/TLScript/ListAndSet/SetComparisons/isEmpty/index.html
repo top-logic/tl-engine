@@ -1,47 +1,47 @@
-<h3>Syntax</h3> 
+<h3>Syntax</h3>
 <pre>	<code>$expr.isEmpty()</code>
-</pre> 
-<h2>Description</h2> 
-<p>Checks if the evaluation of <code class="hljs inlineCode">expr</code> is an empty string, an empty set or <code class="hljs inlineCode">null</code>.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>expr</td> 
-   <td>String/set</td> 
-   <td>The expression for which to check whether it is empty or <code class="hljs inlineCode">null</code>.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p> 
-<p><code class="hljs inlineCode">true</code>, if <code class="hljs inlineCode">expr</code> is empty or <code class="hljs inlineCode">null</code>.</p> 
-<h2>Examples</h2> 
-<h3>Empty set</h3> 
+</pre>
+<h2>Description</h2>
+<p>Checks if the evaluation of <code class="hljs inlineCode">expr</code> is an empty string, an empty set or <code class="hljs inlineCode">null</code>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>expr</td>
+   <td>String/set</td>
+   <td>The expression for which to check whether it is empty or <code class="hljs inlineCode">null</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p>
+<p><code class="hljs inlineCode">true</code>, if <code class="hljs inlineCode">expr</code> is empty or <code class="hljs inlineCode">null</code>.</p>
+<h2>Examples</h2>
+<h3>Empty set</h3>
 <pre>	<code>[].isEmpty()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output: </strong></span> <code class="hljs inlineCode">true</code></p> 
-<h3>Empty string</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span> <code class="hljs inlineCode">true</code></p>
+<h3>Empty string</h3>
 <pre>	<code>"".isEmpty()
 </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output: </strong></span> <code class="hljs inlineCode">true</code></p> 
-<h3>Non-empty set</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span> <code class="hljs inlineCode">true</code></p>
+<h3>Non-empty set</h3>
 <pre>	<code>[0, 1].isEmpty()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span><strong> </strong><code class="hljs inlineCode">false</code><span style="color:#3498db"></span></p> 
-<h3>null</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span><strong> </strong><code class="hljs inlineCode">false</code><span style="color:#3498db"></span></p>
+<h3>null</h3>
 <pre>	<code>null.isEmpty()</code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span><strong> </strong><code class="hljs inlineCode">true</code></p>

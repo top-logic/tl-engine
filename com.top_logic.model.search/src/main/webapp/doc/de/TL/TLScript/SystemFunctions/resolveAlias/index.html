@@ -1,35 +1,35 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>resolveAlias($alias)
 </code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Löst alle Auftreten eines Aliases mit durch die Anwendungskonfiguration angegebenen Werten auf, wenn diese nicht schon von der Anwendungskonfiguration übernommen wurden.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>alias</td> 
-   <td>Zeichenkette</td> 
-   <td>Der Names des Alias, der aufgelöst werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p> 
-<p>Den aufgelösten Alias.</p> 
-<h2>Beispiele</h2> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Löst alle Auftreten eines Aliases mit durch die Anwendungskonfiguration angegebenen Werten auf, wenn diese nicht schon von der Anwendungskonfiguration übernommen wurden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>alias</td>
+   <td>Zeichenkette</td>
+   <td>Der Names des Alias, der aufgelöst werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p>
+<p>Den aufgelösten Alias.</p>
+<h2>Beispiele</h2>
 <pre>	<code> resolveAlias('%HOST%:%PORT%') </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> localhost:8090</p> 
-<p>Unter der Voraussetzung, dass für den Alias <code class="hljs inlineCode">%HOST%</code> in der Konfiguration <code class="hljs inlineCode">localhost</code> und für <code class="hljs inlineCode">%PORT%</code> <code class="hljs inlineCode">8090</code> angegeben wurde. </p>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> localhost:8090</p>
+<p>Unter der Voraussetzung, dass für den Alias <code class="hljs inlineCode">%HOST%</code> in der Konfiguration <code class="hljs inlineCode">localhost</code> und für <code class="hljs inlineCode">%PORT%</code> <code class="hljs inlineCode">8090</code> angegeben wurde.</p>

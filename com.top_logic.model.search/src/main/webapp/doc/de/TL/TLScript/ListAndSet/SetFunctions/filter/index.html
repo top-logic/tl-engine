@@ -1,43 +1,43 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$set.filter($func)</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Filtert <code class="hljs inlineCode">set</code> indem die Prädikatsfunktion <code class="hljs inlineCode">func</code> auf jedes seiner Elemente angewendet wird. In der resultierenden Menge sind nur die Elemente enthalten, welche die Prädikatsfunktion <code class="hljs inlineCode">func</code> als wahr bewertet hat.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>set</td> 
-   <td>Menge</td> 
-   <td>Eine Menge, die gemäß <code class="hljs inlineCode">func</code> gefiltert werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>func</td> 
-   <td>Funktion</td> 
-   <td>Prädikatsfunktion, die auf alle Elemente von <code class="hljs inlineCode">set</code> angewendet werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p> 
-<p>Eine neue Menge, die alle Elemente aus <code class="hljs inlineCode">set</code> beinhaltet, für die die Prädikatsfunktion <code class="hljs inlineCode">true</code> ergab.</p> 
-<h2>Beispiele</h2> 
-<h3>Zahlenfilter</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Filtert <code class="hljs inlineCode">set</code> indem die Prädikatsfunktion <code class="hljs inlineCode">func</code> auf jedes seiner Elemente angewendet wird. In der resultierenden Menge sind nur die Elemente enthalten, welche die Prädikatsfunktion <code class="hljs inlineCode">func</code> als wahr bewertet hat.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>set</td>
+   <td>Menge</td>
+   <td>Eine Menge, die gemäß <code class="hljs inlineCode">func</code> gefiltert werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>func</td>
+   <td>Funktion</td>
+   <td>Prädikatsfunktion, die auf alle Elemente von <code class="hljs inlineCode">set</code> angewendet werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p>
+<p>Eine neue Menge, die alle Elemente aus <code class="hljs inlineCode">set</code> beinhaltet, für die die Prädikatsfunktion <code class="hljs inlineCode">true</code> ergab.</p>
+<h2>Beispiele</h2>
+<h3>Zahlenfilter</h3>
 <pre>	<code>list(1, 3, 5, 3, 7, 8, 3, 9)
   .filter(x -&gt; $x &gt; 4)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>Eine Menge mit den Elementen [5, 7, 8, 9].<span style="color:#3498db"></span></p> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>Eine Menge mit den Elementen [5, 7, 8, 9].<span style="color:#3498db"></span></p>
 <p>Für alle anderen Zahlen gibt die Funktion <code class="hljs inlineCode">false</code> zurück.</p>

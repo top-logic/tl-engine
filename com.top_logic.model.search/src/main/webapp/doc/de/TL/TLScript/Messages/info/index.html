@@ -1,58 +1,58 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>info($message)
 
 info($message, $detail)</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Erzeugt eine Nachricht auf der Nutzeroberfläche, ohne das Script zu unterbrechen.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>message</td> 
-   <td>Zeichenkette/Internationalisierter Text</td> 
-   <td>Die Hauptmessage der Nachricht.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>detail</td> 
-   <td>Zeichenkette/Internationalisierter Text</td> 
-   <td>Details zu <code class="hljs inlineCode">message</code>.</td> 
-   <td>nein</td> 
-   <td>Keine Details.</td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Beispiele</h2> 
-<h3>Nachricht ohne Deteils (Zeichenkette)</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Erzeugt eine Nachricht auf der Nutzeroberfläche, ohne das Script zu unterbrechen.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>message</td>
+   <td>Zeichenkette/Internationalisierter Text</td>
+   <td>Die Hauptmessage der Nachricht.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>detail</td>
+   <td>Zeichenkette/Internationalisierter Text</td>
+   <td>Details zu <code class="hljs inlineCode">message</code>.</td>
+   <td>nein</td>
+   <td>Keine Details.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Beispiele</h2>
+<h3>Nachricht ohne Deteils (Zeichenkette)</h3>
 <pre>	<code>info('Hello');
 </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span></p> 
-<p><img src="ref:image_49169.png" style="opacity:1"></p> 
-<h3>Nachricht mit Details (Zeichenkette)</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span></p>
+<p><img src="ref:image_49169.png" style="opacity:1"></p>
+<h3>Nachricht mit Details (Zeichenkette)</h3>
 <pre>	<code>info('Hello', 'How are you?')</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span></p> 
-<p><img src="ref:image_22633.png" style="opacity:1"></p> 
-<h3>Nachricht mit Details (Internationlisierter Text)</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span></p>
+<p><img src="ref:image_22633.png" style="opacity:1"></p>
+<h3>Nachricht mit Details (Internationlisierter Text)</h3>
 <pre><code>{
    message = #("Hallo"@de, "Hello"@en);
    details = #("Wie geht es dir?"@de, "How are you?"@en);
    info($message, $details);
-}</code></pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span></p> 
-<p><strong>Deutsch: </strong></p> 
-<p><img src="ref:image_6779.png" style="opacity:1"></p> 
-<p><strong>Englisch: </strong></p> 
+}</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span></p>
+<p><strong>Deutsch: </strong></p>
+<p><img src="ref:image_6779.png" style="opacity:1"></p>
+<p><strong>Englisch: </strong></p>
 <p><img src="ref:image_85621.png" style="opacity:1"></p>

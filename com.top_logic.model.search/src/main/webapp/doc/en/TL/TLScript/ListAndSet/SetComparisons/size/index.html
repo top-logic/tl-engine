@@ -1,38 +1,38 @@
-<h3>Syntax</h3> 
+<h3>Syntax</h3>
 <pre>	<code>$expr.size()</code>
-</pre> 
-<h2>Description</h2> 
-<p>The number of elements in the set/list <code class="hljs inlineCode">expr</code> or the number of assignments in the dictionary <code class="hljs inlineCode">expr</code>.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>expr</td> 
-   <td>Businss object/set</td> 
-   <td>An expression whose size is to be measured. Can be a list, set or even a <a class="tlObject" data-custom="true" href="?page=Dictionaries&amp;uuid=6e9709bc-d8a4-4539-a4e9-cee8ef97dc37">dictionary</a>.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2><span style="background-color:rgba(255, 255, 255, 0); font-size:16pt">Return value</span></h2> 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Number</p> 
-<p>The number of elements of the given set/list <code class="hljs inlineCode">expr</code> or the number of mappings in the dictionary. <span style="color:#695d69; font-family:monospace"><span style="background-color:#f7f3f7">expr</span></span>.</p> 
-<h2>Examples</h2> 
-<h3>Set of list elements</h3> 
+</pre>
+<h2>Description</h2>
+<p>The number of elements in the set/list <code class="hljs inlineCode">expr</code> or the number of assignments in the dictionary <code class="hljs inlineCode">expr</code>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>expr</td>
+   <td>Businss object/set</td>
+   <td>An expression whose size is to be measured. Can be a list, set or even a <a class="tlObject" data-custom="true" href="?page=Dictionaries&amp;uuid=6e9709bc-d8a4-4539-a4e9-cee8ef97dc37">dictionary</a>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2><span style="background-color:rgba(255, 255, 255, 0); font-size:16pt">Return value</span></h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Number</p>
+<p>The number of elements of the given set/list <code class="hljs inlineCode">expr</code> or the number of mappings in the dictionary. <span style="color:#695d69; font-family:monospace"><span style="background-color:#f7f3f7">expr</span></span>.</p>
+<h2>Examples</h2>
+<h3>Set of list elements</h3>
 <pre>	<code>[1, 2, 3].size()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output: </strong></span> 3</p> 
-<h3>Set of dictionary mappings</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span> 3</p>
+<h3>Set of dictionary mappings</h3>
 <pre>	<code>{
   dict = {
     "all": "alle",
@@ -42,5 +42,5 @@
 
   $dict.size()
 }</code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Output: </strong></span> 3</p>

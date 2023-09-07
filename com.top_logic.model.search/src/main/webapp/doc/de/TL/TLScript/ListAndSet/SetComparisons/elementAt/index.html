@@ -1,51 +1,51 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$set.elementAt($index)
 
 $set[$index]</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Gibt das Element der Liste <code class="hljs inlineCode">set</code> an der Stelle <code class="hljs inlineCode">index</code> zurück.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>set</td> 
-   <td>Menge</td> 
-   <td>Eine Menge, aus der ein Element zurückgegeben werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>index</td> 
-   <td>Zahl</td> 
-   <td>Der Index der Liste <code class="hljs inlineCode">set</code>, von dem das Element zurückgegeben werden soll. Die Zählung beginnt bei 0 und der gewählte Index darf nur zwischen 0 und <code class="hljs inlineCode">$set.size() -1</code> liegen.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2><span style="background-color:rgba(255, 255, 255, 0); font-size:16pt">Rückgabewert</span></h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</p> 
-<p>Das Element aus der Liste <code class="hljs inlineCode">set</code> an der Position <code class="hljs inlineCode">index</code>.</p> 
-<h2>Beispiele</h2> 
-<h3>Gültiger Index</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Gibt das Element der Liste <code class="hljs inlineCode">set</code> an der Stelle <code class="hljs inlineCode">index</code> zurück.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>set</td>
+   <td>Menge</td>
+   <td>Eine Menge, aus der ein Element zurückgegeben werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>index</td>
+   <td>Zahl</td>
+   <td>Der Index der Liste <code class="hljs inlineCode">set</code>, von dem das Element zurückgegeben werden soll. Die Zählung beginnt bei 0 und der gewählte Index darf nur zwischen 0 und <code class="hljs inlineCode">$set.size() -1</code> liegen.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2><span style="background-color:rgba(255, 255, 255, 0); font-size:16pt">Rückgabewert</span></h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</p>
+<p>Das Element aus der Liste <code class="hljs inlineCode">set</code> an der Position <code class="hljs inlineCode">index</code>.</p>
+<h2>Beispiele</h2>
+<h3>Gültiger Index</h3>
 <pre>	<code>list("hello", "how", "are", "you").elementAt(3)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> you</p> 
-<h3>Ungültiger Index</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> you</p>
+<h3>Ungültiger Index</h3>
 <pre>	<code>list("hello", "how", "are", "you").elementAt(5)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> <code class="hljs inlineCode">null</code></p> 
-<h3>Index ohne elementAt</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> <code class="hljs inlineCode">null</code></p>
+<h3>Index ohne elementAt</h3>
 <pre>	<code>list("hello", "how", "are", "you")[2]</code>
-</pre> 
+</pre>
 <p><strong><span style="color:#3498db">Ausgabe:</span> </strong>are</p>

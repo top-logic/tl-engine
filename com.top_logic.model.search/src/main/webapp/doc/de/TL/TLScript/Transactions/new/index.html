@@ -1,45 +1,45 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>new(`my.module:MyType`)
 new(`my.module:MyType`, $context)
 </code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Erstellt ein neues Objekt des angegebenen Typs. Als optionaler Kontext kann ein weiteres Objekt mitgegeben werden, in dessen logischem Kontext das neue Objekt erstellt wird. Dieses Kontextobjekt ist bei der Berechnung von Standardwerten von Attributen des neu angelegeten Objektes verfügbar.</p> 
-<p>Typischerweise sollte als Kontext das Objekt übergeben werden, in dessen Kompositionsreferenz das neu angelegete Objekt gespeichert werden wird. Bei der Anlage einer Baumstruktur hat der Vaterknoten eine Kompositionsreferenz "kinder", in welche ein neu angelegter Kindknoten nach der Anlage gespeichert wird. Bei der Anlage des Kindknotens sollte also der Vaterknoten als Kontextobjekt mitgegeben werden.</p> 
-<p> </p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>type-literal</td> 
-   <td>Zeichenkette</td> 
-   <td>Literal des Objekttypes, von welchem ein neues Objekt erzeugt werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>context</td> 
-   <td>Objekt</td> 
-   <td>Das Objekt, in dessen Kontext die Anlage stattfindet. Kann für Standardwertberchnungen für Attribute verwendet werden.</td> 
-   <td>nein</td> 
-   <td><code class="hljs inlineCode">null</code></td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
-<p>Das neu erzeugte Objekt des Types <code class="hljs inlineCode">my.module:MyType</code>.</p> 
-<h2>Beispiele</h2> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Erstellt ein neues Objekt des angegebenen Typs. Als optionaler Kontext kann ein weiteres Objekt mitgegeben werden, in dessen logischem Kontext das neue Objekt erstellt wird. Dieses Kontextobjekt ist bei der Berechnung von Standardwerten von Attributen des neu angelegeten Objektes verfügbar.</p>
+<p>Typischerweise sollte als Kontext das Objekt übergeben werden, in dessen Kompositionsreferenz das neu angelegete Objekt gespeichert werden wird. Bei der Anlage einer Baumstruktur hat der Vaterknoten eine Kompositionsreferenz "kinder", in welche ein neu angelegter Kindknoten nach der Anlage gespeichert wird. Bei der Anlage des Kindknotens sollte also der Vaterknoten als Kontextobjekt mitgegeben werden.</p>
+<p></p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>type-literal</td>
+   <td>Zeichenkette</td>
+   <td>Literal des Objekttypes, von welchem ein neues Objekt erzeugt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>context</td>
+   <td>Objekt</td>
+   <td>Das Objekt, in dessen Kontext die Anlage stattfindet. Kann für Standardwertberchnungen für Attribute verwendet werden.</td>
+   <td>nein</td>
+   <td><code class="hljs inlineCode">null</code></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Das neu erzeugte Objekt des Types <code class="hljs inlineCode">my.module:MyType</code>.</p>
+<h2>Beispiele</h2>
 <pre>	<code>new(`my.module:MyClass`)
 </code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Erzeugt ein Objekt des Types <code class="hljs inlineCode">my.module:MyClass</code>.</p>

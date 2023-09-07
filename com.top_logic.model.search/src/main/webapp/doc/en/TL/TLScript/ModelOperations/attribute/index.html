@@ -1,42 +1,42 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$type.attribute($name)</code>
-</pre> 
-<h2>Description</h2> 
-<p>Returns the attribute with the <code class="hljs inlineCode">name</code> of a <code class="hljs inlineCode">type</code>.</p> 
-<p>The attribute can be either a property with a primitive value type, or a reference to one or more objects of a buisness object type.</p> 
-<h2>Parameters</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>type</td> 
-   <td>String</td> 
-   <td>The model type whose attribute is to be determined.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>name</td> 
-   <td>String</td> 
-   <td>Name of the attribute searched for.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>type:</strong></span> Business object</p> 
-<p>The attribute with information about its name, definition type and target type.</p> 
-<h2>Examples</h2> 
+</pre>
+<h2>Description</h2>
+<p>Returns the attribute with the <code class="hljs inlineCode">name</code> of a <code class="hljs inlineCode">type</code>.</p>
+<p>The attribute can be either a property with a primitive value type, or a reference to one or more objects of a buisness object type.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>type</td>
+   <td>String</td>
+   <td>The model type whose attribute is to be determined.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>name</td>
+   <td>String</td>
+   <td>Name of the attribute searched for.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>type:</strong></span> Business object</p>
+<p>The attribute with information about its name, definition type and target type.</p>
+<h2>Examples</h2>
 <pre>	<code>`my.module:MyType`.attribute("myAttr") </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> The attribute with the name "myAttr" and its definition and target type.</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> The attribute with the name "myAttr" and its definition and target type.</p>
 <p>The returned attribute corresponds to <code class="hljs inlineCode">`my.module:MyType#myAttr`</code>.</p>

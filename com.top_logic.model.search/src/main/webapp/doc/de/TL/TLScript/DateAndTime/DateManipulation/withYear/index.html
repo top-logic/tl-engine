@@ -1,40 +1,40 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$calendar.withYear($year)</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Erstellt einen neuen Kalender aus dem gegebenen Kalender, wobei das <a class="tlObject" data-custom="true" href="?page=year&amp;uuid=914035cc-d113-4b70-9b71-44de79ef3d5e">Jahr</a> auf <code class="hljs inlineCode">year</code> gesetzt wird. Durch das Verändern des Jahres können sich auch andere Werte wie zum Beispiel den <a class="tlObject" data-custom="true" href="?page=dayOfWeek&amp;uuid=994c8b37-d3ce-4979-8e2c-c5c159d4000a">Tag der Woche</a> ändern.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>calendar</td> 
-   <td>Fachobjekt</td> 
-   <td>Der Kalender, dessen Jahr geändert werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>year</td> 
-   <td>Zahl</td> 
-   <td>Wert für das neue Jahr, das für den Kalender gesetzt werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong> </span>Fachobjekt</p> 
-<p>Ein Kalender mit dem geänderten Wert für das Jahr.</p> 
-<h2>Beispiele</h2> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Erstellt einen neuen Kalender aus dem gegebenen Kalender, wobei das <a class="tlObject" data-custom="true" href="?page=year&amp;uuid=914035cc-d113-4b70-9b71-44de79ef3d5e">Jahr</a> auf <code class="hljs inlineCode">year</code> gesetzt wird. Durch das Verändern des Jahres können sich auch andere Werte wie zum Beispiel den <a class="tlObject" data-custom="true" href="?page=dayOfWeek&amp;uuid=994c8b37-d3ce-4979-8e2c-c5c159d4000a">Tag der Woche</a> ändern.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>calendar</td>
+   <td>Fachobjekt</td>
+   <td>Der Kalender, dessen Jahr geändert werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>year</td>
+   <td>Zahl</td>
+   <td>Wert für das neue Jahr, das für den Kalender gesetzt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Fachobjekt</p>
+<p>Ein Kalender mit dem geänderten Wert für das Jahr.</p>
+<h2>Beispiele</h2>
 <pre>	<code>date(2012, 8, 15).toUserCalendar().withYear(2021).year()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 2021 </p>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 2021</p>

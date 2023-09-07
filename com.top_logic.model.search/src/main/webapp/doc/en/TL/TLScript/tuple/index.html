@@ -1,38 +1,38 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>tuple($coord1 -&gt; $expr1, $coord2 -&gt; $expr2,..., $coordN -&gt; $exprN)
 </code>
-</pre> 
-<h2>Description</h2> 
-<p>The expression evaluates to a collection of transient tuple objects with properties <code class="hljs inlineCode">coord1</code> to <code class="hljs inlineCode">coordN</code>.</p> 
-<p>The objects are structured as follows: The expression <code class="hljs inlineCode">expr1</code> is evaluated and for each element of the result set, the variable <code class="hljs inlineCode">coord1</code> is assigned this result and then the expression <code class="hljs inlineCode">expr2</code> is evaluated. The expression <code class="hljs inlineCode">expr2</code> may contain the expression <code class="hljs inlineCode">coord1</code> in order to access the result of the evaluation of <code class="hljs inlineCode">expr1</code>. The process is continued with all expressions up to <code class="hljs inlineCode">exprN</code>. In this process, the expression <code class="hljs inlineCode">exprN</code> is allowed to access all variables <code class="hljs inlineCode">coord1</code> through <code class="hljs inlineCode">coord[N-1]</code>. A transient tuple object is created from each complete set of variable assignments <code class="hljs inlineCode">coord1</code> through <code class="hljs inlineCode">coordN</code> and returned as the result of the expression.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>coord</td> 
-   <td>Business object</td> 
-   <td>Properties</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>expr</td> 
-   <td>Number/string/boolean/buisness object/set</td> 
-   <td>Object to be evaluated and stored in <code class="hljs inlineCode">coord</code>.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong> </span>Set</p> 
+</pre>
+<h2>Description</h2>
+<p>The expression evaluates to a collection of transient tuple objects with properties <code class="hljs inlineCode">coord1</code> to <code class="hljs inlineCode">coordN</code>.</p>
+<p>The objects are structured as follows: The expression <code class="hljs inlineCode">expr1</code> is evaluated and for each element of the result set, the variable <code class="hljs inlineCode">coord1</code> is assigned this result and then the expression <code class="hljs inlineCode">expr2</code> is evaluated. The expression <code class="hljs inlineCode">expr2</code> may contain the expression <code class="hljs inlineCode">coord1</code> in order to access the result of the evaluation of <code class="hljs inlineCode">expr1</code>. The process is continued with all expressions up to <code class="hljs inlineCode">exprN</code>. In this process, the expression <code class="hljs inlineCode">exprN</code> is allowed to access all variables <code class="hljs inlineCode">coord1</code> through <code class="hljs inlineCode">coord[N-1]</code>. A transient tuple object is created from each complete set of variable assignments <code class="hljs inlineCode">coord1</code> through <code class="hljs inlineCode">coordN</code> and returned as the result of the expression.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>coord</td>
+   <td>Business object</td>
+   <td>Properties</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>expr</td>
+   <td>Number/string/boolean/buisness object/set</td>
+   <td>Object to be evaluated and stored in <code class="hljs inlineCode">coord</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong> </span>Set</p>
 <p>A set of all evaluated tuples.</p>

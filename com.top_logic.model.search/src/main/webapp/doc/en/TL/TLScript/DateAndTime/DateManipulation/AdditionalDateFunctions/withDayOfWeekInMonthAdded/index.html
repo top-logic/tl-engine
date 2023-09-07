@@ -1,46 +1,46 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$calendar.withDayOfWeekInMonthAdded($value)</code>
-</pre> 
-<h2>Description</h2> 
-<p>Creates a new calendar from the given calendar, adding <code class="hljs inlineCode">value</code> to the <a class="tlObject" data-custom="true" href="?page=dayOfWeekInMonth&amp;uuid=25d2caa1-50a3-4898-91f8-4068da748ff9">day of the week in the month</a>. The addition of the value can have an effect on other values, for example the <a class="tlObject" data-custom="false" href="?page=day&amp;uuid=4bf3f6a5-acc7-4f26-9aa0-1efb04882005">day</a>.</p> 
-<h2>Parameters</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>calendar</td> 
-   <td>Business object</td> 
-   <td>The calendar whose day of the week in the month is to be changed. It can be a <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">system</a> or <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">user calendar</a>.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>value</td> 
-   <td>Number</td> 
-   <td>Value by which the day of the week in the month should be increased.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Business Object</p> 
-<p>A calendar with the changed value for the day of the week in the month.</p> 
-<h2>Examples</h2> 
-<h3>DayOfWeekInMonth after customization</h3> 
+</pre>
+<h2>Description</h2>
+<p>Creates a new calendar from the given calendar, adding <code class="hljs inlineCode">value</code> to the <a class="tlObject" data-custom="true" href="?page=dayOfWeekInMonth&amp;uuid=25d2caa1-50a3-4898-91f8-4068da748ff9">day of the week in the month</a>. The addition of the value can have an effect on other values, for example the <a class="tlObject" data-custom="false" href="?page=day&amp;uuid=4bf3f6a5-acc7-4f26-9aa0-1efb04882005">day</a>.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>calendar</td>
+   <td>Business object</td>
+   <td>The calendar whose day of the week in the month is to be changed. It can be a <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">system</a> or <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">user calendar</a>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>value</td>
+   <td>Number</td>
+   <td>Value by which the day of the week in the month should be increased.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business Object</p>
+<p>A calendar with the changed value for the day of the week in the month.</p>
+<h2>Examples</h2>
+<h3>DayOfWeekInMonth after customization</h3>
 <pre>	<code>dateTime(2012, 8, 14, 7, 55, 24, 3).toUserCalendar().withDayOfWeekInMonthAdded(1).dayOfWeekInMonth()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> 3</p> 
-<h3>Day after adjustment</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 3</p>
+<h3>Day after adjustment</h3>
 <pre>	<code>dateTime(2012, 8, 14, 7, 55, 24, 13).toUserCalendar().withDayOfWeekInMonthAdded(8).day()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> 9</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 9</p>
 <p>Adjusting <code class="hljs inlineCode">dayOfWeekInMonth</code> also changes other values such as <a class="tlObject" data-custom="false" href="?page=day&amp;uuid=4bf3f6a5-acc7-4f26-9aa0-1efb04882005">day</a>.</p>

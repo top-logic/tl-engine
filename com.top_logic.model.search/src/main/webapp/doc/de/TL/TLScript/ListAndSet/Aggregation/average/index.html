@@ -1,53 +1,53 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>average($num1, ..., $numN)
 
 $set.average()</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Berechnet den Durchschnittswert aller gegebenen Werte. Alle Werte müssen Zahlen sein. Die Funktion kann entweder mit mehreren Argumenten oder mit einer Menge bzw. Liste von Zahlen als Argument aufgerufen werden. <code class="hljs inlineCode">null</code>-Werte werden ausgefiltert und haben keinen Einfluss auf das Ergebnis.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>number</td> 
-   <td>Zahl</td> 
-   <td>Eine Zahl, die in die Berechnung des Durchschnitts miteinfließen soll. </td> 
-   <td colspan="1" rowspan="2">Einer von beiden muss definiert sein.</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>set</td> 
-   <td>Menge</td> 
-   <td>Eine Menge von Zahlen, die in die Berechnung des Durchschnitts miteinfließen sollen. </td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl</p> 
-<p>Der Durchschnitt der angegebenen Zahlen.</p> 
-<h2>Beispiele</h2> 
-<h3>Einfacher Durchschnitt</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Berechnet den Durchschnittswert aller gegebenen Werte. Alle Werte müssen Zahlen sein. Die Funktion kann entweder mit mehreren Argumenten oder mit einer Menge bzw. Liste von Zahlen als Argument aufgerufen werden. <code class="hljs inlineCode">null</code>-Werte werden ausgefiltert und haben keinen Einfluss auf das Ergebnis.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>number</td>
+   <td>Zahl</td>
+   <td>Eine Zahl, die in die Berechnung des Durchschnitts miteinfließen soll.</td>
+   <td colspan="1" rowspan="2">Einer von beiden muss definiert sein.</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>set</td>
+   <td>Menge</td>
+   <td>Eine Menge von Zahlen, die in die Berechnung des Durchschnitts miteinfließen sollen.</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl</p>
+<p>Der Durchschnitt der angegebenen Zahlen.</p>
+<h2>Beispiele</h2>
+<h3>Einfacher Durchschnitt</h3>
 <pre>	<code>average(1, 2, 3, 4)
 </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 2,5</p> 
-<h3>Durchschnitt mit einer Liste</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 2,5</p>
+<h3>Durchschnitt mit einer Liste</h3>
 <pre>	<code>list(1, 2, 3, 4).average()
 </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 2,5</p> 
-<h3>Durchschnitt mit null</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 2,5</p>
+<h3>Durchschnitt mit null</h3>
 <pre>	<code>list(1, 2, 3, 4, null).average()
 </code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 2,5</p>

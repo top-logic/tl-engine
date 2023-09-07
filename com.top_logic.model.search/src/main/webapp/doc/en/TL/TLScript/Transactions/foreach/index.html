@@ -1,43 +1,43 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$set.foreach($func)</code>
-</pre> 
-<h2>Description</h2> 
-<p>Applies the <code class="hljs inlineCode">func</code> function to each element of the <code class="hljs inlineCode">set</code> and returns the set of evaluation results. Alternative syntax for <a class="tlObject" data-custom="true" href="?page=map&amp;uuid=c382824b-adb0-468c-8508-c4297b61bb3d">map()</a>, if not the result of the mapping but the side effect of the function is relevant.</p> 
-<h2>Parameters</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>set</td> 
-   <td>Set</td> 
-   <td>A set on whose elements <code class="hljs inlineCode">func</code> should be called.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>func</td> 
-   <td>Function</td> 
-   <td>A function to be executed on the elements of <code class="hljs inlineCode">set</code>.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Examples</h2> 
+</pre>
+<h2>Description</h2>
+<p>Applies the <code class="hljs inlineCode">func</code> function to each element of the <code class="hljs inlineCode">set</code> and returns the set of evaluation results. Alternative syntax for <a class="tlObject" data-custom="true" href="?page=map&amp;uuid=c382824b-adb0-468c-8508-c4297b61bb3d">map()</a>, if not the result of the mapping but the side effect of the function is relevant.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>set</td>
+   <td>Set</td>
+   <td>A set on whose elements <code class="hljs inlineCode">func</code> should be called.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>func</td>
+   <td>Function</td>
+   <td>A function to be executed on the elements of <code class="hljs inlineCode">set</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Examples</h2>
 <pre>	<code>{
    a = new(`my.module:MyClass`);
    b = new(`my.module:MyClass`);
    list = list($a, $b);
    $list.foreach(x -&gt; $x.set(`my.module:MyClass#date`, now()));
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output:</strong></span> /</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> /</p>
 <p>Creates two objects of type <code class="hljs inlineCode">my.module:MyClass</code> and assigns them the current date in the <code class="hljs inlineCode">date</code> attribute.</p>

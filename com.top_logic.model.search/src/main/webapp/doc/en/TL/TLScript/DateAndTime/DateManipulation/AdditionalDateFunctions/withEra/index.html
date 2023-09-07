@@ -1,40 +1,40 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$calendar.withEra($era)</code>
-</pre> 
-<h2>Description</h2> 
-<p>Creates a new calendar from the given calendar, setting the <a class="tlObject" data-custom="true" href="?page=era&amp;uuid=248faaa1-b7ee-4f62-944d-a64ef8b94653">epoch</a> to <code class="hljs inlineCode">era</code>. Changing the day can also change other values such as the result of <a class="tlObject" data-custom="false" href="?page=toMillis&amp;uuid=11ace3b7-6de1-45b1-9878-c5d7ed24280a">toMillis</a>.</p> 
-<h2>Parameters</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>calendar</td> 
-   <td>Business object</td> 
-   <td>The calendar whose epoch is to be changed. It can be a <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">system</a> or <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">user calendar</a>.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>era</td> 
-   <td>Number</td> 
-   <td>Value for the new epoch to be set for the calendar.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong> </span>Business object</p> 
-<p>A calendar with the changed value for the epoch.</p> 
-<h2>Examples</h2> 
+</pre>
+<h2>Description</h2>
+<p>Creates a new calendar from the given calendar, setting the <a class="tlObject" data-custom="true" href="?page=era&amp;uuid=248faaa1-b7ee-4f62-944d-a64ef8b94653">epoch</a> to <code class="hljs inlineCode">era</code>. Changing the day can also change other values such as the result of <a class="tlObject" data-custom="false" href="?page=toMillis&amp;uuid=11ace3b7-6de1-45b1-9878-c5d7ed24280a">toMillis</a>.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>calendar</td>
+   <td>Business object</td>
+   <td>The calendar whose epoch is to be changed. It can be a <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">system</a> or <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">user calendar</a>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>era</td>
+   <td>Number</td>
+   <td>Value for the new epoch to be set for the calendar.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong> </span>Business object</p>
+<p>A calendar with the changed value for the epoch.</p>
+<h2>Examples</h2>
 <pre>	<code>date(2021, 9, 12).toSystemCalendar().withEra(0).era()</code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span> 0</p>

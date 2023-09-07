@@ -1,56 +1,56 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$e1.isFloatEqual($e2, $precision)</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Vergleicht zwei Fließkommazahlen miteinander, , wenn man auf <code class="hljs inlineCode">precision</code> Stellen rundet.</p> 
-<p>Der Ausdruck ist äquivalent zu </p> 
-<pre><code>$e1.round($precision) == $e2.round($precision)</code></pre> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>e1</td> 
-   <td>Zahl</td> 
-   <td>Eine Fließkommazahl, die mit <code class="hljs inlineCode">e2</code> verglichen werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>e2</td> 
-   <td>Zahl</td> 
-   <td>Eine Fließkommazahl, die mit <code class="hljs inlineCode">e1</code> verglichen werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>precision</td> 
-   <td>Zahl</td> 
-   <td>Eine Zahl, die angibt wie viele Nachkommastellen berücksichtigt werden sollen.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p> 
-<p><code class="hljs inlineCode">true</code>, wenn die beiden Floatzahlen bis zur angegeben Genauigkeit gleich sind.</p> 
-<h2>Beispiele</h2> 
-<h3>Vergleich mit 2 Nachkommastellen</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Vergleicht zwei Fließkommazahlen miteinander, , wenn man auf <code class="hljs inlineCode">precision</code> Stellen rundet.</p>
+<p>Der Ausdruck ist äquivalent zu</p>
+<pre><code>$e1.round($precision) == $e2.round($precision)</code></pre>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>e1</td>
+   <td>Zahl</td>
+   <td>Eine Fließkommazahl, die mit <code class="hljs inlineCode">e2</code> verglichen werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>e2</td>
+   <td>Zahl</td>
+   <td>Eine Fließkommazahl, die mit <code class="hljs inlineCode">e1</code> verglichen werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>precision</td>
+   <td>Zahl</td>
+   <td>Eine Zahl, die angibt wie viele Nachkommastellen berücksichtigt werden sollen.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+<p><code class="hljs inlineCode">true</code>, wenn die beiden Floatzahlen bis zur angegeben Genauigkeit gleich sind.</p>
+<h2>Beispiele</h2>
+<h3>Vergleich mit 2 Nachkommastellen</h3>
 <pre>	<code>3.1314.isFloatEqual(3.1315, 2)</code>
-</pre> 
-<p><strong><span style="color:#3498db">Ausgabe:</span> </strong> true</p> 
-<p>Die Zahlen sind gleich, da sie nur bis zur zweiten Nachkommastelle miteinander verglichen werden.</p> 
-<h3>Vergleich mit 5 Nachkommastellen</h3> 
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong> true</p>
+<p>Die Zahlen sind gleich, da sie nur bis zur zweiten Nachkommastelle miteinander verglichen werden.</p>
+<h3>Vergleich mit 5 Nachkommastellen</h3>
 <pre>	<code>3.1314.isFloatEqual(3.1315, 5)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> false</p> 
-<p> </p>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> false</p>
+<p></p>

@@ -1,51 +1,51 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$match.regexGroup()
 
 $match.regexGroup($index)
 </code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Liefert die Teilstrings der Suchtreffers <code class="hljs inlineCode">match</code>. Diese werden durch Gruppen ausgewählt, die im Regex Ausdruck durch <code class="hljs inlineCode">()</code> umklammert definiert werden.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>match</td> 
-   <td>Fachobjekt</td> 
-   <td>Die Liste von <a class="tlObject" data-custom="true" href="?page=regexSearch&amp;uuid=74b294a0-955f-4fc0-b55e-793641445745">Suchtreffern</a>, von denen nur der Substring ausgewählt werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>index</td> 
-   <td>Zahl</td> 
-   <td>Nur Gruppen mit dem Index werden berücksichtigt</td> 
-   <td>nein</td> 
-   <td>0 - liefert den vollständigen Text des Suchtreffers</td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong> </span>Menge</p> 
-<p>Eine Menge von Teilstrings der Suchtreffer.</p> 
-<h2>Beispiele</h2> 
-<h3>Ohne Index</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Liefert die Teilstrings der Suchtreffers <code class="hljs inlineCode">match</code>. Diese werden durch Gruppen ausgewählt, die im Regex Ausdruck durch <code class="hljs inlineCode">()</code> umklammert definiert werden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>match</td>
+   <td>Fachobjekt</td>
+   <td>Die Liste von <a class="tlObject" data-custom="true" href="?page=regexSearch&amp;uuid=74b294a0-955f-4fc0-b55e-793641445745">Suchtreffern</a>, von denen nur der Substring ausgewählt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>index</td>
+   <td>Zahl</td>
+   <td>Nur Gruppen mit dem Index werden berücksichtigt</td>
+   <td>nein</td>
+   <td>0 - liefert den vollständigen Text des Suchtreffers</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Menge</p>
+<p>Eine Menge von Teilstrings der Suchtreffer.</p>
+<h2>Beispiele</h2>
+<h3>Ohne Index</h3>
 <pre>	<code>regex('ab+').regexSearch("XXXabbbYYYabb").regexGroup()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>["abbb", "abb"]</p> 
-<p>Da kein Index für die Gruppe angegeben wurde, werden die Suchtreffer komplett ausgegeben.</p> 
-<h3>Mit Index</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>["abbb", "abb"]</p>
+<p>Da kein Index für die Gruppe angegeben wurde, werden die Suchtreffer komplett ausgegeben.</p>
+<h3>Mit Index</h3>
 <pre>	<code>regex('a(b+)').regexSearch("XXXabbbYYYabb").regexGroup(1)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe: [</strong></span>"bbb", "bb"]</p> 
-<p>Es werden nur die Teilstrings der Gruppe 1, also (b+) ausgegeben.</p> 
-<p> </p>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: [</strong></span>"bbb", "bb"]</p>
+<p>Es werden nur die Teilstrings der Gruppe 1, also (b+) ausgegeben.</p>
+<p></p>

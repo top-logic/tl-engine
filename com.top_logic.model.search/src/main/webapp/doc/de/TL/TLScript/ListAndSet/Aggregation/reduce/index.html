@@ -1,45 +1,45 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$set.reduce($identity, $fun)</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Reduziert die Menge <code class="hljs inlineCode">set</code> auf einen einzigen Wert, indem eine assoziative Kombinatorfunktion <code class="hljs inlineCode">fun</code> angewendet wird.</p> 
-<p>Der Ausdruck <code class="hljs inlineCode">list(v1, v2, ...., vn).reduce(i, fun)</code> entspricht der Auswertung von <code class="hljs inlineCode">fun(.... fun(fun(i, v1), v2)....), vn)</code>. Das bedeutet, <code class="hljs inlineCode">fun</code> wird zunächst auf die Elemente <code class="hljs inlineCode">i</code> und <code class="hljs inlineCode">v1</code> angewendet. Anschließend wird <code class="hljs inlineCode">fun</code> auf das Ergebnis davon und auf <code class="hljs inlineCode">v2</code> angwendet und so weiter, bis alle Elemente der Menge kombiniert wurden.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>set</td> 
-   <td>Menge</td> 
-   <td>Eine Menge von Elementen, die auf ein einziges reduziert werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>identity</td> 
-   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt</td> 
-   <td>Das neutrale Elemente bzgl. der Kombinatorfunktion <code class="hljs inlineCode">fun</code>, was bedeutet, dass <code class="hljs inlineCode">fun(identity, x)</code> gleich <code class="hljs inlineCode">x</code> für jedes <code class="hljs inlineCode">x</code> ist.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl/Zeichenkette/Wahrheitswert/Fachobjekt</p> 
-<p>Das reduzierte Element von <code class="hljs inlineCode">set</code>.</p> 
-<h2>Beispiele</h2> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Reduziert die Menge <code class="hljs inlineCode">set</code> auf einen einzigen Wert, indem eine assoziative Kombinatorfunktion <code class="hljs inlineCode">fun</code> angewendet wird.</p>
+<p>Der Ausdruck <code class="hljs inlineCode">list(v1, v2, ...., vn).reduce(i, fun)</code> entspricht der Auswertung von <code class="hljs inlineCode">fun(.... fun(fun(i, v1), v2)....), vn)</code>. Das bedeutet, <code class="hljs inlineCode">fun</code> wird zunächst auf die Elemente <code class="hljs inlineCode">i</code> und <code class="hljs inlineCode">v1</code> angewendet. Anschließend wird <code class="hljs inlineCode">fun</code> auf das Ergebnis davon und auf <code class="hljs inlineCode">v2</code> angwendet und so weiter, bis alle Elemente der Menge kombiniert wurden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>set</td>
+   <td>Menge</td>
+   <td>Eine Menge von Elementen, die auf ein einziges reduziert werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>identity</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt</td>
+   <td>Das neutrale Elemente bzgl. der Kombinatorfunktion <code class="hljs inlineCode">fun</code>, was bedeutet, dass <code class="hljs inlineCode">fun(identity, x)</code> gleich <code class="hljs inlineCode">x</code> für jedes <code class="hljs inlineCode">x</code> ist.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl/Zeichenkette/Wahrheitswert/Fachobjekt</p>
+<p>Das reduzierte Element von <code class="hljs inlineCode">set</code>.</p>
+<h2>Beispiele</h2>
 <pre>	<code>{
    list = list(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
    $list.reduce(0, subresult -&gt; element -&gt; $subresult + $element)
 }</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 55</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 55</p>
 <p>Addiert alle Zahlen der Menge miteinander.</p>

@@ -1,67 +1,67 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>max($num1, ..., $numN)
 
 $set.max()</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Berechnet das Maximum der angegebenen Zahlen. Die Funktion kann entweder mit mehreren Argumenten oder einer Menge bzw. Liste aus Zahlen als Argument aufgerufen werden. <code class="hljs inlineCode">null</code>-Werte werden ausgefiltert und haben keinen Einfluss auf das Ergebnis.</p> 
-<p>Das Maximum bezüglich einer benutzerdefinierten Vergleichsfunktion kann über <a class="tlObject" data-custom="true" href="?page=reduce&amp;uuid=aca63b04-383d-4c50-a37b-313c8567b99d">reduce</a> berechnet werden:</p> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Berechnet das Maximum der angegebenen Zahlen. Die Funktion kann entweder mit mehreren Argumenten oder einer Menge bzw. Liste aus Zahlen als Argument aufgerufen werden. <code class="hljs inlineCode">null</code>-Werte werden ausgefiltert und haben keinen Einfluss auf das Ergebnis.</p>
+<p>Das Maximum bezüglich einer benutzerdefinierten Vergleichsfunktion kann über <a class="tlObject" data-custom="true" href="?page=reduce&amp;uuid=aca63b04-383d-4c50-a37b-313c8567b99d">reduce</a> berechnet werden:</p>
 <pre><code>cmp -&gt; list -&gt; 
   $list.reduce(null, 
     x -&gt; y -&gt; 
       if ($x == null, $y, 
-        if ($cmp($x, $y) &lt; 0, $y, $x)))</code></pre> 
-<p>Die so definierte Funktion erwartet eine <a class="tlObject" data-custom="true" href="?page=comparator&amp;uuid=5835844a-f9cb-4317-b881-972ada6aa453">Komparatorfunktion</a> als erstes und eine Liste als zweites Argument. Sie reduziert die Liste auf dasjenige Einzelelement, das verglichen über die Komparatorfunktion größer als jedes andere Element ist.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>num</td> 
-   <td>Zahl</td> 
-   <td>Eine Zahl, die mit den anderen angegebenen Zahlen verglichen werden soll, um das Maximum zu ermitteln.</td> 
-   <td colspan="1" rowspan="2">Einer von beiden muss definiert sein.</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>set</td> 
-   <td>Menge</td> 
-   <td>Eine Menge von Zahlen, die miteinander verglichen werden sollen, um das Maximum zu ermitteln.</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl</p> 
-<p>Die Zahl aus der angegebenen Menge an Zahlen, die am höchsten ist.</p> 
-<h2>Beispiele</h2> 
-<h3>Einfacher Zahlenvergleich</h3> 
+        if ($cmp($x, $y) &lt; 0, $y, $x)))</code></pre>
+<p>Die so definierte Funktion erwartet eine <a class="tlObject" data-custom="true" href="?page=comparator&amp;uuid=5835844a-f9cb-4317-b881-972ada6aa453">Komparatorfunktion</a> als erstes und eine Liste als zweites Argument. Sie reduziert die Liste auf dasjenige Einzelelement, das verglichen über die Komparatorfunktion größer als jedes andere Element ist.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>num</td>
+   <td>Zahl</td>
+   <td>Eine Zahl, die mit den anderen angegebenen Zahlen verglichen werden soll, um das Maximum zu ermitteln.</td>
+   <td colspan="1" rowspan="2">Einer von beiden muss definiert sein.</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>set</td>
+   <td>Menge</td>
+   <td>Eine Menge von Zahlen, die miteinander verglichen werden sollen, um das Maximum zu ermitteln.</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl</p>
+<p>Die Zahl aus der angegebenen Menge an Zahlen, die am höchsten ist.</p>
+<h2>Beispiele</h2>
+<h3>Einfacher Zahlenvergleich</h3>
 <pre>	<code>max(1, 8, 3, 10)
 </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 10</p> 
-<h3>Zahlenvergleich mit einer Liste</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 10</p>
+<h3>Zahlenvergleich mit einer Liste</h3>
 <pre>	<code>list(1, 8, 3, 10).max()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 10</p> 
-<h3>Zahlenvergleich mit doppelten Zahlen</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 10</p>
+<h3>Zahlenvergleich mit doppelten Zahlen</h3>
 <pre>	<code>list(1, 8, 10, 8, 3, 10).max()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong> </span>10</p> 
-<h3>Zahlenvergleich mit null</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong> </span>10</p>
+<h3>Zahlenvergleich mit null</h3>
 <pre>	<code>list(1, null, null, 8, 3, 10).max()</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 10</p> 
-<p><code class="hljs inlineCode">null</code> Werte werden bei dem Vergleich ignoriert</p> 
-<h3>Vergleich mit einer benutzerdefinierten Funktion für Zeichenketten</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 10</p>
+<p><code class="hljs inlineCode">null</code> Werte werden bei dem Vergleich ignoriert</p>
+<h3>Vergleich mit einer benutzerdefinierten Funktion für Zeichenketten</h3>
 <pre><code>{
    cmpFun = a -&gt; b -&gt; if($a &lt; $b, -1, 1);
    (cmp -&gt; list -&gt; 
@@ -72,6 +72,6 @@ $set.max()</code>
            )
       )
    ).apply($cmpFun, list("c", "b", "d", "a"));
-}</code></pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> d</p> 
+}</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> d</p>
 <p>Die Funktion <code class="hljs inlineCode">max()</code> kann nicht mit Zeichenketten umgehen, dafür muss für eine Maximumbestimmung bei Zeichenketten eine eigene Funktion definiert werden.</p>

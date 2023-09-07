@@ -1,38 +1,38 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>tuple($coord1 -&gt; $expr1, $coord2 -&gt; $expr2,..., $coordN -&gt; $exprN)
 </code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Der Ausdruck wertet zu einer Sammlung von transienten Tupelobjekten mit den Eigenschaften <code class="hljs inlineCode">coord1</code> bis <code class="hljs inlineCode">coordN</code> aus.</p> 
-<p>Die Objekte sind wie folgt aufgebaut: Der Ausdruck <code class="hljs inlineCode">expr1</code> wird ausgewertet und für jedes Element der Ergebnismenge, wird die Variable <code class="hljs inlineCode">coord1</code> mit diesem Ergebnis belegt und anschließend der Ausdruck <code class="hljs inlineCode">expr2</code> ausgewertet. Der Ausdruck <code class="hljs inlineCode">expr2</code> darf dabei den Ausdruck <code class="hljs inlineCode">coord1</code> enthalten, um auf das Ergebnis der Auswertung von <code class="hljs inlineCode">expr1</code> zugreifen. Der Prozess wird mit allen Ausdrücken bis hin zu <code class="hljs inlineCode">exprN</code> fortgesetzt. Dabei darf der Ausdruck <code class="hljs inlineCode">exprN</code> auf alle Variablen <code class="hljs inlineCode">coord1</code> bis <code class="hljs inlineCode">coord[N-1]</code> zugreifen. Aus jedem vollständigen Satz von Variablenzuweisungen <code class="hljs inlineCode">coord1</code> bis <code class="hljs inlineCode">coordN</code> wird ein transientes Tupelobjekt erstellt und als Ergebnis des Ausdrucks zurückgegeben.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>coord</td> 
-   <td>Business object</td> 
-   <td>Eigenschaften</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>expr</td> 
-   <td>Number/string/boolean/buisness object/set</td> 
-   <td>Objekt, das ausgewertet und in <code class="hljs inlineCode">coord</code> gespeichert werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong> </span>Menge</p> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Der Ausdruck wertet zu einer Sammlung von transienten Tupelobjekten mit den Eigenschaften <code class="hljs inlineCode">coord1</code> bis <code class="hljs inlineCode">coordN</code> aus.</p>
+<p>Die Objekte sind wie folgt aufgebaut: Der Ausdruck <code class="hljs inlineCode">expr1</code> wird ausgewertet und für jedes Element der Ergebnismenge, wird die Variable <code class="hljs inlineCode">coord1</code> mit diesem Ergebnis belegt und anschließend der Ausdruck <code class="hljs inlineCode">expr2</code> ausgewertet. Der Ausdruck <code class="hljs inlineCode">expr2</code> darf dabei den Ausdruck <code class="hljs inlineCode">coord1</code> enthalten, um auf das Ergebnis der Auswertung von <code class="hljs inlineCode">expr1</code> zugreifen. Der Prozess wird mit allen Ausdrücken bis hin zu <code class="hljs inlineCode">exprN</code> fortgesetzt. Dabei darf der Ausdruck <code class="hljs inlineCode">exprN</code> auf alle Variablen <code class="hljs inlineCode">coord1</code> bis <code class="hljs inlineCode">coord[N-1]</code> zugreifen. Aus jedem vollständigen Satz von Variablenzuweisungen <code class="hljs inlineCode">coord1</code> bis <code class="hljs inlineCode">coordN</code> wird ein transientes Tupelobjekt erstellt und als Ergebnis des Ausdrucks zurückgegeben.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>coord</td>
+   <td>Business object</td>
+   <td>Eigenschaften</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>expr</td>
+   <td>Number/string/boolean/buisness object/set</td>
+   <td>Objekt, das ausgewertet und in <code class="hljs inlineCode">coord</code> gespeichert werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Menge</p>
 <p>Eine Menge aller ausgewerteten Tupel.</p>

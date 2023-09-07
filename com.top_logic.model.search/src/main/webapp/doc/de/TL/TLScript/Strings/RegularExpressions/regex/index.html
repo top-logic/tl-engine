@@ -1,39 +1,39 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>regex($string)
 </code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Erzeugt ein Regular-Expression-Pattern aus dem gegebenen String. Das Pattern kann über die Ausdrücke <a class="tlObject" data-custom="true" href="?page=regexSearch&amp;uuid=74b294a0-955f-4fc0-b55e-793641445745">regexSearch()</a> und <a class="tlObject" data-custom="true" href="?page=regexReplace&amp;uuid=827fa943-ea69-4f63-a797-df18d238eb51">regexReplace()</a> auf Zeichenketten angewendet werden.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>string</td> 
-   <td>Zeichenkette</td> 
-   <td>Ein Regex Ausdruck, aus dem das Pattern erstellt werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
-<p>Ein Regular-Expression-Pattern, das auf Zeichenkette angewendet werden kann.</p> 
-<h2>Beispiele</h2> 
-<h3>Buchstaben und Zahlen</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Erzeugt ein Regular-Expression-Pattern aus dem gegebenen String. Das Pattern kann über die Ausdrücke <a class="tlObject" data-custom="true" href="?page=regexSearch&amp;uuid=74b294a0-955f-4fc0-b55e-793641445745">regexSearch()</a> und <a class="tlObject" data-custom="true" href="?page=regexReplace&amp;uuid=827fa943-ea69-4f63-a797-df18d238eb51">regexReplace()</a> auf Zeichenketten angewendet werden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>string</td>
+   <td>Zeichenkette</td>
+   <td>Ein Regex Ausdruck, aus dem das Pattern erstellt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Ein Regular-Expression-Pattern, das auf Zeichenkette angewendet werden kann.</p>
+<h2>Beispiele</h2>
+<h3>Buchstaben und Zahlen</h3>
 <pre>	<code>regex("[A-Za-z0-9]")</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Pattern für einen beliebigen lateinischen Buchstaben oder eine beliebige Ziffer.</p> 
-<h3>Zahlen</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Pattern für einen beliebigen lateinischen Buchstaben oder eine beliebige Ziffer.</p>
+<h3>Zahlen</h3>
 <pre>	<code>regex("[0-9]")</code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Pattern für eine beliebige Ziffer.</p>

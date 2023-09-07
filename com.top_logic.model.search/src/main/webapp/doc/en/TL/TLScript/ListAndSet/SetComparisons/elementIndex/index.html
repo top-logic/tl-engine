@@ -1,49 +1,49 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$set.elementIndex($element)</code>
-</pre> 
-<h2>Description</h2> 
-<p>Returns the position of an element in a list, counting from 0. If the element is contained more than once, the position of the first occurrence is returned.</p> 
-<h2>Parameters</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>set</td> 
-   <td>Set</td> 
-   <td>A set in which the position of an element is to be determined.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>element</td> 
-   <td>Number/string/boolean/businss object/set</td> 
-   <td>The element whose position is to be determined.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Number</p> 
-<p>The index of the element's position in the <code class="hljs inlineCode">set</code>. If the element occurs more than once, the index of the first occurrence is returned. If the element is not contained at all, -1 is returned.</p> 
-<h2>Examples</h2> 
-<h3>Element is in the set 1 time</h3> 
+</pre>
+<h2>Description</h2>
+<p>Returns the position of an element in a list, counting from 0. If the element is contained more than once, the position of the first occurrence is returned.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>set</td>
+   <td>Set</td>
+   <td>A set in which the position of an element is to be determined.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>element</td>
+   <td>Number/string/boolean/businss object/set</td>
+   <td>The element whose position is to be determined.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Number</p>
+<p>The index of the element's position in the <code class="hljs inlineCode">set</code>. If the element occurs more than once, the index of the first occurrence is returned. If the element is not contained at all, -1 is returned.</p>
+<h2>Examples</h2>
+<h3>Element is in the set 1 time</h3>
 <pre>	<code>list(1, 2, 3, 4).elementIndex(2)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output: </strong></span> 1</p> 
-<h3>Element is in the set more than once</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span> 1</p>
+<h3>Element is in the set more than once</h3>
 <pre>	<code>list(1, 2, 2, 2, 3, 4).elementIndex(2)</code>
-</pre> 
-<p><span style="color:#3498db"><strong>Output: </strong></span> 1</p> 
-<h3>Element is not in the set</h3> 
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span> 1</p>
+<h3>Element is not in the set</h3>
 <pre>	<code>list(1, 2, 2, 2, 3, 4).elementIndex(8)</code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span><span style="color:#3498db"> </span>-1<span style="color:#3498db"></span></p>

@@ -1,23 +1,23 @@
-<p>Die Modell-Elemente von Top-Logic können über ihren qualifizierten Namen direkt in TL-Script-Ausdrücken angesprochen werden. Referenzen zu Modell-Elementen werden in "Back-Ticks" (<code class="hljs inlineCode">`</code>) eingeschlossen.</p> 
-<h2>Module</h2> 
-<p>Ein Modul ist eine sparates Modell-Element, das referenziert werden kann. Eine Modul-Referenz wird über den Namen des Moduls ausgedrückt:</p> 
+<p>Die Modell-Elemente von Top-Logic können über ihren qualifizierten Namen direkt in TL-Script-Ausdrücken angesprochen werden. Referenzen zu Modell-Elementen werden in "Back-Ticks" (<code class="hljs inlineCode">`</code>) eingeschlossen.</p>
+<h2>Module</h2>
+<p>Ein Modul ist eine sparates Modell-Element, das referenziert werden kann. Eine Modul-Referenz wird über den Namen des Moduls ausgedrückt:</p>
 <pre><code>`my.module`
-</code></pre> 
-<h2>Typen</h2> 
-<p>Der Modell-Typ wird benannt durch das ihn definierende Paket und seinen technischen Namen getrennt durch einen Doppelpunkt (<code class="hljs inlineCode">:</code>). Ein Modell-Typ kann eine Klasse, eine Aufzählung, oder ein Datentyp sein.</p> 
-<p>Die Klasse <code class="hljs inlineCode">MyClass</code> im Modul <code class="hljs inlineCode">my.module</code>:</p> 
+</code></pre>
+<h2>Typen</h2>
+<p>Der Modell-Typ wird benannt durch das ihn definierende Paket und seinen technischen Namen getrennt durch einen Doppelpunkt (<code class="hljs inlineCode">:</code>). Ein Modell-Typ kann eine Klasse, eine Aufzählung, oder ein Datentyp sein.</p>
+<p>Die Klasse <code class="hljs inlineCode">MyClass</code> im Modul <code class="hljs inlineCode">my.module</code>:</p>
 <pre><code>`my.module:MyClass`
-</code></pre> 
-<h2>Attribute und Aufzählungselemente</h2> 
-<p>Ein Attribut einer Modell-Klasse oder ein Aufzählungselement einer Aufzählung wird über den qualifizierten Namen des Typs und den technischen Namen des Attributs oder Aufzählungselements getrennt durch ein Gitter-Zeichen (<code class="hljs inlineCode">#</code>) benannt.</p> 
-<p>Das Attribut <code class="hljs inlineCode">myProperty</code> der Klasse <code class="hljs inlineCode">my.module:MyClass</code>:</p> 
+</code></pre>
+<h2>Attribute und Aufzählungselemente</h2>
+<p>Ein Attribut einer Modell-Klasse oder ein Aufzählungselement einer Aufzählung wird über den qualifizierten Namen des Typs und den technischen Namen des Attributs oder Aufzählungselements getrennt durch ein Gitter-Zeichen (<code class="hljs inlineCode">#</code>) benannt.</p>
+<p>Das Attribut <code class="hljs inlineCode">myProperty</code> der Klasse <code class="hljs inlineCode">my.module:MyClass</code>:</p>
 <pre><code>`my.module:MyClass#myProperty`
-</code></pre> 
-<p>Das Aufzählungselement <code class="hljs inlineCode">CONST_1</code> der Aufzählung <code class="hljs inlineCode">my.module:MyEnum</code>:</p> 
+</code></pre>
+<p>Das Aufzählungselement <code class="hljs inlineCode">CONST_1</code> der Aufzählung <code class="hljs inlineCode">my.module:MyEnum</code>:</p>
 <pre><code>`my.module:MyEnum#CONST_1`
-</code></pre> 
-<h2>Singletons</h2> 
-<p>Ein Modul des Modell kann ausgezeichnete benannte Objekte ("Singletons") enthalten. Ein solches Singleton wird über den Namen seines Moduls und den technischen Namen des Singletons getrennt durch ein Gitter-Zeichen (<code class="hljs inlineCode">#</code>) benannt.</p> 
-<p>Das Root-Element im Modul <code class="hljs inlineCode">my.module</code>:</p> 
+</code></pre>
+<h2>Singletons</h2>
+<p>Ein Modul des Modell kann ausgezeichnete benannte Objekte ("Singletons") enthalten. Ein solches Singleton wird über den Namen seines Moduls und den technischen Namen des Singletons getrennt durch ein Gitter-Zeichen (<code class="hljs inlineCode">#</code>) benannt.</p>
+<p>Das Root-Element im Modul <code class="hljs inlineCode">my.module</code>:</p>
 <pre><code>`my.module#ROOT`
 </code></pre>

@@ -1,36 +1,36 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$cmp.desc()</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Kehrt die Reihenfolge der Elemente einer Liste um, die aus der Vergleichsfunktion <code class="hljs inlineCode">cmp</code> stammt.</p> 
-<p>Folgendes gilt: <code class="hljs inlineCode">compare(desc($cmp1), desc($cmp2))</code> = <code class="hljs inlineCode">-compare($cmp1,$cmp2)</code>. Es ist darauf zu achten, dass <code class="hljs inlineCode">desc(....)</code>-Werte nur mit anderen <code class="hljs inlineCode">desc(...)</code>-Werten vergleichbarer Inhalte verglichen werden.</p> 
-<p>Siehe auch <a class="tlObject" data-custom="true" href="?page=compare&amp;uuid=9b99eaf6-0a4d-4f83-a4b0-c22005a44494">Vergleichswert.</a></p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>cmp</td> 
-   <td>Menge</td> 
-   <td>Das Ergebnis einer Vergleichsfunktion.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p> 
-<p>Das Ergebnis der Vergleichsfunktion <code class="hljs inlineCode">cmp</code> in umgekerhter Reihenfolge.</p> 
-<h2>Beispiele</h2> 
-<h3>Zahlen absteigend sortieren</h3> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Kehrt die Reihenfolge der Elemente einer Liste um, die aus der Vergleichsfunktion <code class="hljs inlineCode">cmp</code> stammt.</p>
+<p>Folgendes gilt: <code class="hljs inlineCode">compare(desc($cmp1), desc($cmp2))</code> = <code class="hljs inlineCode">-compare($cmp1,$cmp2)</code>. Es ist darauf zu achten, dass <code class="hljs inlineCode">desc(....)</code>-Werte nur mit anderen <code class="hljs inlineCode">desc(...)</code>-Werten vergleichbarer Inhalte verglichen werden.</p>
+<p>Siehe auch <a class="tlObject" data-custom="true" href="?page=compare&amp;uuid=9b99eaf6-0a4d-4f83-a4b0-c22005a44494">Vergleichswert.</a></p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>cmp</td>
+   <td>Menge</td>
+   <td>Das Ergebnis einer Vergleichsfunktion.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p>
+<p>Das Ergebnis der Vergleichsfunktion <code class="hljs inlineCode">cmp</code> in umgekerhter Reihenfolge.</p>
+<h2>Beispiele</h2>
+<h3>Zahlen absteigend sortieren</h3>
 <pre>	<code>list(5, 8, 2, 6).sort(desc(x -&gt; y -&gt; compare($x, $y))).toString()</code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit den Zahlen [8, 6, 5, 2].</p>

@@ -1,42 +1,42 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$type.attribute($name)</code>
-</pre> 
-<h2>Beschreibung</h2> 
-<p>Liefert das Attribut mit dem Namen <code class="hljs inlineCode">name</code> eines Typs <code class="hljs inlineCode">type</code>.</p> 
-<p>Das Attribut kann entweder ein Property mit primitivem Wertetyp sein, oder eine Referenz auf ein oder mehrere Objekte eines Fachobjekttyps.</p> 
-<h2>Parameter</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Typ</th> 
-   <th>Beschreibung</th> 
-   <th>Pflicht</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>type</td> 
-   <td>Zeichenkette</td> 
-   <td>Der Modelltyp, dessen Attribut ermittelt werden soll.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
-  <tr> 
-   <td>name</td> 
-   <td>Zeichenkette</td> 
-   <td>Name des gesuchten Attributs.</td> 
-   <td>ja</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Rückgabewert</h2> 
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
-<p>Das Attribut mit Angaben zum Namen, dem Definitons- und Zieltyp.</p> 
-<h2>Beispiele</h2> 
+</pre>
+<h2>Beschreibung</h2>
+<p>Liefert das Attribut mit dem Namen <code class="hljs inlineCode">name</code> eines Typs <code class="hljs inlineCode">type</code>.</p>
+<p>Das Attribut kann entweder ein Property mit primitivem Wertetyp sein, oder eine Referenz auf ein oder mehrere Objekte eines Fachobjekttyps.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>type</td>
+   <td>Zeichenkette</td>
+   <td>Der Modelltyp, dessen Attribut ermittelt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>name</td>
+   <td>Zeichenkette</td>
+   <td>Name des gesuchten Attributs.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Das Attribut mit Angaben zum Namen, dem Definitons- und Zieltyp.</p>
+<h2>Beispiele</h2>
 <pre>	<code>`my.module:MyType`.attribute("myAttr") </code>
-</pre> 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Das Attribut mit dem Namen "myAttr" sowie seinem Definitions- und Zieltyp.</p> 
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Das Attribut mit dem Namen "myAttr" sowie seinem Definitions- und Zieltyp.</p>
 <p>Das zurückgegebene Attribut entspricht <code class="hljs inlineCode">`my.module:MyType#myAttr`</code>.</p>

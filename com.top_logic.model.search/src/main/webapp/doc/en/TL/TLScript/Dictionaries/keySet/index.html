@@ -1,34 +1,34 @@
-<h2>Syntax</h2> 
+<h2>Syntax</h2>
 <pre>	<code>$dict.keySet()</code>
-</pre> 
-<h2>Description</h2> 
-<p>Returns the key set of a dictionary. The set does not contain duplicate keys, since keys must be unique and therefore appear only once in the dictionary.</p> 
-<h2>Parameters</h2> 
-<table class="tlDocTable"> 
- <thead> 
-  <tr> 
-   <th>Name</th> 
-   <th>Type</th> 
-   <th>Description</th> 
-   <th>Mandatory</th> 
-   <th>Default</th> 
-  </tr> 
- </thead> 
- <tbody> 
-  <tr> 
-   <td>dict</td> 
-   <td>Business object</td> 
-   <td>A dictionary whose keys are to be returned.</td> 
-   <td>yes</td> 
-   <td> </td> 
-  </tr> 
- </tbody> 
-</table> 
-<h2>Return value</h2> 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p> 
-<p>A set containing all keys of the dictionary <code class="hljs inlineCode">dict</code>.</p> 
-<h2>Examples</h2> 
-<h3>Simple dictionary</h3> 
+</pre>
+<h2>Description</h2>
+<p>Returns the key set of a dictionary. The set does not contain duplicate keys, since keys must be unique and therefore appear only once in the dictionary.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>dict</td>
+   <td>Business object</td>
+   <td>A dictionary whose keys are to be returned.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p>
+<p>A set containing all keys of the dictionary <code class="hljs inlineCode">dict</code>.</p>
+<h2>Examples</h2>
+<h3>Simple dictionary</h3>
 <pre>	<code>{
   dict = {
     "all": "alle",
@@ -38,5 +38,5 @@
 
   $dict.keySet();
 }</code>
-</pre> 
+</pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span> A set with the values ["all", "some", "none"].</p>

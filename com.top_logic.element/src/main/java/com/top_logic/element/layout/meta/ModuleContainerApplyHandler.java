@@ -33,7 +33,7 @@ public class ModuleContainerApplyHandler extends DeclarativeApplyHandler<EditMod
 	}
 
 	@Override
-	protected void afterCommit(FormComponent formHandler, EditModel editModel, ModuleContainer container) {
+	protected void afterCommit(FormComponent form, EditModel editModel, ModuleContainer container) {
 		try (ResourceTransaction tx = ResourcesModule.getInstance().startResourceTransaction()) {
 			ResKey key = TLModelNamingConvention.modelPartNameKey(container.getName());
 
@@ -42,7 +42,9 @@ public class ModuleContainerApplyHandler extends DeclarativeApplyHandler<EditMod
 			tx.commit();
 		}
 
-		super.afterCommit(formHandler, editModel, container);
+		super.afterCommit(form, editModel, container);
+
+		form.getMaster().invalidate();
 	}
 
 	@Override

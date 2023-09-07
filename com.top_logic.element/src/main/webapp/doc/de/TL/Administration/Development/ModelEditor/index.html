@@ -1,27 +1,27 @@
-<p>Mit Hilfe des Modell-Editors ist es möglich, das Modell der Anwendung zur Laufzeit in der Anwendung selbst zu erstellen und zu bearbeiten. Die Sicht des Modell-Editors ist zweigeteilt in den Modell-Baum auf der linken und Detailansichten auf der rechten Seite.</p> 
-<h2>Baum der Fachobjekttypen</h2> 
-<p>Auf der linken Seite befindet sich der Baum der Fachobjekttypen:</p> 
-<p><img src="ref:grafik.png" style="opacity:1"></p> 
-<p>Die äußerste Ebene des Baumes zeigt die Module der Anwendung (bspw. <code class="hljs inlineCode">DemoPlain</code>). Die direkten Kinder der Module entsprechen Typen innerhalb des Moduls, die keine andern Typen desselben Moduls erweitern. Die weitere Baumstruktur spiegelt die Typhierarchie innerhalb des Moduls wieder. Beispielsweise ist <code class="hljs inlineCode">Flaches B</code> ein Untertyp von <code class="hljs inlineCode">Flaches BC</code>, welches wiederum ein Untertyp von <code class="hljs inlineCode">Flaches All</code> ist. <code class="hljs inlineCode">Flaches All</code> ist ein Typ innerhalb des Moduls <code class="hljs inlineCode">DemoPlain</code>.</p> 
-<p>Im Baum der Fachobjekttypen werden zwei verschiedene Arten von Typen dargestellt:</p> 
-<p>1. Klassen zu erkennen am Symbol <img src="ref:grafik_2.png" style="opacity:1">vor dem Namen.</p> 
-<p>2. Aufzählungen mit dem Symbol <img src="ref:grafik_1.png" style="opacity:1">.</p> 
-<p><img src="ref:grafik_3.png" style="opacity:1"></p> 
-<p>Im Modul Test ist, wie der Name bereits vermuten lässt, <code class="hljs inlineCode">Class</code> eine Klasse und <code class="hljs inlineCode">Enumeration</code> eine Aufzählung.</p> 
-<p>Die Sicht neben dem Baum der Fachobjekttypen ist unterteilt in 4 Bereiche, Eigenschaften, Attribute, Instanzen und Diagramm.</p> 
-<p><img src="ref:grafik_4.png" style="opacity:1"></p> 
-<h3>Eigenschaften</h3> 
-<p>Im Tab Eigenschaften wird die Detailssicht für den selektierten Fachobjekttyp oder das selektierte Modul angezeigt. Im Bearbeiten-Modus dieser Sicht können die direkten Eigenschaften des selektierten Elements (Modul oder Typ) bearbeitet werden.</p> 
-<h3>Attribute</h3> 
-<p>Der Tab "Attribute" ist nur für Fachobjekttypen sichtbar. Falls ein solcher Typ selektiert ist, wird hier eine Tabelle aller Attribute des Typs und daneben eine passende Detailsicht mit Eigenschaften des selektierten Attributs dargestellt. In dieser Sicht ist es möglich dem Typ neue Attribute hinzuzufügen oder bereits bestehende Attribute zu modifzieren oder zu löschen.</p> 
-<p><img src="ref:grafik_6.png" style="opacity:1"></p> 
-<h3>Instanzen</h3> 
-<p>Der Tab Instanzen ist ebenfalls nur für Fachobjekttypen sichtbar. Hier werden alle Instanzen des selektierten Fachobjekttyps angezeigt. Des Weiteren ist es möglich neue Instanzen zu erstellen. Diese Sicht kann zur Entwicklungszeit als Ersatz für eine spezialisierte GUI für den ausgewählten Typ verwendet werden. Im Betrieb kann diese Sicht zur Inspektion und Fehleranalyse dienen.</p> 
-<p><img src="ref:grafik_5.png" style="opacity:1"></p> 
-<h3>Diagramm</h3> 
-<p>Der Tab "Diagramm" stellt dieselben Informationen wie in den Tabs "Eigenschaften" und "Attribute" graphisch dar.&nbsp; Darstellung des selektierten Moduls (bzw. das zugehörige Modul, falls ein Typ selektiert ist). Die Sicht des Diagramms ist zweigeteilt. Auf der linken Seite befindet sich das Diagramm und auf der anderen Seite befindet sich eine Detailssicht für das selektierte Element.</p> 
-<p><img src="ref:grafik_7.png" style="opacity:1"></p> 
-<p>Im Diagramm selbst ist es möglich neue Klassen durch <img src="ref:grafik_8.png" style="opacity:1">und neue Aufzählungen durch <img src="ref:grafik_9.png" style="opacity:1">zu erstellen. Durch Selektion eines Types im Diagramm erscheint ein Kontextmenü</p> 
-<p><img src="ref:grafik_10.png" style="opacity:1"></p> 
-<p>in dem es möglich ist Vererbungen durch <img src="ref:grafik_11.png" style="opacity:1">, Kompositionen durch <img src="ref:grafik_12.png" style="opacity:1">, Referenzen durch <img src="ref:grafik_13.png" style="opacity:1">und Attribute durch <img src="ref:grafik_14.png" style="opacity:1">zu erstellen.</p> 
+<p>Mit Hilfe des Modell-Editors ist es möglich, das Modell der Anwendung zur Laufzeit in der Anwendung selbst zu erstellen und zu bearbeiten. Die Sicht des Modell-Editors ist zweigeteilt in den Modell-Baum auf der linken und Detailansichten auf der rechten Seite.</p>
+<h2>Baum der Fachobjekttypen</h2>
+<p>Auf der linken Seite befindet sich der Baum der Fachobjekttypen:</p>
+<p><img src="ref:grafik.png" style="opacity:1"></p>
+<p>Die äußerste Ebene des Baumes zeigt die Module der Anwendung (bspw. <code class="hljs inlineCode">DemoPlain</code>). Die direkten Kinder der Module entsprechen Typen innerhalb des Moduls, die keine andern Typen desselben Moduls erweitern. Die weitere Baumstruktur spiegelt die Typhierarchie innerhalb des Moduls wieder. Beispielsweise ist <code class="hljs inlineCode">Flaches B</code> ein Untertyp von <code class="hljs inlineCode">Flaches BC</code>, welches wiederum ein Untertyp von <code class="hljs inlineCode">Flaches All</code> ist. <code class="hljs inlineCode">Flaches All</code> ist ein Typ innerhalb des Moduls <code class="hljs inlineCode">DemoPlain</code>.</p>
+<p>Im Baum der Fachobjekttypen werden zwei verschiedene Arten von Typen dargestellt:</p>
+<p>1. Klassen zu erkennen am Symbol <img src="ref:grafik_2.png" style="opacity:1">vor dem Namen.</p>
+<p>2. Aufzählungen mit dem Symbol <img src="ref:grafik_1.png" style="opacity:1">.</p>
+<p><img src="ref:grafik_3.png" style="opacity:1"></p>
+<p>Im Modul Test ist, wie der Name bereits vermuten lässt, <code class="hljs inlineCode">Class</code> eine Klasse und <code class="hljs inlineCode">Enumeration</code> eine Aufzählung.</p>
+<p>Die Sicht neben dem Baum der Fachobjekttypen ist unterteilt in 4 Bereiche, Eigenschaften, Attribute, Instanzen und Diagramm.</p>
+<p><img src="ref:grafik_4.png" style="opacity:1"></p>
+<h3>Eigenschaften</h3>
+<p>Im Tab Eigenschaften wird die Detailssicht für den selektierten Fachobjekttyp oder das selektierte Modul angezeigt. Im Bearbeiten-Modus dieser Sicht können die direkten Eigenschaften des selektierten Elements (Modul oder Typ) bearbeitet werden.</p>
+<h3>Attribute</h3>
+<p>Der Tab "Attribute" ist nur für Fachobjekttypen sichtbar. Falls ein solcher Typ selektiert ist, wird hier eine Tabelle aller Attribute des Typs und daneben eine passende Detailsicht mit Eigenschaften des selektierten Attributs dargestellt. In dieser Sicht ist es möglich dem Typ neue Attribute hinzuzufügen oder bereits bestehende Attribute zu modifzieren oder zu löschen.</p>
+<p><img src="ref:grafik_6.png" style="opacity:1"></p>
+<h3>Instanzen</h3>
+<p>Der Tab Instanzen ist ebenfalls nur für Fachobjekttypen sichtbar. Hier werden alle Instanzen des selektierten Fachobjekttyps angezeigt. Des Weiteren ist es möglich neue Instanzen zu erstellen. Diese Sicht kann zur Entwicklungszeit als Ersatz für eine spezialisierte GUI für den ausgewählten Typ verwendet werden. Im Betrieb kann diese Sicht zur Inspektion und Fehleranalyse dienen.</p>
+<p><img src="ref:grafik_5.png" style="opacity:1"></p>
+<h3>Diagramm</h3>
+<p>Der Tab "Diagramm" stellt dieselben Informationen wie in den Tabs "Eigenschaften" und "Attribute" graphisch dar.&nbsp; Darstellung des selektierten Moduls (bzw. das zugehörige Modul, falls ein Typ selektiert ist). Die Sicht des Diagramms ist zweigeteilt. Auf der linken Seite befindet sich das Diagramm und auf der anderen Seite befindet sich eine Detailssicht für das selektierte Element.</p>
+<p><img src="ref:grafik_7.png" style="opacity:1"></p>
+<p>Im Diagramm selbst ist es möglich neue Klassen durch <img src="ref:grafik_8.png" style="opacity:1">und neue Aufzählungen durch <img src="ref:grafik_9.png" style="opacity:1">zu erstellen. Durch Selektion eines Types im Diagramm erscheint ein Kontextmenü</p>
+<p><img src="ref:grafik_10.png" style="opacity:1"></p>
+<p>in dem es möglich ist Vererbungen durch <img src="ref:grafik_11.png" style="opacity:1">, Kompositionen durch <img src="ref:grafik_12.png" style="opacity:1">, Referenzen durch <img src="ref:grafik_13.png" style="opacity:1">und Attribute durch <img src="ref:grafik_14.png" style="opacity:1">zu erstellen.</p>
 <p>Des Weiteren können selektierte Elemente im Diagramm durch <img src="ref:grafik_15.png" style="opacity:1">gelöscht und durch <img src="ref:grafik_16.png" style="opacity:1">ausgeblendet werden.</p>

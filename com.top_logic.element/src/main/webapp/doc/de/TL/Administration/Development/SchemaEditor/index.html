@@ -1,22 +1,24 @@
-<p>Der Schema-Editor dient dazu, die Definitionen der Datenbanktabellen zu erstellen und bearbeiten. Die Sicht des Schema-Editors ist zweigeteilt.</p> 
-<p>Auf der linken Seite werden in einer Tabelle die Definitionen der verschiedenen Datenbanktabellen aufgelistet:</p> 
-<p><img src="ref:grafik.png" style="opacity:1"></p> 
-<p>Die Spalte "Name" enthält den logischen Namen der Tabelle, mit dem diese Tabelle aus anderen Definitionen (z.B. dem Modell) referenziert wird. Die Spalte "DB-Name" enthält den technischen Namen der Datenbanktabelle, so wie diese in SQL angesprochen wird. Im Bearbeitungsmodus können neue Tabellendefinitionen erstellt oder bestehende modifiziert werden. Das Icon vor dem Namen der Datenbanktabellen-Definition kennzeichnet den Typ. Die folgenden Typen existieren:</p> 
-<ul> 
- <li>Eine "abstrakte" Tabellen-Definition wird mit <img src="ref:grafik_4.png" style="opacity:1">gekennzeichnet. Eine "abstrakte" Tabelle existiert nicht in der realen Datenbank, sondern die Tabelle dient lediglich als Vorlage für die Definition anderer Tabellen. Bei der Tabellendefinition gibt man an, welche andere Tabelle erweitert werden soll. Durch Erweiterung "erbt" die neue Tabelle alle Spalten der erweiterten Tabelle und kann weitere hinzufügen. Eine abstrakte Tabelle kann nur verwendet werden, um als Basis für die Definition anderer Tabellen zu dienen.</li> 
- <li>Ganz "normale" Tabellen-Definitionen sind<img src="ref:grafik_5.png" style="opacity:1">durchgekennzeichnet. Zu diesen Definitionen existieren entsprechende Tabellen in der Datenbank, auf die mit SQL zugegriffen werden kann.</li> 
- <li>Assoziationen werden durch <img src="ref:grafik_6.png" style="opacity:1">gekennzeichnet. Eine Assoziation ist eine spezielle Definition einer Datenbanktabelle. Sie enthält für die Quelle und das Ziel zwei zusätzliche Spalten.</li> 
- <li>Durch <img src="ref:grafik_3.png" style="opacity:1">werden sogenannte "Summentypen" gekennzeichnet. Ein Summentyp gibt einer Reihe von anderen Tabellen einen gemeinsamen Namen, mit dem eine Referenz auf Objekte in diesen Tabellen ausgezeichnet werden kann. In einer Fremdschlüsselspalte können Referenzen auf andere Objekte in anderen Tabellen abgelegt werden. Die Zieltabelle muss dabei anders als in reinem SQL nicht fest vorgegeben sein, sondern Referenzen in unterschiedlichen Zeilen können auf unterschiedliche Tabellen verweisen. Der Typ der Fremdschlüsselspalte schränkt die möglichen Tabellen ein, auf welche die Referenz verweisen kann. Ist der Typ eine abstrakte Tabelle, so können Referenzen auf alle konkreten Tabellen verweisen, welche die abstrakte Tabelle erweitern. Sollen Referenzen auf voneinander unabhängige Tabellen (die nicht Erweiterungen einer gemeinsamen abstrakten Tabelle sind) verweisen können, so kann als Referenztyp ein Summentyp gewählt werden, der die möglichen Ziele der Referenz aufzählt.<br> <br> <img src="ref:grafik_7.png" style="opacity:1"><br> <br> Die Definition <code class="hljs inlineCode">needsRoleAware</code> kann nur durch die Definitionen <code class="hljs inlineCode">FastListElt</code>, <code class="hljs inlineCode">MetaAttribute</code> oder <code class="hljs inlineCode">PersBoundComp</code> erweitert werden.<br> &nbsp;</li> 
-</ul> 
-<p>Die restliche Sicht ist in 4 Bereichen unterteilt:</p> 
-<p><img src="ref:grafik_1.png" style="opacity:1"></p> 
-<h3>Eigenschaften</h3> 
-<p>Der Tab Eigenschaften dient als Detailsicht für die Definition einer Datenbanktabelle. Im Bearbeitungsmodus können hier die verschiedenen Attribute bearbeitet werden.</p> 
-<h3>Spalten</h3> 
-<p>Die Sicht der Spalten ist zweigeteilt. Auf der linken Seite werden die verschiedenen Spalten der selektierten Datenbanktabellen-Definition aufgelistet. Daneben befindet sich die Detailsicht für die selektierte Spalte. Im Bearbeitungsmodus können hier ebenfalls die verschiedenen Attribute bearbeitet, neue Spalten angelegt oder gar nicht weiter benötigte Spalten wieder gelöscht werden.</p> 
-<h3>Verwendungen</h3> 
-<p>Im Tab Verwendungen werden alle Objekte aufgelistet, die diesen Typ benutzen.</p> 
-<p><img src="ref:grafik_2.png" style="opacity:1"></p> 
-<p>Beispielsweise ist <code class="hljs inlineCode">Person </code>der Ziel-Typ der Referenz <code class="hljs inlineCode">user</code> der Datenbanktabelle <code class="hljs inlineCode">LogEntry</code>.</p> 
-<h3>Abbildung</h3> 
+<p>Der Schema-Editor dient dazu, die Definitionen der Datenbanktabellen zu erstellen und bearbeiten. Die Sicht des Schema-Editors ist zweigeteilt.</p>
+<p>Auf der linken Seite werden in einer Tabelle die Definitionen der verschiedenen Datenbanktabellen aufgelistet:</p>
+<p><img src="ref:grafik.png" style="opacity:1"></p>
+<p>Die Spalte "Name" enthält den logischen Namen der Tabelle, mit dem diese Tabelle aus anderen Definitionen (z.B. dem Modell) referenziert wird. Die Spalte "DB-Name" enthält den technischen Namen der Datenbanktabelle, so wie diese in SQL angesprochen wird. Im Bearbeitungsmodus können neue Tabellendefinitionen erstellt oder bestehende modifiziert werden. Das Icon vor dem Namen der Datenbanktabellen-Definition kennzeichnet den Typ. Die folgenden Typen existieren:</p>
+<ul>
+ <li>Eine "abstrakte" Tabellen-Definition wird mit <img src="ref:grafik_4.png" style="opacity:1">gekennzeichnet. Eine "abstrakte" Tabelle existiert nicht in der realen Datenbank, sondern die Tabelle dient lediglich als Vorlage für die Definition anderer Tabellen. Bei der Tabellendefinition gibt man an, welche andere Tabelle erweitert werden soll. Durch Erweiterung "erbt" die neue Tabelle alle Spalten der erweiterten Tabelle und kann weitere hinzufügen. Eine abstrakte Tabelle kann nur verwendet werden, um als Basis für die Definition anderer Tabellen zu dienen.</li>
+ <li>Ganz "normale" Tabellen-Definitionen sind<img src="ref:grafik_5.png" style="opacity:1">durchgekennzeichnet. Zu diesen Definitionen existieren entsprechende Tabellen in der Datenbank, auf die mit SQL zugegriffen werden kann.</li>
+ <li>Assoziationen werden durch <img src="ref:grafik_6.png" style="opacity:1">gekennzeichnet. Eine Assoziation ist eine spezielle Definition einer Datenbanktabelle. Sie enthält für die Quelle und das Ziel zwei zusätzliche Spalten.</li>
+ <li>Durch <img src="ref:grafik_3.png" style="opacity:1">werden sogenannte "Summentypen" gekennzeichnet. Ein Summentyp gibt einer Reihe von anderen Tabellen einen gemeinsamen Namen, mit dem eine Referenz auf Objekte in diesen Tabellen ausgezeichnet werden kann. In einer Fremdschlüsselspalte können Referenzen auf andere Objekte in anderen Tabellen abgelegt werden. Die Zieltabelle muss dabei anders als in reinem SQL nicht fest vorgegeben sein, sondern Referenzen in unterschiedlichen Zeilen können auf unterschiedliche Tabellen verweisen. Der Typ der Fremdschlüsselspalte schränkt die möglichen Tabellen ein, auf welche die Referenz verweisen kann. Ist der Typ eine abstrakte Tabelle, so können Referenzen auf alle konkreten Tabellen verweisen, welche die abstrakte Tabelle erweitern. Sollen Referenzen auf voneinander unabhängige Tabellen (die nicht Erweiterungen einer gemeinsamen abstrakten Tabelle sind) verweisen können, so kann als Referenztyp ein Summentyp gewählt werden, der die möglichen Ziele der Referenz aufzählt.<br><br><img src="ref:grafik_7.png" style="opacity:1"><br><br>
+   Die Definition <code class="hljs inlineCode">needsRoleAware</code> kann nur durch die Definitionen <code class="hljs inlineCode">FastListElt</code>, <code class="hljs inlineCode">MetaAttribute</code> oder <code class="hljs inlineCode">PersBoundComp</code> erweitert werden.<br>
+   &nbsp;</li>
+</ul>
+<p>Die restliche Sicht ist in 4 Bereichen unterteilt:</p>
+<p><img src="ref:grafik_1.png" style="opacity:1"></p>
+<h3>Eigenschaften</h3>
+<p>Der Tab Eigenschaften dient als Detailsicht für die Definition einer Datenbanktabelle. Im Bearbeitungsmodus können hier die verschiedenen Attribute bearbeitet werden.</p>
+<h3>Spalten</h3>
+<p>Die Sicht der Spalten ist zweigeteilt. Auf der linken Seite werden die verschiedenen Spalten der selektierten Datenbanktabellen-Definition aufgelistet. Daneben befindet sich die Detailsicht für die selektierte Spalte. Im Bearbeitungsmodus können hier ebenfalls die verschiedenen Attribute bearbeitet, neue Spalten angelegt oder gar nicht weiter benötigte Spalten wieder gelöscht werden.</p>
+<h3>Verwendungen</h3>
+<p>Im Tab Verwendungen werden alle Objekte aufgelistet, die diesen Typ benutzen.</p>
+<p><img src="ref:grafik_2.png" style="opacity:1"></p>
+<p>Beispielsweise ist <code class="hljs inlineCode">Person </code>der Ziel-Typ der Referenz <code class="hljs inlineCode">user</code> der Datenbanktabelle <code class="hljs inlineCode">LogEntry</code>.</p>
+<h3>Abbildung</h3>
 <p>Im Tab Abbildung wird aufgelistet welche Modellelemente in die Datenbanktabelle gespeichert werden.</p>

@@ -368,9 +368,9 @@ public class TLModelNamingConvention {
 	 */
 	public static ResKey getModuleLabelKey(TLModule module) {
 		String moduleName = module.getName();
-		return ResKey.fallback(modelPartNameKey(moduleName), ResKey.text(moduleName));
+		return ResKey.fallback(modelPartNameKey(moduleName), nameKey(TLModelUtil.getLocalName(moduleName)));
 	}
-
+	
 	/**
 	 * {@link ResKey} for the model part with the given fully qualified dotted name.
 	 */

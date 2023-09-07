@@ -52,7 +52,7 @@
 			>
 				<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
 					method="getName"
-					type="com.top_logic.model.TLNamedPart"
+					type="com.top_logic.basic.Named"
 				/>
 			</column>
 			<column name="abstract"

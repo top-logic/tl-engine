@@ -46,7 +46,7 @@ public class TLModuleApplyHandler extends DeclarativeApplyHandler<EditModel, TLM
 	@Override
 	protected void afterCommit(FormComponent formHandler, EditModel editModel, TLModule module) {
 		try (ResourceTransaction tx = ResourcesModule.getInstance().startResourceTransaction()) {
-			TLMetaModelUtil.saveI18NForPartNoLabelHeuristic(module, editModel, tx);
+			TLMetaModelUtil.saveI18NForPart(module, editModel, tx);
 
 			tx.commit();
 		}

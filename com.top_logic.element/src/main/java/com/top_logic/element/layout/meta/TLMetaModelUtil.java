@@ -49,7 +49,23 @@ public class TLMetaModelUtil {
 	 */
 	public static void saveI18NForPart(TLNamedPart part, Internationalized i18n, ResourceTransaction tx) {
 		boolean autoTranslate = PersonalConfiguration.getPersonalConfiguration().getAutoTranslate();
-		storeInternationalized(i18n, getResKey(part), part.getName(), tx, CodeUtil::englishLabel, autoTranslate);
+
+		if (part instanceof TLModule) {
+			storeInternationalized(i18n, getResKey(part), part.getName(), tx, name -> {
+				return CodeUtil.englishLabel(TLModelUtil.getLocalName(name));
+			}, autoTranslate);
+		} else {
+			storeInternationalized(i18n, getResKey(part), part.getName(), tx, CodeUtil::englishLabel, autoTranslate);
+		}
+	}
+
+	/**
+	 * Stores the I18N for the given {@link ResKey}.
+	 */
+	public static void saveI18N(Internationalized i18n, ResKey key, String name, ResourceTransaction tx) {
+		boolean autoTranslate = PersonalConfiguration.getPersonalConfiguration().getAutoTranslate();
+
+		storeInternationalized(i18n, key, name, tx, CodeUtil::englishLabel, autoTranslate);
 	}
 
 	/**

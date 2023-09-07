@@ -3024,4 +3024,25 @@ public class TLModelUtil {
 		return false;
 	}
 
+	/**
+	 * Returns the local name of the given (full qualified) technical name.
+	 * 
+	 * <p>
+	 * It handles <code>.</code> as name part separator.
+	 * </p>
+	 * 
+	 * <p>
+	 * Example: The name <code>my.foo.bar</code> results in the local name <code>bar</code>.
+	 * </p>
+	 */
+	public static String getLocalName(String name) {
+		int lastIndexOf = name.lastIndexOf(".");
+
+		if (lastIndexOf != -1 && lastIndexOf != name.length() - 1) {
+			return name.substring(lastIndexOf + 1);
+		} else {
+			return name;
+		}
+	}
+
 }

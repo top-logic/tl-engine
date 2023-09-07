@@ -6,10 +6,12 @@ package com.top_logic.element.layout.meta;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
@@ -124,6 +126,19 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 			return _name;
 		}
 
+		/**
+		 * The containers label.
+		 */
+		public String getLabel() {
+			String parentName = getDisplayGroup(_parent);
+
+			if (parentName.isEmpty()) {
+				return _name;
+			} else {
+				return _name.substring(parentName.length() + 1);
+			}
+		}
+
 	}
 
 	@Override
@@ -215,7 +230,7 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 	}
 
 	private Iterator<? extends Object> getModuleContainerChildIterator(ModuleContainer moduleContainer) {
-		return getModules(moduleContainer, moduleContainer.getModel()).iterator();
+		return getChildrenModules(moduleContainer, moduleContainer.getModel()).iterator();
 	}
 
 	private Iterator<? extends Object> getModelPartChildIterator(TLModelPart part) {
@@ -223,13 +238,13 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 			case MODEL: {
 				TLModel model = (TLModel) part;
 
-				return getModules(model, model).iterator();
+				return getChildrenModules(model, model).iterator();
 			}
 			case MODULE: {
 				TLModule module = (TLModule) part;
 
 				List<Object> types = getTypes(module);
-				List<Object> modules = getModules(module, module.getModel());
+				List<Object> modules = getChildrenModules(module, module.getModel());
 
 				return CollectionUtil.concat(types, modules).iterator();
 			}
@@ -245,63 +260,100 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 		}
 	}
 
-	private List<Object> getModules(Object parent, TLModel model) {
-		List<Object> modules = new ArrayList<>();
+	private List<Object> getChildrenModules(Object parent, TLModel model) {
+		List<Object> childModules = new ArrayList<>();
 
-		for (String name : removeExtendingElements(getModuleNames(parent, model))) {
+		for (String name : getChildrenModuleNames(parent, model)) {
 			TLModule module = model.getModule(name);
 
 			if (module != null) {
-				modules.add(module);
+				childModules.add(module);
 			} else {
-				modules.add(new ModuleContainer(parent, model, name));
+				childModules.add(new ModuleContainer(parent, model, name));
 			}
 		}
 
-		return modules;
+		return childModules;
 	}
 
-	private Set<String> removeExtendingElements(Set<String> strings) {
-		Set<String> result = new HashSet<>();
+	private Set<String> getChildrenModuleNames(Object parent, TLModel model) {
+		Map<TLModule, String> moduleByNameToGroupIn = getModuleByNameToGroupIn(parent, model);
 
-		for (String string : strings) {
-			boolean isExtending = false;
-
-			for (String other : strings) {
-				if (!other.equals(string) && string.startsWith(other)) {
-					isExtending = true;
-					break;
-				}
-			}
-
-			if (!isExtending) {
-				result.add(string);
-			}
-		}
-
-		return result;
+		return getChildrenModuleNamesInternal(getDisplayGroup(parent), moduleByNameToGroupIn);
 	}
 
-	private Set<String> getModuleNames(Object parent, TLModel model) {
-		Set<String> names = new LinkedHashSet<>();
-		String name = getDisplayGroup(parent);
+	private Set<String> getChildrenModuleNamesInternal(String parentName, Map<TLModule, String> moduleByNameToGroupIn) {
+		Set<String> names = new HashSet<>();
 
-		for (TLModule module : model.getModules()) {
-			String nameToGroupIn = getNameToGroupIn(module);
-
-			if (nameToGroupIn.equals(name)) {
-				names.add(module.getName());
-			} else if (nameToGroupIn.startsWith(name)) {
-				if (isSubgroup(name, nameToGroupIn, GROUP_NAME_DELIMITER)) {
-					names.add(nameToGroupIn);
-				}
+		for (Entry<TLModule, String> entry : moduleByNameToGroupIn.entrySet()) {
+			if (entry.getValue().equals(parentName)) {
+				names.add(entry.getKey().getName());
+			} else {
+				names.add(getClosestCommonGroup(parentName, entry.getValue(), moduleByNameToGroupIn.values()));
 			}
 		}
 
 		return names;
 	}
 
-	private String getDisplayGroup(Object object) {
+	private String getClosestCommonGroup(String parentGroup, String referenceGroup, Collection<String> groups) {
+		String closestCommonGroup = referenceGroup;
+
+		for (String group : groups) {
+			String commonGroup = getCommonGroup(referenceGroup, group);
+
+			if (!parentGroup.equals(commonGroup) && commonGroup != null && commonGroup.length() < closestCommonGroup.length()) {
+				closestCommonGroup = commonGroup;
+			}
+		}
+
+		return closestCommonGroup;
+	}
+
+	private String getCommonGroup(String group1, String group2) {
+		if (group1.startsWith(group2)) {
+			return group2;
+		} else if (group2.startsWith(group1)) {
+			return group1;
+		} else {
+			int index = 0;
+
+			for (int i = 0; i < Math.min(group2.length(), group1.length()); i++) {
+				if (group2.charAt(i) == group1.charAt(i)) {
+					if (group2.charAt(i) == GROUP_NAME_DELIMITER) {
+						index = i;
+					}
+				} else {
+					break;
+				}
+			}
+
+			if (index != 0) {
+				return group2.substring(0, index);
+			} else {
+				return null;
+			}
+		}
+	}
+
+	private Map<TLModule, String> getModuleByNameToGroupIn(Object parent, TLModel model) {
+		Map<TLModule, String> moduleByNameToGroupIn = new HashMap<>();
+		String parentGroupName = getDisplayGroup(parent);
+
+		for (TLModule module : model.getModules()) {
+			String nameToGroupIn = getNameToGroupIn(module);
+
+			if (nameToGroupIn.equals(parentGroupName)) {
+				moduleByNameToGroupIn.put(module, nameToGroupIn);
+			} else if (isSubgroup(parentGroupName, nameToGroupIn, GROUP_NAME_DELIMITER)) {
+				moduleByNameToGroupIn.put(module, nameToGroupIn);
+			}
+		}
+
+		return moduleByNameToGroupIn;
+	}
+
+	private static String getDisplayGroup(Object object) {
 		if (object instanceof TLModel) {
 			return getModelDisplayGroup();
 		} else if (object instanceof Named) {
@@ -311,12 +363,16 @@ public class MetaElementTreeModelBuilder extends AbstractTreeModelBuilder<Object
 		}
 	}
 
-	private String getModelDisplayGroup() {
+	private static String getModelDisplayGroup() {
 		return StringServices.EMPTY_STRING;
 	}
 
-	private boolean isSubgroup(String name1, String name2, char delimiter) {
-		return name1.isEmpty() || name2.length() > name1.length() && name2.charAt(name1.length()) == delimiter;
+	private boolean isSubgroup(String group, String subgroup, char delimiter) {
+		if (group.equals(subgroup)) {
+			return false;
+		} else {
+			return subgroup.startsWith(group) && (group.isEmpty() || subgroup.charAt(group.length()) == delimiter);
+		}
 	}
 
 	private String getNameToGroupIn(TLModule module) {

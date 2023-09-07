@@ -122,6 +122,11 @@
 						<ancestors aspect="structure" kind="shared" />
 					</operation>
 				</model>
+				<java impl="com.top_logic.element.layout.meta.MetaElementTreeModelBuilder$ModuleContainer">
+					<operation name="editValues">
+						<global aspect="values" kind="exclusive"/>
+					</operation>
+				</java>
 			</instance>
 		</config>
 
@@ -788,6 +793,12 @@
 		            <handler id="elementApply" class="com.top_logic.element.layout.structured.StructuredElementApplyHandler"
 						clique="apply"/>
 		            <handler id="applyTLStructuredTypePart" class="com.top_logic.element.layout.meta.TLStructuredTypePartApplyHandler"
+						clique="additional-apply" resourceKey="tl.command.apply">
+						<executability>
+							<reference rule-id="InEditMode"/>
+						</executability>
+					</handler>
+		            <handler id="applyModuleContainer" class="com.top_logic.element.layout.meta.ModuleContainerApplyHandler"
 						clique="additional-apply" resourceKey="tl.command.apply">
 						<executability>
 							<reference rule-id="InEditMode"/>

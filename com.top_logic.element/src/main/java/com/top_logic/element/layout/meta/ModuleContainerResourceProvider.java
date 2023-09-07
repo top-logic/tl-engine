@@ -24,9 +24,12 @@ public class ModuleContainerResourceProvider extends AbstractResourceProvider {
 
 	@Override
 	public String getLabel(Object object) {
-		String name = ((MetaElementTreeModelBuilder.ModuleContainer) object).getName();
+		ModuleContainer container = (MetaElementTreeModelBuilder.ModuleContainer) object;
 
-		ResKey key = ResKey.fallback(TLModelNamingConvention.modelPartNameKey(name), ResKey.text(name));
+		String name = container.getName();
+		String label = container.getLabel();
+
+		ResKey key = ResKey.fallback(TLModelNamingConvention.modelPartNameKey(name), ResKey.text(label));
 
 		return Resources.getInstance().getString(key);
 	}

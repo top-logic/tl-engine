@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<component class="com.top_logic.demo.layout.form.demo.model.DemoFormTemplate"
+			displayWithoutModel="true"
+			name="DemoFormTemplate"
+			page="/jsp/test/layout/demoFormTemplate.jsp"
+			resPrefix="layouts.layoutdemo.DemoFormTemplate.DemoFormTemplate."
+			securityProviderClass="securityRoot"
+		/>
+		<!--
+			component class="com.top_logic.knowledge.gui.layout.ButtonComponent"
+			target="DemoFormTemplate"
+			name="DemoFormTemplateButtons"
+			/
+		-->
+	</components>
+</layout>

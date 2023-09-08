@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<fallback-test-c xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<config-items>
+		<config-item
+			config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$B"></config-item>
+		<config-item config:operation="remove"
+			config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$C"></config-item>
+		<config-item
+			config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A"
+			intValue="15" stringValue="XXX"></config-item>
+	</config-items>
+</fallback-test-c>

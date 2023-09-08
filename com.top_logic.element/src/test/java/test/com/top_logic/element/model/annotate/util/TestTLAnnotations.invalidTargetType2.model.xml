@@ -1,0 +1,20 @@
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="test1">
+			<class name="X">
+				<attributes>
+					<reference name="invalidSubType" type="X" composite="true">
+						<annotations>
+							<!-- Is just allowed on tl.folder:WebFolder -->
+							<folder-type value="default" />
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>
+				

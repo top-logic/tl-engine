@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Tests > Externe Fenster"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.window.OpenWindowCommand"
+			command-label="Externes Fenster 1 öffnen"
+			command-name="openWindow_com_top_logic_demo_technical_test_separatewindow_sepWin1"
+			component-name="com.top_logic.demo/technical/test/separatewindow/separateWindowDemo.layout.xml#SWTreeA"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+			window-name="win_com.top_logic.demo_technical_test_separatewindow_sepWin1.xmlsepWin1"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Fenster"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="Node.1"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic.demo/technical/test/separatewindow/separateWindowDemo.layout.xml#SWTreeA"
+				tab-path="Technisches Demo > Tests > Externe Fenster"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/test/separatewindow/separateWindowDemo.layout.xml#SWDemoFormInputA1"
+						tab-path="Technisches Demo > Tests > Externe Fenster"
+					/>
+					<path>
+						<named-member name="MasterDemoModel"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Node.1"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+			window-name="win_com.top_logic.demo_technical_test_separatewindow_sepWin1.xmlsepWin1"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/test/separatewindow/sepWin1.xml#sepWin1SWDemoFormInputA2"
+						tab-path="Fenster"
+					/>
+					<path>
+						<named-member name="MasterDemoModel"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Node.1"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+			window-name="win_com.top_logic.demo_technical_test_separatewindow_sepWin1.xmlsepWin1"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="Node.3"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic.demo/technical/test/separatewindow/sepWin1.xml#sepWin1SWTreeB"
+				tab-path="Fenster"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+			window-name="win_com.top_logic.demo_technical_test_separatewindow_sepWin1.xmlsepWin1"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/test/separatewindow/sepWin1.xml#sepWin1SWDemoFormInputB1"
+						tab-path="Fenster"
+					/>
+					<path>
+						<named-member name="MasterDemoModel"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Node.3"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/test/separatewindow/separateWindowDemo.layout.xml#SWDemoFormInputB2"
+						tab-path="Technisches Demo > Tests > Externe Fenster"
+					/>
+					<path>
+						<named-member name="MasterDemoModel"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Node.3"
+			/>
+		</action>
+	</actions>
+</action>

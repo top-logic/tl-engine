@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance>
+				<task class="com.top_logic.bpe.execution.engine.BPETimeoutTask"
+					name="BPETimeoutTask" 
+					run-on-startup="true"
+				>
+					<schedules>
+						<periodically
+							interval="10s" 
+							start-time="00:01"
+							stop-time="23:55" />
+					</schedules>
+				</task>
+			</instance>
+		</config>
+	
+	
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="model.tl.bpe.bpml.messages" />
+					<bundle name="model.tl.bpe.execution.messages" />
+					<bundle name="tl-bpe.messages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/tl.bpe.bpml.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.bpe.execution.model.xml"/>
+				</declarations>
+				<classifications>
+					<classification name="bpe.execution.state" mode="use" />
+				</classifications>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-bpe" />
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+			<instance class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+				<schemes>
+					<scheme class="com.top_logic.bpe.layout.scripting.EventDefinitionNaming" priority="preferred"/>
+					<scheme class="com.top_logic.bpe.layout.scripting.BPMLObjectNaming" priority="preferred"/>
+					<scheme class="com.top_logic.bpe.layout.scripting.TokenNaming" priority="preferred"/>
+				</schemes>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
+			<instance>
+				<meta-objects>
+					<meta-object value="BPExecution" />
+				</meta-objects>
+			</instance>
+		</config>
+
+        <config service-class="com.top_logic.layout.provider.LabelProviderService">
+            <instance>
+                <resource-providers>
+	    	        <provider kind="MODEL" type="tl.bpe.execution:Token" implementation="com.top_logic.bpe.layout.execution.TokenResourceProvider" />
+    	    	    <provider kind="MODEL" type="tl.bpe.execution:ProcessExecution" implementation="com.top_logic.bpe.layout.execution.ProcessExecutionResourceProvider" />
+                </resource-providers>
+            </instance>
+        </config>		
+		
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<handlers>
+				</handlers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
+			<instance>
+				<attribute-settings>
+					<attribute-setting
+						config-name="FORM_DEFINITION"
+						legacy-type-code="1"
+					>
+						<field-provider impl="com.top_logic.bpe.bpml.display.DisplayDescriptionFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<export-binding impl="com.top_logic.model.io.bindings.ConfigurationAttributeValueBinding"/>
+					</attribute-setting>
+				</attribute-settings>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/bpeMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+		
+		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">
+			<types>
+				<type name="tl.bpe.bpml:Collaboration" attributes="name"/>
+				<type name="tl.bpe.bpml:Process" attributes="name,collaboration,extId"/>
+				<type name="tl.bpe.bpml:Node" attributes="name,process,extId"/>
+				<type name="tl.bpe.bpml:Edge" attributes="name,process,extId"/>
+				<type name="tl.bpe.bpml:Participant" attributes="name,process,extId"/>
+				<type name="tl.bpe.bpml:Lane" attributes="name,owner,extId"/>
+			</types>
+		</config>
+
+	</configs>
+</application>

@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	comment="TestTypendemoTreeGrid_Sortieren_neues_Element"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Sortieren_neues_Element"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Filter setzen, neben dem angezeigten Elemnt ein weiteres Element anlegen, neu angelegtes Element soll erst nach der Aktualisierung des Filters ausgeblendet werden."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="level"
+									value="INFO"
+								/>
+								<parameter name="text"
+									value="Filter setzen, neben dem angezeigten Elemnt ein weiteres Element anlegen, neu angelegtes Element soll erst nach der Aktualisierung des Filters ausgeblendet werden."
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Alle loeschen"
+							business-object="Variable"
+						/>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Variable zuweisen"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="ergebnis"
+									value="E_01"
+								/>
+								<parameter name="Name"
+									value="ROOT"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Element"
+						>
+							<parameters>
+								<parameter name="name"
+									value="Sortieren_neues_Element_01"
+								/>
+								<parameter name="type"
+									value="Demo A"
+								/>
+								<parameter name="ergebnis"
+									value="E_01_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Element"
+						>
+							<parameters>
+								<parameter name="name"
+									value="Sortieren_neues_Element_02"
+								/>
+								<parameter name="type"
+									value="Demo B"
+								/>
+								<parameter name="ergebnis"
+									value="E_01_02"
+								/>
+								<parameter name="kontext"
+									value="E_01_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Element"
+						>
+							<parameters>
+								<parameter name="name"
+									value="Sortieren_neues_Element_03"
+								/>
+								<parameter name="type"
+									value="Demo C"
+								/>
+								<parameter name="ergebnis"
+									value="E_01_03"
+								/>
+								<parameter name="kontext"
+									value="E_01_02"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anzeigen"
+							business-object="Sicht"
+						>
+							<parameters>
+								<parameter name="Pfad"
+									value="Strukturen > Typendemo"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Setzen"
+							business-object="DemoTypesSelektion"
+						>
+							<parameters>
+								<parameter name="Pfad"
+									value="Strukturen > Typendemo"
+								/>
+								<parameter name="kontext"
+									value="E_01_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anzeigen"
+							business-object="Sicht"
+						>
+							<parameters>
+								<parameter name="Pfad"
+									value="Strukturen > Typendemo > TreeGrid"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Filterauswahl"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="E_01_01"
+								/>
+								<parameter name="Name"
+									value="Name"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Filterselektion"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="Sortieren_neues_Element_02"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Zeilenanzahl pruefen"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="Anzahl"
+									value="1"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Druecken"
+							business-object="Knopf"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="B Bruder anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="String Wert setzen"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="Wert"
+									value="Sortieren_neues_Element_04"
+								/>
+								<parameter name="Pfad"
+									value="Strukturen > Typendemo > TreeGrid"
+								/>
+								<parameter name="Feld"
+									value="Name"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Druecken"
+							business-object="Knopf"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="Übernehmen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Spalte sortieren"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="Pfad"
+									value="Strukturen > Typendemo > TreeGrid"
+								/>
+								<parameter name="Name"
+									value="name"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Zeilenanzahl pruefen"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="Anzahl"
+									value="2"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Persöhnliche Einstellungen zurücksetzen."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Persöhnliche Einstellungen zurücksetzen."
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Persoenliche Einstellungen zuruecksetzen"
+							business-object=""
+						/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Löschen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Alles wieder löschen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="level"
+									value="INFO"
+								/>
+								<parameter name="text"
+									value="Alles wieder löschen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Loeschen"
+							business-object="Element"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="E_01_03"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Loeschen"
+							business-object="Element"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="E_01_02"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Loeschen"
+							business-object="Element"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="E_01_01"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE taglib
+  PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN"
+  "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd">
+
+<!-- a tag library descriptor -->
+
+<taglib>
+  <!-- after this the default space is
+	"http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd"
+   -->
+
+<!-- The version number of this tag library -->
+  <tlibversion>1.0</tlibversion>
+
+<!-- The JSP specification version required to function -->
+  <jspversion>1.1</jspversion>
+
+<!-- The short name of this tag library -->
+    <shortname>util</shortname>
+  
+<!-- General information about this tag library -->
+    <info>Defines tags for better handling inside Top-Logic</info>
+
+
+<!-- Generates an I18N output for the given key. -->
+    <tag>
+        <name>label</name>
+        <tagclass>com.top_logic.knowledge.taglibs.LabelTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Generates an I18N output for the given key.</info>
+
+        <attribute>
+            <name>name</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>nameConst</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    
+<!-- Executes the body of this tag according to the given boolean condition. -->   
+    <tag>
+        <name>if</name>
+        <tagclass>com.top_logic.knowledge.taglibs.IfTag</tagclass>
+        <bodycontent>JSP</bodycontent>
+        <info>Executes the body of this tag according to the given boolean condition.</info>
+
+        <attribute>
+            <name>condition</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    
+<!-- Generates an input field for the given attribute of the object. -->
+    <tag>
+        <name>input</name>
+        <tagclass>com.top_logic.knowledge.taglibs.InputTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Generates an input field for the given attribute of the object.</info>
+
+        <attribute>
+            <name>object</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>name</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>properties</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>size</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    
+<!-- Replaces variables in sum braces (e.g. {cancel}) with the corresponding
+	values in the server language (I18n). The prefix part of the key
+	(e.g. base.edit) has to be assigned via the attribute prefix.
+	 Non existing keys remain untouched. Attention: A terminating point has to be added
+	 to the prefix unless prefix is an empty String.
+ -->
+	<tag>
+		<name>replaceVar</name>
+		<tagclass>com.top_logic.util.VariableReplaceTag</tagclass>
+		<bodycontent>JSP</bodycontent>
+		<info>Replaces variables in sum braces (e.g. {cancel})  with I18N properties.</info>
+		<attribute>
+			<name>prefix</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+    <!--
+        Draw images, which are located in the theme. 
+     -->
+    <tag>
+        <name>image</name>
+        <tagclass>com.top_logic.gui.ImageTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Draw images, which are located in the theme.</info>
+        <attribute>
+            <name>name</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>i18n</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    <tag>
+        <name>percentage</name>
+        <tagclass>com.top_logic.layout.percentage.PercentageTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <attribute>
+            <name>percentage</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>shapeWidth</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>shapeHeight</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>shapeNumber</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>spaceWidth</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>shapeForegroundPaint</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>shapeBackgroundPaint</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>spacePaint</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    
+</taglib>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- The outer component only provides scrollbars for its child. -->
+<template>
+	<params>
+		<param name="componentName"
+			value="DemoOrderForm"
+		/>
+	</params>
+
+	<layout>
+		<components>
+			<component class="com.top_logic.demo.layout.form.demo.DemoOrderForm"
+				buttonComponent="${componentName}Buttons"
+				model="provider(com.top_logic.layout.component.model.SelfModelProvider)"
+				name="${componentName}"
+				page="/jsp/test/layout/DemoOrderForm.jsp"
+				resPrefix="layouts.layoutdemo.DemoOrderForm_shared.main."
+				saveScrollPosition="true"
+				securityProviderClass="securityRoot"
+			/>
+			<buttonbar name="${componentName}Buttons"/>
+		</components>
+	</layout>
+</template>

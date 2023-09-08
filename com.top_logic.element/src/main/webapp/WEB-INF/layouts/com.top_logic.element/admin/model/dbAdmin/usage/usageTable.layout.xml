@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<tableView name="Table"
+	isSecurityMaster="true"
+	model="selection(com.top_logic.element/admin/model/dbAdmin/tables/tablesTable.layout.xml#Table)"
+>
+	<modelBuilder class="com.top_logic.element.util.dbadmin.TableUsageListModelBuilder"
+		schema="model(com.top_logic.element/admin/model/dbAdmin/tables/tablesTable.layout.xml#Table)"
+	/>
+	<titleKey>
+		<de>Verwendungen</de>
+		<en>Usage</en>
+	</titleKey>
+	<table
+		defaultColumns="type,reference"
+		defaultSortOrder="type"
+		fixedColumns="0"
+	>
+		<columns>
+			<column name="type"
+				columnWidth="250px"
+			>
+				<columnLabelKey>
+					<de>Typ</de>
+					<en>Type</en>
+				</columnLabelKey>
+				<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+					method="getType"
+					type="com.top_logic.element.util.dbadmin.TableUsageListModelBuilder$Usage"
+				/>
+			</column>
+			<column name="reference"
+				columnWidth="250px"
+			>
+				<columnLabelKey>
+					<de>Referenz</de>
+					<en>Reference</en>
+				</columnLabelKey>
+				<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+					method="getReference"
+					type="com.top_logic.element.util.dbadmin.TableUsageListModelBuilder$Usage"
+				/>
+			</column>
+		</columns>
+	</table>
+	<buttons>
+		<reference command-id="editLayoutCommand"/>
+		<reference command-id="deleteComponentCommand"/>
+	</buttons>
+</tableView>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICON_FILE_IMPORT"
+		value="css:fas fa-file-import"
+	/>
+	<icon name="ICON_PLUS"
+		value="css:fas fa-plus"
+	/>
+	<icon name="THEME_EXPORT"
+		expr=""
+		value="css:fas fa-upload"
+	/>
+	<icon name="THEME_IMPORT"
+		expr=""
+		value="css:fas fa-download"
+	/>
+	<icon name="com.top_logic.layout.themeedit.browser.providers.resources.Icons.FONT"
+		value="css:fas fa-font"
+	/>
+</settings>

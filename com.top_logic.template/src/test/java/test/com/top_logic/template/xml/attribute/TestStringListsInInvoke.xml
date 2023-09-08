@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<t:parameter name="Invoking_String_Attribute" type="string" multiple="true">
+				<t:default>
+					<t:entry value="Delta Goodrem"/>
+					<t:entry value="Amy Studt"/>
+					<t:entry value="Natasha Bedingfield"/>
+				</t:default>
+			</t:parameter>
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<t:invoke template="TestStringLists.xml">
+			
+			<t:parameter name="Invoked_String_Attribute" value="${$Invoking_String_Attribute}" />
+			
+		</t:invoke>
+	</t:body>
+</t:template>

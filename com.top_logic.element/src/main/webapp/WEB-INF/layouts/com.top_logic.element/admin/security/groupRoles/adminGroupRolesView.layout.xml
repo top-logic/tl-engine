@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminGroupRolesView"
+	helpIDLegacy="main.admin.group.roles.tabber"
+	titleKey="main.admin.group.roles.tabber"
+>
+	<tabInfo label="main.admin.group.roles.tabber"/>
+	<components>
+		<include name="com.top_logic.element/admin/security/groupRoles/editGroupRightsMulti.xml"/>
+	</components>
+</securityLayout>

@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="structure"/>
+		<param name="namePrefix"
+			value="${structure}"
+		/>
+		<param name="resPrefix"
+			value="layouts.demo.editStructureWithExport."
+		/>
+		<param name="defaultFor"
+			value=""
+		/>
+		<param name="exportHandlers"
+			value="demoExportTypes,demoExportTypesSubstructure"
+		/>
+	</params>
+
+	<layout name="${namePrefix}StructureArea"
+		horizontal="true"
+	>
+		<components>
+			<treeView name="${namePrefix}Tree"
+				partnerGroup="gridGroup"
+				resPrefix="${resPrefix}Tree."
+				show-only-selectable-nodes="true"
+			>
+				<layoutInfo
+					minSize="100"
+					size="220"
+				/>
+				<modelBuilder class="com.top_logic.demo.model.types.util.CyclicDemoTreeBuilder"/>
+				<security-filter delegationDestination="${namePrefix}Edit"/>
+
+				<contextMenuFactory>
+					<customCommands>
+						<switch
+							kind="MODEL"
+							type="DemoTypes:DemoTypes.All"
+						>
+							<command id="ShowComponentInfo"
+								class="com.top_logic.demo.layout.contextMenu.ShowComponentInfoCommand"
+								clique="help"
+							/>
+						</switch>
+					</customCommands>
+				</contextMenuFactory>
+
+				<buttons>
+					<button id="openNewElementDialog"
+						checkScopeProvider="com.top_logic.layout.basic.check.MasterSlaveCheckProvider"
+						class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+						clique="create"
+						dialog-name="${namePrefix}newElementLayoutDialog"
+						group="System"
+						image="theme:ICON_PLUS"
+						resourceKey="${resPrefix}openCreateElementDialog"
+						targetComponent="${namePrefix}newElementDialog"
+					>
+						<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+							function="x -> $x == null ? `DemoTypes#ROOT` : $x"
+						>
+							<channel name="selection">
+								<relation kind="self"/>
+							</channel>
+						</target>
+						<executability>
+							<reference rule-id="CreateElementRule"/>
+							<security-check
+								group="Create"
+								security-component="${namePrefix}newElementDialog"
+							/>
+						</executability>
+					</button>
+				</buttons>
+			</treeView>
+			<layout name="${namePrefix}CompareContainer">
+				<components>
+					<include name="commons/compare/revisionCompareSelector.xml"
+						componentName="${namePrefix}VersionSelector"
+						model="selection(${namePrefix}Tree)"
+						namePrefix="${namePrefix}"
+					>
+						<inject>
+							<layoutInfo size="220"/>
+						</inject>
+					</include>
+					<tabbar name="demoStructureTab">
+						<components>
+							<layout
+								helpID="structureDetail.helpID"
+								titleKey="${resPrefix}main.tabber"
+							>
+								<tabInfo label="${resPrefix}demoStructureDemoTypes.tab"/>
+								<components>
+									<include name="com.top_logic.demo/structure/demoTypes/detail/editStructureDetail.xml"
+										defaultFor="${defaultFor}"
+										master="${namePrefix}VersionSelector"
+										show-compare-command="false"
+										structure="${structure}"
+									>
+										<exportDialogs>
+											<include name="export/exportTableDialog_shared.xml"
+												exportHandlers="demoExportTypes,demoExportTypesSubstructure"
+												namePrefix="${namePrefix}Edit"
+											/>
+										</exportDialogs>
+									</include>
+								</components>
+							</layout>
+							<include name="com.top_logic.demo/structure/demoTypes/grid/grid.xml"
+								elements="A,B,C"
+								model="selection(${namePrefix}VersionSelector)"
+								namePrefix="${namePrefix}"
+								structure="${structure}"
+							>
+								<inject>
+									<tabInfo label="${resPrefix}demoStructureDemoTypesGrid.tab"/>
+								</inject>
+								<dialogs>
+									<include name="element/createStructuredElement.xml"
+										namePrefix="${namePrefix}${structure}"
+										newModelAction="set-parent-selection"
+									>
+										<inject>
+											<dialogInfo
+												executability="CreateElementRule"
+												height="250"
+												image="theme:TREE_NEW_ELEMENT"
+												openerClique="create"
+												openerCommandGroup="Create"
+												width="450"
+											/>
+										</inject>
+									</include>
+								</dialogs>
+								<buttons>
+									<button id="newASibling"
+										class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+										contextSelector="com.top_logic.element.layout.grid.SibblingCreateContext"
+										group="Create"
+										image="theme:DEMO_NEW_AS"
+										nodeType="A"
+										resourceKey="layouts.demo.grid.newASibling"
+									/>
+									<button id="newBSibling"
+										class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+										contextSelector="com.top_logic.element.layout.grid.SibblingCreateContext"
+										group="Create"
+										image="theme:DEMO_NEW_BS"
+										nodeType="B"
+										resourceKey="layouts.demo.grid.newBSibling"
+									/>
+									<button id="newCSibling"
+										class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+										contextSelector="com.top_logic.element.layout.grid.SibblingCreateContext"
+										group="Create"
+										image="theme:DEMO_NEW_CS"
+										nodeType="C"
+										resourceKey="layouts.demo.grid.newCSibling"
+									/>
+								</buttons>
+							</include>
+							<include name="com.top_logic.demo/structure/demoTypes/treeGrid/tree_grid.xml"
+								model="selection(${namePrefix}VersionSelector)"
+								namePrefix="${namePrefix}"
+							>
+								<inject>
+									<tabInfo label="${resPrefix}demoStructureDemoTypesTreeGrid.tab"/>
+								</inject>
+								<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
+							</include>
+							<include name="com.top_logic.demo/structure/demoTypes/grid/grid.xml"
+								elements="A,B,C"
+								model="selection(${namePrefix}VersionSelector)"
+								namePrefix="TypedSetOrdered"
+								openInEdit="true"
+								structure="${structure}"
+								titleKey="layouts.demo.grid.AttributeGrid.title"
+							>
+								<inject>
+									<tabInfo label="${resPrefix}demoStructureDemoTypesGridTypedSetOrdered.tab"/>
+								</inject>
+								<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+									elements="model->$model.get(`DemoTypes:DemoTypes.A#typedSetOrdered`)"
+									supportsElement="element->$element.instanceOf(`DemoTypes:C`)"
+									supportsModel="model->$model.instanceOf(`DemoTypes:DemoTypes.A`)"
+								>
+									<modelForElement><![CDATA[
+										element -> model -> {
+											options=$element.referers(`DemoTypes:DemoTypes.A#typedSetOrdered`);
+											if($options.containsElement($model), $model, $options.firstElement());
+										}
+									]]></modelForElement>
+								</modelBuilder>
+							</include>
+							<include name="com.top_logic.demo/structure/demoTypes/grid/grid.xml"
+								elements="A,B,C"
+								model="selection(${namePrefix}VersionSelector)"
+								namePrefix="CumulativeTypedSetOrdered"
+								openInEdit="true"
+								structure="${structure}"
+								titleKey="layouts.demo.grid.CumulativeAttributeGrid.title"
+							>
+								<inject>
+									<tabInfo label="${resPrefix}demoStructureDemoTypesGridCumulativeTypedSetOrdered.tab"/>
+								</inject>
+								<modelBuilder class="com.top_logic.element.layout.table.StructuredElementAttributeListModelBuilder"
+									additionalTypes="DemoTypes:BNotUnderA"
+									reference="DemoTypes:DemoTypes.A#typedSetOrdered"
+								/>
+							</include>
+							<tableView name="DemoTypesSelectedTable"
+								model="selection(${namePrefix}VersionSelector)"
+								objectType="me:DemoTypes.All"
+								resPrefix="layouts.demo.table.editStructureWithExport.DemoTypesSelectedTable."
+							>
+								<tabInfo label="layouts.demo.table.editStructureWithExport.DemoTypesSelectedTable.tab"/>
+								<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
+								<table
+									defaultColumns="name, boolean, date, float"
+									fixedColumns="2"
+								/>
+							</tableView>
+							<include name="com.top_logic.demo/structure/demoTypes/treeTable/tree_table_shared.xml"
+								defaultSelection="true"
+								model="selection(${namePrefix}VersionSelector)"
+								namePrefix="StructureEdit"
+							>
+								<inject>
+									<tabInfo label="${resPrefix}demoStructureDemoTypesTreeTable.tab"/>
+								</inject>
+							</include>
+							<include name="commons/compare/revision_compare_table_shared.xml"
+								model="selection(${namePrefix}VersionSelector)"
+								namePrefix="Demo"
+								objectTypes="DemoTypes:DemoTypes.A, DemoTypes:DemoTypes.B, DemoTypes:DemoTypes.C.All, DemoTypes:DemoTypes.X, DemoTypes:DemoTypes.L"
+								tableConfigurationProvider="com.top_logic.demo.table.DemoTableConfigurationProvider"
+							>
+								<inject>
+									<tabInfo label="${resPrefix}demoStructureDemoTypesCompareTreeComponent.tab"/>
+								</inject>
+							</include>
+							<include name="com.top_logic.demo/structure/demoTypes/structureEdit/structureEdit_shared.xml"
+								expandAll="true"
+								model="selection(${namePrefix}VersionSelector)"
+								namePrefix="${namePrefix}"
+							>
+								<inject>
+									<tabInfo label="${resPrefix}demoStructureDemoTypesStructureEdit.tab"/>
+								</inject>
+							</include>
+							<include name="com.top_logic.demo/structure/demoTypes/chart/demoChartCockpit.xml">
+								<inject>
+									<tabInfo label="${resPrefix}demoChartCockpit.tab"/>
+								</inject>
+							</include>
+							<include name="com.top_logic.demo/structure/demoTypes/chart/demoChartCockpitTable.xml">
+								<inject>
+									<tabInfo label="${resPrefix}demoChartCockpitTable.tab"/>
+								</inject>
+							</include>
+							<include name="commons/webfolder/documents.xml"
+								model="selection(${namePrefix}VersionSelector)"
+								namePrefix="demoTypesDocuments"
+							>
+								<inject>
+									<tabInfo
+										decorator="demoTypesDocumentsFolder"
+										label="${resPrefix}demoStructureDemoTypesDocuments.tab"
+									/>
+								</inject>
+							</include>
+							<include name="commons/webfolder/documents.xml"
+								manual-locking="true"
+								model="selection(${namePrefix}VersionSelector)"
+								namePrefix="demoTypesDocumentsManualLocking"
+							>
+								<inject>
+									<tabInfo
+										decorator="demoTypesDocumentsFolder"
+										label="${resPrefix}demoStructureDemoTypesDocumentsManualLocking.tab"
+									/>
+								</inject>
+							</include>
+							<include name="mail/mailFolder/mailFolder_aliased.xml"
+								masterComponent="${namePrefix}VersionSelector"
+								namePrefix="mailFolder"
+							>
+								<inject>
+									<tabInfo
+										decorator="mailFolderMail_List"
+										label="${resPrefix}demoStructureDemoTypesMail.tab"
+									/>
+								</inject>
+							</include>
+							<include name="commons/comments/comments.xml"
+								model="selection(${namePrefix}VersionSelector)"
+								namePrefix="demoTypesComments"
+							>
+								<inject>
+									<tabInfo
+										decorator="demoTypesCommentsCommentTable"
+										label="${resPrefix}demoStructureDemoTypesComments.tab"
+									/>
+								</inject>
+								<modelBuilder class="com.top_logic.demo.model.types.util.DemoACommentTableModelBuilder"/>
+							</include>
+							<include name="com.top_logic.demo/structure/demoTypes/gantt/demoGantt.xml"
+								model="selection(${namePrefix}VersionSelector)"
+							>
+								<inject>
+									<tabInfo label="${resPrefix}demoStructureDemoTypesGantt.tab"/>
+								</inject>
+							</include>
+						</components>
+					</tabbar>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

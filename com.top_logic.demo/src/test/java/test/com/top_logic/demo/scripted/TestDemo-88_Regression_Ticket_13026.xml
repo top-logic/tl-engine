@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Ticket #13026"
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+					structure-name="DemoTypes"
+				>
+					<structure-path>
+						<node name="Ticket #13026"/>
+					</structure-path>
+				</selectee>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+				tab-path="Strukturen > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+			command-label="Löschen..."
+			command-name="elementRemove"
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			failure-message="Ticket #13026: Grid stores TLClasses in an instance variable but does not remove them when they are deleted."
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo > Grid"
+			/>
+		</action>
+	</actions>
+</action>

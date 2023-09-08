@@ -1,0 +1,1406 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create users"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser2"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser3"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser4"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser5"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser6"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser7"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser8"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser9"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser10"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser11"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser12"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser13"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser14"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser15"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser16"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser17"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser18"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser19"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser20"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser1"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser2"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser3"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser4"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser5"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser6"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser7"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser8"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser9"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser10"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser11"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser12"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser13"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser14"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser15"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser16"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser17"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser18"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser19"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser20"
+							/>
+						</parameter>
+						<parameter name="Passwort">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="root1234"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Login-Logout"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login muser1"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser1"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser1"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login muser2"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser2"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser2"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser3"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser3"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser3"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser3"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser4"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser4"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser4"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser4"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser5"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser5"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser5"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser5"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser6"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser6"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser6"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser6"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser7"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser7"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser7"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser7"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser8"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser8"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser8"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser8"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser9"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser9"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser9"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser9"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser10"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser10"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser10"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser10"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser11"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser11"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser11"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser11"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser12"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser12"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser12"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser12"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser13"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser13"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser13"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser13"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser14"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser14"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser14"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser14"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser15"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser15"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser15"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser15"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser16"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser16"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser16"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser16"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser17"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser17"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser17"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser17"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser18"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser18"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser18"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser18"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser19"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser19"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser19"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser19"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Login-Logout muser20"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer anmelden.xml"
+							template-name-comment="Nutzer anmelden"
+						>
+							<parameters>
+								<parameter name="Username">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser20"
+									/>
+								</parameter>
+								<parameter name="ProcessId">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="muser20"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="muser20"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer abmelden.xml"
+					template-name-comment="Nutzer abmelden"
+					user-id="muser1"
+				/>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer abmelden.xml"
+					template-name-comment="Nutzer abmelden"
+					user-id="muser2"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Delete users"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser2"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser3"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser4"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser5"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser6"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser7"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser8"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser9"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser10"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser11"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser12"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser13"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser14"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser15"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser16"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser17"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser18"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser19"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="muser20"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

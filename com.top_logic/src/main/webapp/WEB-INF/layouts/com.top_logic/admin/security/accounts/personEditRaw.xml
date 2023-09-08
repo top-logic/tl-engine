@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="changePasswordComponent"/>
+		<param name="changePasswordCommandGroup"/>
+		<param name="model"
+			optional="true"
+		/>
+		<param name="editClass"
+			value="com.top_logic.knowledge.gui.layout.person.SelfEditPersonComponent"
+		/>
+		<param name="defaultFor"
+			value="tl.accounts:Person"
+		/>
+		<param name="jspPage"
+			value="/jsp/layout/persons/EditPerson.jsp"
+		/>
+		<param name="newDialog">
+			<!-- No create dialog by default. -->
+		</param>
+	</params>
+
+	<layout name="${namePrefix}EditPersonContainer"
+		titleKey="admin.person.edit.dialog.tabber"
+	>
+		<components>
+			<component class="${editClass}"
+				defaultFor="${defaultFor}"
+				isSecurityMaster="true"
+				model="${model}"
+				name="${namePrefix}EditPerson"
+				page="${jspPage}"
+				resPrefix="layouts.admin.persons.personEditRaw.EditPerson."
+				resetInvisible="true"
+				securityProviderClass="securityRoot"
+			>
+				<dialogs>
+					${newDialog}
+					<include name="com.top_logic/admin/security/accounts/changePassword.xml"
+						changePasswordCommandGroup="${changePasswordCommandGroup}"
+						changePasswordComponent="${changePasswordComponent}"
+						namePrefix="${namePrefix}"
+					/>
+				</dialogs>
+			</component>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

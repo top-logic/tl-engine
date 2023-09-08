@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Succeeding test -->
+<component class="A"
+	name="a"
+>
+	<childList>
+		<include name="test.com.top_logic.layout.processor.TestComponentNameCheck/c.xml"
+			componentName="c1"
+		/>
+		<include name="test.com.top_logic.layout.processor.TestComponentNameCheck/c.xml"
+			componentName="c2"
+		/>
+		<component class="C"
+			name="c3"
+		/>
+
+		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+	</childList>
+</component>

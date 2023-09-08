@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Static AJAX Form Test</title>
+    
+    <link type="text/css" rel="stylesheet" href="../../style/ajax-form.css"/>
+    
+    <script src="../../script/tl/bal.js"></script>
+    <script src="../../script/tl/bal-ie.js"></script>
+    
+    <script type="text/javascript">
+    	function handleClick(event) {
+			event = BAL.getEvent(event);
+			var clickedElement = BAL.getEventSource(event);
+
+    		alert('this=' + this.tagName);
+    		alert('event=' + event);
+    		alert('clickedElement=' + clickedElement.tagName);
+    	}
+    </script>
+    
+  </head>
+  <body>
+  	<h1>Static List Selectbox Test</h1>
+  	
+  	<div id="scrollpane">
+  		<ul class="is-list" onclick="return handleClick.apply(this, arguments);">
+  			<li>Option 1</li>
+  			<li>Option 2</li>
+  			<li>Option 3</li>
+  			<li>Option 4</li>
+  			<li>Option 5</li>
+  			<li>Option 6</li>
+  			<li>Option 7</li>
+  			<li>Option 8</li>
+  			<li>Option 9</li>
+  		</ul>
+  	</div>
+  	
+
+  </body>
+</html>

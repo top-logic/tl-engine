@@ -1,0 +1,567 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id=""
+	window-name=""
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Start monitoring"
+			failure-message=""
+			user-id=""
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Administration > Monitor > SQL Monitor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.util.monitor.db.StartMonitoringCommand"
+					command-label="Monitoring starten"
+					command-name="startMonitoring"
+					comment=""
+					component-name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#StatementMonitorTable"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Generate data"
+			failure-message=""
+			user-id=""
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+					command-label="Generieren..."
+					command-name="generateTypes"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Name des generierten Wurzelelementes"
+									field-name="rootName"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="While Monitoring"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Anzahl der generierten Kinder"
+									field-name="numberChildren"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+								int="2"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					comment=""
+					component-implementation-comment=""
+					component-name="rootLayout#masterFrame"
+					failure-message=""
+					label="Generieren"
+					user-id=""
+					window-name=""
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					comment=""
+					component-implementation-comment=""
+					component-name="rootLayout#masterFrame"
+					failure-message=""
+					label="Ok"
+					user-id=""
+					window-name=""
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Refresh Monitoring results"
+			failure-message=""
+			user-id=""
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Administration > Monitor > SQL Monitor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.util.monitor.db.RefreshMonitoringCommand"
+					command-label="Zwischenergebnisse holen"
+					command-name="refreshMonitoring"
+					comment=""
+					component-name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#StatementMonitorTable"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="greater-than"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRows">
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Monitor > SQL Monitor > Monitor für Datenbankanfragen"
+							/>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="0"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Edit data"
+			failure-message=""
+			user-id=""
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Strukturen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="While Monitoring"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="While Monitoring > A0"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="Name"
+								>
+									<attribute-ref attribute-name="name">
+										<type type-name="DemoTypes.All">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="While Monitoring"/>
+											<node name="A0"/>
+										</structure-path>
+									</self-ref>
+								</field>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="A0x"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Stop Monitoring"
+			failure-message=""
+			user-id=""
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.util.monitor.db.StopMonitoringCommand"
+					command-label="Monitoring beenden"
+					command-name="stopMonitoring"
+					comment=""
+					component-name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#StatementMonitorTable"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="greater-than"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRows">
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Monitor > SQL Monitor > Monitor für Datenbankanfragen"
+							/>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="0"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Filter Result Table"
+			failure-message=""
+			user-id=""
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+					column-name="stack"
+					comment=""
+					failure-message=""
+					filter-column-name=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#StatementMonitorTable"
+							tab-path="Administration > Monitor > SQL Monitor"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+						context-name=""
+					>
+						<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#StatementMonitorTable"
+								tab-path="Administration > Monitor > SQL Monitor"
+							/>
+						</table-name>
+					</model-name>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent0"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterField"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="text"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Cluster"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+						context-name=""
+					>
+						<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#StatementMonitorTable"
+								tab-path="Administration > Monitor > SQL Monitor"
+							/>
+						</table-name>
+					</model-name>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterList"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Filterergebnis invertieren"
+									field-name="invert"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="true"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					comment=""
+					failure-expected="false"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Anwenden"
+					>
+						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#StatementMonitorTable"
+									tab-path="Administration > Monitor > SQL Monitor"
+								/>
+							</table-name>
+						</component>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SortTableColumnOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#StatementMonitorTable"
+							tab-path="Administration > Monitor > SQL Monitor"
+						/>
+					</model-name>
+					<sort-orders>
+						<sort-order
+							ascending="true"
+							column="tableName"
+						/>
+					</sort-orders>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Reset view"
+			failure-message=""
+			user-id=""
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.util.monitor.db.ClearCommand"
+					command-label="Anzeige löschen"
+					command-name="clearMonitoring"
+					comment=""
+					component-name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#StatementMonitorTable"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+					command-implementation-comment="com.top_logic.util.monitor.db.StartMonitoringCommand"
+					command-label="Monitoring starten"
+					command-name="startMonitoring"
+					comment=""
+					component-name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#StatementMonitorTable"
+					contained-keys=""
+					failure-message=""
+					reason-key=""
+					reason-keys=""
+					user-id="root"
+					window-name=""
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

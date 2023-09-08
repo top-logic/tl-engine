@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26986_remove_width_and_height_units"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26872_id_column_to_sort_config"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.layout.tools.rewrite.LayoutMigrationProcessor">
+			<rewriter class="com.top_logic.layout.tools.rewrite.XSLTLayoutRewrite"
+				transform="/WEB-INF/kbase/migration/tl/Ticket_26986_remove_width_and_height_units.xslt"
+			>
+				<templates>
+					<template value="com.top_logic/dialog.template.xml"/>
+					<template value="com.top_logic.model.search/transaction.template.xml"/>
+					<template value="com.top_logic.model.search/transactionAssistent.template.xml"/>
+					<template value="com.top_logic.model.search/create/genericCreateDialog.template.xml"/>
+				</templates>
+			</rewriter>
+		</processor>
+	</processors>
+	<post-processors/>
+</migration>

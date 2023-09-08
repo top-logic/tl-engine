@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.b7198344-ef2d-460b-90ab-7b7762ba9f8e">
+				<en>Create multiple objects....</en>
+				<de>Mehrere Objekte anlegen....</de>
+			</title>
+		</title>
+		<open-handler id="ID_9083c2ba_70c9_4aab_8654_ada3d767d096"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="css:fas fa-plus-square"
+			targetComponent="com.top_logic.demo/technical/components/selectionOptions/createMultipleObjects____/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.b7198344-ef2d-460b-90ab-7b7762ba9f8e">
+				<en>Create multiple objects....</en>
+				<de>Mehrere Objekte anlegen....</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="test.optionprovider:WithOptions"/>
+		<create-handler id="ID_117023c4_e67e_4c01_8dd4_311793263e94"
+			closeDialog="false"
+		/>
+	</arguments>
+</config:template-call>

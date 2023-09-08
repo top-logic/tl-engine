@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminLists"
+	helpIDLegacy="main.admin.list.edit.tabber"
+	titleKey="main.admin.list.edit.tabber"
+>
+	<tabInfo label="main.admin.list.edit.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/model/lists/listAdmin.xml"/>
+	</components>
+</securityLayout>

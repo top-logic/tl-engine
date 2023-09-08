@@ -1,0 +1,46 @@
+div.cGraphDisplay {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+}
+
+div.cGraphMap {
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	width: 100px;
+	height: 75px;
+}
+
+/* This class is written in the "com.top_logic.graph.client.yf.service.style.YFButtonFactory". */
+g.tlGraphButton {
+	font-weight : bold;
+	cursor : pointer;
+	/* prevent text selection: */
+	user-select : none; /* standard */
+	-ms-user-select : none; /* IE, Edge */
+	-moz-user-select : none; /* Firefox */
+	-khtml-user-select : none; /* Konqueror HTML */
+	-webkit-user-select : none; /* Safari */
+	-webkit-touch-callout : none; /* iOS Safari */
+}
+
+.tlGraphButtonBackground {
+	color : transparent;
+	fill : currentColor;
+	stroke : currentColor;
+}
+
+.tlGraphPlus {
+	/* Apply the "color", whichever it is, to "fill" and "stroke", too. */
+	fill : currentColor;
+	stroke : currentColor;
+}
+
+.tlGraphMinus {
+	/* See: ".tlGraphPlus" */
+	fill : currentColor;
+	stroke : currentColor;
+}

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- This component manages the scheduled tasks. -->
+<layout>
+	<components>
+		<component class="com.top_logic.util.monitor.ApplicationMonitorComponent"
+			buttonComponent="applMonitorButtons"
+			name="applMonitor"
+			page="/jsp/layout/monitor/ApplicationMonitor.jsp"
+			resPrefix="util.maintenance."
+			securityProviderClass="securityRoot"
+		>
+			<buttons>
+				<include name="com.top_logic/license/license-buttons.xml"/>
+
+				<button id="refreshApplicationMonitorCommand"
+					class="com.top_logic.util.monitor.ApplicationMonitorComponent$RefreshApplicationMonitorCommand"
+					clique="refresh"
+					group="System"
+					resourceKey="layouts.admin.technical.monitor.refreshApplicationMonitorCommand"
+				/>
+			</buttons>
+
+			<tables>
+				<table name="fieldMonitors"
+					columnCustomization="none"
+					multiSort="never"
+					showColumnHeader="false"
+					showFooter="false"
+					showTitle="false"
+				>
+					<column-default accessor="com.top_logic.util.monitor.ApplicationMonitorComponent$MonitorMessageAccessor"/>
+					<columns>
+						<column name="icon"
+							columnWidth="34px"
+							cssClass="monitor-icon-center"
+							resourceProvider="com.top_logic.util.monitor.ApplicationMonitorComponent$StatusIconResourceProvider"
+						/>
+						<column name="monitor"
+							columnWidth="15%"
+						/>
+						<column name="message"
+							cellStyle="white-space: normal;"
+						/>
+					</columns>
+				</table>
+
+				<table name="fieldProperties"
+					columnCustomization="none"
+					id-column="name"
+					multiSort="never"
+					showColumnHeader="false"
+					showFooter="false"
+					showTitle="false"
+				>
+					<column-default accessor="com.top_logic.util.monitor.ApplicationMonitorComponent$PropertyAccessor"/>
+					<columns>
+						<column name="name"
+							columnWidth="30%"
+							sortable="false"
+						/>
+						<column name="value"
+							cellStyle="white-space: normal;"
+						/>
+					</columns>
+				</table>
+			</tables>
+		</component>
+
+		<buttonbar name="applMonitorButtons"
+			resPrefix="layouts.admin.technical.monitor.applMonitorButtons."
+		/>
+	</components>
+</layout>

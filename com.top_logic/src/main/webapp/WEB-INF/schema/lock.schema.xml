@@ -1,0 +1,54 @@
+<schema name="lock">
+	<tables>
+		<!--
+		Existing locks identified by the locked object (OBJ) and the lock aspect (NAME).
+		
+		A lock may either be shared or exclusive (EXCLUSIVE). For a shared lock, there may exist 
+		multiple tokens (TL_LOCK_TOKEN) that reference this lock (LOCK_ID). For an exclusive lock,
+		only a single token exists. A lock without tokens does no longer exist and can be cleared.
+		 -->
+		<table name="TL_LOCK">
+			<columns>
+				<column name="ID" type="long" mandatory="true"/>
+				<column name="OBJ_BRANCH" type="long" mandatory="true"/>
+				<column name="OBJ_ID" type="id" mandatory="true"/>
+				<column name="OBJ_TYPE" type="varchar" size="254" binary="true" mandatory="false"/>
+				<column name="NAME" type="varchar" size="254" binary="true" mandatory="true"/>
+				<column name="EXCLUSIVE" type="boolean" mandatory="true"/>
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="OBJ_BRANCH"/>
+					<column name="OBJ_ID"/>
+					<column name="NAME"/>
+				</columns>
+			</primary-key>
+		</table>
+		
+		<!-- 
+		A token belongs to a lock referenced by LOCK_ID. It provides details about its owner (OWNER) that
+		acquired the token. A logical operation may require multiple tokens to be acquired. The OPERATION_ID
+		identifies the logical operation that required the acquisition of a token. All tokens with the same
+		OPERATION_ID belong to the same logical operation. In a cluster environment, the CLUSTER_NODE_ID field 
+		remembers the cluster node id of the machine that acquired the token.
+		 -->
+		<table name="TL_LOCK_TOKEN">
+			<columns>
+				<column name="ID" type="long" mandatory="true"/>
+				<column name="LOCK_ID" type="long" mandatory="true"/>
+				<column name="TIMEOUT" type="long" mandatory="true"/>
+				<column name="OWNER_BRANCH" type="long" mandatory="true"/>
+				<column name="OWNER_ID" type="id" mandatory="true"/>
+				<column name="OWNER_TYPE" type="varchar" size="254" binary="true" mandatory="false"/>
+				<column name="OPERATION_ID" type="long" mandatory="true"/>
+				<column name="OPERATION" type="varchar" size="254" binary="true" mandatory="false"/>
+				<column name="CLUSTER_NODE_ID" type="long" mandatory="false"/>
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="ID"/>
+				</columns>
+			</primary-key>
+		</table>
+	</tables>
+</schema>

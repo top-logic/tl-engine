@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+
+		<metaobject object_type="MOKnowledgeObject" object_name="TestJournallableWrapper" super_class="KnowledgeObject">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding
+						application-type="test.com.top_logic.knowledge.wrap.TestJournallableWrapper$TestingJournallableWrapper"
+					/>
+				</annotation>
+			</annotations>
+		</metaobject>
+		
+		<metaobject object_type="MOKnowledgeObject" object_name="TestJournal" super_class="DublinCore">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding
+						application-type="test.com.top_logic.knowledge.journal.TestJournal$JournallableDocument"
+					/>				
+				</annotation>
+			</annotations>
+			<attributes>
+			    <mo_attribute att_name="name" att_type="String" mandatory="true"	/>
+			    <mo_attribute att_name="size" att_type="Long" mandatory="true"/>
+			    <mo_attribute att_name="updateRevisionNumber" att_type="Long" mandatory="true"/>
+			
+				<mo_attribute att_name="versionNumber" att_type="Integer" mandatory="false"/>
+			</attributes>
+		</metaobject>
+
+	</metaobjects>
+</objectlist>

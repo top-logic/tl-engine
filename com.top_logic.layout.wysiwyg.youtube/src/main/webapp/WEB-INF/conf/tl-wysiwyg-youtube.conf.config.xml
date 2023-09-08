@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.html.SafeHTML">
+			<instance>
+				<allowed-tags>
+					<tag name="iframe" />
+				</allowed-tags>
+				
+				<allowed-attributes>
+					<attribute name="allow" />
+					<attribute name="allowfullscreen" />
+					<attribute name="frameborder" />
+					<attribute name="width" />
+					<attribute name="height" />
+				</allowed-attributes>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService">
+			<instance>
+				<features>
+					<feature name="youtube">
+						<property key="toolbar">
+							<list>
+								<struct>
+									<property key="name">
+										<string value="insert" />
+									</property>
+									<property key="items">
+										<list>
+											<string value="Youtube" />
+										</list>
+									</property>
+								</struct>
+							</list>
+						</property>
+					
+						<property key="extraPlugins">
+							<list>
+								<string value="youtube" />
+							</list>
+						</property>
+					
+						<property key="removePlugins">
+							<list>
+								<string value="iframe" />
+							</list>
+						</property>
+						
+						<property key="youtube_width">
+							<string value="640"/>
+						</property>
+						<property key="youtube_height">
+							<string value="480"/>
+						</property>
+						<property key="youtube_responsive">
+							<boolean value="false"/>
+						</property>
+						<property key="youtube_related">
+							<boolean value="false"/>
+						</property>
+						<property key="youtube_older">
+							<boolean value="false"/>
+						</property>
+						<property key="youtube_privacy">
+							<boolean value="true"/>
+						</property>
+						<property key="youtube_autoplay">
+							<boolean value="false"/>
+						</property>
+						<property key="youtube_controls">
+							<boolean value="true"/>
+						</property>
+						<property key="youtube_disabled_fields">
+							<list>
+							<!-- 
+								<string value="txtEmbed"/>
+								<string value="txtUrl"/>
+								<string value="txtWidth"/>
+								<string value="txtHeight"/>
+								<string value="chkResponsive"/>
+								<string value="chkNoEmbed"/>
+								<string value="chkRelated"/>
+								<string value="chkPrivacy"/>
+								<string value="txtStartAt"/>
+								<string value="chkControls"/>
+							 -->
+								<string value="chkAutoplay"/>
+								<string value="chkOlderCode"/>
+							</list>
+						</property>
+					</feature>
+				</features>
+				<feature-sets>
+					<feature-set name="html">
+						<feature-ref name="youtube" />
+					</feature-set>
+					<feature-set name="i18n-html">
+						<feature-ref name="youtube" />
+					</feature-set>
+				</feature-sets>
+			</instance>
+		</config>
+	</services>
+</application>

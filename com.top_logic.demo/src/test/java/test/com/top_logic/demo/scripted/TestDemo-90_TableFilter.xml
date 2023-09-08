@@ -1,0 +1,1033 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+					command-label="Generieren..."
+					command-name="generateTypes"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Name des generierten Wurzelelementes"
+									field-name="rootName"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="TestFilter"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Anzahl der generierten Kinder"
+									field-name="numberChildren"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+								int="40"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Generieren"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+							structure-name="DemoTypes"
+						>
+							<structure-path>
+								<node name="TestFilter"/>
+							</structure-path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Tabellen > Grid"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+										field-label-comment=""
+									>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestFilter"/>
+												<node name="A0"/>
+											</structure-path>
+										</business-object>
+									</node>
+								</path>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="gridEdit"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+						component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+									field-label-comment=""
+								>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="A0"/>
+										</structure-path>
+									</business-object>
+								</field>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="Name"
+								>
+									<attribute-ref attribute-name="name">
+										<type type-name="DemoTypes.All">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="A0"/>
+										</structure-path>
+									</self-ref>
+								</field>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Y1"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+										field-label-comment=""
+									>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestFilter"/>
+												<node name="A10"/>
+											</structure-path>
+										</business-object>
+									</node>
+								</path>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+						component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+									field-label-comment=""
+								>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="A10"/>
+										</structure-path>
+									</business-object>
+								</field>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="Name"
+								>
+									<attribute-ref attribute-name="name">
+										<type type-name="DemoTypes.All">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="A10"/>
+										</structure-path>
+									</self-ref>
+								</field>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Y2"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+										field-label-comment=""
+									>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestFilter"/>
+												<node name="A15"/>
+											</structure-path>
+										</business-object>
+									</node>
+								</path>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+						component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+									field-label-comment=""
+								>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="A15"/>
+										</structure-path>
+									</business-object>
+								</field>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="Name"
+								>
+									<attribute-ref attribute-name="name">
+										<type type-name="DemoTypes.All">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="A15"/>
+										</structure-path>
+									</self-ref>
+								</field>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Y3"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridComponent$GridApplyCommandHandler"
+					command-label="Übernehmen"
+					command-name="gridApplyRowObject"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+						component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+									field-label-comment=""
+								>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="Y3"/>
+										</structure-path>
+									</business-object>
+								</field>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="long"
+								>
+									<attribute-ref attribute-name="long">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="Y3"/>
+										</structure-path>
+									</self-ref>
+								</field>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="3"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+										field-label-comment=""
+									>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestFilter"/>
+												<node name="Y2"/>
+											</structure-path>
+										</business-object>
+									</node>
+								</path>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+						component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+									field-label-comment=""
+								>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="Y2"/>
+										</structure-path>
+									</business-object>
+								</field>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="long"
+								>
+									<attribute-ref attribute-name="long">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="Y2"/>
+										</structure-path>
+									</self-ref>
+								</field>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="2"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+										field-label-comment=""
+									>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestFilter"/>
+												<node name="Y1"/>
+											</structure-path>
+										</business-object>
+									</node>
+								</path>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+						component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+									field-label-comment=""
+								>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="Y1"/>
+										</structure-path>
+									</business-object>
+								</field>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="long"
+								>
+									<attribute-ref attribute-name="long">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestFilter"/>
+											<node name="Y1"/>
+										</structure-path>
+									</self-ref>
+								</field>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="1"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridComponent$GridApplyCommandHandler"
+					command-label="Übernehmen"
+					command-name="gridApplyRowObject"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+					column-name="long"
+					filter-column-name=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name">
+						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+								component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="fieldTable"
+								/>
+							</path>
+						</table-name>
+					</model-name>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="ComparableFilterView0"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Vergleichsart:"
+									field-name="operator"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumValue"
+										enum="com.top_logic.layout.table.filter.ComparableFilterConfiguration$Operators:EQUALS"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name">
+						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+								component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="fieldTable"
+								/>
+							</path>
+						</table-name>
+					</model-name>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="ComparableFilterView0"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="ComparableFilterView-Pattern"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Wert:"
+									field-name="text"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="2"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name">
+							<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+							</table-name>
+						</form-handler-name>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="filterDialogContent"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="buttons"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="Anwenden"
+								field-name="apply"
+							/>
+						</path>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRows">
+						<table config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+								component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="fieldTable"
+								/>
+							</path>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SortTableColumnOp"
+					label="true"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+							tab-path="Tabellen > Grid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="fieldTable"
+							/>
+						</path>
+					</model-name>
+					<sort-orders>
+						<sort-order
+							ascending="true"
+							column="Name"
+						/>
+					</sort-orders>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestFilter"/>
+												<node name="Y2"/>
+												<node name="X10"/>
+											</structure-path>
+										</business-object>
+									</node>
+								</path>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+							tab-path="Tabellen > Grid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="fieldTable"
+							/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FieldValueAccess">
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableDisplayValue"
+							column-name="long"
+						>
+							<table config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+							</table>
+							<row-number config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+								int="0"
+							/>
+						</field>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.LongValue"
+						long="2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestFilter"/>
+												<node name="Y2"/>
+											</structure-path>
+										</business-object>
+									</node>
+								</path>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+							tab-path="Tabellen > Grid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="fieldTable"
+							/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FieldValueAccess">
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableDisplayValue"
+							column-name="long"
+						>
+							<table config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+							</table>
+							<row-number config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+								int="1"
+							/>
+						</field>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.LongValue"
+						long="2"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+					column-name="long"
+					filter-column-name=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name">
+							<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+							</table-name>
+						</form-handler-name>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="filterDialogContent"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="buttons"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="Alle anzeigen"
+								field-name="showAll"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
+					template-name-comment="Persoenliche Einstellungen zuruecksetzen"
+				>
+					<parameters/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="com.top_logic.model.search/transaction.template.xml"
+	groups="dialogs"
+>
+	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.tool.boundsec.CommandHandler$ImageConfig, com.top_logic.tool.boundsec.CommandHandler$ExecutabilityConfig, com.top_logic.tool.boundsec.CommandHandler$ConfirmConfig, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$UIOptions, com.top_logic.model.search.providers.TransactionHandlerByExpression$UIOptions">
+		<annotations>
+			<display-inherited value="IGNORE"/>
+			<display-order>
+				<value>
+					<property name="label"/>
+					<property name="width"/>
+					<property name="height"/>
+					<property name="image"/>
+					<property name="disabledImage"/>
+					<property name="executability"/>
+					<property name="target"/>
+					<property name="formType"/>
+					<property name="initialization"/>
+					<property name="operation"/>
+					<property name="closeDialog"/>
+					<property name="confirm"/>
+					<property name="confirmMessage"/>
+					<property name="postCreateActions"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="label"
+			type="com.top_logic.basic.util.ResKey"
+		>
+			<mandatory/>
+		</property>
+
+		<property name="openID"
+			type="String"
+		>
+			<complex-default value="com.top_logic.layout.RandomIDProvider"/>
+			<hidden/>
+		</property>
+	</properties>
+
+	<config
+		closableUsingX="true"
+		createOpenerButtons="true"
+		formType="${formType}"
+		height="${height}"
+		helpID="${helpID}"
+		initialization="${initialization}"
+		openMaximized="false"
+		resizable="true"
+		width="${width}"
+	>
+		<title title="${label}"/>
+
+		<open-handler id="${openID}"
+			disabledImage="${disabledImage}"
+			executability="${executability}"
+			group="Write"
+			image="${image}"
+			resourceKey="${label}"
+			target="${target}"
+			targetComponent="Form"
+		/>
+
+		<transactionHandler id="perform"
+			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+			clique="apply"
+			closeDialog="${closeDialog}"
+			confirm="${confirm}"
+			confirmMessage="${confirmMessage}"
+			group="Write"
+			image="theme:ICONS_BUTTON_OK"
+			operation="${operation}"
+			postCreateActions="${postCreateActions}"
+			resourceKey="${label}"
+		/>
+	</config>
+</config:template>

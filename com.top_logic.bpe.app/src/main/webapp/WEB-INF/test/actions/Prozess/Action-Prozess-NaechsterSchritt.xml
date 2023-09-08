@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings output-format="xml"/>
+		<t:parameters>
+			<t:parameter name="Pfad"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+					command-label="Aufgabe abschließen"
+					command-name="finishTask"
+					component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+					component-name="com.top_logic.bpe.app/bpe/app/structure/tileTab.layout.xml#EditActiveTaskEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Nächste Aufgabe"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+								node-path="${$Pfad}"
+							/>
+						</values>
+					</value>
+				</action>
+
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ja"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

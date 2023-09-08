@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+	SPDX-FileCopyrightText: 2005 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<!-- The meta objects that make up the features for the mail project. -->
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+		<metaobject object_type="MOKnowledgeObject" object_name="MailFolder" super_class="DublinCore">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="com.top_logic.mail.base.imap.IMAPMailFolder"/>
+				</annotation>
+			</annotations>
+			<attributes>
+				<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+					att_name="tType"
+					att_type="MetaElement"
+					mandatory="true"
+				>
+					<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+						<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+							type="tl.mail:MailFolder"
+						/>
+					</storage>
+				</mo_attribute>
+				<mo_attribute att_name="name"        att_type="String" mandatory="true" />
+				<mo_attribute att_name="description" att_type="String" mandatory="false" />
+			</attributes>
+		</metaobject>
+		<metaobject object_type="MOKnowledgeObject" object_name="Mail" super_class="DublinCore">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="com.top_logic.mail.base.imap.IMAPMail"/>
+				</annotation>
+			</annotations>
+			<attributes>
+				<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+					att_name="tType"
+					att_type="MetaElement"
+					mandatory="true"
+				>
+					<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+						<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+							type="tl.mail:Mail"
+						/>
+					</storage>
+				</mo_attribute>
+				<mo_attribute att_name="name"         att_type="String"  mandatory="true" />
+				<mo_attribute att_name="mailID"       att_type="String"  mandatory="true" />
+				<mo_attribute att_name="sentDate"     att_type="Date"    mandatory="false" />
+				<mo_attribute att_name="attachements" att_type="Boolean" mandatory="true" />
+
+				<mo_attribute att_name="from"       att_type="String"  mandatory="false" />
+			</attributes>
+		</metaobject>
+
+		<association super_class="Association" object_name="hasMailBox">
+			<attributes>
+				<destination
+					override="true"
+					target-type="MailFolder" />
+			</attributes>
+		</association>
+
+		<association super_class="Association" object_name="hasMailFolderContent">
+			<attributes>
+				<source
+					override="true"
+					target-type="MailFolder" />
+				<destination
+					override="true"
+					target-type="MailFolderContent" />
+			</attributes>
+		</association>
+
+		<alternative object_name="MailFolderContent">
+			<specialisations>
+				<specialisation name="MailFolder"/>
+				<specialisation name="Mail"/>
+			</specialisations>
+		</alternative>
+
+		<association super_class="Association" object_name="hasAttachedDocuments">
+			<attributes>
+				<source
+					override="true"
+					target-type="Mail" />
+				<destination
+					override="true"
+					target-type="Document" />
+			</attributes>
+		</association>
+	</metaobjects>
+</objectlist>

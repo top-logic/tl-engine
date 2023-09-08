@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="com.top_logic/tileTable.template.xml"
+	groups="commons"
+	usable-in-context="com.top_logic.mig.html.layout.tiles.IsInTileContext"
+>
+	<properties extends="com.top_logic.layout.editor.config.TypeTemplateParameters,com.top_logic.mig.html.layout.tiles.TileComponentName">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="type"/>
+				</value>
+			</display-order>
+		</annotations>
+		<property name="defaultColumns"
+			element-type="String"
+			type="List"
+		>
+			<hidden/>
+			<derived fun="com.top_logic.layout.editor.DefaultColumnsProvider">
+				<args>
+					<ref value="type"/>
+				</args>
+			</derived>
+			<format value="com.top_logic.basic.config.CommaSeparatedStrings"/>
+		</property>
+	</properties>
+
+	<config name="${name}"
+		defaultColumns="${defaultColumns}"
+		type="${type}"
+	>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`${type}`)"
+			supportsElement="element->$element.instanceOf(`${type}`)"
+		/>
+	</config>
+</config:template>

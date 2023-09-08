@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="param1"/>
+		<param name="param2"/>
+		<param name="param3"/>
+		<param name="param4"/>
+	</params>
+	<component class="X"
+		p1="${param1}"
+		p2="${param2}"
+		p3="${param3}"
+	>${param4}</component>
+</template>

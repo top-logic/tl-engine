@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create objects"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-B.xml"
+					template-name-comment="Create B"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Ticket #18985: Pfadnavigation in Vergangenheit"
+						/>
+						<parameter name="ergebnis"
+							value="root"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="root"
+						/>
+						<parameter name="Name"
+							value="A1"
+						/>
+						<parameter name="ergebnis"
+							value="a1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="root"
+						/>
+						<parameter name="Name"
+							value="A2"
+						/>
+						<parameter name="ergebnis"
+							value="a2"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="root"
+						/>
+						<parameter name="Name"
+							value="A3"
+						/>
+						<parameter name="ergebnis"
+							value="a3"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-B.xml"
+					template-name-comment="Create C"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a1"
+						/>
+						<parameter name="Name"
+							value="C1"
+						/>
+						<parameter name="Typ"
+							value="Demo C"
+						/>
+						<parameter name="ergebnis"
+							value="c1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-B.xml"
+					template-name-comment="Create C"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a1"
+						/>
+						<parameter name="Name"
+							value="C2"
+						/>
+						<parameter name="Typ"
+							value="Demo C"
+						/>
+						<parameter name="ergebnis"
+							value="c2"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-B.xml"
+					template-name-comment="Create C"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a1"
+						/>
+						<parameter name="Name"
+							value="C3"
+						/>
+						<parameter name="Typ"
+							value="Demo C"
+						/>
+						<parameter name="ergebnis"
+							value="c3"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Set references"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Liste setzen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a1"
+						/>
+						<parameter name="attribute"
+							value="structure"
+						/>
+						<parameter name="value1"
+							value="c1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Liste setzen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a2"
+						/>
+						<parameter name="attribute"
+							value="structure"
+						/>
+						<parameter name="value1"
+							value="c2"
+						/>
+						<parameter name="value2"
+							value="c3"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Liste setzen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a3"
+						/>
+						<parameter name="attribute"
+							value="structure"
+						/>
+						<parameter name="value1"
+							value="c3"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Remember revision"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Text setzen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a1"
+						/>
+						<parameter name="attribute"
+							value="text"
+						/>
+						<parameter name="value"
+							value="first change"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Revision merken"
+					business-object="Variable"
+				>
+					<parameters>
+						<parameter name="ergebnis"
+							value="r0"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check initial state"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Liste pruefen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a3"
+						/>
+						<parameter name="attribute"
+							value="structure"
+						/>
+						<parameter name="value1"
+							value="c3"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Liste pruefen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a1"
+						/>
+						<parameter name="attribute"
+							value="derivedPath"
+						/>
+						<parameter name="value1"
+							value="a1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Liste pruefen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a2"
+						/>
+						<parameter name="attribute"
+							value="derivedPath"
+						/>
+						<parameter name="value1"
+							value="a2"
+						/>
+						<parameter name="value2"
+							value="a3"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Liste pruefen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a3"
+						/>
+						<parameter name="attribute"
+							value="derivedPath"
+						/>
+						<parameter name="value1"
+							value="a2"
+						/>
+						<parameter name="value2"
+							value="a3"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Modify objects"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Liste setzen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a1"
+						/>
+						<parameter name="attribute"
+							value="structure"
+						/>
+						<parameter name="value1"
+							value="c3"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Liste pruefen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a1"
+						/>
+						<parameter name="attribute"
+							value="derivedPath"
+						/>
+						<parameter name="value1"
+							value="a1"
+						/>
+						<parameter name="value2"
+							value="a2"
+						/>
+						<parameter name="value3"
+							value="a3"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Text setzen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="a1"
+						/>
+						<parameter name="attribute"
+							value="text"
+						/>
+						<parameter name="value"
+							value="second change"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Revision merken"
+					business-object="Variable"
+				>
+					<parameters>
+						<parameter name="ergebnis"
+							value="r1"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Browse historic version"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Historie..."
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.WrapperInRevisionNaming$WrapperInRevisionName">
+								<revision config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+									name="r0"
+								/>
+								<wrapper config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+									name="a1"
+								/>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesHistroyTable"
+							tab-path=""
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="false"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="derivedPath"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#HistoricDemoTypesEdit"
+								tab-path="Typendemo"
+							/>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.WrapperInRevisionNaming$WrapperInRevisionName">
+									<revision config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+										name="r0"
+									/>
+									<wrapper config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+										name="a1"
+									/>
+								</model-name>
+							</entry>
+						</list>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.WrapperInRevisionNaming$WrapperInRevisionName">
+								<revision config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+									name="r1"
+								/>
+								<wrapper config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+									name="a1"
+								/>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesHistroyTable"
+							tab-path=""
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					comparision="set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="false"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="derivedPath"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#HistoricDemoTypesEdit"
+								tab-path="Typendemo"
+							/>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.WrapperInRevisionNaming$WrapperInRevisionName">
+									<revision config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+										name="r1"
+									/>
+									<wrapper config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+										name="a1"
+									/>
+								</model-name>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.WrapperInRevisionNaming$WrapperInRevisionName">
+									<revision config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+										name="r1"
+									/>
+									<wrapper config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+										name="a2"
+									/>
+								</model-name>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.WrapperInRevisionNaming$WrapperInRevisionName">
+									<revision config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+										name="r1"
+									/>
+									<wrapper config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+										name="a3"
+									/>
+								</model-name>
+							</entry>
+						</list>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
+					command-label="Schließen"
+					command-name="closeDialogInView"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#HistoricDemoTypesEdit"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

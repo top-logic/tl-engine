@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- the following are only demo-objects, do not plain copy to other modules  -->
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<metaobject object_name="TestObject" super_class="AttributedObject" />
+	</metaobjects>
+</objectlist>

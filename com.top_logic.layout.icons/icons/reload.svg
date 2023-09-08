@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="visual"
+   viewBox="0 0 22 22"
+   version="1.1"
+   sodipodi:docname="buttonRefresh_path.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata5771">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>buttonRefresh</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     id="namedview5769"
+     showgrid="false"
+     inkscape:zoom="15.170655"
+     inkscape:cx="14.801644"
+     inkscape:cy="24.487131"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="visual" />
+  <defs
+     id="defs5760">
+    <style
+       id="style5758">.cls-1{fill:#fbfbfd;}</style>
+  </defs>
+  <title
+     id="title5762">buttonRefresh</title>
+  <path
+     id="path5766"
+     style="fill:#008fb8;fill-opacity:1;stroke-width:1.48224211"
+     d="M 11.546067,16.413097 H 10.997638 A 5.395361,5.395361 0 0 1 5.5874546,11.002913 H 2.1041858 a 8.8934521,8.8934521 0 0 0 8.8934522,8.893452 h 0.548429 v 2.07514 l 6.6108,-3.809363 -6.6108,-3.824183 z M 10.997638,2.1094608 h -0.54843 V 0.03432203 L 3.8384089,3.843684 10.449208,7.6678684 V 5.5927297 h 0.54843 a 5.395361,5.395361 0 0 1 5.410184,5.4101833 H 19.89109 A 8.8934521,8.8934521 0 0 0 10.997638,2.1094608 Z"
+     inkscape:connector-curvature="0" />
+</svg>

@@ -1,0 +1,351 @@
+html,
+body {
+    box-sizing: border-box;
+}
+
+
+/* --------------------- form responsiveness fix --------------------- */
+
+@media all and (-ms-high-contrast:active), all and (-ms-high-contrast:none) {
+    :not(.dflColumns0):not(.dflColumns1).layoutControl.dflColumns .rf_content.cols2 > *:not(.rf_line):not(.rf_groupCell),
+    .dflColumns2 .rf_content > *:not(.rf_line):not(.rf_groupCell)
+    {
+        /*
+        this is an unmaintainable, hammer-to-the-head fix for responsiveness in IE
+        unfortunately we have to support IE so ...
+        */
+        min-width: calc(50% - 80px);
+        width: calc(50% - 80px);
+    }
+
+}
+
+
+/* --------------------- adjust other styles ---------------------------- */
+.firstLevelTabBar .activeTab,
+.tabBar .activeTab
+{
+    border: none;
+    border-bottom: 2px;
+    border-bottom-style: solid;
+    border-bottom-color: var(--LAYOUT_MAIN_COLOR);
+}
+
+.card-text
+{
+    text-overflow: ellipsis;
+    max-height: 2em;
+}
+
+.card .cButton
+{
+    right: 10px;
+}
+
+div.cColorComposer tr.spacer
+{
+    height:0px;
+}
+
+td.colorDisplay > span.canDrag
+{
+    width: 14px;
+    height: 13px;
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+.ColorChooser,
+.cIconChooser .input-image
+{
+    height: 22px;
+    box-sizing: border-box;
+}
+
+.tabBar .tab, .tabBar .activeTab,
+.tabBar .tab:hover
+{
+    margin: 0 0 0 0.4em;
+    font-size: 1em;
+    font-weight: normal;
+}
+
+.mainTabBar .tab:hover
+{
+    border: none;
+}
+
+.tabContainer {
+    padding-top: 1px;
+    box-sizing: border-box;
+}
+
+.TitleTop
+{
+    border-bottom: 1px var(--TL-iron) solid;
+}
+
+div.fltCommandContent
+{
+    text-align: center;
+}
+
+.tl-table__footer-pager{
+    border: none;
+    line-height: 24px;
+}
+
+div.pdlgTitleBar > span.pdlgToolbar > span.dlgToolbarGroup > span.cButton[data-tooltip*="Farbschema"]
+{
+    vertical-align: 0.1em;
+}
+
+.errorFragmentContainer
+{
+    font-size: 10px;
+    padding: 0 5px;
+}
+
+table.tblFrozen td span.cError img {
+	height: 8px;
+	width: 8px;
+}
+
+.BreadCrumbOuter
+{
+    box-shadow: 10px 10px 81px -14px rgba(0,0,0,0.5);
+}
+
+.div.ToolContainer div.IconContainer .input-image
+{
+    box-shadow: none;
+    border-left: 1px var(--TL-iron) solid;
+}
+
+
+/* overflow */
+.ToolBarContainer,
+.TitleName,
+.TitleTop
+{
+    overflow: hidden;
+}
+
+div.dlgContent > div > div.lcAuto
+{
+    overflow: auto;
+}
+
+.ToolContainerRight
+{
+    margin-right: 38px;
+}
+
+div.ToolContainer div.IconContainer .input-image.disabled
+{
+    transition: background-color 4s;
+}
+
+div.ToolContainer div.IconContainer ul.mtbGroup li:last-child .input-image:not(.disabled)
+{
+    margin-right: 0.8em;
+}
+
+div.ToolContainer div.IconContainer .input-image:hover
+{
+    box-shadow: none;
+}
+
+div.fltSubContent > hr
+{
+    border: 1px 0 0 0;
+    border-style: solid;
+    border-color: var(--TL-iron);
+}
+
+div.fptIconBar > span.fptIcon,
+div.fptIconBar > span.fptIconWithOverlay
+{
+    background-color: var(--TL-white-grey);
+    padding: 8px;
+    border-radius: 30px;
+    font-size: 38px;
+    height: 40px;
+    width: 40px;
+    text-align: center;
+}
+
+.fptIconOverlay i {
+	position: absolute;
+	top: 0px;
+	right: 5px;
+	border-radius: 30px;
+	font-size: 30px;
+	padding: 4px;
+}
+
+div.fptIconBar > span.fptIcon > i,
+div.fptIconBar > span.fptIconWithOverlay > i
+{
+	position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+div.fptIconBar > span.fptIconOverlay > i
+{
+	color: var(--ICON_COLOR_CIRCLE_OVERLAY_BASIC);
+}
+
+div.fptIconBar > span.fptIcon > i,
+div.fptIconBar > span.fptIconWithOverlay > i,
+div.fptIconBar > span.fptIconOverlay > i.icon-circle,
+div.fptIconBar > span.fptIcon > i span::after,
+div.fptIconBar > span.fptIconWithOverlay > i span::after,
+div.fptIconBar > span.fptIconOverlay > i.icon-circle span::after
+{
+	color: var(--ICON_COLOR_CIRCLE_BASIC);
+}
+
+.card-title::before
+{
+    content: '\25e6';
+    font-weight: bold;
+    font-size: 1.2em;
+    margin: 0 0.25em 0 0.25em;
+    color: var(--LAYOUT_MAIN_COLOR);
+}
+
+.cExpandableTextInput textarea.is-input, .cBlockTextInput textarea.is-input
+{
+    width: calc(100% - 46px);
+}
+
+div.BreadCrumbOuter
+{
+    overflow: hidden;
+}
+
+a.tab
+{
+    text-decoration: none;
+}
+
+/* -------------------------- trying to style the select tag -------------------------------- */
+
+div.mainText > span > span > select
+{
+    line-height: 1em;
+    max-height: 22px;
+}
+
+select:not( [multiple="multiple"] )
+{
+	line-height: 1.3;
+	padding: .2em 1.9em .2em .6em;
+	margin: 0;
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+    background-image: linear-gradient(45deg, transparent 49%, var(--ICON_COLOR_BASIC) 50%), linear-gradient(135deg, var(--ICON_COLOR_BASIC) 49%, transparent 50%);
+	background-position: calc(100% - 10px) center, calc(100% - 5px) center;
+	background-size: 5px 5px, 5px 5px;
+	background-repeat: no-repeat;
+}
+
+select::-ms-expand
+{
+	display: none;
+}
+
+.rf_header select,
+select:focus:not( [multiple="multiple"] )
+{
+	background-image: linear-gradient(45deg, transparent 49%, var(--ICON_COLOR_DARK_CONTEXT_BASIC) 50%), linear-gradient(135deg, var(--ICON_COLOR_DARK_CONTEXT_BASIC) 49%, transparent 50%);
+}
+
+span.disabled > span.lFlexible > select:not( [multiple="multiple"] )
+{
+    background-image: linear-gradient(45deg, transparent 49%, var(--TL-disabled) 50%), linear-gradient(135deg, var(--TL-disabled) 49%, transparent 50%);
+}
+
+select:focus:not( [multiple="multiple"] ),
+.rf_header select,
+.mandatory select:focus:not( [multiple="multiple"] )
+{
+	background-color: var(--LAYOUT_MAIN_COLOR);
+    color: var(--TL-bright);
+}
+
+select option
+{
+	font-weight:normal;
+}
+
+div.headermain > div.mainText > span > span.lFixedRight
+{
+    position: absolute;
+    top: 4px;
+}
+
+div.ToolContainer .input-image:not([src*='png']):not([src*='minus']):not([src*='plus']):not([src*='image_buttons']) {
+	padding: 5px;
+}
+
+div.ToolContainer .input-image:not([src*='png']):not([src*='minus']):not([src*='plus']):not([src*='image_buttons']) {
+	display: inline-block;
+	width: var(--TOOLBAR_BUTTON_ICON_SIZE);
+	height: var(--TOOLBAR_BUTTON_ICON_SIZE);
+}
+
+.cLogoutTimer a {
+	text-align: left;
+}
+
+div.ToolContainer .cButton.cmdLinkActive .input-image i {
+	color: var(--ICON_COLOR_DARK_CONTEXT_BASIC);
+}
+
+div.ToolContainer .cButton.cmdLinkActive .input-image span::before,
+div.ToolContainer .cmdLinkActive .input-image:hover i[class*=" overlay-"] span::before {
+	color: var(--IMAGE_BUTTON_BACKGROUND);
+}
+
+div.ToolContainer .cButton.cmdLinkActive .input-image span::after {
+	color: var(--ICON_COLOR_DARK_CONTEXT_HIGHLIGHT);
+}
+
+.rf_header .cButton,
+.cDecoratedCell .lFlexible,
+.dlgTitleBar a {
+	vertical-align: middle;
+	font-size: 12px;
+}
+
+.accText {
+	vertical-align: bottom;
+}
+
+.quickSearch .cButton .input-image, 
+.BreadCrumbOuter .input-image {
+	display: inline-block;
+    width: var(--ICON_SIZE_NORMAL);
+    height: var(--ICON_SIZE_NORMAL);
+    position: relative;
+}
+
+.quickSearch .cButton .input-image i, 
+.BreadCrumbOuter .input-image i {
+	color: var(--ICON_COLOR_BASIC);
+	font-size: 14px;
+	position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.quickSearch .cButton .input-image.disabled i {
+	color: var(--ICON_COLOR_DISABLED_BASIC);
+}

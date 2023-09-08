@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<t:parameter name="Example_List_String" multiple="true" type="string" />
+			
+			<t:parameter name="Example_List_Xml" multiple="true" type="xml" />
+			
+			<t:parameter name="Example_List_Boolean" multiple="true" type="boolean" />
+			
+			<t:parameter name="Example_List_Integer" multiple="true" type="integer" />
+			
+			<t:parameter name="Example_List_Float" multiple="true" type="float" />
+			
+			<t:parameter name="Example_List_Date" multiple="true" type="date" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:foreach var='entry' values='$Example_List_String'>
+			<t:value expr='entry' />
+		</t:foreach>
+		
+		<t:foreach var='entry' values='$Example_List_Xml'>
+			<t:value expr='entry' />
+		</t:foreach>
+		
+		<t:foreach var='entry' values='$Example_List_Boolean'>
+			<t:value expr='entry' />
+		</t:foreach>
+		
+		<t:foreach var='entry' values='$Example_List_Integer'>
+			<t:value expr='entry' />
+		</t:foreach>
+		
+		<t:foreach var='entry' values='$Example_List_Float'>
+			<t:value expr='entry' />
+		</t:foreach>
+		
+		<t:foreach var='entry' values='$Example_List_Date'>
+			<t:value expr='entry' />
+		</t:foreach>
+		
+	</t:body>
+</t:template>

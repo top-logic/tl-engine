@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_4375160a_ba0d_42f9_99b1_6e4fd89e6581">
+		<tabLabel key="dynamic.7304bc6d-24fa-45e5-8261-5cf7d3db47bd">
+			<en>Selection options</en>
+			<de>Auswahloptionen</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/selectionOptions/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

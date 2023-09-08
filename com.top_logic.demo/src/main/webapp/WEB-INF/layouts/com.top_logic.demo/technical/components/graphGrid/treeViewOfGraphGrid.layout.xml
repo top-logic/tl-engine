@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/treegrid.template.xml"
+>
+	<arguments
+		defaultColumns="name,others"
+		defaultSelection="false"
+		detailComponent=""
+		isSecurityMaster="false"
+		multiSelection="true"
+		rootVisible="true"
+		showDetailOpener="false"
+		type="tl.demo.graph:N"
+	>
+		<name key="dynamic.d4784ac7-091e-44ac-9146-e33499cf3767">
+			<en>Tree view of graph</en>
+			<de>Baumdarstellung eines Graphen</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.demo.graph:N#others`)"
+			finite="false"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="null"
+			nodePredicate="node->$node.instanceOf(`tl.demo.graph:N`)"
+			parents="node->$node.referers(`tl.demo.graph:N#others`)"
+			rootNode="`tl.demo.graph#ROOT`"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_1a592b61_9297_4b7e_95aa_996b2f5c4d41"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				confirm="false"
+				disabledImage=""
+				group="Delete"
+				image=""
+				target="selection(self())"
+			>
+				<executability>
+					<rule-by-expression>
+						<decision>x -&gt; !$x.containsElement(`tl.demo.graph#ROOT`) || #("Der Wurzelknoten kann nicht gelöscht werden"@de, "The root node cannot be deleted"@en)</decision>
+						<show-disabled>true</show-disabled>
+					</rule-by-expression>
+				</executability>
+				<resourceKey key="dynamic.fe524969-bef9-4433-a491-db53ee54f005">
+					<en>Delete Node</en>
+					<de>Knoten Löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/graphGrid/newNodeDialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

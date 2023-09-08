@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties>
+		<property name="contentParam"
+			type="String"
+		/>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			type="List"
+		/>
+		<property name="componentControlProvider"
+			instance-type="com.top_logic.layout.structure.LayoutControlProvider"
+			type="PolymorphicConfiguration"
+		>
+			<annotations>
+				<implementation-class-default value="com.top_logic.layout.structure.EmptyLayoutControlProvider"/>
+				<item-default />
+			</annotations>
+		</property>
+	</properties>
+
+	<include name="test.com.top_logic.layout.editor.TestDynamicComponentDefinition/testIncludeTemplate.xml"
+		componentControlProvider="${componentControlProvider}"
+		content="${contentParam}"
+		model="${model}"
+	>
+		<inject><buttons>${buttons}</buttons></inject>
+	</include>
+</config:template>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="componentName"/>
+		<param name="moreChildren">
+			<!-- Empty by default. -->
+		</param>
+	</params>
+	<component class="B"
+		name="${componentName}"
+	>
+		<childList>
+			<include name="test.com.top_logic.layout.processor.TestLayoutInline/b-fragment.xml"
+				componentName="${componentName}"
+			>
+				<moreChildren>${moreChildren}</moreChildren>
+			</include>
+		</childList>
+	</component>
+</template>

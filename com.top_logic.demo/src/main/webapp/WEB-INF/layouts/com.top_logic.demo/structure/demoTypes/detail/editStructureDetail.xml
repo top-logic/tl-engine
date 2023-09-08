@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="structure"/>
+		<param name="defaultFor"
+			value=""
+		/>
+		<param name="exportDialogs"
+			optional="true"
+		/>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="master"
+			value="${structure}Tree"
+		/>
+		<param name="show-compare-command"
+			value=""
+		/>
+	</params>
+
+	<include name="element/editStructureDetail.xml"
+		defaultFor="${defaultFor}"
+		editRoot="true"
+		master="${master}"
+		modifier="com.top_logic.demo.edit.DemoFormContextModificator"
+		namePrefix="${namePrefix}"
+		page="/jsp/demo/EditStructuredElement.jsp"
+		show-compare-command="${show-compare-command}"
+		structure="${structure}"
+	>
+		<createForms>
+			<form type="DemoTypes:A">
+				<formDefinition>
+					<group
+						collapsible="true"
+						columns="DEFAULT"
+						initiallyOpened="true"
+						labelPlacement="DEFAULT"
+						showBorder="true"
+						showTitle="true"
+						wholeLine="true"
+					>
+						<field attribute="name"/>
+						<field attribute="booleanMandatory"/>
+						<field attribute="booleanRadioMandatory"/>
+						<field attribute="booleanSelectMandatory"/>
+						<label key="dynamic.a9fd3c02-023d-435f-baaa-443bb3c1e22e">
+							<en>Attributes</en>
+							<de>Attribute</de>
+						</label>
+					</group>
+				</formDefinition>
+			</form>
+		</createForms>
+		<editDialogs>
+			<include name="com.top_logic.demo/structure/demoTypes/detail/historyDialogWithContent.xml"
+				namePrefix="${namePrefix}${structure}"
+				structure="${structure}"
+			/>
+		</editDialogs>
+		<exportDialogs>${exportDialogs}</exportDialogs>
+		<subConfiguration>
+			<buttons>
+				<button id="generateTypes"
+					class="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+					group="Create"
+					image="theme:ICONS_GEAR"
+					resourceKey="layouts.demo.editStructureDetail.generateTypes"
+				/>
+				<button id="deleteMails"
+					class="com.top_logic.demo.model.types.util.DeleteMailsCommand"
+					clique="delete"
+					group="Delete"
+					resourceKey="layouts.demo.editStructureDetail.deleteMails"
+				/>
+				<reference command-id="saveIgnoreWarnings"/>
+				<reference command-id="addToClipboard"/>
+				<reference command-id="showBookmarkLink"/>
+			</buttons>
+
+			<tables>
+				<table name="priorityTable"
+					exporter="com.top_logic.layout.table.model.SimpleTableDataExport"
+					titleKey="layouts.demo.editStructureDetail.priorityTable"
+				>
+					<column-default>
+						<additionalHeaders>
+							<nullCount/>
+						</additionalHeaders>
+					</column-default>
+					<columns>
+						<column name="name">
+							<additionalHeaders/>
+						</column>
+						<column name="date"
+							cellStyle="background: red;"
+							headStyle="background: red;"
+						/>
+					</columns>
+				</table>
+				<table name="childrenTable"
+					pageSizeOptions="10,20,all"
+				>
+					<columns>
+						<column name="parent"
+							visibility="excluded"
+						/>
+					</columns>
+				</table>
+				<table name="priorityTableDialogConfig"
+					exporter="com.top_logic.layout.table.model.SimpleTableDataExport"
+					titleKey="layouts.demo.editStructureDetail.priorityTableDialogConfig"
+				>
+					<columns>
+						<column name="date"
+							cellStyle="background: red;"
+							headStyle="background: red;"
+						/>
+					</columns>
+				</table>
+			</tables>
+		</subConfiguration>
+	</include>
+</template>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="performanceMonitor"
+	resPrefix="tl.admin.performanceMonitor."
+>
+	<components>
+		<component class="com.top_logic.layout.admin.component.PerformanceMonitorComponent"
+			name="performanceMonitor_content"
+			page="/jsp/administration/PerformanceMonitor.jsp"
+			resPrefix="tl.admin.performanceMonitor."
+			securityProviderClass="securityRoot"
+		>
+			<componentControlProvider class="com.top_logic.layout.structure.SeparateTableControlProvider"
+				tableName="performanceTable"
+			/>
+
+			<tables>
+				<table name="performanceTable"
+					fixedColumns="2"
+					resPrefix="tl.admin.performanceMonitor.performanceTable."
+				>
+					<column-default filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"/>
+					<columns>
+						<column name="triggerName"
+							cellStyle="text-align: left;"
+							columnWidth="250px"
+							comparator="com.top_logic.basic.col.ComparableComparator"
+						/>
+					</columns>
+				</table>
+			</tables>
+		</component>
+	</components>
+</layout>

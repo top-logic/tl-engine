@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			<t:type name="Pair_Type">
+				<t:attributes>
+					<t:attribute name="Left_Attribute" type="string" />
+					<t:attribute name="Right_Attribute" type="string" />
+				</t:attributes>
+			</t:type>
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Example_Parameter" type="Pair_Type" multiple="true" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:foreach var="entry" values="$Example_Parameter">
+			<t:value expr="entry.Left_Attribute" />
+			<t:value expr="entry.Right_Attribute" />
+		</t:foreach>
+		
+	</t:body>
+</t:template>

@@ -1,0 +1,86 @@
+#cont   {
+        position:absolute;
+        }
+
+body    {
+        background: #FFFFFF;
+        }
+
+table   {
+        border-color:#000000;
+        width:1px;
+        height:1px;
+        }
+
+td      {
+        height:21px;
+        padding:2px;
+        color:#000000;
+        font-size:13px;
+        font-family:Arial, sans-serif;
+        white-space:nowrap;
+        }
+
+.titel  {
+        font-weight:700;
+        border-bottom:2px solid;
+        border-right:1px solid;
+        word-spacing:60px;
+        }
+
+.zahl  {
+		font-family: monospace;
+        width:21px;
+        text-align:center;
+        border-right:1px solid;
+        border-bottom:2px solid;
+        background-image:url(zelle.png)
+        }
+
+.leer   {
+		font-family: monospace;
+        border-bottom:2px solid;
+        }
+
+.oben   {
+        font-weight:700;
+        font-family:Arial, sans-serif;
+        border-right:1px solid;
+        border-left:2px solid;
+        }
+
+.links  {
+        border-right:1px solid;
+        border-left:2px solid;
+        }
+
+.unten  {
+        border-right:1px solid;
+        border-bottom:2px solid;
+        border-left:2px solid;
+        }
+
+.obRe   {
+        border-right:2px solid;
+        background-image:url(zelle.png);
+        }
+
+.rechts {
+        border-right:2px solid;
+        }
+
+.untRe  {
+        border-right:2px solid;
+        border-bottom:2px solid;
+        background:silver;
+        background-image:url(zelle.png);
+        }
+
+.nein   {
+        background-image:url(zelle.png);
+        }
+
+.ja     {
+        background:silver;
+        background-image:url(zelle.png);
+        }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		tabIcon="theme:ICON_TABLE"
+		z_legacy_componentName="tableDemo"
+		z_legacy_tabBarName="tableDemo_tabBar"
+		z_legacy_tabLabel="demo.table.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.demo/table/grid/demoGrid.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/table/gridNoDetails/demoGridNoDetails.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/table/gridNoDisabledMarker/demoGridNoDisabledMarker.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/table/default/demoFrozenTable.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/table/simple/demoTableSimple.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/table/customizedSidebar/customizedSidebar.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/table/treeTable/demoTreeTable.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Switch to Sidebar-Layout"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Persönliche Einstellungen"
+			command-name="showCurrentPersonDialog"
+			component-implementation-comment="com.top_logic.layout.component.TabComponent"
+			component-name="mainTabbar.layout.xml#mainTabber"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.RestrictedSwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="switchToAJAXEdit"
+			component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
+			component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Theme"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+					tab-path=""
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="Sidebar-Layout"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
+			command-label="Speichern"
+			command-name="defaultSave"
+			component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
+			component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

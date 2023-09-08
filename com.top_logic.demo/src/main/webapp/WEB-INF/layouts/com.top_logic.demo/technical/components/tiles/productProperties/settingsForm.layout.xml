@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor=""
+		model="model(com.top_logic.demo/technical/components/tiles/productProperties/dialog.layout.xml#Dialog)"
+		saveClosesDialog="true"
+		securityProviderClass="securityRoot"
+		type=""
+	>
+		<name key="dynamic.cb5de766-c042-4745-9ab9-2a458430a230">
+			<en>Settings</en>
+			<de>Eigenschaften</de>
+		</name>
+		<forms/>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,9 @@
+<p>In TL-Script numbers, character strings, boolean values ​​and sets with arbitrary values ​​of these types can be compared with each other.</p>
+<h2>Numbers</h2>
+<p>Numbers are compared according to their natural order.</p>
+<h2>Strings</h2>
+<p>Strings are compared based on their technical order (neither upper and lower case letters nor letters with and without accents are identified with each other). Here, <code class="hljs inlineCode">"A" &lt; "a"</code> and <code class="hljs inlineCode">"Á" != "A"</code>. Special functions are available for comparisons that produce lexicographic order, see <a class="tlObject" data-custom="true" href="?page=StringComparisons&amp;uuid=36c8f677-8d7b-47da-9c6e-7f9becd1b725">Compare strings</a>.</p>
+<h2>Boolean</h2>
+<p>When comparing booleans, i.e., <code class="hljs inlineCode">true</code> and <code class="hljs inlineCode">false</code>, <code class="hljs inlineCode">true</code> is greater than <code class="hljs inlineCode">false</code>.</p>
+<h2>Sets</h2>
+<p>Sets are compared element by element. A set <code class="hljs inlineCode">l1</code> is smaller than a set <code class="hljs inlineCode">l2</code> if there is an index <code class="hljs inlineCode">n</code> at which its element <code class="hljs inlineCode">l1[n]</code> is smaller than the element <code class="hljs inlineCode">l2[n]</code>, but all other elements <code class="hljs inlineCode">l1[k]</code> are equal to the elements <code class="hljs inlineCode">l2[k]</code> for <code class="hljs inlineCode">k &lt; n</code>. This comparison identifies one-element sets and single values with each other. That is, a one-element set is equal to its single value contained in it.</p>

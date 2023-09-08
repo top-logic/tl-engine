@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<chart config:interface="com.top_logic.reporting.flex.search.chart.SearchResultChartConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	columns="name,boolean"
+	type="DemoTypes.A"
+>
+	<data-source class="com.top_logic.demo.chart.flex.DemoComponentDataSource"
+	/>
+	<model-preparation class="com.top_logic.reporting.flex.chart.config.model.DefaultModelPreparation">
+		<aggregations/>
+		<partitions>
+			<partition add-empty="true" class="com.top_logic.reporting.flex.chart.config.partition.MultiClassificationPartition" meta-attribute="DemoTypes.A#checklist"/>
+		</partitions>
+	</model-preparation>
+	<chart-builder class="com.top_logic.reporting.flex.chart.config.chartbuilder.bar.BarChartBuilder" >
+		<color-provider class="com.top_logic.reporting.flex.chart.config.color.OrderedColorProvider">
+			<colors>
+				<color value="#ff0000"/>
+				<color value="#00ff00"/>
+				<color value="#0000ff"/>
+				<color value="#ffff00"/>
+				<color value="#ff00ff"/>
+			</colors>
+		</color-provider>
+	</chart-builder>
+</chart>

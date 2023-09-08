@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="DemoSecurity">
+			<annotations>
+				<singletons>
+					<singleton type="Root"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="DemoSecurity.All">
+					<annotations>
+						<legacy-qualified-name qualified-name="DemoSecurity.All"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						/>
+						<reference name="singlePerson"
+							kind="forwards"
+							type="tl.accounts:Person"
+						/>
+						<reference name="singlePersonContact"
+							kind="forwards"
+							type="Contacts:Contact.Person"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="PersonContact"/>
+								</constraint>
+							</annotations>
+						</reference>
+						<reference name="personList"
+							kind="forwards"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="personContactList"
+							kind="forwards"
+							multiple="true"
+							type="Contacts:Contact.Person"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="PersonContact"/>
+								</constraint>
+							</annotations>
+						</reference>
+						<reference name="securityA"
+							kind="forwards"
+							multiple="true"
+							type="DemoSecurity:A"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="DemoSecurity.Root">
+					<annotations>
+						<legacy-qualified-name qualified-name="DemoSecurity.Root"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="DemoSecurity.A">
+					<annotations>
+						<instance-presentation icon="theme:DEMO_AS"/>
+						<legacy-qualified-name qualified-name="DemoSecurity.A"/>
+					</annotations>
+					<generalizations>
+						<generalization type="DemoSecurity.All"/>
+					</generalizations>
+				</interface>
+				<interface name="DemoSecurity.B">
+					<annotations>
+						<instance-presentation icon="theme:DEMO_BS"/>
+						<legacy-qualified-name qualified-name="DemoSecurity.B"/>
+					</annotations>
+					<generalizations>
+						<generalization type="DemoSecurity.All"/>
+					</generalizations>
+				</interface>
+				<class name="Root">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="ROOT"/>
+								</default-value>
+							</annotations>
+						</property>
+						<reference name="children"
+							override="true"
+							type="RootChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="DemoSecurity.Root"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="A">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+					</annotations>
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="AChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="DemoSecurity.A"/>
+						<generalization type="DemoSecurity:RootChild"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="DemoSecurity:AChild"/>
+					</generalizations>
+				</class>
+				<class name="B">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+					</annotations>
+					<generalizations>
+						<generalization type="DemoSecurity.B"/>
+						<generalization type="DemoSecurity:AChild"/>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</class>
+				<interface name="RootChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="AChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+			</types>
+		</module>
+	</modules>
+</model>

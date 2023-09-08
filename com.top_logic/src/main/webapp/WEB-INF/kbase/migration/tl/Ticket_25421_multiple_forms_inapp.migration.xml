@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_25421_multiple_forms_inapp"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_25242_Use_legacy_tabbar_template_for_old_layouts"
+			module="tl"
+		/>
+	</dependencies>
+	<processors/>
+	<migration>
+		<type-mapping class=""/>
+		<steps>
+			<step name="Migrate multiple form definitions">
+				<rewriter class="com.top_logic.knowledge.service.db2.migration.rewriters.AttributeRewriter"
+					types="TemplateLayouts"
+				>
+					<algorithm class="com.top_logic.knowledge.service.db2.migration.rewriters.XsltValueTransform"
+						attribute="arguments"
+						transform="/WEB-INF/kbase/migration/tl/Ticket_25421_multiple_forms_inapp.migration.xsl"
+					>
+					</algorithm>
+				</rewriter>
+			</step>
+		</steps>	
+	</migration>
+</migration>

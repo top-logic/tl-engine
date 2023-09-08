@@ -1,0 +1,21 @@
+<div id="{id}" 
+	class="cCollapsible {collapsed ? (horizontal ? 'cCollapsibleCollapsed cCollapsibleHorizontal' : 'cCollapsibleCollapsed')} {cssClass}"
+	data-collapsed="{collapsed}" 
+	data-layout="{layout}" data-collapsed-size="{collapsedSize}" data-layout-size="{layoutSize}"
+>
+	<div class="cCollapsibleHeader"
+		data-layout-size="{!collapsed ? toolbarLayoutSize}"
+	>
+		<div class="cCollapsibleToolbar">
+			<tl:if test="!collapsed">{toolbar}</tl:if>
+			
+			<span class="cCollapsibleButtons" tl:if="showCollapse or showMaximize">
+				<tl:if test="showCollapse">{collapseButton}</tl:if>
+				<tl:if test="showMaximize">{maximizeButton}</tl:if>
+			</span>
+		</div>
+		
+		<div class="cCollapsibleTitle">{title}</div>
+	</div>
+	<tl:if test="!collapsed">{child}</tl:if>
+</div>

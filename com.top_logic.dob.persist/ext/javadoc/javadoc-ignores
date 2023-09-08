@@ -1,0 +1,32 @@
+com.top_logic.dob.persist.AbstractDataManager.java: Invalid camel case word 'DataSource', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.BOOLEAN_FALSE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.BOOLEAN_TRUE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.DATE_TYPE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.DOUBLE_TYPE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.FLOAT_TYPE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.INTEGER_TYPE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.LINK_TYPE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.LONG_TYPE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.NULL_TYPE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.STRING_TYPE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.UNKNOWN_TYPE
+com.top_logic.dob.persist.AbstractDataManager.java: Missing documentation: com.top_logic.dob.persist.AbstractDataManager.connectionPool
+com.top_logic.dob.persist.BLOBDataManager.java: Invalid camel case word 'BLOBDataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.BLOBDataManager.java: Invalid camel case word 'CryptDataManager', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.BLOBDataManager.java: Invalid camel case word 'DataManager', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.BLOBDataManager.java: Invalid camel case word 'DataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.BLOBDataManager.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.BLOBDataManager.java: Invalid camel case word 'dataManager', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.DataManager.java: Invalid camel case word 'DataManager', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.DataManager.java: Invalid camel case word 'DataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.DataManager.java: Invalid camel case word 'DataObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.DataManager.java: Invalid camel case word 'FlexWrapper', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.DataManager.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.DataManager.java: Missing documentation: com.top_logic.dob.persist.DataManager.getInstance
+com.top_logic.dob.persist.EncryptedDataManager.java: Invalid camel case word 'BLOBDataManger', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.EncryptedDataManager.java: Missing documentation: com.top_logic.dob.persist.EncryptedDataManager.Config
+com.top_logic.dob.persist.NewDataManager.java: Invalid camel case word 'DataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.NewDataManager.java: Invalid camel case word 'DataObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.NewDataManager.java: Invalid camel case word 'GenericDataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.NewDataManager.java: Invalid camel case word 'SubObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dob.persist.NewDataManager.java: Missing documentation: com.top_logic.dob.persist.NewDataManager.statements

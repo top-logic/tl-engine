@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_8b96c002_771f_43d4_96ac_06265a765f1d">
+		<tabLabel key="dynamic.0ddd82cb-cf18-4d49-8daf-debbcfca50b1">
+			<en>Grid with multiple selection</en>
+			<de>Grid mit Mehrfachauswahl</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/gridWithMultipleSelection/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

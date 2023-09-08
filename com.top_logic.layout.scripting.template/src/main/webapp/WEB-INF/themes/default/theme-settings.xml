@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="TEMPLATE_EXPORT"
+		value="css:fas fa-upload"
+	/>
+	<icon name="TEMPLATE_IMPORT"
+		value="css:fas fa-download"
+	/>
+	<icon name="LOAD_SCRIPT"
+		value="css:fas fa-folder-open"
+	/>
+	<icon name="SAVE_SCRIPT"
+		value="css:fas fa-save"
+	/>
+	<icon name="SAVE_SCRIPT_AS"
+		value="colored:fas fa-save overlay-add"
+	/>
+</settings>

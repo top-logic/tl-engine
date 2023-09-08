@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/technical/layoutDemo1/tables/table1/DemoTableComponent_shared.xml"
+	columns="title,givenName,tooltip_surname,responsability,gender,birthdate,marital,contact,classificationDemo,editBoolean"
+	titleKey="layouts.layoutdemo.table.DemoTableComponentCustom.title"
+>
+	<renderer class="com.top_logic.layout.table.renderer.ConfiguredTableRenderer">
+		<template>
+		<![CDATA[
+			<table id="{id}">
+				<tbody>
+					<tr>
+						<th colspan="{cols.size}">
+							{title}
+						</th>
+					</tr>
+					<tr>
+						{foreach(col : cols, '', {
+							<th>
+								{#not(#equals($col.columnName, '_select')) ? $col.label}
+							</th>
+						})}
+					</tr>
+					
+					{foreach(row : rows, '', $row)}
+				</tbody>
+			</table>
+		]]>
+		</template>
+
+		<row-template>
+		<![CDATA[
+			<tr id="{id}" onclick="{selectAction}">
+				{foreach(col : cols, '', {
+					<td>
+						{selected ? {
+							<i>{$col.value}</i>
+						} : {
+							{$col.value}
+						}}
+					</td>
+				})}
+			</tr>
+		]]>
+		</row-template>
+	</renderer>
+</include>

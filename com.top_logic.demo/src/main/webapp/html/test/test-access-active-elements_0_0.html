@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Try Access when change input type file</title>
+	<script type="text/javascript">
+		function triggerAccess() {
+			try {
+				alert(document.activeElement.tagName);
+			} catch (e) {
+				alert(e);
+			}
+		}
+		
+		function triggerAccessDelayed() {
+			window.setTimeout("triggerAccess()",200);
+		}
+		
+		function triggerAccessNewFunction() {
+			new Function("try {alert(document.activeElement.tagName)}catch(e){alert(e)};").call();
+		}
+	</script>
+</head>
+<body onload="triggerAccess()">
+	<h2>Upload frame</h2>
+	<h3>On change works on ordinary input</h3>
+	<input type="text" onchange="parent.triggerAccess();"/>
+	<input type="checkbox" onchange="parent.triggerAccess();"/>
+
+	<h3>Trigger as in #6313</h3>
+	<input type="file" onchange="parent.triggerAccess();"/>
+
+	<h3>Trigger access directly</h3>
+	<input type="file" onchange="triggerAccess();"/>
+
+	<h3>Trigger access delayed</h3>
+	<input type="file" onchange="triggerAccessDelayed();"/>
+	
+	<h3>Trigger access via new function</h3>
+	<input type="file" onchange="triggerAccessNewFunction();"/>
+	
+	<h3>Trigger access via access to other element</h3>
+	<input type="file" onchange="document.getElementById('checkbox').onchange()"/>
+	<input id="checkbox" onchange="triggerAccess()"/>
+
+</body>
+</html>

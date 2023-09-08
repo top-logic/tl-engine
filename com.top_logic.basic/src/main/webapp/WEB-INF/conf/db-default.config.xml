@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+				<pools>
+					<pool name="default" init-during-startup="%DB_INIT_ON_STARTUP%">
+						<read-pool>
+							<maxActive>30</maxActive>
+							<minIdle>4</minIdle>
+							<softMinEvictableIdleTimeMillis>600000</softMinEvictableIdleTimeMillis>
+							<maxWait>5000</maxWait>
+							<timeBetweenEvictionRunsMillis>600000</timeBetweenEvictionRunsMillis>
+							<testWhileIdle>true</testWhileIdle>
+							<numTestsPerEvictionRun>10</numTestsPerEvictionRun>
+							<whenExhaustedAction>grow</whenExhaustedAction>
+						</read-pool>
+						<write-pool>
+							<maxActive>30</maxActive>
+							<minIdle>4</minIdle>
+							<softMinEvictableIdleTimeMillis>600000</softMinEvictableIdleTimeMillis>
+							<maxWait>5000</maxWait>
+							<timeBetweenEvictionRunsMillis>600000</timeBetweenEvictionRunsMillis>
+							<testWhileIdle>true</testWhileIdle>
+							<numTestsPerEvictionRun>10</numTestsPerEvictionRun>
+							<whenExhaustedAction>grow</whenExhaustedAction>
+						</write-pool>
+						
+						<!-- For selecting a data source, either e.g. db-mysql or db-oracle must be included as well. -->
+					</pool>
+				</pools>
+			</instance>
+		</config>
+
+	</services>
+</application>

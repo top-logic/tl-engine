@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- searchLucene main configuration file                         -->
+
+<root>
+	<alias>
+		<!-- Folder to create the Lucene index in. -->
+        <entry name="%LUCENE_PATH%" value="%VAR_PATH%/lucene_index" />
+	</alias>
+
+</root>

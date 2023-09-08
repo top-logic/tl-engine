@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="Pfad"
+				type="string"
+			/>
+
+			<t:parameter name="Komponente"
+				type="string"
+			/>
+
+			<t:parameter name="Feld"
+				type="string"
+			/>
+
+			<!-- The ValueRef to the value. The root tag has to be named 'value'. -->
+			<t:parameter name="Wert"
+				mandatory="true"
+				type="xml"
+			/>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+			user-id="${$Tester}"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="${$Komponente}"
+				tab-path="${$Pfad}"
+			/>
+			<field-values>
+				<value>
+					<t:value expr="$Wert"/>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.LabeledFieldRef"
+							label="${$Feld}"
+						/>
+					</field-path>
+				</value>
+			</field-values>
+		</action>
+	</t:body>
+</t:template>

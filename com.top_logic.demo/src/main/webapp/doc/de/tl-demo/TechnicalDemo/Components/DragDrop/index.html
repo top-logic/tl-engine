@@ -1,0 +1,25 @@
+<p>Die Sicht demonstriert die Verwendung von Drag&amp;Drop zwischen Komponenten. Auf der rechten Seite kann eine Template-Struktur administriert werden und daraus können Elemente in den Fabrikplan auf der linken Seite mit Drag&amp;Drop eingefügt werden. Die Elemente des Fabrikplans können ebenfalls über Drag&amp;Drop umgeordnet werden. Dabei erhält der Nutzer entsprechendes Feedback, wo welche Elemente eingefügt werden können.</p> 
+<p><img src="ref:image.png" style="height:223px; opacity:1; width:600px"></p> 
+<p>In dem zugehörigen Beispielmodell können bestehen Fabriken aus Stockwerken und Stockwerke aus Arbeitsplätzen. Bei der Drag&amp;Drop-Operation können entsprechend Stockwerke nur in Fabriken und Arbeitsplätze nur innerhalb von Stockwerken plaziert werden.</p> 
+<h2>Import von Bibliothekselementen</h2> 
+<p>Im Burger-Menü der Template-Bibliothek befindet sich ein Import-Kommando, mit dem aus einer XML-Struktur Bibliothekselemente importiert werden können. Diese Funktionalität demonstriert den konfigurierbaren XML-Import. Wenn man die folgende Struktur in eine Datei speichert, können hiermit über den Import Bibliothekselemente in der Template-Bibliothek angelegt werden:</p> 
+<pre><code class="language-xml">&lt;items&gt;
+	&lt;factory name="F1"&gt;
+		&lt;floor name="Ebene 0"&gt;
+			&lt;location name="Raum1"&gt;
+				&lt;entry name="Robot 1"/&gt;
+			&lt;/location&gt;
+		&lt;/floor&gt;
+	&lt;/factory&gt;
+
+	&lt;floor name="Ebene"&gt;
+		&lt;location name="Raum A"&gt;
+			&lt;Entry name="Robot 1"/&gt;
+		&lt;/location&gt;
+		&lt;location name="Raum B"&gt;
+			&lt;Entry name="Robot 2"/&gt;
+		&lt;/location&gt;
+	&lt;/floor&gt;
+&lt;/items&gt;
+</code></pre> 
+<p> </p>

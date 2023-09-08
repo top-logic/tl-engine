@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component>
+	<component name="SearchAttributedSearchInput"
+		metaElement="DemoTypes.A,DemoTypes.B,DemoTypes.C.All,DemoTypes.X,Mandator.all"
+	>
+		<modelBuilder class="com.top_logic.element.layout.meta.search.DefaultConfigurableSearchModelBuilder">
+			<elements>
+				<element name="DemoTypes.A"
+					exclude-columns="date"
+					ko-type="DemoTypes"
+					result-columns="name,boolean,booleanMandatory,createdBy,modifiedBy,createdDate,modifiedDate,checklist,checklistSingle,checklistMulti,collection,complexCountry,complexLanguage,document,float,floatConstraint,list,long,longConstraint,stringSet,string,structure,singleStructure,typedSetOrdered,typedSetUnordered,webFolder,typedWrapperC,typedWrapper,typedWrapperFiltered,typedWrapperGenerated,untypedWrapper,dependency1,dependency2"
+				/>
+				<element name="DemoTypes.B"
+					ko-type="DemoTypes"
+					result-columns="name,structureReverse,stringInBAndC"
+				/>
+				<element name="DemoTypes.C.All"
+					ko-type="DemoTypesC"
+					result-columns="name,structureReverse,stringInBAndC,isAssignable"
+				/>
+				<element name="DemoTypes.X"
+					ko-type="GenericObject"
+					result-columns="name,boolean,booleanNullable,booleanSelect,booleanRadio"
+				/>
+				<element name="Mandator.all"
+					exclude-search="documents"
+					ko-type="StructuredElement"
+					result-columns="name,description,allowContracts,contractGuidelines,contactPersons"
+				/>
+			</elements>
+		</modelBuilder>
+	</component>
+</component>

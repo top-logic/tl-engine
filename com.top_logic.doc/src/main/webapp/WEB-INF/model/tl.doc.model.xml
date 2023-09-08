@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="tl.doc">
+			<annotations>
+				<factory value="com.top_logic.doc.model.TLDocFactory"/>
+				<package-binding
+					implementation-package="com.top_logic.doc.model.impl"
+					interface-package="com.top_logic.doc.model"
+				/>
+				<singletons>
+					<singleton type="Root"/>
+				</singletons>
+			</annotations>
+			<types>
+				<class name="Root">
+					<attributes>
+						<property name="name"
+							override="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<default-value>
+									<string value="Documentation"/>
+								</default-value>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="Page"/>
+					</generalizations>
+				</class>
+				<class name="Page">
+					<annotations>
+						<implementation-binding class-name="com.top_logic.doc.model.impl.PageImpl"/>
+						<instance-presentation icon="theme:model.tl.doc.Page.icon"/>
+						<table name="tl.doc.Page"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						/>
+						<property name="position"
+							mandatory="false"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<visibility value="hidden"/>
+							</annotations>
+						</property>
+						<property name="title"
+							mandatory="false"
+							type="tl.model.i18n:I18NString"
+						/>
+						<property name="content"
+							mandatory="false"
+							type="tl.model.i18n:I18NHtml">
+							<annotations>
+								<wysiwyg templates="function_templates">
+									<template-files>
+										<template-file value="plugins/templates/templates/templateFiles/tl_templates.js"/>
+									</template-files>
+								</wysiwyg>
+							</annotations>
+						</property>
+						<property name="uuid"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<default-value provider="com.top_logic.model.provider.UuidDefaultProvider"/>
+								<visibility value="read-only"/>
+							</annotations>
+						</property>
+						<property name="importSource"
+							mandatory="false"
+							type="tl.core:String"
+						/>
+						<reference name="children"
+							override="true"
+							type="Page"
+						/>
+						<reference name="parent"
+							override="true"
+							type="Page"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

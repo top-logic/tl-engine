@@ -1,0 +1,22 @@
+<model>
+	<module name="test.com.top_logic.element.meta.TestClearMandatoryAttribute">
+		<class name="Src">
+			<annotations>
+				<table name="TestObject"/>
+			</annotations>
+			<attributes>
+				<property name="name" type="tl.core:String"/>
+				<reference name="dest" type="Dst" mandatory="true" composite="true"/>
+			</attributes>
+		</class>
+		
+		<class name="Dst">
+			<annotations>
+				<table name="TestObject"/>
+			</annotations>
+			<attributes>
+				<property name="name" type="tl.core:String"/>
+			</attributes>
+		</class>
+	</module>
+</model>

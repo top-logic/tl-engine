@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="demo.test.tabber"
+		z_legacy_componentName="layoutTest"
+		z_legacy_tabBarName="layoutTest_tabBar"
+		z_legacy_tabLabel="demo.test.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/test/separatewindow/separateWindowDemo.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/TestAJAX/ajaxDemoContainer.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/TestCustomConfirmComponent/confirmDemo.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/TestPageLayout/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/TestAJAXEditComponent/editDemo.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/test22798/test22798.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/test22708/test22708.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/testPDFDisplay/testPDFDisplay.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/noDefaultSelection/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/externalSelection/externalSelection.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/DemoAJAXProgress/progressDemo.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/DemoProgress/progressDemo2.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/DemoTabbing/tabbingDemo.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/chart/chartDemo.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/dynamicToolbar/dynamicToolbarTitle.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/externalFrames/externalFrames.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/exports/TestOfficeExports.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/renderingRobustness/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/attributeOverride/tabLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

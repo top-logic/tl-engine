@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.SetGlobalVariableOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	name="Variable_Test_DifferentSuite"
+>
+	<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+		string="Value for Test DifferentSuite"
+	/>
+</action>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Modell Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.model.importer.XMIModelImportHandler"
+			command-label="Modell importieren."
+			command-name="importModel"
+			component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Model-Definition"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+						base64data="PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiID8-Cgo8bW9kZWwgeG1sbnM9Imh0dHA6Ly93d3cudG9wLWxvZ2ljLmNvbS9ucy9keW5hbWljLXR5cGVzLzYuMCI-Cgk8bW9kdWxlIG5hbWU9InRlc3QubW9kZWxleHBvcnQiPgoJCTxjbGFzcyBuYW1lPSJYIj4KCQkJPGdlbmVyYWxpemF0aW9ucz4KCQkJCTxnZW5lcmFsaXphdGlvbiB0eXBlPSJ0bC5tb2RlbDpUTE9iamVjdCIvPgoJCQk8L2dlbmVyYWxpemF0aW9ucz4KCQk8L2NsYXNzPgoJPC9tb2R1bGU-CjwvbW9kZWw-"
+						content-type="text/xml"
+						name="test.modelexport.model.xml"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+	</actions>
+</action>

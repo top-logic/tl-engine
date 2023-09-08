@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	schema-update="true"
+>
+	<version name=" Ticket_24962_Missing_model_events_in_i18n_attributes.migration.xml"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_25421_multiple_forms_inapp"
+			module="tl"
+		/>
+		<dependency name="Ticket_24885_Reset_application_model"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+	</processors>
+</migration>

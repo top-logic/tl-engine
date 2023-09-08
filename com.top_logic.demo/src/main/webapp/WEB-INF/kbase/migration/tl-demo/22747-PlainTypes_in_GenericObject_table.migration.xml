@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration>
+	<version name="22747-PlainTypes_in_GenericObject_table"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket-23398-LockService"
+			module="tl"
+		/>
+		<dependency name="22747-Add_GenericObject_table"
+			module="tl-element"
+		/>
+		<dependency name="set_date2_format"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<migration>
+		<type-mapping/>
+		
+		<steps>
+			<step name="Move DemoPlain objects">
+				<type-renaming types="DemoPlain" target-type="GenericObject"/>
+				
+				<attribute-value-rewrite
+					types="MetaElement"
+					source-attribute="annotations"
+					target-attribute="annotations"
+				>
+					<config-as-string>
+						<regex-replace>
+							<pattern><![CDATA[<table\s+name\s*=\s*"DemoPlain"\s*(/?)>]]></pattern>
+							<replacement><![CDATA[<table name="GenericObject"$1>]]></replacement>
+						</regex-replace>
+					</config-as-string>
+				</attribute-value-rewrite>
+				
+				<!-- TODO #22747: Delete table type for DemoPlain, change inheritance hierarchy to use new table type for GenericObject -->
+				
+			</step>
+		</steps>
+	</migration>
+</migration>

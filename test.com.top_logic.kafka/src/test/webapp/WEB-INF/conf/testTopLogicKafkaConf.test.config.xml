@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="testTopLogicKafkaMessages" />
+				</bundles>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/test.com.top_logic.kafka.services.TestKafkaCommunication.model.xml" />
+					<declaration file="/WEB-INF/model/test.com.top_logic.kafka.services.TestTLSync.model.xml" />
+					<declaration file="/WEB-INF/model/test.com.top_logic.kafka.services.TestExImportType.model.xml" />
+					<declaration file="/WEB-INF/model/test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.model.xml" />
+					<declaration file="/WEB-INF/model/test.com.top_logic.kafka.services.TestTLSyncAssociationUpdate.model.xml" />
+					<declaration file="/WEB-INF/model/test.com.top_logic.kafka.services.TestTLSyncAttributeValueTypeNotImported.model.xml" />
+					<declaration file="/WEB-INF/model/test.com.top_logic.kafka.services.TestTLSyncReceiveMissingExtReference.model.xml" />
+					<declaration file="/WEB-INF/model/test.com.top_logic.kafka.services.TestTLSyncValueMappings.model.xml" />
+					<declaration file="/WEB-INF/model/test.com.top_logic.kafka.services.TestTLSyncChangeAndDeleteBeforeSend.model.xml" />
+				</declarations>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.kafka.services.consumer.KafkaConsumerService">
+			<instance join-timeout="15000">
+				<consumers>
+					<consumer name="KB-Data-Change-Consumer">
+						<processors config:override="true">
+							<processor class="test.com.top_logic.kafka.services.TestingKBDataProcessor">
+								<rewriters>
+									<rewriter class="com.top_logic.kafka.knowledge.service.importer.DefaultKafkaKBImportRewriter"/>
+								</rewriters>
+							</processor>
+						</processors>
+					</consumer>
+				</consumers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.kafka.server.module.KafkaModule">
+			<instance class="test.com.top_logic.kafka.server.module.TestKafkaModule" />
+		</config>
+
+		<config service-class="com.top_logic.kafka.server.module.ZooKeeperModule">
+			<instance class="test.com.top_logic.kafka.server.module.TestZooKeeperModule" />
+		</config>
+
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance>
+				<tasks>
+					<task name="KafkaProducerTask"
+						cached-event-size="5000"
+					/>
+				</tasks>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/KafkaTestMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

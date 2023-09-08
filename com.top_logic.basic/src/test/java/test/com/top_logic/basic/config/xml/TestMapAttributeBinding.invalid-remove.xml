@@ -1,0 +1,5 @@
+<r xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<map>
+		<e k="y" v="4" config:operation="remove"></e>
+	</map>
+</r>

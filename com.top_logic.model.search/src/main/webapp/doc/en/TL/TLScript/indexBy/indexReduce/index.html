@@ -1,0 +1,68 @@
+<h2>Syntax</h2> 
+<pre>	<code>$list.indexReduce($index-fun, $unit, $reduce-fun)</code>
+</pre> 
+<h2>Description</h2> 
+<p>Creates a dictionary from the entries of a list. The key values are calculated from list elements using the indexing function. A value of the resulting dictionary consists of the reduction of all list elements for which the same key value was calculated. The first reduction step is performed with the passed neutral element and the first list element of a key.</p> 
+<p>If the same key value <code class="hljs inlineCode">k</code> was calculated for the list elements <code class="hljs inlineCode">e1</code>,<code class="hljs inlineCode"> e5</code> and <code class="hljs inlineCode">e7</code>, then the value <code class="hljs inlineCode">$reduceFun($reduceFun($reduceFun($unit, e1), e5), e7)</code> is stored in the resulting dictionary under the key <code class="hljs inlineCode">k</code>.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>list</td> 
+   <td>Set</td> 
+   <td>A list from which a dictionary should be generated.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>index-fun</td> 
+   <td>Function</td> 
+   <td>Function that assigns a key value to a list item.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>unit</td> 
+   <td>Number/string</td> 
+   <td>Neutral element of <code class="hljs inlineCode">reduce-fun</code>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>reduce-fun</td> 
+   <td>Function</td> 
+   <td>Function that reduces multiple list values with the same key value to one element.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p> 
+<p>A dictionary containing all list elements that have been assigned key values according to the <code class="hljs inlineCode">index-fun</code> and <code class="hljs inlineCode">reduce-fun</code> functions.</p> 
+<h2>Examples</h2> 
+<h3>Number of equal list elements</h3> 
+<pre>	<code>{
+   list = list("Martin", "Tom", "Eric", "Martin", "Eric", "Lars", "Steven", "Steven", "Eric");
+   indexfun = string -&gt; $string;
+   reducefun = subtotal -&gt; $subtotal + 1;
+   $list.indexReduce($indexfun, 0, $reducefun);
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> Dictionary with the following values:</p> 
+<pre><code>{
+  Martin=2.0, 
+  Tom=1.0, 
+  Eric=3.0, 
+  Lars=1.0, 
+  Steven=2.0
+}</code></pre>

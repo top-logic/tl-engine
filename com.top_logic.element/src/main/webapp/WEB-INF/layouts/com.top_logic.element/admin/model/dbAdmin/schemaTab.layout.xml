@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_8c756299_3df9_475b_a01c_0203c83ae5d3"
+		tabIcon=""
+	>
+		<tabLabel>
+			<en>Schema editor</en>
+			<de>Schema Editor</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.element/admin/model/dbAdmin/schemaLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

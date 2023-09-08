@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	comment="TestTypendemoTreeGrid_Unsichtbarer_Root_II"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Unsichtbarer_Root_II"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Unsichtbarer Root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="level"
+									value="INFO"
+								/>
+								<parameter name="text"
+									value="Unsichtbarer Root"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Alle loeschen"
+							business-object="Variable"
+						/>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Variable zuweisen"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="ergebnis"
+									value="E_01"
+								/>
+								<parameter name="Name"
+									value="ROOT"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anzeigen"
+							business-object="Sicht"
+						>
+							<parameters>
+								<parameter name="Pfad"
+									value="Strukturen > Typendemo"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anzeigen"
+							business-object="Sicht"
+						>
+							<parameters>
+								<parameter name="Pfad"
+									value="Strukturen > Typendemo > TreeGrid"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Setzen"
+							business-object="DemoTypesSelektion"
+						>
+							<parameters>
+								<parameter name="Pfad"
+									value="Strukturen > Typendemo"
+								/>
+								<parameter name="kontext"
+									value="E_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Filterauswahl"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="Name"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Nach Name filtern"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="GrossKlein"
+									value="Ja"
+								/>
+								<parameter name="Text"
+									value="ROOT"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Zeilenanzahl pruefen"
+							business-object="TypendemoTreeGrid"
+						>
+							<parameters>
+								<parameter name="Anzahl"
+									value="0"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Persoenliche Einstellungen zuruecksetzen"
+							business-object=""
+						/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

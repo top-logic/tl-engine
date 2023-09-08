@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/treetable.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		type="test.graph:Edge"
+	>
+		<name key="dynamic.25e46d0a-e8c0-4b17-98a4-38cf0d108cd3">
+			<en>Directed line graph of nodes of the same color</en>
+			<de>Gerichteter Kantengraph gleichfarbiger Knoten</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="null"
+			nodePredicate="edge -> $edge.instanceOf(`test.graph:Edge`)"
+			rootNode="`test.graph#ROOT`"
+			typesToObserve="test.graph:Node"
+		>
+			<children><![CDATA[edge-> {
+  children = $edge == `test.graph#ROOT` ? all(`test.graph:Edge`).filter(x -> $x != `test.graph#ROOT`) : $edge.get(`test.graph:Edge#target`).referers(`test.graph:Edge#source`);
+  
+   $children.filter(child -> $child.get(`test.graph:Edge#source`).get(`test.graph:Node#color`) == $child.get(`test.graph:Edge#target`).get(`test.graph:Node#color`));
+}]]></children>
+			<parents><![CDATA[edge-> {
+  $edge == `test.graph#ROOT` ? none() :$edge.get(`test.graph:Edge#source`).referers(`test.graph:Edge#target`).union(singleton(`test.graph#ROOT`))
+}]]></parents>
+			<nodesToUpdate><![CDATA[object -> if($object.instanceOf(`test.graph:Node`),{
+ $object.referers(`test.graph:Edge#source`).union($object.referers(`test.graph:Edge#target`));
+},none())]]></nodesToUpdate>
+		</modelBuilder>
+	</arguments>
+</config:template-call>

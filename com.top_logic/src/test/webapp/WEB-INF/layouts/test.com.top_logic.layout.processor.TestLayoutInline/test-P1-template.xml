@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="px" />
+	</params>
+	
+	<component class="A"
+		py="${px}"
+	/>
+</template>

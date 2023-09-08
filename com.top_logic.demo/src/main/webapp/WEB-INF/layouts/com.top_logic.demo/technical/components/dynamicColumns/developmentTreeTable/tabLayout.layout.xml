@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_a59fddba_7bbd_411e_a7e9_5ae92eececd0"
+		securityDomain="SecurityStructure"
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.58aaa813-1be4-4d77-9ba8-e22871cd180e">
+			<en>Treetable</en>
+			<de>Baumtabelle</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeTable/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

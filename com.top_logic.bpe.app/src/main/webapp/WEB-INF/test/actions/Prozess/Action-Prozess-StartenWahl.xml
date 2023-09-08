@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="xml"/>
+		<t:parameters/>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.DisplayTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.bpe.app/bpe/app/structure/tileTab.layout.xml#MainTilesContainer"
+					tile-path="Inhalt > Prozesslauf starten"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<objectlist	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+		<metaobject object_name="BPItem" abstract="true" super_class="TLObject" object_type="MOKnowledgeObject">
+			<attributes>
+				<mo_attribute att_name="extId" att_type="String"
+					mandatory="false" db_size="256" />
+			</attributes>
+		</metaobject>
+		
+		<metaobject object_name="BPElement" abstract="false" super_class="BPItem" object_type="MOKnowledgeObject">
+			<attributes>
+				<mo_attribute att_name="name" att_type="String"
+					mandatory="false" db_size="2000" />
+			</attributes>
+		</metaobject>
+		
+		<metaobject object_name="BPNode" abstract="false" super_class="BPElement"  object_type="MOKnowledgeObject">
+			<attributes>
+			</attributes>
+		</metaobject>
+
+		<metaobject object_name="BPEdge" abstract="false" super_class="BPElement"  object_type="MOKnowledgeObject">
+			<attributes>
+				<reference att_name="source" target-type="BPNode" mandatory="true"
+					history-type="current" deletion-policy="delete-referer" monomorphic="true"
+				/>
+				<reference att_name="target" target-type="BPNode" mandatory="true"
+					history-type="current" deletion-policy="delete-referer" monomorphic="true"
+				/>
+			</attributes>
+		</metaobject>
+
+		<!--
+			Note: BPFlow is different from BPEdge in since it stores MessageFlow 
+			instances that must no be retrieved, when navigating backwards the source 
+			and target attributes of BPEdge. The reverse navigation of inline reference 
+			attributes relies on the fact that the inline reference is not used to store 
+			attributes of different types.
+		 -->
+		<metaobject object_name="BPFlow" abstract="false" super_class="BPElement"  object_type="MOKnowledgeObject">
+			<attributes>
+				<reference att_name="source" target-type="BPNode" mandatory="true"
+					history-type="current" deletion-policy="delete-referer" monomorphic="true"
+				/>
+				<reference att_name="target" target-type="BPNode" mandatory="true"
+					history-type="current" deletion-policy="delete-referer" monomorphic="true"
+				/>
+			</attributes>
+		</metaobject>
+
+		<metaobject object_name="BPCollaboration" abstract="false" super_class="BPElement"  object_type="MOKnowledgeObject">
+			<attributes>
+			</attributes>
+		</metaobject>
+		
+		<metaobject object_name="BPAnnotation" abstract="false" super_class="BPItem" object_type="MOKnowledgeObject">
+			<attributes>
+				<mo_attribute att_name="text" att_type="Clob"
+					mandatory="false" db_size="200000" />
+			</attributes>
+		</metaobject>
+
+		<metaobject object_name="BPAssociation" abstract="false" super_class="BPItem" object_type="MOKnowledgeObject">
+			<attributes>
+				<reference att_name="source" target-type="BPElement" mandatory="true"
+					history-type="current" deletion-policy="delete-referer" monomorphic="false"
+				/>
+				<reference att_name="target" target-type="BPAnnotation" mandatory="true"
+					history-type="current" deletion-policy="delete-referer" monomorphic="true"
+				/>
+			</attributes>
+		</metaobject>
+
+		<metaobject object_name="BPExecution" abstract="false" super_class="TLObject" object_type="MOKnowledgeObject">
+			<attributes>
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

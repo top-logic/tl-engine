@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Basic definition of tables.
+-->
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<metaobject	object_name="AbstractKafkaDemo"	object_type="MOKnowledgeObject"	super_class="AttributedObject" abstract="true">
+			<attributes>
+			    <mo_attribute att_name="name" att_type="String" mandatory="true"/>
+			</attributes>
+		</metaobject>
+		<metaobject	object_name="KafkaDemo" object_type="MOKnowledgeObject" super_class="AbstractKafkaDemo">
+		</metaobject>
+		<metaobject	object_name="KafkaDemoRemote" object_type="MOKnowledgeObject" super_class="AbstractKafkaDemo">
+		</metaobject>
+		<metaobject	object_name="KafkaDemoUntransferred" object_type="MOKnowledgeObject" super_class="AbstractKafkaDemo">
+		</metaobject>
+	</metaobjects>
+</objectlist>

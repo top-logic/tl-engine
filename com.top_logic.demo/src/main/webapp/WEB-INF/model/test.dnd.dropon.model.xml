@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.dnd.dropon">
+		<annotations>
+			<singletons>
+				<singleton type="Root"/>
+			</singletons>
+		</annotations>
+		<enum name="WorkType">
+			<classifier name="A"/>
+			<classifier name="B"/>
+			<classifier name="C"/>
+		</enum>
+		<class name="Processor">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.dnd.dropon:Processor#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="active"
+							fullQualifiedName="test.dnd.dropon:Processor#active"
+							type="tl.core:Boolean"
+						/>
+						<field
+							attribute="canProcess"
+							fullQualifiedName="test.dnd.dropon:Processor#canProcess"
+							type="test.dnd.dropon:WorkType"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<reference name="subprocessors"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Processor"
+				/>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="active"
+					type="tl.core:Boolean"
+				/>
+				<reference name="processing"
+					inverse-reference="processedBy"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="WorkItem"
+				/>
+				<reference name="canProcess"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="WorkType"
+				/>
+			</attributes>
+		</class>
+		<class name="Root"
+			final="true"
+		>
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="processors"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Processor"
+				/>
+			</attributes>
+		</class>
+		<class name="WorkItem">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="processedBy"
+					inverse-reference="processing"
+					kind="backwards"
+					multiple="true"
+					navigate="true"
+					type="Processor"
+				/>
+				<reference name="type"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="WorkType"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

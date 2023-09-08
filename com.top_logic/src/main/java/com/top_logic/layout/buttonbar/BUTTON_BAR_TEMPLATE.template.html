@@ -1,0 +1,19 @@
+<div id="{id}" class="{cssClass}" data-layout-size="\{size:100.0, minSize:0, unit:'%'\}" data-resize="{dataResize}" data-hidden-button-count="{hiddenButtonCount}">
+	<div id="{id}-buttonDialogOpener" class="cmdButtonsDialogOpener">
+		<span id="{id}-buttonDialogOpenerImage">
+			{dialogOpener}
+		</span>
+	</div>
+	<div id="{id}-buttonScrollContainer" class="{scrollContainerClasses}" data-complexwidget="true">
+		<div id="{id}-buttonSpaceHolderContainer" class="buttonSpaceHolder">
+			<span id="{id}-buttonContainer">
+				<!-- Non breakable space prevents the button bar to shrink if no button is displayed. -->
+				&nbsp;
+				{buttons} 
+			</span>
+		</div>
+	</div>
+	<div id="{id}_progressDiv" class="cmdProgress">
+		{imageSlider}
+	</div>
+</div>

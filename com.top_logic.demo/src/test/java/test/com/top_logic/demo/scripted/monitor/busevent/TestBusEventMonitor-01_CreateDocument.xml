@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="TestDocumentMonitor"
+						/>
+						<parameter name="ergebnis"
+							value="TestDocumentMonitor"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create document"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > 0 Dokumente"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Dokument/Action-Dokument-Im Webfolder Tab hochladen.xml"
+							template-name-comment="Dokument Im Webfolder Tab hochladen"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="TestDocument.txt"
+								/>
+								<parameter name="Typ"
+									value="mimetype.text/plain"
+								/>
+								<parameter name="Inhalt"
+									value="No special Content"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Monitor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Monitor > BusEvent Monitor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.InvalidateCommand"
+							command-label="Aktualisieren"
+							command-name="reloadEventMonitorTableCommand"
+							comment="Display Event for created document."
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic/admin/monitor/event/eventMonitor.layout.xml#EventMonitorTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Update document"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Ersetzen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 1 Dokumente"
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="input"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+										base64data="No special content2"
+										content-type="mimetype.text/plain"
+										name="TestDocument.txt"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Aktualisieren"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.InvalidateCommand"
+							command-label="Aktualisieren"
+							command-name="reloadEventMonitorTableCommand"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic/admin/monitor/event/eventMonitor.layout.xml#EventMonitorTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Delete document"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 1 Dokumente"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-name="rows"
+									/>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+										column-name="_delete"
+									>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+											provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+										>
+											<name>
+												<part key="element">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="TestDocument.txt"
+													/>
+												</part>
+											</name>
+										</row-object>
+									</node>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment="Löschen"
+										field-name="_delete"
+									/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ja"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.InvalidateCommand"
+							command-label="Aktualisieren"
+							command-name="reloadEventMonitorTableCommand"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic/admin/monitor/event/eventMonitor.layout.xml#EventMonitorTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Element/Action-Element-Loeschen.xml"
+					template-name-comment="Element Loeschen"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="TestDocumentMonitor"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

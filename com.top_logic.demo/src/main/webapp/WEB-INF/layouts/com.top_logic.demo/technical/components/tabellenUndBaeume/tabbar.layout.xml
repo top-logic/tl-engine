@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tabbar.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/baum/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/baumtabelle/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/baumgrid/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/grid/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/tabelle/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeWithMultipleSelection/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/gridWithMultipleSelection/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/tableWithMultipleSelection/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTable_priorityTable_/tabLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

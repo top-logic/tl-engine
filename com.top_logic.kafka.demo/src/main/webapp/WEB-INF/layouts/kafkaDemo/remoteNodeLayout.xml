@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Grid displaying the plain demo types. -->
+<template>
+	<params>
+		<param name="namePrefix"
+			value="kafkaRemoteNode"
+		/>
+	</params>
+	<include name="element/gridWithDetail.xml"
+		columns="name,otherRemoteNode,notExternalized,externalId"
+		namePrefix="${namePrefix}"
+		types="kafka.demo:RemoteNode"
+	>
+		<buttons>
+			<reference command-id="invalidate"/>
+		</buttons>
+	</include>
+</template>

@@ -1,0 +1,5 @@
+<config xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<string-list>
+		<str config:operation="add" config:position="before" config:reference="invalid" val="x" />
+	</string-list>
+</config>

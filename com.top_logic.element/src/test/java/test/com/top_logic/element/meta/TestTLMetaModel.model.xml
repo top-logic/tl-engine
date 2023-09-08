@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
+	<module name="test.com.top_logic.element.meta.TestTLMetaModel">
+		<annotations>
+			<singletons>
+				<singleton type="Root"/>
+				<singleton name="ROOT2"
+					type="Root"
+				/>
+			</singletons>
+		</annotations>
+		<datatype name="dataType1"
+			db_type="varchar"
+			kind="Custom"
+		>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="java.lang.Object"
+			/>
+		</datatype>
+		<enum name="enum1">
+			<annotations>
+				<classification-display value="radio-inline"/>
+				<system-enum value="false"/>
+			</annotations>
+			<classifier name="classifier1"/>
+			<classifier name="classifier2"
+				default="true"
+			/>
+		</enum>
+		<class name="Root"/>
+		<class name="A"
+			final="true"
+		>
+			<generalizations>
+				<generalization type="Root"/>
+				<generalization type="B"/>
+			</generalizations>
+			<attributes>
+				<property name="prop1"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="ref"
+					composite="true"
+					mandatory="true"
+					type="B"
+				/>
+			</attributes>
+		</class>
+		<interface name="B">
+			<attributes>
+				<property name="dateProp"
+					multiple="true"
+					type="tl.core:Date"
+				/>
+			</attributes>
+		</interface>
+
+		<datatype name="D1"
+			db_type="varchar"
+			kind="Custom"
+		>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="java.lang.Object"
+			/>
+		</datatype>
+	</module>
+</model>

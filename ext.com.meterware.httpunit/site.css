@@ -1,0 +1,84 @@
+/* based on a style sheet from www.bluerobot.com/web/layouts */
+
+
+body {
+	background-color:white;
+	}
+h1 {
+	margin:5px 0px 5px 0px;
+	padding:0px;
+	font-size:28px;
+	line-height:28px;
+	font-weight:900;
+	}
+h2 {
+   color:white;
+   background-color:#666699;
+   padding:0px 5px;
+   }
+p {
+	margin:0px 0px 16px 0px;
+	padding:0px;
+	}
+pre { font-family: "courier new", courier; font-size: 8pt;
+      margin-left: 2%; margin-right: 2%;
+      padding-top: .5em; padding-bottom: .5em; padding-right: .5em; padding-left: .5em;
+      border-color: black; border-width: 2; border-style: solid
+      }
+
+
+#Content>p {margin:0px;}
+#Content>p+p {text-indent:30px;}
+
+#Content {
+	margin:0px 50px 50px 170px;
+	padding:10px;
+	}
+
+.developers dt { font-size:120%; font-weight: bold; margin-top: 1em }
+.developers dd { margin-top: 0; margin-left: 0 }
+.story-list dt { margin: 1em 0 0 2em; font-weight: bold }
+.story-list dd { margin-left: 2em; margin-top: 0 }
+.sourceforge { text-align: right;
+               position: absolute;
+               top:0;
+               right: 70px;
+/* Again, the ugly brilliant hack. */
+	           voice-family: "\"}\"";
+	           voice-family:inherit;
+	           right:0px;
+	           }
+/* Again, "be nice to Opera 5". */
+body>.sourceforge {right:0px;}
+               }
+td.news { border-color: white; background-color: #ccc; padding:0px 2px 2px 2px }
+td.summaries { padding: 2px 2px 2px 2px }
+
+#Menu {
+	position:absolute;
+	top:120px;
+	left:10px;
+	width:172px;
+	padding:10px;
+	font-size:11px;
+	font-family:verdana, arial, helvetica, sans-serif;
+	background-color:#ccc;
+	line-height:17px;
+/* Again, the ugly brilliant hack. */
+	voice-family: "\"}\"";
+	voice-family:inherit;
+	width:150px;
+	}
+/* Again, "be nice to Opera 5". */
+body>#Menu {width:150px;}
+
+
+#Menu a {
+    color:#669;
+	text-decoration:none;
+	font-weight:600;
+	}
+#Menu a:hover {background-color:#eee;}
+
+
+

@@ -1,0 +1,34 @@
+<h2>Syntax</h2> 
+<pre>	<code>$calendar.zoneOffset()</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Der UTC-Offset des gegebenen Kalenders in Millisekunden (siehe <a class="tlObject" data-custom="false" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">toSystemCalendar</a> und <a class="tlObject" data-custom="false" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">toUserCalendar</a>).</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>calendar</td> 
+   <td>Fachobjekt</td> 
+   <td>Der Kalender, dessen UTC-Offset ermittelt werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2><strong>Rückgabewert</strong></h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl</p> 
+<p>Eine Zahl, die den UTC-Offset set des gegebenen Kalenders in Millisekunden angibt.</p> 
+<h2>Beispiele</h2> 
+<pre>	<code>date(2012, 8, 15).toUserCalendar().zoneOffset()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe für die Zeitzone Arizona (UTC -7):</strong></span> -25.200.000</p> 
+<p>Umgerechnet in Stunden ergibt das -7.</p>

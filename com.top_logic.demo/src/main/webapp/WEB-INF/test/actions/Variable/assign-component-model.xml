@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="Name"
+				type="string"
+			/>
+			<t:parameter name="ComponentName"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.SetGlobalVariableOp"
+			name="${$Name}"
+		>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+				<model-name config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+						<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+							component-name="${$ComponentName}"
+						/>
+					</component>
+				</model-name>
+			</value>
+		</action>
+	</t:body>
+</t:template>

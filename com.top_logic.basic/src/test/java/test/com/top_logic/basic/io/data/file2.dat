@@ -1,0 +1,10 @@
+BuildingDevice Name	BuildingDevice ID	Location Name	Location ID	Filepath and Name
+zuschauer.xml	84da23:120d79a38cb:-789f	Auth toon	84da23:120d79a38cb:-7aef	toon/Auth/zuschauer.xml
+kanaele.xml	84da23:120d79a38cb:-790d	Auth toon	84da23:120d79a38cb:-7aef	toon/Auth/kanaele.xml
+bandbreite.xml	84da23:120d79a38cb:-7958	Auth toon	84da23:120d79a38cb:-7aef	toon/Auth/bandbreite.xml
+zuschauer.xml	84da23:120d79a38cb:-789f	Security wirk	84da23:120d79a38cb:-7ad3	wirk/Security/zuschauer.xml
+kanaele.xml	84da23:120d79a38cb:-790d	Security wirk	84da23:120d79a38cb:-7ad3	wirk/Security/kanaele.xml
+bandbreite.xml	84da23:120d79a38cb:-7958	Security wirk	84da23:120d79a38cb:-7ad3	wirk/Security/bandbreite.xml
+zuschauer.xml	84da23:120d79a38cb:-789f	Bilder tvil	84da23:120d79a38cb:-7aa5	tvil/Bilder/zuschauer.xml
+kanaele.xml	84da23:120d79a38cb:-790d	Bilder tvil	84da23:120d79a38cb:-7aa5	tvil/Bilder/kanaele.xml
+bandbreite.xml	84da23:120d79a38cb:-7958	Bilder tvil	84da23:120d79a38cb:-7aa5	tvil/Bilder/bandbreite.xml

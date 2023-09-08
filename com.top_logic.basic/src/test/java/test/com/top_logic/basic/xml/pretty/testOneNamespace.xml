@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<a xmlns:foo="bar">
+	<b>
+		<foo:c/>
+		<c foo:bar="foobar"/>
+	</b>
+	<b/>
+</a>

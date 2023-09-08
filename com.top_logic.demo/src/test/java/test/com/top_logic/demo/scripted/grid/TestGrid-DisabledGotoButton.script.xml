@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path=""
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+					tab-path="Strukturen > Typendemo"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Tabellen > Grid"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="false"
+			reason-key="class.com.top_logic.element.layout.grid.I18NConstants.NO_GOTO_NO_DEFAULT_LAYOUT"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					tab-path="Tabellen > Grid"
+				/>
+				<row config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+						tab-path="Tabellen > Grid"
+					/>
+					<path>
+						<object>
+							<business-object config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path=""
+								structure="DemoTypes"
+							/>
+						</object>
+					</path>
+				</row>
+			</model-name>
+		</action>
+	</actions>
+</action>

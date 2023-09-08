@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="metaElement"/>
+		<param name="namePrefix"/>
+		<param name="modelBuilder"/>
+		<param name="querySupport"
+			value="true"
+		/>
+		<param name="inputSupport"
+			value="true"
+		/>
+		<param name="columns"
+			value="name"
+		/>
+		<param name="pageSizeOptions"
+			value="15"
+		/>
+		<param name="jSPPage"
+			value="/jsp/element/search/SearchInput.jsp"
+		/>
+		<param name="rendererClass"
+			value=""
+		/>
+		<param name="accessorClass"
+			value="com.top_logic.knowledge.wrap.WrapperAccessor"
+		/>
+	</params>
+
+	<layout name="${namePrefix}SearchGeneralAttributes">
+		<components>
+			<!-- MetaElement search test page -->
+			<layout name="${namePrefix}SearchGeneralAttributesComponent"
+				horizontal="true"
+			>
+				<components>
+					<!-- Stored queries component -->
+					<component class="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+						buttonComponent="${namePrefix}AttributeSearchGeneralButtons"
+						inputSupport="${inputSupport}"
+						metaElement="${metaElement}"
+						modelBuilder="${modelBuilder}"
+						name="${namePrefix}AttributedSearchGeneralInput"
+						page="${jSPPage}"
+						querySupport="${querySupport}"
+						resPrefix="element.search."
+						resultColumns="${columns}"
+					>
+						<layoutInfo size="480"/>
+						<dialogs>
+							<layout name="${namePrefix}NewStoredQueryDialog">
+								<dialogInfo
+									defaultI18n="element.search.displayDialog_NewStoredQueryDialog"
+									height="220"
+									width="320"
+								/>
+
+								<components>
+									<component class="com.top_logic.element.layout.meta.search.NewQueryComponent"
+										buttonComponent="${namePrefix}NewStoredQueryButtons"
+										name="${namePrefix}NewStoredQuery"
+										page="/jsp/element/metaattributes/NewStoredQuery.jsp"
+										resPrefix="element.meta.search.create."
+									/>
+									<buttonbar name="${namePrefix}NewStoredQueryButtons"/>
+								</components>
+							</layout>
+						</dialogs>
+					</component>
+					<component class="com.top_logic.element.layout.meta.search.AttributedSearchResultComponent"
+						metaElement="${metaElement}"
+						model="selection(${namePrefix}AttributedSearchGeneralInput)"
+						name="${namePrefix}AttributedSearchGeneralResultTable"
+						resPrefix="element.search.table."
+						selectable="false"
+					>
+						<table pageSizeOptions="$PageSizeOptions$">
+							<column-default accessor="${accessorClass}"/>
+
+							<tableRenderer class="${rendererClass}"/>
+						</table>
+						<buttons>
+							<button id="exportExcel"
+								class="com.top_logic.layout.table.export.ExcelExportHandler"
+							/>
+						</buttons>
+					</component>
+				</components>
+			</layout>
+			<buttonbar name="${namePrefix}AttributeSearchGeneralButtons"/>
+		</components>
+	</layout>
+</template>

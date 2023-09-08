@@ -1,0 +1,40 @@
+<div class="root">
+<div class="javadoc">
+{% include "search-template.html" %}
+
+<div class="header">
+<a href="#package-list"><img alt="TopLogic" src="toplogic.svg" height="50px"/></a>
+Documentation
+</div>
+
+<h1>Package overview</h1>
+
+{% macro printPackages(packages, n) %}
+<ul>
+	{% for package in packages %}
+	<li class="{% if package | isExpanded(n) %}expanded{% else %}collapsed{% endif %}">
+	<span class="package-node" onclick="return togglePackage(this);">
+		{{ package.name | packageRef }}
+		{% if package.packages.length > 0 %}
+		<i class="far fa-plus-square expand"></i>
+		<i class="far fa-minus-square collapse"></i>
+		{% endif %}
+	</span>
+	{% if package.packages.length > 0 %}
+		{{ printPackages(package.packages, n + 1) }}
+	{% endif %}
+	</li>
+	{% endfor %}
+</ul>
+{% endmacro %}
+
+<div>
+{{ printPackages(packages, 0) }}
+</div>
+
+</div>
+
+<div class="footer">
+TopLogic API and implementations © Copyright by Business Operation Systems GmbH
+</div>
+</div>

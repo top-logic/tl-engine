@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="DemoTypesTableCustomizedSidebarContainer"
+	horizontal="true"
+>
+	<components>
+		<tableView name="DemoTypesTableCustomizedSidebar"
+			objectType="me:DemoTypes.A"
+			resPrefix="layouts.demo.table.frozenTable.DemoTypesFrozenTable."
+		>
+			<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"
+				meta-elements="DemoTypes:A"
+			/>
+			<componentControlProvider class="com.top_logic.layout.structure.TableWithSidebar"
+				initiallyMinimized="false"
+			/>
+
+			<table
+				defaultColumns="name, booleanMandatory, date, float, string"
+				fixedColumns="1"
+				sidebarFilters="name, date"
+			>
+				<columns>
+					<column name="webFolder"
+						excludeFilterFromSidebar="true"
+					/>
+				</columns>
+			</table>
+		</tableView>
+	</components>
+</layout>

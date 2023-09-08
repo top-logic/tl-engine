@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<objectlist>
+
+<knowledgeobject object_type="TestB" object_name="TestBSource">
+	<ko_attribute att_name="nameA" att_value="TestBSourceName"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="TestB" object_name="TestBDest">
+	<ko_attribute att_name="nameA" att_value="TestBDestName"/>
+</knowledgeobject>
+
+<knowledgeassociation object_type="hasTestAssocA">
+	<ko_attribute att_name="source" att_value="TestBSource"/>
+	<ko_attribute att_name="dest" att_value="TestBDest"/>
+</knowledgeassociation>
+
+</objectlist>

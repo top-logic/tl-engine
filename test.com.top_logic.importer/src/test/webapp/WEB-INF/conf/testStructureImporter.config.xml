@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.importer.ImporterService">
+			<instance class="com.top_logic.importer.ImporterService">
+				<importers>
+					<importer name="structureXML">
+						<parser class="com.top_logic.importer.xml.XMLFileImportParser"
+							needs-character-events="true"
+							structure="testStruct"
+							namespace="Test-Datenstruktur"
+							extensions=".xml">
+							<default-mappings>
+								<default-mapping name="Nutzer" class="com.top_logic.importer.text.WrapperImportParser$Person" />
+
+								<default-mapping name="Ampel"  class="com.top_logic.importer.text.WrapperImportParser$FastListElement">
+									<mappings>
+										<mapping value="Grün" element="tl.beacon.three.green"  />
+										<mapping value="Gelb" element="tl.beacon.three.yellow" />
+										<mapping value="Rot"  element="tl.beacon.three.red"    />
+									</mappings>
+								</default-mapping>
+								<default-mapping name="Person" class="com.top_logic.importer.text.WrapperImportParser$PersonContact"  uid="name,vorname" />
+								<default-mapping name="Firma"  class="com.top_logic.importer.text.WrapperImportParser$CompanyContact" uid="name" />
+								<default-mapping name="Zahl"   class="com.top_logic.importer.text.TextImportParser$Float"             format="#0.0" locale="DE" />
+							</default-mappings>
+							<tags>
+								<tag name="structure" type="Root"       namespace="Test-Datenstruktur" />
+								<tag name="ebene1"    type="Context"    uid="ID">
+									<mappings>
+										<mapping name="Aktiv"     class="com.top_logic.importer.text.TextImportParser$Boolean" true="Ja" />
+										<mapping name="Aktiviert" class="com.top_logic.importer.text.TextImportParser$Date"    format="dd.MM.yyyy" />
+										<mapping name="Land"      class="com.top_logic.importer.text.TextImportParser$Text"    />
+										<mapping name="Sprache"   class="com.top_logic.importer.text.TextImportParser$Text"    />
+									</mappings>
+								</tag>
+								<tag name="ebene2a" type="Sub1"    uid="ID" />
+								<tag name="ebene2b" type="Sub2"    uid="ID">
+									<mappings>
+										<mapping name="Zahl"  class="com.top_logic.importer.text.TextImportParser$Long" format="#,##0" locale="DE" />
+									</mappings>
+								</tag>
+								<tag name="ebene3a" type="SubSub1" uid="ID" />
+								<tag name="ebene3b" type="SubSub2" uid="ID" />
+							</tags>
+						</parser>
+						<performer class="com.top_logic.importer.base.StructuredDataImportPerformer"
+							root-name="Root"
+							create-command-handler="createElement"
+							object-provider="test.com.top_logic.importer.structure.TestStructObjectProvider">
+							<mappings>
+								<mapping name="Root"    type="Root"    class="com.top_logic.importer.handler.structured.GoIntoDOImportHandler" /> 
+								<mapping name="Context" type="Root"    class="com.top_logic.importer.handler.structured.StructuredElementDOImportHandler" /> 
+								<mapping name="Sub1"    type="Context" class="com.top_logic.importer.handler.structured.StructuredElementDOImportHandler" /> 
+								<mapping name="Sub2"    type="Context" class="com.top_logic.importer.handler.structured.StructuredElementDOImportHandler" /> 
+<!-- 
+								<mapping name="SubSub1" type="Sub2"    class="com.top_logic.importer.handler.structured.GoIntoDOImportHandler" /> 
+								<mapping name="SubSub2" type="Sub2"    class="com.top_logic.importer.handler.structured.GoIntoDOImportHandler" /> 
+ -->
+							</mappings>
+						</performer>
+					</importer>
+				</importers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/testStruct.model.xml" />
+				</declarations>
+				<settings>
+					<module name="testStruct">
+						<factory value="test.com.top_logic.importer.data.struct.TestStructFactory" />
+					</module>					
+				</settings>
+				<classifications>
+					<classification name="tl.beacon.three"  mode="use" />
+				</classifications>
+			</instance>
+		</config>
+	</services>
+
+	<configs />
+</application>

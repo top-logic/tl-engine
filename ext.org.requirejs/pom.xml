@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>7.6.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>ext-org-requirejs</artifactId>
+  
+  <description>require.js version 2.3.5</description>
+  <url>http://requirejs.org/</url>
+  <licenses>
+  	<license>
+  		<name>BSD-3-Clause (BSD-3-Clause "New" or "Revised" License), MIT (MIT License)</name>
+  		<url>https://github.com/requirejs/requirejs/blob/master/LICENSE</url>
+  	</license>
+  </licenses>
+  
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+    </dependency>
+  </dependencies>
+</project>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="DemoTypesFrozenTableContainer"
+	horizontal="true"
+>
+	<components>
+		<layoutControl name="DemoTypesFrozenTableTableSidebar"
+			componentName="DemoTypesFrozenTable"
+		>
+			<layoutInfo size="200px"/>
+			<componentControlProvider class="com.top_logic.layout.structure.TableFilterLayoutControlProvider"
+				initiallyMinimized="true"
+			/>
+		</layoutControl>
+		<tableView name="DemoTypesFrozenTable"
+			maximizeRoot="DemoTypesFrozenTableContainer"
+			objectType="me:DemoTypes.A"
+			resPrefix="layouts.demo.table.frozenTable.DemoTypesFrozenTable."
+			showMinimize="false"
+		>
+			<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"
+				meta-elements="DemoTypes:A"
+			/>
+
+			<table
+				defaultColumns="name, boolean, booleanMandatory, date, float, floatDefault, long, string, singleStructure"
+				defaultSortOrder="name"
+				fixedColumns="3"
+				footerStyle="height:50px;background:orange;"
+				headerStyle="height: 35px; background:green;"
+				pageSizeOptions="10, all"
+				titleStyle="background:yellow; height:50px"
+			>
+				<tableRenderer class="com.top_logic.demo.table.DemoTableRenderer"
+					numberHeaderRows="2"
+				/>
+
+				<column-default columnWidth="200px">
+					<additionalHeaders>
+						<nullCount/>
+						<nullPercentage/>
+					</additionalHeaders>
+				</column-default>
+				<columns>
+					<column name="name"
+						headStyle="background:red;"
+					>
+						<additionalHeaders/>
+					</column>
+					<column name="primitiveAttributes"
+						columnLabel="Primitive Attributes"
+					>
+						<columns>
+							<column name="numericAttributes"
+								columnLabelKey="demo.demoTypes.numericAttributes"
+							>
+								<columns>
+									<column name="float"
+										columnWidth="80px"
+										cssClass="tblRight"
+									>
+										<additionalHeaders>
+											<min/>
+											<max/>
+										</additionalHeaders>
+									</column>
+									<column name="long"
+										columnWidth="80px"
+										cssClass="tblRight"
+									/>
+									<column name="floatDefault"
+										columnWidth="120px"
+									>
+										<additionalHeaders>
+											<average/>
+											<sum/>
+										</additionalHeaders>
+									</column>
+								</columns>
+							</column>
+
+							<column name="booleanAttributes"
+								columnLabelKey="demo.demoTypes.booleanAttributes"
+							>
+								<columns>
+									<column name="boolean"
+										headStyle="background:inherit;"
+									/>
+
+									<!-- Test case for Ticket #5768. -->
+									<column name="booleanMandatory"
+										sortable="false"
+									/>
+								</columns>
+							</column>
+
+							<column name="string"/>
+						</columns>
+					</column>
+					<column name="singleStructure">
+						<renderer class="com.top_logic.layout.basic.ResourceRenderer"
+							useImage="false"
+							useLink="false"
+							useToolTip="false"
+						/>
+					</column>
+					<column name="twoInputs"
+						controlProvider="com.top_logic.layout.form.template.DefaultFormFieldControlProvider"
+						fieldProvider="com.top_logic.demo.table.DemoTwoFieldProvider"
+						sortable="false"
+					/>
+				</columns>
+			</table>
+		</tableView>
+	</components>
+</layout>

@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/demo/create-elements.xml"
+			template-name-comment="Create elements"
+		>
+			<parameters>
+				<parameter name="rootName">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestCustomATile"
+					/>
+				</parameter>
+				<parameter name="numberChildren">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="2"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+			expand="true"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+					tab-path="Strukturen > Typendemo"
+				/>
+			</model-name>
+			<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+				label-path="TestCustomATile"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestCustomATile > A0"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestCustomATile A0"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestCustomATile > A1"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestCustomATile A1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.AddComponentCommand"
+			command-label="Sicht hinzufügen..."
+			command-name="addComponent"
+			component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Darzustellendes A"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="TestCustomATile A0"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Name"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Mein A0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.AddComponentCommand"
+			command-label="Sicht hinzufügen..."
+			command-name="addComponent"
+			component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Darzustellendes A"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="TestCustomATile A1"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Name"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Mein A1"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.mig.html.layout.tiles.scripting.DisplayTileActionOp"
+			component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+			tile-path="Mein A0"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand"
+			command-label="Übergeordnete Kachel"
+			command-name="stepOutTile"
+			component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.mig.html.layout.tiles.scripting.DisplayTileActionOp"
+			component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+			tile-path="Mein A1"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand"
+			command-label="Übergeordnete Kachel"
+			command-name="stepOutTile"
+			component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="TestCustomATile > TestCustomATile A0"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+					tab-path="Strukturen > Typendemo"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+			command-label="Löschen..."
+			command-name="elementRemove"
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment="Base element 'TestCustomATile A0' was deleted."
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileAllowedNaming">
+				<arguments/>
+				<base-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tile-path="Mein A0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+				value="false"
+			/>
+		</action>
+		<action class="com.top_logic.mig.html.layout.tiles.scripting.DisplayTileActionOp"
+			component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+			tile-path="Mein A1"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TilePathNaming">
+				<arguments/>
+				<base-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout > Kachel-Layout Container"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Mein A1"
+					/>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="TestCustomATile > TestCustomATile A1"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+			command-label="Löschen..."
+			command-name="elementRemove"
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment="Base element 'TestCustomATile A1' was deleted."
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileAllowedNaming">
+				<arguments/>
+				<base-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tile-path="Mein A1"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+				value="false"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment="Test that deleting object purges tile stack."
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TilePathNaming">
+				<arguments/>
+				<base-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout > Kachel-Layout Container"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/demo/delete-demo-type.xml"
+			template-name-comment="Delete demo type"
+		>
+			<parameters>
+				<parameter name="Element">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestCustomATile"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
+			template-name-comment="Persoenliche Einstellungen zuruecksetzen"
+		/>
+	</actions>
+</action>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="b"/>
+	</params>
+	<include name="template2.xml"
+		a="${b}"
+		b="b_value"
+	>
+		<inject>
+			<testAdditional name="additional">
+				<foobar/>
+			</testAdditional>
+		</inject>
+	</include>
+</template>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<a><b><![CDATA[]]></b><b><![CDATA[ some content ]]></b>
+<b><![CDATA[ 
+some			x 
+ content		y  
+  with			z   
+   tailing      
+    whitespace  
+]]></b>
+	<b><c/><![CDATA[]]><c/>   some other text </b>
+	<b foo="bar" x="y">         
+                <c 
+                	foo="bar" 
+                	x="y"
+                />
+				<![CDATA[]]><c/>
+				   some other text</b>
+</a>

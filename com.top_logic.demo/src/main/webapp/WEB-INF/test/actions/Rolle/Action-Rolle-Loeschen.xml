@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="kontext"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="Berechtigungsstruktur"
+				type="string"
+			/>
+			<t:parameter name="Name"
+				type="string"
+			/>
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<t:invoke template="script:Sicht/Action-Sicht-Anzeigen.xml">
+					<t:parameter name="Tester"
+						value="${$Tester}"
+					/>
+					<t:parameter name="Pfad"
+						value="Administration > Berechtigungen"
+					/>
+				</t:invoke>
+
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Berechtigungsstruktur"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+							tab-path="Administration > Berechtigungen"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="${$Berechtigungsstruktur}"
+							/>
+						</values>
+					</value>
+				</action>
+
+				<t:invoke template="script:Sicht/Action-Sicht-Anzeigen.xml">
+					<t:parameter name="Tester"
+						value="${$Tester}"
+					/>
+					<t:parameter name="Pfad"
+						value="Administration > Berechtigungen > Rollen"
+					/>
+				</t:invoke>
+
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="${$Tester}"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="${$Name}"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#editRolesTable"
+							tab-path="Administration > Berechtigungen > Rollen"
+						/>
+					</selection-model-name>
+				</action>
+
+				<t:invoke template="script:Knopf/Action-Knopf-Druecken.xml">
+					<t:parameter name="Tester"
+						value="${$Tester}"
+					/>
+					<t:parameter name="Name"
+						value="Löschen..."
+					/>
+				</t:invoke>
+				<t:if condition=" ! #equals($kontext, &quot;&quot;)">
+					<t:then>
+						<t:invoke template="script:Variable/Action-Variable-Loeschen.xml">
+							<t:parameter name="Tester"
+								value="${$Tester}"
+							/>
+							<t:parameter name="Name"
+								value="${$kontext}"
+							/>
+						</t:invoke>
+					</t:then>
+				</t:if>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

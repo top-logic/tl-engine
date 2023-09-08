@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="tile"
+>
+	<properties extends="com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.mig.html.layout.tiles.TileComponentName">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="model"/>
+					<property name="chartDescription"/>
+					<property name="data"/>
+					<property name="securityDomain"/>
+					<property name="securityObject"/>
+					<property name="helpID"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="chartDescription"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="data"
+			type="com.top_logic.model.search.expr.config.dom.Expr"
+		>
+			<formatted-default>
+				<value><![CDATA[{
+	'type': 'bar',
+	'data': {
+	    'labels': ['Value 1', 'Value 2', 'Value 3'],
+		'datasets': [
+		    {
+		        'label': 'Category 1',
+			    'data': [10, 50, 30]
+		    },
+		    {
+		        'label': 'Category 2',
+			    'data': [20, 40, 10]
+		    }
+		]
+	},
+	'options': {
+		'maintainAspectRatio': false,
+		'plugins': {
+            'colorschemes': {
+            	// See https://nagix.github.io/chartjs-plugin-colorschemes/colorchart.html
+                'scheme': 'tableau.Tableau10'
+            }
+        },
+		'scales': {
+		    'y': {
+			    'ticks': {
+			        'min': 0
+			    }
+		    },
+			'x': {
+				'gridLines': {
+					'offsetGridLines': true
+				}
+			}
+		}
+	}
+}]]></value>
+			</formatted-default>
+		</property>
+		<property name="tileName"
+			type="String"
+		>
+			<hidden/>
+			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
+		</property>
+
+		<property name="securityDomain"
+			default="SecurityStructure"
+			type="String"
+		>
+			<nullable/>
+			<options
+				fun="com.top_logic.tool.boundsec.manager.SecurityStructures"
+				mapping="com.top_logic.model.config.TLModelPartMapping"
+			/>
+		</property>
+		<property name="helpID"
+			type="String"
+		>
+			<property-editor value="com.top_logic.layout.help.UseHelpEditor"/>
+			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
+		</property>
+	</properties>
+
+	<securityLayout name="TileLayout"
+		helpID="${helpID}"
+		securityDomain="${securityDomain}"
+		titleKey="${name}"
+	>
+		<tile-info name="${tileName}"
+			label="${name}"
+		>
+			<preview class="com.top_logic.chart.chartjs.tile.ChartJSPreview"
+				chart-description="${chartDescription}"
+			/>
+		</tile-info>
+		<chartjs name="Chart"
+			data="${data}"
+			dialogs="${dialogs}"
+			model="${model}"
+			securityObject="${securityObject}"
+			titleKey="${name}"
+			toolbar="true"
+		>
+			<buttons>
+				<include name="templates/editComponentCommands.xml"/>
+			</buttons>
+		</chartjs>
+	</securityLayout>
+</config:template>

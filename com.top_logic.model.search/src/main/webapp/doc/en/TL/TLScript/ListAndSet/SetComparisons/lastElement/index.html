@@ -1,0 +1,41 @@
+<h2>Syntax</h2> 
+<pre>	<code>$set.lastElement()
+
+$set[$set.size() - 1]
+</code>
+</pre> 
+<h2>Description</h2> 
+<p>Returns the last element of the <span style="color:#695d69; font-family:monospace"><span style="background-color:#f7f3f7">set</span></span>.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set</td> 
+   <td>Set</td> 
+   <td>A set from which the last element should be returned.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong> </span>number/string/boolean/businss object/set</p> 
+<p>The last element from <code class="hljs inlineCode">set</code> or <code class="hljs inlineCode">null</code>, if the set is empty.</p> 
+<h2>Examples</h2> 
+<h3>Filled list</h3> 
+<pre>	<code>list("hello", "how", "are", "you").lastElement()</code>
+</pre> 
+<p><strong><span style="color:#3498db">Output:</span> </strong>you</p> 
+<h3>Empty list</h3> 
+<pre>	<code>list().lastElement()</code>
+</pre> 
+<p><strong><span style="color:#3498db">Output:</span> </strong> <code class="hljs inlineCode">null</code></p>

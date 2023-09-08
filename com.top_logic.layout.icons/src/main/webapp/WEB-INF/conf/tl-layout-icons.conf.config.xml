@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.layout.form.control.IconInputControl$Config">
+			<resources>
+				<resource name="tl_icon" resource="/webfonts/tl_iconFontMetadata.json">
+					<icon-mappings>
+						<icon-mapping style="" encoded-icon="colored:tl-icon ${name}" />					
+					</icon-mappings>
+				</resource>
+			</resources>
+		</config>
+	</configs>
+</application>

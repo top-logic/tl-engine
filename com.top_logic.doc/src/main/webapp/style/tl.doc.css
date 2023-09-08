@@ -1,0 +1,28 @@
+/*
+  CSS for TL DOC.
+*/
+
+.tlTranslatedI18nField .cke_editable {
+	height: 90%; /* TODO #25919: Find a better solution. */
+}
+
+.structuredTextFullHeight .tlTranslatedI18nField {
+	height: 100%;
+}
+
+.languageSelect {
+	float: right;
+}
+
+.tlDocCreateDialog {
+	padding: 10px;
+}
+
+div.tlDocSearchContainer {
+	display: table;
+	width: 100%;
+}
+
+.margin5 {
+	margin: 5px;
+}

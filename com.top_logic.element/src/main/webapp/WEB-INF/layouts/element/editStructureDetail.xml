@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="structure"/>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="namePrefixComposed"
+			value="${namePrefix}${structure}"
+		/>
+		<param name="masterComponentName"
+			value=""
+		/>
+		<param name="master"
+			value="${structure}Tree"
+		/>
+		<param name="defaultFor"
+			value="tl.element:StructuredElement"
+		/>
+		<param name="page"
+			value="/jsp/element/EditStructuredElement.jsp"
+		/>
+		<param name="showNoModel"
+			optional="true"
+		/>
+		<param name="createCommandGroups"
+			optional="true"
+		/>
+		<param name="editCommandGroups"
+			optional="true"
+		/>
+		<param name="editDialogs">
+			<!-- Empty by default. -->
+		</param>
+		<param name="openCreateCommandGroup"
+			value="Create"
+		/>
+		<param name="dialogName"
+			value="${namePrefixComposed}newElementLayoutDialog"
+		/>
+		<param name="createForms"
+			optional="true"
+		/>
+		<param name="openCreateName"
+			value="openCreateDialog"
+		/>
+		<param name="createClique"
+			value="create"
+		/>
+		<param name="openCreateLabel"
+			value="element.structure.edit.layout.openAsDialog"
+		/>
+		<param name="securityProvider"
+			value="default"
+		/>
+		<param name="modifier"
+			value=""
+		/>
+		<param name="editRoot"
+			value="false"
+		/>
+		<param name="show-compare-command"
+			value=""
+		/>
+		<param name="subConfiguration">
+			<!-- Empty by default. -->
+		</param>
+		<param name="exportDialogs">
+			<!-- Empty by default. -->
+		</param>
+		<param name="buttonbarName"
+			value="${namePrefixComposed}structureEditButtons"
+		/>
+		<param name="buttonbar">
+			<buttonbar name="${buttonbarName}"/>
+		</param>
+	</params>
+
+	<layout>
+		<components>
+			<!-- component to edit structured elements -->
+			<component class="com.top_logic.element.layout.structured.AdminElementComponent"
+				buttonComponent="${buttonbarName}"
+				commandGroups="${editCommandGroups}"
+				defaultFor="${defaultFor}"
+				editRoot="${editRoot}"
+				model="selection(${master})"
+				modifier="${modifier}"
+				name="${namePrefixComposed}Edit"
+				page="${page}"
+				resPrefix="element.structure.edit."
+				securityProviderClass="${securityProvider}"
+				show-compare-command="${show-compare-command}"
+				showNoModel="${showNoModel}"
+				structure="${structure}"
+				titleKey="layouts.element.editStructureDetail.editTitle.${structure}"
+			>
+				<dialogs>
+					<include name="com.top_logic.element/create/genericCreateStructure.xml"
+						createCommandGroups="${createCommandGroups}"
+						detailComponentName="${namePrefixComposed}newElementDialog"
+						dialogName="${dialogName}"
+						forms="${createForms}"
+						namePrefix="${namePrefixComposed}"
+						newModelAction="set-parent-model"
+						securityProvider="${securityProvider}"
+						setParentToEdit="true"
+					>
+						<inject>
+							<dialogInfo
+								height="%STRUCTURE_DIALOG_HEIGHT%"
+								width="%STRUCTURE_DIALOG_WIDTH%"
+							>
+								<open-handler id="${openCreateName}"
+									clique="${createClique}"
+									disabledImage="theme:TREE_NEW_ELEMENT_DISABLED"
+									executability="CreateElementRule"
+									group="${openCreateCommandGroup}"
+									image="theme:ICONS_ADD_BUTTON"
+									resourceKey="${openCreateLabel}"
+									targetComponent="${namePrefixComposed}newElementDialog"
+								>
+									<target class="com.top_logic.layout.channel.linking.impl.UnionLinking">
+										<channel name="model">
+											<relation kind="self"/>
+										</channel>
+										<provider>
+											<impl class="com.top_logic.element.layout.structured.WholeStructureModelProvider"
+												structure="${structure}"
+											/>
+										</provider>
+									</target>
+								</open-handler>
+							</dialogInfo>
+						</inject>
+					</include>
+					${editDialogs}
+					${exportDialogs}
+				</dialogs>
+				${subConfiguration}
+			</component>
+			${buttonbar}
+		</components>
+	</layout>
+</template>

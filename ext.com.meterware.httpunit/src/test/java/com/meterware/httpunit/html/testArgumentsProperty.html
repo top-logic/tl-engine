@@ -1,0 +1,26 @@
+<!--
+  $Header$
+  Test for bug report [ 1286018 ] EcmaError in seemingly valid function
+  by Stephane Mikaty 
+-->
+<html>                                                        
+<body onload="dumpargs('a','b')">                             
+<script language='JavaScript'>                                
+	<!--                                                         
+	function dumpargs() {                                        
+		var args=dumpargs.arguments;                               
+		var argdump=args.length;                                   
+		for (i=0; i<args.length; i+=1) {                           
+			argdump+='+';                                            
+			argdump+=args[i];                                        
+		}                                                          
+		document.getElementById('actual').innerHTML=argdump;       
+	}                                                            
+	// -->                                                       
+</script>                                                     
+                                                              
+<div id="expected">2+a+b</div>                                
+<div id="actual"/>                                            
+                                                              
+</body>                                                       
+</html>

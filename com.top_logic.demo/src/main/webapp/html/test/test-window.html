@@ -1,0 +1,108 @@
+<html>
+
+<head>
+	<title>Window library test</title>
+	
+	<style type="text/css">
+		button {
+			margin-right: 2ex;
+		}
+	</style>
+	
+	<!-- Import thread library. --> 
+	<script type="text/javascript" src="../../script/tl/thread.js"></script>
+	<script type="text/javascript" src="../../script/tl/window.js"></script>
+
+	<script type="text/javascript">
+		// Test events from other windows.
+		var windowId = 0;
+
+		function testOpenWindow(button) {
+			var name = "win" + (windowId++);
+			winOpenWindow(name, "test-window-content.html", 300, 200, /*hasLocation*/false, /*hasStatus*/false, /*isResizable*/true, /*hasScrollbars*/true, /*hasToolbar*/false);
+			var span = document.createElement("span");
+			span.innerHTML = '<button onclick="return testCloseWindow(this);"></button>';
+			
+			var closeButton = span.firstChild;
+			closeButton.name = name;
+			closeButton.id = "close-" + name;
+			
+			closeButton.appendChild(document.createTextNode("Close window '" + name + "'"));
+			document.getElementById("buttons").appendChild(closeButton);
+			
+			logOpenWindows();
+		}
+		
+		function logOpenWindows() {
+			var windowNames = "";
+			var first = true;
+			for (var name in winAllWindows) {
+				if (first) {
+					first = false;
+				} else {
+					windowNames += ", ";
+				}
+				
+				windowNames += name;
+			}
+			
+			log("Currently open windows: " + windowNames);
+		}
+		
+		function testCloseWindow(button) {
+			var windowName = button.name;
+			
+			// Programmatically close window.
+			winCloseWindow(windowName);
+			deleteButton(windowName);
+			
+			logOpenWindows();
+		}
+
+		// @Override		
+		function _winNotifyWindowClose(windowName) {
+			log("Inform server: Window '" + windowName + "' was closed.");
+			logOpenWindows();
+
+			deleteButton(windowName);
+		}
+		
+		function deleteButton(windowName) {
+			var button = document.getElementById("close-" + windowName);
+			button.parentNode.removeChild(button);
+		}
+		
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+	</script>
+</head>
+<body onload="log('Test page ready.');">
+
+	<h2>Test case JavaScript window library</h2>
+	
+	<h2>Action triggers</h2>
+	
+	<p id="buttons">
+		<button onclick="return testOpenWindow(this);">Open window</button>
+		<button onclick="return logOpenWindows();">Dump windows</button>
+	</p>
+
+	<p>
+		<button onclick="return clearConsole();">Clear console</button>
+	</p>
+	
+	<h2>Console output</h2>
+	
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+</body>
+</html>

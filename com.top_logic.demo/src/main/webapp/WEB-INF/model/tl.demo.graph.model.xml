@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.demo.graph">
+		<annotations>
+			<singletons>
+				<singleton type="R"/>
+			</singletons>
+		</annotations>
+		<interface name="N">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="others"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="N"
+				/>
+			</attributes>
+		</interface>
+		<class name="A">
+			<generalizations>
+				<generalization type="N"/>
+			</generalizations>
+		</class>
+		<class name="R">
+			<generalizations>
+				<generalization type="N"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<string value="ROOT"/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

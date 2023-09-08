@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<fallback-test xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<b-config>
+		<a-map-configs config:override="false">
+			<aConfig config:operation="add"
+				config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$B"
+				intValue="15" stringValue="four" />
+			<aConfig config:operation="remove" stringValue="one" />
+			<aConfig config:operation="update" stringValue="two"
+				config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A" />
+		</a-map-configs>
+	</b-config>
+</fallback-test>

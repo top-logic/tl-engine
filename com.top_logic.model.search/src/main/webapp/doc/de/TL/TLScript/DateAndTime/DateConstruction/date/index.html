@@ -1,0 +1,58 @@
+<h2>Syntax</h2> 
+<pre>	<code>date($year, $month, $day)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Konstruiert einen Datumswert, der einen Tag eines Jahres darstellt (im Systemkalender). Kompatibel mit <code class="hljs inlineCode">tl.core:Date</code> Werten.</p> 
+<p>Dieser Wert kann beispielsweise in Attribute vom Typ <code class="hljs inlineCode">tl.core:Date</code> gespeichert, oder mit <a class="tlObject" data-custom="false" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">toSystemCalendar</a> weiter untersucht werden.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>year</td> 
+   <td>Zahl</td> 
+   <td>Jahr des Datums</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>month</td> 
+   <td>Zahl</td> 
+   <td>Monat des Datums. Die Zählung beginnt bei 0 (Januar = 0, Februar = 1 etc.)</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>day</td> 
+   <td>Zahl</td> 
+   <td>Tag des Datums. Die Zählung beginnt bei 1 (1 = erster Tag des Monats)</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
+<p>Einen Datumswert für den angegebenen Tag des Jahres im Systemkalender.</p> 
+<h2>Beispiele</h2> 
+<p><strong>Hinweis: </strong>Die Ausgabe kann abhängig von der Zeitzone des Kalenders abweichen.</p> 
+<h3>Unformatiertes Datum</h3> 
+<pre>	<code>date(2012, 11, 31)
+</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 31.12.2012</p> 
+<h3>Formatiertes Datum</h3> 
+<pre>	<code>dateFormat("dd-MM-yyy").format(date(2012, 11, 31))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 30-12-2012</p> 
+<p> </p> 
+<p> </p> 
+<p> </p>

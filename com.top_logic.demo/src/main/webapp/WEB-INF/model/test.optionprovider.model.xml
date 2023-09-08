@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.optionprovider">
+		<class name="Part">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="value"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="x -> count($x.container().get(`test.optionprovider:WithOptions#min`), $x.container().get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="WithOptions">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<main-properties properties="name,min,max,value,values,num,nums,str,strs"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.optionprovider:WithOptions#name"
+							type="tl.core:String"
+						/>
+						<columnsLayout>
+							<field
+								attribute="min"
+								fullQualifiedName="test.optionprovider:WithOptions#min"
+								type="tl.core:Integer"
+							/>
+							<field
+								attribute="max"
+								fullQualifiedName="test.optionprovider:WithOptions#max"
+								type="tl.core:Integer"
+							/>
+							<group>
+								<field
+									attribute="value"
+									fullQualifiedName="test.optionprovider:WithOptions#value"
+									type="tl.core:Integer"
+								/>
+								<field
+									attribute="values"
+									fullQualifiedName="test.optionprovider:WithOptions#values"
+									type="tl.core:Integer"
+								/>
+								<field
+									attribute="num"
+									fullQualifiedName="test.optionprovider:WithOptions#num"
+									type="tl.core:Double"
+								/>
+								<field
+									attribute="nums"
+									fullQualifiedName="test.optionprovider:WithOptions#nums"
+									type="tl.core:Float"
+								/>
+								<field
+									attribute="str"
+									fullQualifiedName="test.optionprovider:WithOptions#str"
+									type="tl.core:String"
+								/>
+								<field
+									attribute="strs"
+									fullQualifiedName="test.optionprovider:WithOptions#strs"
+									type="tl.core:String"
+								/>
+								<label key="dynamic.ef5426ac-a7df-407a-a281-fafb585bd1e7">
+									<en>Primitive attributes with selection options</en>
+									<de>Primitive Attribute mit Auswahoptionen</de>
+								</label>
+							</group>
+						</columnsLayout>
+						<group>
+							<field
+								attribute="parts"
+								fullQualifiedName="test.optionprovider:WithOptions#parts"
+								type="test.optionprovider:Part"
+							/>
+							<field
+								attribute="bestValue"
+								fullQualifiedName="test.optionprovider:WithOptions#bestValue"
+								type="tl.core:Integer"
+							/>
+							<label key="dynamic.eeb3aa71-9393-4b09-a389-8c747c086f9e">
+								<en>Dependencies across object boundaries</en>
+								<de>Abhängigkeiten über Objektgrenzen hinweg</de>
+							</label>
+						</group>
+						<group initiallyOpened="false">
+							<field
+								attribute="valuePopUp"
+								fullQualifiedName="test.optionprovider:WithOptions#valuePopUp"
+								type="tl.core:Integer"
+							/>
+							<field
+								attribute="valueChecklist"
+								fullQualifiedName="test.optionprovider:WithOptions#valueChecklist"
+								type="tl.core:Integer"
+							/>
+							<field
+								attribute="valueRadioInline"
+								fullQualifiedName="test.optionprovider:WithOptions#valueRadioInline"
+								type="tl.core:Integer"
+							>
+								<annotations>
+									<render-whole-line/>
+								</annotations>
+							</field>
+							<field
+								attribute="valueRadio"
+								fullQualifiedName="test.optionprovider:WithOptions#valueRadio"
+								type="tl.core:Integer"
+							/>
+							<label key="dynamic.1c4318c3-bf2c-45e8-96d3-c4cce0659f6b">
+								<en>Display types for values</en>
+								<de>Darstellungsarten für Werte</de>
+							</label>
+						</group>
+						<group initiallyOpened="false">
+							<field
+								attribute="valuesPopUp"
+								fullQualifiedName="test.optionprovider:WithOptions#valuesPopUp"
+								type="tl.core:Integer"
+							/>
+							<field
+								attribute="valuesChecklist"
+								fullQualifiedName="test.optionprovider:WithOptions#valuesChecklist"
+								type="tl.core:Integer"
+							/>
+							<field
+								attribute="valuesRadioInline"
+								fullQualifiedName="test.optionprovider:WithOptions#valuesRadioInline"
+								type="tl.core:Integer"
+							>
+								<annotations>
+									<render-whole-line/>
+								</annotations>
+							</field>
+							<field
+								attribute="valuesRadio"
+								fullQualifiedName="test.optionprovider:WithOptions#valuesRadio"
+								type="tl.core:Integer"
+							/>
+							<label key="dynamic.7a3740ce-5dc3-4b1f-9e51-45d7e41ed5c4">
+								<en>Display types for multiple values</en>
+								<de>Darstellungsarten für mehrere Werte</de>
+							</label>
+						</group>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="value"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+						<format format="'#'#"/>
+					</annotations>
+				</property>
+				<property name="min"
+					mandatory="true"
+					type="tl.core:Integer"
+				/>
+				<property name="max"
+					mandatory="true"
+					type="tl.core:Integer"
+				/>
+				<property name="num"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -> $n / 10)"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="str"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function>x -&gt; count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -&gt; "Option " + $n)</function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</property>
+				<property name="values"
+					multiple="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="strs"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function>x -&gt; count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -&gt; "Option " + $n)</function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</property>
+				<property name="nums"
+					multiple="true"
+					type="tl.core:Float"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -> $n / 10)"/>
+						</options>
+					</annotations>
+				</property>
+				<reference name="parts"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Part"
+				/>
+				<property name="bestValue"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="x->$x.get(`test.optionprovider:WithOptions#parts`).foreach(p -> $p.get(`test.optionprovider:Part#value`)).filter(v -> $v != null).toSet()"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="valuePopUp"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<classification-display value="pop-up"/>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="valueRadio"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<classification-display value="radio"/>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="valueRadioInline"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<classification-display value="radio-inline"/>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="valueChecklist"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<classification-display value="checklist"/>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="valuesPopUp"
+					multiple="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<classification-display value="pop-up"/>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="valuesRadio"
+					multiple="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<classification-display value="radio"/>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="valuesRadioInline"
+					multiple="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<classification-display value="radio-inline"/>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="valuesChecklist"
+					multiple="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<classification-display value="checklist"/>
+						<options>
+							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+						</options>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

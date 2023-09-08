@@ -1,0 +1,138 @@
+#bar {
+	background: #d1e0f3;
+	padding: 0 8px;
+	cursor: default;
+	height: 26px;
+}
+
+.XulMenu {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-weight: bold;
+	-moz-user-select: none;
+}
+
+.XulMenu .buttondisable {
+	height: 26px;
+	line-height: 26px;
+	padding: 0 10px;
+	color: #929caa;
+	text-decoration: none;
+	cursor: default;
+	white-space: nowrap;
+	display: block;
+}
+
+.XulMenu .button {
+	
+	height: 26px;
+	line-height: 26px;
+	padding: 0 10px;
+	background: var(--MAIN_TAB_BACKGROUND);
+	color: var(--MAIN_TAB_FONT_COLOR);
+	text-decoration: none;
+	cursor: default;
+	white-space: nowrap;
+	display: block;
+	cursor: pointer;
+	border-left: var(--MAIN_TAB_BORDER);
+	border-right: var(--MAIN_TAB_BORDER);
+}
+
+.XulMenu .button:hover {
+	height: 26px;
+	line-height: 26px;
+	padding: 0 10px;
+	background: var(--MAIN_TAB_BACKGROUND_HOVER);
+	color: var(--MAIN_TAB_FONT_COLOR_HOVER);
+	text-decoration: none;
+	cursor: default;
+	white-space: nowrap;
+	display: block;
+	cursor: pointer;
+	border-left: var(--MAIN_TAB_BORDER_HOVER);
+	border-right: var(--MAIN_TAB_BORDER_HOVER);
+}
+
+.XulMenu .button_hover {
+	height: 26px;
+	line-height: 26px;
+	padding: 0 10px;
+	background: var(--MAIN_TAB_BACKGROUND_HOVER);
+	color: var(--MAIN_TAB_FONT_COLOR_HOVER);
+	text-decoration: none;
+	cursor: default;
+	white-space: nowrap;
+	display: block;
+	cursor: pointer;
+	border-left: var(--MAIN_TAB_BORDER_HOVER);
+	border-right: var(--MAIN_TAB_BORDER_HOVER);
+}
+
+.XulMenu .button-active {
+	height: 26px;
+	line-height: 26px;
+	padding: 0 10px;
+	background: var(--MAIN_TAB_BACKGROUND_ACTIVE);
+	border-left: var(--MAIN_TAB_BORDER_ACTIVE);
+	border-right: var(--MAIN_TAB_BORDER_ACTIVE);
+	color: var(--MAIN_TAB_FONT_COLOR_ACTIVE);
+	text-decoration: none;
+	cursor: default;
+	white-space: nowrap;
+	display: block;
+}
+
+.XulMenu .button-active:hover {
+	height: 26px;
+	line-height: 26px;
+	padding: 0 10px;
+	background: var(--MAIN_TAB_BACKGROUND_ACTIVE_HOVER);
+	border-left: var(--MAIN_TAB_BORDER_ACTIVE_HOVER);
+	border-right: var(--MAIN_TAB_BORDER_ACTIVE_HOVER);
+	color: var(--MAIN_TAB_FONT_COLOR_ACTIVE_HOVER);
+	text-decoration: none;
+	cursor: default;
+	white-space: nowrap;
+	display: block;
+}
+
+.XulMenu .item,.XulMenu .item:hover,.XulMenu .item-active,.XulMenu .item-active:hover
+	{
+	line-height: normal;
+	background: url(../images/menu_bg.png) left top repeat-y;
+	padding: 3px 30px 3px 20px;
+	color: #000000;
+	text-decoration: none;
+	cursor: default;
+	white-space: nowrap;
+	display: block;
+	position: relative;
+	z-index: 10;
+	cursor: pointer;
+}
+
+.XulMenu .item:hover,.XulMenu .item-active,.XulMenu .item-active:hover {
+	background: #667fac;
+	color: #ffffff;
+}
+
+.XulMenu .section {
+	border: 1px solid #9bb0d1;
+	position: absolute;
+	visibility: hidden;
+	z-index: -1;
+}
+
+.XulMenu .arrow {
+	position: absolute;
+	top: 7px;
+	right: 8px;
+	border: 0;
+	z-index: 9;
+}
+
+* html .XulMenu td {
+	position: relative;
+	z-index: 9;
+} /* ie 5.0 fix */

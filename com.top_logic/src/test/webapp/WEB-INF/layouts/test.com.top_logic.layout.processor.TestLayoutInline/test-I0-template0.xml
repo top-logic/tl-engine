@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="p10"
+			optional="true"
+		/>
+		<param name="p20"
+			value="p2Value"
+		/>
+		<param name="p30"
+			optional="true"
+		/>
+		<param name="p40"
+			optional="true"
+		/>
+		<param name="p50"
+			value="p5Value"
+		/>
+		<param name="p60"
+			optional="true"
+		/>
+	</params>
+
+	<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-I0-template1.xml"
+		p11="${p10}"
+		p21="${p20}"
+		p31="${p30}"
+	>
+		<p41>${p40}</p41>
+		<p51>${p50}</p51>
+		<p61>${p60}</p61>
+	</include>
+</template>

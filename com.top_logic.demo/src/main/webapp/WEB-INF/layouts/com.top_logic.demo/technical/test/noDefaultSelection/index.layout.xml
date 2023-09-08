@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="demo.noDefaultSelection.tabber"
+		z_legacy_componentName="noDefaultSelection"
+		z_legacy_tabBarName="noDefaultSelection_tabBar"
+		z_legacy_tabLabel="demo.noDefaultSelection.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/test/noDefaultSelection/tree/treeNoDefaultSelection.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/noDefaultSelection/grid/gridNoDefaultSelection.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/noDefaultSelection/table/tableNoDefaultSelection.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+					<list/>
+				</selectee>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.doc.app/tl.doc.app.layout.xml#Tree"
+					tab-path="Wiki"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.doc.create.OpenCreatePageDialogCommand"
+			command-label="Unterseite erstellen"
+			command-name="createChildPageDialog"
+			component-implementation-comment="com.top_logic.doc.component.DocumentationTreeComponent"
+			component-name="com.top_logic.doc.app/tl.doc.app.layout.xml#Tree"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Titel"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="A"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Erstellen"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="A"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.doc.app/tl.doc.app.layout.xml#Tree"
+					tab-path="Wiki"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.doc.create.OpenCreatePageDialogCommand"
+			command-label="Unterseite erstellen"
+			command-name="createChildPageDialog"
+			component-implementation-comment="com.top_logic.doc.component.DocumentationTreeComponent"
+			component-name="com.top_logic.doc.app/tl.doc.app.layout.xml#Tree"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Titel"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="B"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Erstellen"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="A > B"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.doc.app/tl.doc.app.layout.xml#Tree"
+					tab-path="Wiki"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.bookmark.ShowBookmarkLinkCommandHandler"
+			command-label="Lesezeichen erstellen"
+			command-name="showBookmarkLink"
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="com.top_logic.doc.app/tl.doc.app.layout.xml#Detailtl.docEdit"
+			user-id="root"
+		>
+			<arguments>
+				<argument name="TARGET_MODEL">
+					<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+						path="a > b"
+						structure="tl.doc"
+					>
+						<branch config:interface=""/>
+						<revision config:interface=""/>
+					</value>
+				</argument>
+			</arguments>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Schließen"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="A"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.doc.app/tl.doc.app.layout.xml#Tree"
+					tab-path="Wiki"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+			command-label="Löschen..."
+			command-name="elementRemove"
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="com.top_logic.doc.app/tl.doc.app.layout.xml#Detailtl.docEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

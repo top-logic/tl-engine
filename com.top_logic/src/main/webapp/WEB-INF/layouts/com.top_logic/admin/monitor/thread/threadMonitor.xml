@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Displays running threads of the JVM. -->
+<layout horizontal="true">
+	<components>
+		<tableView name="threadList"
+			modelBuilder="com.top_logic.util.monitor.thread.ThreadListModelBuilder"
+			resPrefix="layouts.admin.technical.monitor.thread.threadMonitor.threadList."
+			securityProviderClass="securityRoot"
+		>
+			<layoutInfo size="485px"/>
+			<table
+				defaultColumns="kind,name,state"
+				defaultSortOrder="name:ascending"
+				fixedColumns="1"
+			>
+				<columns>
+					<column name="kind"
+						accessor="com.top_logic.util.monitor.thread.ThreadData$ThreadKind"
+						columnWidth="110px"
+					/>
+					<column name="name"
+						accessor="com.top_logic.util.monitor.thread.ThreadData$ThreadName"
+						columnWidth="250px"
+					/>
+					<column name="state"
+						accessor="com.top_logic.util.monitor.thread.ThreadData$ThreadState"
+						columnWidth="115px"
+					/>
+					<column name="priority"
+						accessor="com.top_logic.util.monitor.thread.ThreadData$ThreadPriority"
+						columnWidth="100px"
+						visible="false"
+					/>
+					<column name="group"
+						accessor="com.top_logic.util.monitor.thread.ThreadData$ThreadGroup"
+						columnWidth="100px"
+						visible="false"
+					/>
+				</columns>
+			</table>
+			<buttons>
+				<button id="refreshThreads"
+					class="com.top_logic.util.monitor.thread.RefreshThreadsCommand"
+					disabledImage="theme:ICONS_BUTTON_REFRESH_DISABLED"
+					image="theme:ICONS_BUTTON_REFRESH"
+					resourceKey="layouts.admin.technical.monitor.thread.threadMonitor.threadList.refreshThreads"
+				/>
+			</buttons>
+		</tableView>
+		<component class="com.top_logic.util.monitor.thread.ThreadDetailComponent"
+			model="selection(threadList)"
+			name="threadDetail"
+			page="/jsp/util/monitor/thread/ThreadDetail.jsp"
+			resPrefix="layouts.admin.technical.monitor.thread.threadMonitor.threadDetail."
+			securityProviderClass="securityRoot"
+		/>
+	</components>
+</layout>

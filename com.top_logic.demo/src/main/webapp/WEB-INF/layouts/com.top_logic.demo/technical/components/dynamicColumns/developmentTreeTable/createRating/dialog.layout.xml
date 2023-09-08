@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID=""
+		openMaximized="false"
+		resizable="true"
+		securityProviderClass="securityRoot"
+		width="800px"
+	>
+		<open-handler id="ID_66601067_fb85_4723_945a_b3ff7e1eb679"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			clique="create"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			image="css:fas fa-link"
+			target="selection(self())"
+			targetComponent="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeTable/createRating/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.81a45410-baac-4488-bff8-bfa76642a21e">
+				<en>Create individual rating manually</en>
+				<de>Einzelne Bewertung manuell anlegen</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.81a45410-baac-4488-bff8-bfa76642a21e">
+				<en>New rating</en>
+				<de>Neue Bewertung</de>
+			</title>
+		</title>
+		<typeOptions
+			include-subtypes="true"
+			type="test.dynamictable:Rating"
+		/>
+		<create-handler id="ID_45d1997b_286d_4aa0_8035_bf0f8efbb625"
+			clique="save"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			ignoreWarnings="default"
+			image=""
+			linkOperation="context -> link -> $context.add(`test.dynamictable:Development#ratings`, $link)"
+		/>
+	</arguments>
+</config:template-call>

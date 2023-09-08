@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name,description,state"
+		model="selection(com.top_logic.demo/technical/components/tiles/releasesTileLayout.layout.xml#Table)"
+		type="test.tiles:Ticket"
+	>
+		<name key="dynamic.5ad5b8dd-3290-4233-99b9-fcda07252d52">
+			<en>Tickets</en>
+			<de>Tickets</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="release->all(`test.tiles:Ticket`).filter(t -> $t.get(`test.tiles:Ticket#planedIn`).containsElement($release))"
+			modelForElement="t -> $t.get(`test.tiles:Ticket#reportedFor`).firstElement()"
+			supportsElement="element->$element.instanceOf(`test.tiles:Ticket`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_e09aeeab_7fa3_47b8_9a35_1aaaacfd8741"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+				clique="create"
+				createContext="model->$model"
+				createType="test.tiles:Ticket"
+				group="Create"
+			>
+				<resourceKey key="dynamic.131b74af-d3cc-4c71-9762-500977778697">
+					<en>New ticket</en>
+					<de>Neues Ticket</de>
+				</resourceKey>
+				<checkScopeProvider class="com.top_logic.layout.basic.check.SelfCheckProvider"/>
+				<initOperation><![CDATA[release -> ticket -> {
+    product = $release.referers(`test.tiles:Product#releases`).singleElement();
+    $product.add(`test.tiles:Product#tickets`, $ticket);
+    $ticket.add(`test.tiles:Ticket#planedIn`, $release);
+}]]></initOperation>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<pool name="h2" class="test.com.top_logic.basic.sql.TestingConnectionPool">
+						<read-pool>
+							<maxActive>40</maxActive>
+							<whenExhaustedAction>block</whenExhaustedAction>
+							<maxWait>5000</maxWait>
+						</read-pool>
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.top_logic.basic.sql.H2DataSourceProxy</driver-class>
+							<options>
+								<option name="url" value="jdbc:h2:%H2_SCHEMA%" />
+								<option name="user" value="%H2_USER%" />
+								<encrypted-option name="password" value="%H2_PASSWD%" />
+							</options>
+						</data-source>
+					</pool>
+					<pool name="testUnitH2" class="test.com.top_logic.basic.sql.TestingConnectionPool">
+						<read-pool>
+							<maxActive>10</maxActive>
+							<whenExhaustedAction>block</whenExhaustedAction>
+							<maxWait>5000</maxWait>
+						</read-pool>
+						<write-pool />
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.top_logic.basic.sql.H2DataSourceProxy</driver-class>
+							<options>
+								<option name="url" value="jdbc:h2:%H2_SCHEMA_TEST_UNIT%" />
+								<option name="user" value="%H2_USER%" />
+								<encrypted-option name="password" value="%H2_PASSWD%" />
+							</options>
+						</data-source>
+					</pool>
+					<pool name="testMigrationH2" class="test.com.top_logic.basic.sql.TestingConnectionPool">
+						<read-pool>
+							<maxActive>5</maxActive>
+						</read-pool>
+						<write-pool />
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.top_logic.basic.sql.H2DataSourceProxy</driver-class>
+							<options>
+								<option name="url" value="jdbc:h2:%H2_SCHEMA_TEST_MIGRATION%" />
+								<option name="user" value="%H2_USER%" />
+								<encrypted-option name="password" value="%H2_PASSWD%" />
+							</options>
+						</data-source>
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

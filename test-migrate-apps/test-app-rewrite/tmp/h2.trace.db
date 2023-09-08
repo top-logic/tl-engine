@@ -1,0 +1,6 @@
+2022-06-09 08:16:41 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "SEQUENCE" not found (this database is empty); SQL statement:
+SELECT * FROM "SEQUENCE" WHERE 1=0 [42104-210]
+2022-06-09 08:16:41 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "TL_PROPERTIES" not found (this database is empty); SQL statement:
+SELECT * FROM "TL_PROPERTIES" WHERE 1=0 [42104-210]

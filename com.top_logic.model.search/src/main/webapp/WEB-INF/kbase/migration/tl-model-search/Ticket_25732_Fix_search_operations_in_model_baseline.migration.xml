@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_25732_Fix_search_operations_in_model_baseline"
+		module="tl-model-search"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26699_Update_layout_configuration"
+			module="tl"
+		/>
+		<dependency name="Ticket_25881_Remove_model_annotations_from_tables"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_25800_inconsistent_signature_create_handler"
+			module="tl-model-search"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-model-search/Ticket_25732_Fix_search_operations_in_model_baseline.xslt"		
+		>
+		</processor>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			table="TLDatatype"
+			column="annotations"
+			transform="/WEB-INF/kbase/migration/tl-model-search/Ticket_25732_Fix_search_operations_in_model_baseline.xslt"
+		>
+		</processor>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

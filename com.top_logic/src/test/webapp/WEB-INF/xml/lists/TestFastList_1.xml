@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<list name="TestFastList_1" type="MyFunnySpecialType">
+	<elements>
+		<element name="TestFastList_1.1" />
+	</elements>
+</list>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Roles profile file for TL-Demo.
+-->
+<security>
+	<profiles>
+		<profile name="SecurityStructure.OwnerRole">
+			<view name="modelSearch">
+				<commandGroup name="Read"/>
+				<commandGroup name="ownerWrite"/>
+			</view>
+			<view name="searchView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="searchInput">
+				<commandGroup name="Read"/>
+				<commandGroup name="ownerWrite"/>
+			</view>
+			<view name="searchChart">
+				<commandGroup name="Read"/>
+				<commandGroup name="ownerWrite"/>
+			</view>
+		</profile>
+		<profile name="DemoTypes.Administrator">
+			<view name="demoTypesView">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Create"/>
+				<commandGroup name="Write"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="System"/>
+				<commandGroup name="Export"/>
+			</view>
+			<view name="globalDialogDemoTypesTop">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Create"/>
+				<commandGroup name="Write"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="System"/>
+				<commandGroup name="Export"/>
+			</view>
+		</profile>
+		<profile name="DemoTypes.BAdministrator"/>
+		<profile name="DemoTypes.BooleanAdministrator"/>
+		<profile name="DemoTypes.DateAdministrator"/>
+		<profile name="DemoTypes.Navigation">
+			<view name="demoTypesView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="globalDialogDemoTypesTop">
+				<commandGroup name="Read"/>
+			</view>
+		</profile>
+		<profile name="DemoTypes.Responsible"/>
+		<profile name="DemoTypes.Selection">
+			<view name="demoTypesView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="globalDialogDemoTypesTop">
+				<commandGroup name="Read"/>
+			</view>
+		</profile>
+		<profile name="DemoTypes.StringAdministrator"/>
+		<profile name="DemoSecurity.navigation"/>
+		<profile name="DemoSecurity.Role1"/>
+		<profile name="DemoSecurity.Role2"/>
+		<profile name="DemoSecurity.Role3"/>
+		<profile name="DemoSecurity.SecurityAdministrator"/>
+		<profile name="DemoSecurity.SecurityAdministratorB"/>
+		<profile name="DemoSecurity.selection"/>
+		<profile name="DemoSecurity.User"/>
+	</profiles>
+</security>

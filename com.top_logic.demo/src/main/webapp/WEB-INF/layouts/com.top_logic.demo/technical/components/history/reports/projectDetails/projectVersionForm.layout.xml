@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor="test.history:Project"
+		saveClosesDialog="true"
+		type=""
+	>
+		<name key="dynamic.0ab39ab1-f20b-4ee1-bb27-244fe2ebe37c">
+			<en>Project version</en>
+			<de>Projektversion</de>
+		</name>
+		<editExecutability/>
+		<forms>
+			<form type="test.history:Project">
+				<formDefinition>
+					<field attribute="name"/>
+					<field attribute="lead"/>
+					<field attribute="progress"/>
+					<field
+						attribute="milestones"
+						visibility="read-only"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

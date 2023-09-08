@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="Layout"
+	horizontal="true"
+>
+	<tabInfo label="element.meta.InstanceBrowserTab"/>
+
+	<components>
+		<!-- table with MetaAttributes -->
+		<!-- Button component is only necessary for invalidation if model changes. -->
+		<grid name="Instances"
+			deleteCommand=""
+			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
+			modelBuilder="com.top_logic.element.layout.instances.DirectInstances"
+			resPrefix="layouts.element.meta.InstanceBrowser.table"
+			securityProviderClass="securityRoot"
+			showMaximize="true"
+		>
+			<selectionModelFactory multiple="true"/>
+			<buttons>
+				<button id="deleteInstance"
+					class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					clique="delete"
+					group="Delete"
+					resourceKey="tl.command.delete"
+					target="selection(self())"
+				/>
+				<button id="newInstance"
+					class="com.top_logic.element.layout.instances.CreateInstanceHandler"
+					group="Create"
+					image="theme:ICON_PLUS"
+					resourceKey="layouts.element.meta.InstanceBrowser.newInstance"
+				/>
+			</buttons>
+			<tables>
+				<table name="fieldTable"
+					configurationProviders="com.top_logic.element.layout.instances.DirectInstancesTable"
+					fixedColumns="0"
+				/>
+			</tables>
+		</grid>
+	</components>
+</layout>

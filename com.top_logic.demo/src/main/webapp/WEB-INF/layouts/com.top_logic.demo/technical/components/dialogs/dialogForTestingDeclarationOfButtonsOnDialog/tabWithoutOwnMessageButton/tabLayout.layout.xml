@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_9939fdb0_77ff_4adc_bafc_8aa36feb7b04">
+		<tabLabel key="dynamic.e69e1cf8-be82-42f0-8a46-ad4bf79cd276">
+			<en>Tab without own message button</en>
+			<de>Tab ohne eigene Message-Button</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/dialogs/dialogForTestingDeclarationOfButtonsOnDialog/tabWithoutOwnMessageButton/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

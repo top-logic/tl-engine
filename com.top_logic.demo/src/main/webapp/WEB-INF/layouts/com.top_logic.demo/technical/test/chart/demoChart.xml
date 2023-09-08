@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="DemoChartLayout">
+	<components>
+		<component class="com.top_logic.demo.chart.DemoChartComponent"
+			max-height="600"
+			max-width="800"
+			min-height="400"
+			min-width="600"
+			name="DemoChartDisplay"
+			page="/jsp/layout/image/chart.jsp"
+			resPrefix="layouts.demo.chart.demoChart.DemoChartDisplay."
+			securityProviderClass="securityRoot"
+		/>
+	</components>
+</layout>

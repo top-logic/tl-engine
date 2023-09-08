@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+		<metaobject
+			object_name="TemplateLayouts"
+			super_class="KnowledgeObject"
+			versioned="false"
+		>
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="com.top_logic.mig.html.layout.PersistentTemplateLayoutWrapper"/>
+				</annotation>
+				<key-attributes attributes="layoutKey,person,template,arguments"/>
+			</annotations>
+			<attributes>
+				<mo_attribute
+					att_name="layoutKey"
+					att_type="String"
+					mandatory="true"
+				/>
+				<mo_attribute
+					att_name="template"
+					att_type="String"
+					mandatory="true"
+				/>
+				<mo_attribute
+					att_name="arguments"
+					att_type="String"
+					db_size="1000000"
+					db_type="clob"
+					mandatory="true"
+				/>
+				<reference
+					att_name="person"
+					branch-global="false"
+					deletion-policy="delete-referer"
+					history-type="current"
+					mandatory="false"
+					monomorphic="true"
+					target-type="Person"
+				/>
+			</attributes>
+			<index>
+				<mo_index name="configKey"
+					unique="true"
+				>
+					<index-parts>
+						<index_part name="layoutKey"/>
+						<index_part name="person"/>
+					</index-parts>
+				</mo_index>
+			</index>
+		</metaobject>
+	</metaobjects>
+</objectlist>

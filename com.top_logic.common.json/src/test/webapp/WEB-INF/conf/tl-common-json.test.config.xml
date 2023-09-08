@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<configs>
+		<config config:interface="test.com.top_logic.basic.TestComment$Config">
+			<ignore>
+				<entry value="com.top_logic.common.json.gstream" />
+			</ignore>
+		</config>
+	</configs>
+	
+</application>

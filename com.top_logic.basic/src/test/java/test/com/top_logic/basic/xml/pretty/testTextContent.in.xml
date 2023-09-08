@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<a>
+	<b>
+		<c>
+		      single line
+		</c>
+		<c><before/>single line</c>
+		<c>single line<after/></c>
+		<c>first line
+second line</c>
+
+	</b>
+	<b>
+first line
+ second line
+  <c/>
+   <c/>
+    middle line
+     <c/>
+      yet another line
+       last line
+	</b>
+</a>

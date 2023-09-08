@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="p1"/>
+		<param name="p2"/>
+		<param name="p3"/>
+		<param name="p4"
+			value="${p1}-${p2}-${p3}"
+		/>
+		<param name="p5"
+			value="xxx-${p4}"
+		/>
+	</params>
+	
+	<component class="A"
+		p1="${p1}"	
+		p2="${p2}"	
+		p3="${p3}"	
+		p4="${p4}"	
+		p5="${p5}"	
+	/>
+
+</template>

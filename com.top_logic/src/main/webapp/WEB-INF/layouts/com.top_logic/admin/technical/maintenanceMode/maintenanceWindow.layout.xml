@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="maintenanceWindow"
+	helpIDLegacy="main.admin.maintenanceWindow.tabber"
+	titleKey="main.admin.maintenanceWindow.tabber"
+>
+	<tabInfo label="main.admin.maintenanceWindow.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.xml"/>
+	</components>
+</securityLayout>

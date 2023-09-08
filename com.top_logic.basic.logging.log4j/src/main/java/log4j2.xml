@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<Configuration>
+	<Properties>
+		<Property name="pattern.long">%date{ISO8601} %-5level [%thread]: %logger - %message%n%throwable</Property>
+		<Property name="pattern.plain">%message%n%throwable</Property>
+	</Properties>
+	<Appenders>
+		<Console name="STDOUT"
+			target="SYSTEM_OUT"
+		>
+			<PatternLayout pattern="${pattern.long}"/>
+		</Console>
+		<Console name="STDERR"
+			target="SYSTEM_ERR"
+		>
+			<PatternLayout pattern="${pattern.plain}"/>
+		</Console>
+	</Appenders>
+	<Loggers>
+		<Root level="info">
+			<AppenderRef ref="STDOUT"/>
+		</Root>
+	</Loggers>
+</Configuration>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="Tag">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.element.version"
+					interface-package="com.top_logic.element.version.intf"
+				/>
+			</annotations>
+			<types>
+				<interface name="Tag.all">
+					<annotations>
+						<instance-presentation
+							expanded-icon="theme:MIMETYPES_TAG"
+							icon="theme:MIMETYPES_TAG"
+						/>
+						<legacy-qualified-name qualified-name="Tag.all"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="100"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="date"
+							mandatory="true"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<delete-protected/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.element.version.TagWrapper#getRevisionDate()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<reference name="taggedObj"
+							kind="forwards"
+							mandatory="false"
+							type="tl.model:TLObject"
+						>
+							<annotations>
+								<delete-protected/>
+								<storage-algorithm>
+									<historic-storage/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</interface>
+				<class name="Tag">
+					<annotations>
+						<table name="Tag"/>
+						<implementation-binding class-name="com.top_logic.element.version.TagWrapper"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Tag.all"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

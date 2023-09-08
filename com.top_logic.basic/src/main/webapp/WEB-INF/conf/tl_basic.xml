@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- com.top-logic.basic Main Configuration File              -->
+<!-- ======================================================== -->
+
+<root>
+	<alias>
+		<!-- API key for translation service. -->
+        <entry name="%TRANSLATION_API_KEY%" value="${env:translation_api_key:unencrypted:}" />
+        <entry name="%TRANSLATION_ENABLED%" value="${env:translation_enabled:false}" />
+    </alias>
+
+	<properties> 
+	</properties>
+</root>

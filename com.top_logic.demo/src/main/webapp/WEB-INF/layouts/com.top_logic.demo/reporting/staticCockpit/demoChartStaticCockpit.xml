@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="DemoStaticCockpit"
+		/>
+		<param name="resPrefix"
+			value="layouts.demo.reporting.flex.demoStaticCockpit."
+		/>
+		<param name="structure"
+			value="DemoTypes"
+		/>
+		<param name="resPrefix"
+			value="layouts.demo.reporting.flex.demoChartStaticCockpit."
+		/>
+	</params>
+
+	<layout name="${namePrefix}Layout"
+		horizontal="true"
+	>
+		<components>
+			<treeView name="${namePrefix}Tree"
+				expandSelected="false"
+				resPrefix="${resPrefix}Tree"
+				show-only-selectable-nodes="true"
+			>
+				<layoutInfo size="340px"/>
+				<modelBuilder class="com.top_logic.demo.model.types.util.CyclicDemoTreeBuilder"/>
+				<security-filter delegationDestination="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#${structure}Edit"/>
+			</treeView>
+
+			<layout name="${namePrefix}Charts">
+				<components>
+					<component class="com.top_logic.reporting.flex.chart.component.StaticChartComponent"
+						chartConfig="demo/reporting/flex/static/barchartMaster.xml"
+						model="selection(${namePrefix}Tree)"
+						name="${namePrefix}Chart1"
+						page="/jsp/layout/image/chart.jsp"
+						resPrefix="${resPrefix}Chart1"
+						securityProviderClass="securityRoot"
+					>
+						<export-manager class="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager"
+							export-objects="NONE"
+						/>
+					</component>
+
+					<component class="com.top_logic.reporting.flex.chart.component.StaticChartComponent"
+						chartConfig="demo/reporting/flex/static/piechartMaster.xml"
+						model="selection(${namePrefix}Tree)"
+						name="${namePrefix}Chart2"
+						page="/jsp/layout/image/chart.jsp"
+						resPrefix="${resPrefix}Chart2"
+						securityProviderClass="securityRoot"
+					>
+						<export-manager class="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager"
+							export-objects="NONE"
+						/>
+					</component>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

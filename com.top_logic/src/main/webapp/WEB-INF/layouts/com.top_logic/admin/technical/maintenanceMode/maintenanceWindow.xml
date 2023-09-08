@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	SPDX-FileCopyrightText: 2007 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<layout>
+	<components>
+		<component class="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
+			buttonComponent="maintenanceWindowComponentButtons"
+			displayWithoutModel="true"
+			name="maintenanceWindowComponent"
+			page="/jsp/layout/admin/MaintenanceWindowComponent.jsp"
+			resPrefix="main.admin.maintenanceWindow.component."
+			securityProviderClass="securityRoot"
+		>
+			<buttons>
+				<with-checker name="enterMaintenanceWindow">
+					<command id="AbortEnteringMaintenanceWindow"
+						class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$AbortEnteringMaintenanceWindowCommandHandler"
+					/>
+				</with-checker>
+			</buttons>
+			<dialogs>
+				<securityLayout name="enterMaintenanceWindowDialog"
+					securityDomain=""
+					titleKey="main.admin.maintenanceWindow.enterDialog.tabber"
+				>
+					<dialogInfo
+						executability="com.top_logic.layout.admin.component.StrictInNormalModeExecutable"
+						height="280"
+						openButtonSecComp="enterMaintenanceWindow"
+						openerCommandGroup="Write"
+						width="400"
+					/>
+
+					<components>
+						<component class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDialog"
+							buttonComponent="enterMaintenanceWindowButtons"
+							name="enterMaintenanceWindow"
+							page="/jsp/layout/admin/EnterMaintenanceWindowDialog.jsp"
+							resPrefix="main.admin.maintenanceWindow.enterDialog."
+							securityProviderClass="securityRoot"
+						/>
+						<buttonbar name="enterMaintenanceWindowButtons"/>
+					</components>
+				</securityLayout>
+				<securityLayout name="exitMaintenanceWindowDialog"
+					securityDomain=""
+					titleKey="main.admin.maintenanceWindow.exitDialog.tabber"
+				>
+					<dialogInfo
+						executability="com.top_logic.layout.admin.component.InMaintenanceWindowExecutable"
+						height="150"
+						openButtonSecComp="exitMaintenanceWindow"
+						openerCommandGroup="Write"
+						width="400"
+					/>
+
+					<components>
+						<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
+							buttonComponent="exitMaintenanceWindowButtons"
+							content-message="main.admin.maintenanceWindow.exitDialog.content"
+							name="exitMaintenanceWindow"
+							resPrefix="main.admin.maintenanceWindow.exitDialog."
+							securityProviderClass="securityRoot"
+						>
+							<buttons>
+								<button id="LeaveMaintenanceWindow"
+									class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$LeaveMaintenanceWindowCommandHandler"
+									resourceKey="main.admin.maintenanceWindow.exitDialog.LeaveMaintenanceWindow"
+								/>
+							</buttons>
+						</component>
+						<buttonbar name="exitMaintenanceWindowButtons"/>
+					</components>
+				</securityLayout>
+			</dialogs>
+		</component>
+		<buttonbar name="maintenanceWindowComponentButtons"/>
+	</components>
+</layout>

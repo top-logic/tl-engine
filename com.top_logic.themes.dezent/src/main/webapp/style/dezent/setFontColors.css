@@ -1,0 +1,157 @@
+.firstLevelTabBar .activeTab,
+.tabBar .activeTab,
+.mainTabBar .activeTab,
+.adjustableColumn,
+.sidebarFilterEntry,
+.breadcrumb .hover .selectableNode,
+
+div.fltContainer td.fhrMiddle,
+div.tblMandatory .tl-table__title,
+div.pdlgTitleBar,
+div.cCollapsibleToolbar .input-image,
+div.cCollapsibleHorizontal div.cCollapsibleHeader,
+div.fptTitle,
+div.fptTitleContent,
+div.fltButtons a.cmdButtonHover span.cmdLabel,
+div.folderView .breadcrumb .treeNode a.selectableNode,
+
+th.tl-table__cell,
+.tl-table__title,
+th.treeTableTh,
+.tl-table__header-cell-content > span,
+.tl-table__header-cell-content > div,
+
+td.frmGroupTitleContent,
+td.fhrMiddle,
+td.fhrLeft,
+td.fhrRight,
+
+a.cmdButtonHover,
+a.cmdButtonHover:link,
+a.cmdButtonHover:visited,
+a.cmdButtonHover:active,
+
+a.cmdButton,
+a.cmdButton:link,
+a.cmdButton:visited,
+a.cmdButton:active,
+
+a.tcrLink > span,
+.tl-table__title .breadcrumb .breadcrumbNodeText,
+
+span.containerButton a.cmdButtonHover span.cmdLabel
+{
+    color: var(--TL-white-grey);
+}
+
+th.tl-table__cell,
+tr.header {
+	font-size: 13px;
+}
+
+.firstLevelTabBar .tab,
+.tabBar .tab,
+.BreadCrumbOuter .breadcrumb .breadcrumbNodeText,
+.breadcrumb,
+.sblLogo,
+div.BreadCrumbOuter > div.Right,
+div.cCollapsibleHeader,
+div.fptSubtitleContent
+{
+    color: var(--TL-black);
+}
+
+.dfListEntry div.dfEntryTitle.colored,
+.dfListEntry div.dfEntryTitle.colored label,
+span.accIcon.input-image,
+
+.TitleTop,
+div.accSelected a.accEntry,
+a.accEntry:hover,
+.menuEntryImage,
+.TitleTop .TitleName,
+.cMenuButton i,
+.cMenuButton.menuEntryHover i,
+.breadcrumb .breadcrumbNodeIcon,
+.breadcrumb .breadcrumbNodeText
+{
+    color: var(--ICON_COLOR_BASIC);
+}
+
+.cMenuButton i span:after,
+.cMenuButton.menuEntryHover i span:after {
+	color: var(--ICON_COLOR_HIGHLIGHT);
+}
+
+td.tl-table__cell--selected,
+td.tl-table__cell--selected a,
+td.tl-table__cell i {
+	color: var(--ICON_COLOR_BASIC);
+}
+
+div.BreadCrumbOuter
+{
+    color: var(--TL-mako);
+}
+
+.mainTabBar .tab
+{
+    color: var(--LAYOUT_MAIN_COLOR);
+}
+
+.cButton.active .menuEntryImage i,
+.cButton.active .input-image i
+{
+	color: var(--ACTIVE_ELEMENT_COLOR);
+}
+
+/* On dark background */
+.cDataItem .cmdButton:hover span.cmdLabel,
+.cDataItem .cmdButton:hover span.cmdLabel i,
+.cDataItem label i {
+	color:  var(--ICON_COLOR_DARK_CONTEXT_BASIC);
+}
+
+.cButton.cmdLink span::before,
+.cButton .cmdImg span::before,
+.cmdButtonHover span::before,
+.cImageButton .input-image span::before,
+.cDownload .input-image span::before,
+.rf_groupCell .rf_header .cButton span::before,
+.dlgTitleBar .input-image span::before
+{
+    color: var(--ICON_COLOR_DARK_CONTEXT_HIGHLIGHT_BG);
+}
+
+.cButton.cmdLink i[class*=" overlay-"] span::before,
+.cButton .cmdImg i[class*=" overlay-"] span::before,
+.cmdButtonHover i[class*=" overlay-"] span::before,
+.cImageButton .input-image i[class*=" overlay-"] span::before,
+.cDownload .input-image i[class*=" overlay-"] span::before,
+.rf_groupCell .rf_header .cButton i[class*=" overlay-"] span::before,
+.dlgTitleBar .input-image i[class*=" overlay-"] span::before
+{
+	color: var(--ICON_COLOR_OVERLAY_DARK_CONTEXT_HIGHLIGHT_BG);
+}
+
+.cButton.cmdLink:hover i[class*=" overlay-"] span::before,
+.cButton:hover .cmdImg i[class*=" overlay-"] span::before,
+.cmdButtonHover:hover i[class*=" overlay-"] span::before,
+.cImageButton:hover .input-image i[class*=" overlay-"] span::before,
+.cDataItem:hover .input-image i[class*=" overlay-"] span::before,
+.rf_groupCell .rf_header .cButton:hover i[class*=" overlay-"] span::before,
+.dlgTitleBar .input-image:hover i[class*=" overlay-"] span::before
+{
+    color: var(--ICON_COLOR_OVERLAY_DARK_CONTEXT_HIGHLIGHT_BG_HOVER);
+}
+
+.cButton.cmdLink span::after,
+.cButton .cmdImg span::after,
+.cmdButtonHover span::after,
+.cImageButton .input-image span::after,
+.cDownload .input-image span::after,
+.rf_groupCell .rf_header .cButton span::after,
+.dlgTitleBar .input-image span::after
+{
+    color: var(--ICON_COLOR_DARK_CONTEXT_HIGHLIGHT);
+}

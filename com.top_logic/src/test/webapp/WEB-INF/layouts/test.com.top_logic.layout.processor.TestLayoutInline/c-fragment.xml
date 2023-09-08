@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<include name="test.com.top_logic.layout.processor.TestLayoutInline/b-fragment.xml"
+		componentName="c1"
+	/>
+	<include name="test.com.top_logic.layout.processor.TestLayoutInline/c.xml"
+		componentName="c4"
+	/>
+</template>

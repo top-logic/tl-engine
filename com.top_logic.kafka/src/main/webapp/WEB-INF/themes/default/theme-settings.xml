@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="KAFKA_MESSAGES22"
+		value="/kafka/Messages22.png"
+	/>
+	<icon name="KAFKA_SENSOR22"
+		value="/kafka/Sensor22.png"
+	/>
+	<icon name="mime.SensorActivityState.ACTIVE"
+		value="/mimetypes/sensorState/Active.png"
+	/>
+	<icon name="mime.SensorActivityState.ACTIVE.large"
+		value="/mimetypes/sensorState/large/Active60.png"
+	/>
+	<icon name="mime.SensorActivityState.INACTIVE"
+		value="/mimetypes/sensorState/Inactive.png"
+	/>
+	<icon name="mime.SensorActivityState.INACTIVE.large"
+		value="/mimetypes/sensorState/large/Inactive60.png"
+	/>
+	<icon name="mime.SensorActivityState.RUNNING"
+		value="/mimetypes/sensorState/Running.png"
+	/>
+	<icon name="mime.SensorActivityState.RUNNING.large"
+		value="/mimetypes/sensorState/large/Running60.png"
+	/>
+</settings>

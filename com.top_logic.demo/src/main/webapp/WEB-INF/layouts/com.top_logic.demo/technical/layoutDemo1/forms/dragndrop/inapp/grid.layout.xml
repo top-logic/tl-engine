@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		detailComponent=""
+		isSecurityMaster="false"
+		multiSelection="false"
+		showDetailOpener="false"
+		type="DemoTypes:DemoTypes.All"
+	>
+		<name key="dynamic.13beb98c-413d-49fd-9057-01781bc19f18">
+			<de>Grid</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`DemoTypes:DemoTypes.All`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
+			supportsModel="true"
+		/>
+		<dragSource class="com.top_logic.model.search.providers.GridDragSourceByExpression"
+			canDrag="source -> if($source!= `DemoTypes#ROOT`,$source.get(`DemoTypes:DemoTypes.All#name`).stringContains('1'), true)"
+		/>
+		<tableDrop class="com.top_logic.model.search.providers.GridDropTargetByExpression"
+			canDrop="draggedObjects->referenceRow->{canDrop=source -> target -> $target.get(`DemoTypes:DemoTypes.All#name`).stringStartsWith('C');$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}"
+			dropType="ORDERED"
+		>
+			<handleDrop><![CDATA[draggedObjects->referenceRow->{handleDrop=source -> target -> {
+  info($source + " -> " + $target);
+  oldParent = $source.get(`DemoTypes:DemoTypes.All#parent`);
+  oldSiblings = $oldParent.get(`tl.element:StructuredElementContainer#children`).filter(element -> $element != $source);
+  $oldParent.set(`tl.element:StructuredElementContainer#children`, $oldSiblings);
+  newSiblings = concat($target.get(`tl.element:StructuredElementContainer#children`), $source);
+  $target.set(`tl.element:StructuredElementContainer#children`, $newSiblings);
+};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}
+]]></handleDrop>
+		</tableDrop>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

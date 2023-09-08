@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <xsd:annotation>
+        <xsd:documentation xml:lang="DE"> 
+        	Concurrency Schema Definition
+            <![CDATA[
+            SPDX-FileCopyrightText: 2005 (c) Business Operation Systems GmbH <info@top-logic.com>
+            SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+            
+             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+             X                                                                X
+             X    XML Schema Definitions of for concurrency schema            X
+             X                                                                X
+             X                                                                X
+             X  Use XML - Buddy version 2.x to have support for creating      X
+             X  instance documents of this schema                             X
+             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+           ]]>
+        </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType name="TypBezeichner">
+        <xsd:restriction base="xsd:token">
+            <xsd:maxLength value="200"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name="WerteFuerInstantiierungsbereich">
+        <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="StructureContext"/>
+            <xsd:enumeration value="any"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name="AlleWerteFuerWirkungsbereich">
+        <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="global"/>
+            <xsd:enumeration value="local"/>
+            <xsd:enumeration value="rekursiv"/>
+            <xsd:enumeration value="definedInDeklaration"/>
+            <xsd:enumeration value="definedInContextScheme"/>
+    	</xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name="WerteFuerWirkungsbereich">
+        <xsd:restriction base="AlleWerteFuerWirkungsbereich">
+            <xsd:enumeration value="local"/>
+            <xsd:enumeration value="rekursiv"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name="WerteFuerSperrtyp">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="exclusiv"/>
+            <xsd:enumeration value="shared"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:attribute name="Wirkungsbereich" type="AlleWerteFuerWirkungsbereich"/>
+    <xsd:attribute name="Typ" type="TypBezeichner"/>
+    <xsd:element name="TokenSchemaDeklaration">
+        <xsd:complexType>
+            <xsd:attribute name="Wirkungsbereich" use="required">
+                <xsd:simpleType>
+                    <xsd:restriction base="AlleWerteFuerWirkungsbereich">
+                        <xsd:enumeration value="global"/>
+                        <xsd:enumeration value="definedInContextScheme"/>
+                    </xsd:restriction>
+                </xsd:simpleType>
+            </xsd:attribute>
+            <xsd:attribute ref="Typ" use="required"/>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="TokenSchema">
+        <xsd:complexType>
+            <xsd:attribute name="Wirkungsbereich" use="required">
+                <xsd:simpleType>
+                    <xsd:restriction base="AlleWerteFuerWirkungsbereich">
+                        <xsd:enumeration value="local"/>
+                        <xsd:enumeration value="rekursiv"/>
+                        <xsd:enumeration value="definedInDeklaration"/>
+                    </xsd:restriction>
+                </xsd:simpleType>
+            </xsd:attribute>
+            <xsd:attribute ref="Typ" 								 use="required"/>
+            <xsd:attribute name="Sperrtyp" 	type="WerteFuerSperrtyp" use="required"/>
+            <xsd:attribute name="Nummer" 	type="xsd:integer" 		 use="required"/>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="KontextSchema">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element ref="TokenSchema" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+            <xsd:attribute name="Instanziierungsbereich" type="WerteFuerInstantiierungsbereich" use="required"/>
+            <xsd:attribute name="ID" type="TypBezeichner" use="required"/>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="TokenSchemaDeklarationen">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element ref="TokenSchemaDeklaration" minOccurs="1" maxOccurs="unbounded"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="KontextSchemata">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element ref="KontextSchema" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="ConcurrencySchema">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element ref="TokenSchemaDeklarationen" minOccurs="1" maxOccurs="1"/>
+                <xsd:element ref="KontextSchemata" minOccurs="1" maxOccurs="unbounded"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    
+</xsd:schema>

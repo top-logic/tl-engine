@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="tl.security.searchView.tabber"
+		z_legacy_componentName="securitySearchView"
+		z_legacy_tabBarName="securitySearchView_tabBar"
+		z_legacy_tabLabel="tl.security.searchView.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.demo/security/search/input/securitySearchInput.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/security/search/result/securitySearchResult.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

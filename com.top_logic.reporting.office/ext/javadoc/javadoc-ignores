@@ -1,0 +1,88 @@
+com.top_logic.reporting.office.AbstractDelegationSymbolResolver.java: Invalid camel case word 'ExpansionContext', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.AbstractDelegationSymbolResolver.java: Invalid camel case word 'delegationMap', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.AbstractDelegationSymbolResolver.java: Invalid camel case word 'methodName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.AbstractDelegationSymbolResolver.java: Missing documentation: com.top_logic.reporting.office.AbstractDelegationSymbolResolver.METHOD_PARAM
+com.top_logic.reporting.office.AbstractDelegationSymbolResolver.java: Missing documentation: com.top_logic.reporting.office.AbstractDelegationSymbolResolver.delegationMap
+com.top_logic.reporting.office.AbstractDelegationSymbolResolver.java: Missing documentation: com.top_logic.reporting.office.AbstractDelegationSymbolResolver.getMethodNameForSymbol
+com.top_logic.reporting.office.AbstractReportReaderWriter.java: Invalid camel case word 'ExpansionObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.AbstractReportReaderWriter.java: Invalid camel case word 'ReportReaderWriter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.AbstractReportReaderWriter.java: Invalid camel case word 'SymbolParser', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.AbstractReportReaderWriter.java: Invalid camel case word 'localeLanguage', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.AbstractReportReaderWriter.java: Invalid camel case word 'localeString', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.AbstractReportReaderWriter.java: Invalid camel case word 'templatePath', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.AbstractReportReaderWriter.java: Invalid camel case word 'templatePathName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.DefaultStaticSymbolResolver.java: Invalid camel case word 'ExpansionContext', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ExpansionContext.java: Invalid camel case word 'getDefault', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ExpansionEngine.java: Invalid camel case word 'ExpansionObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ExpansionObject.java: Invalid camel case word 'ExpansionObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ExpansionObject.java: Invalid camel case word 'isExpanded', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ExpansionObject.java: Missing documentation: com.top_logic.reporting.office.ExpansionObject.STATIC
+com.top_logic.reporting.office.FallbackNoopReportHandler.java: Invalid camel case word 'ReportResult', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.FallbackNoopReportHandler.java: Invalid camel case word 'reportHandler', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportGenerator.java: Invalid camel case word 'ReportGenerator', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportGenerator.java: Invalid camel case word 'ReportQueue', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportGenerator.java: Invalid camel case word 'ReportToken', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportGenerator.java: Invalid camel case word 'reportHandler', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportGenerator.java: Invalid camel case word 'reportResult', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportGenerator.java: Missing documentation: com.top_logic.reporting.office.ReportGenerator.EXCEL_REPORT
+com.top_logic.reporting.office.ReportGenerator.java: Missing documentation: com.top_logic.reporting.office.ReportGenerator.PPT_REPORT
+com.top_logic.reporting.office.ReportGenerator.java: Missing documentation: com.top_logic.reporting.office.ReportGenerator.WORD_REPORT
+com.top_logic.reporting.office.ReportGenerator.java: Missing documentation: com.top_logic.reporting.office.ReportGenerator.excelQueue
+com.top_logic.reporting.office.ReportGenerator.java: Missing documentation: com.top_logic.reporting.office.ReportGenerator.getReportTypes
+com.top_logic.reporting.office.ReportGenerator.java: Missing documentation: com.top_logic.reporting.office.ReportGenerator.reportTypes
+com.top_logic.reporting.office.ReportGenerator.java: Missing documentation: com.top_logic.reporting.office.ReportGenerator.wordQueue
+com.top_logic.reporting.office.ReportHandler.java: Invalid camel case word 'ReportResult', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportHandler.java: Invalid camel case word 'ReportToken', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportQueue.java: Invalid camel case word 'ReportHandler', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportQueue.java: Invalid camel case word 'ReportToken', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportQueue.java: Invalid camel case word 'executeJobs', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportQueue.java: Invalid camel case word 'proccedJobs', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportQueue.java: Invalid camel case word 'reportHandler', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportQueue.java: Invalid camel case word 'tokenQueue', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportQueue.java: Missing documentation: com.top_logic.reporting.office.ReportQueue.jobExecuted
+com.top_logic.reporting.office.ReportQueue.java: Missing documentation: com.top_logic.reporting.office.ReportQueue.jobQueued
+com.top_logic.reporting.office.ReportReaderWriter.java: Invalid camel case word 'ExpansionObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportReaderWriter.java: Invalid camel case word 'ReaderWriter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportReaderWriter.java: Invalid camel case word 'ReportHandler', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportReaderWriter.java: Invalid camel case word 'ReportResult', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportReaderWriter.java: Missing documentation: com.top_logic.reporting.office.ReportReaderWriter.init
+com.top_logic.reporting.office.ReportToken.java: Invalid camel case word 'ReportToken', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportToken.java: Invalid camel case word 'reportID', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportToken.java: Invalid camel case word 'requestUser', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.ReportToken.java: Invalid camel case word 'tokenID', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.StaticSymbolResolver.java: Invalid camel case word 'ReportHandler', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.SymbolParser.java: Invalid camel case word 'ExpansionObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.SymbolParser.java: Invalid camel case word 'StringBuffer', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.AbstractReport.java: Invalid camel case word 'ExpansionEngine', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.AbstractReport.java: Invalid camel case word 'ReaderWriter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.AbstractReport.java: Invalid camel case word 'ReportToken', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.AbstractReport.java: Invalid camel case word 'SimpleExpansionContext', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.AbstractReport.java: Missing documentation: com.top_logic.reporting.office.basic.AbstractReport.context
+com.top_logic.reporting.office.basic.AbstractReport.java: Missing documentation: com.top_logic.reporting.office.basic.AbstractReport.contextUser
+com.top_logic.reporting.office.basic.AbstractReport.java: Missing documentation: com.top_logic.reporting.office.basic.AbstractReport.engine
+com.top_logic.reporting.office.basic.AbstractReport.java: Missing documentation: com.top_logic.reporting.office.basic.AbstractReport.processingComplete
+com.top_logic.reporting.office.basic.AbstractReport.java: Missing documentation: com.top_logic.reporting.office.basic.AbstractReport.readerWriter
+com.top_logic.reporting.office.basic.AbstractReport.java: Missing documentation: com.top_logic.reporting.office.basic.AbstractReport.reportResult
+com.top_logic.reporting.office.basic.AbstractReport.java: Missing documentation: com.top_logic.reporting.office.basic.AbstractReport.resolver
+com.top_logic.reporting.office.basic.AliasSymbolResolver.java: Invalid camel case word 'AliasManager', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.AliasSymbolResolver.java: Invalid camel case word 'ExpansionObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.BasicExpansionContext.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.reporting.office.basic.BasicExpansionContext
+com.top_logic.reporting.office.basic.BasicExpansionContext.java: Missing documentation: com.top_logic.reporting.office.basic.BasicExpansionContext.init
+com.top_logic.reporting.office.basic.BasicExpansionEngine.java: Invalid camel case word 'StaticSymbolResolver', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.BasicPPTReaderWriter.java: Invalid camel case word 'ExpansionObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.BasicPPTReaderWriter.java: Invalid camel case word 'ExpansionObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.BasicPPTReaderWriter.java: Invalid camel case word 'ReaderWriter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.BasicPPTReaderWriter.java: Invalid camel case word 'ReportReaderWriter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.BasicPPTReaderWriter.java: Missing documentation: com.top_logic.reporting.office.basic.BasicPPTReaderWriter.PPT
+com.top_logic.reporting.office.basic.BasicSymbolParser.java: Invalid camel case word 'hybridPattern', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.BasicSymbolParser.java: Missing documentation: com.top_logic.reporting.office.basic.BasicSymbolParser.expPattern
+com.top_logic.reporting.office.basic.BasicSymbolParser.java: Missing documentation: com.top_logic.reporting.office.basic.BasicSymbolParser.expStylePattern
+com.top_logic.reporting.office.basic.BasicSymbolParser.java: Missing documentation: com.top_logic.reporting.office.basic.BasicSymbolParser.hybridPattern
+com.top_logic.reporting.office.basic.MultiSymbolPPTReaderWriter.java: Invalid camel case word 'ExpansionObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.MultiSymbolParser.java: Invalid camel case word 'ExpansionObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.MultiSymbolParser.java: Invalid camel case word 'StackedExpansionObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.office.basic.MultiSymbolParser.java: Missing documentation: com.top_logic.reporting.office.basic.MultiSymbolParser.addMatchResults
+com.top_logic.reporting.office.basic.StackedExpansionObject.java: Missing documentation: com.top_logic.reporting.office.basic.StackedExpansionObject
+com.top_logic.reporting.office.basic.StackedExpansionObject.java: Missing documentation: com.top_logic.reporting.office.basic.StackedExpansionObject.addExpansionObject
+com.top_logic.reporting.office.basic.StackedExpansionObject.java: Missing documentation: com.top_logic.reporting.office.basic.StackedExpansionObject.getInnerExpansionObjects
+com.top_logic.reporting.office.basic.StackedExpansionObject.java: Missing documentation: com.top_logic.reporting.office.basic.StackedExpansionObject.hasInnerExpansionObjects

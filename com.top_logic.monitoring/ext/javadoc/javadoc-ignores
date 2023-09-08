@@ -1,0 +1,34 @@
+com.top_logic.monitoring.memory.MemoryObserverDataSource.java: Missing documentation: com.top_logic.monitoring.memory.MemoryObserverDataSource.Config.RANGES
+com.top_logic.monitoring.memory.MemoryObserverDataSource.java: Missing documentation: com.top_logic.monitoring.memory.MemoryObserverDataSource.Config.getRanges
+com.top_logic.monitoring.memory.MemoryObserverDataSource.java: Missing documentation: com.top_logic.monitoring.memory.MemoryObserverDataSource.TimeRange
+com.top_logic.monitoring.memory.MemoryObserverDataSource.java: Missing documentation: com.top_logic.monitoring.memory.MemoryObserverDataSource.TimeRange.getKey
+com.top_logic.monitoring.memory.MemoryObserverDataSource.java: Missing documentation: com.top_logic.monitoring.memory.MemoryObserverDataSource.TimeRange.getSeconds
+com.top_logic.monitoring.memory.MemoryObserverModelPreparation.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.monitoring.memory.MemoryObserverModelPreparation
+com.top_logic.monitoring.memory.MemoryObserverModelPreparation.java: Invalid camel case word 'ConfigItem', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.monitoring.memory.MemoryObserverModelPreparation.java: Missing documentation: com.top_logic.monitoring.memory.MemoryObserverModelPreparation.Config.ATTRIBUTES
+com.top_logic.monitoring.memory.MemoryObserverModelPreparation.java: Missing documentation: com.top_logic.monitoring.memory.MemoryObserverModelPreparation.Config.INITIAL
+com.top_logic.monitoring.memory.MemoryObserverModelPreparation.java: Missing documentation: com.top_logic.monitoring.memory.MemoryObserverModelPreparation.Config.getAttributes
+com.top_logic.monitoring.memory.MemoryObserverModelPreparation.java: Missing documentation: com.top_logic.monitoring.memory.MemoryObserverModelPreparation.Config.getInitial
+com.top_logic.monitoring.memory.MemoryObserverModelPreparation.java: Missing documentation: com.top_logic.monitoring.memory.MemoryObserverModelPreparation.MemoryUsageEntryPartition
+com.top_logic.monitoring.rendering.LayoutComponentNode.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.monitoring.rendering.LayoutComponentNode
+com.top_logic.monitoring.rendering.LayoutComponentNode.java: Invalid camel case word 'CompoundSecurityLayout', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.monitoring.rendering.LayoutComponentNodeBuilder.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.monitoring.rendering.LayoutComponentNodeBuilder
+com.top_logic.monitoring.rendering.LayoutComponentNodeBuilder.java: Invalid camel case word 'CompoundSecurityLayout', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.monitoring.rendering.LayoutComponentNodeLabelProvider.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.monitoring.rendering.LayoutComponentNodeLabelProvider
+com.top_logic.monitoring.rendering.PerformanceTree.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.monitoring.rendering.PerformanceTree
+com.top_logic.monitoring.revision.ChangeSetTreeAccessors.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.monitoring.revision.ChangeSetTreeAccessors.ChangeSetAccessor
+com.top_logic.monitoring.session.FailedLoginTableComponent.java: Invalid camel case word 'ModelBuilder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.monitoring.session.FailedLoginTableComponent.java: Invalid camel case word 'ResourceProvider', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.monitoring.session.SessionSearchComponent.java: Invalid camel case word 'UserMonitorComponent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.monitoring.session.SessionSearchComponent.java: Missing documentation: com.top_logic.monitoring.session.SessionSearchComponent.ABSOLUTE
+com.top_logic.monitoring.session.SessionSearchComponent.java: Missing documentation: com.top_logic.monitoring.session.SessionSearchComponent.ANNUALLY
+com.top_logic.monitoring.session.SessionSearchComponent.java: Missing documentation: com.top_logic.monitoring.session.SessionSearchComponent.CURRENT
+com.top_logic.monitoring.session.SessionSearchComponent.java: Missing documentation: com.top_logic.monitoring.session.SessionSearchComponent.MANUALLY
+com.top_logic.monitoring.session.SessionSearchComponent.java: Missing documentation: com.top_logic.monitoring.session.SessionSearchComponent.MONTHLY
+com.top_logic.monitoring.session.SessionSearchComponent.java: Missing documentation: com.top_logic.monitoring.session.SessionSearchComponent.QUARTERLY
+com.top_logic.monitoring.session.SessionSearchComponent.java: Missing documentation: com.top_logic.monitoring.session.SessionSearchComponent.Update
+com.top_logic.monitoring.session.SessionSearchComponent.java: Missing documentation: com.top_logic.monitoring.session.SessionSearchComponent.WEEKLY
+com.top_logic.monitoring.session.SessionSearchComponent.java: Missing documentation: com.top_logic.monitoring.session.SessionSearchComponent.addTimeRangeSelectionFields
+com.top_logic.monitoring.session.SessionSearchComponent.java: Missing documentation: com.top_logic.monitoring.session.SessionSearchComponent.update
+com.top_logic.monitoring.session.UserMonitorListModelBuilder.java: Missing documentation: com.top_logic.monitoring.session.UserMonitorListModelBuilder
+com.top_logic.monitoring.session.chart.UserSessionModelPreparation.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.monitoring.session.chart.UserSessionModelPreparation

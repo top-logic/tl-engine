@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="master"/>
+		<param name="namePrefix"/>
+		<param name="resPrefix"/>
+		<param name="tablePrefix"/>
+		<param name="columns"/>
+		<param name="objectType"/>
+		<param name="chartProducer"/>
+		<param name="producerComponentClass"
+			value="com.top_logic.reporting.report.view.component.ExtendedProducerChartComponent"
+		/>
+		<param name="detailTable"
+			value="com.top_logic.layout.table.component.TableComponent"
+		/>
+		<param name="detailBuilder"
+			value="com.top_logic.reporting.report.view.component.ExtendedProducerChartComponent$ExtendedProducerChartModelBuilder"
+		/>
+		<param name="chartDetailHandler"
+			value="com.top_logic.reporting.report.view.component.ExtendedProducerChartComponent$ChartDisplayDetailCommandHandler"
+		/>
+		<param name="accessorClass"
+			value="com.top_logic.knowledge.wrap.WrapperAccessor"
+		/>
+		<param name="checkerClass"
+			value="com.top_logic.reporting.report.control.checker.TrueChecker"
+		/>
+		<param name="chartPage"
+			value="/jsp/layout/image/chart.jsp"
+		/>
+		<param name="rendererClass"
+			value="com.top_logic.layout.table.renderer.DefaultTableRenderer"
+		/>
+		<param name="chartSizeManipulatorClass"
+			value="com.top_logic.reporting.report.control.size.NoChangeManipulator"
+		/>
+		<param name="securityProvider"
+			value="master"
+		/>
+		<param name="dialogWidth"
+			value="500"
+		/>
+		<param name="dialogHeight"
+			value="350"
+		/>
+		<param name="toolbar"
+			value="true"
+		/>
+		<param name="maximizeRoot"
+			value=""
+		/>
+		<param name="exportAsWindowButton"
+			value="true"
+		/>
+		<param name="exportHandlerId"
+			value="exportPowerpoint"
+		/>
+		<param name="templateFile"
+			value="chart/default.pptx"
+		/>
+		<param name="downloadNameKey"
+			value=""
+		/>
+		<param name="table">
+			<table
+				defaultColumns="${columns}"
+				fixedColumns="1"
+			>
+				<column-default accessor="${accessorClass}"/>
+				<tableRenderer class="${rendererClass}"/>
+			</table>
+		</param>
+	</params>
+
+	<component class="${producerComponentClass}"
+		chartProducer="${chartProducer}"
+		chartSizeClassName="${chartSizeManipulatorClass}"
+		detailComponent="${namePrefix}ChartDetail"
+		downloadNameKey="${downloadNameKey}"
+		exportAsWindowButton="${exportAsWindowButton}"
+		exportHandlerId="${exportHandlerId}"
+		maximizeRoot="${maximizeRoot}"
+		model="selection(${master})"
+		name="${namePrefix}ChartGraphicsComponent"
+		page="${chartPage}"
+		resPrefix="${resPrefix}chart."
+		securityProviderClass="${securityProvider}"
+		templateFile="${templateFile}"
+		toolbar="${toolbar}"
+	>
+		<dialogs>
+			<layout name="${namePrefix}ChartDialog">
+				<dialogInfo
+					createOpenerButtons="false"
+					defaultI18n="reporting.matrix.chart.openChartDetails"
+					height="${dialogHeight}"
+					openHandlerClass="${chartDetailHandler}"
+					openHandlerName="openChartDetails"
+					openerCommandGroup="Read"
+					width="${dialogWidth}"
+				/>
+
+				<components>
+					<component class="${detailTable}"
+						buttonComponent="${namePrefix}ChartDetailButtons"
+						modelBuilder="${detailBuilder}"
+						name="${namePrefix}ChartDetail"
+						objectType="${objectType}"
+						resPrefix="${tablePrefix}"
+						securityProviderClass="dialogParent"
+						selectable="false"
+					>${table}</component>
+					<buttonbar name="${namePrefix}ChartDetailButtons"/>
+				</components>
+			</layout>
+		</dialogs>
+	</component>
+</template>

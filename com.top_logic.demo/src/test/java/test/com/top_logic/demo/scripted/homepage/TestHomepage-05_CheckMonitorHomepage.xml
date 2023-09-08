@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+					component-name="com.top_logic/admin/monitor/app/applicationMonitor.layout.xml#applMonitor"
+					visible="true"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="resource:WEB-INF/test/actions/misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
+			template-name-comment="Persoenliche Einstellungen zuruecksetzen"
+		>
+			<parameters/>
+		</action>
+	</actions>
+</action>

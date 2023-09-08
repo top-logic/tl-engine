@@ -1,0 +1,66 @@
+<h2>Syntax</h2> 
+<pre>	<code>$expr1.compare($expr2)
+</code>
+</pre> 
+<h2>Description</h2> 
+<p>Returns the comparison result of <code class="hljs inlineCode">expr1</code> and <code class="hljs inlineCode">expr2</code>. The comparison result is less than 0, equal to 0, greater than 0 if <code class="hljs inlineCode">expr1</code> is less than, equal to, or greater than <code class="hljs inlineCode">expr2</code>.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>expr1</td> 
+   <td>Number/string/boolean/business object</td> 
+   <td>An element to be compared with <code class="hljs inlineCode">expr2</code>. See <a class="tlObject" data-custom="false" href="?page=Comparisons&amp;uuid=a9117c9d-c941-44d9-bdc1-00f4a25e8a7a">Comparison operators</a>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>expr2</td> 
+   <td>Number/string/boolean/business object</td> 
+   <td>An element to be compared with <code class="hljs inlineCode">expr1</code>. See <a class="tlObject" data-custom="false" href="?page=Comparisons&amp;uuid=a9117c9d-c941-44d9-bdc1-00f4a25e8a7a">Comparison operators</a>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Number</p> 
+<p>Depending on result the function returns:</p> 
+<ul> 
+ <li>0 if <code class="hljs inlineCode">expr1</code> and <code class="hljs inlineCode">expr2</code> are the same size</li> 
+ <li>a number greater than 0, if <code class="hljs inlineCode">expr1</code> is greater than <span style="color:#695d69; font-family:monospace"><span style="background-color:#f7f3f7">expr2</span></span></li> 
+ <li>a number smaller than 0, if <code class="hljs inlineCode">expr1</code> is smaller than <code class="hljs inlineCode"><span style="color:#695d69"><span style="font-family:monospace">expr2</span></span></code></li> 
+</ul> 
+<h2>Examples</h2> 
+<h3>Numbers</h3> 
+<pre>	<code>compare(1, 5)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> -1</p> 
+<h3>Strings</h3> 
+<pre>	<code>compare("z", "a")</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 25</p> 
+<p>When comparing strings, not only is the result less than, greater than, or equal to 0 output, but additionally defines how far apart the strings are.</p> 
+<h3>Boolean values</h3> 
+<pre>	<code>compare("true", "false")</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span>1</p> 
+<h3>Lists</h3> 
+<pre>	<code>compare(list(3 , 2, 1) , list(1, 2, 3))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 1</p> 
+<p>Lists are compared element by element until one element is greater or less for a pair of elements, see <a class="tlObject" data-custom="false" href="?page=Comparisons&amp;uuid=a9117c9d-c941-44d9-bdc1-00f4a25e8a7a">Comparison operators</a>.</p> 
+<h3>Sorting with a comparison value result</h3> 
+<pre><code>list("z", "a", "f")
+  .sort(x -&gt; y -&gt; compare($x, $y))</code></pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> A list with the elements ["a", "f", "z"].</p> 
+<p>See the example "Comparison with comparison function" in <a class="tlObject" data-custom="false" href="?page=sort&amp;uuid=30b1f03d-7f93-4a98-a879-b523480ac72e">Sort</a>.</p>

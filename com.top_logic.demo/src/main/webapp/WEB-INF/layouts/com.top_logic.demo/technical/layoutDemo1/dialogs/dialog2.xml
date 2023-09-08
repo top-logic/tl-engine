@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<tabbar name="dialog2">
+	<components>
+		<include name="com.top_logic.demo/technical/layoutDemo1/forms/frame/DemoOrderForm_shared.xml"
+			componentName="DemoOrderFormInDialog"
+		>
+			<inject>
+				<tabInfo label="layouts.layoutdemo.dialog.dialog2.demoDialogTab3.tab"/>
+			</inject>
+		</include>
+		<include name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsForm_shared.xml"
+			componentName="dialogInfo2a"
+		>
+			<inject>
+				<tabInfo label="layouts.layoutdemo.dialog.dialog2.demoDialogTab1.tab"/>
+			</inject>
+		</include>
+		<layout>
+			<tabInfo label="layouts.layoutdemo.dialog.dialog2.demoDialogTab2.tab"/>
+			<components>
+				<component class="com.top_logic.mig.html.layout.SimpleComponent"
+					buttonComponent="dialog2bButtons"
+					content="42"
+					name="dialogInfo2b"
+					resPrefix="layouts.layoutdemo.dialog.dialog2.dialogInfo2b."
+				/>
+				<buttonbar name="dialog2bButtons"/>
+			</components>
+		</layout>
+	</components>
+</tabbar>

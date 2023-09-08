@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Created-By: 1.4.2 (Sun Microsystems Inc.)
+Crypto-Strength: unlimited
+
+Name: default_US_export.policy
+SHA1-Digest: cITKKaqB2E2DsMCcfrm2MykjVmk=
+

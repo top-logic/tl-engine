@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.31cd41ec-f334-42b0-a4e5-bbd436eb17be">
+				<en>New object</en>
+				<de>Neues Objekt</de>
+			</title>
+		</title>
+		<open-handler id="ID_49c4393e_572e_4bb4_b9b9_a807293eaa1f"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			targetComponent="com.top_logic.demo/technical/components/polymorphicViews/newObject/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.31cd41ec-f334-42b0-a4e5-bbd436eb17be">
+				<en>New object</en>
+				<de>Neues Objekt</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="test.polymorphism:A"/>
+		<create-handler id="ID_844ad3c3_8d50_4e8e_9b15_344a10c1ae40"/>
+	</arguments>
+</config:template-call>

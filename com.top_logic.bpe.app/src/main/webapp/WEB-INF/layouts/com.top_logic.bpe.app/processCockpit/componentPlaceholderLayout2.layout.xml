@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tileGroup.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRunObjects.layout.xml"/>
+			<layout-reference resource="com.top_logic.bpe.app/processCockpit/currentTasks/currentTasksTileLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.bpe.app/processCockpit/myProcesses/myProcessesTileLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

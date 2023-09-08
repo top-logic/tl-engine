@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.dynamictable">
+		<annotations>
+			<singletons>
+				<singleton type="AllDevelopments"/>
+			</singletons>
+		</annotations>
+		<class name="AllDevelopments">
+			<attributes>
+				<reference name="developments"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Development"
+				/>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr>toString(#("Alle Entwicklungen"@de, "All developments"@en))</expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Development">
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="name"/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<reference name="ratings"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Rating"
+				/>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="parts"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Development"
+				/>
+			</attributes>
+		</class>
+		<class name="Objective">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+		<class name="Rating">
+			<attributes>
+				<property name="value"
+					mandatory="true"
+					type="tl.core:Integer"
+				/>
+				<reference name="objective"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Objective"
+				/>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[l -> toString(
+  $l.get(`test.dynamictable:Rating#objective`), " = ", 
+  $l.get(`test.dynamictable:Rating#value`))]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

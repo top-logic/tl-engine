@@ -1,0 +1,3 @@
+String;Integer;Long;Double;Boolean;Ungültig;URL
+AAA;1;1000;42.23;x;Text 1;http://www.top-logic.com
+BBB;2;2000;84.46;Ja;Text 2;http://www.top-logic.com/project

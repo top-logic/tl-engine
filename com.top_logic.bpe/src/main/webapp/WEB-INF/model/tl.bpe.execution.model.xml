@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.bpe.execution">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.bpe.execution.model.impl"
+				interface-package="com.top_logic.bpe.execution.model"
+			/>
+			<factory value="com.top_logic.bpe.execution.model.TlBpeExecutionFactory"/>
+		</annotations>
+		<interface name="Named">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</interface>
+		<class name="Token">
+			<generalizations>
+				<generalization type="Named"/>
+				<generalization type="tl.bpe.bpml:Iconified"/>
+				<generalization type="tl.bpe.bpml:Described"/>
+			</generalizations>
+			<annotations>
+				<table name="BPExecution"/>
+				<implementation-binding class-name="com.top_logic.bpe.execution.model.impl.TokenImpl"/>
+				<instance-presentation icon="theme:ICON_DROPBOX"/>
+			</annotations>
+			<attributes>
+				<reference name="node"
+					kind="forwards"
+					navigate="true"
+					type="tl.bpe.bpml:Node"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<reference name="previous"
+					inverse-reference="next"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Token"
+				/>
+				<reference name="next"
+					inverse-reference="previous"
+					kind="backwards"
+					multiple="true"
+					navigate="true"
+					type="Token"
+				/>
+				<reference name="processExecution"
+					inverse-reference="allTokens"
+					kind="forwards"
+					navigate="true"
+					type="ProcessExecution"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<property name="finishDate"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+				<reference name="finishBy"
+					kind="forwards"
+					navigate="true"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<reference name="dynamicActors"
+					kind="forwards"
+					multiple="true"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.execution.model.impl.TokenImpl#calculateDynamicActors()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<property name="startDate"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.execution.model.impl.TokenImpl#getCreated()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="userRelevant"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.execution.model.impl.TokenImpl#calculateUserRelevant()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="name"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.execution.model.impl.TokenImpl#calculateLabel()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="active"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.execution.model.impl.TokenImpl#calculateActive()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="durationInMinutes"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.execution.model.impl.TokenImpl#calculateDurationInMinutes()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="description"
+					override="true"
+					type="tl.model.wysiwyg:Html"
+				>
+					<annotations>
+						<delete-protected/>
+						<storage-algorithm>
+							<query expr="self -> $self.get(`tl.bpe.execution:Token#node`).get(`tl.bpe.bpml:Described#description`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="icon"
+					override="true"
+					type="tl.core:Icon"
+				>
+					<annotations>
+						<delete-protected/>
+						<storage-algorithm>
+							<query expr="self -> $self.get(`tl.bpe.execution:Token#node`).get(`tl.bpe.bpml:Iconified#icon`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="executionNumber"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+						<create-visibility value="hidden"/>
+						<storage-algorithm>
+							<query expr="self -> $self.get(`tl.bpe.execution:Token#processExecution`).get(`tl.bpe.execution:ProcessExecution#executionNumber`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="ProcessExecution">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="BPExecution"/>
+				<implementation-binding class-name="com.top_logic.bpe.execution.model.impl.ProcessExecutionImpl"/>
+				<instance-presentation icon="theme:ICON_POLL_H"/>
+			</annotations>
+			<attributes>
+				<reference name="allTokens"
+					inverse-reference="processExecution"
+					kind="backwards"
+					multiple="true"
+					navigate="true"
+					type="Token"
+				>
+					<annotations>
+						<reference-display value="table"/>
+						<main-properties properties="name,startDate,finishDate,finishBy"/>
+					</annotations>
+				</reference>
+				<reference name="activeTokens"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Token"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<reference name="collaboration"
+					kind="forwards"
+					navigate="true"
+					type="tl.bpe.bpml:Collaboration"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<reference name="process"
+					kind="forwards"
+					navigate="true"
+					type="tl.bpe.bpml:Process"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<reference name="userRelevantTokens"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Token"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.execution.model.impl.ProcessExecutionImpl#calculateUserRelevantTokens()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<property name="durationInMinutes"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.execution.model.impl.ProcessExecutionImpl#calculateDurationInMinutes()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<reference name="createdBy"
+					kind="forwards"
+					navigate="true"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.execution.model.impl.ProcessExecutionImpl#calculateCreatedBy()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="createdByContact"
+					kind="forwards"
+					navigate="true"
+					type="Contacts:PersonContact"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.execution.model.impl.ProcessExecutionImpl#calculateCreatedByContact()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="executionState"
+					kind="forwards"
+					type="tl5.enum:bpe.execution.state"
+				>
+					<annotations>
+						<default-value>
+							<classifier value="bpe.execution.state.running"/>
+						</default-value>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<property name="executionNumber"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.element.structured.util.NumberHandlerDefaultProvider"
+								number-pattern="00000"
+								pattern="%NUMBER%"
+								sequence-name="bpmlExecution"
+							/>
+						</default-value>
+						<visibility value="read-only"/>
+						<create-visibility value="hidden"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

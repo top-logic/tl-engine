@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="components"/>
+		<param name="dialogs">
+			<!-- No dialogs by default. -->
+		</param>
+	</params>
+
+	<tabbar name="mainTabber"
+		components="${components}"
+	>
+		<layoutInfo size="100%"/>
+		<dialogs>
+			<include name="GlobalDialogs.xml"/>
+			${dialogs}
+		</dialogs>
+		<windows>
+			<include name="GlobalWindows.xml"/>
+		</windows>
+		<commands>
+			<reference command-id="reloadI18N"/>
+			<reference command-id="reloadTheme"/>
+			<reference command-id="toggleAlwaysShowKeys"/>
+			<reference command-id="toggleShowAllCommands"/>
+			<reference command-id="releaseLayout"/>
+			<reference command-id="exportLayout"/>
+		</commands>
+		<views>
+			<include name="toolrow/helpButton.xml"/>
+			<view class="com.top_logic.layout.component.configuration.LogoutView"
+				name="logout"
+			/>
+			<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
+				name="setHomepage"
+			>
+				<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+					command="setHomepage"
+				/>
+			</view>
+			<view class="com.top_logic.layout.component.configuration.MultiViewConfiguration"
+				name="systemMessages"
+			>
+				<renderer class="com.top_logic.layout.component.configuration.SystemViewRenderer"/>
+				<views>
+					<include name="com.top_logic/license/license-expiry.xml"/>
+					<view class="com.top_logic.layout.component.configuration.MaintenanceViewConfiguration"
+						name="maintenance"
+					/>
+				</views>
+			</view>
+		</views>
+	</tabbar>
+</template>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="componentName"
+			value="FaultyJSPComponentIframe"
+		/>
+	</params>
+
+	<layout>
+		<component class="com.top_logic.layout.form.component.FormComponent"
+			componentControlProvider="com.top_logic.layout.structure.IFrameLayoutControlProvider"
+			name="${componentName}"
+			page="/jsp/test/layout/renderingRobustness/FaultyJSP.jsp"
+			resPrefix="layouts.layoutdemo.${componentName}.main."
+			securityProviderClass="securityRoot"
+		/>
+	</layout>
+</template>

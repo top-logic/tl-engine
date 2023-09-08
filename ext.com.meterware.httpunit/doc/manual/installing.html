@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!-- $Id: installing.html 107617 2012-01-03 09:51:15Z jst $ -->
+<html>
+<head>
+<title>HttpUnit Manual - Installing HttpUnit</title>
+<LINK REL="stylesheet" HREF="manual.css" TYPE="text/css">
+</head>
+
+<body>
+<h1>Installing HttpUnit</h1>
+<h2><a name="getting">Getting HttpUnit</a></h2>
+<h3>Releases</h3>
+<p>The latest release of HttpUnit is available from the
+<a href="http://sourceforge.net/project/showfiles.php?group_id=6550">HttpUnit project download page</a>.
+<br>From time to time, pre-release versions are made available from <a href="http://www.httpunit.org/prerelease">the web site prerelease directory</a>.
+Because HttpUnit is build test-first, these should usually be as stable as the releases; however, they are not tracked as closely and formally,
+and typically are only available for a relatively short time. Either form of distribution includes all source code and jars required to build the project.</p>
+
+<h3>Subversion access</h3>
+
+<p>If you prefer to see the very latest code, you can always obtain directly it from the Subversion/svn archive at
+<code>svn co https://httpunit.svn.sourceforge.net/svnroot/httpunit httpunit</code>. Be sure to check out the <code>httpunit</code> module.</p>
+You can also access the <a href="http://httpunit.svn.sourceforge.net/viewvc/httpunit/">svn repository online</a>.
+See <a href="#building"><i>Building HttpUnit</i></a> for instructions on building
+HttpUnit from the source code.</p>
+
+<h2><a name="sysrequirements">System Requirements</a></h2>
+HttpUnit should run on any system that supports Java JDK 1.4 or higher.
+
+<h2><a name="distribution">Examining the Distribution</a></h2>
+<p>When you unpack the HttpUnit distribution, you should find the following directory layout:
+<pre>
+httpunit
+   +--- jars // contains jars required to build, test, and run HttpUnit
+   |
+   +--- lib  // contains the HttpUnit jar
+   |
+   +--- doc  // contains documentation
+   |      |
+   |      +--- tutorial  // a brief tutorial in test-first development of a servlet-based web site
+   |      |
+   |      +--- api       // the javadoc
+   |      |
+   |      +--- manual    // this user manual
+   |
+   +--- examples // some example programs written with HttpUnit
+   |
+   +--- src      // the HttpUnit source code
+   |
+   +--- test     // unit tests for HttpUnit - a good source for more examples
+</pre>
+
+Only the <code>lib</code> and <code>jars</code> directories are required to run HttpUnit. You must have at least
+the HttpUnit jar in your classpath. Many of the other jars are optional.
+See the sext section, <a href="#dependencies"><i>Understanding HttpUnit's dependencies</i></a> for more information.
+
+<h2><a name="dependencies">Understanding HttpUnit's dependencies</a></h2>
+<p>HttpUnit supports a number of optional capabilities.
+If you don't need them, you don't need the corresponding libraries in your classpath.
+At the minimum you must have an HTML parser (both JTidy and NekoHTML are supported)
+and a jaxp-compliant parser (xerces 2.2 is included in the distribution).</p>
+
+<table border="1" cellpadding="2" cellspacing="0">
+  <tr>
+    <th>Jar Name</td>
+    <th>Needed For</td>
+    <th>Documented at</td>
+  </tr>
+  <tr>
+    <td>nekohtml.jar</td>
+    <td>HTML parsing. Very tolerant of sloppy HTML. Requires xerces-j 2.2 or higher</td>
+    <td><a target="_top" href="http://www.apache.org/~andyc/neko/doc/html/index.html">
+    www.apache.org/~andyc/neko/doc/html/index.html</a>.</td>
+  </tr>
+  <tr>
+    <td>tidy.jar</td>
+    <td>HTML parsing. Very picky. Works with any jaxp-compliant parser.</td>
+    <td><a href="http://lempinen.net/sami/jtidy/" target="_top">lempinen.net/sami/jtidy/</a></td>
+  </tr>
+  <tr>
+    <td>xmlParserAPIs.jar</td>
+    <td>the generic parser APIs supported by xerces-j</td>
+    <td><a href="http://xml.apache.org" target="_top">xml.apache.org</a></td>
+  </tr>
+  <tr>
+    <td>xercesImpl.jar</td>
+    <td>the xerces-j 2.2 implementation</td>
+    <td><a href="http://xml.apache.org" target="_top">xml.apache.org</a></td>
+  </tr>
+  <tr>
+    <td>js.jar</td>
+    <td>javascript support</td>
+    <td><a href="http://www.mozilla.org/rhino/" target="_top">www.mozilla.org/rhino</a></td>
+  </tr>
+  <tr>
+    <td>servlet.jar</td>
+    <td>required for ServletUnit - unit testing of servlets</td>
+    <td><a href="http://java.sun.com/" target="_top">java.sun.com</a></td>
+  </tr>
+  <tr>
+    <td>junit.jar</td>
+    <td>running the unit tests.</td>
+    <td><a href="http://www.junit.org/" target="_top">www.junit.org</a></td>
+  </tr>
+  <tr>
+    <td>mail.jar</td>
+    <td>Testing the file upload capabilities - not used to run HttpUnit itself</td>
+    <td><a href="http://java.sun.com/products/javamail/"
+        target="_top">java.sun.com/products/javamail/</a></td>
+  </tr>
+  <tr>
+    <td>activation.jar</td>
+    <td>Testing the file upload capabilities - not used to run HttpUnit itself</td>
+    <td><a href="http://java.sun.com/products/javabeans/glasgow/jaf.html"
+        target="_top">java.sun.com/products/javabeans/glasgow/jaf.html</a></td>
+  </tr>
+</table>
+<h2><a name="#building">Building HttpUnit</a></h2>
+<p>By far the easiest way to build HttpUnit is by using <code>ant</code>. If you choose to build with less than the full set of jars,
+some classes will not compile. The included <code>ant</code> script handles this automatically for you, selecting only those that are appropriate.
+If you have <code>ant</code> installed, simply go to the main httpunit installation directory and type:<blockquote><code>ant jar</code></blockquote>
+to build the httpunit jar using any classes available in the jars directory.
+You can then verify your installation by running one of the examples. The command<blockquote><code>ant run-example</code></blockquote>
+will compile the examples and run the simplest of them, going to the <a href="http://www.meterware.com">Meterware</a>
+web site and following a link to the main HttpUnit site. If all is working properly, it should print out a message
+telling you the number of links it found there.
+
+<hr>
+<p align="center">Copyright &copy; 2000-2007 Russell Gold. All rights Reserved.</p>
+
+</body>
+</html>

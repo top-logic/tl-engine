@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="B"
+	name="b1"
+>
+	<option1 parameter1="value1">
+		<sub-option sub-parameter="sub-value"/>
+	</option1>
+	<option2 parameter2="value2"/>
+	<childList>
+		<component class="C"
+			name="c1"
+		/>
+		<component class="C"
+			name="c2"
+		/>
+		<component class="C"
+			name="c3"
+		/>
+		<component class="C"
+			name="c4"
+		/>
+	</childList>
+</component>

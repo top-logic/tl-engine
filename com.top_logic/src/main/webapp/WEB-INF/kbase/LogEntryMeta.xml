@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+	SPDX-FileCopyrightText: 2001 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+<metaobjects>
+
+<metaobject object_type="MOKnowledgeObject" object_name="LogEntry" super_class="KnowledgeObject" db_name="LOGENTRY" versioned="false">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.event.logEntry.LogEntry"/>
+	</annotation>
+</annotations>
+<attributes>
+    <mo_attribute att_name="eventType"		att_type="String" mandatory="true"	/>
+	<reference att_name="user" 
+	    mandatory="false"
+    	history-type="current" 
+    	branch-global="false" 
+    	monomorphic="true" 
+    	is-container="false" 
+    	deletion-policy="delete-referer" 
+    	target-type="Person"
+   	/>
+	<mo_attribute att_name="message" 		att_type="String" mandatory="false" db_size="254"/>
+	<mo_attribute att_name="sourceName"     att_type="String" mandatory="false"/>
+	<reference att_name="source" 
+	    mandatory="false"
+    	history-type="current" 
+    	branch-global="false" 
+    	monomorphic="false" 
+    	is-container="false" 
+    	deletion-policy="clear-reference" 
+    	target-type="KnowledgeObject"
+   	/>
+	<mo_attribute att_name="triggerName"    att_type="String" mandatory="false"/>
+	<reference att_name="trigger" 
+	    mandatory="false"
+    	history-type="current" 
+    	branch-global="false" 
+    	monomorphic="false" 
+    	is-container="false" 
+    	deletion-policy="clear-reference" 
+    	target-type="KnowledgeObject"
+   	/>
+	<mo_attribute att_name="date"           att_type="Date" mandatory="true" db_name="TL_DATE"/>		
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="ArchiveUserDayEntry" super_class="KnowledgeObject" db_name="DAYUSERENTRY" versioned="false">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.event.logEntry.ArchiveUserDayEntry"/>
+	</annotation>
+</annotations>
+<attributes>
+	<reference att_name="user" 
+	    mandatory="true"
+    	history-type="current" 
+    	branch-global="false" 
+    	monomorphic="true" 
+    	is-container="false" 
+    	deletion-policy="delete-referer" 
+    	target-type="Person"
+   	/>
+	<mo_attribute att_name="date" 	    att_type="java.sql.Date" mandatory="true"  db_name="TL_DATE"/>	
+	   <!-- entryIDs is a java.sql.Types.CLOB ==> db_type=2005 -->
+	<mo_attribute att_name="entryIDs" 	att_type="String" mandatory="false" db_type="clob" db_size="1000000"/>
+</attributes>
+<index>
+    <mo_index name="Ade_user_date" unique="true">
+		<index-parts>
+        <index_part name="user"   />
+        <index_part name="date"     />
+		</index-parts>
+    </mo_index> 
+</index>    
+</metaobject>
+
+<!-- Association from Person TO LogEntry, Date is Day when Events happened -->
+<association super_class="Association" object_name="hasLogEntry" versioned="false">
+<attributes>
+	<source
+		override="true"
+		target-type="Person"
+	/>
+	<destination
+		override="true"
+		target-type="LogEntry"
+	/>
+	<mo_attribute att_name="date" att_type="java.sql.Date" mandatory="true" db_name="TL_DATE"/>
+	</attributes>
+</association>
+
+</metaobjects>
+</objectlist>

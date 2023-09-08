@@ -1,0 +1,54 @@
+<h2>Syntax</h2> 
+<pre>	<code>$e1 &gt;= $e2
+
+$e1.ge($e2)
+</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Boolescher Ausdruck, der als wahr bewertet wird, wenn das Ergebnis der Auswertung von <code class="hljs inlineCode">e1</code> größer oder gleich dem Ergebnis der Auswertung von <code class="hljs inlineCode">e2</code> ist.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>e1</td> 
+   <td>Zahl/Zeichenkette/Menge</td> 
+   <td>Objekt, das mit <code class="hljs inlineCode">e2</code> verglichen werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>e2</td> 
+   <td>Zahl/Zeichenkette/Menge</td> 
+   <td>Objekt, das mit <code class="hljs inlineCode">e1</code> verglichen werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Wahrheitswert</p> 
+<p><code class="hljs inlineCode">true</code>, wenn das Ergebnis der Auswertung besagt, dass <code class="hljs inlineCode">e1</code> kleiner gleich <code class="hljs inlineCode">e2</code> ist.</p> 
+<h2>Beispiele</h2> 
+<h3>Zahlen</h3> 
+<pre>	<code>1 &gt;= 1
+</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong><code class="hljs inlineCode">true</code></p> 
+<h3>Ungleiche Mengen</h3> 
+<pre>	<code>list(1, 2, 4).ge(list(1, 2, 3))</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong><code class="hljs inlineCode">true</code></p> 
+<p>Da Mengen elementweise miteinander verglichen werden, ist die erste Menge größer als die zweite, denn die Zahl 4 ist größer als die Zahl 3 (siehe <a class="tlObject" data-custom="true" href="?page=Comparisons&amp;uuid=a9117c9d-c941-44d9-bdc1-00f4a25e8a7a">Vergleichsoperatoren</a>).</p> 
+<h3>Gleiche Mengen</h3> 
+<pre>	<code>list(1, 2, 3).ge(list(1, 2, 3))</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong><code class="hljs inlineCode">true</code></p>

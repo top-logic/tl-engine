@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="Benchmark">
+			<annotations>
+				<package-binding
+					implementation-package="test.com.top_logic.element.meta.benchmark.model.impl"
+					interface-package="test.com.top_logic.element.meta.benchmark.model"
+				/>
+			</annotations>
+			<types>
+				<interface name="BenchmarkA">
+					<annotations>
+						<instance-presentation icon="prod/tempI.png"/>
+						<legacy-qualified-name qualified-name="BenchmarkA"/>
+					</annotations>
+					<attributes>
+						<property name="s1"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="s2"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="x"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="y"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<reference name="ref"
+							kind="forwards"
+							type="Benchmark:BenchmarkA"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</reference>
+						<reference name="backRef"
+							inverse-reference="ref"
+							kind="backwards"
+							type="Benchmark:BenchmarkA"
+						/>
+						<reference name="refSet"
+							kind="forwards"
+							multiple="true"
+							type="Benchmark:BenchmarkA"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</reference>
+						<reference name="refList"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="Benchmark:BenchmarkA"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</reference>
+					</attributes>
+				</interface>
+				<interface name="BenchmarkB">
+					<annotations>
+						<instance-presentation icon="prod/tempI.png"/>
+						<legacy-qualified-name qualified-name="BenchmarkB"/>
+					</annotations>
+					<attributes>
+						<property name="dynamicS1"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="dynamicS2"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="dynamicX"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="dynamicY"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<reference name="dynamicRef"
+							kind="forwards"
+							type="Benchmark:BenchmarkA"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</reference>
+						<reference name="dynamicRefSet"
+							kind="forwards"
+							multiple="true"
+							type="Benchmark:BenchmarkA"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</reference>
+						<reference name="dynamicRefList"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="Benchmark:BenchmarkA"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="BenchmarkA"/>
+					</generalizations>
+				</interface>
+				<interface name="BenchmarkResult">
+					<annotations>
+						<instance-presentation icon="prod/tempI.png"/>
+						<legacy-qualified-name qualified-name="BenchmarkResult"/>
+					</annotations>
+					<attributes>
+						<property name="testName"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="objectCnt"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="millisPerOperation"
+							type="tl.core:Double"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+					</attributes>
+				</interface>
+				<class name="A">
+					<annotations>
+						<table name="Benchmark"/>
+						<implementation-binding class-name="test.com.top_logic.element.meta.benchmark.model.impl.AWrapper"/>
+					</annotations>
+					<generalizations>
+						<generalization type="BenchmarkA"/>
+					</generalizations>
+				</class>
+				<class name="B">
+					<annotations>
+						<table name="Benchmark"/>
+						<implementation-binding class-name="test.com.top_logic.element.meta.benchmark.model.impl.BWrapper"/>
+					</annotations>
+					<generalizations>
+						<generalization type="BenchmarkB"/>
+					</generalizations>
+				</class>
+				<class name="Result">
+					<annotations>
+						<table name="BenchmarkResult"/>
+						<implementation-binding class-name="test.com.top_logic.element.meta.benchmark.model.impl.BenchmarkResult"/>
+					</annotations>
+					<generalizations>
+						<generalization type="BenchmarkResult"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

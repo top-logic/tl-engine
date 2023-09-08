@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="dynamicDemoLayout1">
+	<components>
+		<component class="com.top_logic.mig.html.layout.SimpleComponent"
+			content="Dynamic layout demo layout 1."
+			name="dynamicDemoLayout1_content"
+		/>
+		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+	</components>
+</layout>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Configuration of the form displaying or creating a TLStructuredType. -->
+<template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<params>
+		<param name="showNoModel"
+			value="false"
+		/>
+	</params>
+
+	<modelBuilder class="com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder"
+		showNoModel="${showNoModel}"
+	>
+		<customizations>
+			<type name="com.top_logic.model.annotate.LegacyQualifiedNameForCompatibility">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+				</annotations>
+			</type>
+
+			<type name="com.top_logic.element.config.annotation.ConfigType">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+				</annotations>
+			</type>
+
+			<type name="com.top_logic.model.config.annotation.EnumScope">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+				</annotations>
+			</type>
+
+			<type name="com.top_logic.element.config.annotation.ScopeRef">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+				</annotations>
+			</type>
+
+			<type name="com.top_logic.model.config.annotation.SystemEnum">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+				</annotations>
+			</type>
+
+			<type name="com.top_logic.model.annotate.TLI18NKey">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+				</annotations>
+			</type>
+
+			<property name="com.top_logic.model.config.TypeConfig#annotations">
+				<annotations>
+					<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.Options"
+						fun="com.top_logic.element.layout.meta.TypeAnnotationOptions"
+						mapping="com.top_logic.layout.form.values.ItemOptionMapping"
+					/>
+				</annotations>
+			</property>
+
+			<property name="com.top_logic.model.annotate.TLDefaultValue#provider">
+				<annotations>
+					<options
+						fun="com.top_logic.model.annotate.util.ObjectDefaultProviderOptions"
+						mapping="com.top_logic.layout.form.values.ImplOptionMapping"
+					/>
+				</annotations>
+			</property>
+		</customizations>
+	</modelBuilder>
+</template>

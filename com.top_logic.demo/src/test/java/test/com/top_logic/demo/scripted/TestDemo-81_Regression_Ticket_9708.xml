@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-comment="Suche"
+			card-name="searchInput"
+			component-name="mainTabbar.layout.xml#mainTabber"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler"
+			command-label="Erweiterte Suche"
+			command-name="switchAttributedSearchScope"
+			component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+			component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+				component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+				component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+			/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+							field-label-comment="float"
+						>
+							<attribute-ref attribute-name="float">
+								<type type-name="DemoTypes.A">
+									<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+								</type>
+							</attribute-ref>
+						</field>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="float"
+							field-name="from"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.LongValue"
+						long="0"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+				component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+				component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+			/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+							field-label-comment="float"
+						>
+							<attribute-ref attribute-name="float">
+								<type type-name="DemoTypes.A">
+									<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+								</type>
+							</attribute-ref>
+						</field>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="float"
+							field-name="to"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleValue"
+						double="0.3"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.search.SearchCommandHandler"
+			command-label="Suchen"
+			command-name="searchAttributed"
+			comment="Ticket #9708: Comparision of long and double in ComparisionDependency."
+			component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+			component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

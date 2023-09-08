@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<layout name="oldParent">
+		<layout name="child">
+			<dialogs>
+				<layout name="dialog">
+					<dialogInfo/>
+					<component class="com.top_logic.mig.html.layout.SimpleComponent"
+						name="dialogContent"
+					/>
+				</layout>
+			</dialogs>
+		</layout>
+	</layout>
+	<layout name="newParent"/>
+</layout>

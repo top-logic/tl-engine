@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="viewSelector"
+>
+	<properties>
+		<property name="id"
+			type="String"
+		>
+			<mandatory/>
+		</property>
+		<property name="components"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<hidden/>
+			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplatesDefault"/>
+			<layout-templates value="com.top_logic/contentLayout.template.xml"/>
+		</property>
+	</properties>
+
+	<layout name="ViewAlternative"
+		components="${components}"
+	>
+		<tabInfo id="${id}"
+			label="/s${id}"
+		/>
+	</layout>
+</config:template>

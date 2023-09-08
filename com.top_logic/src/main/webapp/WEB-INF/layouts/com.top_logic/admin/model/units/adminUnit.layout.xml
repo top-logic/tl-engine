@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminUnit"
+	helpIDLegacy="admin.units.unit.tabber"
+	titleKey="admin.units.unit.tabber"
+>
+	<tabInfo label="admin.units.unit.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/model/units/editUnit.xml"/>
+	</components>
+</securityLayout>

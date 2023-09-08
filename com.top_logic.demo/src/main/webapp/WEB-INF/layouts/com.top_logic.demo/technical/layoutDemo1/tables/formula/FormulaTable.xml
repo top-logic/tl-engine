@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<component class="com.top_logic.demo.layout.demo.table.DemoFormulaTables"
+			name="FormularTable"
+			page="/jsp/test/layout/table/FormulaTables.jsp"
+			resPrefix="layouts.layoutdemo.table.FormulaTable.FormularTable."
+			resetInvisible="true"
+		>
+			<tables>
+				<table name="replaceNoSort"
+					columnCustomization="selection"
+					pageSizeOptions="5"
+					resPrefix="layouts.layoutdemo.table.FormulaTable.FormularTable.replaceNoSort"
+				>
+					<column-default
+						accessor="com.top_logic.demo.layout.demo.table.DemoTableAccessor"
+						sortable="false"
+					/>
+					<!-- Test case for Ticket #5768. -->
+					<columns>
+						<column name="title"
+							sortable="false"
+						/>
+					</columns>
+				</table>
+
+				<table name="selectSortNoReplace"
+					columnCustomization="none"
+					pageSizeOptions="5, 10, all"
+					resPrefix="layouts.layoutdemo.table.FormulaTable.FormularTable.selectSortNoReplace"
+				>
+					<column-default
+						accessor="com.top_logic.demo.layout.demo.table.DemoTableAccessor"
+						sortable="true"
+					/>
+					<!-- Test case for Ticket #5768. -->
+					<columns>
+						<column name="title"
+							sortable="false"
+						/>
+					</columns>
+				</table>
+
+				<!-- Note: Test with a default page size that is not the smallest one. -->
+				<table name="tableField"
+					pageSizeOptions="10, 5"
+					resPrefix="layouts.layoutdemo.table.FormulaTable.FormularTable.tableField"
+				>
+					<!-- Test case for Ticket #5768. -->
+					<columns>
+						<column name="title"
+							sortable="false"
+						/>
+					</columns>
+				</table>
+
+				<table name="tableHiddenSelect"
+					pageSizeOptions="10, 5"
+					resPrefix="layouts.layoutdemo.table.FormulaTable.FormularTable.tableHiddenSelect"
+					titleKey="layouts.layoutdemo.table.FormulaTable.FormularTable.tableHiddenSelect.tableTitle"
+				>
+					<columns>
+						<column name="_select"
+							visibility="hidden"
+						/>
+					</columns>
+				</table>
+
+				<table name="tableExcludedSelect"
+					pageSizeOptions="10, 5"
+					resPrefix="layouts.layoutdemo.table.FormulaTable.FormularTable.tableExcludedSelect"
+				>
+					<columns>
+						<column name="_select"
+							visibility="excluded"
+						/>
+					</columns>
+				</table>
+			</tables>
+			<buttons>
+				<button id="focusTable"
+					class="com.top_logic.demo.layout.demo.table.DemoFormulaTables$FocusTableCommand"
+					table="tableHiddenSelect"
+				/>
+			</buttons>
+		</component>
+		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+	</components>
+</layout>

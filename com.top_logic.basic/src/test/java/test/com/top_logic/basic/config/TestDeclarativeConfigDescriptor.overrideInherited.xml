@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<declarative-config-descriptor extends="test.com.top_logic.basic.config.TestDeclarativeConfigDescriptor$ExtendedConfig">
+	<property name="programmatic-string"
+		default="otherDefault"
+	/>
+</declarative-config-descriptor>

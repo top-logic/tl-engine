@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Nutzer/Nutzer anmelden.xml"
+			template-name-comment="Nutzer anmelden"
+		>
+			<parameters>
+				<parameter name="Username"
+					value="userWithoutPrivileges"
+				/>
+				<parameter name="ProcessId"
+					value="userWithoutPrivileges"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="userWithoutPrivileges"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.check.TabSelectableCheck"
+					card-name="adminView"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					selectable="false"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Teste dass 'Knoten anlegen' verboten ist"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Knoten anlegen"
+							command-name="openNewElementDialog"
+							component-implementation-comment="com.top_logic.layout.tree.component.TreeComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							reason-key="tl.executable.not.allowed"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

@@ -1,0 +1,13 @@
+#djUnit Plugin Settings
+#Wed Jan 12 10:15:14 CET 2005
+CoverageIncludedPatterns=com.top-logic.basic.*;
+JUnitExcludedUseDefault=true
+UseTrace=false
+PrintMethodTrace=false
+CoverageExcludedPatterns=test.*;
+UseVirtualMock=false
+UseCoverage=true
+TraceIncludePatterns=
+PrintCatchTrace=false
+PrintIndent=false
+CoverageWorkingDirectory=

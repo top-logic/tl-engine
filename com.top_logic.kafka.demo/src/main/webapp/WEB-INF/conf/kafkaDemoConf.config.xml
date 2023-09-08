@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="kafkaDemoMessages" />
+					<bundle name="model.kafka.demo.messages" />
+				</bundles>
+			</instance>
+		</config>
+
+        <config service-class="com.top_logic.layout.provider.LabelProviderService">
+            <instance>
+                <label-providers>
+		            <provider kind="MODEL" type="kafka.demo:CommonNode" implementation="com.top_logic.element.layout.meta.ConfiguredAttributedTooltipProvider" />
+                </label-providers>
+            </instance>
+        </config>
+
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance class="com.top_logic.util.sched.Scheduler"
+				polling-interval="1000"
+			>
+			</instance>
+		</config>
+
+        <config service-class="com.top_logic.kafka.services.consumer.KafkaConsumerService">
+            <instance class="com.top_logic.kafka.services.consumer.KafkaConsumerService">
+                <consumers>
+                    <consumer name="MessageConsumer"
+                        topics="%DATA_CHANGE_TOPIC_CONSUMER%"
+                        bootstrap.servers="%KAFKA_CONSUMER_SERVER%"
+                        group.id="%MESSAGE_CONSUMER_GROUP%"
+						log-writer="com.top_logic.kafka.log.KafkaStringLogWriter"
+                    >
+                        <processors>
+                            <processor class="com.top_logic.kafka.interceptor.TopicSensorAndViewerInterceptor" />
+                        </processors>
+                    </consumer>
+                    <consumer name="KB-Data-Change-Consumer">
+	                    <value.deserializer.typed.config class="com.top_logic.kafka.serialization.ChangeSetDeserializer" >
+	                    	<type-mapping class="com.top_logic.knowledge.service.db2.migration.FuzzyTableNameMapping">
+	                    		<renames>
+	                    			<rename name="NotExistingType" target-name="StructuredElement" />
+	                    		</renames>
+	                    	</type-mapping>
+	                    </value.deserializer.typed.config>
+                    </consumer>
+                </consumers>
+            </instance>
+        </config>
+
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<handlers>
+					<handler id="createManyObjects"
+						class="com.top_logic.kafka.demo.command.CreateManyObjectsCommand"
+					/>
+				</handlers>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/kafka.demo.model.xml"/>
+				</declarations>
+				<settings>
+					<module name="kafka.demo">
+						<factory value="com.top_logic.kafka.demo.model.types.KafkaDemoFactory"/>
+					</module>
+				</settings>
+				<classifications>
+					<classification name="tl.beacon.three" mode="use" />
+				</classifications>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/KafkaDemoMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+		
+		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
+			<layout>
+				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper" />
+			</layout>
+		</config>
+
+		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">
+			<types>
+				<type name="kafka.demo:CommonNode" attributes="tType,name"/>
+			</types>
+		</config>
+
+	</configs>
+</application>

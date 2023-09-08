@@ -1,0 +1,41 @@
+.BreadCrumbOuter,
+.BreadCrumbOuter .Left,
+.BreadCrumbOuter .Right,
+.firstLevelTabBar .tab,
+.tabBar .tab,
+.tabBar .tab:hover,
+
+.breadcrumb .selectableNode,
+.breadcrumb .hover .selectableNode,
+
+.rf_hr.visible,
+
+td.cmdButton,
+a.cmdButton,
+a.cmdButton:link,
+a.cmdButton:visited,
+a.cmdButton:active,
+a.cmdButtonHover,
+a.cmdButtonHover:link,
+a.cmdButtonHover:visited,
+a.cmdButtonHover:active,
+a.cmdButtonDisabled,
+a.cmdButtonDisabled:link,
+a.cmdButtonDisabled:visited,
+a.cmdButtonDisabled:active,
+a.cmdButtonDisabled:hover,
+
+select:not( [multiple="multiple"] )
+{
+    border: none;
+}
+
+div.containerScrollRightButton > span.scrollRightButton,
+div.containerScrollLeftButton > span.scrollLeftButton
+{
+    border-left: none;
+}
+
+[data-type*="group"] > .field {
+    border: none;
+}

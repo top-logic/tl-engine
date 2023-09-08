@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+	</params>
+
+	<layout>
+		<components>
+			<component class="com.top_logic.tool.boundsec.assistent.AssistentComponent"
+				name="${namePrefix}testAssistent"
+				resPrefix="layouts.layoutdemo.assistent.demoAssistant.testAssistent."
+			>
+				<controller class="com.top_logic.demo.tool.boundsec.assistent.demo.DemoAssistentController">
+					<steps>
+						<step name="${namePrefix}demoFirstStep"/>
+						<step name="${namePrefix}demoUploadStep"/>
+						<step name="${namePrefix}demoAssistentUpload"/>
+						<step name="${namePrefix}demoNameInput"/>
+					</steps>
+				</controller>
+				<component class="com.top_logic.demo.tool.boundsec.assistent.demo.TestingNameInputComponent"
+					name="${namePrefix}demoFirstStep"
+					page="/jsp/layout/test/TestNameInput.jsp"
+					resPrefix="layouts.layoutdemo.assistent.demoAssistant.demoFirstStep."
+					securityProviderClass="securityRoot"
+				>
+					<assistantInfo labelKeySuffix="step1"/>
+				</component>
+
+				<component class="com.top_logic.demo.tool.boundsec.assistent.demo.DemoFileUploadComponent"
+					name="${namePrefix}demoUploadStep"
+					resPrefix="layouts.layoutdemo.assistent.demoAssistant.demoUploadStep."
+					securityProviderClass="securityRoot"
+				>
+					<assistantInfo labelKeySuffix="step2"/>
+				</component>
+
+				<component class="com.top_logic.tool.boundsec.assistent.AssistantMultiFileUploadComponent"
+					name="${namePrefix}demoAssistentUpload"
+					page="/jsp/layout/assistant/assistantMulitFileUploadPage.jsp"
+					resPrefix="layouts.layoutdemo.assistent.demoAssistant.demoAssistentUpload."
+					securityProviderClass="securityRoot"
+				>
+					<assistantInfo labelKeySuffix="step3"/>
+				</component>
+
+				<component class="com.top_logic.demo.tool.boundsec.assistent.demo.TestingNameInputComponent"
+					name="${namePrefix}demoNameInput"
+					page="/jsp/layout/test/TestNameInput.jsp"
+					resPrefix="layouts.layoutdemo.assistent.demoAssistant.demoNameInput."
+					securityProviderClass="securityRoot"
+				>
+					<assistantInfo labelKeySuffix="step4"/>
+				</component>
+			</component>
+
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

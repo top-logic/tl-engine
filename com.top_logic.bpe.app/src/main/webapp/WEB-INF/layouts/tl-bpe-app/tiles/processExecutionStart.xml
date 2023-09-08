@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="model"
+			value="selection(StartEventTable)"
+		/>
+		<param name="tokenTable"
+			value="TokenTable"
+		/>
+	</params>
+
+	<layout name="createProcessExecutionLayout"
+		horizontal="false"
+	>
+		<components>
+			<!-- component to create attributed objects -->
+			<component class="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"
+				create-handler="startProcessExecution"
+				element=""
+				model="${model}"
+				modifier="com.top_logic.bpe.app.layout.ProcessExecutionFormContextModifier"
+				name="createProcessExecutionNewAttributed"
+				newModelAction="set-parent-model"
+				page="/jsp/processExecution/StartProcess.jsp"
+				resPrefix="layouts.tl-bpe-app.tiles.processExecutionStart.createProcessExecution"
+				securityProviderClass="securityRoot"
+				structure=""
+				type="tl.bpe.execution:ProcessExecution"
+			>
+				<commands>
+					<command id="startProcessExecution"
+						class="com.top_logic.bpe.app.layout.StartProcessExecutionHandler"
+						group="Create"
+						image="theme:ICONS_ADD_BUTTON"
+						tokenTable="${tokenTable}"
+					/>
+				</commands>
+			</component>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

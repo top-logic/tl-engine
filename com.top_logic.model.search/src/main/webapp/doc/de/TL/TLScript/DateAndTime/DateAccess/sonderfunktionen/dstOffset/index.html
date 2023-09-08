@@ -1,0 +1,41 @@
+<h2>Syntax</h2> 
+<pre>	<code>$calendar.dstOffset()</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Gibt den DST (Daylight Saving Time) - Offset an, also die Differenz der Zeit zum UTC während der Sommerzeit. Die Angabe ist in Millisekunden.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>calendar</td> 
+   <td>Fachobjekt</td> 
+   <td>Der Kalender, dessen DST-Offset ermittelt werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl</p> 
+<p>Der DST-Offset zur UTC Zeit zum Zeitpunkt des Kalenderdatums.</p> 
+<h2>Beispiele</h2> 
+<h3>Sommerzeit</h3> 
+<pre>	<code>date(2012, 6, 15).toUserCalendar().dstOffset()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe in Europäischer Zeitzone (UTC +1): </strong></span>3600000<span style="color:#3498db"></span></p> 
+<p>Zu dieser Zeit gilt die Sommerzeit in der Zeitzone, daher ein DST Offset von 1 Stunde.</p> 
+<h3>Winterzeit</h3> 
+<pre>	<code>date(2012, 1, 15).toUserCalendar().dstOffset()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe in Europäischer Zeitzone (UTC +1): </strong></span>0<span style="color:#3498db"></span></p> 
+<p>Zu dieser Zeit gilt keine Sommerzeit in der Zeitzone, daher liegt der DST Offset bei 0.</p> 
+<p> </p>

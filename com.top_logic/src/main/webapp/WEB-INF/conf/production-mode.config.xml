@@ -1,0 +1,47 @@
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<!-- 
+		Settings for an application in production mode. In production mode, 
+		scripts and styles are not generated during startup and not observed for 
+		change. Instead, it is expected that scripts and styles are generated during 
+		the deployment process.
+	 -->
+
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance
+				error-on-missing-key="false"
+				log-deprecated-keys="false"
+			/>
+		</config>
+		
+		<config service-class="com.top_logic.gui.JSFileCompiler">
+			<instance
+				is-deployed="true"
+				original-names="false"
+				always-check="false"
+				strip-file="false"
+			/>
+		</config>
+		
+		<config service-class="com.top_logic.gui.ThemeFactory">
+			<instance
+				is-deployed="true"
+			/>
+		</config>
+	</services>
+	
+	<configs>
+		<config config:interface="com.top_logic.knowledge.gui.layout.LayoutConfig">
+			<debug-headers-enabled>false</debug-headers-enabled>
+		</config>
+		
+		<config config:interface="com.top_logic.layout.basic.DebuggingConfig"
+			dirtyHandlingDebug="false"
+			showDebugButtons="false"
+		/>
+		<config config:interface="com.top_logic.layout.scripting.recorder.gui.ScriptingGuiConfig"
+			show-server-script-selector="false"
+		/>
+	</configs>
+</application>

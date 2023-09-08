@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments
+		defaultSelection="false"
+		partnerGroup="GridPartner"
+	>
+		<titleKey key="dynamic.559584ac-5d24-4e8a-96ed-c530b2d44f0e">
+			<en>Grid Selection</en>
+			<de>Grid Auswahl</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="all(`DemoTypes:DemoTypes.All`)"
+		/>
+	</arguments>
+</config:template-call>

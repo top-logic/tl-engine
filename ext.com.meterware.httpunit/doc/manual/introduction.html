@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>HttpUnit Manual - Introduction</title>
+<LINK REL="stylesheet" HREF="manual.css" TYPE="text/css">
+</head>
+
+<body>
+<h1>Introduction</h2>
+<p>Automated unit testing is a great way to ensure that code being
+maintained works and continues to work. The <A HREF="http://www.XProgramming.com/">Extreme
+Programming</A> (XP) methodology relies heavily on it, and practitioners
+have available to them a range of <A HREF="http://www.xprogramming.com/software.htm">unit
+testing frameworks</A>, which work by making direct calls to the
+code being tested. But what if you want to test a web application?
+HttpUnit is a library which makes this possible.</p>
+
+<p>HttpUnit works by emulating a browser, handling frames, cookies, redirects, and so on. It lets you view pages as
+plain text, an XML DOM, or as an aggregation of collection of links, frames, images, and so on.   It lets you select
+an element which should lead to a new page and follow it, so that you can easily handle a chain of web pages.</p>
+
+<h2>Test Design and Abstraction</h2>
+<p>Unlike most commercial tools, HttpUnit does not rely on record and playback. Its API lets you define what you
+want to see or change, even before the web site is built. This is essential for test-first development.
+Since the primary use of HttpUnit is to write functional tests, it helps you abstract those elements which are
+most likely to change. For example, a page might start by providing a small number of options, using a set of radio buttons:</p>
+<form class="sample">
+Select the desired color: <input type="radio" name="color" value="red">Red
+<input type="radio" name="color" value="green" checked>Green
+<input type="radio" name="color" value="blue">Blue
+</form>
+<p>As the site evolves, the number of options might grow until the UI designer feels that a pull-down menu would be easier
+to use to send the same values:</p>
+<form class="sample">
+Select the desired color: <select name="color">
+  <option value="red">Red
+  <option value="green" selected>Green
+  <option value="blue">Blue
+  <option value="yellow">Yellow
+  <option value="magenta">Magenta
+</select>
+</form>
+<p>Further expansion could lead to a free-form textual input:</p>
+<form class="sample">
+  Enter the desired color: <input type="text" name="color" value="green">
+</form>
+<p>A tool which focuses on the type of control actually
+on the page would force the testers to rewrite their tests with each change, even though the functionality of the site
+is unchanged. HttpUnit focuses on the intent of the entry, and allows tests to be defined in terms of the values to
+be transmitted. It is aware of the controls being used and ensures that only values which a user could supply will be
+sent; however, the tester need only focus on the desired value for each test.</p>
+
+<hr>
+<p align="center">Copyright &copy; 2000-2002 Russell Gold. All rights Reserved.</p>
+</body></html>

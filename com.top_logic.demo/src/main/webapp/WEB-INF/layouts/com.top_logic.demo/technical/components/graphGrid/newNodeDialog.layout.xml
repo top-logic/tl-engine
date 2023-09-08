@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.467282a8-2769-49dc-a4d3-a0393debc952">
+				<en>New Node</en>
+				<de>Neuer Knoten</de>
+			</title>
+		</title>
+		<open-handler id="ID_786185e6_4f6e_4bd5_9b6c_8fb8077c230c"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="css:fas fa-plus"
+			targetComponent="com.top_logic.demo/technical/components/graphGrid/newNodeDialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.467282a8-2769-49dc-a4d3-a0393debc952">
+				<en>New Node</en>
+				<de>Neuer Knoten</de>
+			</resourceKey>
+			<executability>
+				<rule-by-expression show-disabled="true">
+					<decision>x -&gt; $x != null || #("Kein Parent-Knoten gewählt"@de, "No parent node selected"@en)</decision>
+				</rule-by-expression>
+			</executability>
+			<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+				input="selection(self())"
+			>
+				<function><![CDATA[model -> if ($model.size() <= 1, $model.singleElement(), null)]]></function>
+			</target>
+		</open-handler>
+		<typeOptions type="tl.demo.graph:A"/>
+		<create-handler id="ID_da6248c5_07f6_4899_954d_8defd9002ce4"
+			linkOperation="parent -> child -> $parent.add(`tl.demo.graph:N#others`, $child)"
+		>
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/graphGrid/treeViewOfGraphGrid.layout.xml#Grid)"/>
+			</postCreateActions>
+		</create-handler>
+	</arguments>
+</config:template-call>

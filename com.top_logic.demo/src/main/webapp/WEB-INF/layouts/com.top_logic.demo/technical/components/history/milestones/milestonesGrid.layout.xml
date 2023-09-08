@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name,dependsOn,openDependencies,date,status,completed"
+		detailComponent=""
+		isSecurityMaster="false"
+		model="selection(com.top_logic.demo/technical/components/history/projekteTable.layout.xml#Table)"
+		multiSelection="false"
+		showDetailOpener="false"
+		type="test.history:Milestone"
+	>
+		<name key="dynamic.115df59b-d2d0-4c9e-b826-797fceb3e61d">
+			<en>Milestones</en>
+			<de>Meilensteine</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->$model.get(`test.history:Project#milestones`)"
+			modelForElement="model->$model.referers(`test.history:Project#milestones`).singleElement()"
+			supportsElement="element->$element.instanceOf(`test.history:Milestone`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_f4890b73_f465_4280_937a_e52bfcf5d5aa"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+				clique="create"
+				confirm="false"
+				createContext="model->$model"
+				createType="test.history:Milestone"
+				disabledImage=""
+				group="Create"
+				image=""
+				initOperation="project -> milestone -> $project.add(`test.history:Project#milestones`, $milestone)"
+				typeChooser="false"
+			>
+				<checkScopeProvider/>
+				<resourceKey key="dynamic.c3a8e5d5-3ee6-4c40-aa45-e2c45f379677">
+					<en>New milestone</en>
+					<de>Neuer Meilenstein</de>
+				</resourceKey>
+			</button>
+			<button id="ID_3c9d531b_ab63_4c7f_a900_10e04494ae66"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+				clique="refresh"
+				concurrent="false"
+				confirm="false"
+				disabledImage=""
+				group="System"
+				image=""
+				read-only="false"
+			>
+				<resourceKey key="dynamic.511dcaf0-9b0e-4cdd-9401-0cc36f69263e">
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

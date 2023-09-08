@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminMonitorDB"
+	helpIDLegacy="util.monitor.db.layout.tabber"
+	titleKey="util.monitor.db.layout.tabber"
+>
+	<tabInfo label="util.monitor.db.layout.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/monitor/db/statementMonitor.xml"/>
+	</components>
+</securityLayout>

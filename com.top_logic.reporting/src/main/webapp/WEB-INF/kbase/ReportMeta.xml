@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+
+<metaobjects>
+	<metaobject object_type="MOKnowledgeObject" object_name="StoredReport" super_class="KnowledgeObject" >
+		<annotations>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+				<binding application-type="com.top_logic.reporting.report.wrap.StoredReport"/>
+			</annotation>
+		</annotations>
+<attributes>
+		<mo_attribute att_name="name"         att_type="String" mandatory="true"/>
+		<mo_attribute att_name="report"       att_type="String" db_size="100000" mandatory="true"/>
+		<mo_attribute att_name="bo_type"      att_type="String" mandatory="true"/>
+</attributes>
+	</metaobject>
+
+</metaobjects>
+</objectlist>

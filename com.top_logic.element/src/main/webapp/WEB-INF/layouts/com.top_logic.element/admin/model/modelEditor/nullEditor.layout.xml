@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="Layout"
+	horizontal="true"
+>
+	<tabInfo label="element.meta.NullEditorTab"/>
+
+	<components>
+		<editor name="Editor"
+			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
+			modelBuilder="com.top_logic.mig.html.NullModelBuilder"
+			resPrefix="element.meta.NullEditor."
+			securityProviderClass="securityRoot"
+		/>
+	</components>
+</layout>

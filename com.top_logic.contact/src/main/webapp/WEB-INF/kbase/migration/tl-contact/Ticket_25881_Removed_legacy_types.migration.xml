@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_25881_Removed_legacy_types"
+		module="tl-contact"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26117_security_object"
+			module="tl"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-reference name="Contacts:Contact.Person#account"
+			multiple="false"
+			type="tl.accounts:Person"
+		>
+			<annotations>
+				<storage-algorithm>
+					<singleton-link-storage
+						monomorphic-table="true"
+						table="representsUser"
+					/>
+				</storage-algorithm>
+				<delete-protected/>
+			</annotations>
+		</create-reference>
+
+		<change-reference-type
+			reference="Contacts:Contact.Person#company"
+			target="Contacts:Contact.Company"
+		/>
+		<change-reference-type
+			reference="Contacts:Contact.Person#boss"
+			target="Contacts:Contact.Person"
+		/>
+		<change-reference-type
+			reference="orgStructure:OrgUnit.base#member"
+			target="Contacts:Contact.Person"
+		/>
+		<change-reference-type
+			reference="orgStructure:OrgUnit.base#boss"
+			target="Contacts:Contact.Person"
+		/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

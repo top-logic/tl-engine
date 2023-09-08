@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_fbbee8cd_4740_4ac9_8d37_226f850a83a2"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.9e14a7d7-05a3-442f-83e9-283f68d2518c">
+			<en>Override</en>
+			<de>Überschreibung</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/test/attributeOverride/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Contact main configuration file
+	 TODO configure SAN 
+	 TODO configure locking
+-->
+
+<root>
+	<alias />		
+
+	<properties>
+
+        <section name="ModelService.enhancer" comment="Contains the mapping for filters an generators">
+           <entry name="com.top_logic.contact.filter.PersonContactFilter"                  value="tl5.structure.contacts:PersonContact"/>
+           <entry name="com.top_logic.contact.mandatoraware.filter.COSPersonContactFilter" value="tl5.structure.contacts:PersonContact"/>
+           <entry name="com.top_logic.contact.filter.CachedPersonContactGenerator" value="tl5.structure.contacts:PersonContact"/>
+           <entry name="com.top_logic.contact.mandatoraware.filter.COSCachedPersonContactGenerator" value="tl5.structure.contacts:PersonContact"/>
+
+           <entry name="com.top_logic.contact.filter.CompanyContactFilter"                  value="tl5.structure.contacts:CompanyContact"/>
+           <entry name="com.top_logic.contact.mandatoraware.filter.COSCompanyContactFilter" value="tl5.structure.contacts:CompanyContact"/>
+           <entry name="com.top_logic.contact.mandatoraware.filter.SupplierFilter"          value="tl5.structure.contacts:CompanyContact"/>
+           <entry name="com.top_logic.contact.mandatoraware.filter.ClientFilter"            value="tl5.structure.contacts:CompanyContact"/>
+           <entry name="com.top_logic.contact.mandatoraware.filter.COSCachedSupplierGenerator" value="tl5.structure.contacts:CompanyContact"/>
+           <entry name="com.top_logic.contact.mandatoraware.filter.COSCachedClientGenerator" value="tl5.structure.contacts:CompanyContact"/>
+           <entry name="com.top_logic.contact.mandatoraware.filter.COSCachedCompanyContactGenerator" value="tl5.structure.contacts:CompanyContact"/>
+        </section>
+        
+	</properties>
+</root>

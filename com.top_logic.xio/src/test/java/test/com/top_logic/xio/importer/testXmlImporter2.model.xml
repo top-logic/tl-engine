@@ -1,0 +1,49 @@
+<model>
+	<module name="test.com.top_logic.xio.importer.test2">
+		<class name="R">
+			<attributes>
+				<reference name="values" type="V" multiple="true" ordered="true" composite="true"/>
+			</attributes>
+		</class>
+		
+		<class name="V">
+			<attributes>
+				<property name="name" type="tl.core:String"/>
+				<reference name="as" type="A" multiple="true" />
+				<reference name="bs" type="B" multiple="true" />
+				<reference name="others" type="I" multiple="true" />
+			</attributes>
+		</class>
+	
+		<interface name="I">
+			<attributes>
+				<property name="name" type="tl.core:String"/>
+			</attributes>
+		</interface>
+			
+		<class name="A">
+			<generalizations>
+				<generalization type="I"/>
+			</generalizations>
+		</class>
+		
+		<class name="B">
+			<generalizations>
+				<generalization type="I"/>
+			</generalizations>
+			<attributes>
+				<property name="x" type="tl.core:Integer"/>
+			</attributes>
+		</class>
+		
+		<class name="C">
+			<generalizations>
+				<generalization type="I"/>
+			</generalizations>
+			<attributes>
+				<property name="y" type="tl.core:Integer"/>
+			</attributes>
+		</class>
+		
+	</module>
+</model>

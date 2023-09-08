@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+encoding/.classpath=UTF-8
+encoding/.factorypath=ISO-8859-1
+encoding//.settings/org.eclipse.jdt.apt.core.prefs=ISO-8859-1
+encoding//.settings/org.eclipse.jdt.core.prefs=ISO-8859-1
+encoding//.settings/org.eclipse.jdt.ui.prefs=ISO-8859-1
+encoding//bin/build.xml=ISO-8859-1
+encoding//deploy/local/webapp/WEB-INF/conf/metaConf.txt=ISO-8859-1
+encoding//src/main/java=ISO-8859-1
+encoding//src/test/java=ISO-8859-1
+encoding/<project>=ISO-8859-1

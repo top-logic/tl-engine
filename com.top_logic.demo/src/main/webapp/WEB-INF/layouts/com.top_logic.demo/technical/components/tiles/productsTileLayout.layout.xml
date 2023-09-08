@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tileList.template.xml"
+>
+	<arguments
+		helpID="ID_b5160ea3_07b3_46e4_b56c_a52f40a9ff47"
+		securityDomain="SecurityStructure"
+	>
+		<name key="dynamic.f093db8a-ab73-4168-a0b9-af031bb37168">
+			<en>Products</en>
+			<de>Produkte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.tiles:Product`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.tiles:Product`)"
+			supportsModel="true"
+		/>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
+			<label class="com.top_logic.model.search.tiles.DynamicTilePreviewText"
+				text="x -> $x.toString()"
+			/>
+			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText"
+				text="x -> $x.get(`test.tiles:Product#description`)"
+			/>
+			<content-preview class="com.top_logic.model.search.form.GalleryPreview"
+				gallery-attribute="image"
+				icon=""
+				type="test.tiles:Product"
+			/>
+		</preview>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/tiles/newProduct/dialog.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</dialogs>
+		<component class="com.top_logic.mig.html.layout.LayoutReference$LayoutReferenceComponent"
+			resource="com.top_logic.demo/technical/components/tiles/releasesTileLayout.layout.xml"
+		>
+			<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+				<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+					<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+				</contextMenuFactory>
+			</content-layouting>
+		</component>
+	</arguments>
+</config:template-call>

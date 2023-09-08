@@ -1,0 +1,31 @@
+com.top_logic.mail.MailStartStop.java: Missing documentation: com.top_logic.mail.MailStartStop
+com.top_logic.mail.base.MailFolder.java: Invalid camel case word 'WebFolder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.MailFolderAware.java: Invalid camel case word 'MailServer', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.MailFolderAware.java: Invalid camel case word 'PosMailServer', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.MailFolderAware.java: Invalid camel case word 'StackOverFlow', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.MailFolderAware.java: Invalid camel case word 'getMailFolder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.MailFolderAware.java: Invalid camel case word 'getMailFolderName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.MailFolderAware.java: Invalid camel case word 'theAware', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.MailPreprocessor.java: Missing documentation: com.top_logic.mail.base.MailPreprocessor
+com.top_logic.mail.base.MailServer.java: Invalid camel case word 'DispatchService', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.MailServer.java: Invalid camel case word 'hasMailBox', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.imap.IMAPMail.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.imap.IMAPMail.java: Invalid camel case word 'MailFolder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.imap.IMAPMail.java: Invalid camel case word 'WrapperFactory', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.imap.IMAPMail.java: Invalid camel case word 'getInstance', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.base.imap.IMAPMailFolder.java: Invalid camel case word 'messageIDs', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.layout.MailFolderListModelBuilder.java: Missing documentation: com.top_logic.mail.layout.MailFolderListModelBuilder.getMailFolder
+com.top_logic.mail.layout.SendDateAccessor.java: Missing documentation: com.top_logic.mail.layout.SendDateAccessor.SEND_DATE
+com.top_logic.mail.proxy.AbstractMailServerDaemon.java: Invalid camel case word 'AbstractMailServerDaemon', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.proxy.AbstractMailServerDaemon.java: Invalid camel case word 'ExchangeMeeting', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.proxy.AbstractMailServerDaemon.java: Invalid camel case word 'MailDaemonCountListener', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.proxy.AbstractMailServerDaemon.java: Invalid camel case word 'MailMessage', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.proxy.AbstractMailServerDaemon.java: Invalid camel case word 'MessageCountEvent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.proxy.AbstractMailServerDaemon.java: Invalid camel case word 'aFoldername', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.proxy.AbstractMailServerDaemon.java: Invalid camel case word 'processMail', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.proxy.AbstractMailServerDaemon.java: Invalid camel case word 'processMeeting', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.proxy.Attachements.java: Missing documentation: com.top_logic.mail.proxy.Attachements
+com.top_logic.mail.proxy.Attachements.java: Missing documentation: com.top_logic.mail.proxy.Attachements.Attachement.getSize
+com.top_logic.mail.proxy.MailMessage.java: Missing documentation: com.top_logic.mail.proxy.MailMessage
+com.top_logic.mail.proxy.MailServerMessage.java: Invalid camel case word 'MessageChangedListener', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.mail.proxy.MailServerMessage.java: Missing documentation: com.top_logic.mail.proxy.MailServerMessage

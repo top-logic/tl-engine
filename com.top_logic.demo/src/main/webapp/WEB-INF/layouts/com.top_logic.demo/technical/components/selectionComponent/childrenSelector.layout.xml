@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/selectionComponent/contextSelector.layout.xml#Selector)">
+		<titleKey key="dynamic.f95ec3ac-7153-46f8-a17c-23bfd212dd36">
+			<en>Children</en>
+			<de>Kinder</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model -> $model.get(`DemoTypes:A#children`)"
+			modelForElement="x -> model -> $model.containsElement($x.container()) ? $model : $x.container().singleton()"
+		/>
+		<defaultSelectionProvider class="com.top_logic.model.search.providers.ListSelectionProviderByExpression">
+			<function><![CDATA[options -> model -> lastSelection -> {
+    name = $lastSelection.get(`DemoTypes:DemoTypes.All#name`);
+    
+    // Select option with same name as previously selected.
+    $options.filter(x -> $x.get(`DemoTypes:DemoTypes.All#name`) == $name)
+        .firstElement() || $options.firstElement()
+}]]></function>
+		</defaultSelectionProvider>
+	</arguments>
+</config:template-call>

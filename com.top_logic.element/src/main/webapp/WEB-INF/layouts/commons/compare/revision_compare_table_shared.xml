@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="model"/>
+		<param name="resPrefix"
+			value="layouts.element.table.RevisionCompareTreeTable."
+		/>
+		<param name="objectTypes"
+			value=""
+		/>
+		<param name="tableConfigurationProvider"
+			value=""
+		/>
+	</params>
+	<securityLayout name="${namePrefix}RevisionCompareTreeTableLayout"
+		horizontal="false"
+		titleKey="${resPrefix}tabber"
+	>
+		<components>
+			<component class="com.top_logic.element.layout.table.tree.compare.AdapterRevisionCompareComponent"
+				model="${model}"
+				name="${namePrefix}RevisionCompareTreeAdapter"
+				objectTypes="${objectTypes}"
+				tableConfigurationProvider="${tableConfigurationProvider}"
+			/>
+			<component class="com.top_logic.layout.table.tree.compare.CompareTreeTableComponent"
+				isSecurityMaster="true"
+				model="selection(${namePrefix}RevisionCompareTreeAdapter)"
+				name="${namePrefix}RevisionCompareTree"
+				resPrefix="${resPrefix}"
+				securityProviderClass="modelOrSecRoot"
+			/>
+		</components>
+	</securityLayout>
+</template>

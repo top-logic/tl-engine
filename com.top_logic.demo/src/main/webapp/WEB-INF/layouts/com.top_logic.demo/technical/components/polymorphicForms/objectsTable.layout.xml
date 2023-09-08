@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,propA,propAB,propADefault"
+		defaultSelection="true"
+		fixedColumns="0"
+		isSecurityMaster="false"
+		partnerGroup=""
+		type="test.polymorphism:A"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicForms/newObject/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.3c878fbc-6d8b-4b3c-9c65-da0f92e7ff03">
+			<en>Objects</en>
+			<de>Objekte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.polymorphism:A`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.polymorphism:A`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_0b405059_1d29_408f_a0c2_c76834419f70"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				confirm="true"
+				disabledImage=""
+				group="Delete"
+				image=""
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.d46a8b1a-3a5b-49f6-adff-7b118f6b1bb8">
+					<en>Delete object</en>
+					<de>Objekt löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

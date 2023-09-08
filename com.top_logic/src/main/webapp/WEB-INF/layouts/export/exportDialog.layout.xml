@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="ProgressExportDialog"
+	titleKey="tool.export.progress.dialog.tabber"
+>
+	<dialogInfo
+		closableUsingX="false"
+		createOpenerButtons="false"
+		executability="Always"
+		height="170"
+		openerCommandGroup="Read"
+		resizable="true"
+		width="410"
+	/>
+
+	<components>
+		<component class="com.top_logic.tool.export.progress.ExportProgressComponent"
+			closeHandlerName="cancelProgress"
+			name="ProgressExportView"
+			page="/jsp/layout/misc/refreshProgress.jsp"
+			resPrefix="tool.export.progress."
+		/>
+
+		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+	</components>
+</layout>

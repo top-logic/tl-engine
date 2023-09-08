@@ -1,0 +1,438 @@
+<div class="root">
+{% import "common-template.html" as common %}
+
+<div class="javadoc">
+{% include "search-template.html" %}
+
+<div class="header">
+<a href="#package-list"><img alt="TopLogic" src="toplogic.svg" height="50px"/></a>
+Documentation
+</div>
+
+{% macro printDoc(method) %}
+  	<p>{{ method.title | doc(name) }}</p>
+  	{{ method.doc | doc(name) }}
+{% endmacro%}
+
+{% macro srcDisplay(element) %}
+	<a class="link" title="Link to this member." href="#{{ name }}#{{ element.id }}"><i class="fas fa-link"></i></a>
+	{% if settings.showSrcLink and pkgInfo.srcLink %}
+	<a class="link" title="Link to the source code." href="{{ name | srcUrl(settings, pkgInfo, element.line) }}" target="_blank"><i class="fas fa-code-branch"></i></a>
+	{% endif %}
+{% endmacro %}
+
+{% macro printAnnotations(method) -%}
+	{% for annotation in method.annotations | annotationFilter %}
+		<div class="annotation">
+			{{ printAnnotation(annotation) }}
+		</div>
+ 	{% endfor %}
+{% endmacro %}
+
+{% macro printAnnotation(annotation) -%}
+	{{ printType(annotation, name) }}
+	{%- if annotation.params.length > 0 -%}
+	(
+		{%- for param in annotation.params -%}
+			{%- if param.name != "value" -%}
+				{{param.name}}=
+			{%- endif -%}				
+			{{ printValue(param.value) }}
+			{%- if not loop.last %}, {% endif -%}
+		{%- endfor -%}
+	)
+	{%- endif -%}				
+{%- endmacro %}
+
+{% macro printValue(value) -%}
+	{%- if value.kind == "string" -%}
+		"{{ value.label}}"
+	{%- elseif value.kind == "enum" -%}
+		{{ value | enumValueRef(name) }}
+	{%- elseif value.kind == "type" -%}
+		{{ printType(value.type, name) }}
+	{%- elseif value.kind == "annotation" -%}
+		{{ printAnnotation(value) }}
+	{%- elseif value.kind == "array" -%}
+		{%- if value.values.length == 1 -%}
+			{{ printValue(value.values[0]) }}
+		{%- else -%}
+			[
+			{%- for elem in value.values -%}
+				{{ printValue(elem) }}
+				{%- if not loop.last %}, {% endif -%}
+			{%- endfor -%}
+			]
+		{%- endif -%}
+	{%- else -%}
+		{{ value.label }}
+	{%- endif -%}
+{% endmacro %}
+
+{% macro methodDisplay(method) %}
+	{% if method.abstract == "true" -%}
+		<code class="modifier">abstract </code> 
+	{%- endif -%}
+		
+	<code class="method-name">{{ method | methodName }}</code>
+	{%- if kind != "annotation" -%}
+		<code>({% for param in method.params %}{% if not loop.first %}, {% endif %}{{ printType(param.type, name) }} <span class="param" title="{{ param.title | docPlain }}">{{ param.name }}</span>{% endfor %})</code>
+	{%- endif -%}
+	
+	{%- if method.return and (method.return.type.id != "void") -%}
+		<code>: </code><code class="return>" title="{{ method.return.title | docPlain }}">{{ printType(method.return.type, name) }}</code> 
+	{%- endif %}
+  
+	{{ srcDisplay(method) }}
+{% endmacro %}
+
+{% macro printType(type, current) -%}
+	{%- if type.kind == "primitive" or type.kind == "typevar" or type.kind == "wildcard" -%}
+		{{ type.id }}
+	{%- else -%}
+		{%- if type | outerType and (type | outerType).id != current -%}
+			{{ printType(type | outerType, current) }}.
+		{%- endif -%}
+		{{ common.printTypeRef(type, current) }}
+	{%- endif -%}
+	
+	{%- if type.args.length > 0 -%}
+		&lt;
+		{%- for arg in type.args -%}
+			{{ printType(arg, current) }}
+			{%- if not loop.last %},{% endif -%}
+		{%- endfor -%}
+		&gt;
+	{%- endif -%}
+	
+	{%- if type.extendsBounds.length > 0 %}
+		extends
+		{% for bound in type.extendsBounds -%}
+			{{ printType(bound, current) }}
+			{%- if not loop.last %}, {% endif -%}
+		{%- endfor %}
+	{%- endif -%}
+	
+	{%- if type.superBounds.length > 0 %}
+		super
+		{% for bound in type.superBounds %}
+			{{ printType(bound, current) }}
+			{%- if not loop.last %},{% endif -%}
+		{%- endfor -%}
+	{%- endif -%}
+	
+	{{ printArray(type.dim) }}
+{%- endmacro %}
+
+{% macro printArray(dim) -%}
+	{%- if dim > 0 -%}
+		[]
+	{%- endif -%}
+{%- endmacro %}
+
+{% macro printMethod(method) %}
+  <dt id="{{ method.id }}">
+	{{ methodDisplay(method) }}
+  </dt>
+  <dd>
+	{{ printAnnotations(method) }}
+	
+	{% if method.defaultValue %}
+		<div class="annotation">
+			Default value: {{ printValue(method.defaultValue.value) }}
+		</div>
+	{% endif %}
+	
+	{{ printDoc(method) }}
+	
+  	{% if (method.params | withDoc).length > 0 %}
+  	<div class="parameters">
+  		<b>Parameters</b>
+  	<table>
+	  	{% for param in method.params | withDoc %}
+	  	<tr>
+	  	<td><code>{{ param.name }}</code></td>
+	  	<td> - </td>
+	  	<td class="doc">
+		  	{{ param.title | doc(name) }}
+		  	{{ param.doc | doc(name) }}
+	  	</td>
+	  	</tr>
+	  	{% endfor %}
+  	</table>
+  	</div>
+  	{% endif %}
+  	
+	{% if method.return.doc %}
+	<p>
+	<b>Returns</b>: {{ method.return.title | doc(name) }} {{ method.return.doc | doc(name) }}
+	</p>  	
+  	{% endif %}
+
+	{{ common.printSees(method.sees, name) }}
+  </dd>
+{% endmacro%}
+
+<div class="package">
+Package <code>{{ name | packageName | packageRef }}</code>
+</div>
+
+<h1>
+{% if abstract %}
+Abstract
+{% endif %}
+
+{{kind | capitalize }} <code>{{ name | typeName }}</code>
+
+{%- if args.length > 0 -%}
+<code>&lt;</code>
+	{%- for arg in args -%}
+		<code>{{ printType(arg, name) }}</code>	
+		{%- if not loop.last %}, {% endif -%}
+	{%- endfor -%}
+<code>&gt;</code>
+{%- endif %}
+
+{% if name | containingTypeName %}
+	(<code>{{ name | containingTypeName | typeNameRef }}</code>)
+{% endif %}
+
+<a class="link" title="Link to this type." href="#{{name}}"><i class="fas fa-link"></i></a>
+{% if settings.showSrcLink and  pkgInfo.srcLink %}
+<a class="link" title="Link to the source code." href="{{ name | srcUrl(settings, pkgInfo, line) }}" target="_blank"><i class="fas fa-code-branch"></i></a>
+{% endif %}
+</h1>
+
+<div class="section">
+
+{% for annotation in annotations %}
+	<div class="annotation">
+		{{ printAnnotation(annotation) }}
+	</div>
+{% endfor %}
+
+<p class="title">{{ title | doc(name) }}</p>
+{{ doc | doc(name) }}
+
+{% if extends and (kind != "enum") %}
+<p class="extends">
+Extends <code>{{ printType(extends, name) }}</code>
+</p>
+{% endif %}
+
+{% if implements and (kind != "annotation") %}
+<p class="implements">
+	Implements {% for type in implements %}<code>{{ printType(type, name) }}</code>{% if not loop.last %}, {% endif %}{% endfor %}.
+</p>
+{% endif %}
+
+{% if constructors | getConfigInterface %}
+<p class="configuration">
+	Configuration options: <code>{{ printType(constructors | getConfigInterface(name), name) }}</code>
+</p>
+{% endif %}
+
+{% if xref.specializations.length > 0 %}
+<p class="specializations">
+Direct specializations:
+{% for usage in xref.specializations %}
+
+{% if loop.index == 6 %}
+<span class="further-reading collapsed">
+<span class="when-expanded">
+{% endif %}
+<code>{{ printType({id: usage}, name) }}</code>{% if not loop.last %}, {% endif %}
+
+{% if loop.last and loop.length >= 6 %}
+</span>
+<button onclick="$(this.parentNode).toggleClass('expanded collapsed');">
+<i class="when-collapsed fas fa-ellipsis-h"></i>
+<i class="when-expanded fas fa-angle-up"></i>
+</button>
+</span>
+{% endif %}
+{% endfor %}
+</p>
+{% endif %}
+
+{{ common.printSees(sees, name) }}
+</div>
+
+{% if kind != "config" %}
+{% if (fields | onlyStatic).length > 0 %}
+<h2>Constants</h2>
+
+<div class="section">
+<dl>
+{% for field in fields | onlyStatic %}
+  <dt id="{{ field.id }}">
+  	{% if (kind != "enum") -%}
+  	<code class="field-type">{{ printType(field.type, name) }} </code>
+  	{%- endif -%}
+	
+	<code class="field-name">{{ field.id }}</code>
+	
+	{%- if field.value -%}
+		<code> = </code><code class="field-value">{{ field.value }}</code>
+	{%- endif %}
+
+	{{ srcDisplay(field) }}
+  </dt>
+  <dd>
+	{{ printDoc(field) }}
+  </dd>
+{% endfor %}
+</dl>
+</div>
+{% endif %}
+{% endif %}
+
+{% if (fields | nonStatic).length > 0 %}
+<h2>Fields</h2>
+<div class="section">
+<dl>
+{% for field in fields | nonStatic %}
+  <dt id="{{ field.id }}">
+  	<code>{{ printType(field.type, name) }} </code><code class="field-name">{{ field.id }}</code>
+  
+  	{{ srcDisplay(field) }}
+  </dt>
+  <dd>
+	{{ printDoc(field) }}
+  </dd>
+{% endfor %}
+</dl>
+</div>
+{% endif %}
+
+{% if (methods | onlyStatic | withType(name) | onlyPublic).length > 0 %}
+<h2>Factory Methods</h2>
+<div class="section">
+<dl>
+	{% for method in methods | onlyStatic | withType(name) | onlyPublic | sortMethods %}
+		{{ printMethod(method) }}
+	{% endfor %}
+</dl>
+</div>
+{% endif %}
+
+{% if constructors %}
+<h2>Constructors</h2>
+<div class="section">
+<dl>
+{% for method in constructors %}
+  <dt id="{{ method.id }}">
+	{{ methodDisplay(method) }}
+  </dt>
+  <dd>
+  	<p>{{ method.title | doc(name) }}</p>
+  	
+  	{{ method.doc | doc(name) }}
+  </dd>
+{% endfor %}
+</dl>
+</div>
+{% endif %}
+
+{% if kind == "config" %}
+	{% if (allMethods | nonOverrides  | nonStatic | onlyPublic | nonDefaults | nonSetters).length > 0 %}
+	<h2>Configuration Options</h2>
+	<div class="section">
+	<dl>
+		{% for method in allMethods | nonOverrides |nonStatic | onlyPublic | nonDefaults | nonSetters %}
+			<dt id="{{ method.id }}">
+				<code class="option-name">{{ method | configName }}: </code><code class="return">{{ printType(method.return.type, name) }}</code>
+				{{ srcDisplay(method) }}
+			</dt>
+			<dd>
+				{{ printAnnotations(method) }}
+				
+				{{ printDoc(method) }}
+				
+				{% if method.return.doc %}
+					{{ method.return.title | doc(name) }} {{ method.return.doc | doc(name) }}
+			  	{% endif %}
+			
+				{{ common.printSees(method.sees, name) }}
+			</dd>
+		{% endfor %}
+	</dl>
+	</div>
+	{% endif %}
+{% else %}
+	{% if (methods | nonOverrides  | nonStatic | onlyPublic | nonDefaults).length > 0 %}
+	{% if kind == "annotation" %}
+	<h2>Arguments</h2>
+	{% else %}
+	<h2>Methods</h2>
+	{% endif %}
+	<div class="section">
+	<dl>
+		{% for method in methods | nonOverrides | nonStatic | onlyPublic | nonDefaults | sortMethods %}
+			{{ printMethod(method) }}
+		{% endfor %}
+	</dl>
+	</div>
+	{% endif %}
+{% endif %}
+
+{% if (methods | nonOverrides | nonStatic | onlyPublic | onlyDefaults).length > 0 %}
+<h2>Default Methods</h2>
+<div class="section">
+<dl>
+	{% for method in methods | nonOverrides | nonStatic | onlyPublic | onlyDefaults | sortMethods %}
+		{{ printMethod(method) }}
+	{% endfor %}
+</dl>
+</div>
+{% endif %}
+
+{% if (methods | onlyStatic | withoutType(name) | onlyPublic).length > 0 %}
+<h2>Static Methods</h2>
+<div class="section">
+<dl>
+	{% for method in methods | onlyStatic | withoutType(name) | onlyPublic | sortMethods %}
+		{{ printMethod(method) }}
+	{% endfor %}
+</dl>
+</div>
+{% endif %}
+
+{% if (methods | nonOverrides | nonStatic | nonPublic).length > 0 %}
+<h2>Protected Methods</h2>
+<div class="section">
+<dl>
+	{% for method in methods | nonOverrides | nonStatic | nonPublic | sortMethods %}
+		{{ printMethod(method) }}
+	{% endfor %}
+</dl>
+</div>
+{% endif %}
+
+{% if (methods | onlyStatic | nonPublic).length > 0 %}
+<h2>Protected Static Methods</h2>
+<div class="section">
+<dl>
+	{% for method in methods | onlyStatic | nonPublic | sortMethods %}
+		{{ printMethod(method) }}
+	{% endfor %}
+</dl>
+</div>
+{% endif %}
+
+{% if contents %}
+<h2>Inner types</h2>
+<div class="section">
+<ul>
+{% for type in contents %}
+  <li><code>{{ printType(type, name) }}</code></li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+</div>
+
+<div class="footer">
+TopLogic API and implementations © Copyright by Business Operation Systems GmbH
+</div>
+</div>

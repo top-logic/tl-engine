@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model 
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="foo">
+			<annotations>
+				<annotation config:interface="com.top_logic.model.config.JavaPackage"
+					interface-package="test.foo"
+					implementation-package="test.foo.impl"
+				/>
+				<singletons>
+					<singleton name="A1" type="A"/>
+					<singleton name="A2" type="A"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="A">
+					<attributes>
+						<property name="name" type="tl.core:String" mandatory="true" />
+					</attributes>
+				</interface>
+			</types>
+		</module>
+		<module name="bar">
+			<annotations>
+				<annotation config:interface="com.top_logic.model.config.JavaPackage"
+					interface-package="test.bar"
+					implementation-package="test.bar.impl"
+				/>
+			</annotations>
+			<types>
+				<interface name="B">
+					<generalizations>
+						<generalization type="foo:A"/>
+					</generalizations>
+					<attributes>
+						<property name="value" type="tl.core:Integer" mandatory="true" />
+						<reference name="others" type="B" multiple="true"/>
+					</attributes>
+				</interface>
+				<class name="X">
+					<generalizations>
+						<generalization type="B"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

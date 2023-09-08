@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<list name="tl.systemList" type="Checklist" multiselect="false" system="true">
+	<elements>
+		<element name="tl.systemList.1" />
+		<element name="tl.systemList.2" />
+		<element name="tl.systemList.3" />
+	</elements>
+</list>

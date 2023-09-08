@@ -1,0 +1,15 @@
+com.top_logic.kafka.interceptor.TopicSensorAndViewerInterceptor.java: Invalid camel case word 'TopicSensorAndViewerInterceptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.kafka.knowledge.service.AbstractModelBasedKafkaConfiguration.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.kafka.knowledge.service.AbstractModelBasedKafkaConfiguration
+com.top_logic.kafka.knowledge.service.KafkaExportImportConfiguration.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.kafka.knowledge.service.KafkaExportImportConfiguration.Config
+com.top_logic.kafka.knowledge.service.exporter.ModelBasedExportConfiguration.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.kafka.knowledge.service.exporter.ModelBasedExportConfiguration
+com.top_logic.kafka.knowledge.service.importer.KafkaImportConfiguration.java: Invalid camel case word 'tType', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.kafka.layout.kafka.KafkaMessageDetailColumnRenderer.java: Missing documentation: com.top_logic.kafka.layout.kafka.KafkaMessageDetailColumnRenderer.LongValueFactory
+com.top_logic.kafka.serialization.StructBinaryDeserializer.java: Missing documentation: com.top_logic.kafka.serialization.StructBinaryDeserializer.getSchema
+com.top_logic.kafka.serialization.StructBinaryDeserializer.java: Missing documentation: com.top_logic.kafka.serialization.StructBinaryDeserializer.isSet
+com.top_logic.kafka.services.common.CommonClientConfig.java: Invalid camel case word 'TypedConfiguration', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.kafka.services.consumer.KafkaConsumerService.java: Missing documentation: com.top_logic.kafka.services.consumer.KafkaConsumerService.getConsumer
+com.top_logic.kafka.services.producer.KafkaProducerService.java: Missing documentation: com.top_logic.kafka.services.producer.KafkaProducerService.getProducer
+com.top_logic.kafka.services.producer.StringTLKafkaProducer.java: Missing documentation: com.top_logic.kafka.services.producer.StringTLKafkaProducer.newProducerRecord
+com.top_logic.kafka.services.sensors.DummySensorBuilder.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.kafka.services.sensors.DummySensorBuilder.Config
+com.top_logic.kafka.services.sensors.SensorService.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.kafka.services.sensors.SensorService.Config
+com.top_logic.kafka.services.sensors.SensorService.java: Missing documentation: com.top_logic.kafka.services.sensors.SensorService.getSensor

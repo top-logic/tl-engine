@@ -1,0 +1,139 @@
+/**
+ * JavaCC Grammar File
+ */
+options
+{
+    JDK_VERSION = "1.7";
+    STATIC = false;
+    UNICODE_INPUT = true;
+    JAVA_UNICODE_ESCAPE = false;
+}
+
+PARSER_BEGIN(ExpressionParser)
+/*
+ * SPDX-FileCopyrightText: 2015 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.element.meta.expr.parser;
+
+import java.util.*;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.element.meta.expr.internal.OperationFactory;
+import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
+
+/**
+ * Parser for an {@link AttributeValueLocator} expression syntax.
+ *
+ * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ */
+public class ExpressionParser {
+  private OperationFactory _f;
+
+  public void setOperationFactory(OperationFactory f) {
+	_f = f;
+  }
+}
+PARSER_END(ExpressionParser)
+
+SKIP :
+{
+    " "
+|   "\r"
+|   "\t"
+|   "\n"
+}
+
+TOKEN :
+{
+  < NAME : [ "A"-"Z", "a"-"z", "_" ] ([ "A"-"Z", "a"-"z", "_", "0"-"9"] | ( "." [ "A"-"Z", "a"-"z", "_", "0"-"9"] ) )* >
+| < STRING : "'" (~[ "'", "\\" ] | < QUOTE > )* "'" | "\"" (~[ "\"", "\\" ] | < QUOTE > )* "\"" >
+| < #QUOTE : "\\\\" | "\\'" | "\\\"" >
+| < NUM : "0" | ( [ "1"-"9" ] ([ "0"-"9" ])* ) >
+}
+
+PolymorphicConfiguration<? extends AttributeValueLocator> expr() :
+{
+  List<PolymorphicConfiguration<? extends AttributeValueLocator>> l = new ArrayList<PolymorphicConfiguration<? extends AttributeValueLocator>>();
+}
+{
+  step(l)
+  (
+    "/"
+    step(l)
+  )*
+  {
+    if (l.size() == 1) {
+      return l.get(0);
+    } else {
+      return _f.chain(l);
+    }
+  }
+}
+
+
+void step(List<PolymorphicConfiguration<? extends AttributeValueLocator>> r) :
+{
+  Token m, t, a, n, s = null;
+}
+{
+  "-" m=< NAME > ":" t=< NAME > "#" a=< NAME >
+  {
+    r.add(_f.backwards(m.image, t.image, a.image));
+  }
+| "(" m=< NAME > ":" t=< NAME > ")"
+  {
+    r.add(_f.typeOf(m.image, t.image));
+  }
+| ">" a=< NAME >
+  {
+    r.add(_f.associationDestinations(a.image));
+  }
+| "<" a=< NAME >
+  {
+    r.add(_f.associationSources(a.image));
+  }
+| "@" n=< NAME >
+  {
+    r.add(_f.data(n.image));
+  }
+| n=< NAME >
+  (
+    "(" (s=< STRING >)? ")"
+    {
+      r.add(_f.locator(n.image, s == null ? null : s.image));
+    }
+  | valueStep(r, n)
+  )
+}
+
+void valueStep(List<PolymorphicConfiguration<? extends AttributeValueLocator>> r, Token n) :
+{
+  Token x, t, a;
+}
+{
+  (
+    "#" t=< NAME >
+    (
+      "(" ")"
+      {
+        r.add(_f.method(n.image, t.image));
+      }
+    )
+  | ":" t=< NAME > "#" a=< NAME >
+    {
+      r.add(_f.typeOf(n.image, t.image));
+      r.add(_f.value(a.image));
+    }
+  | 
+    {
+      r.add(_f.value(n.image));
+    }
+  )
+  (
+    "[" x=< NUM > "]"
+    {
+      r.add(_f.index(Integer.parseInt(x.image)));
+    }
+  )?
+}

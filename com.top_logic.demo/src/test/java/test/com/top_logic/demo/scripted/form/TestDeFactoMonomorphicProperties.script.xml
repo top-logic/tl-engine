@@ -1,0 +1,597 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#1 > Formulare"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="X"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="dummyEditWithoutModel"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="X"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="42"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Y"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="y"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Optional A"/>
+					<named-member name="outerContainer"/>
+					<labeled-member label="Anlegen"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Optional A"/>
+					<named-member name="outerContainer"/>
+					<named-member name="contentContainer"/>
+					<named-member name="content"/>
+					<labeled-member label="X"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="42"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Optional A"/>
+					<named-member name="outerContainer"/>
+					<named-member name="contentContainer"/>
+					<named-member name="content"/>
+					<labeled-member label="Y"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="y"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="List of As"/>
+					<named-member name="add"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="List of As"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="0"
+						/>
+					</object>
+					<labeled-member label="B"/>
+					<labeled-member label="X"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="42"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="List of As"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="0"
+						/>
+					</object>
+					<labeled-member label="B"/>
+					<labeled-member label="Y"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="y"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="List of As"/>
+					<named-member name="add"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="List of As"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="1"
+						/>
+					</object>
+					<labeled-member label="B"/>
+					<labeled-member label="X"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="43"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="List of As"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="1"
+						/>
+					</object>
+					<labeled-member label="B"/>
+					<labeled-member label="Y"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="z"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Mandatory Instance"/>
+					<named-member name="outerContainer"/>
+					<labeled-member label="Anlegen"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Message"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="AAA"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Optional Instance"/>
+					<named-member name="outerContainer"/>
+					<labeled-member label="Anlegen"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Message"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="AAA"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Instances"/>
+					<named-member name="add"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Message"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="AAA"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Instances"/>
+					<named-member name="add"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Message"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="BBB"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+					/>
+					<path>
+						<labeled-member label="Instances"/>
+						<named-member name="content"/>
+						<object>
+							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="0"
+							/>
+						</object>
+						<labeled-member label="Impl"/>
+						<labeled-member label="Message"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="AAA"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+					/>
+					<path>
+						<labeled-member label="Instances"/>
+						<named-member name="content"/>
+						<object>
+							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="1"
+							/>
+						</object>
+						<labeled-member label="Impl"/>
+						<labeled-member label="Message"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="BBB"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Anlegen"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Mandatory Instance Config"/>
+					<named-member name="outerContainer"/>
+					<named-member name="contentContainer"/>
+					<named-member name="content"/>
+					<labeled-member label="Message"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="AAA"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Optional Instance Config"/>
+					<named-member name="outerContainer"/>
+					<named-member name="contentContainer"/>
+					<named-member name="content"/>
+					<labeled-member label="Message"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="AAA"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Instance Configs"/>
+					<named-member name="add"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Instance Configs"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="0"
+						/>
+					</object>
+					<labeled-member label="Impl"/>
+					<labeled-member label="Message"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="AAA"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Instance Configs"/>
+					<named-member name="add"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test de-facto monomorphic properties"
+				/>
+				<path>
+					<labeled-member label="Instance Configs"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="1"
+						/>
+					</object>
+					<labeled-member label="Impl"/>
+					<labeled-member label="Message"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="BBB"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+			command-label="Abbrechen"
+			command-name="nothing"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml#TestDeFactoMonomorphicProperties"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

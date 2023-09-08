@@ -1,0 +1,10 @@
+
+<p>
+The three Windows you can see here are in a special Container, a <i>CockpitLayout</i>.
+</p>
+<p>
+In a <i>CockpitLayout</i> you can display any kind of <i>LayoutComponent</i>s but for 
+windows you can do some aditional things. A <i>WindowLayout</i> can be marked as maximiseable.
+If so a aditional icon is rendered in the windowbar allowing to size up the window to the size 
+of the <i>CockpitLayout</i>.
+</p>

@@ -1,0 +1,139 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<version>7.6.0-SNAPSHOT</version>
+		<artifactId>tl-parent-all</artifactId>
+		
+		<relativePath>../tl-parent-all</relativePath>
+	</parent>
+	
+	<artifactId>tl-parent-build</artifactId>
+	
+	<description>Parent module for the TopLogic build tools.</description>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<packaging>pom</packaging>
+
+	<properties>
+		<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+		
+		<!-- By default, generate JavaDoc only to a project-local location. -->
+		<javadocOutput>${project.build.directory}/tl-doc</javadocOutput>
+		
+		<tl.javadoc.skipTranslate>false</tl.javadoc.skipTranslate>
+		<tl.javadoc.targetLanguages>de</tl.javadoc.targetLanguages>
+		<tl.javadoc.glossaries></tl.javadoc.glossaries>
+	</properties>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+            </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<executions>
+					<execution>
+		            	<goals>
+							<goal>javadoc</goal>
+		            	</goals>
+		            	<phase>prepare-package</phase>
+						<configuration>
+							<doclet>com.top_logic.build.doclet.TLDoclet</doclet>
+						    <docletArtifact>
+								  <groupId>com.top-logic</groupId>
+								  <artifactId>tl-build-doclet</artifactId>
+								  <classifier>jar-with-dependencies</classifier>
+								  <version>${tl.version}</version>
+							</docletArtifact>
+							<useStandardDocletOptions>false</useStandardDocletOptions>
+							<additionalOptions>
+								<additionalOption>-d</additionalOption>
+								<additionalOption>${javadocOutput}</additionalOption>
+								<additionalOption>-Xmaxerrs</additionalOption>
+								<additionalOption>100000</additionalOption>
+								<additionalOption>-Xmaxwarns</additionalOption>
+								<additionalOption>100000</additionalOption>
+								<additionalOption>-targetMessages</additionalOption>
+								<additionalOption>${basedir}/src/main/java/META-INF/messages_en.properties</additionalOption>
+								<additionalOption>-acronyms</additionalOption>
+								<additionalOption>acronyms.properties</additionalOption>
+ 								<additionalOption>-knownBugs</additionalOption>
+								<additionalOption>${basedir}/ext/javadoc/javadoc-ignores</additionalOption>
+								<additionalOption>-createBaseline</additionalOption>
+								<additionalOption>false</additionalOption>
+							</additionalOptions> 
+							<protected>true</protected>
+							<failOnError>false</failOnError>
+						</configuration>
+					</execution>
+				</executions>
+				
+				<dependencies>
+					<dependency>
+						<groupId>com.top-logic</groupId>
+						<artifactId>tl-build-doclet</artifactId>
+						<classifier>jar-with-dependencies</classifier>
+						<version>${tl.version}</version>
+					</dependency>
+				</dependencies>            
+			</plugin>
+
+			<plugin>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-maven-plugin</artifactId>
+				<version>${tl.version}</version>
+				<executions>
+					<execution>
+						<id>translate-system-messages</id>
+						
+						<goals>
+							<goal>translate</goal>
+						</goals>
+						<phase>prepare-package</phase>
+						
+						<configuration>
+							<skip>${tl.javadoc.skipTranslate}</skip>
+							<sourcePath>src/main/java/META-INF/messages_en.properties</sourcePath>
+							<referencePath>src/main/java/META-INF/messages_en.properties~</referencePath>
+							<targetLanguages>${tl.javadoc.targetLanguages}</targetLanguages>
+							<glossaries>${tl.javadoc.glossaries}</glossaries>
+						</configuration>
+					</execution>
+					
+					<execution>
+						<id>check-web-resources</id>
+						
+						<goals>
+							<goal>check-resources</goal>
+						</goals>
+						<phase>prepare-package</phase>
+					</execution>
+					<execution>
+						<id>check-system-resources</id>
+						
+						<goals>
+							<goal>check-resources</goal>
+						</goals>
+						<phase>prepare-package</phase>
+						
+						<configuration>
+							<resourcePath>src/main/java/META-INF</resourcePath>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.pdfExport">
+		<class name="A">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.pdfExport:A#name"
+							type="tl.core:String"
+						/>
+						<other-attributes/>
+					</form>
+				</form-definition>
+				<export-definition>
+					<export-form>
+						<macro>
+							<expr><![CDATA[<h3 style="text-align: center;">Export vom {now()}!</h3>]]></expr>
+						</macro>
+						<field
+							attribute="name"
+							fullQualifiedName="test.pdfExport:A#name"
+							type="tl.core:String"
+						/>
+						<other-attributes/>
+					</export-form>
+				</export-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+		<class name="B">
+			<generalizations>
+				<generalization type="A"/>
+			</generalizations>
+			<annotations>
+				<export-definition>
+					<export-form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.pdfExport:A#name"
+							type="tl.core:String"
+						/>
+						<foreign-objects
+							items="x -> $x.get(`test.pdfExport:B#referenceToA`)"
+							type="DemoTypes:DemoTypes.All"
+						>
+							<label>#("Referenced A"@en, "Referenziertes A"@de)</label>
+						</foreign-objects>
+					</export-form>
+				</export-definition>
+			</annotations>
+			<attributes>
+				<reference name="referenceToA"
+					kind="forwards"
+					navigate="true"
+					type="DemoTypes:DemoTypes.A"
+				/>
+			</attributes>
+		</class>
+		<class name="C">
+			<generalizations>
+				<generalization type="A"/>
+			</generalizations>
+			<attributes>
+				<property name="intValue"
+					type="tl.core:Integer"
+				/>
+			</attributes>
+		</class>
+		<class name="D">
+			<generalizations>
+				<generalization type="A"/>
+			</generalizations>
+			<attributes>
+				<property name="date"
+					type="tl.core:Date"
+				/>
+			</attributes>
+		</class>
+		<class name="P">
+			<generalizations>
+				<generalization type="A"/>
+			</generalizations>
+			<attributes>
+				<property name="password"
+					type="tl.core:Password"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

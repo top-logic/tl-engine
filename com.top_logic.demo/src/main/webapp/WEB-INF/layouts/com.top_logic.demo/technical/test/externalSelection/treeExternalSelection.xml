@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<layout name="treeGridDExternalSelectionDemo"
+		horizontal="true"
+	>
+		<components>
+			<treeView name="ExternalSelectionTree2"
+				resPrefix="layouts.demo.editStructureWithExport.Tree."
+				show-only-selectable-nodes="true"
+			>
+				<layoutInfo size="25%"/>
+				<modelBuilder class="com.top_logic.demo.model.types.util.CyclicDemoTreeBuilder"/>
+			</treeView>
+
+			<layout name="multiSelectionTree">
+				<grid name="treeGridDemo1"
+					elementTypes="DemoTypes:DemoTypes.All"
+					model="selection(ExternalSelectionTree2)"
+					resPrefix="layouts.demo.table.tree_grid.treeGrid."
+				>
+					<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
+					<selectionModelFactory multiple="true"/>
+					<tables>
+						<table
+							defaultColumns="name"
+							fixedColumns="2"
+						>
+							<columns>
+								<column name="name"
+									mandatory="true"
+								/>
+							</columns>
+						</table>
+					</tables>
+				</grid>
+				<grid name="treeGridDemo2"
+					elementTypes="DemoTypes:DemoTypes.All"
+					model="selection(ExternalSelectionTree2)"
+					resPrefix="layouts.demo.table.tree_grid.treeGrid."
+					selection="selection(treeGridDemo1)"
+				>
+					<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
+					<selectionModelFactory multiple="true"/>
+					<tables>
+						<table
+							defaultColumns="name"
+							fixedColumns="2"
+						>
+							<columns>
+								<column name="name"
+									mandatory="true"
+								/>
+							</columns>
+						</table>
+					</tables>
+				</grid>
+			</layout>
+			<layout name="singleSelectionTree">
+				<grid name="treeGridDemo3"
+					elementTypes="DemoTypes:DemoTypes.All"
+					model="selection(ExternalSelectionTree2)"
+					resPrefix="layouts.demo.table.tree_grid.treeGrid."
+				>
+					<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
+					<selectionModelFactory multiple="false"/>
+					<tables>
+						<table
+							defaultColumns="name"
+							fixedColumns="2"
+						>
+							<columns>
+								<column name="name"
+									mandatory="true"
+								/>
+							</columns>
+						</table>
+					</tables>
+				</grid>
+				<grid name="treeGridDemo4"
+					elementTypes="DemoTypes:DemoTypes.All"
+					model="selection(ExternalSelectionTree2)"
+					resPrefix="layouts.demo.table.tree_grid.treeGrid."
+					selection="selection(treeGridDemo3)"
+				>
+					<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
+					<selectionModelFactory multiple="false"/>
+					<tables>
+						<table
+							defaultColumns="name"
+							fixedColumns="2"
+						>
+							<columns>
+								<column name="name"
+									mandatory="true"
+								/>
+							</columns>
+						</table>
+					</tables>
+				</grid>
+			</layout>
+		</components>
+	</layout>
+</layout>

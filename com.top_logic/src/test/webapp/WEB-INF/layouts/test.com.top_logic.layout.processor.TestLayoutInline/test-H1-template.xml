@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="p1">
+		</param>
+		<param name="p2">
+			<!-- Also no value. -->
+		</param>
+	</params>
+
+	<component class="A">
+		${p1}
+		${p2}
+	</component>
+</template>

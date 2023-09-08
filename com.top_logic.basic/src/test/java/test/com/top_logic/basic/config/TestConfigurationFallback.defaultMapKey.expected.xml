@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<base>
+	<map>
+		<value key="first" x="0"/>
+		<value x="7"/>
+		<value key="last" x="10"/>
+	</map>
+</base>

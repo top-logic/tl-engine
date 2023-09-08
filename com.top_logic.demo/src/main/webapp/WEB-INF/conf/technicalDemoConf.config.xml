@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+	
+		<config service-class="com.top_logic.basic.io.BasicFileLog">
+			<instance class="com.top_logic.basic.io.BasicFileLog">
+				<logTypes>
+					<logType name="example"
+						filename="example"
+						path="example/"
+						suffix=".log"
+						useYearMonth="false"
+					/>
+				</logTypes>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.util.sched.MemoryObserverThread">
+			<instance class="com.top_logic.util.sched.MemoryObserverThread"
+				createReport="true"
+			/>
+ 		</config>
+		
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+				   <module key="com.top_logic.knowledge.service.listener.ContentChangeEventListener$Module" value="true"/>
+				   	<module key="com.top_logic.convert.FormatConverterFactory$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="TL-DemoMessages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<handlers>
+		            <handler id="demoOrderApply" class="com.top_logic.demo.layout.form.demo.DemoOrderForm$ApplyCommand" clique="apply"/>
+		            <handler id="fillInDefault" class="com.top_logic.demo.layout.form.demo.DemoOrderForm$FillInDefaultValuesAction"/>
+		            <handler id="newAddress" class="com.top_logic.demo.layout.form.demo.DemoOrderForm$NewAddressAction"/>
+		            <handler id="toggleNameVisibility" class="com.top_logic.demo.layout.form.demo.DemoOrderForm$ToggleNameVisibility"/>
+		            <handler id="legacyCommand" class="com.top_logic.demo.layout.form.demo.DemoOrderForm$LegacyCommand"/>
+		            <handler id="ajaxApply" class="com.top_logic.demo.layout.form.demo.DemoOrderForm$AjaxApply"/>
+		            <handler id="externalCheck" class="com.top_logic.demo.layout.form.demo.DemoOrderForm$ExternalCheck"/>
+		            <handler id="externalLegacyCheck" class="com.top_logic.demo.layout.form.demo.DemoOrderForm$ExternalLegacyCheck"/>
+		            
+		            <handler id="resetProgressBar" class="com.top_logic.demo.layout.demo.DemoAJAXProgressComponent$ResetProgressBar"
+		            	resourceKey="layouts.layoutdemo.DemoAJAXProgress.ajaxProgress.resetProgressBar"
+		            />
+		            <handler id="demoFormApply" class="com.top_logic.demo.layout.form.demo.model.DemoFormTemplate$ApplyCommand" clique="apply"
+						resourceKey="layouts.layoutdemo.DemoFormTemplate.DemoFormTemplate.demoFormApply"		            
+		            />
+
+		            <handler id="TestAJAXEditComponent_Apply" class="com.top_logic.demo.layout.form.demo.TestAJAXEditComponent$ApplyCommand" clique="apply"/>
+		            <handler id="TestAJAXEditComponent_Save" class="com.top_logic.demo.layout.form.demo.TestAJAXEditComponent$SaveCommand" clique="save"/>
+		            <handler id="dummyApply" class="com.top_logic.demo.layout.demo.DummyEditComponent$DummyApplyCommand" clique="apply"/>
+		            <handler id="dummyEditWithoutModel" class="com.top_logic.layout.form.component.SwitchEditCommandHandler" group="Write" clique="edit">
+		            	<executability>
+		            		<reference rule-id="InViewMode"/>
+		            	</executability>
+		            </handler>
+		            <handler id="dummyDelete" class="com.top_logic.demo.layout.demo.DummyEditComponent$DummyDeleteCommand" clique="delete"/>
+					<handler id="TestPageLayoutEditApply" class="com.top_logic.demo.layout.form.demo.TestPageLayoutEdit$Apply" group="Write" clique="apply"/>
+
+		            <handler id="demoProgressCommand" class="com.top_logic.demo.layout.demo.DemoProgressComponent$DemoProgressCommandHandler"
+		            	progress-component="com.top_logic.demo/technical/test/DemoProgress/progressDemo2.layout.xml#demoProgress"
+		            />
+
+		            <handler id="TestCustomConfirmComponentApply" class="com.top_logic.demo.layout.form.demo.TestCustomConfirmComponent$Apply" clique="apply">
+		            	<resourceKey>demo.test.TestCustomConfirmComponent.apply</resourceKey>
+		            	<executability>
+		            		<rule class="com.top_logic.tool.execution.InEditModeExecutable"/>
+		            	</executability>
+		            </handler>
+				</handlers>
+			</instance>		
+		</config>
+		
+
+		<config config:operation="update" service-class="com.top_logic.util.sched.Scheduler">
+			<instance>
+				<tasks>
+					<task name="DayEntryArchiverTask"  enabled="false" />
+					<task name="CheckUnusedAccountsTask" enabled="false" />
+				</tasks>
+				<kb-tasks>EMailTask</kb-tasks>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/TLDemoMeta.xml" />
+					</declarations>
+					<data>
+						<definition resource="webinf://kbase/TechnicalKBData.xml"/>
+					</data>
+				</type-system>
+			</type-systems>
+		</config>
+		
+		<config config:interface="com.top_logic.base.services.simpleajax.AJAX"
+			useWaitPaneInFormula="false"
+		/>
+	</configs>
+	
+	<defaults>
+		<config interface="com.top_logic.layout.form.selection.SelectDialogConfig">
+			<property name="options-per-page" value="250"/>
+		</config>
+	
+		<config interface="com.top_logic.layout.form.selection.TableSelectDialogConfig">
+			<property name="options-per-page" value="250"/>
+		</config>
+	</defaults>
+	
+</application>

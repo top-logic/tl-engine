@@ -1,0 +1,165 @@
+<html>
+
+<head>
+	<title>Thread library test</title>
+	
+	<!-- Import thread library. --> 
+	<script type="text/javascript" src="../../script/tl/thread.js"></script>
+
+	<script type="text/javascript">
+		var sharedCounter;
+		var monitor = new Lock();
+		
+		function testThread(button) {
+			var valueBefore = button.value;
+			if (valueBefore == "Running...") {
+				if (! monitor.acquire('interactive')) {
+					log("Interactive event blocked.");
+					return;
+				}
+				try {
+					log("Interactive decrement.");
+					var valueBefore = sharedCounter;
+					
+					var dummy = 0;
+					for (var n = 0; n < 1000000; n++) {
+						dummy++;
+					}
+					
+					sharedCounter = valueBefore - 1;
+				} finally {
+					monitor.release('interactive');
+				}
+			
+				return false;
+			}
+			button.value = "Running...";
+			
+			sharedCounter = 0;
+			
+			var source = new Thread(
+				function() {
+					if (! monitor.acquire('source')) {
+						log("Source blocked.");
+						return;
+					}
+					try {
+						var valueBefore = sharedCounter;
+						
+						var dummy = 0;
+						for (var n = 0; n < 1000; n++) {
+							dummy++;
+						}
+						
+						sharedCounter = valueBefore + 1;
+					} finally {
+						monitor.release('source');
+					}
+					
+					this.count--;
+					if (this.count == 0) {
+						this.stop();
+					}
+				});
+			source.count = 500;
+			source.delay = 10;
+			source.start();
+			
+			var sink = new Thread(
+				function() {
+					if (! monitor.acquire('sink')) {
+						log("Sink blocked.");
+						return;
+					}
+					try {
+						var valueBefore = sharedCounter;
+						
+						var dummy = 0;
+						for (var n = 0; n < 1000; n++) {
+							dummy++;
+						}
+						
+						sharedCounter = valueBefore - 1;
+					} finally {
+						monitor.release('sink');
+					}
+					
+					this.count--;
+					if (this.count == 0) {
+						this.stop();
+					}
+				});
+			sink.count = 400;
+			sink.delay = 4;
+			sink.start();
+
+			var tester = new Thread(
+				function() {
+					if (this.tick % 5 == 0) {
+						log("Test running, sharedCounter=" + sharedCounter);
+					}
+					if (! source.stopped) return;
+					if (! sink.stopped) return;
+					
+					log("Test finished, sharedCounter=" + sharedCounter);
+					button.value = valueBefore;
+					this.stop();
+				});
+			tester.delay = 300;
+			tester.tick = 0;
+			tester.start();
+		}
+
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+		
+	</script>
+</head>
+<body onload="log('Test page ready.');">
+
+	<h2>Test case for JavaScript thread and lock library</h2>
+	
+	<p>
+	This page demonstrates the JavaScript thread library in <code>thread.js</code>.
+	By starting the thread test, two thread are created. One of them (the
+	source) increments a shared counter. The other one (the sink) decrements
+	the counter. By pressing the start button during the benchmark run, the shared
+	counter is interactively decremented from the event handler. 
+	</p>
+	
+	<p>
+	One can observe, that the lock acquisition never fails (in both, IE and FF). 
+	From that, one can conclude that in both browsers <code>onclick</code> 
+	handlers and timers	are executed in a single thread. However, there is evidence
+	that IE executes some handlers concurrently in different threads. See 
+	<a href="window-open.html">the window open test</a>. Using explicit lock objects
+	from the tread library seems to be necessary only if code might be executed 
+	concurrently from "regular" handlers and those dangerous handlers, one of which 
+	seems to be the <code>onload</code> handler.  
+	</p>
+	
+	<h2>Action triggers</h2>
+
+	<p>
+		<button id="clear-console-button" onclick="return clearConsole();">Clear console</button>
+	</p>
+	
+	<p>
+		<button id="test-thread-button" onclick="return testThread(this);">Test threads</button>
+	</p>
+
+	<h2>Console output</h2>
+	
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+</body>
+</html>

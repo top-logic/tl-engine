@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- 
+	Configuration file to use by TopLogic modules that are not dual licensed. 
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+	</services>
+
+	<configs>
+		<config config:interface="test.com.top_logic.basic.TestComment$Config">
+			<copyright-pattern>\W*SPDX-FileCopyrightText: \d{4} \(c\) Business Operation Systems GmbH &lt;info@top-logic\.com&gt;\W+SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0</copyright-pattern>
+		</config>
+	</configs>
+
+</application>

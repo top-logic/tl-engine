@@ -1,0 +1,43 @@
+<h2>Syntax</h2> 
+<pre>	<code>$set.filter($func)</code>
+</pre> 
+<h2>Description</h2> 
+<p>Filters <code class="hljs inlineCode">set</code> by applying the <code class="hljs inlineCode">func</code> predicate function to each of its elements. The resulting set contains only the elements that the <code class="hljs inlineCode">func</code> predicate function has evaluated as true.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set</td> 
+   <td>Set</td> 
+   <td>A set to be filtered according to <code class="hljs inlineCode">func</code>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>func</td> 
+   <td>Function</td> 
+   <td>Predicate function to be applied to all elements of <code class="hljs inlineCode">set</code>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p> 
+<p>A new set containing all elements from <code class="hljs inlineCode">set</code> for which the predicate function resulted <code class="hljs inlineCode">true</code>.</p> 
+<h2>Examples</h2> 
+<h3>Number filter</h3> 
+<pre>	<code>list(1, 3, 5, 3, 7, 8, 3, 9)
+  .filter(x -&gt; $x &gt; 4)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span>A set with the elements [5, 7, 8, 9].<span style="color:#3498db"></span></p> 
+<p>For all other numbers, the function returns <code class="hljs inlineCode">false</code>.</p>

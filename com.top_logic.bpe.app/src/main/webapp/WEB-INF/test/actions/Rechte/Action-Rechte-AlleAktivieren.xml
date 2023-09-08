@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings output-format="xml"/>
+		<t:parameters/>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Berechtigungen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Berechtigungen > Rollenprofile"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ExpandAllCommandHandler"
+					command-label="Rollenprofile aufklappen"
+					command-name="expandRoleProfileTree"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.SetAccessCommandHandler"
+					command-label="Alle an"
+					command-name="setAllAccess"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:include schemaLocation="config.xsd"/>
+	<xs:element name="ConfigCustomizations" substitutionGroup="component">
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="component">
+		<xs:annotation>
+			<xs:documentation>Global settings. These will be applied  
+first.</xs:documentation>
+		</xs:annotation>
+			<xs:sequence>
+				<xs:element name="Settings" type="Customizations"  
+minOccurs="0" maxOccurs="1"/>
+				<xs:element name="Branches" type="BranchCollection"  
+minOccurs="0" maxOccurs="1"/>
+			</xs:sequence>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="BranchCollection">
+			<xs:sequence>
+				<xs:element name="Branch" type="Branch" minOccurs="0" maxOccurs="unbounded"/>	
+			</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="GroupCollection">
+			<xs:sequence>
+				<xs:element name="Group" type="Group" minOccurs="0" maxOccurs="unbounded"/>	
+			</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Branch">
+		<xs:sequence>
+			<xs:element name="Settings" type="Customizations" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Groups" type="GroupCollection" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Roles" type="RoleCollection" minOccurs="0" maxOccurs="1"/>
+		</xs:sequence>
+		<xs:attribute name="Name" type="xs:string" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="Group">
+		<xs:sequence>
+			<xs:element name="Settings" type="Customizations" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Roles" type="RoleCollection" minOccurs="0" maxOccurs="1"/>
+		</xs:sequence>
+		<xs:attribute name="Name" type="xs:string" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="RoleCollection">
+		<xs:sequence>
+			<xs:element name="Role" type="Role" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Role">
+		<xs:sequence>
+			<xs:element name="Settings" type="Customizations" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Machines" type="MachineCollection" minOccurs="0" maxOccurs="1"/>
+		</xs:sequence>
+		<xs:attribute name="Name" type="xs:string" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="MachineCollection">
+		<xs:sequence>
+			<xs:element name="Machine" type="Machine" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Machine">
+		<xs:sequence>
+			<xs:element name="Settings" type="Customizations" minOccurs="0" maxOccurs="1"/>
+		</xs:sequence>
+		<xs:attribute name="Name" type="xs:string" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="NodeAdd">
+		<xs:annotation>
+			<xs:documentation>Add a node</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:any namespace="##any" minOccurs="0" maxOccurs="unbounded" processContents="skip"/> 
+		</xs:sequence>
+		<xs:attribute name="Component" use="required"/>
+		<xs:attribute name="XPath" use="required"/>
+		<xs:attribute name="NodeName" use="optional"/>
+		<xs:attribute name="NodeText" use="optional"/>
+		<xs:attribute name="BeforeXPath" use="optional"/>
+	</xs:complexType>
+	<xs:complexType name="NodeDelete">
+		<xs:annotation>
+			<xs:documentation>Delete a node</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="Component" use="required"/>
+		<xs:attribute name="XPath" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="NodeValue">
+		<xs:annotation>
+			<xs:documentation>Change a node's value</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="Component" use="required"/>
+		<xs:attribute name="XPath" use="required"/>
+		<xs:attribute name="Value" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="AttributeSet">
+		<xs:annotation>
+			<xs:documentation>Set an attribute</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="Component" use="required"/>
+		<xs:attribute name="XPath" use="required"/>
+		<xs:attribute name="Name" use="required"/>
+		<xs:attribute name="Value" use="required"/>
+	</xs:complexType>
+	<xs:complexType name="Customizations">
+		<xs:sequence>
+			<xs:element name="NodeDelete" type="NodeDelete" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="NodeAdd" type="NodeAdd" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="NodeValue" type="NodeValue" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="AttributeSet" type="AttributeSet" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

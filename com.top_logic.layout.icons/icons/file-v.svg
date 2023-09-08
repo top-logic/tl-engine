@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="visual"
+   viewBox="0 0 22 22"
+   version="1.1"
+   sodipodi:docname="v_path.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata6888">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     id="namedview6886"
+     showgrid="false"
+     inkscape:zoom="15.170655"
+     inkscape:cx="-3.0783581"
+     inkscape:cy="12.590209"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="visual"
+     inkscape:pagecheckerboard="true" />
+  <defs
+     id="defs6879">
+    <style
+       id="style6877">.cls-1{fill:#bb0a30;}</style>
+  </defs>
+  <path
+     style="fill:#008fb8;stroke-width:1.22107923;fill-opacity:1"
+     d="M 2.0062689,0.01257945 V 21.992452 H 19.845271 V 6.2644431 L 13.581241,0.01257945 Z M 4.447801,2.4561395 h 8.121542 l 4.883064,4.8830643 V 19.55092 H 4.447801 Z M 6.4026491,5.8629286 8.9415181,16.547674 H 11.871762 L 14.41266,5.8629286 H 12.287472 L 10.407654,14.787499 8.5258088,5.8629286 Z"
+     id="path6881"
+     inkscape:connector-curvature="0" />
+</svg>

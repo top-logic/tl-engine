@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Note: This XML is included as export dialog template in "com.top_logic.tool.boundsec.BoundComponent". -->
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="exportHandlers"/>
+		<param name="dialogWidth"
+			value="700"
+		/>
+		<param name="dialogHeight"
+			value="300"
+		/>
+		<param name="dialogOpenerCommandGroup"
+			value="Read"
+		/>
+		<param name="dialogOpenHandlerClass"
+			value="com.top_logic.tool.export.ExportTableComponent$OpenExportTableCommand"
+		/>
+		<param name="dialogOpenHandlerName"
+			value="exportTableDialog"
+		/>
+		<param name="dialogDefaultI18N"
+			value="export.table.dialog"
+		/>
+		<param name="class"
+			value="com.top_logic.tool.export.ExportTableComponent"
+		/>
+		<param name="resPrefix"
+			value="export.table.component."
+		/>
+		<param name="securityProviderClass"
+			value="dialogParent"
+		/>
+		<param name="refreshInterval"
+			value="5"
+		/>
+		<param name="page"
+			value="/jsp/layout/export/exportTable.jsp"
+		/>
+	</params>
+
+	<layout name="${namePrefix}Dialog">
+		<dialogInfo
+			defaultI18n="${dialogDefaultI18N}"
+			height="${dialogHeight}"
+			openHandlerClass="${dialogOpenHandlerClass}"
+			openHandlerName="${dialogOpenHandlerName}"
+			openerClique="exportButtons"
+			openerCommandGroup="${dialogOpenerCommandGroup}"
+			target="model(self())"
+			targetComponent="${namePrefix}Component"
+			width="${dialogWidth}"
+		>
+			<executability>
+				<rule class="com.top_logic.tool.export.ExportTableOpenRule"
+					exportComponentName="${namePrefix}Component"
+					exportHandlers="${exportHandlers}"
+				/>
+			</executability>
+		</dialogInfo>
+
+		<components>
+			<component class="${class}"
+				exportHandlers="${exportHandlers}"
+				name="${namePrefix}Component"
+				page="${page}"
+				refreshInterval="${refreshInterval}"
+				resPrefix="${resPrefix}"
+				securityProviderClass="${securityProviderClass}"
+			/>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

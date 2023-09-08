@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_34a537b3_30cc_4972_b078_89302c5ac8c8"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.b99440c6-e60b-400b-a6c3-16316612d9b0">
+			<en>Grid editability</en>
+			<de>Grid-Bearbeitbarkeit</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/gridEditability/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

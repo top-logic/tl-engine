@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.webfolder">
+		<class name="Context">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.webfolder:Context#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="objects"
+							fullQualifiedName="test.webfolder:Context#objects"
+							type="test.webfolder:WithDocument"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="objects"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="WithDocument"
+				/>
+				<reference name="folder"
+					composite="true"
+					kind="forwards"
+					navigate="true"
+					type="tl.folder:WebFolder"
+				/>
+			</attributes>
+		</class>
+		<class name="WithDocument">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="doc"
+					kind="forwards"
+					navigate="true"
+					type="tl.folder:Document"
+				>
+					<annotations>
+						<folder>
+							<value class="com.top_logic.model.search.providers.AttributeValueLocatorByExpression"
+								expr="x -> $x.container().get(`test.webfolder:Context#folder`)"
+							/>
+						</folder>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

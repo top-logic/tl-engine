@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor=""
+		model="selection(com.top_logic.demo/technical/components/componentVisibility/demoTypesTree.layout.xml#Tree)"
+		saveClosesDialog="true"
+		showNoModel="false"
+		type="DemoTypes:DemoTypes.A"
+	>
+		<name key="dynamic.39148b1f-da0d-4b22-8ca6-37b2c8a84f39">
+			<en>Documents</en>
+			<de>Documente</de>
+		</name>
+		<forms>
+			<form type="DemoTypes:A">
+				<formDefinition>
+					<field attribute="name"/>
+					<field attribute="webFolder"/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

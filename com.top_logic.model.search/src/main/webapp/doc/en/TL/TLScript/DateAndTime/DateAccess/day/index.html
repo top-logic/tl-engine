@@ -1,0 +1,34 @@
+<h2>Syntax</h2> 
+<pre>	<code>$calendar.day()</code>
+</pre> 
+<h2>Description</h2> 
+<p>The day of the given calendar.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>calendar</td> 
+   <td>Business object</td> 
+   <td>The calendar whose day is to be determined. It can be a <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">system</a> or <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">user calendar</a>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Number</p> 
+<p>A number representing the day of the given calendar.</p> 
+<h2>Examples</h2> 
+<p><strong>Note: </strong>The output may differ depending on the calendar's time zone.</p> 
+<pre>	<code>date(2012, 8, 5).toSystemCalendar().day()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 5</p>

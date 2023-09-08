@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="GridExportDownloadDialog"
+	titleKey="tool.export.result.dialog.tabber"
+>
+	<dialogInfo
+		closableUsingX="true"
+		createOpenerButtons="false"
+		executability="Always"
+		height="170"
+		openerCommandGroup="Read"
+		resizable="false"
+		width="400"
+	/>
+
+	<components>
+		<component class="com.top_logic.tool.export.progress.ExportDownloadComponent"
+			name="GridExportDownload"
+			page="/jsp/export/DownloadResult.jsp"
+			resPrefix="tool.export.result."
+		/>
+		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+	</components>
+</layout>

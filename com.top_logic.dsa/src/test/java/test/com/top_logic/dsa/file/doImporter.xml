@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+  Demo data for TestDOImporter
+ -->
+<root-is-ignored>
+  <dataobject>
+    <attribute name="string" value="x64"                    type="java.lang.String"    />
+    <attribute name="int"    value="42"                     type="java.lang.Integer"   />
+  </dataobject>
+
+  <other>
+    <date>2007-12-31 23:59:55:44</date>
+    <strictDate>2008-01-04 15:05:55:444</strictDate>
+    <double>2.7182818284590452354</double>
+    <float>3.14159265358979323846</float>
+    <long>3141592653589793238</long>
+    <int>271828182</int>
+  </other>
+</root-is-ignored>

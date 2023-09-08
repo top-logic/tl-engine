@@ -1,0 +1,28 @@
+<!-- 
+	 background-clip: padding is necessary to show the bottom border in table header cell when
+	 a background color is set.
+	 https://stackoverflow.com/a/16337203/1156476
+	  
+	 The header cells of sticky columns have z-index 1 so that they are always stacked on top when scrolling.
+	 The flexible cells have to be positioned to implement a grabber to change the column size. This 
+	 grabber have to be positioned absolute to be displayed at the full tables cell height.
+ -->
+<th class="{classes} {isSticky ? 'tl-position--sticky'}"
+	scope="{isRowHeader ? 'row' : 'col'}"
+	style="height: {rowHeight};{isSticky ? 'left:' + offset + ';'}{styles}"
+	colspan="{colspan}"
+	data-is-fixed="{isSticky}"
+	data-first-column-index="{firstColumnIndex}"
+	data-last-column-index="{lastColumnIndex}"
+>
+	<div class="px-1"
+		style="{isSticky ? 'position:relative;'}overflow:hidden;white-space:nowrap;max-height:100%;"
+	>
+		{label}
+	</div>
+	<tl:if test="isFixedTable">
+		<div class="tl-table__cell-resizer"
+			onmousedown="{onResizeGrabberMousedownHandler}"
+		></div>
+	</tl:if>
+</th>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="commons"
+>
+	<properties extends="com.top_logic.common.webfolder.ui.WebFolderComponent$UIOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
+		<annotations>
+			<display-order>
+				<value>
+					<property name="name"/>
+
+					<property name="model"/>
+
+					<property name="max-upload-size"/>
+
+					<property name="hasUploadCommand"/>
+					<property name="hasNewFolderCommand"/>
+					<property name="updateDocuments"/>
+					<property name="deleteDocuments"/>
+					<property name="hasClipboardCommand"/>
+					<property name="hasZipDownloadCommand"/>
+					<property name="analyzeDocuments"/>
+					<property name="sendDocuments"/>
+
+					<property name="isSecurityMaster"/>
+					<property name="securityObject"/>
+
+					<property name="buttons"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+
+		<property name="hasClipboardCommand"
+			default="false"
+			type="Boolean"
+		/>
+		<property name="hasNewFolderCommand"
+			default="true"
+			type="Boolean"
+		/>
+		<property name="hasZipDownloadCommand"
+			default="true"
+			type="Boolean"
+		/>
+		<property name="hasUploadCommand"
+			default="true"
+			type="Boolean"
+		/>
+		<property name="updateDocuments"
+			default="true"
+			type="Boolean"
+		/>
+		<property name="deleteDocuments"
+			default="true"
+			type="Boolean"
+		/>
+		<property name="analyzeDocuments"
+			default="false"
+			type="Boolean"
+		/>
+		<property name="sendDocuments"
+			default="false"
+			type="Boolean"
+		/>
+	</properties>
+
+	<component class="com.top_logic.common.webfolder.ui.WebFolderComponent"
+		analyzeDocuments="${analyzeDocuments}"
+		deleteDocuments="${deleteDocuments}"
+		dialogs="${dialogs}"
+		hasClipboardCommand="${hasClipboardCommand}"
+		hasNewFolderCommand="${hasNewFolderCommand}"
+		hasUploadCommand="${hasUploadCommand}"
+		hasZipDownloadCommand="${hasZipDownloadCommand}"
+		isSecurityMaster="${isSecurityMaster}"
+		max-upload-size="${max-upload-size}"
+		model="${model}"
+		modelBuilder="com.top_logic.common.webfolder.model.WebFolderAwareModelBuilder"
+		name="Folder"
+		resPrefix="class.com.top_logic.common.webfolder.ui.I18NConstants.TABLE"
+		securityObject="${securityObject}"
+		sendDocuments="${sendDocuments}"
+		titleKey="${name}"
+		toolbar="true"
+		updateDocuments="${updateDocuments}"
+	>
+		<buttons>
+			${buttons}
+			<include name="templates/editComponentCommands.xml"/>
+		</buttons>
+	</component>
+</config:template>

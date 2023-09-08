@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+	</params>
+
+	<component class="com.top_logic.mig.html.layout.Layout"
+		dontRecord="true"
+		name="${namePrefix}Container"
+		resizable="false"
+	>
+		<dialogInfo
+			height="100%"
+			image="theme:SAVE_SCRIPT_AS"
+			openerClique="additional-apply"
+			openerCommandGroup="System"
+			width="655px"
+		/>
+		<components>
+			<component class="com.top_logic.layout.folder.file.selection.FileSelectionComponent"
+				columns="name, _type, _date, _size"
+				model="provider(com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder)"
+				name="${namePrefix}FolderSelector"
+				resPrefix="tl.scripting.recorder.saveScriptAs.folderSelector."
+				securityProviderClass="securityRoot"
+			>
+				<modelBuilder class="com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder"/>
+				<treeBuilder>
+					<fileFilter class="com.top_logic.basic.col.filter.typed.TypedFilterAdapter"
+						default="false"
+					>
+						<filter class="com.top_logic.basic.col.filter.configurable.NamedEndingFilter"
+							allowed-endings=".script.xml"
+						/>
+					</fileFilter>
+				</treeBuilder>
+			</component>
+			<form class="com.top_logic.layout.form.component.SelectableFormComponent"
+				buttonComponent="${namePrefix}Buttons"
+				dontRecord="true"
+				model="selection(${namePrefix}FolderSelector)"
+				name="${namePrefix}FileNameInput"
+				page="/jsp/layout/scripting/SaveScriptAs.jsp"
+				resPrefix="tl.scripting.recorder.saveScriptAs.form."
+				resetInvisible="true"
+				securityProviderClass="securityRoot"
+				toolbar="false"
+			>
+				<layoutInfo size="33px"/>
+				<modelBuilder class="com.top_logic.layout.scripting.template.gui.saveas.SaveScriptAsFormBuilder"
+					allowedEndings=".script.xml"
+				/>
+				<buttons>
+					<button id="saveScriptAs"
+						class="com.top_logic.layout.scripting.template.gui.saveas.SaveScriptAsCommand"
+					/>
+				</buttons>
+			</form>
+			<buttonbar name="${namePrefix}Buttons"/>
+		</components>
+	</component>
+</template>

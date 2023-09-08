@@ -1,0 +1,10 @@
+<config xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<string-list>
+		<str config:operation="update" config:position="begin" val="c" />
+		<str config:operation="update" config:position="end" val="b" />
+		<str config:operation="update" config:position="before"
+			config:reference="e" val="a" />
+		<str config:operation="update" config:position="after"
+			config:reference="a" val="d" />
+	</string-list>
+</config>

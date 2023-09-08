@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<test xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	item-with-shortcut-format="foo"
+	item-with-type-format="foo"
+	list-with-shortcut-format="foo,bar"
+	map-with-shortcut-format="foo,bar"
+>
+</test>

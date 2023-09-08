@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="X"
+	p1="x-arg2"
+	p2="arg2"
+	p3="z-arg2"
+>
+	<component class="C"
+		conf1="c-x-arg2"
+		conf2="c-arg2"
+		conf3="c-z-arg2"
+	/>
+	<component class="B"
+		conf1="b-x-arg2"
+		conf2="b-arg2"
+		conf3="b-z-arg2"
+	/>
+</component>

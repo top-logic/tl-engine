@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- $Id: layoutWysiwygConf.config.xml 312895 2022-07-13 05:42:12Z bhu $ -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+			<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+				   <module key="com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="layoutWysiwygMessages" />
+				</bundles>
+			</instance>
+		</config>
+	
+        <config service-class="com.top_logic.gui.JSFileCompiler">
+			<instance>
+	            <files>
+	            	<file resource="wysiwyg.js"/>
+				</files>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+			<instance class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+				<schemes>
+					<scheme class="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme" priority="preferred"/>
+					<scheme class="com.top_logic.layout.wysiwyg.ui.scripting.I18NStructuredTextNamingScheme" priority="preferred"/>
+				</schemes>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService">
+			<instance class="com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService">
+				<default-config>
+					<property key="extraPlugins">
+						<list>
+							<string value="tlobjectlink" />
+							<string value="simplelink" />
+							<string value="imageUploader" />
+							<string value="find" />
+							<string value="copyformatting" />
+							<string value="removeformat" />
+							<string value="templates" />
+							<string value="ajax" />
+							<string value="xml" />
+							<string value="indentblock" />
+						</list>
+					</property>
+					<property key="removePlugins">
+						<list>
+							<string value="image" />
+						</list>
+					</property>
+					
+					<!-- Note: Must be formulated in object syntax, since it is extended on the client with a rule to allow TLScript content. -->
+					<property key="extraAllowedContent">
+						<struct>
+							<property key="a">
+								<struct>
+									<property key="attributes">
+										<string value="href, id, name, title, target, download, dir, lang, type, charset, rel, accesskey, tabindex, data-custom, data-section, data-object"/>
+									</property>
+									<property key="classes">
+										<string value="*"/>
+									</property>
+								</struct>
+							</property>
+							<property key="code em i">
+								<struct>
+									<property key="classes">
+										<string value="*"/>
+									</property>
+								</struct>
+							</property>
+							<property key="ol">
+								<struct>
+									<property key="attributes">
+										<string value="start"/>
+									</property>
+								</struct>
+							</property>
+							<property key="p">
+								<struct>
+									<property key="styles">
+										<string value="text-align"/>
+									</property>
+								</struct>
+							</property>
+							<property key="table">
+								<struct>
+									<property key="styles">
+										<string value="width, height"/>
+									</property>
+								</struct>
+							</property>
+							<property key="img">
+								<struct>
+									<property key="classes">
+										<string value="*"/>
+									</property>
+									<property key="attributes">
+										<string value="src, alt"/>
+									</property>
+									<property key="styles">
+										<string value="opacity, width, height"/>
+									</property>
+								</struct>
+							</property>
+							<property key="u s sub sup strong dd dl">
+								<struct>
+								</struct>
+							</property>
+							<property key="iframe">
+								<struct>
+									<property key="attributes">
+										<string value="allowfullscreen, src, width, height, frameborder"/>
+									</property>
+									<property key="classes">
+										<string value="*"/>
+									</property>
+								</struct>
+							</property>
+							<property key="div">
+								<struct>
+									<property key="styles">
+										<string value="width"/>
+									</property>
+								</struct>
+							</property>
+						</struct>
+					</property>
+					<property key="disallowedContent">
+						<string value="a{*}"/>
+					</property>
+					<property key="pasteFilter">
+						<string value="a[!href, id, name, title, target, download, dir, lang, type, charset, rel, accesskey, tabindex, data-custom, data-section, data-object](*);code em i(*);ol[start];table{width, height};img(*)[src, alt]{opacity, width, height};u s sub sup strong;span(*);div{width};h1;h2;h3;h4;h5;h6;ol;ul;li;dd;dl;b"/>
+					</property>
+					<property key="fillEmptyBlocks  ">
+						<boolean value="false"/>
+					</property>
+					<property key="codeSnippet_languages">
+						<struct>
+							<property key="java">
+								<string value="Java"/>
+							</property>
+							<property key="javascript">
+								<string value="JavaScript"/>
+							</property>
+							<property key="html">
+								<string value="HTML"/>
+							</property>
+							<property key="xml">
+								<string value="XML"/>
+							</property>
+							<property key="css">
+								<string value="CSS"/>
+							</property>
+							<property key="json">
+								<string value="JSON"/>
+							</property>
+							<property key="sql">
+								<string value="SQL"/>
+							</property>
+							<property key="bash">
+								<string value="Bash"/>
+							</property>
+							<property key="markdown">
+								<string value="Markdown"/>
+							</property>
+							<property key="diff">
+								<string value="Diff"/>
+							</property>
+						</struct>
+					</property>
+					<property key="templates_replaceContent">
+						<boolean value="false"/>
+					</property>
+					<property key="templates_files">
+						<list>
+							<string value="plugins/templates/templates/templateFiles/default.js"/>
+						</list>
+					</property>
+					<property key="templates">
+						<string value="default"/>
+					</property>
+				</default-config>
+				<features>
+					<feature name="sourceCode">
+						<property key="toolbar">
+							<list>
+								<struct>
+									<property key="name">
+										<string value="document"/>
+									</property>
+									<property key="items">
+										<list>
+											<string value="Source"/>
+										</list>
+									</property>
+								</struct>
+							</list>
+						</property>
+					</feature>
+					<feature name="basicstyles">
+						<property key="toolbar">
+							<list>
+								<struct>
+									<property key="name">
+										<string value="basicstyles" />
+									</property>
+									<property key="items">
+										<list>
+											<string value="Find" />
+											<string value="CopyFormatting" />
+											<string value="RemoveFormat" />
+											<string value="Bold" />
+											<string value="Italic" />
+											<string value="Underline" />
+											<string value="Strike" />
+											<string value="Subscript" />
+											<string value="Superscript" />
+										</list>
+									</property>
+								</struct>
+							</list>
+						</property>
+					</feature>
+					<feature name="colors">
+						<property key="toolbar">
+							<list>
+								<struct>
+									<property key="name">
+										<string value="colors" />
+									</property>
+									<property key="items">
+										<list>
+											<string value="TextColor" />
+											<string value="BGColor" />
+										</list>
+									</property>
+								</struct>
+							</list>
+						</property>
+					</feature>
+					<feature name="styles">
+						<property key="toolbar">
+							<list>
+								<struct>
+									<property key="name">
+										<string value="styles" />
+									</property>
+									<property key="items">
+										<list>
+											<string value="Format" />
+											<string value="Font" />
+											<string value="FontSize" />
+										</list>
+									</property>
+								</struct>
+							</list>
+						</property>
+					</feature>
+					<feature name="insert">
+						<property key="toolbar">
+							<list>
+								<struct>
+									<property key="name">
+										<string value="insert" />
+									</property>
+									<property key="items">
+										<list>
+											<string value="Image" />
+											<string value="Table" />
+											<string value="Templates" />
+											<string value="HorizontalRule" />
+											<string value="Smiley" />
+										</list>
+									</property>
+								</struct>
+							</list>
+						</property>
+					</feature>
+					<feature name="links">
+						<property key="toolbar">
+							<list>
+								<struct>
+									<property key="name">
+										<string value="links" />
+									</property>
+									<property key="items">
+										<list>
+											<string value="TLObjectLink" />
+											<string value="Link" />
+											<string value="Unlink" />
+										</list>
+									</property>
+								</struct>
+							</list>
+						</property>
+					</feature>
+					<feature name="paragraph">
+						<property key="toolbar">
+							<list>
+								<struct>
+									<property key="name">
+										<string value="paragraph" />
+									</property>
+									<property key="items">
+										<list>
+											<string value="NumberedList" />
+											<string value="BulletedList" />
+											<string value="Outdent" />
+											<string value="Indent" />
+											<string value="Blockquote" />
+											<string value="JustifyLeft" />
+											<string value="JustifyCenter" />
+											<string value="JustifyRight" />
+											<string value="JustifyBlock" />
+										</list>
+									</property>
+								</struct>
+							</list>
+						</property>
+					</feature>
+				</features>
+				<feature-sets>
+					<feature-set name="html">
+						<feature-ref name="basicstyles" />
+						<feature-ref name="colors" />
+						<feature-ref name="styles" />
+						<feature-ref name="insert" />
+						<feature-ref name="links" />
+						<feature-ref name="paragraph" />
+					</feature-set>
+					<feature-set name="i18n-html">
+						<feature-ref name="basicstyles" />
+						<feature-ref name="colors" />
+						<feature-ref name="styles" />
+						<feature-ref name="insert" />
+						<feature-ref name="links" />
+						<feature-ref name="paragraph" />
+					</feature-set>
+					<!-- @see com.top_logic.layout.wysiwyg.ui.MacroControlProvider -->
+					<feature-set name="macro" base="html">
+						<feature-ref name="sourceCode" />
+					</feature-set>
+				</feature-sets>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.provider.LabelProviderService">
+			<instance>
+				<renderers>
+		            <renderer kind="CODE" type="com.top_logic.layout.wysiwyg.ui.StructuredText" implementation="com.top_logic.layout.wysiwyg.ui.HTMLRenderer"/>
+		            <renderer kind="CODE" type="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText" implementation="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLRenderer"/>
+				</renderers>
+				<pdf-renderers>
+					<pdf-renderer kind="CODE" type="com.top_logic.layout.wysiwyg.ui.StructuredText" implementation="com.top_logic.layout.wysiwyg.ui.StructuredTextPDFRenderer"/>
+					<pdf-renderer kind="CODE" type="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText" implementation="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextPDFRenderer"/>
+				</pdf-renderers>
+			</instance>
+		</config>
+
+	</services>
+	
+	<configs>
+		<config config:interface="com.top_logic.element.layout.formeditor.DisplayFormEditorBuilder$GlobalConfig">
+			<buttons>
+				<button value="com.top_logic.layout.wysiwyg.ui.formeditor.implementation.StaticHTML" />
+			</buttons>
+		</config>
+	</configs>
+	
+	<defaults>
+	</defaults>
+	
+</application>

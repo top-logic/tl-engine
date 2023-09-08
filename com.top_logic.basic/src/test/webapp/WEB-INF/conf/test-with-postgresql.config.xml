@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<pool name="postgresql" class="test.com.top_logic.basic.sql.TestingConnectionPool">
+						<read-pool>
+							<maxActive>40</maxActive>
+							<whenExhaustedAction>block</whenExhaustedAction>
+							<maxWait>5000</maxWait>
+						</read-pool>
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<jndi-name></jndi-name>
+							<driver-class>org.postgresql.ds.PGSimpleDataSource</driver-class>
+							<options>
+								<option name="URL" value="jdbc:postgresql://%POSTGRESQL_HOST%:%POSTGRESQL_PORT%/%POSTGRESQL_DATABASE%" />
+								<option name="user" value="%POSTGRESQL_USER%" />
+								<encrypted-option name="password" value="%POSTGRESQL_PASSWD%" />
+								
+								<option name="currentSchema" value="%POSTGRESQL_SCHEMA%" />
+								
+								<option name="ssl" value="%POSTGRESQL_SSL%" />
+								<option name="sslmode" value="%POSTGRESQL_SSL_MODE%" />
+								
+								<option name="autosave" value="%POSTGRESQL_AUTOSAVE%" />
+							</options>
+						</data-source>
+					</pool>
+					<pool name="testUnitPostgresql" class="test.com.top_logic.basic.sql.TestingConnectionPool">
+						<read-pool>
+							<maxActive>10</maxActive>
+							<whenExhaustedAction>block</whenExhaustedAction>
+							<maxWait>5000</maxWait>
+						</read-pool>
+						<write-pool />
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>org.postgresql.ds.PGSimpleDataSource</driver-class>
+							<options>
+								<option name="URL" value="jdbc:postgresql://%POSTGRESQL_HOST%:%POSTGRESQL_PORT%/%POSTGRESQL_DATABASE_TEST_UNIT%" />
+								<option name="user" value="%POSTGRESQL_USER%" />
+								<encrypted-option name="password" value="%POSTGRESQL_PASSWD%" />
+								
+								<option name="currentSchema" value="%POSTGRESQL_SCHEMA%" />
+								
+								<option name="ssl" value="%POSTGRESQL_SSL%" />
+								<option name="sslmode" value="%POSTGRESQL_SSL_MODE%" />
+								
+								<option name="autosave" value="%POSTGRESQL_AUTOSAVE%" />
+							</options>
+						</data-source>
+					</pool>
+					<pool name="testMigrationPostgresql" class="test.com.top_logic.basic.sql.TestingConnectionPool">
+						<read-pool>
+							<maxActive>5</maxActive>
+						</read-pool>
+						<write-pool />
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>org.postgresql.ds.PGSimpleDataSource</driver-class>
+							<options>
+								<option name="URL" value="jdbc:postgresql://%POSTGRESQL_HOST%:%POSTGRESQL_PORT%/%POSTGRESQL_DATABASE_TEST_MIGRATION%" />
+								<option name="user" value="%POSTGRESQL_USER%" />
+								<encrypted-option name="password" value="%POSTGRESQL_PASSWD%" />
+								
+								<option name="currentSchema" value="%POSTGRESQL_SCHEMA%" />
+								
+								<option name="ssl" value="%POSTGRESQL_SSL%" />
+								<option name="sslmode" value="%POSTGRESQL_SSL_MODE%" />
+								
+								<option name="autosave" value="%POSTGRESQL_AUTOSAVE%" />
+							</options>
+						</data-source>
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

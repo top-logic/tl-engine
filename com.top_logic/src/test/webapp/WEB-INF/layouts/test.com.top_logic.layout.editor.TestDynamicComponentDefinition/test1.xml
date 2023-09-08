@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties>
+		<property name="contentParam"
+			type="String"
+		/>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			type="List"
+		/>
+	</properties>
+
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		buttons="${buttons}"
+		content="${contentParam}"
+		model="${model}"
+	/>
+</config:template>

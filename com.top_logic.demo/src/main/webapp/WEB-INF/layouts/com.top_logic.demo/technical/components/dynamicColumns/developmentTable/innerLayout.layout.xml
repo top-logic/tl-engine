@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/contentLayout.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/developmentTable/developmentTable.layout.xml">
+				<layoutInfo
+					scrolleable="true"
+					size=""
+				/>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

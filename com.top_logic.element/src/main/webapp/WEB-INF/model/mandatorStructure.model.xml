@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="mandatorStructure">
+			<annotations>
+				<singletons>
+					<singleton type="RootElement"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="Mandator.all">
+					<annotations>
+						<legacy-qualified-name qualified-name="Mandator.all"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="254"/>
+								<sort-order value="11.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="description"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line/>
+								<sort-order value="20.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="numberHandlerID"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<sort-order value="25.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="allowContracts"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<sort-order value="30.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<reference name="documents"
+							composite="true"
+							kind="forwards"
+							type="tl.folder:WebFolder"
+						>
+							<annotations>
+								<folder-type value="standardFolder"/>
+								<sort-order value="40.0"/>
+								<delete-protected/>
+								<visibility value="hidden"/>
+							</annotations>
+						</reference>
+						<property name="contractGuidelines"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line/>
+								<sort-order value="70.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<class name="RootElement">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.Mandator"/>
+						<instance-presentation icon="theme:MIMETYPES_MANDATOR_ROOT"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+							override="true"
+						>
+							<annotations>
+								<delete-protected/>
+		
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="ROOT"/>
+								</default-value>
+							</annotations>
+						</property>
+						<reference name="children"
+							override="true"
+							type="RootElementChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="Mandator.all"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="Mandator">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.Mandator"/>
+						<instance-presentation icon="theme:MIMETYPES_MANDATOR"/>
+					</annotations>
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="MandatorChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="Mandator.all"/>
+						<generalization type="mandatorStructure:RootElementChild"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="mandatorStructure:MandatorChild"/>
+					</generalizations>
+				</class>
+				<interface name="RootElementChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="MandatorChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+			</types>
+		</module>
+	</modules>
+</model>

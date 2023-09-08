@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.containmentContext">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.demo.model.containmentContext.wrap"
+				interface-package="com.top_logic.demo.model.containmentContext"
+			/>
+		</annotations>
+		<class name="Thing">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="name"/>
+						<field
+							attribute="createdFor"
+							fullQualifiedName="test.containmentContext:Thing#createdFor"
+							type="test.containmentContext:World"
+						/>
+						<field
+							attribute="uses"
+							fullQualifiedName="test.containmentContext:Thing#uses"
+							type="test.containmentContext:Usage"
+						>
+							<annotations>
+								<main-properties properties="thing,reason"/>
+							</annotations>
+						</field>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="uses"
+					composite="true"
+					inverse-reference="subject"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Usage"
+				/>
+				<reference name="world"
+					aggregate="true"
+					inverse-reference="things"
+					kind="backwards"
+					navigate="true"
+					type="World"
+				/>
+				<reference name="createdFor"
+					kind="forwards"
+					navigate="true"
+					type="World"
+				>
+					<annotations>
+						<default-value>
+							<default-by-expression value="x -> $x"/>
+						</default-value>
+						<create-visibility value="read-only"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Usage">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="thing"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Thing"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="usage -> $usage.container().container().get(`test.containmentContext:World#things`)"/>
+						</options>
+					</annotations>
+				</reference>
+				<property name="reason"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="subject"
+					aggregate="true"
+					inverse-reference="uses"
+					kind="backwards"
+					navigate="true"
+					type="Thing"
+				/>
+			</attributes>
+		</class>
+		<class name="World">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="things"
+					composite="true"
+					inverse-reference="world"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Thing"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

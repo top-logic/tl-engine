@@ -1,0 +1,17 @@
+com.top_logic.knowledge.searching.index.AbstractIndexSearchEngine.java: Invalid camel case word 'MindAccess', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.knowledge.searching.index.IndexSearch.java: Invalid camel case word 'IndexSearchThread', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.knowledge.searching.index.IndexSearch.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.knowledge.searching.index.IndexSearch.java: Invalid camel case word 'KnowledgeObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.knowledge.searching.index.IndexSearch.java: Invalid camel case word 'MindAccess', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.knowledge.searching.index.IndexSearch.java: Missing documentation: com.top_logic.knowledge.searching.index.IndexSearch._closed
+com.top_logic.knowledge.searching.internet.DefaultLink.java: Invalid camel case word 'hashCode', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.knowledge.searching.ui.SearchComponent.java: Invalid camel case word 'SearchComponent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.knowledge.searching.ui.SearchComponent.java: Missing documentation: com.top_logic.knowledge.searching.ui.SearchComponent.SearchCommandHandler
+com.top_logic.knowledge.searching.ui.SearchComponent.java: Missing documentation: com.top_logic.knowledge.searching.ui.SearchComponent.SearchCommandHandler.COMMAND_ID
+com.top_logic.knowledge.searching.ui.SearchModel.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.knowledge.searching.ui.SearchModel
+com.top_logic.knowledge.searching.ui.SearchModel.java: Invalid camel case word 'SearchModel', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.knowledge.searching.ui.SearchResultAccessor.java: Invalid camel case word 'SearchResultAccessor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.knowledge.searching.ui.SearchResultAccessor.java: Missing documentation: com.top_logic.knowledge.searching.ui.SearchResultAccessor.MODIFIED_KEY
+com.top_logic.knowledge.searching.ui.SearchResultAccessor.java: Missing documentation: com.top_logic.knowledge.searching.ui.SearchResultAccessor.RANKING_KEY
+com.top_logic.knowledge.searching.ui.SearchResultComponent.java: Invalid camel case word 'SearchResultComponent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.knowledge.searching.ui.SearchResultModelBuilder.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.knowledge.searching.ui.SearchResultModelBuilder

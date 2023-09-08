@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Component definition in TestTableComponent.
+-->
+<component class="test.com.top_logic.layout.table.component.TestTableComponent$TestingTableComponent"
+	name="testingTable"
+>
+	<modelBuilder class="test.com.top_logic.layout.table.component.TestTableComponent$TestingBuilder"/>
+	
+	<table>
+		<tableRenderer class="test.com.top_logic.layout.table.renderer.TestingTableRenderer"/>
+		<columns>
+			<column name="foo">
+				<labelProvider class="test.com.top_logic.layout.table.component.TestTableComponent$TestingResources"/>
+			</column>
+		</columns>
+	</table>
+</component>

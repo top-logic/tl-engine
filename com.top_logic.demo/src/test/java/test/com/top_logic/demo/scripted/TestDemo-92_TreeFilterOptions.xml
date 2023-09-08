@@ -1,0 +1,1047 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Root"
+							/>
+						</parameter>
+						<parameter name="ergebnis">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Root"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-B.xml"
+					template-name-comment="Create C"
+				>
+					<parameters>
+						<parameter name="kontext">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Root"
+							/>
+						</parameter>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Parent"
+							/>
+						</parameter>
+						<parameter name="Typ">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Demo C"
+							/>
+						</parameter>
+						<parameter name="ergebnis">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Parent"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="kontext">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Parent"
+							/>
+						</parameter>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Child"
+							/>
+						</parameter>
+						<parameter name="ergebnis">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Child"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-B.xml"
+					template-name-comment="Create C"
+				>
+					<parameters>
+						<parameter name="kontext">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Child"
+							/>
+						</parameter>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Ancestor"
+							/>
+						</parameter>
+						<parameter name="Typ">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Demo C"
+							/>
+						</parameter>
+						<parameter name="ergebnis">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Ancestor"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Strukturen > Typendemo > TreeGrid"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Setzen"
+					business-object="Selektion"
+				>
+					<parameters>
+						<parameter name="kontext">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Root"
+							/>
+						</parameter>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Strukturen > Typendemo"
+							/>
+						</parameter>
+						<parameter name="Komponente">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Show neither parents nor children of filter matches."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Baumfilteroptionen_setzen"
+							business-object="Tabelle"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Strukturen > Typendemo > TreeGrid"
+									/>
+								</parameter>
+								<parameter name="Komponente">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+									/>
+								</parameter>
+								<parameter name="Eltern">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="false"
+									/>
+								</parameter>
+								<parameter name="Kinder">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="false"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Nach_Text_filtern"
+							business-object="Tabelle"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Strukturen > Typendemo > TreeGrid"
+									/>
+								</parameter>
+								<parameter name="Komponente">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+									/>
+								</parameter>
+								<parameter name="Spalte">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="name"
+									/>
+								</parameter>
+								<parameter name="Text">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Test TreeFilterOptions Parent"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Check filter result."
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.grid.TreeGridExpandAll"
+									command-label="Alles aufklappen"
+									command-name="treeGridExpandAll"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp">
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRows">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="1"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+											<nodes>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Parent"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+											</nodes>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="0"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Show parents of filter matches."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Baumfilteroptionen_setzen"
+							business-object="Tabelle"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Strukturen > Typendemo > TreeGrid"
+									/>
+								</parameter>
+								<parameter name="Komponente">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+									/>
+								</parameter>
+								<parameter name="Eltern">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="true"
+									/>
+								</parameter>
+								<parameter name="Kinder">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="false"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Nach_Text_filtern"
+							business-object="Tabelle"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Strukturen > Typendemo > TreeGrid"
+									/>
+								</parameter>
+								<parameter name="Komponente">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+									/>
+								</parameter>
+								<parameter name="Spalte">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="name"
+									/>
+								</parameter>
+								<parameter name="Text">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Test TreeFilterOptions Child"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Check filter result."
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.grid.TreeGridExpandAll"
+									command-label="Alles aufklappen"
+									command-name="treeGridExpandAll"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp">
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRows">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="2"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+											<nodes>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Parent"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+											</nodes>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="0"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+											<nodes>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Parent"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Child"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+											</nodes>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="1"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Show children of filter matches."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Baumfilteroptionen_setzen"
+							business-object="Tabelle"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Strukturen > Typendemo > TreeGrid"
+									/>
+								</parameter>
+								<parameter name="Komponente">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+									/>
+								</parameter>
+								<parameter name="Eltern">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="false"
+									/>
+								</parameter>
+								<parameter name="Kinder">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="true"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Nach_Text_filtern"
+							business-object="Tabelle"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Strukturen > Typendemo > TreeGrid"
+									/>
+								</parameter>
+								<parameter name="Komponente">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+									/>
+								</parameter>
+								<parameter name="Spalte">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="name"
+									/>
+								</parameter>
+								<parameter name="Text">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Test TreeFilterOptions Parent"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Check filter result."
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.grid.TreeGridExpandAll"
+									command-label="Alles aufklappen"
+									command-name="treeGridExpandAll"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp">
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRows">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="3"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+											<nodes>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Parent"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+											</nodes>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="0"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+											<nodes>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Parent"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Child"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+											</nodes>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="1"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+											<nodes>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Parent"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Child"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Ancestor"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+											</nodes>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="2"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Show parents and children of filter matches."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Baumfilteroptionen_setzen"
+							business-object="Tabelle"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Strukturen > Typendemo > TreeGrid"
+									/>
+								</parameter>
+								<parameter name="Komponente">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+									/>
+								</parameter>
+								<parameter name="Eltern">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="true"
+									/>
+								</parameter>
+								<parameter name="Kinder">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="true"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Nach_Text_filtern"
+							business-object="Tabelle"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Strukturen > Typendemo > TreeGrid"
+									/>
+								</parameter>
+								<parameter name="Komponente">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+									/>
+								</parameter>
+								<parameter name="Spalte">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="name"
+									/>
+								</parameter>
+								<parameter name="Text">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Test TreeFilterOptions Child"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Check filter result."
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.grid.TreeGridExpandAll"
+									command-label="Alles aufklappen"
+									command-name="treeGridExpandAll"
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp">
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRows">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="3"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+											<nodes>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Parent"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+											</nodes>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="0"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+											<nodes>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Parent"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Child"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+											</nodes>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="1"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+												tab-path="Strukturen > Typendemo > TreeGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+											<nodes>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Parent"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Child"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+														<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+															name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+															tab-path="Strukturen > Typendemo > TreeGrid"
+														/>
+														<path>
+															<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																field-label-comment=""
+															>
+																<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+																	name="Test TreeFilterOptions Ancestor"
+																/>
+															</node>
+														</path>
+													</model-name>
+												</node>
+											</nodes>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="2"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Test TreeFilterOptions Root"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

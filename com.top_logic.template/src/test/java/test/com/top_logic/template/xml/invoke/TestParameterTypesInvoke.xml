@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+	</t:head>
+	<t:body>
+		<t:invoke template="TestParameterTypes.xml">
+			
+			<t:parameter name="Example_Attribute_Type_String" value="Value of String Parameter" />
+			
+			<t:parameter name="Example_Attribute_Type_Xml">
+				<t:value>
+					Some Text
+					<!-- Some Comment -->
+					More Text
+					<child-node />
+				</t:value>
+			</t:parameter>
+			
+			<t:parameter name="Example_Attribute_Type_Boolean" value="true" />
+			
+			<t:parameter name="Example_Attribute_Type_Integer" value="42" />
+			
+			<t:parameter name="Example_Attribute_Type_Float" value="3.14159" />
+			
+			<t:parameter name="Example_Attribute_Type_Date" value="2012-12-31T23:59:59.999Z" />
+			
+		</t:invoke>
+	</t:body>
+</t:template>

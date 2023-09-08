@@ -1,0 +1,13 @@
+<p>The view represents the demotypes as a tree. The concrete configuration for the model looks as follows:</p> 
+<p><img src="ref:grafik_5.png" style="opacity:1"></p> 
+<p>The structure of the tree is implied by the children and the root node itself. The singleton</p> 
+<pre><code>`DemoTypes#ROOT`</code></pre> 
+<p>is used as the root. The children are determined by the attribute <code class="hljs inlineCode">children</code>, starting at the root node. The node predicate determines, for trees only, among other things which nodes may be selected by the user. The interaction of the node predicate, parent and model-query configuration is especially important to decide, if an object has been created in another view, whether this object is also automatically added or displayed in this tree.</p> 
+<p>In this concrete, trivial configuration, the tree builder ignores the component model, which could be configured using</p> 
+<p><img src="ref:grafik.png" style="opacity:1"></p> 
+<p>The same result is obtained, for example, by specifying</p> 
+<p><img src="ref:grafik_1.png" style="opacity:1"></p> 
+<p>as component model and as root object in the tree the identity:</p> 
+<p><img src="ref:grafik_2.png" style="opacity:1"></p> 
+<p>In addition, it is possible to further refine the behavior and appearance of the tree using the following options</p> 
+<p><img src="ref:grafik_3.png" style="opacity:1"></p>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!-- Additional attributes of element types and MetaElements                    -->
+<!--     - defaultIcon: path to tree icon of the element                        -->
+<!--     - openIcon: path to tree icon of the element if it is opened           -->
+<!--     - koType: MetObject name of the KO used for this element               -->
+<!--     - wrapperClass: fully qualified class name of the wrapper for this     -->
+<!--                     element                                                -->
+<!ELEMENT attribute EMPTY>
+<!ATTLIST attribute
+	name (defaultIcon|koType|openIcon|wrapperClass) #REQUIRED
+	value CDATA #REQUIRED
+>
+
+<!-- Container for the additional attributes of element types and MetaElements  -->
+<!ELEMENT attributes (attribute|meattribute)*>
+
+<!-- Defines a possible child name of the current element type                  -->
+<!-- name has to be one of the element types                                    -->
+<!ELEMENT child EMPTY>
+<!ATTLIST child name NMTOKEN #REQUIRED>
+
+<!-- Contains the child name definitions                                        -->
+<!ELEMENT children (child+)>
+
+<!-- Defines a structure element type, e.g. Project, SubProject...              -->
+<!-- The type has to be unique in the structure definition                      -->
+<!ELEMENT element (attributes|children|metaelementdefinition)*>
+<!ATTLIST element type NMTOKEN #REQUIRED>
+
+<!-- Additional config for MetaElements (not actually used...)                  -->
+<!ELEMENT meattribute EMPTY>
+<!ATTLIST meattribute
+	name (defaultIcon|koType|wrapperClass) #REQUIRED
+	value CDATA #REQUIRED
+>
+
+<!-- Defines a single MetaAttribute of a MetaElement                            -->
+<!--     - name: the name of the MetaAttribute. Has to be unique in the         -->
+<!--             MetaElement hierarchy and not null or empty                    -->
+<!--     - type: one of "TYPE_STRING","TYPE_DATE","TYPE_LONG","TYPE_FLOAT",     -->
+<!--             "TYPE_BOOLEAN","TYPE_WRAPPER","TYPE_CLASSIFICATION",           -->
+<!--             "TYPE_COLLECTION","TYPE_TYPEDSET","TYPE_STRUCTURE",            -->
+<!--             "TYPE_DAP", "TYPE_DAP_COLLECTION"                              -->
+<!--     - mandatory: can be "true" or "false" (DEFAULT)                        -->
+<!--     - deleteProtected: can be "true" or "false" (DEFAULT)                  -->
+<!--     - additionalParam: holds an additional value for some attribute types  -->
+<!--            TYPE_WRAPPER : the MetaObject name of the KO of the Wrapper     -->
+<!--            TYPE_TYPEDSET : the MetaObject name of the KO of the Wrappers   -->
+<!--            TYPE_CLASSIFICATION : the ID of the classification list         -->
+<!ELEMENT metaattribute EMPTY>
+<!ATTLIST metaattribute
+	additionalParam CDATA #REQUIRED
+	sortOrder CDATA #IMPLIED
+	deleteProtected NMTOKEN #IMPLIED
+	mandatory NMTOKEN #IMPLIED
+	name NMTOKEN #REQUIRED
+	type NMTOKEN #REQUIRED
+>
+
+<!-- Contains the MetaAttributes of a MetaElement                               -->
+<!ELEMENT metaattributes (metaattribute*)>
+
+<!-- Defines a MetaElement. Contains the MetaAttributes and some attributes to  -->
+<!-- to configure the MetaElement                                               -->
+<!ELEMENT metaelement (attributes,metaattributes)>
+<!ATTLIST metaelement
+	superHolderType NMTOKEN #IMPLIED
+	superType NMTOKEN #IMPLIED
+	type NMTOKEN #REQUIRED
+>
+
+<!-- Configuration for both MetaElementHolder and Attributed implementation     -->
+<!-- The attributes are used as follows:                                        -->
+<!--     - holderType: config for Attributed: who holds my MetaElement?         -->
+<!--                   Possible values:                                         -->
+<!--                        - this: holds it itself (DEFAULT)                   -->
+<!--                        - parent: parents holds it                          -->
+<!--                        - <typename>: the parent of the given type holds it -->
+<!--                          Has to be one of the structure type names defined -->
+<!--     - meType: what is the type of my MetaElement? Has to be one of the     -->
+<!--               MetaElement defined on the holder given by the holderType    -->
+<!--               DEFAULT value is structure_name.element_type                 -->
+<!-- The MetaElements that are held by instances of the defining element are    --> 
+<!-- defined by metaelement tags                                                -->
+<!-- Note: an element may be used as a holder and get its own MetaElement from  -->
+<!-- somewhere else, e.g. its parent. Or it may just get its MetaElement from   -->
+<!-- a root element and not define one.                                         -->
+<!ELEMENT metaelementdefinition (metaelement*)>
+<!ATTLIST metaelementdefinition
+	holderType NMTOKEN #IMPLIED
+	meType NMTOKEN #IMPLIED
+>
+
+<!-- Defines the possible element types and their MetaElement configuration     -->
+<!ELEMENT structure (element+)>
+<!ATTLIST structure
+	name NMTOKEN #REQUIRED
+	rootType NMTOKEN #REQUIRED
+>
+
+<!-- Top-Level tag is structuredElements -->
+<!-- Defines structures, e.g. productElement, processElement, projectElement    -->
+<!ELEMENT structuredElements (metaelementdefinition,structure+)>

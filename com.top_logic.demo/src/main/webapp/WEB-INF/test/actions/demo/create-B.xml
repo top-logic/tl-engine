@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="Name"
+				type="string"
+			/>
+			<t:parameter name="kontext"
+				default="-"
+				type="string"
+			/>
+			<t:parameter name="ergebnis"
+				default="-"
+				type="string"
+			/>
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+			<t:parameter name="Typ"
+				default="Demo B-nicht-unter-A"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+
+				<t:invoke template="script:demo/select-context.xml">
+					<t:parameter name="kontext"
+						value="${$kontext}"
+					/>
+				</t:invoke>
+
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Knoten anlegen"
+					command-name="openNewElementDialog"
+					component-implementation-comment="com.top_logic.layout.tree.component.TreeComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Typ"
+									field-name="createType"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="${$Typ}"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesnewElementDialog"
+						tab-path=""
+					/>
+				</action>
+
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesnewElementDialog"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="${$Name}"
+					/>
+				</action>
+
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.create.GenericStructureCreateHandler"
+					command-label="Anlegen"
+					command-name="genericCreateStructure"
+					component-implementation-comment="com.top_logic.element.layout.create.GenericCreateComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesnewElementDialog"
+				>
+					<arguments/>
+				</action>
+
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+				>
+					<arguments/>
+				</action>
+
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Variable/assign-component-model.xml"
+				>
+					<parameters>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="${$Name}"
+							/>
+						</parameter>
+						<parameter name="ComponentName">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<t:if condition="#equals($ergebnis, &quot;-&quot;)">
+					<t:else>
+						<t:invoke template="script:Variable/Action-Variable-Zuweisen.xml">
+							<t:parameter name="Tester"
+								value="${$Tester}"
+							/>
+							<t:parameter name="Name"
+								value="${$ergebnis}"
+							/>
+							<t:parameter name="Wert">
+								<t:value>
+									<t:if condition=" #equals($kontext, &quot;-&quot;)">
+										<t:then>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="${$Name}"/>
+												</structure-path>
+											</value>
+										</t:then>
+										<t:else>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.element.layout.scripting.ChildNamingScheme$ChildName"
+													name="${$Name}"
+												>
+													<parent config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+														name="${$kontext}"
+													/>
+												</model-name>
+											</value>
+										</t:else>
+									</t:if>
+								</t:value>
+							</t:parameter>
+						</t:invoke>
+					</t:else>
+				</t:if>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

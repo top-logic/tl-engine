@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- MetaObejcts for Person and related handling -->
+	 
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+<metaobjects>
+
+<metaobject object_type="MOKnowledgeObject" object_name="Person" super_class="KnowledgeObject" db_name="PERSON">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.person.Person"/>
+	</annotation>
+</annotations>
+<attributes>
+	<mo_attribute att_name="name"   att_type="String" 	mandatory="true" />
+	<mo_attribute att_name="locale" att_type="String" 	mandatory="false" />
+	<mo_attribute att_name="pwdhistory"	    att_type="String"	mandatory="false" db_size="1333" hidden="true" />
+	<mo_attribute att_name="lastPwdChange"	att_type="Date"	    mandatory="false" hidden="true"/>
+	<mo_attribute att_name="unusedNotified" att_type="Boolean"  mandatory="false" />
+	<mo_attribute att_name="wasAlive" att_type="Boolean" mandatory="false" />
+	<mo_attribute att_name="dataDeviceID" att_type="String" mandatory="false" />
+	<mo_attribute att_name="authDeviceID" att_type="String" mandatory="false" />	
+	<mo_attribute att_name="restrictedUser" att_type="Boolean" mandatory="false" />	
+</attributes>
+	<index>
+		<mo_index name="name" unique="true">
+			<index-parts>
+				<index_part name="name"/>
+			</index-parts>
+		</mo_index>
+	</index>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="UserSession" super_class="KnowledgeObject" db_name="USER_SESSION" versioned="false">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.monitor.UserSession"/>
+	</annotation>
+</annotations>
+<attributes>
+	<mo_attribute att_name="name"    att_type="String" db_name="NAME"       db_size="64" mandatory="true" />
+	<mo_attribute att_name="id"      att_type="String" db_name="SESSION_ID" db_size="64" mandatory="true" />
+	<mo_attribute att_name="machine" att_type="String" db_name="MACHINE_IP" db_size="64" mandatory="true" />
+	<mo_attribute att_name="server"  att_type="String"                      db_size="64" mandatory="true" />
+	<mo_attribute att_name="date"    att_type="Date"   db_name="LOGIN"                   mandatory="true" />
+	<mo_attribute att_name="logout"  att_type="Date"                                     mandatory="false" />
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="FailedLogin" super_class="KnowledgeObject">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.monitor.FailedLogin"/>
+	</annotation>
+</annotations>
+<attributes>
+    <mo_attribute att_name="name"    att_type="String" db_size="64" mandatory="true" />
+    <mo_attribute att_name="ip"      att_type="String" db_size="64" mandatory="true" />
+    <mo_attribute att_name="server"  att_type="String" db_size="64" mandatory="true" />
+    <mo_attribute att_name="reason"  att_type="String" db_size="64" mandatory="true" />
+    <mo_attribute att_name="date"    att_type="Date"                mandatory="true" />
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="Address" super_class="KnowledgeObject">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.Address"/>
+	</annotation>
+</annotations>
+<attributes>
+	<mo_attribute att_name="street1" att_type="String" mandatory="false" db_size="254"/>
+	<mo_attribute att_name="street2" att_type="String" mandatory="false" db_size="254"/>
+	<mo_attribute att_name="zip" att_type="String" mandatory="false" db_size="32"/>
+	<mo_attribute att_name="city" att_type="String" mandatory="false" db_size="254"/>
+	<mo_attribute att_name="country" att_type="String" mandatory="false" db_size="254"/>
+	<mo_attribute att_name="state" att_type="String" mandatory="false" db_size="254"/>
+	<mo_attribute att_name="telephone1" att_type="String" mandatory="false" db_size="64"/>
+	<mo_attribute att_name="telephone2" att_type="String" mandatory="false" db_size="64"/>
+	<mo_attribute att_name="mobile" att_type="String" mandatory="false" db_size="64"/>
+	<mo_attribute att_name="fax1" att_type="String" mandatory="false" db_size="64"/>
+	<mo_attribute att_name="fax2" att_type="String" mandatory="false" db_size="64"/>
+	<mo_attribute att_name="eMail" att_type="String" mandatory="false" db_size="254"/>
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="PersonalConfiguration" versioned="false" super_class="KnowledgeObject">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.person.PersonalConfigurationWrapper"/>
+	</annotation>
+</annotations>
+</metaobject>
+
+<association super_class="Association" object_name="hasPersonalConfiguration" versioned="false">
+<attributes>
+	<source
+		override="true"
+		target-type="Person"
+	/>
+	<destination
+		override="true"
+		target-type="PersonalConfiguration"
+	/>
+</attributes>
+</association>
+
+</metaobjects>
+
+</objectlist>

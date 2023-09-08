@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-comment="Technical Demo"
+			card-name="demo.technical.tabber"
+			component-name="mainTabbar.layout.xml#mainTabber"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#1"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-comment="Formulare"
+			card-name="demo.form.tabber"
+			component-name="com.top_logic.demo/technical/layoutDemo1/index.layout.xml#layout_demo_1_tabBar"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-comment="Error Page"
+			card-name="demo.page.error.tabber"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/index.layout.xml#formDemo_tabBar"
+			user-id="root"
+		/>
+	</actions>
+</action>

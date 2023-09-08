@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.model.search.ui.SearchResultTable"
+	model="result(SearchComponent)"
+	name="SearchResultTable"
+	titleKey="layouts.model.search.modelSearch.SearchResultTable.title"
+>
+	<componentControlProvider class="com.top_logic.layout.structure.SeparateTableControlProvider"
+		showMinimize="true"
+		tableName="result"
+	/>
+
+	<tables>
+		<table name="result"
+			fixedColumns="1"
+			titleKey="layouts.model.search.modelSearch.SearchResultTable.title"
+		>
+			<exporter downloadNameKey="layouts.model.search.modelSearch.SearchResultTable.title"/>
+		</table>
+	</tables>
+</component>

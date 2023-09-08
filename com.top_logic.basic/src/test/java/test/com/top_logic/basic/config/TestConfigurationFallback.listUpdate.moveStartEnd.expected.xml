@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<fallback-test>
+	<a-list-configs>
+		<aConfig
+			intValue="5"
+			stringValue="first"
+		/>
+		<aConfig stringValue="last"/>
+	</a-list-configs>
+</fallback-test>

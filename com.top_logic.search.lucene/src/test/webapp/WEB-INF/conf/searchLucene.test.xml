@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Configuration File used for testing only                -->
+<!-- ======================================================= -->
+<!--                                                         -->
+<!--  Please provide a 'comment="..."' attribute/value pair  -->
+<!--  for each of your tags, if applicable. The text         -->
+<!--  provided there is displayed within the Administration  -->
+<!--  GUI of the application.                                -->
+<!--                                                         -->
+<root>
+
+	<alias> 
+    </alias>
+
+    <properties>
+		<section name="TLPDFCompress" comment="Setup for CVistaPDFCompressor">
+			<entry name="exe"    value="C:\Programme\CVision\PdfCompressor 2.1\PDFCompress.exe" />
+			<entry name="params" value="-q -c ON -s ON -stream -o1 -ds -txt" />
+
+			<!-- Map ISO Languages to PdfCompressor -->
+			<entry name="de" value="german"  />
+			<entry name="en" value="english" />
+			<entry name="fr" value="french"  />
+		</section>
+
+	</properties>
+
+</root>

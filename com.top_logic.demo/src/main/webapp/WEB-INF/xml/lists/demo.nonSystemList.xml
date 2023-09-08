@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+Test list used to test that non system lists can be removed. 
+This list is used in TestFastList and removed there. 
+During next application start it is recreated.
+ -->
+
+<list name="demo.nonSystemList" type="Classification" system="false">
+	<elements>
+		<element name="demo.nonSystemList.1" />
+		<element name="demo.nonSystemList.2" />
+		<element name="demo.nonSystemList.3" />
+	</elements>
+</list>

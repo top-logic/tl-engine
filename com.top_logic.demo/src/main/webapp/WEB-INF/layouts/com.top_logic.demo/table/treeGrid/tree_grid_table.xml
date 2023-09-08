@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/structure/demoTypes/treeGrid/tree_grid.xml"
+	namePrefix=""
+	titleKey="layouts.demo.table.tree_grid_table.title"
+>
+	<modelBuilder class="com.top_logic.demo.model.types.util.CyclicDemoTreeBuilder"/>
+	<additionalButtons>
+		<button id="newPlainA"
+			class="com.top_logic.demo.model.types.util.CreateLGridChildHandler"
+			group="Create"
+			image="theme:DEMO_NEW_AP"
+			resourceKey="layouts.demo.table.tree_grid_table.newPlainA"
+		/>
+	</additionalButtons>
+</include>

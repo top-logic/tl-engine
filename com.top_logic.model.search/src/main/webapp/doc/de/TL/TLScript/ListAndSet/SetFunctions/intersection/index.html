@@ -1,0 +1,51 @@
+<h2>Syntax</h2> 
+<pre>	<code>$set1.intersection($set2)
+</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Berechnet den Schnitt der Mengen <code class="hljs inlineCode">set1</code> und <code class="hljs inlineCode">set2</code>.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set1</td> 
+   <td>Menge</td> 
+   <td>Eine Menge, für die überprüft werden soll, ob und welche Elemente auch in <code class="hljs inlineCode">set2</code> enthalten sind.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>set2</td> 
+   <td>Menge</td> 
+   <td>Eine Menge, für die überprüft werden soll, ob und welche Elemente auch in <code class="hljs inlineCode">set1</code> enthalten sind.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p> 
+<p>Eine Menge, die alle Elemente enthält, die sowohl in <code class="hljs inlineCode">set1</code>, als auch in <code class="hljs inlineCode">set2</code> enthalten sind.</p> 
+<h2>Beispiele</h2> 
+<h3>Schnittmenge</h3> 
+<pre>	<code>list(1, 2, 3).intersection(list(2, 3))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Menge mit den Elementen [2, 3].</p> 
+<h3>Schnittmenge bei doppelten Werten</h3> 
+<pre>	<code>list(1, 2, 2, 3).intersection(list(2, 2, 3))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Menge mit den Elementen [2, 3].</p> 
+<p>Doppelte Werte tauchen nicht doppelt im Ergebnis auf.</p> 
+<h3>Keine Schnittmenge</h3> 
+<pre>	<code>list(1, 2, 3).intersection(list(5, 6))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine leere Menge</p>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings output-format="xml"/>
+		<t:parameters>
+			<t:parameter name="Example_Parameter"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+				string="${$Example_Parameter}"
+			/>
+			<constraints>
+				<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Example Value"
+					/>
+				</constraint>
+			</constraints>
+		</action>
+	</t:body>
+</t:template>

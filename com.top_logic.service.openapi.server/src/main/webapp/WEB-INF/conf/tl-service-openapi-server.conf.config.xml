@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="tl-service-openapi-server.messages"/>
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.service.openapi.server.OpenApiServer$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance>
+				<methods>
+					<method class="com.top_logic.service.openapi.server.script.HTTPResponse$Builder"
+						name="response"
+					/>
+				</methods>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.service.openapi.server.OpenApiServer">
+			<instance class="com.top_logic.service.openapi.server.OpenApiServer"
+				base-url="/api"
+			/>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.layout.admin.component.TLServicesCommandProvider$Config">
+			<commands-by-service-class service-class="com.top_logic.service.openapi.server.OpenApiServer">
+				<command id="exportOpenAPIConfig"
+					class="com.top_logic.service.openapi.server.layout.ExportOpenAPIConfiguration"
+					clique="exportButtons"
+					export-format="json"
+					image="theme:ICON_EXPORT_OPEN_API_SERVER"
+				>
+					<executability>
+						<reference rule-id="InViewMode"/>
+					</executability>
+				</command>
+				<command id="exportOpenAPIConfigYAML"
+					class="com.top_logic.service.openapi.server.layout.ExportOpenAPIConfiguration"
+					clique="exportButtons"
+					export-format="yaml"
+					image="theme:ICON_EXPORT_OPEN_API_SERVER"
+				>
+					<executability>
+						<reference rule-id="InViewMode"/>
+					</executability>
+				</command>
+				<command id="importOpenAPIServer"
+					class="com.top_logic.service.openapi.server.layout.ImportOpenAPIServer"
+					image="theme:ICON_IMPORT_OPEN_API_CONFIGURATION"
+				>
+					<executability>
+						<reference rule-id="InEditMode"/>
+					</executability>
+				</command>
+			</commands-by-service-class>
+		</config>
+	</configs>
+</application>

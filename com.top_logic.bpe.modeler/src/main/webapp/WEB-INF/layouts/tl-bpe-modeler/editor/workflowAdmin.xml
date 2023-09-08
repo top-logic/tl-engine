@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="tlBpeModelerEditor"
+		/>
+		<param name="resPrefix"
+			value="tl.bpe.modeler.editor."
+		/>
+		<param name="columns"
+			value="name,state,icon"
+		/>
+	</params>
+
+	<layout name="${namePrefix}Layout"
+		horizontal="true"
+	>
+		<tableView name="${namePrefix}Table"
+			isSecurityMaster="true"
+			objectType="tl.bpe.bpml:Collaboration"
+			resPrefix="${resPrefix}Tree"
+			securityProviderClass="securityRoot"
+		>
+			<layoutInfo
+				minSize="100"
+				size="220"
+			/>
+
+			<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"
+				meta-elements="tl.bpe.bpml:Collaboration"
+			/>
+
+			<table defaultColumns="${columns}"/>
+
+			<buttons>
+				<button id="release"
+					class="com.top_logic.bpe.modeler.component.state.StateBasedHandler"
+					clique="workflowState"
+					fromStates="Development,Retired"
+					group="Write"
+					image="theme:ICON_SHOE_PRINTS"
+					modelType="tl.bpe.bpml:Collaboration"
+					stateAttribute="state"
+					target="selection(self())"
+					toState="Released"
+				/>
+				<button id="revoke"
+					class="com.top_logic.bpe.modeler.component.state.StateBasedHandler"
+					clique="workflowState"
+					fromStates="Released"
+					group="Write"
+					image="theme:ICON_BACKSPACE"
+					modelType="tl.bpe.bpml:Collaboration"
+					stateAttribute="state"
+					target="selection(self())"
+					toState="Retired"
+				/>
+				<button id="delete"
+					class="com.top_logic.knowledge.gui.layout.form.DeleteSimpleWrapperCommandHandler"
+					clique="delete"
+					group="Delete"
+					image="theme:ICON_TRASH_ALT"
+					target="selection(self())"
+				/>
+				<button id="export"
+					class="com.top_logic.bpe.modeler.export.ExportBPMLDefinition"
+					clique="exportButtons"
+					group="Export"
+					image="theme:ICON_FILE_DOWNLOAD"
+					target="selection(self())"
+				>
+					<executability>
+						<rule class="com.top_logic.tool.execution.NullModelDisabled"/>
+					</executability>
+				</button>
+			</buttons>
+
+			<dialogs>
+				<layout name="${namePrefix}New">
+					<dialogInfo
+						height="180"
+						image="theme:ICON_PLUS"
+						openerClique="create"
+						openerCommandGroup="Create"
+						width="350"
+					/>
+
+					<form name="${namePrefix}NewForm"
+						buttonComponent="${namePrefix}NewButtons"
+						resetInvisible="true"
+					>
+						<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+							create="true"
+							formType="com.top_logic.bpe.modeler.create.NewForm"
+						/>
+
+						<buttons>
+							<button id="create"
+								class="com.top_logic.bpe.modeler.create.NewBPMLCommand"
+								group="Create"
+								resourceKey="${resPrefix}create"
+							>
+								<postCreateActions>
+									<setModel target="selection(dialogParent())"/>
+								</postCreateActions>
+							</button>
+						</buttons>
+					</form>
+					<buttonbar name="${namePrefix}NewButtons"/>
+				</layout>
+				<layout name="${namePrefix}Upload">
+					<dialogInfo
+						height="150"
+						image="theme:ICON_FILE_IMPORT"
+						openerClique="workflowState"
+						openerCommandGroup="Create"
+						width="350"
+					/>
+
+					<form name="${namePrefix}UploadForm"
+						buttonComponent="${namePrefix}UploadButtons"
+						resetInvisible="true"
+					>
+						<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+							create="true"
+							formType="com.top_logic.bpe.modeler.upload.UploadForm"
+						/>
+
+						<buttons>
+							<button id="upload"
+								class="com.top_logic.bpe.modeler.upload.BPMLUploadCommand"
+								group="Create"
+							>
+								<postCreateActions>
+									<setModel target="selection(dialogParent())"/>
+								</postCreateActions>
+							</button>
+						</buttons>
+					</form>
+					<buttonbar name="${namePrefix}UploadButtons"/>
+				</layout>
+				<layout name="${namePrefix}Update">
+					<dialogInfo
+						height="200"
+						width="350"
+					>
+						<open-handler id="displayDialog_${namePrefix}Update"
+							clique="workflowState"
+							group="Write"
+							image="theme:ICON_EDIT"
+							resourceKey="${resPrefix}Tree.displayDialog_${namePrefix}Update"
+							target="selection(${namePrefix}Table)"
+						>
+							<executability>
+								<rule class="com.top_logic.tool.execution.NullModelDisabled"/>
+							</executability>
+						</open-handler>
+					</dialogInfo>
+
+					<form name="${namePrefix}UpdateForm"
+						buttonComponent="${namePrefix}UpdateButtons"
+						resetInvisible="true"
+					>
+						<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+							create="true"
+							formType="com.top_logic.bpe.modeler.upload.UpdateForm"
+						/>
+
+						<buttons>
+							<button id="upload"
+								class="com.top_logic.bpe.modeler.upload.BPMLUpdateCommand"
+								group="Create"
+								model="selection(${namePrefix}Table)"
+							/>
+						</buttons>
+					</form>
+					<buttonbar name="${namePrefix}UpdateButtons"/>
+				</layout>
+				<layout name="${namePrefix}Copy">
+					<dialogInfo
+						height="150"
+						image="theme:ICON_CODE_BRANCH"
+						openerClique="workflowState"
+						openerCommandGroup="Write"
+						width="350"
+					/>
+
+					<form name="${namePrefix}CopyForm"
+						buttonComponent="${namePrefix}CopyButtons"
+						model="selection(${namePrefix}Table)"
+						securityProviderClass="securityRoot"
+					>
+						<modelBuilder class="com.top_logic.bpe.modeler.copy.CopyFormBuilder"/>
+
+						<buttons>
+							<button id="copy"
+								class="com.top_logic.bpe.modeler.copy.BPMLCopyCommand"
+								group="Create"
+								resourceKey="${resPrefix}.BPMLCopyCommand"
+							>
+								<postCreateActions>
+									<setModel target="selection(dialogParent())"/>
+								</postCreateActions>
+							</button>
+						</buttons>
+					</form>
+					<buttonbar name="${namePrefix}CopyButtons"/>
+				</layout>
+			</dialogs>
+		</tableView>
+
+		<bpmlEditor name="${namePrefix}Editor"
+			model="selection(${namePrefix}Table)"
+			securityProviderClass="securityRoot"
+			showMaximize="true"
+			titleKey="${resPrefix}Graph"
+		/>
+
+		<editor name="${namePrefix}Properties"
+			applyCommand="storeAttributes"
+			maximizeRoot="${namePrefix}Properties"
+			model="selection(${namePrefix}Editor)"
+			resPrefix="${resPrefix}Properties"
+			securityProviderClass="securityRoot"
+			showMaximize="true"
+		>
+			<layoutInfo
+				minSize="100"
+				size="300"
+			/>
+
+			<modelBuilder class="com.top_logic.bpe.modeler.component.properties.PropertiesEditor"/>
+		</editor>
+	</layout>
+</template>

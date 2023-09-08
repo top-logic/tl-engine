@@ -1,0 +1,84 @@
+			<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="cache-control" content="no-cache">
+<title>Portal Test</title>
+
+<script type="text/javascript">
+
+	// Functions to create portal content frame and portal links with a unique but stable window name.
+
+	function contentFrameName() {
+		if (window.name == "") {
+			window.name = "w" + new Date().getTime();
+		}
+		
+		return window.name + "-content";
+	}
+	
+	function portalFrame() {
+		document.write('<iframe');
+		document.write(' src="about:blank"');
+		document.write(' name="' + contentFrameName() + '"');
+		document.write(' frameborder="0"');
+		document.write('style="width: 100%; height: 512px; border: 0px;">');
+		document.write('<p>Ihr Browser kann leider keine eingebetteten Frames anzeigen</p>');
+		document.write('</iframe>');
+	}
+	
+	function link(url, label) {
+		document.write('<a href="' + url + '" target="' + contentFrameName() + '">' + label + '</a>');
+	}
+
+</script>
+
+</head>
+<body>
+<div id="portalheader">
+<h3><a href="#">Portal-Navigation</a></h3>
+<div id="portalnavigation">
+<ul>
+	<li><a href="#">Meine Anwendungen</a>
+	<ul>
+		<li>
+		<script type="text/javascript">
+			link('http://dict.leo.org/', 'Leo');
+		</script>
+		</li>
+		<li>
+		<script type="text/javascript">
+			link('http://www.google.com/', 'Google');
+		</script>
+		</li>
+		<li>
+		<script type="text/javascript">
+			link('portalStatic.html', 'Static');
+		</script>
+		</li>
+		<li>
+		<script type="text/javascript">
+			link('http://localhost:8080/top-logic/servlet/LayoutServlet', 'Top-Logic');
+		</script>
+		</li>
+		<li>
+		<script type="text/javascript">
+			link('http://localhost:8080/demo/servlet/LayoutServlet', 'Top-Logic Demo');
+		</script>
+		</li>
+	</ul>
+	</li>
+</ul>
+</div>
+</div>
+<hr>
+
+<div id="contentarea" style="overflow: hidden; ">
+<script type="text/javascript">
+	portalFrame();
+</script>
+</div>
+
+</body>
+</html>

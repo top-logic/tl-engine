@@ -1,0 +1,1013 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+					command-label="Generieren..."
+					command-name="generateTypes"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name des generierten Wurzelelementes"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestGanttOptionsRoot"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Anzahl der generierten Kinder"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+						value="20"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Generieren"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestGanttOptionsRoot"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Terminplan"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Start"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="01.01.2000"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Ende"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="31.12.2020"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswertungstiefe"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="2"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Wurzel anzeigen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Wurzel anzeigen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Überg. Vorgänge anzeigen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Überg. Vorgänge anzeigen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Ist - Termine"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Ist - Termine"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Berichtslinien anzeigen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Berichtslinien anzeigen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Abhängigkeitslinien anzeigen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Abhängigkeitslinien anzeigen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Abgeschl. Vorgänge ausgrauen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Abgeschl. Vorgänge ausgrauen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Abgeschl. Vorgänge ausblenden"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Abgeschl. Vorgänge ausblenden"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Vorgangsbalken ausblenden"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Vorgangsbalken ausblenden"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Start-/Ende-Label ausblenden"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Start-/Ende-Label ausblenden"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Zusätzliche Spalten"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+							<actions>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Spalten"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+											tab-path="Strukturen > Typendemo > Terminplan"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="startDate"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+									command-label="Aktualisieren"
+									command-name="update"
+									component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Spalten"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+											tab-path="Strukturen > Typendemo > Terminplan"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="startDate"
+											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="endDate"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+									command-label="Aktualisieren"
+									command-name="update"
+									component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Zusätzliche Spalten"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Kalendereinteilung"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="scalingOptionAuto"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+							command-label="Aktualisieren"
+							command-name="update"
+							component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Kalendereinteilung"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									tab-path="Strukturen > Typendemo > Terminplan"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="scalingOptionManual"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+							<actions>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Granularität"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+											tab-path="Strukturen > Typendemo > Terminplan"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumNaming$Name"
+												value="com.top_logic.reporting.chart.gantt.model.TimeGranularity:MONTH"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+									command-label="Aktualisieren"
+									command-name="update"
+									component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Granularität"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+											tab-path="Strukturen > Typendemo > Terminplan"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumNaming$Name"
+												value="com.top_logic.reporting.chart.gantt.model.TimeGranularity:WEEK"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+									command-label="Aktualisieren"
+									command-name="update"
+									component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Granularität"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+											tab-path="Strukturen > Typendemo > Terminplan"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumNaming$Name"
+												value="com.top_logic.reporting.chart.gantt.model.TimeGranularity:DAY"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+									command-label="Aktualisieren"
+									command-name="update"
+									component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Granularität"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+											tab-path="Strukturen > Typendemo > Terminplan"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumNaming$Name"
+												value="com.top_logic.reporting.chart.gantt.model.TimeGranularity:QUARTER"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.component.UpdateCommandHandler"
+									command-label="Aktualisieren"
+									command-name="update"
+									component-implementation-comment="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#GanttFilter"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestGanttOptionsRoot"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

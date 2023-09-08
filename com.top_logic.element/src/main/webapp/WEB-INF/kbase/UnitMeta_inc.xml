@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+		<metaobject object_name="Unit">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="com.top_logic.element.meta.kbbased.AttributedUnit"/>
+				</annotation>
+				<key-attributes attributes="tType"/>
+			</annotations>
+			<attributes>
+				<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+					att_name="tType"
+					att_type="MetaElement"
+					mandatory="true"
+				>
+					<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+						<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+							type="tl.units:Unit"
+						/>
+					</storage>
+				</mo_attribute>
+			</attributes>
+		</metaobject>
+
+		<metaobject object_name="Currency">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="com.top_logic.element.meta.kbbased.AttributedCurrency"/>
+				</annotation>
+				<key-attributes attributes="tType"/>
+			</annotations>
+			<attributes>
+				<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+					att_name="tType"
+					att_type="MetaElement"
+					mandatory="true"
+				>
+					<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+						<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+							type="tl.units:Currency"
+						/>
+					</storage>
+				</mo_attribute>
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

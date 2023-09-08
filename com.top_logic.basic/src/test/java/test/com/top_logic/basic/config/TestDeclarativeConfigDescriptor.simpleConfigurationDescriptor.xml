@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<declarative-config-descriptor res-prefix="a.b.c.">
+	<property name="string-property"
+		type="java.lang.String"
+	>
+		<annotations>
+			<!-- Test default value -->
+			<string-default value="Hello"/>
+		</annotations>
+	</property>
+	<property name="int-property"
+		type="java.lang.Integer"
+	>
+		<annotations>
+			<!-- Test ordinary annotation -->
+			<mandatory/>
+			<hidden/>
+		</annotations>
+	</property>
+	<property name="config-property"
+		type="test.com.top_logic.basic.config.TestDeclarativeConfigDescriptor$TestValue"
+	/>
+	<property name="map-property"
+		element-type="test.com.top_logic.basic.config.TestDeclarativeConfigDescriptor$TestValue"
+		key-attribute="name"
+		type="java.util.Map"
+	/>
+	<property name="list-property"
+		element-type="test.com.top_logic.basic.config.TestDeclarativeConfigDescriptor$TestValue"
+		type="java.util.List"
+	/>
+	<property name="list-property-with-key"
+		element-type="test.com.top_logic.basic.config.TestDeclarativeConfigDescriptor$TestValue"
+		key-attribute="name"
+		type="java.util.List"
+	/>
+	<property name="plain-list"
+		element-type="java.lang.String"
+		type="java.util.List"
+	>
+		<annotations>
+			<format value="com.top_logic.basic.config.CommaSeparatedStrings"/>
+		</annotations>
+	</property>
+	<property name="instance-type"
+		type="com.top_logic.basic.col.Mapping"
+	>
+		<annotations>
+			<instance-format/>
+			<instance-default value="com.top_logic.basic.col.FirstCharacterMapping"/>
+		</annotations>
+	</property>
+	<!-- Test plain object with Format at class -->
+	<property name="res-key"
+		type="com.top_logic.basic.util.ResKey"
+	>
+		<annotations>
+			<formatted-default value="/ssome constant text"/>
+		</annotations>
+	</property>
+</declarative-config-descriptor>

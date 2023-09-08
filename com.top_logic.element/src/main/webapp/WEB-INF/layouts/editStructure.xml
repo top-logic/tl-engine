@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="structure"/>
+		<param name="defaultFor"
+			value="tl.element:StructuredElement"
+		/>
+		<param name="page"
+			value="/jsp/element/EditStructuredElement.jsp"
+		/>
+		<param name="createCommandGroups"
+			value=""
+		/>
+		<param name="editCommandGroups"
+			value=""
+		/>
+		<param name="editDialogs">
+			<!-- Empty by default. -->
+		</param>
+		<param name="openCreateCommandGroup"
+			value="Create"
+		/>
+		<param name="securityProvider"
+			value="default"
+		/>
+		<param name="modifier"
+			value=""
+		/>
+		<param name="rootVisible"
+			optional="true"
+		/>
+		<param name="showNoModel"
+			optional="true"
+		/>
+		<param name="subConfiguration">
+			<!-- Empty by default. -->
+		</param>
+		<param name="exportDialogs">
+			<!-- Empty by default. -->
+		</param>
+	</params>
+
+	<layout name="${structure}StructureArea"
+		horizontal="true"
+	>
+		<components>
+			<treeView name="${structure}Tree"
+				autoFocusSelection="true"
+				defaultSelection="false"
+				resPrefix="layouts.editStructure.${structure}.tree."
+				rootVisible="${rootVisible}"
+			>
+				<layoutInfo size="220"/>
+				<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
+					structureName="${structure}"
+				/>
+			</treeView>
+			<include name="element/editStructureDetail.xml"
+				createCommandGroups="${createCommandGroups}"
+				defaultFor="${defaultFor}"
+				editCommandGroups="${editCommandGroups}"
+				modifier="${modifier}"
+				openCreateCommandGroup="${openCreateCommandGroup}"
+				page="${page}"
+				securityProvider="${securityProvider}"
+				showNoModel="${showNoModel}"
+				structure="${structure}"
+			>
+				<editDialogs>${editDialogs}</editDialogs>
+				<subConfiguration>${subConfiguration}</subConfiguration>
+				<exportDialogs>${exportDialogs}</exportDialogs>
+			</include>
+		</components>
+	</layout>
+</template>

@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The table has to be visible.
+	
+	This template won't try to navigate there and make it visible, as the table might be part of a dialog or assistent.
+-->
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings output-format="xml"/>
+		<t:parameters>
+			<t:parameter name="Pfad"
+				type="string"
+			/>
+			<t:parameter name="Komponente"
+				type="string"
+			/>
+			<t:parameter name="Spalte"
+				type="string"
+			/>
+
+			<!-- The filter expression. -->
+			<t:parameter name="Text"
+				type="string"
+			/>
+
+			<t:parameter name="Ganzes_Feld"
+				default="false"
+				type="boolean"
+			/>
+			<t:parameter name="Gross_Kleinschreibung"
+				default="false"
+				type="boolean"
+			/>
+			<t:parameter name="RegEx"
+				default="false"
+				type="boolean"
+			/>
+			<t:parameter name="Kein_Wert"
+				default="false"
+				type="boolean"
+			/>
+			<t:parameter name="Invertieren"
+				default="false"
+				type="boolean"
+			/>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Set the tree filter options"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+					filter-column-name="${$Spalte}"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="${$Komponente}"
+							tab-path="${$Pfad}"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+						context-name=""
+					>
+						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="fieldTable"
+								/>
+							</path>
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="${$Komponente}"
+								tab-path="${$Pfad}"
+							/>
+						</table-name>
+					</model-name>
+					<field-values>
+						<value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="${$Text}"
+							/>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent0"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterField"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="text"
+								/>
+							</field-path>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+						context-name=""
+					>
+						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="fieldTable"
+								/>
+							</path>
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="${$Komponente}"
+								tab-path="${$Pfad}"
+							/>
+						</table-name>
+					</model-name>
+					<field-values>
+						<value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="${$Ganzes_Feld}"
+							/>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent0"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterSettings"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Nur ganzes Feld suchen"
+									field-name="wholeField"
+								/>
+							</field-path>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+						context-name=""
+					>
+						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="fieldTable"
+								/>
+							</path>
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="${$Komponente}"
+								tab-path="${$Pfad}"
+							/>
+						</table-name>
+					</model-name>
+					<field-values>
+						<value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="${$Gross_Kleinschreibung}"
+							/>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent0"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterSettings"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Groß- /Kleinschreibung beachten"
+									field-name="caseSensitive"
+								/>
+							</field-path>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+						context-name=""
+					>
+						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="fieldTable"
+								/>
+							</path>
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="${$Komponente}"
+								tab-path="${$Pfad}"
+							/>
+						</table-name>
+					</model-name>
+					<field-values>
+						<value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="${$RegEx}"
+							/>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent0"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterSettings"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Regulärer Ausdruck"
+									field-name="regexp"
+								/>
+							</field-path>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+						context-name=""
+					>
+						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="fieldTable"
+								/>
+							</path>
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="${$Komponente}"
+								tab-path="${$Pfad}"
+							/>
+						</table-name>
+					</model-name>
+					<field-values>
+						<value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="${$Kein_Wert}"
+							/>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="StaticFilterWrapperView1"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterList"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Kein Wert"
+									field-name="active"
+								/>
+							</field-path>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+						context-name=""
+					>
+						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="fieldTable"
+								/>
+							</path>
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="${$Komponente}"
+								tab-path="${$Pfad}"
+							/>
+						</table-name>
+					</model-name>
+					<field-values>
+						<value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="${$Invertieren}"
+							/>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterDialogContent"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="filterList"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Filterergebnis invertieren"
+									field-name="invert"
+								/>
+							</field-path>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Anwenden"
+					>
+						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="${$Komponente}"
+									tab-path="${$Pfad}"
+								/>
+							</table-name>
+						</component>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

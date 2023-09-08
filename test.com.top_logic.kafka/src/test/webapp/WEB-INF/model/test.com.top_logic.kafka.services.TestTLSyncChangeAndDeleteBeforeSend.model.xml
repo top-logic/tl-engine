@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="test.com.top_logic.kafka.services.TestTLSyncChangeAndDeleteBeforeSend.source">
+			<types>
+				<class name="SourceType">
+					<annotations>
+						<table name="SourceTable1"/>
+						<exported />
+					</annotations>
+					<attributes>
+						<reference name="testReference"
+							type="SourceType"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed" />
+					</generalizations>
+				</class>
+			</types>
+		</module>
+		<module name="test.com.top_logic.kafka.services.TestTLSyncChangeAndDeleteBeforeSend.target">
+			<types>
+				<class name="TargetType">
+					<annotations>
+						<table name="TargetTable1"/>
+						<imported source="test.com.top_logic.kafka.services.TestTLSyncChangeAndDeleteBeforeSend.source:SourceType"/>
+					</annotations>
+					<attributes>
+						<reference name="testReference"
+							type="TargetType"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed" />
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

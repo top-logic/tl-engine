@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+
+		<!-- See TestTaskWrapper for details -->
+		<metaobject object_type="MOKnowledgeObject" object_name="TestTask"
+			super_class="Task">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="test.com.top_logic.knowledge.wrap.TestTaskWrapper$TestedWrapper"/>				
+				</annotation>
+			</annotations>
+			
+			<attributes>
+			</attributes>
+		</metaobject>
+
+	</metaobjects>
+</objectlist>

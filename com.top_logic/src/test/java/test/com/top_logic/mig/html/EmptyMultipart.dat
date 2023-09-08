@@ -1,0 +1,10 @@
+-----------------------------00000000000000
+Content-Disposition: form-data; name="file"; filename=""
+Content-Type: application/octet-stream
+
+
+-----------------------------00000000000000
+Content-Disposition: form-data; name="submit"
+
+Submit Query
+-----------------------------00000000000000--

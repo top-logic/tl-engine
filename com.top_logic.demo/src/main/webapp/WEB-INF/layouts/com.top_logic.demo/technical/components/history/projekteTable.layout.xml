@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,progress"
+		isSecurityMaster="false"
+		type="test.history:Project"
+	>
+		<name key="dynamic.f349658f-ce2d-481b-9391-dc9f2c020261">
+			<en>Projects</en>
+			<de>Projekte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.history:Project`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.history:Project`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_0f9ab144_f9aa_4e41_aae2_3386c9740c2e"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+				clique="refresh"
+				concurrent="false"
+				confirm="false"
+				disabledImage=""
+				group="System"
+				image=""
+				read-only="false"
+			>
+				<resourceKey key="dynamic.b1ab03d8-3aa2-44fb-96d9-7388feba56ac">
+					<en>Update</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+			</button>
+			<button id="ID_6d6432a5_91d9_4eac_bb4f_710adf8dc1ce"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				confirm="true"
+				disabledImage=""
+				group="Delete"
+				image=""
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.a26be794-f8c5-4873-a6d7-755074a6284d">
+					<en>Delete project</en>
+					<de>Projekt löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/history/newProject/newProjectDialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

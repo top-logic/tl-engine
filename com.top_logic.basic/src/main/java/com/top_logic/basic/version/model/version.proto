@@ -1,0 +1,108 @@
+/*
+ * SPDX-FileCopyrightText: 2021 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.basic.version.model;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Version and dependency information of an application.
+ */
+message VersionInfo {
+	/** The Maven group identifier of the application. */
+	string groupId;
+	
+	/** The Maven artifact identifier of the application. */
+	string artifactId;
+
+	/** The application version. */
+	string version;
+
+	/** The application name as given in the Maven project model. */
+	@Nullable	
+	string name;
+	
+	/** Description of the application. */
+	@Nullable	
+	string description;
+	
+	/** URL of the application home page. */
+	@Nullable	
+	string url;
+	
+	/** Date of the first releas of the software. */
+	@Nullable	
+	string inceptionYear;
+	
+	/** Additional qualifier to identify the build of the software. */
+	@Nullable
+	string buildQualifier;
+	
+	/** The organization that released the the software. */
+	@Nullable	
+	Organisation organization;
+	
+	/** The contributors to the software that are not {@link #developers}. */
+	repeated Contributor contributors;
+	
+	/** The committers that contributed to the software. */
+	repeated Contributor developers;
+	
+	/** Licenses under which the software is released. */
+	repeated License licenses;
+	
+	/** Description of dependencies this software depends on. */
+	repeated VersionInfo dependencies;
+}
+
+/** An organization that releases software. */
+message Organisation {
+	/** The name of the organization. */
+	string name;
+	
+	/** The home page of the organization. */
+	@Nullable	
+	string url;
+}
+
+/** Description of a license associated to a software product. */
+message License {
+	/** Official name of the license, preferably an SPDX identifier. */
+	string name;
+	
+	/** The URL where the license text can be downloade. */
+	@Nullable	
+	string url;
+	
+	/** Additional comments to the license. */
+	@Nullable	
+	string comments;
+}
+
+/** A contributor to a software module. */
+message Contributor {
+	/** The name of the contributor. */
+	string name;
+	
+	/** The contributor's e-mail address. */
+	@Nullable	
+	string email;
+
+	/** The contributor's home page. */
+	@Nullable	
+	string url;
+
+	/** The name of the organization, the contributor is working for. */
+	@Nullable	
+	string organization;
+
+	/** The home page of the organization, the contributor is working for. */
+	@Nullable	
+	string organizationUrl;
+}

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<layout name="gridExternalSelectionDemo"
+		horizontal="true"
+	>
+		<components>
+			<treeView name="ExternalSelectionGrid1"
+				resPrefix="layouts.demo.editStructureWithExport.Tree."
+				show-only-selectable-nodes="true"
+			>
+				<layoutInfo size="25%"/>
+				<modelBuilder class="com.top_logic.demo.model.types.util.CyclicDemoTreeBuilder"/>
+			</treeView>
+			<layout name="multiSelectionGrid">
+				<grid name="gridDemo1"
+					elementTypes="DemoTypes:DemoTypes.All"
+					model="selection(ExternalSelectionGrid1)"
+					resPrefix="layouts.demo.grid.Grid."
+				>
+					<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
+					<selectionModelFactory multiple="true"/>
+					<tables>
+						<table
+							defaultColumns="name"
+							fixedColumns="2"
+						/>
+					</tables>
+				</grid>
+				<grid name="gridDemo2"
+					elementTypes="DemoTypes:DemoTypes.All"
+					model="selection(ExternalSelectionGrid1)"
+					resPrefix="layouts.demo.grid.Grid."
+					selection="selection(gridDemo1)"
+				>
+					<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
+					<selectionModelFactory multiple="true"/>
+
+					<tables>
+						<table
+							defaultColumns="name"
+							fixedColumns="2"
+						/>
+					</tables>
+				</grid>
+			</layout>
+			<layout name="singleSelectionGrid">
+				<grid name="gridDemo3"
+					elementTypes="DemoTypes:DemoTypes.All"
+					model="selection(ExternalSelectionGrid1)"
+					resPrefix="layouts.demo.grid.Grid."
+				>
+					<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
+					<selectionModelFactory multiple="false"/>
+
+					<tables>
+						<table
+							defaultColumns="name"
+							fixedColumns="2"
+						/>
+					</tables>
+				</grid>
+				<grid name="gridDemo4"
+					elementTypes="DemoTypes:DemoTypes.All"
+					model="selection(ExternalSelectionGrid1)"
+					resPrefix="layouts.demo.grid.Grid."
+					selection="selection(gridDemo3)"
+				>
+					<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
+					<selectionModelFactory multiple="false"/>
+
+					<tables>
+						<table
+							defaultColumns="name"
+							fixedColumns="2"
+						/>
+					</tables>
+				</grid>
+			</layout>
+		</components>
+	</layout>
+</layout>

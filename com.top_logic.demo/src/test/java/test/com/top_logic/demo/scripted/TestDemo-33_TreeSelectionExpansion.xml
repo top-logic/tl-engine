@@ -1,0 +1,602 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create TestTreeComponent1"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-A.xml"
+							template-name-comment="Create A"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="TestTreeComponent1"
+								/>
+								<parameter name="ergebnis"
+									value="TestTreeComponent1"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create TestTreeComponent2"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-B.xml"
+							template-name-comment="Create B"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="TestTreeComponent2"
+								/>
+								<parameter name="kontext"
+									value="TestTreeComponent1"
+								/>
+								<parameter name="ergebnis"
+									value="TestTreeComponent2"
+								/>
+								<parameter name="Typ"
+									value="Demo B"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create TestTreeComponent3"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-A.xml"
+							template-name-comment="Create A"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="TestTreeComponent3"
+								/>
+								<parameter name="kontext"
+									value="TestTreeComponent2"
+								/>
+								<parameter name="ergebnis"
+									value="TestTreeComponent3"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="TestTreeComponent4"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-B.xml"
+							template-name-comment="Create B"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="Demo B"
+								/>
+								<parameter name="Name"
+									value="TestTreeComponent4"
+								/>
+								<parameter name="kontext"
+									value="TestTreeComponent3"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test selection expands node."
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="false"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="Selection expands node because this tree compoannt has this configuration option."
+					comparision="equals"
+					failure-message=""
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeExpansionRef">
+						<context config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</model-name>
+						</context>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+						boolean="true"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test Collapse/Expand of nodes does not change expand state of children."
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="true"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1 > TestTreeComponent2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					comparision="equals"
+					failure-message=""
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeExpansionRef">
+						<context config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</model-name>
+						</context>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1 > TestTreeComponent2"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+						boolean="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="false"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="true"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="Node was expanded before the parent was collapsed."
+					comparision="equals"
+					failure-message=""
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeExpansionRef">
+						<context config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</model-name>
+						</context>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1 > TestTreeComponent2"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+						boolean="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="false"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1 > TestTreeComponent2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					comparision="equals"
+					failure-message=""
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeExpansionRef">
+						<context config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</model-name>
+						</context>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1 > TestTreeComponent2"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+						boolean="false"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="false"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="true"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="Node was collapsed before the parent was collapsed."
+					comparision="equals"
+					failure-message=""
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeExpansionRef">
+						<context config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</model-name>
+						</context>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1 > TestTreeComponent2"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+						boolean="false"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test select expands parents."
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="true"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="true"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1 > TestTreeComponent2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1 > TestTreeComponent2 > TestTreeComponent3"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="false"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1 > TestTreeComponent2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+					comment=""
+					expand="false"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</model-name>
+					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+						label-path="TestTreeComponent1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1 > TestTreeComponent2 > TestTreeComponent3"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="Selection expands parents."
+					comparision="equals"
+					failure-message=""
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeExpansionRef">
+						<context config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</model-name>
+						</context>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+						boolean="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="Selection expands parents."
+					comparision="equals"
+					failure-message=""
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeExpansionRef">
+						<context config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</model-name>
+						</context>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1 > TestTreeComponent2"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+						boolean="true"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Cleanup"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeComponent1"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Variable/Action-Variable-Alle loeschen.xml"
+					template-name-comment="Variable Alle loeschen"
+				/>
+			</actions>
+		</action>
+	</actions>
+</action>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="themEditor"
+		/>
+		<param name="resPrefix"
+			value="layouts.tl-layout-themeedit.themeEditor"
+		/>
+	</params>
+
+	<layout horizontal="true">
+		<tabInfo label="${resPrefix}.resources.tab"/>
+
+		<treeView name="${namePrefix}FolderTree"
+			model="selection(${namePrefix}ThemeTable)"
+			resource-provider="com.top_logic.layout.themeedit.browser.resource.ThemeDirResourceProvider"
+			securityProviderClass="securityRoot"
+			titleKey="${resPrefix}.resources.tree.title"
+		>
+			<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.resources.ThemeDirectoryTreeBuilder"/>
+
+			<buttons>
+				<button id="createResourceFolder"
+					class="com.top_logic.layout.themeedit.browser.providers.resources.OpenCreateResourceFolderDialogHandler"
+					clique="create"
+					executability="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"
+					group="Create"
+					image="theme:ICON_PLUS"
+					resourceKey="${resPrefix}.themes.resources.folder.create"
+				/>
+				<button id="deleteFolder"
+					class="com.top_logic.layout.themeedit.browser.providers.resources.DeleteResourceFolderHandler"
+					clique="delete"
+					confirm="true"
+				>
+					<executability>
+						<rule class="com.top_logic.layout.themeedit.browser.providers.resources.NoInheritedResourceFileRule"/>
+						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"/>
+					</executability>
+				</button>
+				<button id="showInheritedFolders"
+					class="com.top_logic.layout.themeedit.browser.providers.resources.ShowInheritedFoldersHandler"
+					clique="settings"
+				/>
+			</buttons>
+		</treeView>
+
+		<tableView name="${namePrefix}ResourceList"
+			model="selection(${namePrefix}FolderTree)"
+			securityProviderClass="securityRoot"
+			titleKey="${resPrefix}.resources.list.title"
+		>
+			<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.resources.ThemeResourcesListBuilder"/>
+
+			<table
+				fixedColumns="0"
+				resPrefix="${resPrefix}.resources.list.column"
+				rowStyle="height:35px;"
+			>
+				<columns>
+					<column name="resource"
+						filterProvider=""
+						sortable="false"
+					>
+						<accessor class="com.top_logic.layout.themeedit.browser.providers.resources.ThemeResourceIconAccessor"/>
+						<renderer class="com.top_logic.layout.themeedit.browser.renderer.ThemeVarValueRenderer"/>
+					</column>
+					<column name="name">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getName"
+							type="com.top_logic.layout.themeedit.browser.resource.ThemeResource"
+						/>
+					</column>
+					<column name="theme">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getDefiningThemeID"
+							type="com.top_logic.layout.themeedit.browser.resource.ThemeResource"
+						/>
+					</column>
+					<column name="base">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getBaseThemeID"
+							type="com.top_logic.layout.themeedit.browser.resource.ThemeResource"
+						/>
+					</column>
+				</columns>
+			</table>
+
+			<dialogs>
+				<layout name="${namePrefix}ResourceUploadDialog"
+					titleKey="${resPrefix}.resources.uploadDialog.title"
+				>
+					<dialogInfo
+						defaultI18n="${resPrefix}.resources.uploadDialog.openCommand"
+						height="200"
+						image="theme:ICON_FILE_IMPORT"
+						openerCommandGroup="Create"
+						width="350"
+					/>
+					<form name="${namePrefix}ResourceUploadForm"
+						buttonComponent="${namePrefix}ResourceUploadButtons"
+						model="model(dialogParent())"
+						resetInvisible="true"
+						securityProviderClass="securityRoot"
+					>
+						<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+							create="true"
+							createContextType="com.top_logic.layout.themeedit.browser.resource.ThemeResource"
+							formType="com.top_logic.layout.themeedit.browser.dialogs.UploadForm"
+						/>
+
+						<buttons>
+							<button id="upload"
+								class="com.top_logic.layout.themeedit.browser.dialogs.UploadResource"
+								group="Create"
+							/>
+						</buttons>
+					</form>
+					<buttonbar name="${namePrefix}ResourceUploadButtons"/>
+				</layout>
+			</dialogs>
+			<buttons>
+				<button id="deleteResource"
+					class="com.top_logic.layout.themeedit.browser.providers.resources.DeleteResourceHandler"
+					clique="delete"
+					confirm="true"
+					target="provider(com.top_logic.layout.themeedit.browser.providers.resources.ThemeConfigByResourceProvider)"
+				>
+					<executability>
+						<rule class="com.top_logic.tool.execution.EmptyTableModelDisabledRule"/>
+						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"/>
+						<rule class="com.top_logic.layout.themeedit.browser.providers.resources.NoInheritedResourceFileRule"/>
+					</executability>
+				</button>
+			</buttons>
+		</tableView>
+	</layout>
+</template>

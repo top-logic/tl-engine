@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<open-handler id="ID_daee74f0_8868_44a9_ae85_83bcbc2555b0"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image=""
+			target=""
+			targetComponent="com.top_logic.demo/technical/components/history/newProject/newProjectDialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.0cde3acb-bc34-4e57-8ccc-32c1f3620ccb">
+				<de>Neues Projekt</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.0cde3acb-bc34-4e57-8ccc-32c1f3620ccb">
+				<de>Neues Projekt</de>
+			</title>
+		</title>
+		<forms>
+			<form type="test.history:Project">
+				<formDefinition>
+					<field attribute="name"/>
+					<field attribute="lead"/>
+					<field attribute="staff"/>
+				</formDefinition>
+			</form>
+		</forms>
+		<typeOptions
+			include-subtypes="true"
+			type="test.history:Project"
+		/>
+		<create-handler id="ID_8f0eed83_9ecf_4a8d_9d88_4c1b8a00a08b"/>
+	</arguments>
+</config:template-call>

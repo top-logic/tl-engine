@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params/>
+
+	<reference command-id="editComponentCommand"/>
+	<reference command-id="addDialogCommand"/>
+	<reference command-id="editLayoutCommand"/>
+	<reference command-id="deleteComponentCommand"/>
+	<reference command-id="resetLayoutConfig"/>
+</template>

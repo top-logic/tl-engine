@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Configuration File used for testing only -->
+<root>
+    
+    <properties>
+        <section name="testInheritProperties_1" inherit="no">
+            <entry name="key1" value="value1_overridden"/>
+            <entry name="key_not_in_ancestor" value="value_not_in_ancestor"/>
+        </section>       
+        <section name="testInheritProperties_2" inherit="yes">
+            <entry name="key1" value="value1_overridden"/>
+            <entry name="key_not_in_ancestor" value="value_not_in_ancestor"/>
+        </section>       
+    </properties>
+
+</root>

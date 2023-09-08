@@ -1,0 +1,37 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.inRevision($revision)</code>
+</pre>
+<h2>Description</h2>
+<p>Resolves the business object in the given revision.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Business object</td>
+   <td>Business object to be resolved in the given revision</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>revision</td>
+   <td>Revision or number</td>
+   <td>The revision or commit number in which the business object should be displayed. The commit number must be &gt;=0 and must exist.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p>
+<p>The business object in the given revision or <code class="hljs inlineCode">null</code> if the business object does not exist in the revision.</p>
+<p></p>

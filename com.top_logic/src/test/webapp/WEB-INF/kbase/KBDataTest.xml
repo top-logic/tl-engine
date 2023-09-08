@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<!--
+	SPDX-FileCopyrightText: 2000 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<objectlist>
+
+<knowledgeobject object_type="WebFolder" object_name="1049d3:efc1d3c034:-7fbe">
+	<ko_attribute att_name="physicalResource" att_value="repository://de"/>
+	
+	
+	
+	<ko_attribute att_name="dc_type" att_value="WebFolder"/>
+	<ko_attribute att_name="dc_title" att_value="de"/>
+	<ko_attribute att_name="name" att_value="de"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="358f03:ee69d20e58:-7fd6">
+	<ko_attribute att_name="physicalResource" att_value="repository://PUP Website"/>
+	
+	
+	
+	<ko_attribute att_name="dc_type" att_value="WebFolder"/>
+	<ko_attribute att_name="dc_title" att_value="PUP Website"/>
+	<ko_attribute att_name="name" att_value="PUP Website"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="1049d3:efc1d3c034:-7fc3">
+	<ko_attribute att_name="physicalResource" att_value="repository://en"/>
+	
+	
+	
+	<ko_attribute att_name="dc_type" att_value="WebFolder"/>
+	<ko_attribute att_name="dc_title" att_value="en"/>
+	<ko_attribute att_name="name" att_value="en"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="1049d3:efc1d3c034:-7fba">
+	<ko_attribute att_name="physicalResource" att_value="repository://Home45457"/>
+	
+	
+	
+	<ko_attribute att_name="dc_type" att_value="WebFolder"/>
+	<ko_attribute att_name="dc_title" att_value="Home"/>
+	<ko_attribute att_name="name" att_value="Home"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="1049d3:efc1d3c034:-7fb6">
+	<ko_attribute att_name="physicalResource" att_value="repository://Home45458"/>
+	
+	
+	
+	<ko_attribute att_name="dc_type" att_value="WebFolder"/>
+	<ko_attribute att_name="dc_title" att_value="Home"/>
+	<ko_attribute att_name="name" att_value="Home"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="6b9c84:efeb2b2d23:-7fc1">
+	<ko_attribute att_name="physicalResource" att_value="repository://Kontakt"/>
+	
+	
+	
+	<ko_attribute att_name="dc_type" att_value="WebFolder"/>
+	<ko_attribute att_name="dc_title" att_value="Kontakt"/>
+	<ko_attribute att_name="name" att_value="Kontakt"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="6b9c84:efeb2b2d23:-7fbd">
+	<ko_attribute att_name="physicalResource" att_value="repository://Contact"/>
+	
+	
+	
+	<ko_attribute att_name="dc_type" att_value="WebFolder"/>
+	<ko_attribute att_name="dc_title" att_value="Contact"/>
+	<ko_attribute att_name="name" att_value="Contact"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="TLHelpRoot">
+	
+	
+	<ko_attribute att_name="name" att_value="TLHelpRoot"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="TLHelpDE">
+	
+	
+	<ko_attribute att_name="name" att_value="TLHelpDE"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="TLHelpEN">
+	
+	
+	<ko_attribute att_name="name" att_value="TLHelpEN"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="webappFolder">
+	<ko_attribute att_name="physicalResource" att_value="webapp://"/>
+	<ko_attribute att_name="name" att_value="webappFolder"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="WebFolder" object_name="webinfFolder">
+	<ko_attribute att_name="physicalResource" att_value="webapp://WEB-INF"/>
+	<ko_attribute att_name="name" att_value="webinfFolder"/>
+</knowledgeobject>
+
+<knowledgeassociation object_type="hasFolderContent" object_name="webAppWebInf">
+	<ko_attribute att_name="source" att_value="webappFolder"/>
+	<ko_attribute att_name="dest" att_value="webinfFolder"/>
+</knowledgeassociation>
+
+<knowledgeassociation object_type="hasFolderContent" object_name="root2de">
+	<ko_attribute att_name="source" att_value="TLHelpRoot"/>
+	<ko_attribute att_name="dest" att_value="TLHelpDE"/>
+</knowledgeassociation>
+
+<knowledgeassociation object_type="hasFolderContent" object_name="root2en">
+	<ko_attribute att_name="source" att_value="TLHelpRoot"/>
+	<ko_attribute att_name="dest" att_value="TLHelpEN"/>
+</knowledgeassociation>
+
+</objectlist>

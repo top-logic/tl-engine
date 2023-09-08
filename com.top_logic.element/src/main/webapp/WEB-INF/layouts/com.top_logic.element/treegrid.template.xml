@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.element.layout.meta.FormContextModificatorTemplateParameters, com.top_logic.tool.boundsec.WithSecurityMaster">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="type"/>
+					<property name="defaultColumns"/>
+					<property name="detailComponent"/>
+
+					<property name="model"/>
+					<property name="modelBuilder"/>
+
+					<property name="fixedColumns"/>
+					<property name="partnerGroup"/>
+					<property name="readOnlyColumns"/>
+					<property name="configurationProviders"/>
+
+					<property name="rootVisible"/>
+					<property name="expandRoot"/>
+					<property name="defaultSelection"/>
+					<property name="expandSelected"/>
+					<property name="multiSelection"/>
+					<property name="adjustSelectionWhenCollapsing"/>
+					<property name="showDetailOpener"/>
+					<property name="isSecurityMaster"/>
+					<property name="securityObject"/>
+
+					<property name="editExecutability"/>
+					<property name="applyHandler"/>
+
+					<property name="dragSource"/>
+					<property name="tableDrop"/>
+					<property name="buttons"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="modelBuilder"
+			instance-type="com.top_logic.layout.tree.component.TreeModelBuilder"
+			type="PolymorphicConfiguration"
+		>
+			<mandatory/>
+			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
+		</property>
+		<property name="multiSelection"
+			type="boolean"
+		/>
+		<property name="adjustSelectionWhenCollapsing"
+			default="false"
+			type="boolean"
+		/>
+		<property name="showDetailOpener"
+			type="boolean"
+		/>
+		<property name="detailComponent"
+			type="com.top_logic.mig.html.layout.ComponentName"
+		>
+			<dynamic-mandatory fun="com.top_logic.basic.func.Identity">
+				<args>
+					<ref value="showDetailOpener"/>
+				</args>
+			</dynamic-mandatory>
+			<options fun="com.top_logic.layout.editor.AllDialogNames"/>
+		</property>
+		<property name="applyHandler"
+			instance-type="com.top_logic.element.layout.grid.GridApplyHandler"
+			type="com.top_logic.basic.config.PolymorphicConfiguration"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
+		</property>
+		<property name="editExecutability"
+			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
+			instance-type="com.top_logic.tool.execution.ExecutabilityRule"
+			type="List"
+		>
+			<!-- Note: Required to produce format compatible with CommandHandler.Config#executability. -->
+			<entry-tag value="rule"/>
+		</property>
+		<!-- Note: Only for legacy usages of this template. Use `securityObject` instead. -->
+		<property name="securityProviderClass"
+			default="securityRoot"
+			type="String"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
+			<hidden/>
+		</property>
+		<property name="fixedColumns"
+			default="2"
+			type="Integer"
+		/>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			type="List"
+		>
+			<acceptable-classifiers value="treegrid, commons"/>
+		</property>
+		<property name="dragSource"
+			instance-type="com.top_logic.element.layout.grid.GridDragSource"
+			type="PolymorphicConfiguration"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
+			<acceptable-classifiers
+				unclassified="false"
+				value="treegrid"
+			/>
+		</property>
+		<property name="tableDrop"
+			instance-type="com.top_logic.layout.table.dnd.TableDropTarget"
+			type="PolymorphicConfiguration"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
+			<acceptable-classifiers
+				unclassified="false"
+				value="grid"
+			/>
+		</property>
+	</properties>
+
+	<component class="com.top_logic.element.layout.grid.GridComponent"
+		adjustSelectionWhenCollapsing="${adjustSelectionWhenCollapsing}"
+		defaultSelection="${defaultSelection}"
+		deleteCommand=""
+		dialogs="${dialogs}"
+		editCommand="customEdit"
+		editComponentName="${detailComponent}"
+		elementTypes="${type}"
+		expandRoot="${expandRoot}"
+		expandSelected="${expandSelected}"
+		gridApplyHandlerClass="${applyHandler}"
+		isSecurityMaster="${isSecurityMaster}"
+		model="${model}"
+		modelBuilder="${modelBuilder}"
+		name="Grid"
+		page=""
+		partnerGroup="${partnerGroup}"
+		resPrefix="layout.element.grid.Grid."
+		rootVisible="${rootVisible}"
+		securityObject="${securityObject}"
+		securityProviderClass="${securityProviderClass}"
+		selection="${selection}"
+		showDetailOpener="${showDetailOpener}"
+		titleKey="${name}"
+	>
+		<modifier class="com.top_logic.element.layout.meta.TemplateFormContextModificator"
+			readOnlyColumns="${readOnlyColumns}"
+		/>
+		<selectionModelFactory multiple="${multiSelection}"/>
+		<buttons>
+			${buttons}
+			<include name="templates/editComponentCommands.xml"/>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+				exportNameKey="/sExport.xlsx"
+			/>
+			<button id="customEdit"
+				class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+				clique="edit"
+				group="Write"
+				target="selection(self())"
+			>
+				<executability>
+					<reference rule-id="InViewMode"/>
+					${editExecutability}
+				</executability>
+			</button>
+		</buttons>
+		<tables>
+			<table
+				configurationProviders="${configurationProviders}"
+				defaultColumns="${defaultColumns}"
+				dragSource="${dragSource}"
+				fixedColumns="${fixedColumns}"
+				tableDrop="${tableDrop}"
+			/>
+		</tables>
+	</component>
+</config:template>

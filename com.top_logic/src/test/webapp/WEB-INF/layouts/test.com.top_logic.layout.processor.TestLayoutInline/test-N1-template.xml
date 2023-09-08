@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="singleton-default">
+			<singleton name="${value}"/>
+		</param>
+		<param name="values-with-default">
+			<value name="${value}"/>
+			<value name="v2"/>
+			<value name="v3"/>
+		</param>
+		<param name="value" value="v1"/>
+
+		<param name="p0"/>
+		<param name="p1" value="${p0}"/>
+	</params>
+	
+	<component class="A" p1="${p1}" singleton="${singleton-default}">
+		<other-values>${values-with-default}</other-values>
+	</component>
+</template>

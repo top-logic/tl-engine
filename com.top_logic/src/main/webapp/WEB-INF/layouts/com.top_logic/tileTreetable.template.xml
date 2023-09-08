@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig,com.top_logic.mig.html.layout.tiles.TileComponentName">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="type"/>
+					<property name="defaultColumns"/>
+					<property name="model"/>
+					<property name="modelBuilder"/>
+					<property name="rootVisible"/>
+					<property name="expandRoot"/>
+					<property name="expandSelected"/>
+					<property name="securityDomain"/>
+					<property name="securityObject"/>
+					<property name="configurationProviders"/>
+					<property name="dragSource"/>
+					<property name="tableDrop"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="modelBuilder"
+			instance-type="com.top_logic.layout.tree.component.TreeModelBuilder"
+			type="PolymorphicConfiguration"
+		>
+			<mandatory/>
+			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
+		</property>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			type="List"
+		>
+			<acceptable-classifiers value="treetable, commons"/>
+		</property>
+		<property name="dragSource"
+			instance-type="com.top_logic.layout.table.dnd.TableDragSource"
+			type="PolymorphicConfiguration"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
+			<acceptable-classifiers
+				unclassified="false"
+				value="treetable"
+			/>
+		</property>
+		<property name="tableDrop"
+			instance-type="com.top_logic.layout.table.dnd.TableDropTarget"
+			type="PolymorphicConfiguration"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
+			<acceptable-classifiers
+				unclassified="false"
+				value="treetable"
+			/>
+		</property>
+		<property name="component"
+			type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+		>
+			<hidden/>
+			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplateDefault"/>
+			<layout-templates value="com.top_logic/placeholder.template.xml"/>
+		</property>
+		<property name="securityDomain"
+			default="SecurityStructure"
+			type="String"
+		>
+			<nullable/>
+			<options
+				fun="com.top_logic.tool.boundsec.manager.SecurityStructures"
+				mapping="com.top_logic.model.config.TLModelPartMapping"
+			/>
+		</property>
+		<property name="helpID"
+			type="String"
+		>
+			<property-editor value="com.top_logic.layout.help.UseHelpEditor"/>
+			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
+		</property>
+	</properties>
+
+	<securityLayout name="ContextTreeTable"
+		helpID="${helpID}"
+		securityDomain="${securityDomain}"
+		titleKey="${name}"
+	>
+		<component class="com.top_logic.mig.html.layout.tiles.ContextTileComponent"
+			content="${component}"
+			name="Context"
+			titleKey="layout.editor.tileTreetable.title"
+		>
+			<selector class="com.top_logic.layout.table.tree.TreeTableComponent"
+				defaultSelection="false"
+				dialogs="${dialogs}"
+				expandRoot="${expandRoot}"
+				expandSelected="${expandSelected}"
+				isSecurityMaster="true"
+				model="${model}"
+				name="TreeTable"
+				objectType="${type}"
+				rootVisible="${rootVisible}"
+				securityObject="${securityObject}"
+				titleKey="${name}"
+			>
+				<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
+					treeModelBuilder="${modelBuilder}"
+				/>
+				<table
+					configurationProviders="${configurationProviders}"
+					defaultColumns="${defaultColumns}"
+					dragSource="${dragSource}"
+					fixedColumns="1"
+					tableDrop="${tableDrop}"
+				/>
+				<buttons>
+					${buttons}
+					<include name="templates/editComponentCommands.xml"/>
+				</buttons>
+			</selector>
+		</component>
+	</securityLayout>
+</config:template>

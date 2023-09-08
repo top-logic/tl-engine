@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26460_remove_TLStructuredType_part"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26117_security_object"
+			module="tl"
+		/>
+		<dependency name="Ticket_26398_remove_table_interfaces"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- Delete attribute created on system boot -->
+		<delete-inverse-reference name="tl.model:TLStructuredType#localParts"/>
+		<!-- rename original attribute -->
+		<update-inverse-reference name="tl.model:TLStructuredType#parts"
+			new-name="tl.model:TLStructuredType#localParts"
+		/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

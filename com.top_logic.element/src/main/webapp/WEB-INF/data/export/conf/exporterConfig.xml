@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+
+<exporter>
+        
+        <exportPath path="file://D:/cpm_export" comment="The relative or absolute path where to save exported files"/>
+        
+        <!-- <metaElement name="[meta element name]" isStructure="true/false" keyAttribute="[meta attribute name]"/> -->
+        <metaElement name="Mandator.all" isStructure="true"/>
+</exporter>

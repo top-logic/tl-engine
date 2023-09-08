@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+<pre>	<code>$e1 == $e2
+
+$e1.equals($e2)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Boolscher Ausdruck, der als wahr bewertet wird, wenn <code class="hljs inlineCode">e1</code> und <code class="hljs inlineCode">e2</code> zum gleichen Wert ausgewertet werden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>e1</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+   <td>Objekt, das mit <code class="hljs inlineCode">e2</code> verglichen werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>e2</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+   <td>Objekt, das mit <code class="hljs inlineCode">e1</code> verglichen werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+<p><code class="hljs inlineCode">true</code>, wenn das Ergebnis der Auswertung besagt, dass die beiden Objekte identisch sind.</p>
+<h2>Beispiele</h2>
+<h3>Zahlen</h3>
+<pre>	<code>1 == 1
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> <code class="hljs inlineCode">true</code></p>
+<h3>Gleiche Mengen</h3>
+<pre>	<code>list(1, 2).equals(list(1, 2))</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong> <code class="hljs inlineCode">true</code></p>
+<h3>Ungleiche Mengen</h3>
+<pre>	<code>list(1, 2).equals(list("one", "two"))</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong><code class="hljs inlineCode">false</code></p>
+<h2>Siehe auch</h2>
+<ul>
+ <li><a class="tlObject" data-custom="true" href="?page=isDateEqual&amp;uuid=61bc603f-0c3c-4e7c-9336-bf18f0cb3ad6">Gleichheit auf Tagesangaben </a></li>
+ <li><a class="tlObject" data-custom="true" href="?page=isFloatEqual&amp;uuid=f5e1a865-4441-4894-8a36-89bd15ad338f">Gleichheit bei Fließkommazahlen</a></li>
+ <li><a class="tlObject" data-custom="true" href="?page=isStringEqual&amp;uuid=58980aa6-dba0-4fc3-a05f-9ce468c4b8ad">Gleichheit bei Zeichenketten</a></li>
+</ul>

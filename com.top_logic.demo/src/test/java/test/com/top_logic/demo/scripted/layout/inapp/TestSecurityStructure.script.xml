@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+			command-label="Designmodus"
+			command-name="toggleDesignModeCommand"
+			component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+			component-name="rootLayout#masterFrame"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.AddTabCommand"
+			command-label="Tab hinzufügen"
+			command-name="addTabCommand"
+			component-implementation-comment="com.top_logic.layout.component.TabComponent"
+			component-name="mainTabbar.layout.xml#mainTabber"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Deutsch"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Tab mit Berechtigung"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Berechtigungsstruktur"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="Zentrale Berechtigungen"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		>
+			<identifiers>
+				<component-keys>
+					<component-key value="e2dad6dc-6e37-4005-9de1-235ae6dbd590.layout.xml"/>
+					<component-key value="c8717146-2f65-4e5d-a485-134ddab62ee7.layout.xml"/>
+					<component-key value="b2f09490-2457-4e9b-bab7-93d38c05a7ff.layout.xml"/>
+				</component-keys>
+			</identifiers>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Berechtigungen > Rollenprofile"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Berechtigungsstruktur"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+					tab-path="Administration > Berechtigungen"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="Zentrale Berechtigungen"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Refresh view"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+					command-label="Abbrechen"
+					command-name="nothing"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test entry for new tab exists"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+							/>
+							<path>
+								<named-member name="tree"/>
+							</path>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Tab mit Berechtigung"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="false"
+					>
+						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+							/>
+							<path>
+								<named-member name="tree"/>
+							</path>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Tab mit Berechtigung"
+						/>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Tab mit Berechtigung"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.EditComponentCommand"
+			command-label="Sicht bearbeiten"
+			command-name="editComponentCommand"
+			component-implementation-comment="com.top_logic.layout.component.TabComponent"
+			component-name="mainTabbar.layout.xml#mainTabber"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Berechtigungsstruktur"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="DemoTypes"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		>
+			<identifiers/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Berechtigungen > Rollenprofile"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Berechtigungsstruktur"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+					tab-path="Administration > Berechtigungen"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="Zentrale Berechtigungen"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Refresh view"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+					command-label="Abbrechen"
+					command-name="nothing"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test entry for new tab does not longer exist"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
+					expected-failure-message="row with label 'Tab mit Berechtigung' not found"
+				>
+					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+						failure-expected="false"
+						user-id="root"
+					>
+						<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+							expand="true"
+						>
+							<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+								/>
+								<path>
+									<named-member name="tree"/>
+								</path>
+							</context-model>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+								name="Tab mit Berechtigung"
+							/>
+						</model-name>
+					</failure-action>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Berechtigungsstruktur"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+					tab-path="Administration > Berechtigungen"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="DemoTypes"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Refresh view"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+					command-label="Abbrechen"
+					command-name="nothing"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test entry for new tab exists"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+							/>
+							<path>
+								<named-member name="tree"/>
+							</path>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Tab mit Berechtigung"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="false"
+					>
+						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+							/>
+							<path>
+								<named-member name="tree"/>
+							</path>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Tab mit Berechtigung"
+						/>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Tab mit Berechtigung"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.DeleteComponentCommand"
+			command-label="Sicht löschen"
+			command-name="deleteComponentCommand"
+			component-implementation-comment="com.top_logic.layout.component.TabComponent"
+			component-name="mainTabbar.layout.xml#mainTabber"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ja"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Berechtigungen > Rollenprofile"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Berechtigungsstruktur"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+					tab-path="Administration > Berechtigungen"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+						label="DemoTypes"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Refresh view"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+					command-label="Abbrechen"
+					command-name="nothing"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test entry for new tab does not longer exist"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
+					expected-failure-message="row with label 'Tab mit Berechtigung' not found"
+				>
+					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+						failure-expected="false"
+						user-id="root"
+					>
+						<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+							expand="true"
+						>
+							<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+								/>
+								<path>
+									<named-member name="tree"/>
+								</path>
+							</context-model>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+								name="Tab mit Berechtigung"
+							/>
+						</model-name>
+					</failure-action>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+			command-label="Designmodus verlassen"
+			command-name="toggleDesignModeCommand"
+			component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+			component-name="rootLayout#masterFrame"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

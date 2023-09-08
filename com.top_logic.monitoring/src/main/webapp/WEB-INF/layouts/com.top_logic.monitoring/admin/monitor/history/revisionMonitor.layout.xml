@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminRevisionMonitor"
+	helpIDLegacy="tl.admin.revisionMonitor.tabber"
+	titleKey="tl.admin.revisionMonitor.tabber"
+>
+	<tabInfo label="tl.admin.revisionMonitor.tabber"/>
+	<components>
+		<include name="com.top_logic.monitoring/admin/monitor/history/revisionMonitor.xml"/>
+	</components>
+</securityLayout>

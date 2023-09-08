@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminRolesConfigView"
+	helpIDLegacy="main.admin.roles.config.tabber"
+	titleKey="main.admin.roles.config.tabber"
+>
+	<tabInfo label="main.admin.roles.config.tabber"/>
+	<components>
+		<include name="com.top_logic.element/admin/security/profilesLegacy/editScopedProfiles.xml"/>
+	</components>
+</securityLayout>

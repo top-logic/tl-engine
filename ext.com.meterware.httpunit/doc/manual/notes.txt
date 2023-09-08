@@ -1,0 +1,19 @@
+get page for URL (see text)
+parsing XML
+find links in page
+following links
+find tables in a page
+reading data from a table
+reading form data
+submitting a form
+working with text parameters
+working with discrete parameters
+verifying cookies
+examining headers
+setting headers
+uploading files
+downloading files
+working with framesets
+opening new windows
+handling JavaScript problems
+interactive JavaScript

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<component class="com.top_logic.demo.layout.form.demo.PersonAjaxForm"
+			applyCommand="PersonAjaxForm_Apply"
+			name="PersonAjaxForm"
+			page="/jsp/layout/test/PersonAjaxForm.jsp"
+			resPrefix="layouts.layoutdemo.test.PersonAjaxForm.PersonAjaxForm."
+			securityProviderClass="securityRoot"
+		>
+			<goto-targets>
+				<goto-target
+					component="PersonAjaxForm_PersonDialog"
+					type="tl.accounts:Person"
+				/>
+			</goto-targets>
+			<commands>
+				<command id="PersonAjaxForm_Apply"
+					class="com.top_logic.demo.layout.form.demo.PersonAjaxForm$ApplyCommandHandler"
+					clique="apply"
+				/>
+			</commands>
+			<buttons>
+				<button id="openDialogForPerson"
+					class="com.top_logic.demo.layout.form.demo.PersonAjaxForm$GotoPerson"
+					executability="InViewMode"
+					resourceKey="layouts.layoutdemo.test.PersonAjaxForm.PersonAjaxForm.openDialogForPerson"
+					target="model(self())"
+					targetComponent="PersonAjaxForm_PersonDialog"
+				/>
+			</buttons>
+			<dialogs>
+				<component class="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
+					name="PersonAjaxForm_PersonDialog"
+					page="/jsp/contact/person/related/EditRelatedPerson.jsp"
+					resPrefix="layouts.admin.persons.personEditRaw.EditPerson."
+					securityProviderClass="securityRoot"
+				>
+					<dialogInfo createOpenerButtons="false"/>
+				</component>
+			</dialogs>
+		</component>
+		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+	</components>
+</layout>

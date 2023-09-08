@@ -1,0 +1,2502 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE taglib
+    PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN"
+            
+    "http://java.sun.com/j2ee/dtd/web-jsptaglibrary_1_2.dtd">
+<!--
+	The tag library for forms replace regular HTML forms.
+
+	Forms created with this tag library superseed regular HTML forms
+	in the following ways:
+
+     - Well-formedness is guaranteed at compile time of the JSP.
+     - Automatic input processing through {@link com.top_logic.layout.form.model.FormContext}.
+     - Automatic handling of form-related AJAX actions.
+
+ -->
+<taglib>
+
+  <!-- The version number of this tag library -->
+  <tlib-version>1.0</tlib-version>
+
+  <!-- The JSP specification version required to function -->
+  <jsp-version>1.2</jsp-version>
+
+  <!-- The short name of this tag library -->
+  <short-name>ajaxform</short-name>
+
+  <!-- General description of this tag library -->
+  <description>This tag library provides HTML forms that are AJAX-aware.</description>
+
+  <tag>
+    <name>page</name>
+    <tag-class>com.top_logic.layout.form.tag.PageAreaTag</tag-class>
+    <description>
+		Structuring element rendering a page with header and body area.
+    </description>
+    <attribute>
+	    <name>pageRenderer</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Custom renderer for writing the page structure (theme provides default).
+        </description>
+    </attribute>
+    <attribute>
+	    <name>titleView</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Custom view/control rendering the title contents.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>subTitleView</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Custom view/control rendering the sub-title contents.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>iconBarView</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Custom view/control rendering the icon bar contents.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>bodyView</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Custom view/control rendering the body contents.
+        </description>
+    </attribute>
+  </tag>
+  
+  <tag>
+    <name>title</name>
+    <tag-class>com.top_logic.layout.form.tag.PageTitleTag</tag-class>
+    <description>
+		Contents of the title area of a page header, see `form:page`.
+    </description>
+  </tag>
+  
+  <tag>
+    <name>subtitle</name>
+    <tag-class>com.top_logic.layout.form.tag.PageSubTitleTag</tag-class>
+    <description>
+		Contents of the sub-title area of a page header, see `form:page`.
+    </description>
+  </tag>
+  
+  <tag>
+    <name>iconbar</name>
+    <tag-class>com.top_logic.layout.form.tag.PageIconBarTag</tag-class>
+    <description>
+		Contents of the icon bar of a page header, see `form:page`.
+    </description>
+  </tag>
+  
+  <tag>
+    <name>form</name>
+    <tag-class>com.top_logic.layout.form.tag.FormTag</tag-class>
+    <description>
+		Replacement for HTML form element.
+    </description>
+    <attribute>
+	    <name>displayWithoutModel</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Whether the form should be rendered no matter, if the component
+        	has a model or not.
+        	
+        	By specifying a `true` value, the form is rendered exactly if
+        	the component provides a form context.
+        	
+        	By specifying a `false` value, all heuristics determining, whether 
+        	to render a form without model are disabled and the form is 
+        	rendered only if the component provides a model and a form context.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>displayCondition</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Dynamically select whether the form should be rendered.
+		
+			The default is `(component.getModel() != null &amp;&amp; component.getFormContext() != null)`
+			for non-create components with a master and `component.getFormContext() != null`
+			otherwise.
+		
+			Disabling the model check should be done by setting `displayWithoutModel`. This
+			option should only be used, if the form display must be prevented even 
+			if the component provides a form context.
+			
+			The form is not rendered, if the component does not provide a form
+			context regardless of any settings.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>ignoreModel</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Assume `null` as the component's model. Implies `displayWithoutModel`.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>noModelKey</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+		<description>
+			The alternative resource that is displayed, if the form is
+			not rendered. 
+			
+			Only one of `noModelKey`, `noModelKeyConst` or `noModelKeySuffix` may be
+			specified. The default is to use the resource suffix "noModel" to 
+			the components resource prefix with a fallback to a generic 
+			message, if  no resource is found for this derived key. By 
+			specifying either  `noModelKey` or `noModelKeySuffix`, the fallback
+			behavior to a generic message is disabled.
+		</description>
+    </attribute>
+    <attribute>
+	    <name>noModelKeyConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+		<description>
+			Resource key constant identifying the the alternative resource that is displayed, 
+			if the form is not rendered. 
+			
+			Only one of `noModelKey`, `noModelKeyConst` or `noModelKeySuffix` may be
+			specified. The default is to use the resource suffix "noModel" to 
+			the components resource prefix with a fallback to a generic 
+			message, if  no resource is found for this derived key. By 
+			specifying either  `noModelKey` or `noModelKeySuffix`, the fallback
+			behavior to a generic message is disabled.
+		</description>
+    </attribute>
+    <attribute>
+	    <name>noModelKeySuffix</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Suffix to the the component's resource prefix to create a resource
+        	key to display alternatively, if the form is not rendered.
+
+			Only one of `noModelKey`, `noModelKeyConst` or `noModelKeySuffix` may be
+			specified. The default is to use the resource suffix "noModel" to 
+			the components resource prefix with a fallback to a generic 
+			message, if  no resource is found for this derived key. By 
+			specifying either  `noModelKey` or `noModelKeySuffix`, the fallback
+			behavior to a generic message is disabled.
+		</description>
+    </attribute>
+    <attribute>
+	    <name>name</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>target</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>selectFirst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>cssClass</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+	<attribute>
+		<name>labelAbove</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+		<description>Whether the label is rendered above the input.</description>
+	</attribute>
+  </tag>
+
+	<tag>
+		<name>filterForm</name>
+		<tag-class>com.top_logic.layout.form.tag.FilterFormTag</tag-class>
+		<description>Special form tag for filter forms automatically rendering the filter button.</description>
+		<attribute>
+			<name>commandId</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>ID of the command handler that should be triggered for filtering. Either commandId or buttonName must be given, not both.</description>
+		</attribute>
+		<attribute>
+			<name>buttonName</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Name of the command field that should be triggered for filtering. Either commandId or buttonName must be given, not both.</description>
+		</attribute>
+		<attribute>
+			<name>image</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Deprecated: Use icon.</description>
+		</attribute>
+		<attribute>
+			<name>icon</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Custom filter icon.</description>
+		</attribute>
+
+		<!-- Properties inherited from form:form -->
+	    <attribute>
+		    <name>displayWithoutModel</name>
+	    	<required>false</required>
+	        <rtexprvalue>true</rtexprvalue>
+	        <description>
+	        	Whether the form should be rendered no matter, if the component
+	        	has a model or not.
+	        	
+	        	By specifying a `true` value, the form is rendered exactly if
+	        	the component provides a form context.
+	        	
+	        	By specifying a `false` value, all heuristics determining, whether 
+	        	to render a form without model are disabled and the form is 
+	        	rendered only if the component provides a model and a form context.
+	        </description>
+	    </attribute>
+	    <attribute>
+		    <name>displayCondition</name>
+	    	<required>false</required>
+	        <rtexprvalue>true</rtexprvalue>
+	        <description>
+				Dynamically select whether the form should be rendered.
+			
+				The default is `(component.getModel() != null &amp;&amp; component.getFormContext() != null)`
+				for non-create components with a master and `component.getFormContext() != null`
+				otherwise.
+			
+				Disabling the model check should be done by setting `displayWithoutModel`. This
+				option should only be used, if the form display must be prevented even 
+				if the component provides a form context.
+				
+				The form is not rendered, if the component does not provide a form
+				context regardless of any settings.
+	        </description>
+	    </attribute>
+	    <attribute>
+		    <name>ignoreModel</name>
+	    	<required>false</required>
+	        <rtexprvalue>true</rtexprvalue>
+	        <description>
+	        	Assume `null` as the component's model. Implies `displayWithoutModel`.
+	        </description>
+	    </attribute>
+	    <attribute>
+		    <name>noModelKey</name>
+	    	<required>false</required>
+	        <rtexprvalue>true</rtexprvalue>
+			<description>
+				The alternative resource that is displayed, if the form is
+				not rendered. 
+				
+				Only one of `noModelKey`, `noModelKeyConst` or `noModelKeySuffix` may be
+				specified. The default is to use the resource suffix "noModel" to 
+				the components resource prefix with a fallback to a generic 
+				message, if  no resource is found for this derived key. By 
+				specifying either  `noModelKey` or `noModelKeySuffix`, the fallback
+				behavior to a generic message is disabled.
+			</description>
+	    </attribute>
+	    <attribute>
+		    <name>noModelKeyConst</name>
+	    	<required>false</required>
+	        <rtexprvalue>true</rtexprvalue>
+			<description>
+				Resource key constant identifying the alternative resource that is displayed, if the form is
+				not rendered. 
+				
+				Only one of `noModelKey`, `noModelKeyConst` or `noModelKeySuffix` may be
+				specified. The default is to use the resource suffix "noModel" to 
+				the components resource prefix with a fallback to a generic 
+				message, if  no resource is found for this derived key. By 
+				specifying either  `noModelKey` or `noModelKeySuffix`, the fallback
+				behavior to a generic message is disabled.
+			</description>
+	    </attribute>
+	    <attribute>
+		    <name>noModelKeySuffix</name>
+	    	<required>false</required>
+	        <rtexprvalue>true</rtexprvalue>
+	        <description>
+	        	Suffix to the the component's resource prefix to create a resource
+	        	key to display alternatively, if the form is not rendered.
+	
+				Only one of `noModelKey`, `noModelKeyConst` or `noModelKeySuffix` may be
+				specified. The default is to use the resource suffix "noModel" to 
+				the components resource prefix with a fallback to a generic 
+				message, if  no resource is found for this derived key. By 
+				specifying either  `noModelKey` or `noModelKeySuffix`, the fallback
+				behavior to a generic message is disabled.
+			</description>
+	    </attribute>
+	    <attribute>
+		    <name>name</name>
+	    	<required>false</required>
+	        <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+		<attribute>
+			<name>target</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>selectFirst</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>cssClass</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+  <tag>
+    <name>formPage</name>
+    <tag-class>com.top_logic.layout.form.tag.FormPageTag</tag-class>
+    <description>
+		Container for form input elements rendering a decorative header area. 
+		
+		Must only be called once on a page.
+    </description>
+
+	<!-- Attributes inherited from form:form -->
+
+    <attribute>
+	    <name>displayWithoutModel</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Whether the form should be rendered no matter, if the component
+        	has a model or not.
+        	
+        	By specifying a `true` value, the form is rendered exactly if
+        	the component provides a form context.
+        	
+        	By specifying a `false` value, all heuristics determining, whether 
+        	to render a form without model are disabled and the form is 
+        	rendered only if the component provides a model and a form context.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>displayCondition</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Dynamically select whether the form should be rendered.
+		
+			The default is `(component.getModel() != null &amp;&amp; component.getFormContext() != null)`
+			for non-create components with a master and `component.getFormContext() != null`
+			otherwise.
+		
+			Disabling the model check should be done by setting `displayWithoutModel`. This
+			option should only be used, if the form display must be prevented even 
+			if the component provides a form context.
+			
+			The form is not rendered, if the component does not provide a form
+			context regardless of any settings.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>ignoreModel</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Assume `null` as the component's model. Implies `displayWithoutModel`.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>noModelKey</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+		<description>
+			The alternative resource that is displayed, if the form is
+			not rendered. 
+			
+			Only one of `noModelKey`, `noModelKeyConst` or `noModelKeySuffix` may be
+			specified. The default is to use the resource suffix "noModel" to 
+			the components resource prefix with a fallback to a generic 
+			message, if  no resource is found for this derived key. By 
+			specifying either  `noModelKey` or `noModelKeySuffix`, the fallback
+			behavior to a generic message is disabled.
+		</description>
+    </attribute>
+    <attribute>
+	    <name>noModelKeyConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+		<description>
+			Resource key constant identifying the alternative resource that is displayed, if the form is
+			not rendered. 
+			
+			Only one of `noModelKey`, `noModelKeyConst` or `noModelKeySuffix` may be
+			specified. The default is to use the resource suffix "noModel" to 
+			the components resource prefix with a fallback to a generic 
+			message, if  no resource is found for this derived key. By 
+			specifying either  `noModelKey` or `noModelKeySuffix`, the fallback
+			behavior to a generic message is disabled.
+		</description>
+    </attribute>
+    <attribute>
+	    <name>noModelKeySuffix</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Suffix to the the component's resource prefix to create a resource
+        	key to display alternatively, if the form is not rendered.
+
+			Only one of `noModelKey`, `noModelKeyConst` or `noModelKeySuffix` may be
+			specified. The default is to use the resource suffix "noModel" to 
+			the components resource prefix with a fallback to a generic 
+			message, if  no resource is found for this derived key. By 
+			specifying either  `noModelKey` or `noModelKeySuffix`, the fallback
+			behavior to a generic message is disabled.
+		</description>
+    </attribute>
+    <attribute>
+	    <name>name</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>target</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>selectFirst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+
+	<!-- Attributes inherited from form:page tag-->
+
+    <attribute>
+	    <name>pageRenderer</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Custom renderer for writing the page structure (theme provides default).
+        </description>
+    </attribute>
+    <attribute>
+	    <name>titleView</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Custom view/control rendering the title contents.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>subTitleView</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Custom view/control rendering the sub-title contents.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>iconBarView</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Custom view/control rendering the icon bar contents.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>bodyView</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+        	Custom view/control rendering the body contents.
+        </description>
+    </attribute>
+	
+	<!-- Attributes dedicated to decoration -->
+	
+    <attribute>
+	    <name>type</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Type name of the model elements being displayed. The type name is used
+			to select an appropriate default title image and tooltip, if the
+			component has currently no model. In case the component has a model,
+			the information is taken from the model element.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>typeField</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Name of the form field to take the type information from. This should be used, 
+			if the type is dynamically chosen (not statically defined by the JSP).
+        </description>
+    </attribute>
+    <attribute>
+	    <name>titleField</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Name of the form field to display in the title area. If this attribute
+			is given, other title attributes are not considered. The field is
+			displayed no matter, if the component has a model or not. It is
+			required that the form context provides a field with the given name.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>titleKeySuffix</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Resource key suffix (to the component's resource prefix) for the form 
+			title to use, if the component has no model to work on. 
+			
+			In a component with a model, `titleMessageKey`, or `titleMessageKeySuffix` are used.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>titleKey</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Fully qualified resource key for the form title to use, if the component 
+			has no model to work on. 
+			
+			In a component with a model, `titleMessageKey`, or `titleMessageKeySuffix` are used.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>titleKeyConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Fully resource key constant for the form title to use, if the component 
+			has no model to work on. 
+			
+			In a component with a model, `titleMessageKey`, or `titleMessageKeySuffix` are used.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>titleMessageKey</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Fully qualified resource key for the title message that is used, if the 
+			component has a model to work on. The model label is passed as single 
+			resource message argument. 
+			
+			In case no model is present, `titleKey`, or `titleKeySuffix` are used.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>titleMessageKeyConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Resource key constant for the title message that is used, if the 
+			component has a model to work on. The model label is passed as single 
+			resource message argument. 
+			
+			In case no model is present, `titleKey`, or `titleKeySuffix` are used.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>titleMessageKeySuffix</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Suffix to the component's resource key for the title message. It is used, if
+			the component has a model to work on. The model's label is passed as
+			single resource message argument. 
+			
+			In case no model is present, `titleKey`, or `titleKeySuffix` are used.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>subtitleField</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Field name to display in the sub-title area.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>subtitleKeySuffix</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Resource key prefix (to the component's resource prefix) for the form sub-title area.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>subtitleKey</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Fully qualified resource key for the form sub-title area.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>subtitleKeyConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+			Resource key constant for the form sub-title area.
+        </description>
+    </attribute>
+    <attribute>
+	    <name>image</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+	        Deprecated: Use icon.
+		</description>        
+    </attribute>
+    <attribute>
+	    <name>icon</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+	        ThemeImage to display in the header area.
+		</description>        
+    </attribute>
+    <attribute>
+	    <name>imageTooltipKeySuffix</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>imageTooltipKey</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>imageTooltipKeyConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>actionImage</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>Deprecated: Use actionIcon</description>
+    </attribute>
+    <attribute>
+	    <name>actionIcon</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>Image of the overlay image to display over the header area image.</description>
+    </attribute>
+	<attribute>
+		<name>labelAbove</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+		<description>Whether the label is rendered above the input.</description>
+	</attribute>
+  </tag>
+
+  <tag>
+    <name>label</name>
+    <tag-class>com.top_logic.layout.form.tag.LabelTag</tag-class>
+    <description>
+		Replacement for the HTML label element.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>colon</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+	<attribute>
+	    <name>style</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+
+
+    <!--
+    	A label with index or option requires a select field as model.
+    	Such label represents the option label instead of the field label.
+    -->
+    <attribute>
+	    <name>index</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>option</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>resource</name>
+    <tag-class>com.top_logic.layout.form.tag.ResourceTag</tag-class>
+    <description>
+		Writes a resource to the page.
+    </description>
+    <attribute>
+    	<!-- Deprecated, not used anymore. -->
+	    <name>type</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>reskey</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>reskeyConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>key</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>defaultKey</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>defaultKeyConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+    	<!-- Theme image name starting with '/'. -->
+	    <name>image</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>Deprecated: Use icon.</description>
+    </attribute>
+    <attribute>
+	    <name>icon</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>Theme image constant</description>
+    </attribute>
+    <attribute>
+	    <name>global</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>scope</name>
+    <tag-class>com.top_logic.layout.form.tag.ScopeTag</tag-class>
+    <description>
+		Groups a set of form members together. The group does not write anything.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>group</name>
+    <tag-class>com.top_logic.layout.form.tag.FormGroupTag</tag-class>
+    <description>
+		Groups a set of form members together. The group is optionally rendered as field set.
+		This tag provides a namespace for all direct child form tags.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+	<attribute>
+		<name>cssClass</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+		<description>Custom CSS class to add the the top-level containers of the generated boxes.</description>
+	</attribute>
+    <attribute>
+        <name>collapsible</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+		<attribute>
+			<name>independent</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether to enforce rendering independently, even if part of a box tag hierarchy.</description>
+		</attribute>
+
+		<attribute>
+			<name>titleKey</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Resource key for the internationalized title.</description>
+		</attribute>
+		<attribute>
+			<name>titleKeyConst</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Resource key constant for the internationalized title.</description>
+		</attribute>
+		<attribute>
+			<name>titleKeySuffix</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Suffix to the components resource prefix for the internationalized title.</description>
+		</attribute>
+		<attribute>
+			<name>personalizationName</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Personalization name for storing the expansion state.</description>
+		</attribute>
+		<attribute>
+			<name>legend</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether a legend should be drawn above the box. Defaults to true.</description>
+		</attribute>
+		<attribute>
+			<name>border</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether a border should be drawn around the box. Default provided by theme.</description>
+		</attribute>		
+		<attribute>
+			<name>firstColumnWidth</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS width of the first columns of the cells inside. Will be applied at all children, if it is not set there.</description>
+		</attribute>
+
+  </tag>
+
+<tag>
+	<name>block</name>
+	<tag-class>com.top_logic.layout.form.tag.BlockTag</tag-class>
+	<description>
+		Test tag for indirect rendering of child control tags. This tag builds up a renderer from the
+		contents written by the JSP tag body. This enables re-rendering its contents in later AJAX
+		updates.
+	</description>
+	<attribute>
+		<name>id</name>
+		<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>localName</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>initiallyVisible</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+	<attribute>
+		<name>cssClass</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+  <tag>
+    <name>for</name>
+    <tag-class>com.top_logic.layout.form.tag.ForTag</tag-class>
+    <description>
+		Iterates over a sequence of strings.
+    </description>
+    <attribute>
+	    <name>var</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>in</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>ifExists</name>
+    <tag-class>com.top_logic.layout.form.tag.IfExistsTag</tag-class>
+    <description>
+		Evaluates its body only a member with a given name exists in the
+		current context.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>not</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>forEach</name>
+    <tag-class>com.top_logic.layout.form.tag.ForEachTag</tag-class>
+    <description>
+		Iterates over a the names of fields within the current form container.
+    </description>
+    <attribute>
+	    <name>member</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>filter</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>comparator</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>textblock</name>
+    <tag-class>com.top_logic.layout.form.tag.BlockTextInputTag</tag-class>
+    <description>
+        Replacement for HTML input or textarea element.
+    </description>
+    <attribute>
+        <name>name</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>tabindex</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>unsafeHTML</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>onfocus</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>oninput</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>style</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>immutableStyle</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>type</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>maxLengthShown</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>colsCollapsed</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>rowsCollapsed</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>rowsExpanded</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>colsExpanded</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>colsExpandedEdit</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>rowsExpandedEdit</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>colsCollapsedEdit</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>input</name>
+    <tag-class>com.top_logic.layout.form.tag.TextInputTag</tag-class>
+    <description>
+		Replacement for HTML input or textarea element.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>tabindex</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+    	<!-- Number of columns. Applies to multi and single line fields. -->
+	    <name>columns</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>rows</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>multiLine</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>unsafeHTML</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>onfocus</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>oninput</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>style</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>immutableStyle</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>type</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>expandable</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+    <!-- Max # of chars visible in immutable state -->
+	    <name>maxLengthShown</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>integer</name>
+    <tag-class>com.top_logic.layout.form.tag.IntegerInputTag</tag-class>
+    <description>
+        Tag to create a text input for numbers with increment and decrement buttons.
+    </description>
+    <attribute>
+        <name>name</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>tabindex</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>columns</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>style</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>immutableStyle</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>onfocus</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>oninput</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>button</name>
+    <tag-class>com.top_logic.layout.form.tag.ButtonTag</tag-class>
+    <description>
+		Replacement for HTML button element.
+    </description>
+    <attribute>
+	    <name>command</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>id</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>arguments</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>disabled</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>disabledReason</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+	    <description>The reason why the button might be disabled.</description>
+    </attribute>
+    <attribute>
+	    <name>disabledReasonConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+	    <description>Resource key constant identifying the reason why the button might be disabled.</description>
+    </attribute>
+    <attribute>
+	    <name>plain</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>image</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>Deprecated: Use icon.</description>
+    </attribute>
+    <attribute>
+	    <name>icon</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>Button icon to render.</description>
+    </attribute>
+    <attribute>
+	    <name>label</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>execStateInTooltip</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>reskey</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>reskeyConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>tabindex</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>disabledImage</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>
+	        Deprecated: Use disabledIcon.
+		</description> 
+    </attribute>    
+    <attribute>
+	    <name>disabledIcon</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>Disabled button icon to render.</description>
+    </attribute>
+    <attribute>
+	    <name>renderer</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>command</name>
+    <tag-class>com.top_logic.layout.form.tag.CommandTag</tag-class>
+    <description>
+        Renders a GUI representation for an CommandField using a ButtonControl
+    </description>
+    <attribute>
+        <name>name</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>renderer</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>date</name>
+    <tag-class>com.top_logic.layout.form.tag.DateTag</tag-class>
+    <description>
+		Renders an input field with an appended icon that opens a calendar.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>columns</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>checkbox</name>
+    <tag-class>com.top_logic.layout.form.tag.CheckboxInputTag</tag-class>
+    <description>
+		Replacement for an HTML input element with type "checkbox".
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>display</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>yesNo</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    	<description>DEPRECATED: use "display"!</description>
+    </attribute>
+    <attribute>
+	    <name>tabindex</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>tristate</name>
+    <tag-class>com.top_logic.layout.form.tag.TristateCheckboxTag</tag-class>
+    <description>
+		Checkbox with three states "checked", "unchecked", and "undecided".
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>resettable</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>select</name>
+    <tag-class>com.top_logic.layout.form.tag.SelectTag</tag-class>
+    <description>
+		Replacement for a HTML select element.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>tabindex</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>size</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>style</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>width</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>forceDisplayAsList</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>maxLengthShown</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>selectionRenderer</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>option</name>
+    <tag-class>com.top_logic.layout.form.tag.SelectOptionTag</tag-class>
+    <description>
+		Single option input of a select field model.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+
+    <!-- Either index or value is required. -->
+    <attribute>
+	    <name>index</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>option</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+
+    <attribute>
+	    <name>tabindex</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>style</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>list</name>
+    <tag-class>com.top_logic.layout.form.tag.ListTag</tag-class>
+    <description>
+        Renders a ListField.
+    </description>
+    <attribute>
+        <name>name</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>itemRenderer</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>table</name>
+    <tag-class>com.top_logic.layout.form.tag.SelectionTableTag</tag-class>
+    <description>
+		Shows the current selection of a SelectField as table with given column names.
+		Expects that the corresponding SelectField has associated an Accessor.class
+		property.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>columns</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>columnNames</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>renderer</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>accessor</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>securityProvider</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+	<attribute>
+	    <name>rowMove</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+	<attribute>
+	    <name>selectable</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>initialSortColumn</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>ascending</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>tableview</name>
+    <tag-class>com.top_logic.layout.form.tag.TableTag</tag-class>
+    <description>
+		Displays a constant table specified by a TableField.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>renderer</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>fullFooter</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>tablelist</name>
+    <tag-class>com.top_logic.layout.form.tag.TableListTag</tag-class>
+    <description>
+        Displays an editable list as table specified by a TableField with an ObjectTableModel.
+    </description>
+    <attribute>
+        <name>name</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>rowObjectCreator</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>rowObjectRemover</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>appendAlways</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>renderer</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>sortable</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>initialSortColumn</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>ascending</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>comparators</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>choice</name>
+    <tag-class>com.top_logic.layout.form.tag.ChoiceTag</tag-class>
+    <description>
+		A group of radiobuttons or checkboxes representing a single or
+		multiple selection.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>orientation</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+	<attribute>
+	    <name>labelsLeft</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>tabindex</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+    <!--
+    	This tag provides an alignment of labels. See example below:
+
+    	indent="false"
+    	o label label label label
+    	label label label
+
+    	indent="true"
+    	o label label label
+    	  label label label
+    -->
+	    <name>indent</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>popupText</name>
+    <tag-class>com.top_logic.layout.form.tag.PopupTextSelectTag</tag-class>
+    <description>Create a selection that is displayed in a separate window. The selection is a text separated by delete-buttons.</description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+  
+  <tag>
+    <name>popup</name>
+    <tag-class>com.top_logic.layout.form.tag.PopupSelectTag</tag-class>
+    <description>Create a selection that is displayed in a separate window.</description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>clearButton</name>
+    	<required>false</required>
+    	<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>inputField</name>
+    	<required>false</required>
+    	<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>autoCompletion</name>
+    	<required>false</required>
+    	<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>renderer</name>
+    	<required>false</required>
+    	<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>columns</name>
+    	<required>false</required>
+    	<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>style</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>beacon</name>
+    <tag-class>com.top_logic.layout.form.tag.BeaconTag</tag-class>
+    <description>View of a single-valued selection as series of clickable images.</description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>type</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>style</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>custom</name>
+    <tag-class>com.top_logic.layout.form.tag.CustomInputTag</tag-class>
+    <description>Creates a custom form member view through a control provider.</description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>controlProvider</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>folder</name>
+    <tag-class>com.top_logic.layout.form.tag.CustomInputTag</tag-class>
+    <description>Creates a control for the com.top_logic.layout.form.model.FolderField.</description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>controlProvider</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>error</name>
+    <tag-class>com.top_logic.layout.form.tag.ErrorTag</tag-class>
+    <description>
+		Displays an error message of exactly one form field.
+    </description>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>icon</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>errors</name>
+    <tag-class>com.top_logic.layout.form.tag.ErrorsTag</tag-class>
+    <description>
+		Displays error messages of a set of form fields.
+    </description>
+    <attribute>
+	    <name>id</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>names</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>icon</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>onerror</name>
+    <tag-class>com.top_logic.layout.form.tag.OnErrorTag</tag-class>
+    <description>
+		Render a container tag that is only displayed, if the corresponding
+		form field has an error.
+    </description>
+    <attribute>
+	    <name>id</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>localName</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>cssClass</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>onvisible</name>
+    <tag-class>com.top_logic.layout.form.tag.OnVisibleTag</tag-class>
+    <description>
+		Render a container tag that is only displayed, if the corresponding
+		form member is visible.
+    </description>
+    <attribute>
+	    <name>id</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>name</name>
+    	<required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>localName</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>cssClass</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>hr</name>
+    <tag-class>com.top_logic.layout.form.tag.HRTag</tag-class>
+    <description>Create a horizontal line with al label within.</description>
+    <attribute>
+	    <name>key</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>reskey</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>reskeyConst</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>defaultKey</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>defaultKeyConst</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+    	<!-- Deprecated, use icon. -->
+	    <name>image</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    	<description>Theme image name of the info icon (starting with a '/' character).</description>
+    </attribute>
+    <attribute>
+    	<!-- Theme image constant. -->
+	    <name>icon</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>global</name>
+    	<required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>info</name>
+    	<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+        <name>percentage</name>
+        <tag-class>com.top_logic.layout.percentage.PercentageFormTag</tag-class>
+        <body-content>empty</body-content>
+        <attribute>
+            <name>name</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>shapeWidth</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>shapeHeight</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>shapeNumber</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>spaceWidth</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>shapeForegroundPaint</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>shapeBackgroundPaint</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>spacePaint</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+
+  <tag>
+  	<name>colorchooser</name>
+  	<tag-class>com.top_logic.layout.form.tag.ColorChooserTag</tag-class>
+  	<description>Renders a field to open a color chooser</description>
+  	<attribute>
+  		<name>name</name>
+  		<required>true</required>
+  		<rtexprvalue>true</rtexprvalue>
+  	</attribute>
+  </tag>
+
+  <tag>
+    <name>card</name>
+    <tag-class>com.top_logic.layout.form.tag.CardTag</tag-class>
+  	<description>
+  	     Can be used as child of an DeckPaneTag to specify what should be 
+  	     rendered if the member identified by name is selected.
+  	</description>
+    <attribute>
+  		<name>name</name>
+  		<required>true</required>
+  		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+	<attribute>
+		<name>cssClass</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+	</attribute>
+  </tag>
+
+  <tag>
+    <name>deck</name>
+    <tag-class>com.top_logic.layout.form.tag.DeckPaneTag</tag-class>
+    <description>Tag for rendering a DeckField</description>
+    <attribute>
+  		<name>name</name>
+  		<required>true</required>
+  		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+  		<name>controlProvider</name>
+  		<required>false</required>
+  		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+  <tag>
+    <name>tabbar</name>
+    <tag-class>com.top_logic.layout.form.tag.TabBarTag</tag-class>
+    <description>Tag for rendering the bar bar of a DeckField</description>
+    <attribute>
+  		<name>name</name>
+  		<required>true</required>
+  		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+  		<name>renderer</name>
+  		<required>false</required>
+  		<rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>info</name>
+    <tag-class>com.top_logic.layout.form.tag.InfoTag</tag-class>
+    <description>Renderes some info about the member depending on its tooltip</description>
+    <attribute>
+        <name>name</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>image</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <description>Deprecated: Use icon.</description>
+    </attribute>
+    <attribute>
+        <name>icon</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>dataItem</name>
+    <tag-class>com.top_logic.layout.form.tag.DataItemTag</tag-class>
+    <description>Renderes an upload and download field, resp.</description>
+    <attribute>
+        <name>name</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>uploadAutomatically</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <type>boolean</type>
+	    <description>Whether directly after selecting a file the upload should be triggered or a separate button is needed; default is true</description>
+    </attribute>
+    <attribute>
+        <name>downloadInline</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <type>boolean</type>
+	    <description>Whether the download should be shown in a separate browser window; default is false</description>
+    </attribute>
+    <attribute>
+        <name>forbidEmptyFileUpload</name>
+        <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+        <type>boolean</type>
+	    <description>Whether the upload of an empty file is forbidden; default is application default</description>
+    </attribute>
+  </tag>
+	
+	<tag>
+		<name>vertical</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.VerticalLayoutTag</tag-class>
+		<description>Deprecated: Use descriptionContainer-tag instead.</description>
+	</tag>
+	
+	<tag>
+		<name>horizontal</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.HorizontalLayoutTag</tag-class>
+		<description>Deprecated: Use columns-tag instead.</description>
+	</tag>
+	
+	<tag>
+		<name>columns</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.ColumnsLayoutTag</tag-class>
+		<description>Places cells in columns. Consecutive cells are vertically aligned (one cell under each other), columns of cells are placed horizontally with appropriate space in between. In GroupCells its automatically rendered with multiple columns.</description>
+		<attribute>
+			<name>count</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Maximum number of columns to use.</description>
+		</attribute>
+		<attribute>
+			<name>keep</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the number of columns is kept instead of adjust to the viewport size.</description>
+		</attribute>		
+	</tag>
+	
+	<tag>
+		<name>layout</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.BoxLayoutTag</tag-class>
+		<description>Places boxes with an arbitrary layout algorithm.</description>
+		<attribute>
+			<name>type</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The layout algorithm name as specified in the tag's configuration.</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>groupCell</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.GroupCellTag</tag-class>
+		<description>Draws a title above a collection of boxes.</description>
+		<attribute>
+			<name>cssClass</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Custom CSS class to add to the generated groupCell.</description>
+		</attribute>
+		<attribute>
+			<name>style</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS style to add to the generated groupCell.</description>
+		</attribute>
+		<attribute>
+			<name>titleKey</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Resource key for the internationalized title.</description>
+		</attribute>
+		<attribute>
+			<name>titleKeyConst</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Resource key constant for the internationalized title.</description>
+		</attribute>
+		<attribute>
+			<name>titleKeySuffix</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Suffix to the components resource prefix for the internationalized title.</description>
+		</attribute>
+		<attribute>
+			<name>titleText</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The plain (already internationalized) title text.</description>
+		</attribute>
+		<attribute>
+			<name>personalizationName</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Personalization name for storing the expansion state.</description>
+		</attribute>
+		<attribute>
+			<name>initiallyCollapsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the form group should be collapsed when first displayed without and user modification.</description>
+		</attribute>
+		<attribute>
+			<name>name</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Name of the form group to take the expansion state from.</description>
+		</attribute>
+		<attribute>
+			<name>preventCollapse</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether this group should never be rendered collapsed, even if a group name was specified.</description>
+		</attribute>
+		<attribute>
+			<name>border</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether a border should be drawn around the GroupCell. Default provided by theme.</description>
+		</attribute>
+		<attribute>
+			<name>columns</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Number of (maximal) columns of the GroupCell.</description>
+		</attribute>
+		<attribute>
+			<name>labelAbove</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the label is rendered above the input.</description>
+		</attribute>
+		<attribute>
+			<name>width</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The width of the GroupCell.</description>
+		</attribute>		
+		<attribute>
+			<name>firstColumnWidth</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS width of the first columns of the cells inside. Will be applied at all children, if it is not set there.</description>
+		</attribute>	
+		<attribute>
+			<name>wholeLine</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the form group is rendered over the whole line, even when it is in a multicolumn container.</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>cellTitle</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.CellTitleTag</tag-class>
+		<description>Custom title contents of a `groupCell` tag.</description>
+		<attribute>
+			<name>raw</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>
+				Whether the title content should be used as-is. Giving this option, the JSP is
+	 			responsible for rendering a `span` with the CSS class `GroupCellTag#TITLE_TEXT_CSS_CLASS` 
+	 			around the title text.
+	 		</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>separator</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.SeparatorTag</tag-class>
+		<body-content>empty</body-content>
+		<description>Places boxes vertically with a HR border between them.</description>
+		<attribute>
+			<name>visible</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the separator should be displayed or is rendered just as space.</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>emptyCell</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.EmptyCellTag</tag-class>
+		<body-content>empty</body-content>
+		<description>An empty cell taht occupies as much space as a single line of text.</description>
+	</tag>
+	
+	<tag>
+		<name>cell</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.CellTag</tag-class>
+		<description>Spawns a container for entry tags.</description>
+		<attribute>
+			<name>cssClass</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS class(es) to annotate to the cell.</description>
+		</attribute>
+		<attribute>
+			<name>style</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS style to annotate to the cells.</description>
+		</attribute>
+		<attribute>
+			<name>width</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS width of the cell.</description>
+		</attribute>	
+		<attribute>
+			<name>wholeLine</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the cell is rendered over the whole line.</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>descriptionCell</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.DescriptionCellTag</tag-class>
+		<description>Entry of content with an optional description region.</description>
+		<attribute>
+			<name>formMemberName</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The name of the FormMember to listen to the visibility. If nothing is set, this cell is always visible.</description>
+		</attribute>		
+		<attribute>
+			<name>cssClass</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS class(es) to annotate to this cell.</description>
+		</attribute>
+		<attribute>
+			<name>style</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS style to annotate to this cells.</description>
+		</attribute>
+		<attribute>
+			<name>width</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS width of this cell.</description>
+		</attribute>
+		<attribute>
+			<name>firstColumnWidth</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS width of the first column of the cell. By default its the cell for the label.</description>
+		</attribute>
+		<attribute>
+			<name>labelAbove</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the label is rendered above the input.</description>
+		</attribute>	
+		<attribute>
+			<name>labelFirst</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the label is rendered before the input or behind it.</description>
+		</attribute>			
+		<attribute>
+			<name>wholeLine</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the descriptionCell is rendered over the whole line.</description>
+		</attribute>		
+		<attribute>
+			<name>splitControls</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the controls which belong to the descriptionCell are splitted instead of rendered one after each other.</description>
+		</attribute>			
+		<attribute>
+			<name>keepInline</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether description and the input are kept in one line.</description>
+		</attribute>		
+	</tag>
+	
+	<tag>
+		<name>descriptionContainer</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.DescriptionContainerTag</tag-class>
+		<description>Contains descriptionCells which belong together.</description>
+		<attribute>
+			<name>cssClass</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS class(es) to annotate to occupied descriptionContainer.</description>
+		</attribute>
+		<attribute>
+			<name>style</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS style to annotate to occupied descriptionContainer.</description>
+		</attribute>
+		<attribute>
+			<name>width</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS width of the column of description container, only relevant if used in a column layout.</description>
+		</attribute>
+		<attribute>
+			<name>firstColumnWidth</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS width of the first column of the cell. By default its the cell for the label. Will be applied at all children, if it is not set there.</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>inputCell</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.InputCellTag</tag-class>
+		
+		<description>Label value entry of a form box.</description>
+		<attribute>
+			<name>name</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Form member name of the displayed from field.</description>
+		</attribute>
+	    <attribute>
+		    <name>controlProvider</name>
+	    	<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+	    </attribute>
+		<attribute>
+			<name>colon</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the label is suffixes with a colon character.</description>
+		</attribute>
+		<attribute>
+			<name>errorAsText</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether an input error should be rendered as text instead of icon with tooltip.</description>
+		</attribute>
+		<attribute>
+			<name>customError</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether an form:error tag is rendered explicitly instead being automatically appended to the contents.</description>
+		</attribute>
+		<attribute>
+			<name>cssClass</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS class(es) to annotate to occupied table cells of the content cell.</description>
+		</attribute>
+		<attribute>
+			<name>cssStyle</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS style to annotate to occupied table cells of the content cell.</description>
+		</attribute>
+		<attribute>
+			<name>width</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS width of this cell.</description>
+		</attribute>
+		<attribute>
+			<name>firstColumnWidth</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS width of the first column of the cell. By default its the cell for the label.</description>
+		</attribute>
+		<attribute>
+			<name>labelFirst</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the label is rendered before the input or behind it.</description>
+		</attribute>
+		<attribute>
+			<name>labelAbove</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Whether the label is rendered above the input.</description>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>description</name>
+		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.DescriptionTag</tag-class>
+		<description>Description area within a descriptionCell.</description>
+		<attribute>
+			<name>cssClass</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS class(es) to annotate this cell.</description>
+		</attribute>
+		<attribute>
+			<name>style</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The CSS style to annotate to this cell.</description>
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>gallery</name>
+		<tag-class>com.top_logic.layout.image.gallery.GalleryTag</tag-class>
+		<description>Gallery / slideshow of images.</description>
+		<attribute>
+		    <name>name</name>
+	    	<required>true</required>
+	        <rtexprvalue>true</rtexprvalue>
+    	</attribute>
+		<attribute>
+			<name>width</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The width of the image gallery.</description>
+		</attribute>
+		<attribute>
+			<name>height</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>The height of the image gallery.</description>
+		</attribute>
+	</tag>
+
+</taglib>

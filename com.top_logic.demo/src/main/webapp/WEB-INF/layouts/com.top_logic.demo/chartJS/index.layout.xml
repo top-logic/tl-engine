@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		securityDomain=""
+		tabIcon="css:fas fa-chart-bar"
+	>
+		<tabLabel key="dynamic.9520df82-0419-4d4f-9fd5-9d31e3668cef">
+			<en>ChartJS</en>
+			<de>ChartJS</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/chartJS/content.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="contentView"/>
+		<param name="columns"
+			value="name"
+		/>
+		<param name="columnDescriptions">
+			<column name="name"
+				accessor="com.top_logic.layout.IdentityAccessor"
+				labelProvider="com.top_logic.knowledge.journal.ui.ModifiedDateLabelProvider"
+				sortable="false"
+			/>
+		</param>
+		<param name="resPrefix"
+			value="tl.history."
+		/>
+		<param name="executability">
+			<executability>
+				<reference rule-id="InViewMode"/>
+			</executability>
+		</param>
+		<param name="openerCommandGroup"
+			value="Read"
+		/>
+		<param name="defaultI18n"
+			value="tl.showHistory"
+		/>
+	</params>
+
+	<layout name="${namePrefix}ShowHistoryDialog"
+		helpIDLegacy="${resPrefix}title"
+		horizontal="true"
+		titleKey="${resPrefix}title"
+	>
+		<dialogInfo
+			defaultI18n="${defaultI18n}"
+			height="600"
+			width="800"
+		>
+			<open-handler id="displayDialog_${namePrefix}ShowHistoryDialog"
+				clique="history"
+				group="${openerCommandGroup}"
+				image="theme:ICONS_HISTORY"
+				resourceKey="${defaultI18n}"
+				target="model(self())"
+				targetComponent="${namePrefix}Table"
+			>${executability}</open-handler>
+		</dialogInfo>
+
+		<components>
+			<tableView name="${namePrefix}Table"
+				modelBuilder="com.top_logic.knowledge.journal.ui.HistoryModelBuilder"
+				resPrefix="${resPrefix}"
+			>
+				<layoutInfo size="200px"/>
+				<table defaultColumns="${columns}">
+					<column-default accessor="com.top_logic.knowledge.wrap.WrapperAccessor"/>
+
+					<columns>${columnDescriptions}</columns>
+				</table>
+			</tableView>
+			${contentView}
+		</components>
+	</layout>
+</template>

@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="DemoPlain">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.demo.model.plain.wrap"
+					interface-package="com.top_logic.demo.model.plain"
+				/>
+			</annotations>
+			<types>
+				<interface name="DemoPlain.All">
+					<annotations>
+						<legacy-qualified-name qualified-name="DemoPlain.All"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</interface>
+				<interface name="DemoPlain.A">
+					<annotations>
+						<instance-presentation icon="theme:DEMO_A"/>
+						<legacy-qualified-name qualified-name="DemoPlain.A"/>
+						<main-properties properties="name, boolean, string, float, date" />
+					</annotations>
+					<attributes>
+						<property name="boolean"
+							type="tl.core:Boolean"
+						/>
+						<property name="booleanMandatory"
+							mandatory="true"
+							type="tl.core:Tristate"
+						/>
+						<property name="booleanRadio"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<boolean-display presentation="radio"/>
+							</annotations>
+						</property>
+						<property name="booleanRadioMandatory"
+							mandatory="true"
+							type="tl.core:Tristate"
+						>
+							<annotations>
+								<boolean-display presentation="radio"/>
+							</annotations>
+						</property>
+						<property name="booleanSelect"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<boolean-display presentation="select"/>
+							</annotations>
+						</property>
+						<property name="booleanSelectMandatory"
+							mandatory="true"
+							type="tl.core:Tristate"
+						>
+							<annotations>
+								<boolean-display presentation="select"/>
+							</annotations>
+						</property>
+						<property name="createdBy"
+							type="tl.accounts:Person"
+						>
+							<annotations>
+								<search-range value="false"/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.demo.model.plain.wrap.A#getCreator()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="modifiedBy"
+							type="tl.accounts:Person"
+						>
+							<annotations>
+								<search-range value="false"/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.demo.model.plain.wrap.A#getModifier()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="createdDate"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<search-range value="false"/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.demo.model.plain.wrap.A#getCreated()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="modifiedDate"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<search-range value="false"/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.demo.model.plain.wrap.A#getModified()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<reference name="checklist"
+							kind="forwards"
+							multiple="true"
+							type="enum:demo.checklist"
+						>
+							<annotations>
+								<classification-display value="checklist"/>
+							</annotations>
+						</reference>
+						<reference name="checklistSingle"
+							kind="forwards"
+							type="enum:demo.classification.single"
+						/>
+						<reference name="checklistMulti"
+							kind="forwards"
+							multiple="true"
+							type="enum:demo.classification.multi"
+						/>
+						<reference name="collection"
+							kind="forwards"
+							multiple="true"
+							type="tl.model:TLObject"
+						/>
+						<property name="date"
+							type="tl.core:Date"
+						/> 
+						<property name="dateTime"
+							type="tl.core:DateTime"
+						/>
+						<reference name="document"
+							kind="forwards"
+							type="tl.folder:Document"
+						>
+							<annotations>
+								<storage-algorithm>
+									<document-storage folder-path="webFolder"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<property name="float"
+							type="tl.core:Double"
+						/>
+						<property name="floatConstraint"
+							type="tl.core:Double"
+						>
+							<annotations>
+								<format format="#,###,###0.000"/>
+								<value-range
+									max="10.0"
+									min="-10.0"
+								/>
+							</annotations>
+						</property>
+						<reference name="list"
+							bag="true"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="DemoTypes:DemoTypes.All"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="HasEvenNumberInName"/>
+								</constraint>
+							</annotations>
+						</reference>
+						<property name="long"
+							type="tl.core:Long"
+						/>
+						<property name="longConstraint"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<value-range
+									max="10.0"
+									min="-10.0"
+								/>
+							</annotations>
+						</property>
+						<property name="stringSet"
+							multiple="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<config-type value="STRING_SET"/>
+								<storage-algorithm>
+									<string-set-storage/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="string"
+							type="tl.core:String"
+						/>
+						<reference name="typedSetOrdered"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="DemoPlain.All"
+						/>
+						<reference name="typedSetUnordered"
+							kind="forwards"
+							multiple="true"
+							type="DemoPlain.All"
+						/>
+						<reference name="webFolder"
+							composite="true"
+							kind="forwards"
+							type="tl.folder:WebFolder"
+						>
+							<annotations>
+								<folder-type value="standardFolder"/>
+							</annotations>
+						</reference>
+						<reference name="typedWrapper"
+							kind="forwards"
+							type="DemoPlain.All"
+						/>
+						<reference name="typedWrapperFiltered"
+							kind="forwards"
+							type="DemoPlain.All"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="IsAssignable"/>
+								</constraint>
+							</annotations>
+						</reference>
+						<reference name="untypedWrapper"
+							kind="forwards"
+							type="tl.model:TLObject"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="DemoPlain.All"/>
+					</generalizations>
+				</interface>
+				<interface name="DemoPlain.BC">
+					<annotations>
+						<legacy-qualified-name qualified-name="DemoPlain.BC"/>
+					</annotations>
+					<attributes>
+						<reference name="typedWrapperReverse"
+							inverse-reference="typedWrapper"
+							kind="backwards"
+							multiple="true"
+							type="DemoPlain:DemoPlain.A"
+						>
+							<annotations>
+								<search-range/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<navigate-backwards
+												attribute-name="typedWrapper"
+												type="DemoPlain:DemoPlain.A"
+											/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<property name="dateWithDefault"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<default-value>
+									<date value="2015-10-22T00:29:00.000Z"/>
+								</default-value>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="DemoPlain.All"/>
+					</generalizations>
+				</interface>
+				<interface name="DemoPlain.B">
+					<annotations>
+						<instance-presentation icon="theme:DEMO_B"/>
+						<legacy-qualified-name qualified-name="DemoPlain.B"/>
+					</annotations>
+					<attributes>
+						<property name="stringInBAndC"
+							type="tl.core:String"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="DemoPlain.BC"/>
+					</generalizations>
+				</interface>
+				<interface name="DemoPlain.C">
+					<annotations>
+						<instance-presentation icon="theme:DEMO_C"/>
+						<legacy-qualified-name qualified-name="DemoPlain.C"/>
+					</annotations>
+					<attributes>
+						<property name="stringInBAndC"
+							type="tl.core:String"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="DemoPlain.BC"/>
+					</generalizations>
+				</interface>
+				<class name="A">
+					<annotations>
+						<implementation-binding class-name="com.top_logic.demo.model.plain.wrap.A"/>
+					</annotations>
+					<generalizations>
+						<generalization type="DemoPlain.A"/>
+					</generalizations>
+				</class>
+				<class name="B">
+					<annotations>
+						<implementation-binding class-name="com.top_logic.demo.model.plain.wrap.B"/>
+					</annotations>
+					<generalizations>
+						<generalization type="DemoPlain.B"/>
+					</generalizations>
+				</class>
+				<class name="C">
+					<annotations>
+						<implementation-binding class-name="com.top_logic.demo.model.plain.wrap.C"/>
+					</annotations>
+					<generalizations>
+						<generalization type="DemoPlain.C"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

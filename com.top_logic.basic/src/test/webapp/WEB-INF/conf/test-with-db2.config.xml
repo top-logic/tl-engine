@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<pool name="db2">
+						<class>test.com.top_logic.basic.sql.TestingConnectionPool</class>
+						<read-pool>
+						</read-pool>
+						<write-pool />
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.ibm.db2.jcc.DB2SimpleDataSource</driver-class>
+							<options>
+								<option name="driverType" value="4" />
+								<option name="databaseName" value="%DB2_SCHEMA%" />
+								<option name="serverName" value="%DB2_HOST%" />
+								<option name="portNumber" value="%DB2_PORT%" />
+								<option name="user" value="%DB2_USER%" />
+								<encrypted-option name="password" value="%DB2_PASSWD%" />
+							</options>
+						</data-source>
+					</pool>
+					<pool name="testUnitDB2">
+						<class>test.com.top_logic.basic.sql.TestingConnectionPool</class>
+						<read-pool>
+						</read-pool>
+						<write-pool />
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.ibm.db2.jcc.DB2SimpleDataSource</driver-class>
+							<options>
+								<option name="driverType" value="4" />
+								<option name="databaseName" value="%DB2_SCHEMA_TEST_UNIT%" />
+								<option name="serverName" value="%DB2_HOST%" />
+								<option name="portNumber" value="%DB2_PORT%" />
+								<option name="user" value="%DB2_USER%" />
+								<encrypted-option name="password" value="%DB2_PASSWD%" />
+							</options>
+						</data-source>
+					</pool>
+					<pool name="testMigrationDB2">
+						<class>test.com.top_logic.basic.sql.TestingConnectionPool</class>
+						<read-pool>
+						</read-pool>
+						<write-pool />
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.ibm.db2.jcc.DB2SimpleDataSource</driver-class>
+							<options>
+								<option name="driverType" value="4" />
+								<option name="databaseName" value="%DB2_SCHEMA_TEST_MIGRATION%" />
+								<option name="serverName" value="%DB2_HOST%" />
+								<option name="portNumber" value="%DB2_PORT%" />
+								<option name="user" value="%DB2_USER%" />
+								<encrypted-option name="password" value="%DB2_PASSWD%" />
+							</options>
+						</data-source>
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

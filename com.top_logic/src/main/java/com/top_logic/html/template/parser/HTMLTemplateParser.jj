@@ -1,0 +1,510 @@
+/**
+ * JavaCC Grammar File
+ */
+options
+{
+    JDK_VERSION = "1.7";
+    STATIC = false;
+    UNICODE_INPUT = true;
+    JAVA_UNICODE_ESCAPE = false;
+}
+
+PARSER_BEGIN(HTMLTemplateParser)
+/*
+ * SPDX-FileCopyrightText: 2018 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.html.template.parser;
+
+import java.util.List;
+
+import com.top_logic.html.template.*;
+
+/**
+ * Parser for html template expressions.
+ *
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ */
+public class HTMLTemplateParser {
+  
+  private HTMLTemplateFactory _f = new HTMLTemplateFactory();
+
+  public HTMLTemplateFactory getFactory() {
+	return _f;
+  }
+
+  public void setFactory(HTMLTemplateFactory f) {
+	_f = f;
+  }
+
+}
+PARSER_END(HTMLTemplateParser)
+
+<DEFAULT>
+
+SKIP :
+
+{
+  < #JSP_COMMENT_START: "<%--" >
+| < JSP_COMMENT: < JSP_COMMENT_START > ( ~["-"] | "-" ~["-"] | "--" ~["%"] | "--%" ~[">"] )* "--%>" >
+| < #XML_COMMENT_START: "<!--" >
+| < XML_COMMENT: < XML_COMMENT_START > ( ~["-"] | "-" ~["-"] | "--" ~[">"] )* "-->" >
+}
+
+<DEFAULT>
+
+TOKEN :
+{
+  < EMBEDD: "{" > : EXPRESSION
+| < TAG_START : "<" < TAG_NAME > > : TAG
+| < END_TAG : "</" < TAG_NAME > ">" >
+| < #TAG_NAME : [ "A"-"Z", "a"-"z", "-", "_" ] ([ "A"-"Z", "a"-"z", "-", "_", "0"-"9"])* >
+| < IF_TAG : "<tl:if" > : SPECIAL
+| < IF_END : "</tl:if>" >
+| < CHOOSE_TAG : "<tl:choose>" > : CHOOSE
+| < WHEN_END : "</tl:when>" > : CHOOSE
+| < OTHERWISE_END : "</tl:otherwise>" > : CHOOSE
+| < FOREACH_TAG : "<tl:foreach" > : SPECIAL
+| < FOREACH_END : "</tl:foreach>" >
+| < WITH_TAG : "<tl:with" > : SPECIAL
+| < WITH_END : "</tl:with>" >
+| < TEXT_TAG : "<tl:text>" >
+| < TEXT_END : "</tl:text>" >
+| < TEXT_CONTENT : ( ~["<", "&", "{", "}", "\\"] | "\\\\" | "\\<" | "\\&" | "\\{" | "\\}" )+ >
+| < #WS : ( [" ", "\t", "\r", "\n"] )+ >
+| < #WS_OPT : ( [" ", "\t", "\r", "\n"] )* >
+
+// From XML spec
+| < EntityRef :  "&" < Name > ";" >
+| < CharRef :    "&#" (["0"-"9"])+ ";" >
+| < CharRefHex : "&#x" (["0"-"9", "a"-"f", "A"-"F"])+ ";" >
+// From XML spec without ":"
+| < #NameStartChar : ["A"-"Z"] | "_" | ["a"-"z"] | ["\u00C0"-"\u00D6"] | ["\u00D8"-"\u00F6"] | ["\u00F8"-"\u02FF"] | ["\u0370"-"\u037D"] | ["\u037F"-"\u1FFF"] | ["\u200C"-"\u200D"] | ["\u2070"-"\u218F"] | ["\u2C00"-"\u2FEF"] | ["\u3001"-"\uD7FF"] | ["\uF900"-"\uFDCF"] | ["\uFDF0"-"\uFFFD"] > 
+// From XML spec without extended range
+| < #NameChar : < NameStartChar > | "-" | "." | ["0"-"9"] | "\u00B7" | ["\u0300"-"\u036F"] | ["\u203F"-"\u2040"] >
+| < #Name : < NameStartChar > ( < NameChar > )* >
+}
+
+<CHOOSE>
+
+SKIP :
+{
+  < CHOOSE_SPACE :  " " >
+| < CHOOSE_TAB : "\t" >
+| < CHOOSE_CR : "\r" >
+| < CHOOSE_NL : "\n" >
+}
+
+<CHOOSE>
+TOKEN :
+{
+  < CHOOSE_END : "</tl:choose>" > : DEFAULT
+| < WHEN_TAG : "<tl:when" > : SPECIAL
+| < OTHERWISE_TAG : "<tl:otherwise>" > : DEFAULT
+}
+
+<EXPRESSION>
+
+SKIP :
+{
+  < EXPRESSION_SPACE :  " " >
+| < EXPRESSION_TAB : "\t" >
+| < EXPRESSION_CR : "\r" >
+| < EXPRESSION_NL : "\n" >
+}
+
+<EXPRESSION>
+
+TOKEN:
+{
+  < TRUE : "true" >
+| < FALSE : "false" >
+| < NULL : "null" >
+| < AND : "and" | "&&" >
+| < OR : "or" | "||" >
+| < VARIABLE_NAME:[ "A"-"Z", "a"-"z", "_" ] ([ "A"-"Z", "a"-"z", "_", "0"-"9"])* >
+| < NUM : ("0" | ( [ "1"-"9" ] ([ "0"-"9" ])* )) ("." ([ "0"-"9" ])+)? >
+| < EXPRESSION_IF: "?" >
+| < EXPRESSION_ELSE: ":" >
+| < EMBEDD_END: "}" >
+| < SPECIAL_VALUE_END: "\"" >
+| < NOT: "!" >
+| < EQ : "==" >
+| < NEQ: "!=" >
+| < GE: ">=" >
+| < LE: "<=" >
+| < GT: ">" >
+| < LT : "<" >
+| < PLUS: "+" >
+| < MINUS: "-" >
+| < MUL:"*" >
+| < DIV:"/" >
+| < MOD: "%" >
+| < OPEN: "(" >
+| < CLOSE: ")" >
+| < STRING : "'" (~[ "'", "\\" ])* "'" >
+}
+
+<TAG>
+
+SKIP :
+{
+  < TAG_SPACE :  " " >
+| < TAG_TAB : "\t" >
+| < TAG_CR : "\r" >
+| < TAG_NL : "\n" >
+}
+
+<TAG>
+
+TOKEN :
+{
+  < ATTRIBUTE_NAME : [ "A"-"Z", "a"-"z", "-", "_" ] ([ "A"-"Z", "a"-"z", "-", "_", "0"-"9"])* >
+| < IF_ATTR : "tl:if" > : SPECIAL_ATTR
+| < FOREACH_ATTR : "tl:foreach" > : SPECIAL_ATTR
+| < ATTRIBUTE_EQ : "=" >
+| < QUOT_START : "\"" > : ATTR_CONTENT
+| < TAG_END : ">" > : DEFAULT
+| < END_EMPTY_TAG : "/>" > : DEFAULT
+}
+
+<SPECIAL_ATTR>
+
+SKIP :
+{
+  < SPECIAL_ATTR_SPACE :  " " >
+| < SPECIAL_ATTR_TAB : "\t" >
+| < SPECIAL_ATTR_CR : "\r" >
+| < SPECIAL_ATTR_NL : "\n" >
+}
+
+<SPECIAL_ATTR>
+
+TOKEN :
+{
+  < SPECIAL_ATTR_EQ : "=" >
+| < SPECIAL_ATTR_VALUE : "\"" > : EXPRESSION
+}
+
+<SPECIAL>
+
+SKIP :
+{
+  < SPECIAL_SPACE :  " " >
+| < SPECIAL_TAB : "\t" >
+| < SPECIAL_CR : "\r" >
+| < SPECIAL_NL : "\n" >
+}
+
+<SPECIAL>
+
+TOKEN :
+{
+  < TEST_ATTR : "test" >
+| < ELEMENTS_ATTR : "elements" >
+| < DEF_ATTR : "def" >
+| < SPECIAL_EQ : "=" >
+| < SPECIAL_VALUE_START : "\"" > : EXPRESSION
+| < SPECIAL_CLOSE : ">" > : DEFAULT
+}
+
+<ATTR_CONTENT>
+
+TOKEN :
+{
+  < EMBEDD_ATTR: "{" > : EXPRESSION
+| < QUOT_END : "\"" > : TAG
+| < ATTRIBUTE_TEXT : ( ~[ "&", "{", "}", "\"", "\\" ]  | "\\\\" | "\\\"" | "\\&" | "\\{" | "\\}" )+ >
+
+// From XML spec
+| < ATTRIBUTE_EntityRef :  "&" < ATTRIBUTE_Name > ";" >
+| < ATTRIBUTE_CharRef :    "&#" (["0"-"9"])+ ";" >
+| < ATTRIBUTE_CharRefHex : "&#x" (["0"-"9", "a"-"f", "A"-"F"])+ ";" >
+// From XML spec without ":"
+| < #ATTRIBUTE_NameStartChar : ["A"-"Z"] | "_" | ["a"-"z"] | ["\u00C0"-"\u00D6"] | ["\u00D8"-"\u00F6"] | ["\u00F8"-"\u02FF"] | ["\u0370"-"\u037D"] | ["\u037F"-"\u1FFF"] | ["\u200C"-"\u200D"] | ["\u2070"-"\u218F"] | ["\u2C00"-"\u2FEF"] | ["\u3001"-"\uD7FF"] | ["\uF900"-"\uFDCF"] | ["\uFDF0"-"\uFFFD"] > 
+// From XML spec without extended range
+| < #ATTRIBUTE_NameChar : < NameStartChar > | "-" | "." | ["0"-"9"] | "\u00B7" | ["\u0300"-"\u036F"] | ["\u203F"-"\u2040"] >
+| < #ATTRIBUTE_Name : < NameStartChar > ( < NameChar > )* >
+
+}
+
+RawTemplateFragment html() :
+{
+  List<RawTemplateFragment> result = _f.builder();
+  RawTemplateFragment content;
+}
+{
+  ( content=htmlContent()
+    { result.add(content); }
+  )*
+  { return _f.template(result); }
+}
+
+RawTemplateFragment htmlContent() :
+{
+  Token t;
+  TemplateExpression expr;
+  RawTemplateFragment result;
+}
+{
+  ( result=startTag()
+  | t=< TEXT_CONTENT > { result = _f.text(t); }
+  | t=< CharRef > { result = _f.charRef(t); }
+  | t=< CharRefHex > { result = _f.charRefHex(t); }
+  | t=< EntityRef > { result = _f.entityRef(t); }
+  | < EMBEDD > (expr = templateExpression()) { result = _f.renderExpression(expr); token_source.SwitchTo(DEFAULT); } < EMBEDD_END >
+  | t=< END_TAG > { result = _f.endTag(t); }
+  )
+  { return result; }
+}
+
+TemplateExpression templateExpression():
+{
+  TemplateExpression result;
+}
+{
+  (
+    result = ifThenExpression()
+  )
+  {
+    return result;
+  }
+}
+
+TemplateExpression ifThenExpression() :
+{
+  TemplateExpression booleanExpression;
+  TemplateExpression thenExpr;
+  TemplateExpression elseExpr;
+}
+{
+  booleanExpression=booleanExpression()
+  (
+    < EXPRESSION_IF > thenExpr=booleanExpression()
+    (
+      < EXPRESSION_ELSE > elseExpr=templateExpression()
+      { return _f.ifThenExpression(booleanExpression, thenExpr, elseExpr); }
+    )?
+    { return _f.ifThenExpression(booleanExpression, thenExpr); }
+  )?
+  { return booleanExpression; }
+}
+
+TemplateExpression booleanExpression() :
+{
+  TemplateExpression expr;
+  TemplateExpression right;
+}
+{
+  expr=orExpr()
+  (
+    < OR > right=orExpr()
+    { expr=_f.or(expr, right); }
+  )*
+  { return expr; }
+}
+
+TemplateExpression orExpr() :
+{
+  TemplateExpression expr;
+  TemplateExpression right;
+}
+{
+  expr=andExpr()
+  (
+    < AND > right=andExpr()
+    { expr=_f.and(expr, right); }
+  )*
+  { return expr; }
+}
+
+TemplateExpression andExpr() :
+{
+  TemplateExpression expr;
+  TemplateExpression right;
+}
+{
+  expr=aditiveExpr()
+  (
+    <EQ> right=aditiveExpr() { expr=_f.eq(expr, right); }
+  | <NEQ> right=aditiveExpr() { expr=_f.neq(expr, right); }
+  | <GE> right=aditiveExpr() { expr=_f.ge(expr, right); }
+  | <GT>  right=aditiveExpr() { expr=_f.gt(expr, right); }
+  | <LE> right=aditiveExpr() { expr=_f.le(expr, right); }
+  | <LT>  right=aditiveExpr() { expr=_f.lt(expr, right); }
+  )?
+  { return expr; }
+}
+
+TemplateExpression aditiveExpr() :
+{
+  TemplateExpression expr;
+  TemplateExpression right;
+}
+{
+  expr=multiplicativeExpr()
+  (
+    ( <PLUS> right=multiplicativeExpr() { expr=_f.add(expr, right); }
+    | <MINUS> right=multiplicativeExpr() { expr=_f.sub(expr, right); }
+    )
+  )*
+  { return expr; }
+}
+
+TemplateExpression multiplicativeExpr() :
+{
+  TemplateExpression expr;
+  TemplateExpression right;
+}
+{
+  expr=negatedExpr()
+  (
+    ( <MUL> right=negatedExpr() { expr=_f.mul(expr, right); }
+    | <DIV> right=negatedExpr() { expr=_f.div(expr, right); }
+    | <MOD> right=negatedExpr() { expr=_f.mod(expr, right); }
+    )
+  )*
+  { return expr; }
+}
+
+TemplateExpression negatedExpr() :
+{
+  TemplateExpression expr;
+}
+{
+  ( <NOT> expr=atomicExpression() { expr = _f.not(expr); }
+  | <MINUS> expr=atomicExpression() { expr = _f.neg(expr); }
+  | expr=atomicExpression()
+  )
+  { return expr; }
+}
+
+TemplateExpression atomicExpression() :
+{
+  Token t;
+  TemplateExpression result;
+}
+{
+  (
+	t = < VARIABLE_NAME > { result = _f.variable(t); }
+  | t = < STRING > { result = _f.string(t); } 
+  | t = < NUM > { result = _f.numberLiteral(t); } 
+  | t = < TRUE > { result = _f.boolenLiteral(t, true); } 
+  | t = < FALSE >  { result = _f.boolenLiteral(t, false); } 
+  | t = < NULL >  { result = _f.nullLiteral(t); } 
+  | <OPEN> result=templateExpression() <CLOSE> 
+  )
+  {
+    return result;
+  }
+}
+
+RawTemplateFragment startTag() :
+{
+  Token t, v;
+  TagAttributeTemplate attribute;
+  StartTagTemplate result;
+  TemplateExpression expression;
+  RawTemplateFragment content;
+  ConditionalTemplate top, current;
+}
+{
+  t=< TAG_START >
+  { result = _f.startTag(t); }
+  ( attribute=attribute()
+    {
+      result.addAttribute(attribute);
+    }
+  | <IF_ATTR> <SPECIAL_ATTR_EQ> <SPECIAL_ATTR_VALUE> expression=templateExpression() <SPECIAL_VALUE_END>
+    { result = _f.conditionalTag(result, expression); token_source.SwitchTo(TAG); }
+  | <FOREACH_ATTR> <SPECIAL_ATTR_EQ> <SPECIAL_ATTR_VALUE> t=<VARIABLE_NAME> <EXPRESSION_ELSE> expression=templateExpression() <SPECIAL_VALUE_END>
+    { result = _f.foreachTag(result, t.image, expression); token_source.SwitchTo(TAG); }
+  )*
+  ( < END_EMPTY_TAG >
+    { result.setEmpty(true); }
+  | < TAG_END >
+  )
+  { return result; }
+| < IF_TAG > <TEST_ATTR> <SPECIAL_EQ> <SPECIAL_VALUE_START > expression=templateExpression() <SPECIAL_VALUE_END> { token_source.SwitchTo(SPECIAL); }
+  <SPECIAL_CLOSE>
+  content=html()
+  < IF_END >
+  { return _f.ifTag(expression, content); }
+| < CHOOSE_TAG >
+  { top = current = null; }
+  (
+    < WHEN_TAG >
+    <TEST_ATTR> <SPECIAL_EQ> <SPECIAL_VALUE_START > expression=templateExpression() <SPECIAL_VALUE_END> { token_source.SwitchTo(SPECIAL); }
+    <SPECIAL_CLOSE>
+    content=html()
+    < WHEN_END >
+    {
+      ConditionalTemplate outer = current;
+      current = _f.ifTag(expression, content);
+      if (outer == null) {
+        top = current;
+      } else {
+        outer.setElseFragment(current);
+      }
+    }
+  )*
+  (
+    < OTHERWISE_TAG >
+    content=html()
+    < OTHERWISE_END >
+  |
+    { content = EmptyTemplate.INSTANCE; }
+  )
+  < CHOOSE_END >
+  { if (current == null) { return content; } else { current.setElseFragment(content); return top; } }
+| < WITH_TAG >
+  <DEF_ATTR> <SPECIAL_EQ>
+  <SPECIAL_VALUE_START > v=<VARIABLE_NAME> <EXPRESSION_ELSE> expression=templateExpression() <SPECIAL_VALUE_END> { token_source.SwitchTo(SPECIAL); }
+  <SPECIAL_CLOSE>
+  content=html()
+  < WITH_END >
+  { return _f.withTag(v.image, expression, content); }
+| <FOREACH_TAG>
+  <ELEMENTS_ATTR> <SPECIAL_EQ>
+  <SPECIAL_VALUE_START> v=<VARIABLE_NAME> <EXPRESSION_ELSE> expression=templateExpression() <SPECIAL_VALUE_END> { token_source.SwitchTo(SPECIAL); }
+  <SPECIAL_CLOSE>
+  content=html()
+  < FOREACH_END >
+  { return _f.foreachTag(v.image, expression, content); }
+| < TEXT_TAG >
+  t=< TEXT_CONTENT >
+  < TEXT_END >
+  { return _f.rawText(t); }
+}
+
+TagAttributeTemplate attribute() :
+{
+  Token t;
+  List<RawTemplateFragment> content;
+}
+{
+  t=< ATTRIBUTE_NAME >
+  < ATTRIBUTE_EQ >
+  ( < QUOT_START >
+	{ content=attributeContent(); }
+    < QUOT_END >
+  )
+  { return _f.attribute(t, content); }
+}
+
+List<RawTemplateFragment> attributeContent() :
+{
+  Token t;
+  TemplateExpression expression;
+  List<RawTemplateFragment> result = _f.builder();
+}
+{
+  ( t=< ATTRIBUTE_TEXT > { result.add(_f.rawText(t)); }
+  | t=< ATTRIBUTE_EntityRef > { result.add(_f.entityRef(t)); }
+  | t=< ATTRIBUTE_CharRef > { result.add(_f.charRef(t)); }
+  | t=< ATTRIBUTE_CharRefHex > { result.add(_f.charRefHex(t)); }
+  | < EMBEDD_ATTR > (expression = templateExpression()) < EMBEDD_END > { result.add(_f.renderExpression(expression)); token_source.SwitchTo(ATTR_CONTENT); }
+  )*
+  { return result; }
+}

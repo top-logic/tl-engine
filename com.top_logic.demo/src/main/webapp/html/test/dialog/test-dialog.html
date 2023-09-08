@@ -1,0 +1,78 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Dialog Test Page</title>
+
+		<script src="../../../script/tl/bal.js" type="text/javascript"></script>
+		
+		<!--
+			Choose browser abstraction layer of target browser. 
+
+			Automatic detection is not supported on static pages. 		
+		 -->
+		<!-- 
+		<script src="../../../script/tl/bal-op.js" type="text/javascript"></script>
+		<script src="../../../script/tl/bal-ie.js" type="text/javascript"></script>
+		 -->
+		<script src="../../../script/tl/bal-ff.js" type="text/javascript"></script>
+
+		<script src="../../../script/tl/soap.js" type="text/javascript"></script>
+		<script src="../../../script/tl/dialog.js" type="text/javascript"></script>
+		
+		
+		<link rel="stylesheet" type="text/css" href="../../../style/_BOS_Default_theme.css" media="all" />
+		
+		<script type="text/javascript">
+			var nr = 0;
+			
+			function openDialog() {
+				dlgOpenDialog('dlg-' + nr, 'Dialog Nr. ' + nr, 'test-dialog-content.html', 800 - 40*nr, 600 - 15*nr); 
+				nr++; 
+				return false;
+			}
+			
+			function closeDialog() {
+				nr--; 
+				dlgCloseDialog('dlg-' + nr); 
+				return false;
+			}
+			
+			function log(message) {
+				document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+			}
+		
+			function clearConsole() {
+				var c = document.getElementById("console");
+				while (c.lastChild != null) {
+					c.removeChild(c.lastChild);
+				}
+				log("Console cleared.");
+				return false;
+			}
+		</script>
+	</head>
+	<body onload="log('Test ready.');">
+
+		<p>
+			<button onclick="return dlgToogleMinimized('dlg-1');">Auf-/zuklappen</button>
+			<button onclick="return openDialog();">Open dialog</button>
+		</p>
+		
+		<form action="#" onclick="return false;">
+		
+			<input type="text">
+			<select>
+				<option>A</option>
+				<option>B</option>
+				<option>A</option>
+				<option>D</option>
+			</select>
+		</form>
+		
+		<h2>Console output</h2>
+		
+		<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+		
+		<div id="dlgDialogs"></div>
+	</body>
+</html>

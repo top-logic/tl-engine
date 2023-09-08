@@ -1,0 +1,7 @@
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance class="com.top_logic.util.resource.analyzer.IDEResources"/>
+		</config>
+	</services>
+</application>

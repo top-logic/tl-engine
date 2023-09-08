@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="A">
+	<values>
+		<value name="a0"/>
+		<value name="a1"/>
+		<value name="a2"/>
+	</values>
+	<other-values>
+		<value name="v1"/>
+		<value name="v2"/>
+		<value name="v3"/>
+	</other-values>
+	<empty-default>
+	</empty-default>
+	<empty-value>
+	</empty-value>
+</component>

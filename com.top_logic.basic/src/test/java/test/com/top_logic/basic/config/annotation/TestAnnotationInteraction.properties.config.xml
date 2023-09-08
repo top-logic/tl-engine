@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<defaults>
+		<!--
+		The default value configured here has to be the one specified in:
+		test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction.CONFIGURED_DEFAULT_VALUE
+		-->
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerBaseTypes$ScenarioTypeBaseCDefaultSecond">
+			<property name="example" value="2" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerBaseTypes$ScenarioTypeBaseCDefaultThird">
+			<property name="example" value="3" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerBaseTypes$ScenarioTypeBaseCDefault">
+			<property name="example" value="111" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerLocalXY$ScenarioTypeLocalCDefaultADefault">
+			<property name="example" value="111" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerLocalXInheritedY$ScenarioTypeLocalCDefaultInheritedADefault">
+			<property name="example" value="111" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerLocalCDefaultInheritedXY$ScenarioTypeLocalCDefaultInheritedCDefaultCDefault">
+			<property name="example" value="111" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerLocalCDefaultInheritedXY$ScenarioTypeLocalCDefaultInheritedCDefaultADefault">
+			<property name="example" value="111" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerLocalCDefaultInheritedXY$ScenarioTypeLocalCDefaultInheritedCDefaultAbstract">
+			<property name="example" value="111" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerLocalCDefaultInheritedXY$ScenarioTypeLocalCDefaultInheritedADefaultCDefault">
+			<property name="example" value="111" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerLocalCDefaultInheritedXY$ScenarioTypeLocalCDefaultInheritedADefaultADefault">
+			<property name="example" value="111" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerLocalCDefaultInheritedXY$ScenarioTypeLocalCDefaultInheritedADefaultMandatory">
+			<property name="example" value="111" />
+		</config>
+		<config
+			interface="test.com.top_logic.basic.config.annotation.ScenarioAnnotationInteraction$ScenarioContainerLocalCDefaultInheritedXY$ScenarioTypeLocalCDefaultInheritedADefaultAbstract">
+			<property name="example" value="111" />
+		</config>
+	</defaults>
+
+</application>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Main configuration file -->
+<root>
+	<alias>
+	    <entry name="%STORAGE_PATH%" value="${env:storage_path:./tmp/app-data}" />
+	    <entry name="%MESSAGE_CONSUMER_GROUP%" value="${env:message_consumer:demo-message-consumer}" />
+	    
+	    <entry name="%KAFKA_POLLING_INTERVAL%" value="1000" />
+	</alias>
+
+
+	<properties>
+		<section name="ConfiguredAttributedTooltips" comment="Attributes to show in ConfiguredAttributedTooltipProvider">
+            <entry name="me:kafka.demo:Node" value="name, tl.type" />
+            <entry name="me:kafka.demo:RemoteNode" value="name, tl.type, externalId" />
+		</section>
+	</properties>
+</root>

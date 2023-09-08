@@ -1,0 +1,26 @@
+<div>
+<h1>Dynamic HTML generation</h1>
+<p>
+	A multiplication table: 
+</p>
+<script type="text/tlscript">
+numbers = count(1, 10);
+{{{
+<table>
+	<tr>
+		<th>a * b</th>
+{ $numbers.foreach(a -> {{{
+		<th style="border-left: solid 1px;">{$a}</th>}}}) }
+	</tr>
+{ $numbers.foreach(b -> {{{
+	<tr>
+		<th style="border-top: solid 1px;">{$b}</th>
+	{ $numbers.foreach(a -> {{{
+		<td style="border-left: solid 1px; border-top: solid 1px;">{$a * $b}</td>}}} ) 
+	}
+	</tr>
+}}} ) }
+</table>
+}}}
+</script>
+</div>

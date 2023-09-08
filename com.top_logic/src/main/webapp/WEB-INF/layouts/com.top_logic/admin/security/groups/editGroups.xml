@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- This component manages groups. -->
+<include name="com.top_logic/admin/security/groups/editGroups_shared.xml"
+	isSecurityMaster="false"
+	namePrefix="admin"
+	permitEditSystemFlag="false"
+/>

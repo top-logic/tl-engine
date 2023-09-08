@@ -1,0 +1,104 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.72 [en] (X11; U; Linux 2.2.14-5.0 i686) [Netscape]">
+</head>
+<body bgcolor="#FFFFFF">
+<center>
+<h1>
+<font size=+3>Using SSL with httpunit FAQ</font></h1></center>
+
+<h2>
+Where can I get information on SSL?</h2>
+<a href="http://java.sun.com/security/ssl/API_users_guide.html">from Sun
+on SSL</a>
+<br><a href="http://www.thawte.com/developers/contents.html">from Thawte,
+a certificate vendor</a>
+<br>
+<a href="http://java.sun.com/products/jsse/">from the JSSE part of Sun's site</a> 
+<h2> What are some tools for creating and modifying certificates?</h2>
+<a href="http://www.openssl.org/docs/apps/openssl.html">openssl</a> which is <a href="http://www.pseudonym.org/ssl/wwwj-index.html">also 
+described at pseudonym.org</a><br>
+<a href="http://java.sun.com/products/jdk/1.2/docs/tooldocs/solaris/keytool.html">keytool</a> 
+for java &nbsp; 
+<h2>
+How do I create a certificate?</h2>
+Create a self-signed cert via openssl, given an existing key and openssl
+config file:
+<p>&nbsp;&nbsp;&nbsp; openssl req -new -out output.pem -key my_key.pem
+-days 9999 -x509 -config openssl.cnf
+<p>There's also a way to do this with the java "keytool" application.
+<br>&nbsp;
+<h2>
+How can I&nbsp;<a NAME="make my certificate trusted"></a>make my certificate
+trusted by the JVM?</h2>
+
+<p><br>If you purchased your SSL certificate from Verisign or Thawte, then
+it should be automatically trusted by the "trust file" within the JVM (Sun
+seems to ship JVMs with certs from these two suppliers).&nbsp; If you created
+your own certificate, you'll need to <a href="#import my existing certificate into the trust file for">import
+that cert into cacerts</a>.
+<h2>
+How can I&nbsp;<a NAME="import my existing certificate into the trust file for"></a>import
+my existing certificate into the "trust file" for a JVM?</h2>
+
+<p><br>1.&nbsp; Find the trusted file "cacerts" in your JRE, e.g.
+<br>&nbsp;&nbsp;&nbsp; find /java_install -name "cacerts"
+<p>2. Copy that file to a backup
+<br>&nbsp;&nbsp;&nbsp; cp cacerts cacerts.bak
+<p>3. Install your certificate into the trust file (note: the file cacerts
+ships from Sun with password "changeit")
+<br>&nbsp;&nbsp;&nbsp; keytool -import -alias &lt;mycompany> -file mycert.pem
+-keystore $JAVA_HOME/jre/lib/security/cacerts
+<p>4. Verify that your cert was imported:
+<br>&nbsp;&nbsp;&nbsp; keytool -list -keystore $JAVA_HOME/jre/lib/security/cacerts
+<h2>
+How can I use SSL in httpunit?</h2>
+1. You need an SSL certificate intalled into the web server to be tested. That 
+<a href="#make my certificate trusted">certificate must be trusted</a> by the 
+JVM of the test rig (httpunit). That certificate must have, as its Common Name, 
+the exact domain name of the web server you want to secure (e.g. "www.foo.com" 
+or "secure.foo.com". I have not had luck with certs like *.foo.com.) 
+<p>2.&nbsp; You must enable SSL support (i.e., support for URLs that start with 
+  "https") in your test rig's JVM. Some environments like Weblogic offer native 
+  SSL support, which is fast compared to pure java.&nbsp; For Weblogic, set the 
+  property weblogic.security.ssl.enable=true in the config file and just start 
+  using URLs like "https://myhost".&nbsp; Also, there is at least one <a href="#free SSL implementation">free 
+  SSL implementation in java</a>. <br>
+  &nbsp;
+<h2>
+How can I use a&nbsp;<a NAME="free SSL implementation"></a>free SSL implementation?</h2>
+There is a free <a href="http://java.sun.com/products/jsse/">SSL implementation
+available in pure java from Sun</a> , although it is relatively slow, especially
+in its creation of the random key to start an SSL connection (about 3 seconds
+on a 600Mz PIII).&nbsp; To use this implementation, download the JSSE package
+from the Sun URL above, then:
+<p>1. Add the three key jars to your JVM's "ext" (extentions) directory;
+e.g.
+<br>&nbsp;&nbsp;&nbsp; cp jcert.jar jnet.jar jsse.jar $JAVA_HOME/jre/lib/ext/
+<p>2. After the jars are in place, you must modify the file "java.security"
+to allow usage of the providers found within the jars. Find the file
+<br>&nbsp;&nbsp; find $JAVA_HOME -name "java.security"
+<p>3.&nbsp; Add the following line to the file java.security:
+<br>&nbsp;&nbsp;&nbsp; security.provider.2=com.sun.net.ssl.internal.ssl.Provider
+<p>Then start using URLs like "https://myhost" within the test rig.&nbsp;
+The HTTPS protocol will automatically cause new provider classes within
+the extention jars to be employed for a java.net.URL class and its related
+connections. Note that you should NOT add these jars to the CLASSPATH.&nbsp;
+Javax jars are accessed by the JVM by their inclusion in the magic "ext"
+folder.
+<br>&nbsp;
+<h2>
+How do I solve a javax.net.ssl.SSLException: untrusted server cert chain?</h2>
+
+<p><br>See how to <a href="#make my certificate trusted">make your certificate
+trusted</a>.
+<br>&nbsp;
+<p>
+<hr WIDTH="100%">
+<p>Compiled 12 Mar 2001 by larry hamel.&nbsp; Please post corrections/comments 
+  to the <a href="mailto:httpunit-develop@lists.sourceforge.net">httpunit discussion 
+  list</a>. 
+</body>
+</html>

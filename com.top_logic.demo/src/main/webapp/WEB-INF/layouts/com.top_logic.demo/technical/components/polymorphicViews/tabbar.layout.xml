@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/viewSelector.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicViews/cView/viewAlternative.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicViews/bView/viewAlternative.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicViews/default/viewAlternative.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

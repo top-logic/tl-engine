@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.folder">
+		<interface name="WithResource">
+			<attributes>
+				<property name="physicalResource"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+						<visibility value="hidden"/>
+						<fulltext-relevant value="false"/>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+		<class name="WebFolder">
+			<generalizations>
+				<generalization type="WithResource"/>
+			</generalizations>
+			<annotations>
+				<table name="WebFolder"/>
+				<config-type value="WEBFOLDER"/>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.WebFolder"/>
+				<instance-presentation
+					icon="theme:tl.folder.WebFolder"
+					large-icon="theme:tl.folder.WebFolder.large"
+				/>
+				<default-value provider="com.top_logic.element.structured.util.FolderDefaultProvider"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="description"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="folderType"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Document">
+			<generalizations>
+				<generalization type="WithResource"/>
+			</generalizations>
+			<annotations>
+				<table name="Document"/>
+				<config-type value="DOCUMENT"/>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.Document"/>
+				<instance-presentation icon="theme:tl.folder.Document"/>
+				<main-properties properties="name, size, versionNumber"/>
+				<dynamic-icon icon-provider="com.top_logic.layout.provider.icon.BinaryDataIconProvider"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="size"
+					mandatory="true"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<delete-protected/>
+						<fulltext-relevant value="false"/>
+					</annotations>
+				</property>
+				<property name="versionNumber"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<delete-protected/>
+						<fulltext-relevant value="false"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="DocumentVersion">
+			<annotations>
+				<table name="DocumentVersion"/>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.DocumentVersion"/>
+				<instance-presentation icon="theme:tl.folder.DocumentVersion"/>
+			</annotations>
+			<attributes>
+				<property name="revision"
+					mandatory="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<reference name="doc"
+					kind="forwards"
+					navigate="true"
+					type="Document"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="doc"
+								storage-type="DocumentVersion"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

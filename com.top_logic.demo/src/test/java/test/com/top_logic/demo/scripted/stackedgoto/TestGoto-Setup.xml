@@ -1,0 +1,1414 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create root object."
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-B.xml"
+							template-name-comment="Create B"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="TestStackedDialogs"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create complex graph of referenced objects."
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Create L."
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestStackedDialogs"/>
+											</structure-path>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+										tab-path="Strukturen > Typendemo"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+									template="script:/demo/create-element.xml"
+									template-name-comment="Create element"
+								>
+									<parameters>
+										<parameter name="Typ"
+											value="Demo L"
+										/>
+										<parameter name="Name"
+											value="L2"
+										/>
+									</parameters>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Create A2."
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestStackedDialogs"/>
+											</structure-path>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+										tab-path="Strukturen > Typendemo"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+									template="script:/demo/create-element.xml"
+									template-name-comment="Create element"
+								>
+									<parameters>
+										<parameter name="Typ"
+											value="Demo A"
+										/>
+										<parameter name="Name"
+											value="A2"
+										/>
+									</parameters>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Create A4."
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestStackedDialogs"/>
+											</structure-path>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+										tab-path="Strukturen > Typendemo"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+									template="script:/demo/create-element.xml"
+									template-name-comment="Create element"
+								>
+									<parameters>
+										<parameter name="Typ"
+											value="Demo A"
+										/>
+										<parameter name="Name"
+											value="A4"
+										/>
+									</parameters>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Create plain A."
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Tabellen > Tree Grid"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+									columns="Zeilenselektion,Kommandos,Name,booleanMandatory,booleanRadioMandatory,booleanSelectMandatory,date,float,float (no special configuration),long,string,structure"
+									label="true"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Tabellen > Tree Grid > Demo tree_grid.xml (Unendlicher Baum)"
+										/>
+										<path>
+											<named-member name="fieldTable"/>
+										</path>
+									</model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+									comment=""
+									failure-expected="false"
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+										expand="true"
+									>
+										<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+													tab-path="Tabellen > Tree Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+														field-label-comment=""
+														field-name="fieldTable"
+													/>
+												</path>
+											</model-name>
+										</context-model>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming$GridNodeName">
+												<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+														tab-path="Tabellen > Tree Grid"
+													/>
+												</component>
+												<path>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+														<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+															<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+																tab-path="Tabellen > Tree Grid"
+															/>
+															<path>
+																<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																	field-label-comment=""
+																>
+																	<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																		structure-name="DemoTypes"
+																	>
+																		<structure-path>
+																			<node name="TestStackedDialogs"/>
+																		</structure-path>
+																	</business-object>
+																</node>
+															</path>
+														</model-name>
+													</entry>
+												</path>
+											</model-name>
+										</node>
+									</model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming$GridNodeName">
+												<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+														tab-path="Tabellen > Tree Grid"
+													/>
+												</component>
+												<path>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+														<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+															<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+																tab-path="Tabellen > Tree Grid"
+															/>
+															<path>
+																<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																	field-label-comment=""
+																>
+																	<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																		structure-name="DemoTypes"
+																	>
+																		<structure-path>
+																			<node name="TestStackedDialogs"/>
+																		</structure-path>
+																	</business-object>
+																</node>
+															</path>
+														</model-name>
+													</entry>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+														<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+															<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+																tab-path="Tabellen > Tree Grid"
+															/>
+															<path>
+																<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																	field-label-comment=""
+																>
+																	<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																		structure-name="DemoTypes"
+																	>
+																		<structure-path>
+																			<node name="TestStackedDialogs"/>
+																			<node name="L2"/>
+																		</structure-path>
+																	</business-object>
+																</node>
+															</path>
+														</model-name>
+													</entry>
+												</path>
+											</model-name>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="fieldTable"
+											/>
+										</path>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.demo.model.types.util.CreateLGridChildHandler"
+									command-label="Plain A alegen"
+									command-name="newPlainA"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+									component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+										tab-path="Tabellen > Tree Grid"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+													field-label-comment=""
+												>
+													<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+														provider-name="com.top_logic.element.layout.grid.NewObject$Naming"
+													>
+														<name/>
+													</business-object>
+												</field>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+													field-label-comment="name"
+												>
+													<attribute-ref attribute-name="name">
+														<type type-name="DemoPlain.All">
+															<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																table-name="TLModule"
+															>
+																<key-values>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																			string="DemoPlain"
+																		/>
+																	</attribute>
+																</key-values>
+															</scope-ref>
+														</type>
+													</attribute-ref>
+												</field>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="plainA"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="booleanMandatory"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Tabellen > Tree Grid > Demo tree_grid.xml (Unendlicher Baum)"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="booleanRadioMandatory"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Tabellen > Tree Grid > Demo tree_grid.xml (Unendlicher Baum)"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="booleanSelectMandatory"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Tabellen > Tree Grid > Demo tree_grid.xml (Unendlicher Baum)"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming$GridNodeName">
+												<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+													<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+														tab-path="Tabellen > Tree Grid"
+													/>
+												</component>
+												<path>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+														<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+															<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+																tab-path="Tabellen > Tree Grid"
+															/>
+															<path>
+																<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																	field-label-comment=""
+																>
+																	<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																		structure-name="DemoTypes"
+																	>
+																		<structure-path>
+																			<node name="TestStackedDialogs"/>
+																		</structure-path>
+																	</business-object>
+																</node>
+															</path>
+														</model-name>
+													</entry>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+														<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+															<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+																tab-path="Tabellen > Tree Grid"
+															/>
+															<path>
+																<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+																	field-label-comment=""
+																>
+																	<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																		structure-name="DemoTypes"
+																	>
+																		<structure-path>
+																			<node name="TestStackedDialogs"/>
+																			<node name="L2"/>
+																		</structure-path>
+																	</business-object>
+																</node>
+															</path>
+														</model-name>
+													</entry>
+												</path>
+											</model-name>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="fieldTable"
+											/>
+										</path>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Strukturen"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestStackedDialogs"/>
+												<node name="L2"/>
+											</structure-path>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+										tab-path="Strukturen > Typendemo"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+									command-label="Anzeigen"
+									command-name="gotoCmd"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments>
+										<argument name="goto_object">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="GenericObject"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="plainA"
+														/>
+													</attribute>
+													<attribute name="tType">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+															table-name="MetaElement"
+														>
+															<key-values>
+																<attribute name="scope">
+																	<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																		table-name="TLModule"
+																	>
+																		<key-values>
+																			<attribute name="name">
+																				<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																				string="DemoPlain"
+																				/>
+																			</attribute>
+																		</key-values>
+																	</value>
+																</attribute>
+																<attribute name="name">
+																	<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																		string="A"
+																	/>
+																</attribute>
+															</key-values>
+														</value>
+													</attribute>
+												</key-values>
+											</value>
+										</argument>
+									</arguments>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+									command-label="Bearbeiten"
+									command-name="switchToAJAXEdit"
+									comment=""
+									component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+									component-name="mainTabbar.layout.xml#globalDialogPlainEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="mainTabbar.layout.xml#globalDialogPlainEdit"
+										tab-path=""
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+													field-label-comment="booleanMandatory"
+												>
+													<attribute-ref attribute-name="booleanMandatory">
+														<type type-name="DemoPlain.A">
+															<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																table-name="TLModule"
+															>
+																<key-values>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																			string="DemoPlain"
+																		/>
+																	</attribute>
+																</key-values>
+															</scope-ref>
+														</type>
+													</attribute-ref>
+													<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="GenericObject"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="plainA"
+																/>
+															</attribute>
+															<attribute name="tType">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																	table-name="MetaElement"
+																>
+																	<key-values>
+																		<attribute name="scope">
+																			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																				table-name="TLModule"
+																			>
+																				<key-values>
+																				<attribute name="name">
+																				<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																				string="DemoPlain"
+																				/>
+																				</attribute>
+																				</key-values>
+																			</value>
+																		</attribute>
+																		<attribute name="name">
+																			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																				string="A"
+																			/>
+																		</attribute>
+																	</key-values>
+																</value>
+															</attribute>
+														</key-values>
+													</self-ref>
+												</field>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="false"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="mainTabbar.layout.xml#globalDialogPlainEdit"
+										tab-path=""
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+													field-label-comment="booleanSelectMandatory"
+												>
+													<attribute-ref attribute-name="booleanSelectMandatory">
+														<type type-name="DemoPlain.A">
+															<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																table-name="TLModule"
+															>
+																<key-values>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																			string="DemoPlain"
+																		/>
+																	</attribute>
+																</key-values>
+															</scope-ref>
+														</type>
+													</attribute-ref>
+													<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="GenericObject"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="plainA"
+																/>
+															</attribute>
+															<attribute name="tType">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																	table-name="MetaElement"
+																>
+																	<key-values>
+																		<attribute name="scope">
+																			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																				table-name="TLModule"
+																			>
+																				<key-values>
+																				<attribute name="name">
+																				<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																				string="DemoPlain"
+																				/>
+																				</attribute>
+																				</key-values>
+																			</value>
+																		</attribute>
+																		<attribute name="name">
+																			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																				string="A"
+																			/>
+																		</attribute>
+																	</key-values>
+																</value>
+															</attribute>
+														</key-values>
+													</self-ref>
+												</field>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="false"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="mainTabbar.layout.xml#globalDialogPlainEdit"
+										tab-path=""
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+													field-label-comment="booleanRadioMandatory"
+												>
+													<attribute-ref attribute-name="booleanRadioMandatory">
+														<type type-name="DemoPlain.A">
+															<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																table-name="TLModule"
+															>
+																<key-values>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																			string="DemoPlain"
+																		/>
+																	</attribute>
+																</key-values>
+															</scope-ref>
+														</type>
+													</attribute-ref>
+													<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="GenericObject"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="plainA"
+																/>
+															</attribute>
+															<attribute name="tType">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																	table-name="MetaElement"
+																>
+																	<key-values>
+																		<attribute name="scope">
+																			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																				table-name="TLModule"
+																			>
+																				<key-values>
+																				<attribute name="name">
+																				<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																				string="DemoPlain"
+																				/>
+																				</attribute>
+																				</key-values>
+																			</value>
+																		</attribute>
+																		<attribute name="name">
+																			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																				string="A"
+																			/>
+																		</attribute>
+																	</key-values>
+																</value>
+															</attribute>
+														</key-values>
+													</self-ref>
+												</field>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="false"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+									command-label="Speichern"
+									command-name="defaultSave"
+									comment=""
+									component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+									component-name="mainTabbar.layout.xml#globalDialogPlainEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Set references."
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestStackedDialogs"/>
+												<node name="A2"/>
+											</structure-path>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+										tab-path="Strukturen > Typendemo"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+									command-label="Bearbeiten"
+									command-name="ElementSwitchEditCommand"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+													field-label-comment="typedWrapper"
+												>
+													<attribute-ref attribute-name="typedWrapper">
+														<type type-name="DemoTypes.A">
+															<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																table-name="TLModule"
+															>
+																<key-values>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																			string="DemoTypes"
+																		/>
+																	</attribute>
+																</key-values>
+															</scope-ref>
+														</type>
+													</attribute-ref>
+													<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestStackedDialogs"/>
+															<node name="A2"/>
+														</structure-path>
+													</self-ref>
+												</field>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+												<list>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestStackedDialogs"/>
+															<node name="A4"/>
+														</structure-path>
+													</entry>
+												</list>
+											</value>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+													field-label-comment="list"
+												>
+													<attribute-ref attribute-name="list">
+														<type type-name="DemoTypes.A">
+															<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																table-name="TLModule"
+															>
+																<key-values>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																			string="DemoTypes"
+																		/>
+																	</attribute>
+																</key-values>
+															</scope-ref>
+														</type>
+													</attribute-ref>
+													<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestStackedDialogs"/>
+															<node name="A2"/>
+														</structure-path>
+													</self-ref>
+												</field>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+												<list>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestStackedDialogs"/>
+															<node name="L2"/>
+														</structure-path>
+													</entry>
+												</list>
+											</value>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+									command-label="Speichern"
+									command-name="defaultSave"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestStackedDialogs"/>
+												<node name="A4"/>
+											</structure-path>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+										tab-path="Strukturen > Typendemo"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+									command-label="Bearbeiten"
+									command-name="ElementSwitchEditCommand"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+													field-label-comment="typedWrapper"
+												>
+													<attribute-ref attribute-name="typedWrapper">
+														<type type-name="DemoTypes.A">
+															<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																table-name="TLModule"
+															>
+																<key-values>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																			string="DemoTypes"
+																		/>
+																	</attribute>
+																</key-values>
+															</scope-ref>
+														</type>
+													</attribute-ref>
+													<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestStackedDialogs"/>
+															<node name="A4"/>
+														</structure-path>
+													</self-ref>
+												</field>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+												<list>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestStackedDialogs"/>
+															<node name="A2"/>
+														</structure-path>
+													</entry>
+												</list>
+											</value>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+													field-label-comment="list"
+												>
+													<attribute-ref attribute-name="list">
+														<type type-name="DemoTypes.A">
+															<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																table-name="TLModule"
+															>
+																<key-values>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																			string="DemoTypes"
+																		/>
+																	</attribute>
+																</key-values>
+															</scope-ref>
+														</type>
+													</attribute-ref>
+													<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestStackedDialogs"/>
+															<node name="A4"/>
+														</structure-path>
+													</self-ref>
+												</field>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+												<list>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestStackedDialogs"/>
+															<node name="L2"/>
+														</structure-path>
+													</entry>
+												</list>
+											</value>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+									command-label="Speichern"
+									command-name="defaultSave"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestStackedDialogs"/>
+												<node name="L2"/>
+											</structure-path>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+										tab-path="Strukturen > Typendemo"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+									command-label="Anzeigen"
+									command-name="gotoCmd"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments>
+										<argument name="goto_object">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="GenericObject"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="plainA"
+														/>
+													</attribute>
+													<attribute name="tType">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+															table-name="MetaElement"
+														>
+															<key-values>
+																<attribute name="scope">
+																	<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																		table-name="TLModule"
+																	>
+																		<key-values>
+																			<attribute name="name">
+																				<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																				string="DemoPlain"
+																				/>
+																			</attribute>
+																		</key-values>
+																	</value>
+																</attribute>
+																<attribute name="name">
+																	<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																		string="A"
+																	/>
+																</attribute>
+															</key-values>
+														</value>
+													</attribute>
+												</key-values>
+											</value>
+										</argument>
+									</arguments>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+									command-label="Bearbeiten"
+									command-name="switchToAJAXEdit"
+									comment=""
+									component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+									component-name="mainTabbar.layout.xml#globalDialogPlainEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="mainTabbar.layout.xml#globalDialogPlainEdit"
+										tab-path=""
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+													field-label-comment="list (contains DemoTypes with Even number in name)"
+												>
+													<attribute-ref attribute-name="list">
+														<type type-name="DemoPlain.A">
+															<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																table-name="TLModule"
+															>
+																<key-values>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																			string="DemoPlain"
+																		/>
+																	</attribute>
+																</key-values>
+															</scope-ref>
+														</type>
+													</attribute-ref>
+													<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="GenericObject"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="plainA"
+																/>
+															</attribute>
+															<attribute name="tType">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																	table-name="MetaElement"
+																>
+																	<key-values>
+																		<attribute name="scope">
+																			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+																				table-name="TLModule"
+																			>
+																				<key-values>
+																				<attribute name="name">
+																				<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																				string="DemoPlain"
+																				/>
+																				</attribute>
+																				</key-values>
+																			</value>
+																		</attribute>
+																		<attribute name="name">
+																			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																				string="A"
+																			/>
+																		</attribute>
+																	</key-values>
+																</value>
+															</attribute>
+														</key-values>
+													</self-ref>
+												</field>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+												<list>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestStackedDialogs"/>
+															<node name="A2"/>
+														</structure-path>
+													</entry>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestStackedDialogs"/>
+															<node name="A4"/>
+														</structure-path>
+													</entry>
+												</list>
+											</value>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+									command-label="Speichern"
+									command-name="defaultSave"
+									comment=""
+									component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+									component-name="mainTabbar.layout.xml#globalDialogPlainEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create Object that references itself."
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="TestStackedDialogs"/>
+									</structure-path>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+								tab-path="Strukturen > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-element.xml"
+							template-name-comment="Create element"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="Demo A"
+								/>
+								<parameter name="Name"
+									value="A6"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo > TreeGrid"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Tabelle zurücksetzen"
+			user-id="root"
+		>
+			<business-object config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > TreeGrid > Demo tree_grid.xml"
+					/>
+					<path>
+						<named-member name="fieldTable"/>
+					</path>
+				</default-table-data-owner>
+			</business-object>
+		</action>
+	</actions>
+</action>

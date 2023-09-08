@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="commons"
+>
+	<properties extends="com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="data"
+			type="com.top_logic.model.search.expr.config.dom.Expr"
+		>
+			<formatted-default>
+				<value><![CDATA[{
+	'type': 'bar',
+	'data': {
+	    'labels': ['Value 1', 'Value 2', 'Value 3'],
+		'datasets': [
+		    {
+		        'label': 'Category 1',
+			    'data': [10, 50, 30]
+		    },
+		    {
+		        'label': 'Category 2',
+			    'data': [20, 40, 10]
+		    }
+		]
+	},
+	'options': {
+		'maintainAspectRatio': false,
+		'plugins': {
+            'colorschemes': {
+            	// See https://nagix.github.io/chartjs-plugin-colorschemes/colorchart.html
+                'scheme': 'tableau.Tableau10'
+            }
+        },
+		'scales': {
+		    'y': {
+			    'ticks': {
+			        'min': 0
+			    }
+		    },
+			'x': {
+				'gridLines': {
+					'offsetGridLines': true
+				}
+			}
+		}
+	}
+}]]></value>
+			</formatted-default>
+		</property>
+		<property name="securityObject"
+			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
+			type="com.top_logic.basic.config.PolymorphicConfiguration"
+		/>
+		<property name="securityProviderClass"
+			default="securityRoot"
+			type="String"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
+			<hidden/>
+		</property>
+	</properties>
+
+	<chartjs name="Chart"
+		data="${data}"
+		dialogs="${dialogs}"
+		model="${model}"
+		securityObject="${securityObject}"
+		securityProviderClass="${securityProviderClass}"
+		titleKey="${name}"
+		toolbar="true"
+	>
+		<buttons>
+			<include name="templates/editComponentCommands.xml"/>
+		</buttons>
+	</chartjs>
+</config:template>

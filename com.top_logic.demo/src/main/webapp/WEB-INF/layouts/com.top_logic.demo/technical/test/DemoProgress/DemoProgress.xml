@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<component class="com.top_logic.demo.layout.demo.DemoOpenProgressComponent"
+			buttonComponent="demoOpenProgressComponentButtons"
+			displayWithoutModel="true"
+			name="demoOpenProgressComponent"
+			page="/jsp/layout/demo/DemoProgressOpenerComponent.jsp"
+			resPrefix="layouts.layoutdemo.DemoProgress.demoOpenProgressComponent."
+			securityProviderClass="securityRoot"
+		>
+			<buttons>
+				<reference command-id="demoProgressCommand"/>
+			</buttons>
+			<dialogs>
+				<layout name="demoProgressBoundComponent">
+					<dialogInfo
+						closableUsingX="false"
+						createOpenerButtons="false"
+						executability="Always"
+						height="250"
+						openerCommandGroup="Read"
+						resizable="true"
+						width="500"
+					/>
+
+					<components>
+						<component class="com.top_logic.demo.layout.demo.DemoProgressComponent"
+							name="demoProgress"
+							page="/jsp/layout/misc/refreshProgress.jsp"
+							resPrefix="layouts.layoutdemo.DemoProgress.demoProgress."
+							securityProviderClass="securityRoot"
+						/>
+					</components>
+				</layout>
+			</dialogs>
+		</component>
+		<buttonbar name="demoOpenProgressComponentButtons"/>
+	</components>
+</layout>

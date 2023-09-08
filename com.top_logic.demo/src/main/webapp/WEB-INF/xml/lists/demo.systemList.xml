@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<list name="demo.systemList" type="Classification" system="true">
+	<elements>
+		<element name="demo.systemList.1" />
+		<element name="demo.systemList.2" />
+		<element name="demo.systemList.3" />
+	</elements>
+</list>

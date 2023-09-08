@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+		<property name="open-handler"
+			type="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+		>
+			<item-default/>
+			<non-nullable/>
+		</property>
+		<property name="title"
+			type="PolymorphicConfiguration"
+		>
+			<item-default/>
+			<non-nullable/>
+		</property>
+
+		<property name="components"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<hidden/>
+			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplatesDefault"/>
+			<layout-templates value="com.top_logic/contentLayout.template.xml"/>
+		</property>
+		<property name="helpID"
+			type="String"
+		>
+			<nullable/>
+			<property-editor value="com.top_logic.layout.help.UseHelpEditor"/>
+			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
+		</property>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			type="List"
+		>
+			<acceptable-classifiers value="commons, dialog"/>
+		</property>
+	</properties>
+
+	<layout name="Dialog"
+		components="${components}"
+		defaultFor="${defaultFor}"
+	>
+		<dialogInfo
+			closableUsingX="${closableUsingX}"
+			createOpenerButtons="${createOpenerButtons}"
+			height="${height}"
+			helpID="${helpID}"
+			open-handler="${open-handler}"
+			openMaximized="${openMaximized}"
+			resizable="${resizable}"
+			title="${title}"
+			width="${width}"
+		/>
+		<buttons>
+			${buttons}
+			<reference command-id="editDialogCommand"/>
+			<reference command-id="deleteDialogCommand"/>
+		</buttons>
+	</layout>
+</config:template>

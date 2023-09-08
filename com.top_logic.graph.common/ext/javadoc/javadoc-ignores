@@ -1,0 +1,7 @@
+com.top_logic.graph.common.model.GraphEvent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.graph.common.model.GraphEvent
+com.top_logic.graph.common.model.layout.InteriorLayoutPosition.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.graph.common.model.layout.InteriorLayoutPosition
+com.top_logic.graph.common.model.layout.LabelLayout.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.graph.common.model.layout.LabelLayout
+com.top_logic.graph.common.model.styles.ShapeNodeShape.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.graph.common.model.styles.ShapeNodeShape
+com.top_logic.graph.common.model.util.GraphUtil.java: Invalid camel case word 'graphPart', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.common.util.GraphControlCommon.java: Invalid camel case word 'DiagramJSGraph', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.common.util.GraphControlCommon.java: Invalid camel case word 'yFiles', this may only be used within JavaDoc links or HTML code tags.

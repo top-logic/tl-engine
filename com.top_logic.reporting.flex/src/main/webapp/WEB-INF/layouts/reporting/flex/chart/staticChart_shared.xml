@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="chartConfig"/>
+		<param name="resPrefix"
+			value="layouts.reporting.flex.chart.configuredChart_shared."
+		/>
+		<param name="chartComponent"
+			value="com.top_logic.reporting.flex.chart.component.StaticChartComponent"
+		/>
+		<param name="detailColumns"
+			value="name"
+		/>
+		<param name="exportColumns"
+			value="_index,name,_generic"
+		/>
+		<param name="master"
+			value=""
+		/>
+		<param name="objectType"
+			value=""
+		/>
+		<param name="options"
+			value=""
+		/>
+		<param name="detailAccessor"
+			value="com.top_logic.knowledge.wrap.WrapperAccessor"
+		/>
+		<param name="exportAccessor"
+			value="com.top_logic.knowledge.wrap.WrapperAccessor"
+		/>
+		<param name="exportLabelProvider"
+			value="com.top_logic.layout.provider.MetaLabelProvider"
+		/>
+		<param name="exportComparator"
+			value="com.top_logic.basic.col.ComparableComparator"
+		/>
+		<param name="textCutterFactory">
+			<text-cutter-factory class="com.top_logic.reporting.flex.chart.component.export.DefaultFlexChartTemplateTextCutterFactory"/>
+		</param>
+		<param name="additionalChartValueProvider"
+			value="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager$DefaultAdditionalChartValueProvider"
+		/>
+		<param name="imagePostHandler"
+			value="com.top_logic.reporting.flex.chart.component.handler.NoPostHandler"
+		/>
+		<param name="exportObjects"
+			value="LEAF"
+		/>
+		<param name="templatePath"
+			value="flex/chart/default.pptx"
+		/>
+		<param name="additionalValuesTemplatePath"
+			value=""
+		/>
+		<param name="additionalValuesTemplateProvider"
+			value=""
+		/>
+		<param name="securityProvider"
+			value=""
+		/>
+		<param name="dialogWidth"
+			value="800"
+		/>
+		<param name="dialogHeight"
+			value="400"
+		/>
+		<param name="dialogDefaultI18n"
+			value="reporting.matrix.chart.openChartDetails"
+		/>
+		<param name="dialogExportFilename"
+			value="reporting.matrix.chart.openChartDetails.export.filename"
+		/>
+		<param name="tableComponent"
+			value="com.top_logic.layout.table.component.TableComponent"
+		/>
+		<param name="tableConfig">
+			<table
+				defaultColumns="${detailColumns}"
+				defaultSortOrder="name:ascending"
+				fixedColumns="1"
+			>
+				<column-default accessor="${detailAccessor}"/>
+			</table>
+		</param>
+		<param name="exportManager">
+			<export-manager class="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager"
+				accessor="${exportAccessor}"
+				additional-chart-value-provider="${additionalChartValueProvider}"
+				additional-values-template-path="${additionalValuesTemplatePath}"
+				additional-values-template-provider="${additionalValuesTemplateProvider}"
+				columns="${exportColumns}"
+				comparator="${exportComparator}"
+				export-objects="${exportObjects}"
+				label-provider="${exportLabelProvider}"
+				template-path="${templatePath}"
+			>${textCutterFactory}</export-manager>
+		</param>
+		<param name="toolbar"
+			value="true"
+		/>
+		<param name="maximizeRoot"
+			value=""
+		/>
+		<param name="modelBuilder"
+			optional="true"
+		/>
+	</params>
+
+	<component class="${chartComponent}"
+		chartConfig="${chartConfig}"
+		image-post-handler="${imagePostHandler}"
+		maximizeRoot="${maximizeRoot}"
+		model="selection(${master})"
+		modelBuilder="${modelBuilder}"
+		name="${namePrefix}Chart"
+		page="/jsp/layout/image/chart.jsp"
+		resPrefix="${resPrefix}Chart."
+		securityProviderClass="${securityProvider}"
+		toolbar="${toolbar}"
+	>
+		${exportManager}
+		${options}
+		<dialogs>
+			<layout name="${namePrefix}ChartDialog">
+				<dialogInfo
+					createOpenerButtons="false"
+					defaultI18n="${dialogDefaultI18n}"
+					height="${dialogHeight}"
+					openHandlerClass="com.top_logic.reporting.flex.chart.component.handler.OpenChartDetailsCommand"
+					openHandlerName="openChartDetails"
+					openerCommandGroup="System"
+					width="${dialogWidth}"
+				/>
+
+				<components>
+					<component class="${tableComponent}"
+						buttonComponent="${namePrefix}ChartDetailButtons"
+						modelBuilder="com.top_logic.reporting.flex.chart.component.builder.ConfiguredChartListModelBuilder"
+						name="${namePrefix}ChartDetail"
+						objectType="${objectType}"
+						resPrefix="${resPrefix}Details"
+						securityProviderClass="dialogParent"
+						selectable="false"
+					>
+						${tableConfig}
+						<buttons>
+							<button id="exportExcel"
+								class="com.top_logic.layout.table.export.ExcelExportHandler"
+								downloadNameKey="${dialogExportFilename}"
+							/>
+						</buttons>
+					</component>
+					<buttonbar name="${namePrefix}ChartDetailButtons"/>
+				</components>
+			</layout>
+		</dialogs>
+	</component>
+</template>

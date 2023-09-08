@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="replaced">
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		content="origContent"
+		name="referenced"
+	/>
+	<layout-reference resource="test.com.top_logic/TestLayoutReference.testReplaceComp2_b.layout.xml"/>
+</layout>

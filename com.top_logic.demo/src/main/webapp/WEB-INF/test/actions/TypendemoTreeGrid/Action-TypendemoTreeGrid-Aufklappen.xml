@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="kontext"
+				type="string"
+			/>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment=""
+			failure-message=""
+			user-id=""
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+									tab-path="Strukturen > Typendemo > TreeGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+							</model-name>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+							<nodes>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+											tab-path="Strukturen > Typendemo > TreeGrid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+												field-label-comment=""
+											>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+													name="${$kontext}"
+												/>
+											</node>
+										</path>
+									</model-name>
+								</node>
+							</nodes>
+						</node>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

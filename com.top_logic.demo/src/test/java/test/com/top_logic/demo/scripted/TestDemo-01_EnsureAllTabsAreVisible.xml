@@ -1,0 +1,3837 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Strukturen"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Strukturen > Typendemo"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Setup"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+									template="script:/demo/create-A.xml"
+									template-name-comment="Create A"
+								>
+									<parameters>
+										<parameter name="Name"
+											value="Test_AssertAllTabsAreVisible"
+										/>
+									</parameters>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Dialog Objekthistorie"
+							failure-message=""
+							user-id=""
+							window-name=""
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+									comment=""
+									component-implementation-comment=""
+									component-name="rootLayout#masterFrame"
+									failure-message=""
+									label="Historie..."
+									user-id=""
+									window-name=""
+								/>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id=""
+									window-name=""
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="0 Dokumente"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+									comment=""
+									component-implementation-comment="com.top_logic.common.webfolder.ui.WebFolderComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypeshistoricDemoTypesDocumentsFolder"
+									failure-message=""
+									user-id="root"
+									window-name=""
+								/>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Strukturen > Typendemo > Grid"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Strukturen > Typendemo > TreeGrid"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Strukturen > Typendemo > Attribute-Grid"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Chart Cockpit (Grid)"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Chart Cockpit (Tabelle)"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Strukturen > Typendemo > 0 Dokumente"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Strukturen > Typendemo > 0 Mails"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Strukturen > Typendemo > 0 Kommentare"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Strukturen > Typendemo > Terminplan"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Teardown"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+									command-label="Löschen..."
+									command-name="elementRemove"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Strukturen > Aspektvererbung"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Strukturen > Organisation"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Tabellen"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen > Grid"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen > Grid ohne Detaildialoge"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen > Grid ohne Detaildialoge"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen > Tree Grid"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen > Frozen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen > Einfach"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen > Baumbasierte Tabelle"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen > Struktureditor"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			comment="Modellbasierte Suche"
+			failure-message=""
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name=""
+				tab-path="Modellbasierte Suche"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Technisches Demo"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Technisches Demo > Layout-Framework#1"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Layout-Framework#1 > Fenster"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Layout-Framework#1 > Cockpits"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Technisches Demo > Layout-Framework#1 > Dialoge"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Dialoge"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Dynamisches Layout"
+									command-name="displayDialog_dynamicLayoutDemo"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#demoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#layoutSelectDemo"
+											tab-path=""
+										/>
+										<path>
+											<named-member name="select"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+												label="unresolvable model -> default layout"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#layoutSelectDemo"
+											tab-path=""
+										/>
+										<path>
+											<named-member name="select"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="com.top_logic.demo/technical/layoutDemo1/dialogs/dynamicLayout/layout1.xml"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#layoutSelectDemo"
+											tab-path=""
+										/>
+										<path>
+											<named-member name="select"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="com.top_logic.demo/technical/layoutDemo1/dialogs/dynamicLayout/layout2.xml"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+									command-label="Schließen"
+									command-name="closeModalDialog"
+									component-implementation-comment="com.top_logic.mig.html.layout.SimpleComponent"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dynamicLayout/layout2.xml#dynamicDemoLayout2_content"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Dialog mit Dialog"
+									command-name="displayDialog_dialog1"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#demoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Dialog im Dialog"
+									command-name="displayDialog_dialog1a"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#infoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+									command-label="Schließen"
+									command-name="closeModalDialog"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#infoDialog1a"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+									command-label="Schließen"
+									command-name="closeModalDialog"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#infoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Dialog mit Tabs"
+									command-name="displayDialog_dialog2"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#demoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="tabber1"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="tabber2"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+									command-label="Schließen"
+									command-name="closeModalDialog"
+									component-implementation-comment="com.top_logic.mig.html.layout.SimpleComponent"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#dialogInfo2b"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Dialog 4"
+									command-name="displayDialog_dialog4"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#demoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+									command-label="Schließen"
+									command-name="closeModalDialog"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#infoDialog4"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Inline Dialog"
+									command-name="displayDialog_dialogInline1"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#demoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+									command-label="Schließen"
+									command-name="closeModalDialog"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#infoDialogInline1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Inline dialog (2 Komponenten)"
+									command-name="displayDialog_dialogInline2"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#demoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#dialogInline2Buttons"
+									user-id="root"
+								/>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Dialog ohne X"
+									command-name="displayDialog_dialog3"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#demoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+									command-label="Schließen"
+									command-name="closeModalDialog"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#infoDialog3"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Dialog mit prozentualer Größe"
+									command-name="displayDialog_dialog5"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#demoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+									command-label="Schließen"
+									command-name="closeModalDialog"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#infoDialog5"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Dialog 6"
+									command-name="displayDialog_dialog6"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#demoDialog1"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+									command-label="Schließen"
+									command-name="closeModalDialog"
+									component-implementation-comment="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#infoDialog6"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Technisches Demo > Layout-Framework#1 > Formulare"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Prüfe Hide/Show"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+											mode="ACTIVE"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="intControl"
+											>
+												<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+													tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+												/>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+											comment=""
+											user-id="root"
+										>
+											<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.ButtonLabelNaming$ButtonLabelName">
+													<button config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+														<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+															label="Hide"
+														/>
+													</button>
+												</model-name>
+											</actual-value>
+											<constraints>
+												<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+													<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="Hide"
+													/>
+												</constraint>
+											</constraints>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$SetInvisible"
+											command-label="Hide"
+											command-name="setInvisible"
+											component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+											component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+											mode="INVISIBLE"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="intControl"
+											>
+												<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+													tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+												/>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+											comment=""
+											user-id="root"
+										>
+											<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.ButtonLabelNaming$ButtonLabelName">
+													<button config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+														<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+															label="Show"
+														/>
+													</button>
+												</model-name>
+											</actual-value>
+											<constraints>
+												<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+													<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="Show"
+													/>
+												</constraint>
+											</constraints>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$SetInvisible"
+											command-label="Show"
+											command-name="setInvisible"
+											component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+											component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+											mode="ACTIVE"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="intControl"
+											>
+												<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+													tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+												/>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+											comment=""
+											user-id="root"
+										>
+											<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.ButtonLabelNaming$ButtonLabelName">
+													<button config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+														<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+															label="Hide"
+														/>
+													</button>
+												</model-name>
+											</actual-value>
+											<constraints>
+												<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+													<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="Hide"
+													/>
+												</constraint>
+											</constraints>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Test Layout Probleme"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Formulare"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Deklarative Formdefinition"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Deklarative Form (konf. Typ)"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Technisches Demo > Layout-Framework#1 > Tabellen"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Tabelle 1"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+											user-id="root"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Aus Formular"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/technical/layoutDemo1/tables/multipleTables/demoMultipleTablesView.layout.xml#DemoMultipleTables"
+												tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Aus Formular"
+											/>
+											<field-values>
+												<value>
+													<field-path>
+														<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+															field-name="text"
+														/>
+													</field-path>
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="xxx"
+													/>
+												</value>
+											</field-values>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.demo.layout.demo.table.DemoMultipleTablesComponent$RebuildTable"
+											command-label="Tabelle 1 erneuern"
+											command-name="rebuildTable"
+											component-implementation-comment="com.top_logic.demo.layout.demo.table.DemoMultipleTablesComponent"
+											component-name="com.top_logic.demo/technical/layoutDemo1/tables/multipleTables/demoMultipleTablesView.layout.xml#DemoMultipleTables"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.layout.form.component.InvalidateCommand"
+											command-label="Formular komplett neubauen"
+											command-name="invalidate"
+											component-implementation-comment="com.top_logic.demo.layout.demo.table.DemoMultipleTablesComponent"
+											component-name="com.top_logic.demo/technical/layoutDemo1/tables/multipleTables/demoMultipleTablesView.layout.xml#DemoMultipleTables"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+											comparision="equals"
+											inverted="false"
+											user-id="root"
+										>
+											<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+												raw-value="true"
+											>
+												<field-name config:interface="com.top_logic.layout.form.FormMemberName">
+													<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/technical/layoutDemo1/tables/multipleTables/demoMultipleTablesView.layout.xml#DemoMultipleTables"
+														tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Aus Formular"
+													/>
+													<path>
+														<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+															field-name="text"
+														/>
+													</path>
+												</field-name>
+											</actual-value>
+											<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string=""
+											/>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Spalte mit angepasster Tabelle"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Frozen"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Eingefrorene Tabelle groß"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Tables in Formulars"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Clientseitiger Sprung-Test"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Technisches Demo > Layout-Framework#1 > Bäume"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Bäume > ImportKnoten"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Bäume > Bäume im Formular"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#1 > Bäume > Formularbaum dynamisch"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Technisches Demo > Layout-Framework#2"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Technisches Demo > Layout-Framework#2 > Assistenten"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#2 > Assistenten > ohne Dialog"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#2 > Assistenten > im Dialog"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#2 > Assistenten > im Dialog H"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Layout-Framework#2 > Webfolder"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Layout-Framework#2 > Form Templates"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="ButtonComponent"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#2 > ButtonComponent"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/buttonComponent/buttonComponentDemo.layout.xml#DemoButtonComponent"
+										tab-path="Technisches Demo > Layout-Framework#2 > ButtonComponent"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Steuerung"
+													field-name="toggleCommands"
+												/>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Buttons in der Button-Zeile anzeigen"
+													field-name="toggleButtons"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="true"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/buttonComponent/buttonComponentDemo.layout.xml#DemoButtonComponent"
+										tab-path="Technisches Demo > Layout-Framework#2 > ButtonComponent"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Steuerung"
+													field-name="toggleCommands"
+												/>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Buttons in der Toolbar anzeigen"
+													field-name="toggleToolbar"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="true"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/buttonComponent/buttonComponentDemo.layout.xml#DemoButtonComponent"
+										tab-path="Technisches Demo > Layout-Framework#2 > ButtonComponent"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Steuerung"
+													field-name="toggleCommands"
+												/>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Buttons im MenÃ¼ anzeigen"
+													field-name="toggleMenu"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="true"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/buttonComponent/buttonComponentDemo.layout.xml#DemoButtonComponent"
+										tab-path="Technisches Demo > Layout-Framework#2 > ButtonComponent"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Steuerung"
+													field-name="toggleCommands"
+												/>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Kommando1 executable"
+													field-name="toggleCommands_Kommando1_executable"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="false"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/buttonComponent/buttonComponentDemo.layout.xml#DemoButtonComponent"
+										tab-path="Technisches Demo > Layout-Framework#2 > ButtonComponent"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Steuerung"
+													field-name="toggleCommands"
+												/>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Kommando2 executable"
+													field-name="toggleCommands_Kommando2_executable"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="false"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/buttonComponent/buttonComponentDemo.layout.xml#DemoButtonComponent"
+										tab-path="Technisches Demo > Layout-Framework#2 > ButtonComponent"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Steuerung"
+													field-name="toggleCommands"
+												/>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Kommando1 visible"
+													field-name="toggleCommands_Kommando1_visible"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="false"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/buttonComponent/buttonComponentDemo.layout.xml#DemoButtonComponent"
+										tab-path="Technisches Demo > Layout-Framework#2 > ButtonComponent"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Steuerung"
+													field-name="toggleCommands"
+												/>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Kommando2 visible"
+													field-name="toggleCommands_Kommando2_visible"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="false"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/buttonComponent/buttonComponentDemo.layout.xml#DemoButtonComponent"
+										tab-path="Technisches Demo > Layout-Framework#2 > ButtonComponent"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Steuerung"
+													field-name="toggleCommands"
+												/>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Kommando3 executable"
+													field-name="toggleCommands_Kommando3_executable"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="false"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/buttonComponent/buttonComponentDemo.layout.xml#DemoButtonComponent"
+										tab-path="Technisches Demo > Layout-Framework#2 > ButtonComponent"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Steuerung"
+													field-name="toggleCommands"
+												/>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Kommando3 visible"
+													field-name="toggleCommands_Kommando3_visible"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+												boolean="false"
+											/>
+										</value>
+									</field-values>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Layout-Framework#2 > Demo basic:image"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Technisches Demo > Layout-Framework#2 > Box-Layout"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#2 > Box-Layout > Auf Seite"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#2 > Box-Layout > In Formular"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#2 > Box-Layout > In Filter"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Layout-Framework#2 > Box-Layout > Mit Eingabe"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Technisches Demo > Tests"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Tests > Externe Fenster"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Tests > AJAX Test"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Tests > TestCustomConfirmComponent"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Technisches Demo > Tests > Page-Layout"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Tests > Page-Layout > Statisch"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Technisches Demo > Tests > Page-Layout > Edit"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Tests > AJAX EditComponent"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Tests > PersonAjaxForm"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Tests > AJAX-ProgressComponent Demo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Tests > ProgressComponent Demo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Tests > DemoTabbing"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Technisches Demo > Tests > Test ImageControl"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > Test Externe Frames"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > Test dynamischer Toolbartitel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Tests > Office-Exporte"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.demo.layout.demo.export.SimpleFixedTablePPTExporter"
+									command-label="PPT Export Test2"
+									command-name="testFixedTable2"
+									component-implementation-comment="com.top_logic.mig.html.layout.PageComponent"
+									component-name="com.top_logic.demo/technical/test/exports/TestOfficeExports.layout.xml#testExports"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.demo.layout.demo.export.SimpleFixedTablePPTExporter"
+									command-label="PPT Export Test1"
+									command-name="testFixedTable1"
+									component-implementation-comment="com.top_logic.mig.html.layout.PageComponent"
+									component-name="com.top_logic.demo/technical/test/exports/TestOfficeExports.layout.xml#testExports"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Suche"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Suche"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Suchergebnis"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Setup"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+										tab-path="Suche"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Fachobjekt"
+													field-name="metaElement"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+												<list>
+													<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+														label="Demo A"
+													/>
+												</list>
+											</value>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.meta.search.SearchCommandHandler"
+									command-label="Suchen"
+									command-name="searchAttributed"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+									component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Suchergebnis"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Auswertungen"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Security-Beispiele"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Security-Beispiele > Security-Beispieltypen"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Setup"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Security-Beispiele > Security-Beispieltypen"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+											label-path=""
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityTree"
+										tab-path="Security-Beispiele > Security-Beispieltypen"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Security-Beispiele > Security-Beispieltypen > Typendemo"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Neu..."
+									command-name="openCreateDialog"
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityEdit"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Name"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecuritynewElementDialog"
+											tab-path=""
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="Test_AssertAllTabsAreVisible_Security_A"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.create.GenericStructureCreateHandler"
+									command-label="Anlegen"
+									command-name="genericCreateStructure"
+									component-implementation-comment="com.top_logic.element.layout.create.GenericCreateComponent"
+									component-name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecuritynewElementDialog"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+									command-label="Speichern"
+									command-name="defaultSave"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Security-Beispiele > Security-Beispieltypen > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Security-Beispiele > Security-Beispieltypen > Details Typ A"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Security-Beispiele > Security-Beispieltypen > Details Typ B"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Setup"
+									failure-message=""
+									user-id="root"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+											change-kind="ABSOLUTE"
+											comment=""
+											failure-message=""
+											user-id="root"
+										>
+											<selection>
+												<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+													label-path="Test_AssertAllTabsAreVisible_Security_A"
+												/>
+												<selection-state boolean="true"/>
+											</selection>
+											<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityTree"
+												tab-path="Security-Beispiele > Security-Beispieltypen"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+											comment=""
+											failure-message=""
+											user-id="root"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name=""
+												tab-path="Security-Beispiele > Security-Beispieltypen > Typendemo"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+											command-label="Neu..."
+											command-name="openCreateDialog"
+											component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+											component-name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityEdit"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											user-id="root"
+										>
+											<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+												<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecuritynewElementDialog"
+													tab-path=""
+												/>
+												<path>
+													<named-member name="createType"/>
+												</path>
+											</field>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+												<values>
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+														label="Berechtigungs-B"
+													/>
+												</values>
+											</value>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											user-id="root"
+										>
+											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Name"
+											>
+												<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecuritynewElementDialog"
+													tab-path=""
+												/>
+											</field>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="Test_AssertAllTabsAreVisible_Security_B"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.element.layout.create.GenericStructureCreateHandler"
+											command-label="Anlegen"
+											command-name="genericCreateStructure"
+											component-implementation-comment="com.top_logic.element.layout.create.GenericCreateComponent"
+											component-name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecuritynewElementDialog"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+											command-label="Speichern"
+											command-name="defaultSave"
+											comment=""
+											component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+											component-name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityEdit"
+											failure-message=""
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Security-Beispiele > Security-Beispieltypen > Details Typ B"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Teardown"
+									failure-message=""
+									user-id="root"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+											comment=""
+											failure-message=""
+											user-id="root"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name=""
+												tab-path="Security-Beispiele > Security-Beispieltypen > Typendemo"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+											command-label="Bearbeiten"
+											command-name="ElementSwitchEditCommand"
+											comment=""
+											component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+											component-name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityEdit"
+											failure-message=""
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+											command-label="Löschen..."
+											command-name="elementRemove"
+											comment=""
+											component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+											component-name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityEdit"
+											failure-message=""
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+											change-kind="ABSOLUTE"
+											comment=""
+											failure-message=""
+											user-id="root"
+										>
+											<selection>
+												<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+													label-path="Test_AssertAllTabsAreVisible_Security_A"
+												/>
+												<selection-state boolean="true"/>
+											</selection>
+											<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityTree"
+												tab-path="Security-Beispiele > Security-Beispieltypen"
+											/>
+										</action>
+									</actions>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Security-Beispiele > Security-Beispieltypen > Details Elternknoten"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Teardown"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+											label-path="Test_AssertAllTabsAreVisible_Security_A"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityTree"
+										tab-path="Security-Beispiele > Security-Beispieltypen"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Security-Beispiele > Security-Beispieltypen > Typendemo"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+									command-label="Bearbeiten"
+									command-name="ElementSwitchEditCommand"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+									command-label="Löschen..."
+									command-name="elementRemove"
+									comment=""
+									component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+									component-name="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml#DemoSecurityEdit"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Security-Beispiele > Suche"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Security-Beispiele > Suche > Sucheingabe"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Security-Beispiele > Suche > Suchergebnis"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.element.layout.meta.search.SearchCommandHandler"
+									command-label="Suchen"
+									command-name="searchAttributed"
+									comment="Setup"
+									component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+									component-name="com.top_logic.demo/security/search/input/securitySearchInput.layout.xml#SecuritySearchAttributedSearchInput"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Security-Beispiele > Suche > Suchergebnis"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Chart Beispiele"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create test object for chart"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-A.xml"
+							template-name-comment="Create A"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="TestChart_A0"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="checklist"
+										>
+											<attribute-ref attribute-name="checklist">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="TestChart_A0"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="A"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="D"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="checklistSingle"
+										>
+											<attribute-ref attribute-name="checklistSingle">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="TestChart_A0"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Single-B"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="checklistMulti"
+										>
+											<attribute-ref attribute-name="checklistMulti">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="TestChart_A0"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Multi-A"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Multi-D"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Static Charts"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart2.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart3.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="piechart.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="time.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="stacked-bar.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="grouped-stacked-bar.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="matrix.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="bubblechart.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+								tab-path="Chart-Beispiele > Fixe Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="spiderChart.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Interactive Charts"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Chart-Beispiele > Interaktive Charts"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/interactive/demoInteractiveCharts.layout.xml#DemoInteractiveChartSelector"
+								tab-path="Chart-Beispiele > Interaktive Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="interactive1.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/interactive/demoInteractiveCharts.layout.xml#DemoInteractiveChartSelector"
+								tab-path="Chart-Beispiele > Interaktive Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="interactive2.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/interactive/demoInteractiveCharts.layout.xml#DemoInteractiveChartSelector"
+								tab-path="Chart-Beispiele > Interaktive Charts"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="interactive3.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Chart Cockpit"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Chart-Beispiele > Chart-Mehrfachauswahl"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/multi/demoChartCockpit.layout.xml#DemoMultiChartSelector"
+								tab-path="Chart-Beispiele > Chart-Mehrfachauswahl"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/multi/demoChartCockpit.layout.xml#DemoMultiChartSelector"
+								tab-path="Chart-Beispiele > Chart-Mehrfachauswahl"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart2.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/multi/demoChartCockpit.layout.xml#DemoMultiChartSelector"
+								tab-path="Chart-Beispiele > Chart-Mehrfachauswahl"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart.xml"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart2.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/multi/demoChartCockpit.layout.xml#DemoMultiChartSelector"
+								tab-path="Chart-Beispiele > Chart-Mehrfachauswahl"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart.xml"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart2.xml"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart3.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/multi/demoChartCockpit.layout.xml#DemoMultiChartSelector"
+								tab-path="Chart-Beispiele > Chart-Mehrfachauswahl"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart.xml"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart2.xml"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart3.xml"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="piechart.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/reporting/multi/demoChartCockpit.layout.xml#DemoMultiChartSelector"
+								tab-path="Chart-Beispiele > Chart-Mehrfachauswahl"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="charts"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart.xml"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="barchart2.xml"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="spiderChart.xml"
+											/>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="piechart.xml"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Remove test object for chart."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestChart_A0"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+							command-label="Löschen..."
+							command-name="elementRemove"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+							command-label="Abbrechen"
+							command-name="nothing"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Administration"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Administration > FAch. Administration"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Fach. Administration > Personen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Fach. Administration > Unternehmen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Fach. Administration > Organisationseinheiten"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Administration > Zugänge"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Zugänge > Benutzerkonten"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Zugänge > Gruppenzuordnung"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Zugänge > Gruppen"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Administration > Berechtigungen"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment="Setup: Workaround dafür, dass der Sprung direkt nach [Administration > Berechtigungen > Rollen pflegen] zu einem Fehler führt."
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Berechtigungen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Berechtigungen > Rollen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Berechtigungen > Rollenprofile"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Berechtigungen > Gruppenrechte"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Berechtigungen > Benutzerrechte"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Berechtigungen > Attributkategorisierung"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Berechtigungen > Rollen prüfen"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Administration > Basisadministration"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Basisadministration > Listen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Basisadministration > Einheiten"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Basisadministration > Währungen"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Administration > Tech. Administration"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration > Wartungsfenster"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration > Steuerprogramm"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration > Sperren"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration > Sichten"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Administration > Tech. Administration > Log Dateien"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Administration > Tech. Administration > Logdateien > Logdateien"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Administration > Tech. Administration > Logdateien > Einstellungen"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Tech. Administration > Wartung"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Wartungsseiten durchklicken"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/ActivateMailServerDaemon.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/ActiveModules.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/CheckMemory.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/CreateDemoUser.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/CreateTestUser.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/DBQuery.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/DecodeString.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/DeleteSpareWebfolders.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/Dummy.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/EncodeConfigurationValues.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/EncodeString.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="/jsp/administration/maintenance/ExportData.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Administration > Tech. Administration > Wartung > Wartungsseiten"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/ExportUserHistory.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="/jsp/administration/maintenance/ImportData.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Administration > Tech. Administration > Wartung > Wartungsseiten"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/InfoUser.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/Migration_Template_DeleteAttributes.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/PerformanceTest.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/ReleaseMemory.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/Reload.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/ReloadI18n.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/ReloadSecurityProfiles.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/ReloadSecurityStorage.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/RemoveDOReferences.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/SearchIndex.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/Settings.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/TestJDBCAccess.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/TestMailAccess.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/TestMailConnect.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/TestMailServer.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/TestPersonDataAccessService.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="/jsp/administration/maintenance/TriggerTask.jsp"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
+											tab-path="Administration > Tech. Administration > Wartung"
+										/>
+									</selection-model-name>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Administration > Monitor"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Monitor > Monitor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Administration > Monitor > Benutzerhistorie"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Administration > Monitor > Benutzerhistorie > Sitzungen"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Administration > Monitor > Benutzerhistorie > Diagramm"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name=""
+										tab-path="Administration > Monitor > Benutzerhistorie > Fehlgeschlagene Anmeldeversuche"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Monitor > Speicherauslastung"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Monitor > Speichertrend"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Monitor > Threads"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Monitor > Umgebungsvariablen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Monitor > SQL Monitor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Monitor > DB Schema"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Monitor > BusEvent Monitor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Monitor > Performancemonitor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Monitor > Performancetrend"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Administration > Development"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Development > Modell Editor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Development > Theme Editor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Development > Schema Editor"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Administration > Demo Administration"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Demo Administration > Ereignisse"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Demo Administration > Klassifikationen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Demo Administration > Checklisten"
+							/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

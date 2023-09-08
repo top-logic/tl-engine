@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Configuration file to use default connection pool with in memory H2 database. -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<pool name="default" config:override="true">
+						<sql-dialect class="com.top_logic.basic.sql.H2Helper" />
+						<data-source>
+							<driver-class>com.top_logic.basic.sql.H2DataSourceProxy</driver-class>
+							<options>
+								<option name="url" value="jdbc:h2:mem:setup;DB_CLOSE_DELAY=-1" />
+							</options>
+						</data-source>
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

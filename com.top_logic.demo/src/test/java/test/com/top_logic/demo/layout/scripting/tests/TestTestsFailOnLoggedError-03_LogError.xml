@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.LogMessageActionOp"
+			level="ERROR"
+			message="This is a test error message used to check if the test framework fails properly on logged errors. As this message is on priority ERROR, it should cause the test to FAIL."
+		/>
+	</actions>
+</action>

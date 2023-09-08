@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="layout">
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		name="master1"
+	/>
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		name="master2"
+	/>
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		name="slave"
+	>
+		<model class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+			<channel name="model">
+				<target name="master1"/>
+			</channel>
+			<channel name="model">
+				<target name="master2"/>
+			</channel>
+		</model>
+	</component>
+</layout>

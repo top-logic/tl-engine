@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="test.com.top_logic.kafka.services.TestTLSyncReceiveMissingExtReference.source">
+			<types>
+				<class name="SourceType">
+					<annotations>
+						<table name="SourceTable1"/>
+						<exported />
+					</annotations>
+					<attributes>
+						<property name="counter"
+							type="tl.core:Integer"
+						/>
+						<reference name="defaultSingleReference"
+							kind="forwards"
+							multiple="false"
+							type="SourceType"
+						/>
+						<reference name="defaultMultipleReference"
+							kind="forwards"
+							multiple="true"
+							type="SourceType"
+						/>
+						<reference name="inlineReference"
+							kind="forwards"
+							multiple="false"
+							type="SourceType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="inlineReference"
+										storage-type="SourceTable1"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="associationReference"
+							kind="forwards"
+							multiple="true"
+							type="SourceType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<set-storage table="hasKafkaTestObjAttValue"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed" />
+					</generalizations>
+				</class>
+			</types>
+		</module>
+		<module name="test.com.top_logic.kafka.services.TestTLSyncReceiveMissingExtReference.target">
+			<types>
+				<class name="TargetType">
+					<annotations>
+						<table name="TargetTable1"/>
+						<imported source="test.com.top_logic.kafka.services.TestTLSyncReceiveMissingExtReference.source:SourceType"/>
+					</annotations>
+					<attributes>
+						<property name="counter"
+							type="tl.core:Integer"
+						/>
+						<reference name="defaultSingleReference"
+							kind="forwards"
+							multiple="false"
+							type="TargetType"
+						/>
+						<reference name="defaultMultipleReference"
+							kind="forwards"
+							multiple="true"
+							type="TargetType"
+						/>
+						<reference name="inlineReference"
+							kind="forwards"
+							multiple="false"
+							type="TargetType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="inlineReference"
+										storage-type="TargetTable1"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="associationReference"
+							kind="forwards"
+							multiple="true"
+							type="TargetType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<set-storage table="hasKafkaTestObjAttValue"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed" />
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

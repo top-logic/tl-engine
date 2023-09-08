@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="tl.mail">
+			<interface name="FolderContent"/>
+			<class name="MailFolder">
+				<generalizations>
+					<generalization type="FolderContent"/>
+				</generalizations>
+				<annotations>
+					<implementation-binding
+						class-name="com.top_logic.mail.base.imap.IMAPMailFolder"
+						interface-name="com.top_logic.mail.base.MailFolder"
+					/>
+					<instance-presentation icon="theme:mime.tl.mail.MailFolder"/>
+					<table name="MailFolder"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<delete-protected/>
+						</annotations>
+					</property>
+					<property name="description"
+						type="tl.core:String"
+					>
+						<annotations>
+							<delete-protected/>
+						</annotations>
+					</property>
+					<reference name="content"
+						multiple="true"
+						type="tl.mail:FolderContent"
+					>
+						<annotations>
+							<storage-algorithm>
+								<set-storage
+									monomorphic-table="true"
+									table="hasMailFolderContent"
+								/>
+							</storage-algorithm>
+							<delete-protected/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+			<class name="Mail">
+				<generalizations>
+					<generalization type="FolderContent"/>
+				</generalizations>
+				<annotations>
+					<implementation-binding
+						class-name="com.top_logic.mail.base.imap.IMAPMail"
+						interface-name="com.top_logic.mail.base.Mail"
+					/>
+					<instance-presentation icon="theme:mime.tl.mail.Mail"/>
+					<main-properties properties="name, mailID, attachements"/>
+					<table name="Mail"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<delete-protected/>
+						</annotations>
+					</property>
+					<property name="mailID"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<delete-protected/>
+						</annotations>
+					</property>
+					<property name="sentDate"
+						type="tl.core:Date"
+					>
+						<annotations>
+							<delete-protected/>
+						</annotations>
+					</property>
+					<property name="attachements"
+						mandatory="true"
+						type="tl.core:Boolean"
+					>
+						<annotations>
+							<delete-protected/>
+						</annotations>
+					</property>
+					<property name="from"
+						type="tl.core:String"
+					>
+						<annotations>
+							<delete-protected/>
+						</annotations>
+					</property>
+					<reference name="attachedDocuments"
+						multiple="true"
+						type="tl.folder:Document"
+					>
+						<annotations>
+							<storage-algorithm>
+								<set-storage
+									monomorphic-table="true"
+									table="hasAttachedDocuments"
+								/>
+							</storage-algorithm>
+							<delete-protected/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

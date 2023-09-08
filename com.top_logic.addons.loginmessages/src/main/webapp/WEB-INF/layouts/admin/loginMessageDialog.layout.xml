@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="editLoginMessage"
+	horizontal="false"
+	titleKey="LoginMessage.dialog.tabber"
+>
+	<dialogInfo
+		createOpenerButtons="false"
+		height="660px"
+		openHandlerName="openEditLoginMessageDialog"
+		openerCommandGroup="Read"
+		resizable="true"
+		width="850px"
+	/>
+
+	<components>
+		<include name="admin/loginMessages/loginMessageFrame.xml"
+			namePrefix="LoginMessageEdit"
+		/>
+	</components>
+</securityLayout>

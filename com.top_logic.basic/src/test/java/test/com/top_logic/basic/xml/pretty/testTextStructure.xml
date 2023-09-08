@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<a>
+	for (x : xs) {
+		<c/>
+		<c>
+			if (x ||
+				y) {
+				<c>
+					<c/>
+				</c>
+			}
+		</c>
+		<c/>
+	}
+	<c/>
+</a>

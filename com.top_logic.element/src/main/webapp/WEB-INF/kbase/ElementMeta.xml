@@ -1,0 +1,719 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+	SPDX-FileCopyrightText: 2005 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<!-- The Metaobjects that make up the features for the Element Project. -->	 
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+<metaobjects>
+
+	<metaobject object_name="TLModel" super_class="TLModelPart">
+		<annotations>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+				<binding application-type="com.top_logic.element.model.PersistentTLModel"/>
+			</annotation>
+		</annotations>
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+			att_name="tType"
+			att_type="MetaElement"
+			mandatory="true"
+		>
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+					type="tl.model:TLModel"
+				/>
+			</storage>
+		</mo_attribute>
+	</metaobject>
+
+    <metaobject object_type="MOKnowledgeObject" object_name="TLObject" super_class="KnowledgeObject" abstract="true">
+	    <annotations>
+	    	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+				<binding class="com.top_logic.knowledge.wrap.binding.DynamicBinding"
+					type-ref="tType"
+					default-application-type="com.top_logic.element.meta.kbbased.AttributedWrapper"
+				/>
+	    	</annotation>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.InstancesQueryAnnotation">
+					<builder class="com.top_logic.knowledge.search.TypeReferenceQueryBuilder"
+						type-reference-column="tType"
+					/>
+				</annotation>
+			<key-attributes attributes="tType" />
+	    </annotations>
+<attributes>
+		<reference att_name="tType"
+			initial="true"
+			mandatory="true" 
+			by-value="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="veto" 
+	    	target-type="MetaElement"
+    	/>
+</attributes>
+    </metaobject>
+
+    <metaobject object_type="MOKnowledgeObject" object_name="GenericObject" super_class="TLObject">
+    </metaobject>
+
+    <metaobject object_type="MOKnowledgeObject" object_name="AttributedObject" super_class="TLObject" abstract="true">
+    </metaobject>
+
+	<metaobject object_type="MOKnowledgeObject" object_name="StructuredElement" super_class="AttributedObject">
+	    <annotations>
+	    	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+				<binding class="com.top_logic.knowledge.wrap.binding.DynamicBinding"
+					default-application-type="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"
+				/>
+	    	</annotation>
+	    </annotations>
+<attributes>
+		<mo_attribute att_name="name" 			att_type="String" mandatory="true" />
+</attributes>
+	</metaobject>
+
+	<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasStructureChild">
+		<attributes>
+			<destination
+				override="true"
+				is-container="true"
+				target-type="Object"
+			/>
+		</attributes>
+		<index>
+		    <mo_index name="uniqueParent" unique="true">
+				<index-parts>
+					<!-- All objects that are referenced as destinations in the structure child 
+						association are parts of the corresponding source object. Since an object 
+						can only be part of one single container, each an object can only be referenced 
+						once as destination. Therefore the destination reference has a unique index. -->
+			        <index_part name="dest" part="name"/>
+				</index-parts>
+		    </mo_index>
+		</index>
+	</association>
+
+	<metaobject object_type="MOKnowledgeObject" object_name="TLModule" super_class="TLModelPart" abstract="false">
+		<annotations>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+				<binding application-type="com.top_logic.element.model.PersistentModule"/>
+			</annotation>
+		</annotations>
+	<attributes>
+		<mo_attribute att_name="name" att_type="String" mandatory="true" binary="true" initial="true" />
+		<reference att_name="model"
+			mandatory="true" 
+			by-value="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="TLModel"
+	    	initial="true"
+    	/>
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+			att_name="tType"
+			att_type="MetaElement"
+			mandatory="true"
+		>
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+					type="tl.model:TLModule"
+				/>
+			</storage>
+		</mo_attribute>
+	</attributes>
+	<index>
+	    <mo_index name="nameIdx" unique="true">
+		<index-parts>
+	        <index_part name="model" part="name" />
+	        <index_part name="name" />
+		</index-parts>
+	    </mo_index>
+	</index>
+	</metaobject>
+
+	<association object_name="TLModule_singletons" super_class="Item">
+		<annotations xmlns:config="http://www.top-logic.com/ns/config/6.0">
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+				<implementation-factory class="com.top_logic.element.model.PersistentModuleSingletons$Factory" />
+			</annotation>
+		</annotations>
+		
+		<attributes>
+	    <reference att_name="module" 
+	    	initial="true"
+	    	mandatory="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="TLModule"
+	    	/>
+		<mo_attribute att_name="name" att_type="String" mandatory="true" binary="true" initial="true" />
+		
+	    <reference att_name="singleton" 
+	    	initial="true"
+	    	mandatory="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="false" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="TLObject"
+	    	/>
+		</attributes>
+		<index>
+	   	<mo_index name="srcIdx" unique="true" inMemory="false" db_compress="0">
+	   		<index-parts>
+	        <index_part name="module" part="name"/>
+	        <index_part name="name" />
+	   		</index-parts>
+	    </mo_index>
+		</index>
+	</association>
+
+	<metaobject object_type="MOKnowledgeObject" object_name="TLDatatype" super_class="TLType" abstract="false">
+		<annotations>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+				<binding application-type="com.top_logic.element.model.PersistentDatatype"/>
+			</annotation>
+		</annotations>
+	<attributes>
+		<mo_attribute att_name="kind" att_type="String" mandatory="true" binary="true" initial="true" >
+			<storage class="com.top_logic.dob.attr.storage.EnumAttributeStorage" enum="com.top_logic.model.TLPrimitive$Kind" />
+		</mo_attribute>
+		<mo_attribute att_name="dbType" att_type="String" mandatory="true" binary="true" />
+		<mo_attribute att_name="dbSize" att_type="Integer" mandatory="false" />
+		<mo_attribute att_name="dbPrecision" att_type="Integer" mandatory="false" />
+		<mo_attribute att_name="binary" att_type="Boolean" mandatory="false" binary="true" />
+		<mo_attribute att_name="storageMapping" att_type="String" db_type="clob" db_size="1000000" mandatory="true">
+			<storage class="com.top_logic.dob.attr.storage.ConfiguredInstanceStorage" instance-class="com.top_logic.model.access.StorageMapping" />
+		</mo_attribute>
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+			att_name="tType"
+			att_type="MetaElement"
+			mandatory="true"
+		>
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+					type="tl.model:TLPrimitive"
+				/>
+			</storage>
+		</mo_attribute>
+	</attributes>
+	<index>
+	    <mo_index name="nameIdx" unique="true">
+		<index-parts>
+	        <index_part name="module" />
+	        <index_part name="name" />
+		</index-parts>
+	    </mo_index>
+	</index>
+	</metaobject>
+
+	<!-- MetaAttribute and sub classes MOs -->
+	<metaobject object_type="MOKnowledgeObject" object_name="MetaAttribute" super_class="TLModelPart" abstract="false">
+		<annotations>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+				<binding class="com.top_logic.knowledge.wrap.binding.PolymorphicBinding"
+					key-attribute="impl"
+				>
+					<bindings>
+						<binding key="property"
+							application-type="com.top_logic.element.meta.kbbased.PersistentClassProperty"
+						/>
+						<binding key="association-property"
+							application-type="com.top_logic.element.meta.kbbased.PersistentAssociationProperty"
+						/>
+						<binding key="association-end"
+							application-type="com.top_logic.element.meta.kbbased.PersistentEnd"
+						/>
+						<binding key="reference"
+							application-type="com.top_logic.element.meta.kbbased.PersistentReference"
+						/>
+					</bindings>
+				</binding>
+			</annotation>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.InstancesQueryAnnotation">
+				<builder class="com.top_logic.knowledge.search.QNameQueryBuilder"
+					type-reference-column="impl">
+					<type-value-mapping>
+						<entry key="tl.model:TLProperty" value="property" />
+						<entry key="tl.model:TLReference" value="reference" />
+						<entry key="tl.model:TLAssociationEnd" value="association-end" />
+					</type-value-mapping>
+				</builder>
+			</annotation>
+		</annotations>
+<attributes>
+		<mo_attribute att_name="name"             att_type="String" mandatory="true" binary="true" />
+		<mo_attribute att_name="impl"             att_type="String" mandatory="true" binary="true" initial="true" />
+		<reference att_name="owner"
+			mandatory="true" 
+			by-value="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="MetaElement"
+    	/>
+    	<!-- The declaration order within its `owner`. -->
+		<mo_attribute att_name="ownerOrder" att_type="Integer"  mandatory="true" />
+		
+		<reference att_name="type"
+	    	initial="false"
+			mandatory="false" 
+			by-value="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="false" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="TLType"
+    	/>
+		<reference att_name="end"
+	    	initial="false"
+			mandatory="false" 
+			by-value="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="veto" 
+	    	target-type="MetaAttribute"
+    	/>
+		<reference att_name="definition"
+			initial="false"
+			mandatory="false"
+			by-value="true"
+			history-type="current"
+			branch-global="false"
+			monomorphic="true"
+			is-container="false"
+			deletion-policy="delete-referer"
+			target-type="MetaAttribute"
+		>
+			<!-- This attribute is not "mandatory", as this table stores TLAssociationParts, too.
+			And they don't have this attribute. -->
+		</reference>
+		<mo_attribute att_name="mandatory"        att_type="Boolean" mandatory="false" />
+		<mo_attribute att_name="deleteProtected"  att_type="Boolean" mandatory="false" />
+		
+		<mo_attribute att_name="composite"           att_type="Boolean" mandatory="false" />
+		<mo_attribute att_name="aggregate"           att_type="Boolean" mandatory="false" />
+		<mo_attribute att_name="multiple"           att_type="Boolean" mandatory="false" />
+		<mo_attribute att_name="bag"           att_type="Boolean" mandatory="false" />
+		<mo_attribute att_name="ordered"           att_type="Boolean" mandatory="false" />
+		<mo_attribute att_name="navigate"           att_type="Boolean" mandatory="false" />
+		<mo_attribute att_name="historyType" att_type="String" mandatory="false">
+			<storage class="com.top_logic.dob.attr.storage.EnumAttributeStorage" enum="com.top_logic.dob.meta.MOReference$HistoryType" />
+		</mo_attribute>
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute" att_name="storageImplementation" att_type="Void"  mandatory="false">
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.StorageImplementationFactory" />
+			</storage>
+		</mo_attribute>
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute" att_name="options" att_type="Void"  mandatory="false">
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.TLOptionsFactory" />
+			</storage>
+		</mo_attribute>
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute" att_name="constraint" att_type="Void"  mandatory="false">
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.TLConstraintFactory" />
+			</storage>
+		</mo_attribute>
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute" att_name="validityCheck" att_type="Void"  mandatory="false">
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.TLValidityCheckFactory" />
+			</storage>
+		</mo_attribute>
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute" att_name="defaultProvider" att_type="Void"  mandatory="false">
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.TLDefaultProviderFactory" />
+			</storage>
+		</mo_attribute>
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+			att_name="tType"
+			att_type="MetaElement"
+			mandatory="true"
+		>
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.PolymorphicTypeCacheFactory"
+					key-attribute="impl"
+				>
+					<value-type-mapping>
+						<entry type="tl.model:TLProperty" value="property" />
+						<entry type="tl.model:TLReference" value="reference" />
+						<entry type="tl.model:TLAssociationEnd" value="association-end" />
+					</value-type-mapping>
+				</value-factory>
+			</storage>
+		</mo_attribute>
+</attributes>
+		<index>
+	   	<mo_index name="name" unique="true">
+	   		<index-parts>
+		        <index_part name="owner" part="name"/>
+		        <index_part name="name"/>
+	   		</index-parts>
+	    </mo_index>
+	    </index>
+	</metaobject>
+
+	<alternative object_name="TLScope">
+	<specialisations>
+		<specialisation name="TLObject"/>
+		<specialisation name="TLModule"/>
+	</specialisations>
+	</alternative>
+
+	<!-- Redefinition of the column "module" and "scope", as the actual target-type's could not be defined in "ModelMeta.xml", as they are defined here. -->
+	<metaobject object_name="TLType">
+		<reference att_name="module"
+			mandatory="true"
+			monomorphic="true"
+	    	target-type="TLModule"
+		/>
+		<reference att_name="scope"
+			mandatory="true"
+	    	target-type="TLScope"
+		/>
+	</metaobject>
+	
+	<metaobject object_type="MOKnowledgeObject" object_name="MetaElement" super_class="TLType">
+		<annotations>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+				<binding class="com.top_logic.knowledge.wrap.binding.PolymorphicBinding"
+					key-attribute="impl"
+				>
+					<bindings>
+						<binding key="association"
+							application-type="com.top_logic.element.meta.kbbased.PersistentAssociation"
+						/>
+						<binding key="class"
+							application-type="com.top_logic.element.meta.PersistentClass"
+						/>
+					</bindings>
+				</binding>
+			</annotation>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.InstancesQueryAnnotation">
+				<builder class="com.top_logic.knowledge.search.QNameQueryBuilder"
+					type-reference-column="impl">
+					<type-value-mapping>
+						<entry key="tl.model:TLAssociation" value="association" />
+						<entry key="tl.model:TLClass" value="class" />
+					</type-value-mapping>
+				</builder>
+			</annotation>
+		</annotations>
+<attributes>
+		<mo_attribute att_name="impl"            att_type="String" mandatory="true" binary="true" initial="true" />
+		<mo_attribute att_name="abstract"        att_type="Boolean" mandatory="false" />
+		<mo_attribute att_name="final"           att_type="Boolean" mandatory="false" />
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+			att_name="tType"
+			att_type="MetaElement"
+			mandatory="true"
+		>
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.PolymorphicTypeCacheFactory"
+					key-attribute="impl"
+				>
+					<value-type-mapping>
+						<entry type="tl.model:TLAssociation" value="association" />
+						<entry type="tl.model:TLClass" value="class" />
+					</value-type-mapping>
+				</value-factory>
+			</storage>
+		</mo_attribute>
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute" att_name="defaultProvider" att_type="Void"  mandatory="false">
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.TLDefaultProviderFactory" />
+			</storage>
+		</mo_attribute>
+</attributes>
+	</metaobject>
+	
+	<!-- Association pointing from a specialization to its generalizations (super types). -->
+	<association object_name="MetaElement_generalizations" super_class="Item">
+		<annotations xmlns:config="http://www.top-logic.com/ns/config/6.0">
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+				<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeAssociationFactory" />
+			</annotation>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
+				full-load="true" />
+		</annotations>
+		
+		<attributes>
+	    <reference att_name="source" 
+	    	mandatory="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="MetaElement"
+	    	/>
+	    <reference att_name="dest" 
+	    	mandatory="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="MetaElement"
+	    	/>
+		<mo_attribute att_name="order" att_type="Integer" mandatory="true" />
+	    	</attributes>
+	</association>
+ 
+	<!-- Association pointing from a subset TLAssociation to its union types . -->
+	<association object_name="MetaElement_unions" super_class="Item">
+		<annotations xmlns:config="http://www.top-logic.com/ns/config/6.0">
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+				<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeAssociationFactory" />
+			</annotation>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
+				full-load="true" />
+		</annotations>
+		
+		<attributes>
+	    <reference att_name="source" 
+	    	mandatory="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="MetaElement"
+	    	/>
+	    <reference att_name="dest" 
+	    	mandatory="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="MetaElement"
+	    	/>
+	    </attributes>
+	</association>
+
+	<!-- KA from the Attributed (a Wrapper) to the value (a Wrapper) of TypedWrapper/WrapperSet/ClassificationMetaAttributes -->
+	<association super_class="Association" object_name="hasWrapperAttValueBaseAssociation" abstract="true">
+		<annotations>
+			<key-attributes attributes="source,dest,metaAttribute"/>
+		</annotations>
+<attributes>
+	    <reference att_name="metaAttribute" 
+			mandatory="true" 
+	    	by-value="true"
+	    	history-type="current" 
+	    	branch-global="false" 
+	    	monomorphic="true" 
+	    	is-container="false" 
+	    	deletion-policy="delete-referer" 
+	    	target-type="MetaAttribute"
+    	/>
+		<mo_attribute att_name="sortOrder"       att_type="Integer" mandatory="false" />
+</attributes>
+
+<index>
+		<!-- Note: The name of the index matches the name of the auto-generated 
+			index for the source reference as inherited from the super class. By this 
+			convention, the inherited index is replaced by the explicitly declared new 
+			index. This explicitly declared index superseeds the inherited auto-generated 
+			one. Therefore it makes no sense to add this index as additional index to 
+			the type. -->
+	    <mo_index name="source" unique="false">
+<index-parts>
+	        <index_part name="source" part="name" />
+	        <index_part name="metaAttribute" />
+</index-parts>
+	    </mo_index>
+
+		<!-- See comment for the source index. -->		
+	    <mo_index name="dest" unique="false">
+<index-parts>
+	        <index_part name="dest" part="name" />
+	        <index_part name="metaAttribute" />
+</index-parts>
+	    </mo_index>
+</index>
+	</association>
+	
+	<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasWrapperAttValue" />
+
+		<!-- Database table storing references to historic objects. Note: This 
+			definition is actually a copy of "hasWrapperAttValueBaseAssociation". The 
+			copy is necessary, because it is not possible to override "dest" attribute 
+			with a different history type. -->
+	<metaobject object_name="hasHistoricValue" super_class="Item">
+		<annotations>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+				<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeAssociationFactory" />
+			</annotation>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
+				full-load="true" />
+		</annotations>
+		<attributes>
+			<source
+		    	target-type="Object"
+		    />
+		    <destination
+		    	target-type="Object"
+		    	history-type="historic" 
+		    />
+	    	<reference att_name="metaAttribute" 
+				mandatory="true" 
+		    	by-value="true"
+		    	history-type="current" 
+		    	branch-global="false" 
+		    	monomorphic="true" 
+		    	is-container="false" 
+		    	deletion-policy="delete-referer" 
+		    	target-type="MetaAttribute"
+	    	/>
+			<mo_attribute att_name="sortOrder"       att_type="Integer" mandatory="false" />
+		</attributes>
+		<index>
+			<!-- Note: The name of the index matches the name of the auto-generated 
+				index for the source reference as inherited from the super class. By this 
+				convention, the inherited index is replaced by the explicitly declared new 
+				index. This explicitly declared index superseeds the inherited auto-generated 
+				one. Therefore it makes no sense to add this index as additional index to 
+				the type. -->
+			<mo_index name="source" unique="false">
+				<index-parts>
+			        <index_part name="source" part="name" />
+			        <index_part name="metaAttribute" />
+				</index-parts>
+			</mo_index>
+		
+			<!-- See comment for the source index. -->		
+		    <mo_index name="dest" unique="false">
+				<index-parts>
+			        <index_part name="dest" part="name" />
+			        <index_part name="metaAttribute" />
+				</index-parts>
+		    </mo_index>
+		</index>
+	</metaobject>
+	
+		<!-- Database table storing references to historic objects. Note: This 
+			definition is actually a copy of "hasWrapperAttValueBaseAssociation". The 
+			copy is necessary, because it is not possible to override "dest" attribute 
+			with a different history type. -->
+	<metaobject object_name="hasMixedValue" super_class="Item">
+		<annotations>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+				<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeAssociationFactory" />
+			</annotation>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
+				full-load="true" />
+		</annotations>
+		<attributes>
+			<source
+		    	target-type="Object"
+		    />
+		    <destination
+		    	target-type="Object"
+		    	history-type="mixed" 
+		    />
+	    	<reference att_name="metaAttribute" 
+				mandatory="true" 
+		    	by-value="true"
+		    	history-type="current" 
+		    	branch-global="false" 
+		    	monomorphic="true" 
+		    	is-container="false" 
+		    	deletion-policy="delete-referer" 
+		    	target-type="MetaAttribute"
+	    	/>
+			<mo_attribute att_name="sortOrder"       att_type="Integer" mandatory="false" />
+		</attributes>
+		<index>
+			<!-- Note: The name of the index matches the name of the auto-generated 
+				index for the source reference as inherited from the super class. By this 
+				convention, the inherited index is replaced by the explicitly declared new 
+				index. This explicitly declared index superseeds the inherited auto-generated 
+				one. Therefore it makes no sense to add this index as additional index to 
+				the type. -->
+			<mo_index name="source" unique="false">
+				<index-parts>
+			        <index_part name="source" part="name" />
+			        <index_part name="metaAttribute" />
+				</index-parts>
+			</mo_index>
+		
+			<!-- See comment for the source index. -->		
+		    <mo_index name="dest" unique="false">
+				<index-parts>
+			        <index_part name="dest" part="name" />
+			        <index_part name="metaAttribute" />
+				</index-parts>
+		    </mo_index>
+		</index>
+	</metaobject>
+
+	<!-- MetaAttribute and other queries -->
+	<metaobject object_type="MOKnowledgeObject" object_name="StoredQuery" super_class="KnowledgeObject" >
+		<annotations>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+				<binding application-type="com.top_logic.element.meta.query.StoredQuery"/>
+			</annotation>
+		</annotations>
+<attributes>
+		<mo_attribute att_name="name"      att_type="String" mandatory="true"/>
+		<mo_attribute att_name="sortOrder" att_type="Integer" mandatory="false" />
+</attributes>
+	</metaobject>
+
+	<association super_class="Association" object_name="classifiedBy">
+		<attributes>
+			<source
+				override="true"
+				target-type="MetaAttribute"
+			/>
+			<destination
+				override="true"
+				target-type="FastListElt"
+			/>
+		</attributes>
+	</association>
+
+
+	<!-- Overrides definition of needsRole in BoundSecMeta, to allow attribute security. -->
+	<!-- Note: Override mechanism of typed configuration. -->
+	<association object_name="needsRole" >
+		<attributes>
+			<source config:operation="update"
+				target-type="needsRoleAware"
+			/>
+		</attributes>
+	</association>
+	
+	<!-- All MetaObjects that are connected to a role via "needsRole" association. -->
+	<alternative object_name="needsRoleAware">
+		<specialisations>
+			<specialisation name="PersBoundComp"/>
+			<specialisation name="MetaAttribute"/>
+			<specialisation name="FastListElt"/>
+		</specialisations>
+	</alternative>
+	
+</metaobjects>
+</objectlist>

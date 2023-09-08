@@ -1,0 +1,79 @@
+<h2>Syntax</h2>
+<pre><code>zipArchive(
+    name: "archive.zip",
+    entries: [
+        zipEntry(
+            contents: binary("folder/hello.txt", "Hello world!"),
+            comment: "Index file.",
+            time: now(),
+            compress: true
+        ),
+        binary("folder/data.json", $jsonData),
+        ...
+    ],
+    comment: "Project data...",
+    compress: true,
+    level: 9,
+    charset: "utf-8")
+</code></pre>
+<h2>Beschreibung</h2>
+<p>Konstruiert ein ZIP-Archiv bestehend aus den angegebenen Dateien.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>name</td>
+   <td>Zeichenkette</td>
+   <td>Name der Datei</td>
+   <td>ja</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>entries</td>
+   <td>Liste von ZIP-Entries oder Binärwerten</td>
+   <td>Liste von Dateien, die in das Archiv eingepackt werden sollen. Diese können entweder aus <a class="tlObject" data-custom="true" href="?page=zipEntry&amp;uuid=0836fccb-7328-4272-81b6-dae6ed51abd4">ZIP-Entries</a> bestehen, oder direkt Binärwerte darstellen. Um eine Ordnerstruktur im Archiv abzubilden, müssen die Namen der Dateien aus einem mit <code class="hljs inlineCode">"/"</code> getrennten Pfad bestehen. Binärwerte im Inhalt müssen nur dann explizit in ein ZIP-Entry eingepackt werden, wenn Zusatzinformationen wie Kommentare oder Kompression pro Datei angepasst werden sollen.</td>
+   <td>ja</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>comment</td>
+   <td>Zeichenkette</td>
+   <td>Bemerkung zum Inhalt. Wird in dem Archiv mit abgelegt, hat aber keine weitere Bedeutung.</td>
+   <td>nein</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>compress</td>
+   <td>Wahrheitswert</td>
+   <td>Ob die Inhalte komprimiert werden sollen.</td>
+   <td>nein</td>
+   <td><code class="hljs inlineCode">true</code></td>
+  </tr>
+  <tr>
+   <td>level</td>
+   <td>Zahl</td>
+   <td>Stärke der Kompression (0 bis 9)</td>
+   <td>nein</td>
+   <td><code class="hljs inlineCode">9</code></td>
+  </tr>
+  <tr>
+   <td>charset</td>
+   <td>Zeichenkette</td>
+   <td>Der für Dateinamen verwendete Zeichensatz</td>
+   <td></td>
+   <td>"<code class="hljs inlineCode">utf-8</code>"</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><strong>Typ:</strong> Binärwert</p>
+<p>Eine Repräsentanz einer ZIP-Datei. Im obigen Beispiel ist es ein Archiv mit Namen "<code class="hljs inlineCode">archive.zip</code>" bestehend aus den Dateien "<code class="hljs inlineCode">hello.txt</code>" und "<code class="hljs inlineCode">data.json</code>" im Unterordner "<code class="hljs inlineCode">folder</code>". Wird der Wert als Rückgabewert einer benutzerdefinierten Aktion eines Knopfes verwendet, können die Daten dem Nutzer als Download angeboten werden.</p>

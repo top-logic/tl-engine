@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.comments">
+		<class name="Comment">
+			<annotations>
+				<table name="Comment"/>
+				<implementation-binding class-name="com.top_logic.element.comment.wrap.Comment"/>
+				<instance-presentation
+					icon="theme:mime.tl.comments.Comment"
+				/>
+			</annotations>
+			<attributes>
+				<property name="content"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="AwithComments"
+						/>
+						<parameter name="booleanRadioMandatory"
+							value="false"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			comment=""
+			failure-message=""
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="AwithComments"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+					tab-path="Strukturen > Typendemo"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			comment=""
+			failure-message=""
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name=""
+				tab-path="Strukturen > Typendemo > 0 Kommentare"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create comment."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+					command-label="Anlegen"
+					command-name="openNewCommentDialog"
+					comment=""
+					component-implementation-comment="com.top_logic.element.comment.layout.CommentTableComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesCommentsCommentTable"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#newdemoTypesCommentsEditComment"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Kommentar"
+									field-name="comments"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Comment1"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.comment.layout.CommentDialogComponent$NewCommentHandler"
+					command-label="Speichern"
+					command-name="addComment"
+					comment=""
+					component-implementation-comment="com.top_logic.element.comment.layout.CommentDialogComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#newdemoTypesCommentsEditComment"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SetGlobalVariableOp"
+			name="Comment"
+		>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableDisplayValue"
+				column-name="name"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment=""
+						component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesCommentsCommentTable"
+					/>
+				</table>
+				<row-number config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+					int="0"
+				/>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Edit comment."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.comment.layout.CommentTableComponent$QuoteCommentOpenerHandler"
+					command-label="Dialog öffnen"
+					command-name="editCommentOpenerHandler"
+					component-implementation-comment="com.top_logic.element.comment.layout.CommentTableComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesCommentsCommentTable"
+				>
+					<arguments>
+						<argument name="command">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="editCommentOpenerHandler"
+							/>
+						</argument>
+						<argument name="model">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+								name="Comment"
+							/>
+						</argument>
+						<argument name="component">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+								value="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#editdemoTypesCommentsEditComment"
+							/>
+						</argument>
+					</arguments>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Kommentar"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#editdemoTypesCommentsEditComment"
+								tab-path=""
+							/>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Comment1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#editdemoTypesCommentsEditComment"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Kommentar"
+									field-name="comments"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Comment1 modified."
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.comment.layout.CommentDialogComponent$EditCommentHandler"
+					command-label="Speichern"
+					command-name="editComment"
+					component-implementation-comment="com.top_logic.element.comment.layout.CommentDialogComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#editdemoTypesCommentsEditComment"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Quote comment."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.comment.layout.CommentTableComponent$QuoteCommentOpenerHandler"
+					command-label="Dialog öffnen"
+					command-name="quoteCommentOpenerHandler"
+					component-implementation-comment="com.top_logic.element.comment.layout.CommentTableComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesCommentsCommentTable"
+				>
+					<arguments>
+						<argument name="command">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="quoteCommentOpenerHandler"
+							/>
+						</argument>
+						<argument name="model">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+								name="Comment"
+							/>
+						</argument>
+						<argument name="component">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+								value="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#newdemoTypesCommentsQuoteComment"
+							/>
+						</argument>
+					</arguments>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Kommentar"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#newdemoTypesCommentsQuoteComment"
+								tab-path=""
+							/>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue">
+						<string><![CDATA[[quote=Administrator]Comment1 modified.[/quote]
+]]></string>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#newdemoTypesCommentsQuoteComment"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Kommentar"
+									field-name="comments"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="[quote=Administrator]Comment1 modified.[/quote]  Quoted comment."
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.comment.layout.CommentDialogComponent$NewCommentHandler"
+					command-label="Speichern"
+					command-name="addComment"
+					component-implementation-comment="com.top_logic.element.comment.layout.CommentDialogComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#newdemoTypesCommentsQuoteComment"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.DelGlobalVariableOp"
+					comment=""
+					failure-message=""
+					name="Comment"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="L�schen"
+					command-name="elementRemove"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

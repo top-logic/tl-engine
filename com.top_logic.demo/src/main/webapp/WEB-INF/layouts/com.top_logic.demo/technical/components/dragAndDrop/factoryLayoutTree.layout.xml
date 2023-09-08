@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tree.template.xml"
+>
+	<arguments
+		defaultSelection="false"
+		expandSelected="false"
+		multiSelection="true"
+	>
+		<name key="dynamic.12d2a28d-00f2-4b67-96d4-7a20ec6e09c4">
+			<en>Factory layout</en>
+			<de>Fabrikplan</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="null"
+			nodePredicate="node->$node.instanceOf(`test.dnd:NamedPlanElement`) or $node.instanceOf(`test.dnd:Root`)"
+			nodesToUpdate="null"
+			rootNode="`test.dnd#ROOT`"
+		>
+			<children><![CDATA[node-> switch ($node.type()) {
+ `test.dnd:Root`: $node.get(`test.dnd:Root#factories`);
+ `test.dnd:Factory`: $node.get(`test.dnd:Factory#floors`);
+ `test.dnd:Floor`: $node.get(`test.dnd:Floor#locations`);
+  `test.dnd:Location`: {
+    machines = $node.referers(`test.dnd:Machine#location`);
+    entry = $node.get(`test.dnd:Location#entry`);
+    if($entry == null, $machines, union($machines, list($entry)));
+  };
+}
+]]></children>
+			<parents><![CDATA[node-> switch ($node.type()) {
+ `test.dnd:Factory`: $node.referers(`test.dnd:Root#factories`);
+ `test.dnd:Floor`: $node.referers(`test.dnd:Factory#floors`);
+ `test.dnd:Location`: $node.referers(`test.dnd:Floor#locations`);
+ `test.dnd:Entry`: $node.referers(`test.dnd:Location#entry`);
+ `test.dnd:Machine`: $node.get(`test.dnd:Machine#location`);
+}
+]]></parents>
+		</modelBuilder>
+		<treeDrop class="com.top_logic.model.search.providers.OrderedTreeDropByExpression">
+			<canDrop><![CDATA[draggedObjects->parent->reference->{canDrop=source -> parent -> reference ->
+if($source.type() == `test.dnd:Machine`, false, {
+  switch($source.type()) {
+    `test.dnd:Factory`: $parent.instanceOf(`test.dnd:Root`);
+    `test.dnd:Floor`: $parent.instanceOf(`test.dnd:Factory`);
+    `test.dnd:Location`: $parent.instanceOf(`test.dnd:Floor`);
+    `test.dnd:Entry`: $parent.instanceOf(`test.dnd:Location`);
+  };
+});$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$parent,$reference)).isEmpty();}]]></canDrop>
+			<handleDrop><![CDATA[draggedObjects->parent->reference->{handleDrop=source -> parent -> reference -> {
+    ref = switch($parent.type()) {
+      `test.dnd:Root`: `test.dnd:Root#factories`;
+      `test.dnd:Factory`: `test.dnd:Factory#floors`;
+      `test.dnd:Floor`: `test.dnd:Floor#locations`;
+      `test.dnd:Location`: `test.dnd:Location#entry`;
+    };
+  root = $source.recursion(x -> $x.container()).lastElement();
+    
+    switch ($root.type()) {
+      `test.dnd:Library`: {
+        if($parent.type() == `test.dnd:Location`, $parent.set($ref, $source.copy()),
+        {
+          // Create from template
+          children = $parent.get($ref);
+          referenceIndex = $reference == null ? $children.size() : $children.elementIndex($reference);
+          copy = $source.copy();
+          $parent.add($ref, $referenceIndex, $copy);
+          $copy;
+        });
+      };
+      `test.dnd:Root`: {
+        if($parent.type() == `test.dnd:Location`, $parent.set($ref, $source),
+        {
+          // Move in plan
+          if ($source != $reference, {
+            // Never try to insert an element before itself, because it is first 
+            // removed and then re-inserted. When inserting an element before itself, 
+            // Re-insertion fails, because the reference was removed in first operation. 
+            oldParent = $source.referers($ref);
+            oldChildren = $oldParent.get($ref);
+            $oldParent.set($ref, $oldChildren.filter(x -> $x != $source));
+        
+            children = $parent.get($ref);
+            referenceIndex = $reference == null ? $children.size() : $children.elementIndex($reference);
+            $parent.add($ref, $referenceIndex, $source);
+            $source;
+          })
+        });
+      };
+    }
+}
+;$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$parent,$reference));}]]></handleDrop>
+			<postCreateActions>
+				<setModel target="selection(self())"/>
+			</postCreateActions>
+		</treeDrop>
+		<buttons>
+			<button id="ID_81961406_c00a_4c18_9610_4f8b3c65c413"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.e8d279a3-cbd2-4c50-8ea5-7b07f9fed86e">
+					<en>Delete element</en>
+					<de>Element löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

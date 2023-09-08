@@ -1,0 +1,43 @@
+/**
+ * Selector that matches elements with class A and B. 
+ */
+.B.A {
+	/* Green */
+	color: #00DD00;
+}
+
+/**
+ * Selector that matches elements with class A. 
+ */
+.A {
+	color: red;
+}
+
+/**
+ * Selector that matches elements with class B. 
+ */
+.B {
+	color: blue;
+}
+
+/**
+ * Selector that matches elements with class B that have an ancestor 
+ * with class B. 
+ */
+.A .B {
+	/* Gray */
+	color: #DDDDDD;
+}
+
+/**
+ * Selector that matches elements with class B that have a parent with 
+ * class B. 
+ */
+.A > .B {
+	/* Yellow */
+		color: #EEEE00;
+}
+
+p {
+	margin: 0;
+}

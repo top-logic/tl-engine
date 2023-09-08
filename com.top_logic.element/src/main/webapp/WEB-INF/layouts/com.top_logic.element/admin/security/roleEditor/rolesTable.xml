@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="columns"
+			value="name"
+		/>
+		<param name="columnWidth"
+			value="372px"
+		/>
+		<param name="fixedColumns"
+			value="0"
+		/>
+		<param name="sortKeyProvider"
+			value="com.top_logic.layout.LabelMapping"
+		/>
+		<param name="securityProviderClass"
+			value="securityRoot"
+		/>
+		<param name="isSecurityMaster"
+			value="true"
+		/>
+		<param name="builderClass"
+			value="com.top_logic.element.layout.role.ScopedRolesTableModelBuilder"
+		/>
+		<param name="defaultSortOrder"
+			value="name"
+		/>
+	</params>
+
+	<tableView name="${namePrefix}Table"
+		isSecurityMaster="${isSecurityMaster}"
+		model="selection(com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree)"
+		modelBuilder="${builderClass}"
+		objectType="tl.accounts:Role"
+		partnerGroup="RoleTableGroup"
+		resPrefix="admin.roles.checker.table."
+		securityProviderClass="${securityProviderClass}"
+		selectable="true"
+	>
+		<table
+			defaultColumns="${columns}"
+			defaultSortOrder="${defaultSortOrder}"
+			fixedColumns="${fixedColumns}"
+			rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
+			showTitle="true"
+		>
+			<column-default
+				accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+				columnWidth="${columnWidth}"
+				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+			/>
+			<columns>
+				<column name="name"
+					accessor="com.top_logic.layout.IdentityAccessor"
+					labelProvider="com.top_logic.layout.provider.MetaLabelProvider"
+					sortKeyProvider="${sortKeyProvider}"
+				/>
+			</columns>
+		</table>
+	</tableView>
+</template>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="cockpit/chartCockpit.xml"
+	model="selection(DemoTypesVersionSelector)"
+	namePrefix="DemoChartCockpit"
+	types="DemoTypes:DemoTypes.A, DemoTypes:A"
+>
+	<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
+	<!-- No default create button -->
+	<createButton/>
+	<buttons>
+		<button id="newAChartSibling"
+			class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+			contextSelector="com.top_logic.element.layout.grid.SibblingCreateContext"
+			group="Create"
+			image="theme:DEMO_NEW_AS"
+			nodeType="A"
+			resourceKey="layouts.demo.grid.newASibling"
+		/>
+	</buttons>
+</include>

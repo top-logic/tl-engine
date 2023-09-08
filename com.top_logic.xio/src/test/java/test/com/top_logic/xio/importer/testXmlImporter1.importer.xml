@@ -1,0 +1,23 @@
+<handler>
+	<tag name="a">
+		<object model-type="test.com.top_logic.xio.importer.test1:A">
+			<property name="name" xml-attribute="val"/>
+			<reference name="defaultValue" id-attribute="default"/>							
+			
+			<dispatch>
+				<tag name="b">
+					<object model-type="test.com.top_logic.xio.importer.test1:B" id-attribute="name">
+						<linking>
+							<list-linking name="test.com.top_logic.xio.importer.test1:A#bs"/>
+						</linking>
+						
+						<property name="name" xml-attribute="name"/>
+						<multi-reference name="next" id-attribute="other"/>		
+						
+						<dispatch/>					
+					</object>
+				</tag>
+			</dispatch>
+		</object>
+	</tag>
+</handler>

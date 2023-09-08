@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="Berechtigungsstruktur"
+				type="string"
+			/>
+			<t:parameter name="Rolle"
+				type="string"
+			/>
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Berechtigungen > Rollenprofile"
+					/>
+				</action>
+
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Berechtigungsstruktur"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+							tab-path="Administration > Berechtigungen"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="${$Berechtigungsstruktur}"
+							/>
+						</values>
+					</value>
+				</action>
+
+				<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+					columns="Rechte,${$Rolle}"
+					label="true"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+							tab-path="Administration > Berechtigungen > Rollenprofile"
+						/>
+						<path>
+							<named-member name="tree"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ExpandAllCommandHandler"
+					command-label="Rollenprofile aufklappen"
+					command-name="expandRoleProfileTree"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.SetAccessCommandHandler"
+					command-label="Alle an"
+					command-name="setAllAccess"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

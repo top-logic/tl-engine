@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="TestLocalizedNumberFormat_de_DE"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			comment=""
+			failure-message=""
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+					structure-name="DemoTypes"
+				>
+					<structure-path>
+						<node name="TestLocalizedNumberFormat_de_DE"/>
+					</structure-path>
+				</selectee>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+				tab-path="Strukturen > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test in form"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					comment="Input value in style Locale de_DE"
+					failure-message="Ticket #10161: Invalid input format"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="float"
+								>
+									<attribute-ref attribute-name="float">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestLocalizedNumberFormat_de_DE"/>
+										</structure-path>
+									</self-ref>
+								</field>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="15.654.897,00"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test in table"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+							structure-name="DemoTypes"
+						>
+							<structure-path/>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Strukturen > Typendemo > Grid"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+									tab-path="Strukturen > Typendemo > Grid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+										field-label-comment=""
+									>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestLocalizedNumberFormat_de_DE"/>
+											</structure-path>
+										</business-object>
+									</node>
+								</path>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+							tab-path="Strukturen > Typendemo > Grid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-label="Bearbeiten"
+					command-name="gridEdit"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					comment="Input value in style Locale de_DE"
+					failure-message="Ticket #10161: Invalid input format"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+						tab-path="Strukturen > Typendemo > Grid"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+									field-label-comment=""
+								>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestLocalizedNumberFormat_de_DE"/>
+										</structure-path>
+									</business-object>
+								</field>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="float"
+								>
+									<attribute-ref attribute-name="float">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestLocalizedNumberFormat_de_DE"/>
+										</structure-path>
+									</self-ref>
+								</field>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="1.125.125,81"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridComponent$GridApplyCommandHandler"
+					command-label="Übernehmen"
+					command-name="gridApplyRowObject"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminViewConfigView"
+	helpIDLegacy="tl.admin.config.view.tabber"
+	titleKey="tl.admin.config.view.tabber"
+>
+	<tabInfo label="tl.admin.config.view.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/technical/layoutInspector/configViews.xml"/>
+	</components>
+</securityLayout>

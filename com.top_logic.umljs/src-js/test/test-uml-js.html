@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="de">
+	<head>
+		<link rel="stylesheet" href="../dist/assets/diagram-js.css">
+		<link rel="stylesheet" href="assets/custom.css">
+		<meta charset="utf-8"/>
+
+		<style>
+		</style>
+	</head>
+	<body>
+	<div id="canvas" style="width:100vw;height:100vh;"></div>
+
+	<script src="../dist/uml-modeler.development.js"></script>
+
+	<script>
+		var umlViewer = new UmlJS({ parent: '#canvas' });
+
+		function loadJSON(callback) {
+		    var xobj = new XMLHttpRequest();
+		    xobj.overrideMimeType("application/json");
+		    xobj.open('GET', "data/diagram.json", true);
+		    xobj.onreadystatechange = function () {
+		          if (xobj.readyState == 4 && xobj.status == "200") {
+		            callback(xobj.responseText);
+		          }
+		    };
+		    xobj.send(null);
+		 }
+
+		 loadJSON(function(response) {
+        var jsonData = JSON.parse(response);
+
+				umlViewer.importJSON(jsonData);
+    });
+	</script>
+
+	</body>
+</html>

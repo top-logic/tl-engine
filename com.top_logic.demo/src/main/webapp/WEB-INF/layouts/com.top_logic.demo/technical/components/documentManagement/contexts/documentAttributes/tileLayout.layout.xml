@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="13b5c30a-b3f0-4a93-be40-fc85fe8e5c53"
+		tileName="ID_7381e9c3_4c3b_42e2_9bd9_1224fb9aebf2"
+	>
+		<tileLabel key="dynamic.149a8b03-b8ff-4ca5-95e3-6fc8f982b0dc">
+			<en>Document attributes</en>
+			<de>Dokumentenattribute</de>
+		</tileLabel>
+		<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+			icon="css:fas fa-file"
+		/>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/documentManagement/contexts/documentAttributes/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="visual"
+   viewBox="0 0 22 22"
+   version="1.1"
+   sodipodi:docname="PersonContact-16_path.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata15">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>PersonContact-16</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     id="namedview13"
+     showgrid="false"
+     inkscape:zoom="11.313709"
+     inkscape:cx="23.892909"
+     inkscape:cy="-0.15041138"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="visual" />
+  <defs
+     id="defs4">
+    <style
+       id="style2">.cls-1{fill:#454952;}</style>
+  </defs>
+  <title
+     id="title6">PersonContact-16</title>
+  <path
+     id="path10"
+     style="fill:#008fb8;stroke-width:1.09812963;fill-opacity:1"
+     d="m 16.595811,12.543714 a 8.0932154,8.0932154 0 0 1 -11.1569963,0 10.981297,10.981297 0 0 0 -5.40279775,9.454895 H 21.998609 A 10.981297,10.981297 0 0 0 16.595811,12.543714 Z M 17.660997,6.6797013 A 6.6436844,6.6436844 0 0 1 11.017313,13.323386 6.6436844,6.6436844 0 0 1 4.3736286,6.6797013 6.6436844,6.6436844 0 0 1 11.017313,0.03601694 6.6436844,6.6436844 0 0 1 17.660997,6.6797013 Z" />
+</svg>

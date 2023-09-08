@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminTechnicalDeleteLocksView"
+	helpIDLegacy="tl.admin.technical.deleteLocks.tabber"
+	titleKey="tl.admin.technical.deleteLocks.tabber"
+>
+	<tabInfo label="tl.admin.technical.deleteLocks.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/technical/locks/deleteLocks.xml"/>
+	</components>
+</securityLayout>

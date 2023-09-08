@@ -1,0 +1,3124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup objects."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Setup plain objects."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Flache Typen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+							columns="Zeilenselektion,Kommandos,name,booleanMandatory,booleanRadioMandatory,booleanSelectMandatory"
+							label="true"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.GridCreateHandler"
+							command-label="Legt neues A an"
+							command-name="createPlainA"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="name"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="TestTiles A1"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="booleanMandatory"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+									<list>
+										<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+											name="name"
+										/>
+									</list>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="booleanRadioMandatory"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="booleanSelectMandatory"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.GridCreateHandler"
+							command-label="Legt neues A an"
+							command-name="createPlainA"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path=""
+								/>
+								<matchers>
+									<labeled-member label="Übernehmen"/>
+									<named-member name="buttons"/>
+									<form-context/>
+								</matchers>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="name"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="TestTiles A2"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="booleanMandatory"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+									<list>
+										<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+											name="name"
+										/>
+									</list>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="booleanRadioMandatory"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="booleanSelectMandatory"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+							command-label="Speichern"
+							command-name="gridSave"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Setup structured objects."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path=""
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+							command-label="Generieren..."
+							command-name="generateTypes"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Name des generierten Wurzelelementes"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="TestTiles"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Anzahl der generierten Kinder"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="5"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Generieren"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTiles"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTiles > A0"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									tab-path="Strukturen > Typendemo > Typendemo"
+								/>
+								<path>
+									<labeled-member label="document"/>
+									<named-member name="document"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+										base64data="JVBERi0xLjYKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURlY29kZT4-CnN0cmVhbQp4nCWKPQsCMRBE-_0VUwsXd3OXZANhwdOzsDsIWIidH53gNf59L8rAY4Y37AQfeoPBjr0i5OB8CtBBnEbBcqfzBq__Y83ypLFSiE6RUu-yZtQbtkeBeNTHpbCYL-wbeh44mBSODcm6VFhbzdatesejxcL73ziYrmKyaz3RVGmmGV_5ViE3CmVuZHN0cmVhbQplbmRvYmoKCjMgMCBvYmoKMTMzCmVuZG9iagoKNSAwIG9iago8PC9MZW5ndGggNiAwIFIvRmlsdGVyL0ZsYXRlRGVjb2RlL0xlbmd0aDEgMTAzNDg-PgpzdHJlYW0KeJzlOWt0G9WZ95uRZNmWLcm2bMmKpFEUJ3H8kF95OCTxxLZkJ3Zi-UUl52HJlmwp2JKQ5IRAWdxSIMchkFJKy2NLykIWaHYzbqANXbYxXdi2hwXClvYshZT0AKfbA1lSmuZ0oZH3u1djR0kDPduz_3bkmfne73t1o6QSUyGiIdOEJ-LoZCDuNJUKhJB_IwSKRvemhI09husQPksI9-9j8fHJh76_8wIhimcIyXlmfGL_2Htt79USognjrQiHAsE-4weIGyfQxpowEgbT-3MQfxzxZeHJ1E1Dyngj4j9BfMNEbDRwT3lRMSEmBeLCZOCmuF3RziG-jOLRwGTI1sJ3It5OSP7eeCyZCpJl82jqecqPJ0Lx7odGXkL8bUL4w0gD_NBLg6CK4hyvUKpy1Ll5-ZqCQvL_71IeIgbSqdxItCTOnldc_DFiIg8SMv8hxS4_093zn_xfRqHOvL5JjpJnyCHyJtklM9zEQyJkCinZ1wvkdaTSy0OGyNNk5jPMHiMnkZ-R85N7aSbXvDzkG-QE-fEVXjxkktyCsTxL3oR68lMclRj5GNTkS-QltPox0rZdyxRHh2iMgWNZ1LfIw9xBspV7D5EHKYdzcjryInkEdqPlFOZ5aDHjDX9m9C5yKz77SZjsRZhdyo1_-iXJnf89ZnUr2Uq-TDaTiSyN5-FRPg_7N0AexZq-wGjOBWZOJ7-H-x7HXfoaIl8l43gHAHPnDvGbP6NC_-uLHyQFUMlXkNxrcbkmok1_wjXMX-CXkTwyOH9-gTbfNf97PpCOKoYVS5QbFS9_ng_VVxWTqE3m30_fkg4qtyuPYreeJETs2DHk8w4O9Pf1enq2b-vu2rqls8Ptam9r3Sy2bNq44br1zevWrlldX-esraleuWJ5xTLHUrvNWKLXaQsL8vNy1TkqpYLngFQLEvhdEl8h6N0Bh8sR6KypFlzGcHtNtcvh9ktCQJDwpVju6OxkJEdAEvyCtBxfgSyyXxJRcuwqSTEjKS5Kgk7YQDZQFw5BeqXdIZyEoV4vwofaHT5BOsfgbQxWLGdIASJ2O2qwqGi0gkty7w3PuPwYI8zm57U52kJ5NdVkNi8fwXyEpJWO-Cys3AQM4Fa61s9yRF1A3WKmrkBQ8vR6Xe1mu91XU71FKnS0MxZpYyYlVZuUw0wKERo6OSjMVs_N3H1SR0b8VZqgIxjY6ZX4AOrO8K6ZmbskfZVU6WiXKm9-z4iZh6RqR7tLqqJWu_oW_XRddgmSskLnEGb-QDAdx7kPr6QEZIqqQvcHQkGJa5Ogz2unl9mNtZ6ZcTsE94x_JnByfnrEIegcM7MazUzcheUmHi-aODn_g4NmyX23T9L5w7DeJ6fu7uuSint3eCWuwi2EA0jBvxaHfZ3Zrl-U8XwWm2BZsDhYYbudluHgSZGMICJN93ozuEBGzN8lorPKJ3F-yplb4BgGKWd6gbOo7ndgb7v6vTOSomJL0OHCih8MSNMjOF17aGMcOqnwotnumCnSC81OH5MVMKotwYggKZdjkVArWwHnhqrM6BhSeDHzOmdGB8v1RUKzA81QOy6Hyy__7Q0b0YCAhe6sygzCgFcS2xEQA3LHXLN1TtQI-LFhkXbWTMnpiEsljtbF7tKwXJF-L1OR1aSSNon4R2Utyeli60pwzfjbMyFQW45e73Okcf7sbJNgPtFImoivnQqXtuGULXfNeINjks1vDuK6GxO8Zrsk-rDDPoc35KNjhxWqPGtmw-FjszLg7ep3dPUOedfJgWQY1JyiwnWVGYfXnDGDAyipK9SClzPzPhTUIUFwI-Bo3YBPKadCjbcOC86odHBbNwheMJMFaQxDqhRcoXZZjuJXGFXScWrrXLCmoijaaes02332zFVTzSFbkB2jhpoWtXOBhdsUMtQ4n22djERraaRDL3gdIYfPERYk0eOludHysCrLxWA1l3s1cAWWVSwsE7EjewGhxZTcVebs4kodDF9EO69ib1lgCzNqR1f_DDXukA0SjHyLROgIi-v0ZrYX0AXtwL1X0OGSZgt6ZlYU6WIOr6dGHFuCM45-7wYmjfvJreabqa8i0gVdA6011bi1tc464EDvrAgH-oe8z-nwXHhgwPtdDrg2f6tvdhnyvM8J-KXBqBylUiJFBIpQS32IqJm8-TmRkGnGVTACw0dPAmE09QINyOhJLkPTZRwtZ45EwiFHkeGIC9IKpKkztGlGY9csoSUT85SiWswVNVwBZ54FSvouUn6A59hcICc0UADmWdTqY-STMD2bK5ozEtMoIWYiPDB42fXgkPeEBr-dzeyJjlrpheNiDGOz8WvFJQTpoHzRF57x--hiI6XYGvwDCRybsE2OTRiISiPlOUKtUr6jldJbKL0lQ1dReg6OKJQCqk9j7z0S0AnY4bXjkhTKf2qe0Z2jnfLhpjKje78GK4b_jlDcimdQM4mKbk1JCZhUWlAssWiK_b5hTUzD1WiAJxqdhstVajQKs7nE7zPDsM9cpMj3-xTcsE_Bn7XAEQvELeCxgGiBXfQiLVVVxIgPfRFpNjqHd-8a3rULEShr1jfqG-vrWkC_YrVd71ixvAr09rWNCNn1dqEFGnn7dceO8f_VKsTfeAv22ETRln4A1MB5mluLP319tVnxrfLV6VNvFl66cCQdfOzSGd0f09-ixxtShY8iZTfJx9P134pjRKNR6fVlpXxuv4_woON5g2go8vgMWo1eq_f4tIaSMlCUQfOFMjhcBly8DPxl4CkDsQzmykAqgyMMFcpAVwakDM4zCopmS-7KXDdmrgRew4nEblYAPWnECpByo-5VzJ8mj7mz5KFE5Vi6fHXTmsaGUr7MYF-9lhYDbhFrqkWxukbM-3badOQOqFK8k8HFT9ebampMvGCiPcMzJf9r_iWyhMyJt5LiYmO-RpNjzLFYl5g8viXaYkRKjR5fXqmhCCV5XZ-P1z1uhfes8KIVSqygsEIzIvdbIWWFoBUGrNBuhSYrLLOCmbElK3CHrTBthbgV_FYQrXDaCnOMcSSLnp38MEs-c-1m1EwJ9FiERgo00mrQIrAJyEwBbAIsgUGfqUHTcsfSHP3lerRv-8f1N38xkb7h1t7BodtvS--58UbQ8P7q5nvuuvQALQjn7R-2XCrOqk0LzsDTyseIGdaI_1FUWsqbzWXFeQrLklKzyezxmQykpLjE4-OLtTmFHl9-DpgtoLDABQv8kwW-YoGUBYIWqLLI9Bves8AbFnjRAs9Y4H4mgeyuLJ3vMPoOplPC6C8v0NHWgAXaF-jrP2CGHrfA4SxXTRZYxiSIBbjzFsDFdJqtp2m2pHA9CRbQWUBiqI7JZQ0c1j1xVd2zudfiEGwHkXtizLQosyxZR4odq9eywSwz4Np0LFVZoNHgyDTl14899sTXt7XW1yyta2n65JOX04qDvLd-Revps8Wv3GKIP_TIwJ8u2mtq7LgWO-c_5G_kX8B9pYJMii16dUWFQtBoTAoej_5L85b2-owGvX4JrkK9Tc9peL2eqPNKcxQeX46BGDw-opteAcMrQFwBCOzCRHCa6IZCIy9qdmYWFGnOCp9-6EjJ87QCl5i-aRO0wGo6V1pwrF4DOYVgKGlsWLMWXn_oq1PpdHFi9ndbjnzzUMfWYP_SdY8Buf3O4XvbRxv4F_7my5fuMNXsToBx9y2becXXAjudU6840laFcndUshnprxrbMcftuA5LiV_coFfmlypLy4xqrcenUetKS_iSXh9fSoywSTRCnREEI-iMcN4Ip41wxAjTRkD6cSMMG0HuV6ZPCxtH4-W1Ul9XUQgOQc_aQrdMhEtKGxvW8tvrjw2l1_72zbuOrK3qT6Uv_N137ptoXlYJv_vgki39yVFnOvzGs3YaawnuBO8rDxEL-YG4n5SUmAoKC3NNuVabpdzjs5ASRMpw99CUGYo5TqnU9_mUuiM2OGuDORvobEBs0IzIYRvEbeC3gccGog3qbCDYwMbYyJpe4CLrNNOUbHAki549nX_NblGSc-V-ceV24c7p_H5LZr84uhu3i-C-u6GBvxiurdywuGHsPibvF0rOWINz6sEeurGHBtxND4lDJgBtudqgNVisJoLDabKZcDhNJk1RUanHV6TTKHt9mtLFjTB7j_RYgVhhk4ftlnVWEKygs8L5hQ1zIePFhbhLHujFL8iFbBeSNeBWTUfVgL1fupw2X9AbYKnKYG9aDoqNt42vub-u7onr33r51VMQSX8jHIP7dsKbRTMPeory19lqPwTlxY_TY33wyJOPn3iQzsDA_IfczzDXlcQnNtlzSsoLcCwqVxXY-bIyq8dnLtPx-bj--NLpVRBfBf5V4FkFwio4vgqGV0HPKlho3eUdBGNvvhz24jfbitWNZTifq5ucUMtdsZsYSkrLrDz3s9l_cD9VV1PfddOPHvSFdjY8dXj8Yeeq1YnewW3bvzbU4gD13YctRb-5vf3ozU0We_uo-4v32l6ZdHram7eXN9S2Xc--7-nZxY5nFzUx4jfhNDEo8_K0Bm25KVfl9-XmFhQV8X7s2bCviM_TFmiHfQVF95bDbeUQKwdnOTYa3imHU-XwKKP0lEMLo88z-muMOMzE1mXkTjHljOZxpnYb07Exinr35eFebHP2Nrx4IpBbnj3dWLgmehDCfisvTzSucpWDH3roeyPhp76d3v7zSy8_egw-gQ__-7e89MQ9l-546EK61bxaPhFNvfoLWpP5PymnsCa5pIx0i05lCSkoKTCaygzDvjKF31fG60qGfbocv09XREzQIppAMMFZExwxQdzEGpzZghYOb4s7EOiI3aHHphaBQPSIVDhYkIrH06-nf_PMTU9c_O2lP0ISxtJ_n34qvfTYsWPck2CCpZ_eooal_EvpZ9PPpKX0UUUmWkLks2clxlpGLohHS4uKSvQAKlVJPm8y6gkeP_UxPVejx-OnXqfH46der8rN1WFnc4Z9uTyoFCo8fBY9Y4LHTXC_CaZNkDJB0AQKE5w3wXsmeIPRkeg3wYAJ2k1w2gQvmmBR5SsLKsjFStSxYpQwC80XmImMHOJzJuAkEyycci6v4mt93V7d6atPv3JFLzf6imMwPPnOpRceXTwBH7Rt3Gjjhi5dXOw0Pfu-Ts--WMO75t-F_eTneOY1ivlEpdIU8LkP7-CLSYt83sTvjqzDJux3NTW53I2N7p31nZ31jW43-22e_rp_6-3vD2s3_IGzZX4X_kn76Vcv_-o3_y5O1WNk8Udj1j-SY0-7yBeyKVdcWlUzdvhdch3XTKoUhDi5p0kLf4h04r0d8RJ8e3gLGUD3RJEk1yl_TK6jb47Iv7iOkV9CmKvmvsVd4Kf5i4rd-PlP5SblWRXHvGlJJY2dZaDDc_FOBP6F_1fCM64VoosxXb8YH6Dk9TLMkRz0kYF5PKtMyrACZQ7IsJIUkm_KsAo9HpXhHHIzeVaG1aQEnDKcSwqhTYbzIAq9MpxPlnCnFv8npJZ7S4YLyGo-V4YLSTm_iUavoL_gHuO9MgxEUChkmCOFimUyzJM1igYZVqBMWIaVZInigAyriFXxuAznkAuKH8mwmqxUfk-Gc8kS5a9kOI97W_mJDOeTdepfyLCG7MwtlOECsid3jwwXkqbcN9oj45FU5OZQUAgGUgFhNBbfn4iMh1PCytFKoaGuvk7oiMXGJ0JCWywRjyUCqUgsWpvXdrVYg9CHJjoDqWphS3S0tjsyEsrICv2hRGSsLzQ-NRFIbE6OhqLBUEKoEa6WuBq_PpRIUqShtq6utuEy92rhSFIICKlEIBiaDCRuEGJjVwYiJELjkWQqlEBiJCoM1vbXCp5AKhRNCYFoUBhYVOwZG4uMhhhxNJRIBVA4lgpjqHumEpFkMDJKvSVrFzPIKkd_KrQ3JGwLpFKhZCzaGkiiL4xsIBKNJauFfeHIaFjYF0gKwVAyMh5F5sh-4UodAbkBzCUaje1Fk3tD1Rj3WCKUDEei40KSpixrC6lwIEWTngylEpHRwMTEfuzZZBy1RrBJ-yKpMDqeDCWF7aF9Ql9sMhB9ujYTCtZmDIsqRCbjidheFmNNcjQRCkXRWSAYGIlMRFJoLRxIBEaxYli2yGiSVQQLIcQD0RrXVCIWD2GkX-joviyIAWaqmYxN7EXPVDoaCgWpRwx7b2gCldDxRCx2A81nLJbAQIOpcE1W5GOxaApVY0IgGMTEsVqx0alJ2icsc2ohuMBoIoa8-EQghVYmk7XhVCq-3unct29fbUBuzSh2phYtOz-Pl9ofD8n9SFArkxPd2P4obd0U6y9Non9Lt9ATx_q4MThBFqgWFkazvrZedoFljMRTydpkZKI2lhh39ri7STuJkHG8U3jfTEIkSAS8A4gHEBolMRIn-0mCSYWRKuDpbhR3RYE0kDpSj7dAOlAqhvwJ1BdIG8IJ1KLPALMbI1FSS_IY5_OtNSDUJ0fRybSrEdqC-qNooRv1RpCbbVcg_YwSwX2Wao6TKYwjgJTNJIlaIZQJMgmB1OD9l2z8Jf71DEouchowrjr81CJ0Ld2_ZDmCtgRW6xTj0FgnWfw3IC2Gep9XEQHlQqx_SeSEGBZkVqntQZToZ1IepklrkWLeokxq4Boee9DjGOqPsl4uSI4y23QmMpZjCIflqu7BiidYBEGmt5BbEj3_eQ-uPR39LLq9zOc2Rqd4kvFaEU_KeWVqNsCiiCGV1mIfRkL9hhkcYPUMMm06ZVFZcwTnTvhcP4KsG5D7EmU-9spRUp1qud5j7JlkfqPoQ2DxZbp8pW-B1SnAqp7p9CRyU0x2FOkT-Nkvr7NJrErG14i8kvaxdRmWM55kdgWyHd_72FTEWN-i9qWsx5erkpmbMXlSBaYbRzjGslioYw3rDc0kxCKlUICt_RHUmGC-M7GF2XQEWG9Dcq9TLIOFegXlTGnUcUapIS42F3TFh-SafgF3iu5rWsxUMHs2aU8mWLzJLNtRFm1wMcdMtanUhOwpk_EE25FuWOzPGJu3TEWDzFrNZ9R8jNUmJXuNsYiC-Ml0PDNbMdSdYv3IrKfMNKf-rHIBVt-YrBdn-1JKjmWSrY8wm8A4WY9nSydGRz-1bA6zV82ovGZq5Zidf7UejSvOKpi9PhKLsUxijN3y6o8urrqprPW70Il-3IO62X4Rl-fHLVdOuMoCXTVX75r16K_-qiwy0xhBPMXiSbJa1rIcxpHfgx662Tk68y8GO8Z0jWs217N5BEIEIAzjpJjYwE-2wzAZhM1kI4j4FpHXiu82xOm7FjaSaZTbiPRNiG9A-nW4edrw2YJ3D9734q3AOyNRhxJOfDtlvAbxatR4DZ_AbkptQSp9b0W8E98d8tuNdBe-XTK-BXF8Ez_k0B-Y2fMUKMQTcPYSvHYJhEtw26fg-RSmPz78Mfe785W24-dPned6Phr-6PhHfN1HoP0I1OSc7pznnP9c_NyRc6o87YegIR-A_t2z62zvbDwz-KuNbw-SM5jZmboznjPTZ6QzyjPAD77Nl9p0c8Jc3Vx8bnru9NzZufNz6ukfHv4h98_PO23a523Pc7YTPSduO8H7nwTtk7YnOc_D_oe5w4-A9hHbI85H-IcerLU92GG1feOBFbazD5x_gDs5P3figQK9-3nogW6yEWu4_QQ_bzu-2QDbMC0tPm14O_HuwTuG97144797UNyGtxO6xXX88Nch_z7zfVX33XLfwfuU8Tun7zx8Jz99x-E7uON7T-3lkp5KWyxaZYt2rLKZGo2DOY38oArdoHdxy0jFSrd_WLQNo9COoTrbUEelrbixaFCJCStQUMvb-Ba-h4_x9_Kn-Bx1n8dq68X7rOe8hxM9uRq3tsfW4-zhT86fFUNddrS2Nb51eiu_xV1p6-xYZ9N22DqcHa91vNPxUYdquAMexT_3cfcpNy-6K51u0W21u5d0mgdLGw2DetAO6hq1gxxgoxvJoFM7r-W02mHtbVpeS1oIN10KSjgJh2cH-ququk7mzPd1SWrPDgkOSBX99Cn2DkmqAxIZHNrhnQW4x3fHoUOk1dIlNfR7Jb_F1yUFERApMI2AzjJbSlp9yWSqil1QVYXwFD5J1VQVEncnM1SyyCdVSUjiHpVkSlBFBTI44LOK8pBA9QC1dycJfVBmVUaJaidlc0w582CAcff_ABJnD_EKZW5kc3RyZWFtCmVuZG9iagoKNiAwIG9iago2MDcxCmVuZG9iagoKNyAwIG9iago8PC9UeXBlL0ZvbnREZXNjcmlwdG9yL0ZvbnROYW1lL0JBQUFBQStMaWJlcmF0aW9uU2VyaWYKL0ZsYWdzIDQKL0ZvbnRCQm94Wy01NDMgLTMwMyAxMjc3IDk4MV0vSXRhbGljQW5nbGUgMAovQXNjZW50IDg5MQovRGVzY2VudCAtMjE2Ci9DYXBIZWlnaHQgOTgxCi9TdGVtViA4MAovRm9udEZpbGUyIDUgMCBSCj4-CmVuZG9iagoKOCAwIG9iago8PC9MZW5ndGggMjg2L0ZpbHRlci9GbGF0ZURlY29kZT4-CnN0cmVhbQp4nF3RzW6EIBAA4DtPwXF72Piz6u4mxmTruomH_qS2D4AwWpKKBPHg2xeGbZv0oPkmzMAwRHV7bZW00auZeQeWDlIJA8u8Gg60h1EqkqRUSG7vEf75xDSJXG23LRamVg1zWZLoza0t1mx0dxFzDw8kejECjFQj3X3UnYu7VesvmEBZGpOqogIGt88T089sggir9q1wy9Jue1fyl_C-aaApxklohc8CFs04GKZGIGUcV7S83SoCSvxbS7JQ0g_8kxmXmrjUOM7yyjlFF2fvQ3DjnQUX3nlw4l0EH7yPwSfvUzDueUYfMeeCTmPvR3SOrkMPmfc1GM9qQn6DF7l37K_kZ_4zKspXY9yY8GFwPn4yUsHv2-lZ-yr8vgHPYYv6CmVuZHN0cmVhbQplbmRvYmoKCjkgMCBvYmoKPDwvVHlwZS9Gb250L1N1YnR5cGUvVHJ1ZVR5cGUvQmFzZUZvbnQvQkFBQUFBK0xpYmVyYXRpb25TZXJpZgovRmlyc3RDaGFyIDAKL0xhc3RDaGFyIDE0Ci9XaWR0aHNbNzc3IDYxMCAyNzcgNTAwIDMzMyA0NDMgNDQzIDUwMCA0NDMgMzg5IDI1MCA1NTYgNzIyIDU1NiAyNTAgXQovRm9udERlc2NyaXB0b3IgNyAwIFIKL1RvVW5pY29kZSA4IDAgUgo-PgplbmRvYmoKCjEwIDAgb2JqCjw8L0YxIDkgMCBSCj4-CmVuZG9iagoKMTEgMCBvYmoKPDwvRm9udCAxMCAwIFIKL1Byb2NTZXRbL1BERi9UZXh0XQo-PgplbmRvYmoKCjEgMCBvYmoKPDwvVHlwZS9QYWdlL1BhcmVudCA0IDAgUi9SZXNvdXJjZXMgMTEgMCBSL01lZGlhQm94WzAgMCA1OTUuMzAzOTM3MDA3ODc0IDg0MS44ODk3NjM3Nzk1MjhdL0dyb3VwPDwvUy9UcmFuc3BhcmVuY3kvQ1MvRGV2aWNlUkdCL0kgdHJ1ZT4-L0NvbnRlbnRzIDIgMCBSPj4KZW5kb2JqCgo0IDAgb2JqCjw8L1R5cGUvUGFnZXMKL1Jlc291cmNlcyAxMSAwIFIKL01lZGlhQm94WyAwIDAgNTk1IDg0MSBdCi9LaWRzWyAxIDAgUiBdCi9Db3VudCAxPj4KZW5kb2JqCgoxMiAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgNCAwIFIKL09wZW5BY3Rpb25bMSAwIFIgL1hZWiBudWxsIG51bGwgMF0KL0xhbmcoZGUtREUpCj4-CmVuZG9iagoKMTMgMCBvYmoKPDwvQ3JlYXRvcjxGRUZGMDA1NzAwNzIwMDY5MDA3NDAwNjUwMDcyPgovUHJvZHVjZXI8RkVGRjAwNEMwMDY5MDA2MjAwNzIwMDY1MDA0RjAwNjYwMDY2MDA2OTAwNjMwMDY1MDAyMDAwMzcwMDJFMDAzMT4KL0NyZWF0aW9uRGF0ZShEOjIwMjEwNjI4MTA1MjE5KzAyJzAwJyk-PgplbmRvYmoKCnhyZWYKMCAxNAowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDcyNzMgMDAwMDAgbiAKMDAwMDAwMDAxOSAwMDAwMCBuIAowMDAwMDAwMjIzIDAwMDAwIG4gCjAwMDAwMDc0NDIgMDAwMDAgbiAKMDAwMDAwMDI0MyAwMDAwMCBuIAowMDAwMDA2Mzk5IDAwMDAwIG4gCjAwMDAwMDY0MjAgMDAwMDAgbiAKMDAwMDAwNjYxNSAwMDAwMCBuIAowMDAwMDA2OTcwIDAwMDAwIG4gCjAwMDAwMDcxODYgMDAwMDAgbiAKMDAwMDAwNzIxOCAwMDAwMCBuIAowMDAwMDA3NTQxIDAwMDAwIG4gCjAwMDAwMDc2MzggMDAwMDAgbiAKdHJhaWxlcgo8PC9TaXplIDE0L1Jvb3QgMTIgMCBSCi9JbmZvIDEzIDAgUgovSUQgWyA8NDY2NTYzOUU5MTI3Q0I5MDJCNDUwNzUwQkExNkI3Qzg-Cjw0NjY1NjM5RTkxMjdDQjkwMkI0NTA3NTBCQTE2QjdDOD4gXQovRG9jQ2hlY2tzdW0gLzg4REU0QjFCMzRBMDYzRjE5QTBENDlDNjM3RjU5QjE1Cj4-CnN0YXJ0eHJlZgo3ODEzCiUlRU9GCg"
+										content-type="application/pdf"
+										name="simplePDF.pdf"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+			command-label="Designmodus"
+			command-name="toggleDesignModeCommand"
+			component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+			component-name="rootLayout#masterFrame"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.editor.commands.AddTabCommand"
+					command-label="Tab hinzufügen"
+					command-name="addTabCommand"
+					component-implementation-comment="com.top_logic.layout.component.TabComponent"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Deutsch"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="InAppTiles"
+					/>
+				</action>
+				<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				>
+					<identifiers>
+						<component-keys>
+							<component-key value="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml"/>
+							<component-key value="cca1320b-c69a-4f40-a046-eed0d52e7cf8.layout.xml"/>
+							<component-key value="047cf323-a0e6-44db-8f14-28123f79a375.layout.xml"/>
+						</component-keys>
+					</identifiers>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+					command-label="Sicht hinzufügen..."
+					command-name="addComponentCommand"
+					component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+					component-name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#placeholder"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Auswahl"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Kacheln"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				>
+					<identifiers>
+						<component-keys>
+							<component-key value="208aee92-1768-4ae6-b1d4-4406f52a8c64.layout.xml"/>
+						</component-keys>
+					</identifiers>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+					command-label="Sicht hinzufügen..."
+					command-name="addComponentCommand"
+					component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+					component-name="208aee92-1768-4ae6-b1d4-4406f52a8c64.layout.xml#placeholder"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Auswahl"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Kachel-Gruppe"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Deutsch"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Gruppenkachel"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+					comment="Ticket #26312: Tooltip of attribute must be used as tooltip of field."
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.FormMemberTooltipNaming$FormMemberTooltipName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Name"
+						>
+							<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						</form-member>
+					</actual-value>
+					<constraints>
+						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[Name der neuen Komponente. Dieser Name wird in der Navigationsleiste angezeigt. <br/> Der Name wird parametrisiert mit dem Kontextmodell der Komponente angezeigt. Das Kontextmodell wird an der Stelle '{0}' im Namen angezeigt.]]></value>
+							</expected-value>
+						</constraint>
+					</constraints>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Englisch"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Group tile"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Kacheln"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Standard Kachel"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Kacheln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="0"
+								/>
+							</object>
+							<labeled-member label="Komponente"/>
+							<labeled-member label="Vorlage-Argumente"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Name"/>
+							<labeled-member label="Deutsch"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Kachel1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				>
+					<identifiers>
+						<component-keys>
+							<component-key value="4caf5e69-440d-4b9e-8010-7677abd5804b.layout.xml"/>
+							<component-key value="6918b5db-a536-460c-9681-da43cac4582f.layout.xml"/>
+							<component-key value="40ea2c32-e4ee-4189-a2e4-37facdc83790.layout.xml"/>
+						</component-keys>
+					</identifiers>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test plain context table"
+				>
+					<actions>
+						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+							tile-label="Kachel1"
+							user-id="root"
+						>
+							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="InAppTiles > Gruppenkachel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+							command-label="Sicht hinzufügen..."
+							command-name="addComponentCommand"
+							component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+							component-name="4caf5e69-440d-4b9e-8010-7677abd5804b.layout.xml#placeholder"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Kachel Kontext-Tabelle"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Deutsch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Alle flachen Typen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="DemoPlain:DemoPlain.All"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="82b80919-8d1a-4fc7-b45f-5a413eb57363.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="TestTiles A1"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="4caf5e69-440d-4b9e-8010-7677abd5804b.layout.xml#Table"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+							command-label="Sicht hinzufügen..."
+							command-name="addComponentCommand"
+							component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+							component-name="82b80919-8d1a-4fc7-b45f-5a413eb57363.layout.xml#placeholder"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Kachel Kontext-Tabelle"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Deutsch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Personen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="Contacts:Contact.all"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="b57c0d0d-1907-4464-b54d-6dd0c47e7ea7.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="Super"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Personen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+							command-label="Sicht hinzufügen..."
+							command-name="addComponentCommand"
+							component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+							component-name="b57c0d0d-1907-4464-b54d-6dd0c47e7ea7.layout.xml#placeholder"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Formular"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Deutsch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Detail des Kontexts"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Modell"/>
+									<named-member name="outerContainer"/>
+									<labeled-member label="Modell"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+										value="com.top_logic.layout.channel.linking.impl.DirectLinking"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Modell"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Komponente"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Name"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+										value="4caf5e69-440d-4b9e-8010-7677abd5804b.layout.xml#Table"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Kanal"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="selection"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Detail des Kontexts"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="GenericObject"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+													ref="DemoPlain:A"
+												/>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestTiles A1"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+											ref="DemoPlain:A"
+										/>
+									</expected-value>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.mig.html.layout.tiles.StepOutCommand"
+							command-label="Übergeordnete Kachel"
+							command-name="stepOutTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.RootTileComponent"
+							component-name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.mig.html.layout.tiles.StepOutCommand"
+							command-label="Übergeordnete Kachel"
+							command-name="stepOutTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.RootTileComponent"
+							component-name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="TestTiles A2"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="4caf5e69-440d-4b9e-8010-7677abd5804b.layout.xml#Table"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="Super"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Personen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Detail des Kontexts"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="GenericObject"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+													ref="DemoPlain:A"
+												/>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestTiles A2"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+											ref="DemoPlain:A"
+										/>
+									</expected-value>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.EditComponentCommand"
+							command-label="Sicht bearbeiten"
+							command-name="editComponentCommand"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="b57c0d0d-1907-4464-b54d-6dd0c47e7ea7.layout.xml#Form"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Modell"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Komponente"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Name"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+										value="82b80919-8d1a-4fc7-b45f-5a413eb57363.layout.xml#Table"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Kanal"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="selection"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Detail des Kontexts"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="Contact"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+										<attributes>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Super"
+												/>
+											</attribute>
+											<attribute name="firstname">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administrator"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+											ref="Contacts:PersonContact"
+										/>
+									</expected-value>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.mig.html.layout.tiles.StepOutCommand"
+							command-label="Übergeordnete Kachel"
+							command-name="stepOutTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.RootTileComponent"
+							component-name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="Clever"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Personen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Detail des Kontexts"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="Contact"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+										<attributes>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Clever"
+												/>
+											</attribute>
+											<attribute name="firstname">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Fred"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+											ref="Contacts:PersonContact"
+										/>
+									</expected-value>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.mig.html.layout.tiles.StepOutCommand"
+							command-label="Übergeordnete Kachel"
+							command-name="stepOutTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.RootTileComponent"
+							component-name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.mig.html.layout.tiles.StepOutCommand"
+							command-label="Übergeordnete Kachel"
+							command-name="stepOutTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.RootTileComponent"
+							component-name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.mig.html.layout.tiles.StepOutCommand"
+							command-label="Übergeordnete Kachel"
+							command-name="stepOutTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.RootTileComponent"
+							component-name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test structured context table"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddTileCommand"
+							command-label="Kachel hinzufügen..."
+							command-name="addTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.GroupTileComponent"
+							component-name="208aee92-1768-4ae6-b1d4-4406f52a8c64.layout.xml#GroupTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Standard Kachel"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Name"/>
+									<labeled-member label="Deutsch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Kachel2"
+							/>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="2aa6457e-8798-4f0e-ab25-1a42aabb8356.layout.xml"/>
+									<component-key value="7b8d03ca-d13f-4827-bde8-87a378ad6ee6.layout.xml"/>
+									<component-key value="a34c6fc7-ac7b-4a0d-b5d6-9871a27d068e.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+							tile-label="Kachel2"
+							user-id="root"
+						>
+							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="InAppTiles > Gruppenkachel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+							command-label="Sicht hinzufügen..."
+							command-name="addComponentCommand"
+							component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+							component-name="2aa6457e-8798-4f0e-ab25-1a42aabb8356.layout.xml#placeholder"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Kachel Kontext-Baum"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Deutsch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Demo Typen Baum"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Wurzelknoten"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="`DemoTypes#ROOT`"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="DemoTypes:DemoTypes.All"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Referenz"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="tl.element:StructuredElementContainer#children"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTiles"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="2aa6457e-8798-4f0e-ab25-1a42aabb8356.layout.xml#Tree"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+							command-label="Sicht hinzufügen..."
+							command-name="addComponentCommand"
+							component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+							component-name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#placeholder"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Kachel Kontext-Baumtabelle"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Deutsch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Kontext Baumtabelle"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Komponenten-Modell"/>
+									<named-member name="outerContainer"/>
+									<labeled-member label="Komponenten-Modell"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+										value="com.top_logic.layout.channel.linking.impl.DirectLinking"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Komponenten-Modell"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Komponente"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Name"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+										value="2aa6457e-8798-4f0e-ab25-1a42aabb8356.layout.xml#Tree"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Kanal"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="selection"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Wurzelknoten"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="x -> $x"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="DemoTypes:DemoTypes.All"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Referenz"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="tl.element:StructuredElementContainer#children"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="992d0bff-efb6-487f-8ffa-38141ddb96ae.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+								expand="true"
+							>
+								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+									/>
+								</context-model>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path=""
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="A0"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+							command-label="Sicht hinzufügen..."
+							command-name="addComponentCommand"
+							component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+							component-name="992d0bff-efb6-487f-8ffa-38141ddb96ae.layout.xml#placeholder"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Kachel-Gruppe"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Deutsch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Gruppenkachel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Englisch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Group tile"
+							/>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddTileCommand"
+							command-label="Kachel hinzufügen..."
+							command-name="addTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.GroupTileComponent"
+							component-name="992d0bff-efb6-487f-8ffa-38141ddb96ae.layout.xml#GroupTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Standard Kachel"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Name"/>
+									<labeled-member label="Deutsch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Objekt-Details"
+							/>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="584aabef-3ff2-43bd-a102-6353695433b0.layout.xml"/>
+									<component-key value="6b1269f3-dc76-40ac-a6e2-52dc9834b51a.layout.xml"/>
+									<component-key value="3e6b7f45-97de-4c5f-bdbf-9468c23562d4.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+							tile-label="Objekt-Details"
+							user-id="root"
+						>
+							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+							command-label="Sicht hinzufügen..."
+							command-name="addComponentCommand"
+							component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+							component-name="584aabef-3ff2-43bd-a102-6353695433b0.layout.xml#placeholder"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Formular"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Deutsch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Details"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Modell"/>
+									<named-member name="outerContainer"/>
+									<labeled-member label="Modell"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+										value="com.top_logic.layout.channel.linking.impl.DirectLinking"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Modell"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Komponente"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Name"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+										value="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Kanal"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="selection"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel > Objekt-Details > Details"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTiles > A0"
+										structure="DemoTypes"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+									</expected-value>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.mig.html.layout.tiles.StepOutCommand"
+							command-label="Übergeordnete Kachel"
+							command-name="stepOutTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.RootTileComponent"
+							component-name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.mig.html.layout.tiles.StepOutCommand"
+							command-label="Übergeordnete Kachel"
+							command-name="stepOutTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.RootTileComponent"
+							component-name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+								expand="true"
+							>
+								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+									/>
+								</context-model>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="A0"
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="A0 > C1"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+							tile-label="Objekt-Details"
+							user-id="root"
+						>
+							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel > Objekt-Details > Details"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTiles > A0 > C1"
+										structure="DemoTypes"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+									</expected-value>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="Kachel2"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.breadcrumb.BreadcrumbDataName">
+								<breadcrumb-data-owner config:interface="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwnerNaming$GenericBreadcrumbDataName">
+									<algorithm class="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwner$AnnotatedModel"/>
+									<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+										tab-path="InAppTiles"
+									/>
+								</breadcrumb-data-owner>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+							expand="true"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="2aa6457e-8798-4f0e-ab25-1a42aabb8356.layout.xml#Tree"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2"
+								/>
+							</model-name>
+							<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+								label-path="TestTiles"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTiles > A0"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="2aa6457e-8798-4f0e-ab25-1a42aabb8356.layout.xml#Tree"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+								expand="true"
+							>
+								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+									/>
+								</context-model>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path=""
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="C0"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+							tile-label="Objekt-Details"
+							user-id="root"
+						>
+							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel > Objekt-Details > Details"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTiles > A0 > C0"
+										structure="DemoTypes"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+									</expected-value>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.breadcrumb.BreadcrumbDataName">
+								<breadcrumb-data-owner config:interface="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwnerNaming$GenericBreadcrumbDataName">
+									<algorithm class="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwner$AnnotatedModel"/>
+									<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+										tab-path="InAppTiles"
+									/>
+								</breadcrumb-data-owner>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddTileCommand"
+							command-label="Kachel hinzufügen..."
+							command-name="addTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.GroupTileComponent"
+							component-name="992d0bff-efb6-487f-8ffa-38141ddb96ae.layout.xml#GroupTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Chart JS Kachel"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Titel"/>
+									<labeled-member label="Deutsch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Anzahl checklistSingle"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Chart-Modell"/>
+									<named-member name="outerContainer"/>
+									<labeled-member label="Chart-Modell"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+										value="com.top_logic.layout.channel.linking.impl.DirectLinking"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Name"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+										value="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Kanal"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="selection"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Chart-Beschreibung"/>
+									<labeled-member label="Deutsch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="checkListSingle Werte der Objekte in derivedPath gruppiert nach der Anzahl"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Chart-Konfiguration"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[model -> {
+ // Determine next DemoTypes:A
+  model = if($model.instanceOf(`DemoTypes:DemoTypes.A`), $model, $model.get(`tl.element:StructuredElement#parent`));
+ // derivedPath value of of the current model.
+  nodes = $model.get(`DemoTypes:DemoTypes.A#derivedPath`);
+
+  // Group them according to their DemoTypes:A#checklistSingle value.
+  group = $nodes.groupBy(n -> $n.get(`DemoTypes:A#checklistSingle`).singleElement());
+  
+  // Sort the keys according to their labels.
+  keys = $group.keySet().toList().sort(comparator(x -> $x.toString()));
+  
+  // Compute data for the chart configuration.
+  datasets = $keys.map(x -> {
+	'label': $x.toString(),
+  	'data': [$group[$x].size()]
+  });
+  
+  // Produce the chart configuration
+  {
+  	'type': 'bar',
+  	'data': {
+  	    'labels': [#("Anzahl Objekte mit checklistSingle"@de, "Number of objects with checklistSingle"@en)],
+  		'datasets': $datasets
+  	},
+  	'options': {
+		'plugins': {
+            'colorschemes': {
+            	// See https://nagix.github.io/chartjs-plugin-colorschemes/colorchart.html
+                'scheme': 'tableau.Tableau10'
+            }
+        },
+  		'scales': {
+  		    'y': {
+  			    'ticks': {
+  			        'min': 0
+  			    }
+  		    },
+  			'x': {
+  				'gridLines': {
+  					'offsetGridLines': true
+  				}
+  			}
+  		}
+  	}
+  }
+
+}]]></value>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="8b3425f3-b481-4395-950d-04f551c98c0b.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+							tile-label="Anzahl checklistSingle"
+							user-id="root"
+						>
+							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="8b3425f3-b481-4395-950d-04f551c98c0b.layout.xml#Chart"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel > Anzahl checklistSingle"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTiles > A0 > C0"
+										structure="DemoTypes"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+									</expected-value>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.mig.html.layout.tiles.StepOutCommand"
+							command-label="Übergeordnete Kachel"
+							command-name="stepOutTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.RootTileComponent"
+							component-name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddTileCommand"
+							command-label="Kachel hinzufügen..."
+							command-name="addTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.GroupTileComponent"
+							component-name="992d0bff-efb6-487f-8ffa-38141ddb96ae.layout.xml#GroupTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Dokumentenkachel"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Name"/>
+									<labeled-member label="Deutsch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Dokument"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Modell"/>
+									<named-member name="outerContainer"/>
+									<labeled-member label="Modell"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+										value="com.top_logic.layout.channel.linking.impl.DirectLinking"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Modell"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Komponente"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Name"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+										value="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Kanal"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="selection"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Dokumentenfunktion"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="x -> $x.get(`DemoTypes:A#document`)"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Dokumentenbeschreibung"/>
+									<labeled-member label="Deutsch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value>Dokument im Attribut "document".</value>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="0e116bca-7498-4bc2-b200-3c523b6042e3.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+							tile-label="Dokument"
+							user-id="root"
+						>
+							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="Kachel2"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.breadcrumb.BreadcrumbDataName">
+								<breadcrumb-data-owner config:interface="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwnerNaming$GenericBreadcrumbDataName">
+									<algorithm class="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwner$AnnotatedModel"/>
+									<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+										tab-path="InAppTiles"
+									/>
+								</breadcrumb-data-owner>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTiles"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="2aa6457e-8798-4f0e-ab25-1a42aabb8356.layout.xml#Tree"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+								expand="true"
+							>
+								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+									/>
+								</context-model>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path=""
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="A0"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+							tile-label="Dokument"
+							user-id="root"
+						>
+							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.breadcrumb.BreadcrumbDataName">
+								<breadcrumb-data-owner config:interface="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwnerNaming$GenericBreadcrumbDataName">
+									<algorithm class="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwner$AnnotatedModel"/>
+									<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+										tab-path="InAppTiles"
+									/>
+								</breadcrumb-data-owner>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddTileCommand"
+							command-label="Kachel hinzufügen..."
+							command-name="addTileCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.GroupTileComponent"
+							component-name="992d0bff-efb6-487f-8ffa-38141ddb96ae.layout.xml#GroupTile"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Standard Kachel"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Name"/>
+									<labeled-member label="Deutsch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Kinder"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Vorschau"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Beschreibung"/>
+									<labeled-member label="Deutsch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Kinder des selektierten Elements als Kacheln"
+							/>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="9e53805a-e51a-43ee-9c01-998139f2ad76.layout.xml"/>
+									<component-key value="d45f8d73-e79f-41a9-aa81-901be2f3d178.layout.xml"/>
+									<component-key value="53fe875f-d946-4707-bc3c-3461ec1c6bb5.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+							tile-label="Kinder"
+							user-id="root"
+						>
+							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.AddComponentCommand"
+							command-label="Sicht hinzufügen..."
+							command-name="addComponentCommand"
+							component-implementation-comment="com.top_logic.layout.editor.components.ComponentPlaceholder"
+							component-name="9e53805a-e51a-43ee-9c01-998139f2ad76.layout.xml#placeholder"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswahl"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Kachel Kontext-Liste"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Deutsch"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Kinder"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="DemoTypes:DemoTypes.All"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers>
+								<component-keys>
+									<component-key value="7512426b-5f58-4c0e-a05b-929f4fff53bd.layout.xml"/>
+								</component-keys>
+							</identifiers>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.editor.commands.EditComponentCommand"
+							command-label="Sicht bearbeiten"
+							command-name="editComponentCommand"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileListComponent"
+							component-name="9e53805a-e51a-43ee-9c01-998139f2ad76.layout.xml#List"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Basis-Modell"/>
+									<named-member name="outerContainer"/>
+									<labeled-member label="Basis-Modell"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+										value="com.top_logic.layout.channel.linking.impl.DirectLinking"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="modelBox0"/>
+									<named-member name="modelContent0"/>
+									<labeled-member label="Basis-Modell"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Komponente"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Name"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+										value="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Kanal"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="selection"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Elemente der Liste"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="model->$model.get(`tl.element:StructuredElementContainer#children`)"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Prüfer für Benutzung als Listenelement"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Komponentenmodell für Listenelement"
+							>
+								<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="model ->$model"
+							/>
+						</action>
+						<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						>
+							<identifiers/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.breadcrumb.BreadcrumbDataName">
+								<breadcrumb-data-owner config:interface="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwnerNaming$GenericBreadcrumbDataName">
+									<algorithm class="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwner$AnnotatedModel"/>
+									<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+										tab-path="InAppTiles"
+									/>
+								</breadcrumb-data-owner>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="Kachel2 > Kontext Baumtabelle"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.breadcrumb.BreadcrumbDataName">
+								<breadcrumb-data-owner config:interface="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwnerNaming$GenericBreadcrumbDataName">
+									<algorithm class="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwner$AnnotatedModel"/>
+									<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+										tab-path="InAppTiles"
+									/>
+								</breadcrumb-data-owner>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path=""
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
+							tile-label="Kinder"
+							user-id="root"
+						>
+							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+							/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+			command-label="Designmodus verlassen"
+			command-name="toggleDesignModeCommand"
+			component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+			component-name="rootLayout#masterFrame"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+			command-label="Designmodus"
+			command-name="toggleDesignModeCommand"
+			component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+			component-name="rootLayout#masterFrame"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="InAppTiles"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.DeleteComponentCommand"
+			command-label="Sicht löschen"
+			command-name="deleteComponentCommand"
+			component-implementation-comment="com.top_logic.layout.component.TabComponent"
+			component-name="mainTabbar.layout.xml#mainTabber"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ja"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+			command-label="Designmodus verlassen"
+			command-name="toggleDesignModeCommand"
+			component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+			component-name="rootLayout#masterFrame"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown objects."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Teardown plain objects."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Flache Typen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+									<list>
+										<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+											name="TestTiles A1"
+										/>
+									</list>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+							command-label="Löschen..."
+							command-name="dispatchingDelete"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+									<list>
+										<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+											name="TestTiles A2"
+										/>
+									</list>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+									tab-path="Strukturen > Flache Typen"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+							command-label="Löschen..."
+							command-name="dispatchingDelete"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Teardown structured objects"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
+							expand="true"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</model-name>
+							<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+								label-path=""
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestTiles"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+							command-label="Löschen..."
+							command-name="elementRemove"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

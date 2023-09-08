@@ -1,0 +1,5 @@
+com.top_logic.layout.wysiwyg.ui.SearchTemplateBuilder.java: Missing documentation: com.top_logic.layout.wysiwyg.ui.SearchTemplateBuilder.appendSpacerPercent
+com.top_logic.layout.wysiwyg.ui.SearchTemplateBuilder.java: Missing documentation: com.top_logic.layout.wysiwyg.ui.SearchTemplateBuilder.appendSpacerPixel
+com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService.java: Invalid camel case word 'StructuredText', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.wysiwyg.ui.scripting.ImageUploadAction.java: Missing documentation: com.top_logic.layout.wysiwyg.ui.scripting.ImageUploadAction.setField
+com.top_logic.layout.wysiwyg.ui.scripting.ImageUploadAction.java: Missing documentation: com.top_logic.layout.wysiwyg.ui.scripting.ImageUploadAction.setImage

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<component class="com.top_logic.demo.layout.demo.DemoAJAXProgressComponent"
+			buttonComponent="DemoAJAXProgressButtons"
+			closeOnFinish="false"
+			isSecurityMaster="false"
+			logFilePrefix="DemoLog_"
+			logMessages="false"
+			name="ajax_progress"
+			progressComponentHeight="300px"
+			progressComponentWidth="500px"
+			refreshInterval="1"
+			resPrefix="layouts.layoutdemo.DemoAJAXProgress.ajaxProgress."
+			scrollUp="false"
+			securityProviderClass="securityRoot"
+			useIntervallFromProgressProvider="false"
+		/>
+		<buttonbar name="DemoAJAXProgressButtons"/>
+	</components>
+</layout>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26398_remove_table_interfaces"
+		module="tl-contact"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26117_security_object"
+			module="tl"
+		/>
+		<dependency name="Ticket_26398_remove_table_interfaces"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-contact"
+		/>
+	</dependencies>
+	<processors>
+		<change-part-type
+			source="tl.tables:OrgUnitTableInterface"
+			target="orgStructure:OrgUnit.base"
+		/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

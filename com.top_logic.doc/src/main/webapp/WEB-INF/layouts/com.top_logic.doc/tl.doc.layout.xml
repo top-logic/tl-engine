@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="templates/contentTab.xml">
+	<components>
+		<include name="com.top_logic.doc/tl.doc.view.xml"
+			defaultFor="tl.doc:Page"
+			page="/jsp/tl.doc/tl.doc.page.admin.edit.jsp"
+		>
+			<treeButtons>
+				<reference command-id="generateDocumentation"/>
+			</treeButtons>
+			<pageButtons>
+				<reference command-id="gotoHelpLayout"/>
+			</pageButtons>
+		</include>
+	</components>
+</include>

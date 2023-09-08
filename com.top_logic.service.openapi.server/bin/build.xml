@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+	See build_new.doc in the tl-build project for a description. 
+		
+-->
+
+<project name="tl-service-openapi-server" basedir="../">
+	
+	<!-- Note: This property must be mapped to `workspace_loc` in the Eclipse Ant configuration. -->
+	<property name="tl.workspace" value="${basedir}/.." />
+
+	<!-- Import allows you to override targets from base-build -->
+	<import file="${tl.workspace}/tl-build/bin/base-build.xml"/>
+	
+</project>

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Prüfe Typ Binary"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Erstelle A0"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="A0"
+						/>
+						<parameter name="booleanRadioMandatory"
+							value="false"
+						/>
+						<parameter name="booleanSelectMandatory"
+							value="false"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Erstelle X1"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-element.xml"
+					template-name-comment="Create element"
+				>
+					<parameters>
+						<parameter name="Typ"
+							value="Demo X"
+						/>
+						<parameter name="Name"
+							value="X1"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Lade Bild für A0 ins binary Feld"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="A0"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="binary"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+						base64data="iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAD2AAAA9gBbkdjNQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAHMSURBVDiN7dS_SxtxGMfx99dcKQYhdIhIqdCAQdIxBI4TCSYgiGQshS4KJURc7OJ_4OImGQRRwlErHUQnwUG7XAaR1sW2coUkUCidQxvIkUvt06EtJupdLp39LMc9P1735eAO7vI3qteAiITY309RqTzCcTSGhxskk-dqYuLbf8EiEmJ19SmWlcGyHuI4V82xsRaTkx_IZvfU3JwdGJazszCmuczGRorLS-9jJRLfWVx8pZaW3l5vDdxyUsXOzkvW1_1RANuOUCy-kFIp1ROmVMqyuan7ix2p1YY4PHwuIiF_-OhoimbzZt0vBwdxtrfTnrCIDFGpxPtCAVwXTk-fdJa0roGTk8dUq2FyOZiZCYbWarC2BvX6A284FPqFUhCNQiIRDG63_1wHut9eN6zrX4nFHExzENMMBv9LJFLvvO16jFKqQTxe7U8ENA10_bMnDMD0tEU4LH3Bs7M15uctf7hQOCaffxcYjcWa5HJvlFI_O8va9TmllMjFRRHXXWZrK-n79Y2PN1hYeK0Khfc3HK8dEdFYWXlGuTxFuTyC6141R0fbZDIfSaf3VD7_6bb9IL_Ne-zuGtj2CK3WfaLRHxjGuTKML7127wLAbz03mR3RZCyzAAAAAElFTkSuQmCC"
+						content-type="image/png"
+						name="discontinue.png"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Prüfe Dateinamen und Typ für A0"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="binary"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+						base64data="iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAD2AAAA9gBbkdjNQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAHMSURBVDiN7dS_SxtxGMfx99dcKQYhdIhIqdCAQdIxBI4TCSYgiGQshS4KJURc7OJ_4OImGQRRwlErHUQnwUG7XAaR1sW2coUkUCidQxvIkUvt06EtJupdLp39LMc9P1735eAO7vI3qteAiITY309RqTzCcTSGhxskk-dqYuLbf8EiEmJ19SmWlcGyHuI4V82xsRaTkx_IZvfU3JwdGJazszCmuczGRorLS-9jJRLfWVx8pZaW3l5vDdxyUsXOzkvW1_1RANuOUCy-kFIp1ROmVMqyuan7ix2p1YY4PHwuIiF_-OhoimbzZt0vBwdxtrfTnrCIDFGpxPtCAVwXTk-fdJa0roGTk8dUq2FyOZiZCYbWarC2BvX6A284FPqFUhCNQiIRDG63_1wHut9eN6zrX4nFHExzENMMBv9LJFLvvO16jFKqQTxe7U8ENA10_bMnDMD0tEU4LH3Bs7M15uctf7hQOCaffxcYjcWa5HJvlFI_O8va9TmllMjFRRHXXWZrK-n79Y2PN1hYeK0Khfc3HK8dEdFYWXlGuTxFuTyC6141R0fbZDIfSaf3VD7_6bb9IL_Ne-zuGtj2CK3WfaLRHxjGuTKML7127wLAbz03mR3RZCyzAAAAAElFTkSuQmCC"
+						content-type="image/png"
+						name="discontinue.png"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Prüfe Dateinamen und Typ für X1"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="A0 > X1"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="binary"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+						base64data="iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAD2AAAA9gBbkdjNQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAHMSURBVDiN7dS_SxtxGMfx99dcKQYhdIhIqdCAQdIxBI4TCSYgiGQshS4KJURc7OJ_4OImGQRRwlErHUQnwUG7XAaR1sW2coUkUCidQxvIkUvt06EtJupdLp39LMc9P1735eAO7vI3qteAiITY309RqTzCcTSGhxskk-dqYuLbf8EiEmJ19SmWlcGyHuI4V82xsRaTkx_IZvfU3JwdGJazszCmuczGRorLS-9jJRLfWVx8pZaW3l5vDdxyUsXOzkvW1_1RANuOUCy-kFIp1ROmVMqyuan7ix2p1YY4PHwuIiF_-OhoimbzZt0vBwdxtrfTnrCIDFGpxPtCAVwXTk-fdJa0roGTk8dUq2FyOZiZCYbWarC2BvX6A284FPqFUhCNQiIRDG63_1wHut9eN6zrX4nFHExzENMMBv9LJFLvvO16jFKqQTxe7U8ENA10_bMnDMD0tEU4LH3Bs7M15uctf7hQOCaffxcYjcWa5HJvlFI_O8va9TmllMjFRRHXXWZrK-n79Y2PN1hYeK0Khfc3HK8dEdFYWXlGuTxFuTyC6141R0fbZDIfSaf3VD7_6bb9IL_Ne-zuGtj2CK3WfaLRHxjGuTKML7127wLAbz03mR3RZCyzAAAAAElFTkSuQmCC"
+						content-type="image/png"
+						name="discontinue.png"
+					/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

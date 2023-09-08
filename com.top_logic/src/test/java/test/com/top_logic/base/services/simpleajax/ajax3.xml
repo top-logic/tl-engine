@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+	<env:Header>
+		<sequence xmlns="http://top-logic.com/base/services/cs"
+			env:role="http://top-logic.com/sequence" tx="23" />
+		<source xmlns="http://top-logic.com/base/services/cs">masterFrame_0_t_0_t_0_t_0</source>
+	</env:Header>
+	<env:Body>
+		<execute xmlns="http://top-logic.com/base/services/ajax">
+			<component xmlns="http://top-logic.com/base/services/cs"
+				env:role="http://top-logic.com/component" source="masterFrame_0_t_0_t_0_t_0"
+				target="masterFrame_0_t_0_t_0_t_0" />
+			<command>formFieldValueChanged</command>
+			<arguments>
+				<argument>
+					<name>name</name>
+					<value>
+						<string xmlns="http://top-logic.com/ns/xml-value">test.order.purchaser.surname</string>
+					</value>
+				</argument>
+				<argument>
+					<name>value</name>
+					<value>
+						<string xmlns="http://top-logic.com/ns/xml-value">Halfmann</string>
+					</value>
+				</argument>
+			</arguments>
+		</execute>
+	</env:Body>
+</env:Envelope>

@@ -1,0 +1,157 @@
+<html>
+
+<head>
+	<title>Table scroll benchmark</title>
+	
+	<style type="text/css">
+		div.window {
+			position: relative;
+			height: 500px;
+			width: 100%;
+		}
+		
+		div.structure {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			
+/* Causes exorbitant rendering slowdown in IE11 in combination with the DIV_CLIPPING option below. */
+ 			overflow: auto;
+		}
+		
+		div.viewport1 {
+			position:absolute;
+			width: 40%;
+			height: 100%;
+			overflow: auto;
+		}
+		
+		div.viewport2 {
+			position:absolute;
+			width: 40%;
+			height: 100%;
+			right: 40px;
+			overflow: auto;
+		}
+
+		table.slice {
+			table-layout: fixed;
+		}
+		
+		table {
+			border-spacing: 0px;
+		}
+		
+		td.clip {
+			overflow: hidden;
+			white-space: nowrap;
+		}
+		
+		td {
+			padding: 3px;
+			border-style: solid;
+			border-width: 1px;
+			border-color: black;
+			border-bottom-color: red;
+			border-right-color: red;
+		}
+		
+		div.outer {
+			position: relative;
+			width: 150px;
+			overflow:hidden;
+		}
+		
+		div.inner {
+			overflow:hidden;
+			white-space: nowrap;
+		}
+	</style>
+	
+	<script type="text/javascript">
+		var STRUCTURE_DEPTH = 20;
+		var DIV_CLIPPING = true;
+		
+		var SLICES = 3;
+		var COLS = 30;
+		var ROWS = 60;
+
+		function makeNestedDivs(contentCallback) {
+			for (var n = 0; n < STRUCTURE_DEPTH; n++) {
+				document.write('<div class="structure">');
+			}
+			
+			contentCallback();
+			
+			for (var n = 0; n < STRUCTURE_DEPTH; n++) {
+				document.write('</div>');
+			}
+		}
+
+		function makeTable(contentId, viewportClass) {
+			var tableStyle;
+			if (DIV_CLIPPING) {
+				tableStyle = "";
+			} else {
+				tableStyle = ' style="width: ' + (COLS * 150) + 'px"';
+			}
+			
+			document.write('<div class="' + viewportClass + '">');
+			document.write('<div id="' + contentId + '">');	
+			for (var s = 0; s < SLICES; s++) {
+				document.write('<div>');	
+				document.write('<table class="slice"' + tableStyle + '>');	
+				document.write('<colgroup>');
+				for (var n = 0; n < COLS; n++) {
+					document.write('<col style="width: 150px;" />');
+				}
+				document.write('</colgroup>');
+			
+				document.write('<thead>');
+				document.write('<tr>');
+				for (var c = 0; c < COLS; c++) {
+					document.write('<th><div class="outer"><div class="inner">Column ' + c + '</div></div></th>');
+				}
+				document.write('</tr>');
+				document.write('</thead>');
+				
+				document.write('<tbody>');
+				for (var r = 0; r < ROWS; r++) {
+					document.write('<tr>');
+					for (var c = 0; c < COLS; c++) {
+						if (DIV_CLIPPING) {
+							document.write('<td><div class="outer"><div class="inner">Some very long text that is clipped away.</div></div></td>');
+						} else {
+	 						document.write('<td class="clip">Some very long text that is clipped away.</td>');
+						}
+					}
+					document.write('</tr>');
+				}
+				document.write('</tbody>');
+				document.write('</table>');
+				document.write('</div>');
+			}
+			
+			document.write('</div>');
+			document.write('</div>');
+		}
+	</script>
+</head>
+
+<body>
+	<h1>Table scroll benchmark</h1>
+	
+	<div class="window">
+	
+<script type="text/javascript">
+	makeNestedDivs(function() {
+		makeTable("table1", "viewport1");
+		makeTable("table2", "viewport2");
+	});
+</script>
+
+	</div>
+	
+</body>
+
+</html>

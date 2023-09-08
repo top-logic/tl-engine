@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0">
+  <start>
+    <a:documentation>
+RelaxNG schema for KnowledgeBase instance dumps.
+
+</a:documentation>
+    <ref name="defInstances"/>
+  </start>
+  <define name="defInstances">
+    <element name="objectlist">
+      <oneOrMore>
+        <element name="knowledgeobject">
+          <ref name="defIdentification"/>
+          <oneOrMore>
+            <ref name="defProperty"/>
+          </oneOrMore>
+        </element>
+      </oneOrMore>
+      <zeroOrMore>
+        <element name="knowledgeassociation">
+          <ref name="defIdentification"/>
+          <element name="ka_src">
+            <ref name="defIdentification"/>
+          </element>
+          <element name="ka_dest">
+            <ref name="defIdentification"/>
+          </element>
+          <zeroOrMore>
+            <ref name="defProperty"/>
+          </zeroOrMore>
+        </element>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="defIdentification">
+    <attribute name="object_type"/>
+    <attribute name="object_name"/>
+  </define>
+  <define name="defProperty">
+    <element name="ko_attribute">
+      <attribute name="att_value"/>
+      <attribute name="att_name"/>
+    </element>
+  </define>
+</grammar>

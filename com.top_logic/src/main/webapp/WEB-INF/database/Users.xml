@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <properties>                
+        <section name="root">
+            <entry name="initials" value="root"/>             
+            <entry name="username" value="root"/>             
+            <entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$Hx6t6Q7lpQaAreHlr08W7A$xpgcrFrJqsMUHSlVOYnrK3E4P/hER6UYh6bLw3+irek"/>            
+            <entry name="userrole" value="user,tl.admin,R.admin, admin"/>
+            <entry name="givenName" value="Administrator"/>
+            <entry name="sn" value="Super"/>             
+            <entry name="personalTitle" value="Admin"/>
+            <entry name="customerName" value=""/>
+            <entry name="telephoneNumber" value="+49 1234 111100"/>
+            <entry name="mobile" value="+49 170 12345601"/>
+            <entry name="otherTelephone" value="+49 1234 111100"/>            
+            <entry name="privateNumber" value="+49 4321 654301"/>
+            <entry name="mail" value="support@top-logic.com"/>
+            <entry name="otherMailbox" value="support@top-logic.com"/>
+            <entry name="objectClass" value="person"/>
+            <entry name="mailNickname" value="Ernie"/>
+            <entry name="displayName" value="Administrator"/>
+            <entry name="description" value=""/>
+        </section>                  
+	</properties> 
+</root>

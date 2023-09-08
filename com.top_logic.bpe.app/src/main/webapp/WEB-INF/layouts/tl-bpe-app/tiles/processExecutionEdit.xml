@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="model"
+			value="selection(ProcessExecutionTable)"
+		/>
+	</params>
+
+	<include name="element/editAttributedDetail.xml"
+		componentClass="com.top_logic.bpe.app.layout.ProcessExecutionComponent"
+		defaultFor="tl.bpe.execution:ProcessExecution"
+		deleteCommand=""
+		metaElementName="tl.bpe.execution:ProcessExecution"
+		model="${model}"
+		namePrefix="EditProcessExecution"
+		page="/jsp/processExecution/ProcessExecution.jsp"
+		securityProvider="securityRoot"
+	>
+		<subConfiguration>
+			<buttons>
+				<button id="exportAsPdf"
+					class="com.top_logic.bpe.execution.export.ExportAsPdfHandler"
+					group="Create"
+					image="theme:ICONS_ADD_BUTTON"
+					resourceKey="layouts.tl-bpe-app.tiles.exportAsPdf"
+				/>
+				<button id="switchToAJAXEdit"
+					class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					clique="edit"
+				>
+					<executability>
+						<reference rule-id="SwitchToEditMode"/>
+						<rule class="com.top_logic.bpe.app.layout.HasDescriptionRule"/>
+					</executability>
+				</button>
+			</buttons>
+		</subConfiguration>
+	</include>
+</template>

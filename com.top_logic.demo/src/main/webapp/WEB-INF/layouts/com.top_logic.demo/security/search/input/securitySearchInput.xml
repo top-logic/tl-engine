@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="element/search/searchInput.xml"
+	columns="name"
+	metaElement="DemoSecurity.A,DemoSecurity.B"
+	namePrefix="SecuritySearch"
+	searchResultComponent="com.top_logic.demo/security/search/result/securitySearchResult.layout.xml#SecuritySearchAttributedSearchResultTable"
+	securityProvider="com.top_logic.demo.layout.security.DomainAwareSecurityObjectProvider"
+>
+	<modelBuilder class="com.top_logic.element.layout.meta.search.DefaultConfigurableSearchModelBuilder">
+		<elements>
+			<element name="DemoSecurity.A"
+				ko-type="StructuredElement"
+				result-columns="name,singlePerson,singlePersonContact,personList,personContactList"
+			/>
+			<element name="DemoSecurity.B"
+				exclude-columns="structureReverse"
+				ko-type="StructuredElement"
+				result-columns="name,singlePerson,singlePersonContact,personList,personContactList"
+			/>
+		</elements>
+	</modelBuilder>
+</include>

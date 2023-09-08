@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="TreeGrid-Expansionstest"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Tabellen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Tabellen > Tree Grid"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="gridEdit"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Hide #10526_BottomAlpha."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+								expand="true"
+							>
+								<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="fieldTable"
+											/>
+										</path>
+									</model-name>
+								</context-model>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+									<nodes>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+													tab-path="Tabellen > Tree Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+														field-label-comment=""
+													>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="#10526_FirstAlpha"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</node>
+									</nodes>
+								</node>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+								expand="true"
+							>
+								<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="fieldTable"
+											/>
+										</path>
+									</model-name>
+								</context-model>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+									<nodes>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+													tab-path="Tabellen > Tree Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+														field-label-comment=""
+													>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="#10526_FirstAlpha"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</node>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+													tab-path="Tabellen > Tree Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+														field-label-comment=""
+													>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="#10526_FirstAlpha"/>
+																<node name="#10526_FirstBeta"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</node>
+									</nodes>
+								</node>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+								expand="false"
+							>
+								<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="fieldTable"
+											/>
+										</path>
+									</model-name>
+								</context-model>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+									<nodes>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+													tab-path="Tabellen > Tree Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+														field-label-comment=""
+													>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="#10526_FirstAlpha"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</node>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+													tab-path="Tabellen > Tree Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+														field-label-comment=""
+													>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="#10526_FirstAlpha"/>
+																<node name="#10526_FirstBeta"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</node>
+									</nodes>
+								</node>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+								expand="false"
+							>
+								<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="fieldTable"
+											/>
+										</path>
+									</model-name>
+								</context-model>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+									<nodes>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+													tab-path="Tabellen > Tree Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+														field-label-comment=""
+													>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="#10526_FirstAlpha"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</node>
+									</nodes>
+								</node>
+							</model-name>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment="Ensure #10526_BottomAlpha is not selected, by selecting #10526_FirstAlpha."
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+							<nodes>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+												field-label-comment=""
+											>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+													structure-name="DemoTypes"
+												>
+													<structure-path>
+														<node name="#10526_FirstAlpha"/>
+													</structure-path>
+												</business-object>
+											</node>
+										</path>
+									</model-name>
+								</node>
+							</nodes>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+							tab-path="Tabellen > Tree Grid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+					command-label="Anzeigen"
+					command-name="gotoCmd"
+					component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+				>
+					<arguments>
+						<argument name="goto_object">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+								structure-name="DemoTypes"
+							>
+								<structure-path>
+									<node name="#10526_FirstAlpha"/>
+									<node name="#10526_FirstBeta"/>
+									<node name="#10526_BottomAlpha"/>
+								</structure-path>
+							</value>
+						</argument>
+						<argument name="view">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+								value="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+							/>
+						</argument>
+					</arguments>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Check visibility"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comment="Selection of child expands ancestor #10526_FirstAlpha"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeExpansionRef">
+								<context config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="fieldTable"
+											/>
+										</path>
+									</model-name>
+								</context>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+									<nodes>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+													tab-path="Tabellen > Tree Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+														field-label-comment=""
+													>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="#10526_FirstAlpha"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</node>
+									</nodes>
+								</node>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comment="Selection of child expands parent #10526_FirstBeta"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeExpansionRef">
+								<context config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="fieldTable"
+											/>
+										</path>
+									</model-name>
+								</context>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+									<nodes>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+													tab-path="Tabellen > Tree Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+														field-label-comment=""
+													>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="#10526_FirstAlpha"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</node>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+													tab-path="Tabellen > Tree Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+														field-label-comment=""
+													>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="#10526_FirstAlpha"/>
+																<node name="#10526_FirstBeta"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</node>
+									</nodes>
+								</node>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+							comment="#10526_BottomAlpha is selected and visible"
+							mode="ACTIVE"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Name"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+									tab-path="Tabellen > Tree Grid"
+								/>
+							</model-name>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

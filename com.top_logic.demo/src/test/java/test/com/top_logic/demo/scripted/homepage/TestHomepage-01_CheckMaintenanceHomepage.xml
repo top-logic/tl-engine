@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+					component-name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_Content"
+					visible="true"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+						<model-name config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_Content"
+									tab-path="Administration > Tech. Administration > Wartung"
+								/>
+							</component>
+						</model-name>
+					</actual-value>
+					<constraints>
+						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="/jsp/administration/maintenance/ActiveModules.jsp"
+							/>
+						</constraint>
+					</constraints>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="resource:WEB-INF/test/actions/misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
+			template-name-comment="Persoenliche Einstellungen zuruecksetzen"
+		>
+			<parameters/>
+		</action>
+	</actions>
+</action>

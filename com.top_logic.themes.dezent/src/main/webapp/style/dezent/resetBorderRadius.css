@@ -1,0 +1,8 @@
+.breadcrumb .selectableNode,
+div.ToolContainer div.IconContainer .input-image,
+div.ToolContainer div.IconContainer ul.mtbGroup li:first-child:last-child .input-image,
+div.ToolContainer div.IconContainer ul.mtbGroup li:first-child .input-image,
+div.ToolContainer div.IconContainer ul.mtbGroup li:last-child .input-image
+{
+    border-radius: 0;
+}

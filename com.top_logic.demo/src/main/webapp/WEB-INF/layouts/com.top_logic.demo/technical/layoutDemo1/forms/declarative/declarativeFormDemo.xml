@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="resPrefix"/>
+		<param name="formType"/>
+		<param name="modelToFormMapping"
+			optional="true"
+		/>
+		<param name="create"
+			value="false"
+		/>
+		<param name="customizations">
+			<!-- None by default. -->
+		</param>
+		<param name="content">
+			<!-- None by default. -->
+		</param>
+	</params>
+
+	<editor name="${namePrefix}"
+		applyCommand="dummyApply"
+		editCommand="dummyEditWithoutModel"
+		lockOperation=""
+		resPrefix="${resPrefix}"
+		securityProviderClass="securityRoot"
+	>
+		<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+			contextOptional="true"
+			create="${create}"
+			formType="${formType}"
+			modelToFormMapping="${modelToFormMapping}"
+		>
+			<customizations>${customizations}</customizations>
+		</modelBuilder>
+		${content}
+	</editor>
+</template>

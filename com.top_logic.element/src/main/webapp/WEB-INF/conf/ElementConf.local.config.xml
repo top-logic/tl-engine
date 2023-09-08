@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/test/DemoMeta.xml" />
+						<declaration resource="webinf://kbase/test/BenchmarkMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+
+	</configs>
+
+</application>

@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_25881_Removed_legacy_types"
+		module="tl-mail"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26117_security_object"
+			module="tl"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-module name="tl.mail"/>
+		<create-class name="tl.mail:FolderContent"
+			abstract="true"
+			primary-generalization="tl.model:TLObject"
+		/>
+		<create-class name="tl.mail:MailFolder"
+			primary-generalization="tl.mail:FolderContent"
+		>
+			<annotations>
+				<implementation-binding
+					class-name="com.top_logic.mail.base.imap.IMAPMailFolder"
+					interface-name="com.top_logic.mail.base.MailFolder"
+				/>
+				<instance-presentation icon="theme:mime.tl.mail.MailFolder"/>
+				<table name="MailFolder"/>
+			</annotations>
+		</create-class>
+
+		<create-property name="tl.mail:MailFolder#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.mail:MailFolder#description"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-reference name="tl.mail:MailFolder#content"
+			multiple="true"
+			type="tl.mail:FolderContent"
+		>
+			<annotations>
+				<storage-algorithm>
+					<set-storage
+						monomorphic-table="true"
+						table="hasMailFolderContent"
+					/>
+				</storage-algorithm>
+				<delete-protected/>
+			</annotations>
+		</create-reference>
+		<create-class name="tl.mail:Mail"
+			primary-generalization="tl.mail:FolderContent"
+		>
+			<annotations>
+				<implementation-binding
+					class-name="com.top_logic.mail.base.imap.IMAPMail"
+					interface-name="com.top_logic.mail.base.Mail"
+				/>
+				<instance-presentation icon="theme:mime.tl.mail.Mail"/>
+				<main-properties properties="name, mailID, attachements"/>
+				<table name="Mail"/>
+			</annotations>
+		</create-class>
+
+		<create-property name="tl.mail:Mail#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.mail:Mail#mailID"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.mail:Mail#sentDate"
+			type="tl.core:Date"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.mail:Mail#attachements"
+			mandatory="true"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.mail:Mail#from"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-reference name="tl.mail:Mail#attachedDocuments"
+			multiple="true"
+			type="tl.folder:Document"
+		>
+			<annotations>
+				<storage-algorithm>
+					<set-storage
+						monomorphic-table="true"
+						table="hasAttachedDocuments"
+					/>
+				</storage-algorithm>
+				<delete-protected/>
+			</annotations>
+		</create-reference>
+
+		<change-part-type
+			source="tl.legacy.tabletypes:MailFolderTable"
+			target="tl.mail:MailFolder"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:MailTable"
+			target="tl.mail:Mail"
+		/>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.StringReplacementProcessor"
+			column="annotations"
+			table="MetaAttribute"
+		>
+			<replacements>
+				<target-replacement
+					replacement="tl.mail:MailFolder"
+					target="tl.legacy.tabletypes:MailFolderTable"
+				/>
+				<target-replacement
+					replacement="tl.mail:Mail"
+					target="tl.legacy.tabletypes:MailTable"
+				/>
+			</replacements>
+		</processor>
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-mail/Ticket_25881_Removed_legacy_types_model_transform.xslt"
+		/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

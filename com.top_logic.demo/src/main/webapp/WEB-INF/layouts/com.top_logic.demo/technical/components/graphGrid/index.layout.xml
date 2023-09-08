@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_e4bcf934_f018_4b6d_a8a0_9f71c67aa847"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.22de1d2f-490c-44bc-b788-bcf3e122dc34">
+			<en>Graph grid</en>
+			<de>Graph-Grid</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/graphGrid/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

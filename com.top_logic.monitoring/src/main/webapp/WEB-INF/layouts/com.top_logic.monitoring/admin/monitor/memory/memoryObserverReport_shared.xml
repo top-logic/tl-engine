@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<layout horizontal="true">
+		<components>
+			<include name="reporting/flex/chart/chartConfigurator.xml"
+				componentName="MemoryObserverChartFilter"
+				resPrefix="reporting.memoryObserver.filter."
+			>
+				<options>
+					<base-config>
+						<data-source class="com.top_logic.monitoring.memory.MemoryObserverDataSource">
+							<ranges>
+								<range key="05hour"
+									seconds="1800"
+								/>
+								<range key="1hour"
+									seconds="3600"
+								/>
+								<range key="2hours"
+									seconds="7200"
+								/>
+								<range key="6hours"
+									seconds="21600"
+								/>
+								<range key="12hours"
+									seconds="43200"
+								/>
+								<range key="24hours"
+									seconds="86400"
+								/>
+							</ranges>
+						</data-source>
+
+						<model-preparation class="com.top_logic.monitoring.memory.MemoryObserverModelPreparation"
+							attributes="max,total,free,used,avail"
+							initial="used,total"
+						/>
+
+						<chart-builder class="com.top_logic.reporting.flex.chart.config.chartbuilder.time.TimeSeriesChartBuilder"
+							show-tooltips="false"
+							show-urls="false"
+							title-key="reporting.memoryObserver.title"
+							x-axis-label-key="reporting.memoryObserver.dates"
+							y-axis-label-key="reporting.memoryObserver.value"
+						>
+							<dataset-builder class="com.top_logic.reporting.flex.chart.config.dataset.TimeseriesDatasetBuilder"
+								period="SECOND"
+							/>
+
+							<color-provider class="com.top_logic.reporting.flex.chart.config.color.OrderedColorProvider"/>
+						</chart-builder>
+					</base-config>
+				</options>
+				<inject>
+					<layoutInfo size="225px"/>
+				</inject>
+			</include>
+			<include name="reporting/flex/chart/configuredChart_shared.xml"
+				exportObjects="NONE"
+				master="MemoryObserverChartFilter"
+				namePrefix="MemoryObserverChart"
+				objectType=""
+				resPrefix="reporting.memoryObserver.chart."
+				securityProvider="securityRoot"
+			/>
+		</components>
+	</layout>
+</template>

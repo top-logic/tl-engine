@@ -1,0 +1,61 @@
+<h2>Syntax</h2>
+<pre><code>binary(
+    name: "hello.txt",
+    data: "Hello World!",
+    contentType: "text/plain",
+    encoding: "utf-8"
+)</code></pre>
+<h2>Description</h2>
+<p>Constructs a binary value (a file) with the specified values. Such a value can be stored in an attribute of type <code class="hljs inlineCode">tl.core:Binary</code> and offered for download.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>name</td>
+   <td>String</td>
+   <td>Name of the file</td>
+   <td>yes</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>data</td>
+   <td>Any</td>
+   <td>File content. If the value is itself a binary value, it will be taken unchanged. If the content type is application/json, a JSON representation will be created for the object. Otherwise, the string representation of the value will be used and stored in the specified character set.</td>
+   <td>yes</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>contentType</td>
+   <td>String</td>
+   <td>MIME type of the file, e.g. "<code class="hljs inlineCode">text/plain</code>" for a text file or "<code class="hljs inlineCode">application/json</code>" for an object in JSON format.</td>
+   <td>no</td>
+   <td>Derived from the file name.</td>
+  </tr>
+  <tr>
+   <td>encoding</td>
+   <td>Character string</td>
+   <td>The character set to use for textual content. Has no meaning for other content.</td>
+   <td>no</td>
+   <td>"<code class="hljs inlineCode">utf-8</code>"</td>
+  </tr>
+  <tr>
+   <td>size</td>
+   <td>Number</td>
+   <td>Length of binary data, <code class="hljs inlineCode">-1</code>, if not known.</td>
+   <td>no</td>
+   <td>-1</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><strong>Type:</strong> binary value</p>
+<p>A representation of a file. In the above example, it is a text file named "<code class="hljs inlineCode">hello.txt</code>" and the content "<code class="hljs inlineCode">Hello world!</code>" encoded in the character set "<code class="hljs inlineCode">utf-8</code>". If the value is used as a return value of a custom action of a button, the data will be offered to the user as a download.</p>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<role-rules config:interface="com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<rules>
+		<rule
+			inherit="true"
+			meta-element="projElement:ROOT:projElement.All"
+			resource-key="roleRule.unknownPathMetaElement"
+			role="testRole"
+		>
+			<path>
+				<step
+					attribute="Mitarbeiter"
+					inverse="false"
+					meta-element="unknown"
+				/>
+			</path>
+		</rule>
+	</rules>
+</role-rules>

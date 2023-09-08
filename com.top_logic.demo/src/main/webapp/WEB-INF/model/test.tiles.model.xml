@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.tiles">
+		<enum name="TicketState">
+			<classifier name="NEW"/>
+			<classifier name="ASSIGNED"/>
+			<classifier name="ACTIVE"/>
+			<classifier name="CLOSED"/>
+		</enum>
+		<class name="Product">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="name"/>
+						<field attribute="description"/>
+						<field attribute="image"/>
+					</form>
+				</form-definition>
+				<instance-presentation icon="css:fas fa-car"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.model.wysiwyg:Html"
+				/>
+				<reference name="releases"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Release"
+				/>
+				<reference name="image"
+					bag="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="tl.imagegallery:GalleryImage"
+				/>
+				<reference name="tickets"
+					composite="true"
+					inverse-reference="reportedFor"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Ticket"
+				/>
+			</attributes>
+		</class>
+		<class name="Release">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="name"/>
+						<columnsLayout>
+							<field attribute="date"/>
+							<field attribute="completed"/>
+						</columnsLayout>
+						<other-attributes/>
+					</form>
+				</form-definition>
+				<instance-presentation icon="css:far fa-clock"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="date"
+					type="tl.core:Date"
+				/>
+				<property name="completed"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+		<class name="Ticket">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="name"/>
+						<field attribute="description"/>
+						<columnsLayout columns="THREE">
+							<field attribute="reportedFor"/>
+							<field attribute="planedIn"/>
+							<field attribute="state"/>
+						</columnsLayout>
+					</form>
+				</form-definition>
+				<instance-presentation icon="css:fas fa-bug"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="planedIn"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Release"
+				/>
+				<reference name="reportedFor"
+					aggregate="true"
+					inverse-reference="tickets"
+					kind="backwards"
+					navigate="true"
+					type="Product"
+				/>
+				<property name="description"
+					type="tl.model.wysiwyg:Html"
+				/>
+				<reference name="state"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="TicketState"
+				>
+					<annotations>
+						<default-value>
+							<classifier value="NEW"/>
+						</default-value>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="tile"
+>
+	<properties>
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="modelBuilder"
+			instance-type="com.top_logic.mig.html.ListModelBuilder"
+			type="PolymorphicConfiguration"
+		>
+			<mandatory/>
+			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
+		</property>
+		<property name="preview"
+			instance-type="com.top_logic.mig.html.layout.tiles.component.TilePreview"
+			type="PolymorphicConfiguration"
+		>
+			<item-default value="com.top_logic.mig.html.layout.tiles.component.TLObjectTilePreview"/>
+			<non-nullable/>
+			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
+		</property>
+		<property name="component"
+			type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+		>
+			<hidden/>
+			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplateDefault"/>
+			<layout-templates value="com.top_logic/placeholder.template.xml"/>
+		</property>
+		<property name="tileName"
+			type="String"
+		>
+			<hidden/>
+			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
+		</property>
+		<property name="securityDomain"
+			default="SecurityStructure"
+			type="String"
+		>
+			<nullable/>
+			<options
+				fun="com.top_logic.tool.boundsec.manager.SecurityStructures"
+				mapping="com.top_logic.model.config.TLModelPartMapping"
+			/>
+		</property>
+		<property name="helpID"
+			type="String"
+		>
+			<property-editor value="com.top_logic.layout.help.UseHelpEditor"/>
+			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
+		</property>
+	</properties>
+
+	<securityLayout name="TileLayout"
+		helpID="${helpID}"
+		securityDomain="${securityDomain}"
+		titleKey="${name}"
+	>
+		<tile-info name="${tileName}"
+			label="${name}"
+			preview="${preview}"
+			tile-factory="com.top_logic.mig.html.layout.tiles.InlinedTileFactory"
+		/>
+		<component class="com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent"
+			component="${component}"
+			model="${model}"
+			modelBuilder="${modelBuilder}"
+			name="Objects"
+			titleKey="${name}"
+		>
+			<buttons>
+				<reference command-id="editComponentCommand"/>
+				<reference command-id="deleteComponentCommand"/>
+			</buttons>
+		</component>
+	</securityLayout>
+</config:template>

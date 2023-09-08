@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="components"/>
+
+		<param name="securityModel"
+			optional="true"
+		/>
+		<param name="domain"
+			value=""
+		/>
+		<param name="tabIcon"
+			optional="true"
+		/>
+		<param name="tabVisible"
+			optional="true"
+		/>
+		<param name="helpID"
+			optional="true"
+		/>
+
+		<!-- START: Legacy parameters that never should get filled explicitly -->
+		<param name="z_legacy_componentName"
+			value="view"
+		/>
+		<param name="z_legacy_helpID"
+			value="${z_legacy_tabLabel}"
+		/>
+		<param name="z_legacy_tabId"
+			optional="true"
+		/>
+		<param name="z_legacy_resPrefix"
+			value="%LAYOUT_RESPREFIX%"
+		/>
+		<param name="z_legacy_tabLabel"
+			value="${z_legacy_resPrefix}tab"
+		/>
+		<!-- STOP: Legacy parameters that never should get filled explicitly -->
+	</params>
+
+	<securityLayout name="${z_legacy_componentName}"
+		components="${components}"
+		helpID="${helpID}"
+		helpIDLegacy="${z_legacy_helpID}"
+		horizontal="false"
+		model="${securityModel}"
+		securityDomain="${domain}"
+		titleKey="${z_legacy_tabLabel}"
+	>
+		<tabInfo id="${z_legacy_tabId}"
+			image="${tabIcon}"
+			label="${z_legacy_tabLabel}"
+			rendered="${tabVisible}"
+		/>
+	</securityLayout>
+</template>

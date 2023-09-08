@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='utf-8'?>
+<test xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comma-separated-string="c1,c2,c3"
+	foo="test.com.top_logic.basic.config.TestFormatAnnotations$Foo2"
+	item-with-shortcut-format=""
+	item-with-type-format=""
+	list-with-shortcut-format=""
+	map-with-shortcut-format=""
+>
+	<allowed-strings>
+		<entry value="allowed1" />
+		<entry value="allowed2" />
+	</allowed-strings>
+	<list-by-name>
+		<entry key="L1" value="L11,L12" />
+		<entry key="L2" value="L21,L22,L23" />
+		<entry key="L3" value="" />
+	</list-by-name>
+	<strings>
+		<string value="s1" />
+		<string value="s2" />
+		<string value="s3" />
+	</strings>
+	<booleans>
+		<boolean key="b3" value="false" />
+		<boolean key="b2" value="true" />
+		<boolean key="b1" value="true" />
+	</booleans>
+	<boolean-by-int>
+		<entry key="1" value="false" />
+		<entry key="2" value="true" />
+		<entry key="3" value="false" />
+	</boolean-by-int>
+</test>

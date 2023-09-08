@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-P1-template.xml">
+	<px><![CDATA[line 1
+line 2
+line 3]]></px>
+</include>

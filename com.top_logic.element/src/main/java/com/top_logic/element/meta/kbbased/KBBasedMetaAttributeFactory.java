@@ -1,0 +1,148 @@
+/*
+ * SPDX-FileCopyrightText: 2001 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.element.meta.kbbased;
+
+import com.top_logic.basic.TLID;
+import com.top_logic.basic.col.NameValueBuffer;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.module.ServiceDependencies;
+import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.element.meta.MetaAttributeFactory;
+import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.model.TLAssociation;
+import com.top_logic.model.TLAssociationEnd;
+import com.top_logic.model.TLAssociationProperty;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassProperty;
+import com.top_logic.model.TLProperty;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
+
+/**
+ * Create/remove MetaAttributes in/from MetaElements.
+ * 
+ * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
+ */
+@ServiceDependencies({ PersistencyLayer.Module.class })
+public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
+
+	/**
+	 * Marker value for {@link TLReference}s.
+	 * 
+	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
+	 */
+	public static final String REFERENCE_IMPL = "reference";
+
+	/**
+	 * Marker value for {@link TLProperty} instances of a {@link TLClass}.
+	 * 
+	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
+	 */
+	public static final String CLASS_PROPERTY_IMPL = "property";
+
+	/**
+	 * Marker value for {@link TLProperty} instances of a {@link TLAssociation}.
+	 * 
+	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
+	 */
+	public static final String ASSOCIATION_PROPERTY_IMPL = "association-property";
+
+	/**
+	 * Marker value for {@link TLAssociationEnd}s.
+	 * 
+	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
+	 */
+	public static final String ASSOCIATION_END_IMPL = "association-end";
+
+	/**
+	 * Creates a {@link KBBasedMetaAttributeFactory} from configuration.
+	 */
+	public KBBasedMetaAttributeFactory(InstantiationContext context, Config config) {
+		super(context, config);
+	}
+
+	@Override
+	public TLClassProperty createClassProperty(KnowledgeBase kb) {
+		NameValueBuffer initialValues = new NameValueBuffer();
+		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, CLASS_PROPERTY_IMPL);
+		KBBasedMetaAttribute newMetaAttribute = newMetaAttribute(kb, initialValues);
+		initAttributes(newMetaAttribute);
+		return (PersistentClassProperty) newMetaAttribute;
+	}
+
+	@Override
+	public TLAssociationProperty createAssocationProperty(KnowledgeBase kb) {
+		NameValueBuffer initialValues = new NameValueBuffer();
+		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, ASSOCIATION_PROPERTY_IMPL);
+		KBBasedMetaAttribute newMetaAttribute = newMetaAttribute(kb, initialValues);
+		initAttributes(newMetaAttribute);
+		return (PersistentAssociationProperty) newMetaAttribute;
+	}
+
+	private void initAttributes(TLStructuredTypePart newMetaAttribute) {
+		newMetaAttribute.setMandatory(false);
+	}
+
+	@Override
+	public TLAssociationEnd createEnd(KnowledgeBase kb) {
+		NameValueBuffer initialValues = new NameValueBuffer();
+		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, ASSOCIATION_END_IMPL);
+		PersistentEnd end = (PersistentEnd) newMetaAttribute(kb, initialValues);
+		initEnd(end);
+		return end;
+	}
+
+	private void initEnd(PersistentEnd newMetaAttribute) {
+		initAttributes(newMetaAttribute);
+		newMetaAttribute.setAggregate(false);
+		newMetaAttribute.setMultiple(false);
+		newMetaAttribute.setOrdered(false);
+		newMetaAttribute.setBag(false);
+		newMetaAttribute.setComposite(false);
+		newMetaAttribute.setNavigate(false);
+	}
+
+	@Override
+	public TLReference createTLReference(KnowledgeBase kb, TLAssociationEnd end) {
+		NameValueBuffer initialValues = new NameValueBuffer();
+		initialValues.put(ConfiguredAttributeImpl.IMPLEMENTATION_NAME, REFERENCE_IMPL);
+		PersistentReference reference = (PersistentReference) newMetaAttribute(kb, initialValues);
+		reference.tSetDataReference(PersistentReference.END_ATTR, end);
+		initAttributes(reference);
+		return reference;
+	}
+
+	private KBBasedMetaAttribute newMetaAttribute(KnowledgeBase kb, NameValueBuffer values) {
+		try {
+			KnowledgeObject theKO = kb.createKnowledgeObject(KBBasedMetaAttribute.OBJECT_NAME, values);
+
+			return (KBBasedMetaAttribute) WrapperFactory.getWrapper(theKO);
+		} catch (RuntimeException ex) {
+			throw ex;
+		} catch (Exception ex) {
+			throw new RuntimeException("Error creating new attribute .", ex);
+		}
+	}
+
+	@Override
+	public void removeMetaAttribute (TLClass aMetaElement, TLStructuredTypePart aMetaAttribute) 
+			throws NoSuchAttributeException, IllegalArgumentException {
+		super.removeMetaAttribute(aMetaElement, aMetaAttribute);
+		
+		aMetaAttribute.tDelete();
+	}
+	
+	@Override
+	public TLStructuredTypePart getMetaAttribute(TLID anIdentifier) {
+		TLStructuredTypePart theMetaAttr=null;
+		theMetaAttr = (TLStructuredTypePart) WrapperFactory.getWrapper(anIdentifier, KBBasedMetaAttribute.OBJECT_NAME);
+		return theMetaAttr;
+	}
+
+}

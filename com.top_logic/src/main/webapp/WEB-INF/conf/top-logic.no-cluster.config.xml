@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- 
+	Incremental configuration to use application without cluster mode.
+	Note: Must only be included with top-logic.cluster.xml
+ -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	
+	<services>
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance>
+				<tasks>
+					<task name="SchedulerClusterCleanupTask" enabled="false" />
+				</tasks>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.base.cluster.ClusterManager">
+			<instance cluster="false" />
+		</config>
+		
+        <config service-class="com.top_logic.util.monitor.ApplicationMonitor">
+			<instance>
+				<components>
+					<component name="cluster" config:operation="remove" />
+				</components>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.service.KnowledgeBaseFactory">
+			<instance>
+				<knowledge-bases>
+					<knowledge-base name="Default" single-node-optimization="true" />
+				</knowledge-bases>
+			</instance>
+		</config>
+		
+	</services>
+	
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<schemas>
+						<schema name="cluster" config:operation="remove"/>
+					</schemas>
+				</type-system>
+			</type-systems>
+		</config>
+    </configs>
+    
+</application>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.65fff886-54cf-4843-b3b4-57ff4de410d9">
+				<en>New A</en>
+				<de>Neues A</de>
+			</title>
+		</title>
+		<open-handler id="ID_2083d17e_6b91_4523_a47b_f6b3921ec480"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			targetComponent="com.top_logic.demo/technical/components/pDFExport/newA/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.65fff886-54cf-4843-b3b4-57ff4de410d9">
+				<en>New A</en>
+				<de>Neues A</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="test.pdfExport:A"/>
+		<create-handler id="ID_ff255e5f_fbb2_44a7_ab85_374d8941fd52"/>
+	</arguments>
+</config:template-call>

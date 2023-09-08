@@ -1,0 +1,98 @@
+<h2>Syntax</h2> 
+<pre>	<code>$object.copy()
+
+$object.copy($context, $filter, $constructor)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Erstellt eine tiefe Kopie des Objektes bzw. eine einfache Kopie des Wertes <code class="hljs inlineCode">object</code>.</p> 
+<ul> 
+</ul> 
+<p>In einer tiefen Kopie eines Objektes sind alle über Kompositionsreferenzen erreichbare Objekte ebenfalls mitkopiert. Andere Referenzen in dem kopierten Objektgraphen sind auf Objekte in dem neuen Graphen umgesetzt, wenn sie im ursprünglichen Graphen auf ein Objekt zeigten, das bei der Kopieroperation mitkopiert wurde.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>object</td> 
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td> 
+   <td>Das zu kopierende Objekt bzw der zu kopierende Wert.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>context</td> 
+   <td>Fachobjekt</td> 
+   <td>Das Context-Objekt, das bei der Anlage der top-level Kopie (von <code class="hljs inlineCode">object</code>) mitgegeben wird.</td> 
+   <td>nein</td> 
+   <td>null</td> 
+  </tr> 
+  <tr> 
+   <td>filter</td> 
+   <td>Funktion</td> 
+   <td> <p>Entscheidet, ob eine bestimmte Eigenschaft aus dem Ursprungsgraphen mitkopiert werden soll. Die Filter-Funktion erhält drei Argumente.</p> 
+    <ul> 
+     <li>Das zu kopierende Attribut.</li> 
+     <li>Die zu kopierende Instanz aus dem Ursprungsgraphen.</li> 
+     <li>Die Kontext-Instanz, an der das zu kopierende Attribut definiert ist.</li> 
+    </ul> <p>Ist die Entscheidung <code class="hljs inlineCode">true</code>, so wird das Attribut vom Ursprungsobjekt in das Zielobjekt kopiert. Ist das Attribut eine primitive Eigenschaft, wird der Wert direkt in das Zielobjekt übernommen. Ist das Attribut eine Referenz, wird diese Referenz entweder direkt übernommen, oder in den Zielgraphen umgeschrieben, je nachdem, ob das Ursprungsobjekt in der Kopieroperation kopiert wurde oder nicht. Ist das Attribut eine Komposition, wird eine tiefe Kopie des Ursprungsobjektes angefertigt.</p> <p>Ist die Entscheidung <code class="hljs inlineCode">false</code>, so bleibt das Attribut im Zielobjekt uninitialisiert. In diesem Fall, könnte die Konstruktorfunktion für dieses Attribut einen Standardwert ausrechnen und zusammen mit der Konstruktion setzen.</p> </td> 
+   <td>nein</td> 
+   <td><code class="hljs inlineCode">attribute -&gt; orig -&gt; context -&gt; true</code></td> 
+  </tr> 
+  <tr> 
+   <td>constructor</td> 
+   <td>Funktion</td> 
+   <td> <p>Eine Funktion, die ein Objekt aus dem Ursprungsgraphen nimmt und eine (uninitialisierte) Kopie dieses Objektes zurückliefert. Die Funktion erhält drei Argumente:</p> 
+    <ul> 
+     <li>Das zu kopierende Originalobjekt.</li> 
+     <li>Die Kontext-Referenz, über die das Originalobjekt mit seinem Kontext verknüpft ist (<code class="hljs inlineCode">null</code>, für die top-level Kopie).</li> 
+     <li>Das originale Kontext-Objekt, das das zu kopierende Originalobjekt in seiner Kontext-Referenz hält.</li> 
+    </ul> <p>Liefert die Konstruktorfunktion <code class="hljs inlineCode">null</code>, wird ein Objekt vom selben Typ wie das Original angelegt.</p> </td> 
+   <td>nein</td> 
+   <td><code class="hljs inlineCode">orig -&gt; reference -&gt; context -&gt; null</code></td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</p> 
+<p>In Abhängigkeit vom Typen von <code class="hljs inlineCode">x</code> wird folgendes von der Funktion zurückgeliefert:</p> 
+<ul> 
+ <li><strong>Referenz auf ein Fachobjekt</strong>: eine tiefe Kopie dieses Objektes.</li> 
+ <li><strong>Liste:</strong> eine Liste, in der alle Fachobjekte durch tiefe Kopien ersetzt sind.</li> 
+ <li><strong>alle anderen Werte: </strong>der Wert selbst.</li> 
+</ul> 
+<h2>Beispiele</h2> 
+<h3>Objektkopie</h3> 
+<pre>	<code>{
+   a = new(`my.module:MyClass`);
+   $a.set(`my.module:MyClass#name`, "orig");
+   b = $a.copy();
+   $b.set(`my.module:MyClass#name`, "copy");
+   list($a, $b);
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Gibt eine Liste mit dem originalen und dem kopierten Objekt aus: [orig, copy]</p> 
+<h3>Objektlistenkopie</h3> 
+<pre>	<code>{
+   a = new(`my.module:MyClass`);
+   b = new(`my.module:MyClass`);
+   list = list($a, $b);
+   $list.copy();
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit Kopien der Objekte <code class="hljs inlineCode">a</code> und <code class="hljs inlineCode">b</code>.</p> 
+<h3>Wertekopie</h3> 
+<pre>	<code>{
+   a = 5;
+   b = $a.copy();
+   list($a, $b);
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit den Werten [5, 5] - ein Mal die originale Zahl und ein Mal die kopierte.</p>

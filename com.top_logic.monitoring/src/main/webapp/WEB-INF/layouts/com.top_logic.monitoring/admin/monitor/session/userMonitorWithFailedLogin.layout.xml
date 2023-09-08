@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminTechnicalUserHistoryView"
+	helpIDLegacy="main.admin.technical.userHistory.tabber"
+	titleKey="main.admin.technical.userHistory.tabber"
+>
+	<tabInfo label="main.admin.technical.userHistory.tabber"/>
+	<components>
+		<include name="com.top_logic.monitoring/admin/monitor/session/userMonitorWithFailedLogin.xml"/>
+	</components>
+</securityLayout>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+    Local adaption for the configuration
+    ======================================================== 
+    The Installer(s) will only modify this file,
+    so the main top-logic.xml can be fixed in case of Bugs
+-->
+<root>
+	<alias> 
+		<entry name="%IMPORT_LOG_PATH%" value="%LOG_PATH%/testImporterLogs"/>
+	</alias>
+
+	<properties>
+	</properties>
+</root>

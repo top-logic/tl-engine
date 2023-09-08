@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!--
+	Test data for TestUnit, TestCurrency, TestAmount, TestAmountLabelProvider
+-->
+<objectlist>
+
+<knowledgeobject object_type="Currency" object_name="EUR">
+	<ko_attribute att_name="name" att_value="EUR"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="sortOrder" att_value="1000"/>
+	<ko_attribute att_name="factor" att_value="1.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Currency" object_name="GBP">
+	<ko_attribute att_name="name" att_value="GBP"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="baseUnit" att_value="EUR"/>
+	<ko_attribute att_name="sortOrder" att_value="1001"/>
+	<ko_attribute att_name="factor" att_value="0.69749"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Currency" object_name="USD">
+	<ko_attribute att_name="name" att_value="USD"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="baseUnit" att_value="EUR"/>
+	<ko_attribute att_name="sortOrder" att_value="1002"/>
+	<ko_attribute att_name="factor" att_value="1.46778"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Currency" object_name="YEN">
+	<ko_attribute att_name="name" att_value="YEN"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="baseUnit" att_value="EUR"/>
+	<ko_attribute att_name="sortOrder" att_value="1003"/>
+	<ko_attribute att_name="factor" att_value="165.69794"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Currency" object_name="DEM">
+	<ko_attribute att_name="name" att_value="DEM"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="baseUnit" att_value="EUR"/>
+	<ko_attribute att_name="sortOrder" att_value="1010"/>
+	<ko_attribute att_name="factor" att_value="0.5112918812"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Currency" object_name="BRK$">
+	<ko_attribute att_name="name" att_value="BRK$"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="sortOrder" att_value="19999"/>
+	<ko_attribute att_name="factor" att_value="99.99"/>
+</knowledgeobject>
+
+</objectlist>

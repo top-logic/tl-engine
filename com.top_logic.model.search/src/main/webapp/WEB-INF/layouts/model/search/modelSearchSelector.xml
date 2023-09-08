@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.model.search.ui.selector.SearchSelectorComponent"
+	name="SearchSelectorComponent"
+	page="/jsp/element/expression/selectExpression.jsp"
+	reportComponent="layouts_model_search_modelSearch_reports_Configurator"
+	resPrefix="layouts.model.search.modelSearch.SearchSelectorComponent."
+	securityProviderClass="com.top_logic.model.search.ui.selector.ModelSearchSelectorSecurityObjectProvider"
+	toolbar="false"
+>
+	<layoutInfo size="50"/>
+	<dialogs>
+		<layout name="SaveSearchAs">
+			<dialogInfo
+				disabledImage="icons/buttonSaveDisabled.png"
+				height="220px"
+				image="icons/buttonSave.png"
+				openHandlerClass="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsOpenDialogCommand"
+				openerClique="save"
+				openerCommandGroup="Create"
+				resizable="true"
+				width="400px"
+			/>
+
+			<components>
+				<component class="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsComponent"
+					buttonComponent="SaveSearchAsButtons"
+					name="SaveSearchAsForm"
+					page="/jsp/model/search/SaveSearchAs.jsp"
+					resPrefix="layouts.model.search.modelSearch.SaveSearchAsForm."
+					securityProviderClass="securityRoot"
+				/>
+				<buttonbar name="SaveSearchAsButtons"/>
+			</components>
+		</layout>
+	</dialogs>
+</component>

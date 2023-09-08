@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Top-Logic Configuration for Testing                      -->
+<!-- ======================================================== -->
+<!--                                                          -->
+<!--  Additional entries that are used for testing only       -->
+<!--  can be found here                                       -->
+<!--                                                          -->
+
+<root>
+    <alias />
+	<!-- otherwise we get a nasty info message on startup, see Installer.xml -->
+	<properties/>
+</root>

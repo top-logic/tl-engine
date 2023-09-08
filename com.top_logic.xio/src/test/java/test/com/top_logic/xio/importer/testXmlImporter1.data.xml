@@ -1,0 +1,5 @@
+<a val='foo' default='b2'>
+	<b name='b1' other='b2 b3' />
+	<b name='b2' />
+	<b name='b3' other='b1' />
+</a>

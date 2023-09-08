@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/structure/demoTypes/treeTable/tree_table_shared.xml"
+	defaultSelection="true"
+	namePrefix=""
+>
+	<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+		<impl class="com.top_logic.model.search.providers.ModelProviderByExpression"
+			expr="`DemoTypes#ROOT`"
+		/>
+	</model>
+</include>

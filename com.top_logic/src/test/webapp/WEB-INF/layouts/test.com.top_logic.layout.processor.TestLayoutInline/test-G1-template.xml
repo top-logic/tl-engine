@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="p1"/>
+		<param name="p2"/>
+		<param name="p3"/>
+		<param name="p4"/>
+	</params>
+
+	<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-G2-template.xml"
+		p1="a-${p4}"
+		p2="b-${p3}"
+		p3="c-${p2}"
+		p4="d-${p1}"
+	/>
+</template>

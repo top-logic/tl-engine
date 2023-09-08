@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_9af5fbc0_8989_43b6_8704_4404de2ed9e2"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.3f9cb843-ea8a-4889-8b3f-e7890bae2568">
+			<en>Dynamic columns</en>
+			<de>Dynamische Spalten</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

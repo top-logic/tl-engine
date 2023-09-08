@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.mig.html.layout.Layout"
+	horizontal="false"
+>
+	<components>
+		<component class="com.top_logic.mig.html.layout.Layout"
+			horizontal="true"
+			name="windowDemoTab1Level1-1_layout"
+			resPrefix="layouts.layoutdemo.window.windowDemoTab1.windowDemoTab1Level11Layout."
+		>
+			<components>
+				<include name="com.top_logic.demo/technical/layoutDemo1/windows/windowDemo1_1A.xml"/>
+				<include name="com.top_logic.demo/technical/layoutDemo1/windows/windowDemo1_2A.xml"/>
+			</components>
+		</component>
+		<component class="com.top_logic.mig.html.layout.Layout"
+			horizontal="true"
+			name="windowDemoTab1Level1-2_layout"
+			resPrefix="layouts.layoutdemo.window.windowDemoTab1.windowDemoTab1Level12Layout."
+		>
+			<components>
+				<include name="com.top_logic.demo/technical/layoutDemo1/windows/windowDemo1_1B.xml"/>
+				<include name="com.top_logic.demo/technical/layoutDemo1/windows/windowDemo1_2B.xml"/>
+			</components>
+		</component>
+	</components>
+</component>

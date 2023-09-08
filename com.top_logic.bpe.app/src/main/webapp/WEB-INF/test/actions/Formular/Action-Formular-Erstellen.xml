@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings output-format="xml"/>
+		<t:parameters>
+			<t:parameter name="Formular"
+				type="string"
+			/>
+			<t:parameter name="Element"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			xmlns:config="http://www.top-logic.com/ns/config/6.0"
+		>
+			<actions>
+				<action class="com.top_logic.bpe.execution.engine.FormEditActionOp"
+					user-id="root"
+				>
+					<form-definition>
+						<t:value expr="$Formular"/>
+					</form-definition>
+					<manual-task config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+						node-path="${$Element}"
+					/>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

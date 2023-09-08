@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+	</services>
+	
+	<configs>
+		<config config:interface="test.com.top_logic.basic.TestComment$Config">
+			<ignore>
+				<entry value="com.top_logic.model.search.expr.parser" />
+			</ignore>
+		</config>
+
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default" class="com.top_logic.knowledge.service.TypeSystemSetup">
+					<declarations>
+			            <declaration resource="webinf://kbase/TestLockServiceMeta.xml"/>
+			        </declarations>
+			    </type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

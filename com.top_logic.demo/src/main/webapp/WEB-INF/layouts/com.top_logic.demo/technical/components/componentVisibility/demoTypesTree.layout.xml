@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tree.template.xml"
+>
+	<arguments
+		adjustSelectionWhenCollapsing="false"
+		defaultSelection="true"
+		expandRoot="true"
+		expandSelected="true"
+		isSecurityMaster="false"
+		model=""
+		partnerGroup=""
+		rootVisible="true"
+		showOnlySelectableNodes="false"
+	>
+		<name key="dynamic.2f6a4cc9-28a2-4bc0-b38a-c10d19aedcfc">
+			<en>Demo Types</en>
+			<de>Demo Types</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="null"
+			nodePredicate="true"
+			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
+			rootNode="`DemoTypes#ROOT`"
+		/>
+	</arguments>
+</config:template-call>

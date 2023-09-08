@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments>
+		<name key="dynamic.3a66f47a-e13d-4a83-943b-cd6734a54c13">
+			<en>Form 2</en>
+			<de>Formular 2</de>
+		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+			<script expr="`SecurityStructure#ROOT`"/>
+		</model>
+		<forms>
+			<form type="SecurityStructure:Root">
+				<formDefinition>
+					<static-html>
+						<content><![CDATA[<p><span style="font-family:Times New Roman,Times,serif"><span style="font-size:16px"><strong>Tab ohne eigenem Message-Button</strong></span></span></p>
+
+<p>Hier gibt es nur das Message-Button des Dialogsfernsters.</p>
+]]></content>
+					</static-html>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

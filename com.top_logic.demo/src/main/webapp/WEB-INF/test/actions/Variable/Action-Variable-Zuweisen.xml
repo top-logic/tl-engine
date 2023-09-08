@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<!-- If the name is empty, nothing is done. -->
+			<t:parameter name="Name"
+				default=""
+				type="string"
+			/>
+
+			<!-- The ValueRef to the value. The root tag has to be named 'value'. -->
+			<t:parameter name="Wert"
+				mandatory="true"
+				type="xml"
+			/>
+
+			<!-- Is the value allowed to be null? If not, it is checked that it is not null. -->
+			<t:parameter name="Nullable"
+				default="false"
+				type="boolean"
+			/>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<t:if condition=" ! #equals($Name, &quot;&quot;)">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.SetGlobalVariableOp"
+							name="${$Name}"
+						>
+							<t:value expr="$Wert"/>
+						</action>
+						<t:if condition=" ! $Nullable">
+							<t:then>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+										name="${$Name}"
+									/>
+									<constraints>
+										<constraint class="com.top_logic.layout.scripting.check.NullCheck"
+											null="false"
+										/>
+									</constraints>
+								</action>
+							</t:then>
+						</t:if>
+					</t:then>
+				</t:if>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

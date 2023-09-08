@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create demo object."
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="TestSimilarDocuments"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Upload documents."
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+							structure-name="DemoTypes"
+						>
+							<structure-path>
+								<node name="TestSimilarDocuments"/>
+							</structure-path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Strukturen > Typendemo > 0 Dokumente"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Upload doc1."
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							comment=""
+							failure-expected="false"
+							failure-message=""
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Hochladen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 0 Dokumente"
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="input"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+										base64data="U29tZSBzaW1wbGUgY29udGVudC4"
+										content-type="text/plain"
+										name="doc1.txt"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							comment=""
+							component-implementation-comment=""
+							component-name="rootLayout#masterFrame"
+							failure-message=""
+							label="Hochladen"
+							user-id="root"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Upload copy of doc 1."
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							comment=""
+							failure-expected="false"
+							failure-message=""
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Hochladen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 1 Dokumente"
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="input"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+										base64data="U29tZSBzaW1wbGUgY29udGVudC4"
+										content-type="text/plain"
+										name="copyOfDoc1.txt"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							comment=""
+							component-implementation-comment=""
+							component-name="rootLayout#masterFrame"
+							failure-message=""
+							label="Hochladen"
+							user-id="root"
+						/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check similar documents."
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.knowledge.indexing.lucene.scripting.runtime.action.WaitForLuceneFinishedActionOp"
+					comment="Wait for lucene indexing documents"
+					failure-message=""
+					max-sleep="10000"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Check similar of doc1.txt."
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							comment=""
+							failure-expected="false"
+							failure-message=""
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="rows"
+									/>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+										column-name="_similar"
+										field-label-comment=""
+									>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+											provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+										>
+											<name>
+												<part key="element">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="doc1.txt"
+													/>
+												</part>
+											</name>
+										</row-object>
+									</node>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Check that there is a similar document named copyOfDoc1.txt"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+									comment=""
+									failure-expected="false"
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="g"
+											/>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="rows"
+											/>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+												column-name="_download"
+												field-label-comment=""
+											>
+												<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+													provider-name="com.top_logic.knowledge.wrap.WrapperNaming"
+												>
+													<name>
+														<part key="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																string="copyOfDoc1.txt"
+															/>
+														</part>
+													</name>
+												</row-object>
+											</node>
+										</path>
+									</model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Check and clear download."
+									failure-message=""
+									user-id="root"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+											comment=""
+											failure-message=""
+											user-id="root"
+										>
+											<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
+												file-name="copyOfDoc1.txt"
+											/>
+											<constraints>
+												<constraint class="com.top_logic.layout.scripting.check.BinaryFileEqualityCheck">
+													<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+														base64data="U29tZSBzaW1wbGUgY29udGVudC4"
+														content-type="text/plain"
+														name="copyOfDoc1.txt"
+													/>
+												</constraint>
+											</constraints>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"
+											comment=""
+											failure-message=""
+											user-id="root"
+										/>
+									</actions>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							comment=""
+							component-implementation-comment=""
+							component-name="rootLayout#masterFrame"
+							failure-message=""
+							label="Schließen"
+							user-id="root"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Check similar of copyOfDoc1.txt."
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							comment=""
+							failure-expected="false"
+							failure-message=""
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="rows"
+									/>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+										column-name="_similar"
+										field-label-comment=""
+									>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+											provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+										>
+											<name>
+												<part key="element">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="copyOfDoc1.txt"
+													/>
+												</part>
+											</name>
+										</row-object>
+									</node>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Check that there is a similar document named copyOfDoc1.txt"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+									comment=""
+									failure-expected="false"
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="g"
+											/>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-label-comment=""
+												field-name="rows"
+											/>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+												column-name="_download"
+												field-label-comment=""
+											>
+												<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+													provider-name="com.top_logic.knowledge.wrap.WrapperNaming"
+												>
+													<name>
+														<part key="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																string="doc1.txt"
+															/>
+														</part>
+													</name>
+												</row-object>
+											</node>
+										</path>
+									</model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Check and clear download."
+									failure-message=""
+									user-id="root"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+											comment=""
+											failure-message=""
+											user-id="root"
+										>
+											<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
+												file-name="doc1.txt"
+											/>
+											<constraints>
+												<constraint class="com.top_logic.layout.scripting.check.BinaryFileEqualityCheck">
+													<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+														base64data="U29tZSBzaW1wbGUgY29udGVudC4"
+														content-type="text/plain"
+														name="doc1.txt"
+													/>
+												</constraint>
+											</constraints>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"
+											comment=""
+											failure-message=""
+											user-id="root"
+										/>
+									</actions>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							comment=""
+							component-implementation-comment=""
+							component-name="rootLayout#masterFrame"
+							failure-message=""
+							label="Schließen"
+							user-id="root"
+						/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Delete demo object."
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

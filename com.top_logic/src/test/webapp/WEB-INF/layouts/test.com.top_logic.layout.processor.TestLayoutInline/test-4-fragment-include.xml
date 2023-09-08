@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="D">
+	<childList>
+		<include name="test.com.top_logic.layout.processor.TestLayoutInline/c-fragment.xml"/>
+	</childList>
+</component>

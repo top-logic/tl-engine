@@ -1,0 +1,28 @@
+<r>
+	<def id="foo">
+		<a name="a1"/>
+	</def>
+
+	<value name="v1">
+		<ref id="foo"/>
+		<ref id="bar"/>
+		<ref id="ccc"/>
+	</value>
+	
+	<value name="v2">
+		<ref id="bar"/>
+		<ref id="baz"/>
+	</value>
+	
+	<def id="bar">
+		<b name="b1" x="13"/>
+	</def>
+	
+	<def id="baz">
+		<b name="b1" x="42"/>
+	</def>
+	
+	<def id="ccc">
+		<c name="c1" y="99"/>
+	</def>
+</r>

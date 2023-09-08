@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Configuration File used for testing ThreadContext -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.thread.ThreadContextManager">
+			<instance class="test.com.top_logic.basic.thread.ExampleContextManager"
+				debug-context-removal="true"
+			>
+				<context-config property-value="This is expected" />
+			</instance>
+		</config>
+	</services>
+</application>

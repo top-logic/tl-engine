@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<chart >
+	<data-source class="com.top_logic.demo.chart.flex.TreeInfoDataSource" tree-depth="2">
+		<data-source class="com.top_logic.demo.chart.flex.RootNodeProducer" />
+	</data-source>
+
+	<model-preparation class="com.top_logic.reporting.flex.chart.config.model.DefaultModelPreparation">
+		<partitions>
+			<partition class="com.top_logic.demo.chart.flex.TreeInfoDatesPartition" />
+			<partition class="com.top_logic.demo.chart.flex.ElementDatePartition" />
+		</partitions>
+		<aggregations>
+			<aggregation class="com.top_logic.demo.chart.flex.TreeInfoDatesPartition$TreeInfoIndexFunction" />
+		</aggregations>
+	</model-preparation>
+	
+	<chart-builder class="com.top_logic.reporting.flex.chart.config.chartbuilder.tree.TreeAxisTimeSeriesChartBuilder" show-legend="false" show-urls="false" show-tooltips="false" >
+		<label-icon-provider class="com.top_logic.reporting.flex.chart.config.chartbuilder.tree.icon.DefaultLabelIconProvider" >
+			<types>
+				<type name="projElement.ProjectRoot" />
+				<type name="projElement.Project" />
+				<type name="projElement.Subproject" />
+				<type name="projElement.Workpackage" />
+				<type name="projElement.Order" />
+			</types>
+		</label-icon-provider> 
+		<value-icon-provider class="com.top_logic.reporting.flex.chart.config.chartbuilder.tree.icon.DefaultValueIconProvider" >
+			<icons>
+				<color key="0" color="#C0C0C0-#8E8E8E" />
+				<color key="1" color="#00FF00-#00CD00" />
+				
+			</icons>
+			<key-provider class="com.top_logic.demo.chart.flex.TreeInfoDataSource$DemoKeyProvider" />
+		</value-icon-provider>
+	</chart-builder>
+
+</chart>

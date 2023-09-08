@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_25424_Move_custom_composition_links_to_structure_child_table"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_25421_multiple_forms_inapp"
+			module="tl"
+		/>
+		<dependency name="Ticket_25544_Fix_model_baseline"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.element.model.migration.MoveCompositionLinksToStructureChildTable"/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

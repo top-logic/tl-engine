@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="test.com.top_logic.kafka.services.TestKafkaCommunication.source">
+			<types>
+				<class name="Node">
+					<annotations>
+						<table name="SourceTable1"/>
+						<exported/>
+					</annotations>
+					<attributes>
+						<reference name="otherNode"
+							type="test.com.top_logic.kafka.services.TestKafkaCommunication.source:Node"
+						/>
+						<reference name="otherNodeInline"
+							type="test.com.top_logic.kafka.services.TestKafkaCommunication.source:Node"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="inlineReference"
+										storage-type="SourceTable1"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<property name="exported"
+							type="tl.core:String"
+						/>
+						<property name="notExported"
+							type="tl.core:String"
+						>
+							<annotations>
+								<exported value="false"/>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+		<module name="test.com.top_logic.kafka.services.TestKafkaCommunication.target">
+			<types>
+				<class name="TargetNode">
+					<annotations>
+						<table name="TargetTable1"/>
+						<imported source="test.com.top_logic.kafka.services.TestKafkaCommunication.source:Node"/>
+					</annotations>
+					<attributes>
+						<reference name="otherNode"
+							type="test.com.top_logic.kafka.services.TestKafkaCommunication.target:TargetNode"
+						/>
+						<reference name="otherNodeInline"
+							type="test.com.top_logic.kafka.services.TestKafkaCommunication.target:TargetNode"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="inlineReference"
+										storage-type="TargetTable1"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<property name="notExported"
+							type="tl.core:String"
+						>
+							<annotations>
+								<imported source="notExported"/>
+							</annotations>
+						</property>
+						<property name="imported"
+							type="tl.core:String"
+						>
+							<annotations>
+								<imported source="exported"/>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

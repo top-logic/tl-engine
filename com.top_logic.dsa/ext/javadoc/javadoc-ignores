@@ -1,0 +1,225 @@
+com.top_logic.dsa.DAPropertyNames.java: Invalid camel case word 'isLocked', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataAccesProxy', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataAccessProxies', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataChangeEvent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataChangeException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataObect', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataSource', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataSourceAdaptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataSourceAdaptors', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'DataSourceName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'HttpServletResponse', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'NotSupportException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'OutputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'ResourceViewerSerlvet', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'SecurityContext', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'anEvent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'contName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'createContainer', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'dataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'getCurrentUser', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'getEntry', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'getEntryNames', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'getEntryOutputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'getName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'getParent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'getPath', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'getProperties', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'hashCode', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'isEntry', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'putEntry', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessProxy.java: Invalid camel case word 'sendRedirect', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessService.java: Invalid camel case word 'DataSourceAdaptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessService.java: Invalid camel case word 'MailConfig1', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataAccessService.java: Missing documentation: com.top_logic.dsa.DataAccessService.Module
+com.top_logic.dsa.DataAccessService.java: Missing documentation: com.top_logic.dsa.DataAccessService.Module.INSTANCE
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'DataChangeEvent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'DataChangeException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'DataObejct', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'DataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'DataObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'DataSource', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'DataSourceAdaptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'OutputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'aListener', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'aName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'anEvent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'dataObect', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'getEntryNames', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'isContainer', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'isEntry', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'oldPath', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DataSourceAdaptor.java: Invalid camel case word 'putEntry', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.DatabaseAccessException.java: Invalid camel case word 'DatabaseAccessException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.evt.AbstractDataChangeListener.java: Missing documentation: com.top_logic.dsa.evt.AbstractDataChangeListener.dataCreated
+com.top_logic.dsa.evt.AbstractDataChangeListener.java: Missing documentation: com.top_logic.dsa.evt.AbstractDataChangeListener.dataDeleted
+com.top_logic.dsa.evt.AbstractDataChangeListener.java: Missing documentation: com.top_logic.dsa.evt.AbstractDataChangeListener.dataModified
+com.top_logic.dsa.evt.DataChangeEvent.java: Invalid camel case word 'DataChangeEvent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.evt.DataChangeListener.java: Invalid camel case word 'DataSourceAdaptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.ex.DataChangeException.java: Invalid camel case word 'EventHadlers', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.ex.NotSupportedException.java: Invalid camel case word 'DataSourceAdaptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.ex.NotSupportedException.java: Invalid camel case word 'DatabaseAccessException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.ex.UnknownDBException.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.dsa.ex.UnknownDBException
+com.top_logic.dsa.ex.UnknownDBException.java: Invalid camel case word 'DataAccessService', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.ex.UnknownDBException.java: Invalid camel case word 'UnknownDBException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.DOImporter.java: Invalid camel case word 'DataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.DOImporter.java: Invalid camel case word 'DataObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.DOImporter.java: Invalid camel case word 'DispatchingHandler', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.DOImporter.java: Invalid camel case word 'attrName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.DOImporter.java: Invalid camel case word 'dataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.DOImporter.java: Invalid camel case word 'doColl', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.DOImporter.java: Invalid camel case word 'doStack', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.DOImporter.java: Invalid camel case word 'getValue', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.DOImporter.java: Invalid camel case word 'handleDataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.FilesystemDataSourceAdaptor.java: Invalid camel case word 'DataSourceAdaptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.FilesystemDataSourceAdaptor.java: Invalid camel case word 'FilesystemDataSourceAdaptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.FilesystemDataSourceAdaptor.java: Invalid camel case word 'WebApplication', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.FilesystemDataSourceAdaptor.java: Invalid camel case word 'WebContainer', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.FilesystemDataSourceAdaptor.java: Invalid camel case word 'aRootPath', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.file.FilesystemDataSourceAdaptor.java: Invalid camel case word 'webRoot', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'DataChangeEvent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'DataChangeException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'DataObejct', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'DataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'DataSourceAdaptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'OutputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'aListener', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'aName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'anEvent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'dataObect', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'isEntry', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'oldPath', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.AbstractDataSourceAdaptor.java: Invalid camel case word 'putEntry', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.java: Invalid camel case word 'DataSource', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.java: Invalid camel case word 'DataSourceAdaptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.java: Invalid camel case word 'DataSources', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.java: Invalid camel case word 'PlainText', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.java: Missing documentation: com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.Config
+com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.java: Missing documentation: com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.Config.IMPLEMENTATION_NAME
+com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.java: Missing documentation: com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.Config.getImplementation
+com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.java: Missing documentation: com.top_logic.dsa.impl.EncryptedDataSourceAdaptor.Config.setImplementation
+com.top_logic.dsa.repos.AbstractRepository.java: Invalid camel case word 'EntryInfos', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.AbstractRepository.java: Invalid camel case word 'FileRepositoryInfos', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.AbstractRepository.java: Invalid camel case word 'OutputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.AbstractRepository.java: Invalid camel case word '_fFileName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.AbstractRepository.java: Invalid camel case word 'aFile', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.AbstractRepository.java: Invalid camel case word 'getPath', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.AbstractRepository.java: Invalid camel case word 'inUpdate', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.copyLeaf
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.create
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.createContainerInfo
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.createContainerReference
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.createDeletedLeaf
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.createEntryInfo
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.createLeafReference
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.createRepositoryInfo
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.createTempContainer
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.deleteContainer
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.deleteLeaf
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.existsContainer
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.get
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.getChildren
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.getLeaf
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.getName
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.getParent
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.getParentContainer
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.getRevisionContainer
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.getSystemPath
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.isDirectory
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.mkContainer
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.mkContainers
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.prepareCreate
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.renameContainer
+com.top_logic.dsa.repos.AbstractRepository.java: Missing documentation: com.top_logic.dsa.repos.AbstractRepository.updateEntryInfo4Delete
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'FileEntryInfo', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'FileEntryInfos', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'FileRepository', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'FileVersionInfo', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'FileVersionInfos', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'VersionInfo', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'VersionInfos', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'getNumVersions', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'getVersionInfo', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'inUpdateFlag', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Invalid camel case word 'numVersions', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseEntryInfo.java: Missing documentation: com.top_logic.dsa.repos.BaseEntryInfo.getInfoString
+com.top_logic.dsa.repos.BaseEntryInfo.java: Missing documentation: com.top_logic.dsa.repos.BaseEntryInfo.getModifiedFromFile
+com.top_logic.dsa.repos.BaseEntryInfo.java: Missing documentation: com.top_logic.dsa.repos.BaseEntryInfo.readInfo
+com.top_logic.dsa.repos.BaseRepositoryInfo.java: Invalid camel case word 'EntryInfos', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseRepositoryInfo.java: Invalid camel case word 'FileBasedRepository2', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseRepositoryInfo.java: Invalid camel case word 'FileEntryInfo', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseRepositoryInfo.java: Invalid camel case word 'FileEntryInfos', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseRepositoryInfo.java: Invalid camel case word 'FileRepository', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseRepositoryInfo.java: Invalid camel case word 'FileSytem', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseRepositoryInfo.java: Invalid camel case word 'hashCode', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseRepositoryInfo.java: Invalid camel case word 'revDir', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseRepositoryInfo.java: Invalid camel case word 'separatorChar', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseVersionInfo.java: Invalid camel case word 'FileEntryInfo', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseVersionInfo.java: Invalid camel case word 'FileRepository', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.BaseVersionInfo.java: Invalid camel case word 'RevisionNumber', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.createContainer
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.createLeafObject
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.createTempFile
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.delete
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.exists
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.getAbsolutePath
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.getName
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.getParent
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.getParentContainer
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.getPath
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.isDirectory
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.lastModified
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.list
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.listChildren
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.mkdir
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.mkdirs
+com.top_logic.dsa.repos.ContainerObject.java: Missing documentation: com.top_logic.dsa.repos.ContainerObject.renameTo
+com.top_logic.dsa.repos.EntryInfo.java: Invalid camel case word 'BeanDataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.EntryInfo.java: Invalid camel case word 'VersionInfo', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.LeafObject.java: Missing documentation: com.top_logic.dsa.repos.LeafObject.copy
+com.top_logic.dsa.repos.LeafObject.java: Missing documentation: com.top_logic.dsa.repos.LeafObject.delete
+com.top_logic.dsa.repos.LeafObject.java: Missing documentation: com.top_logic.dsa.repos.LeafObject.getAbsolutePath
+com.top_logic.dsa.repos.LeafObject.java: Missing documentation: com.top_logic.dsa.repos.LeafObject.getInputStream
+com.top_logic.dsa.repos.LeafObject.java: Missing documentation: com.top_logic.dsa.repos.LeafObject.getName
+com.top_logic.dsa.repos.LeafObject.java: Missing documentation: com.top_logic.dsa.repos.LeafObject.getOutputStream
+com.top_logic.dsa.repos.LeafObject.java: Missing documentation: com.top_logic.dsa.repos.LeafObject.getWriter
+com.top_logic.dsa.repos.LeafObject.java: Missing documentation: com.top_logic.dsa.repos.LeafObject.lastModified
+com.top_logic.dsa.repos.LeafObject.java: Missing documentation: com.top_logic.dsa.repos.LeafObject.length
+com.top_logic.dsa.repos.NoEntryException.java: Invalid camel case word 'NoEntryException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.Repository.java: Invalid camel case word 'EntryInfos', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.Repository.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.Repository.java: Invalid camel case word 'OputputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.Repository.java: Invalid camel case word 'VersionInfo', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.Repository.java: Invalid camel case word 'aPath', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.RepositoryDataSourceAdaptor.java: Invalid camel case word 'getForwarrdUrl', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.RepositoryException.java: Invalid camel case word 'DatabaseAccessException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.repos.RepositoryException.java: Invalid camel case word 'RepositoryException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'DataObejct', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'DataObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'DataObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'DataSourceAdaptor', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'MeaData', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'MetaObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'OutputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'TableName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'deleteRecursively', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Invalid camel case word 'putEntry', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Missing documentation: com.top_logic.dsa.sql.JDBCDataSourceAdaptor.Config
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Missing documentation: com.top_logic.dsa.sql.JDBCDataSourceAdaptor.Config.CONNECTION_POOL_PROPERTY
+com.top_logic.dsa.sql.JDBCDataSourceAdaptor.java: Missing documentation: com.top_logic.dsa.sql.JDBCDataSourceAdaptor.Config.getConnectionPool
+com.top_logic.dsa.sql.QueryInputStream.java: Invalid camel case word 'BinaryInputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.QueryInputStream.java: Invalid camel case word 'BinaryOutputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.QueryInputStream.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.QueryInputStream.java: Invalid camel case word 'aQuery', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.sql.QueryInputStream.java: Invalid camel case word 'aStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.util.DataAccessProxyDataSource.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.util.DataAccessProxyDataSource.java: Invalid camel case word 'DataSource', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.util.DataAccessProxyDataSource.java: Invalid camel case word 'DatabaseAccessException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.dsa.util.MimeTypes.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.

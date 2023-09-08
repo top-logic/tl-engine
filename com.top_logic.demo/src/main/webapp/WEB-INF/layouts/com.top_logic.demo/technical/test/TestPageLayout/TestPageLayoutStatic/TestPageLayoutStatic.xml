@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<component class="com.top_logic.mig.html.layout.PageComponent"
+			buttonComponent="TestPageLayoutStaticButtons"
+			name="TestPageLayoutStatic"
+			page="/jsp/layout/test/TestPageLayoutStatic.jsp"
+			resPrefix="layouts.layoutdemo.test.TestPageLayoutStatic.TestPageLayoutStatic."
+			securityProviderClass="securityRoot"
+		/>
+		<buttonbar name="TestPageLayoutStaticButtons"/>
+	</components>
+</layout>

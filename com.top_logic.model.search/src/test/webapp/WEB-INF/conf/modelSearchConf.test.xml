@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<root>
+	<alias>
+		<entry name="%TEST.COM.TOP_LOGIC.MODEL.SEARCH.EXPR.TESTSEARCHEXPRESSION__RESOLVE_ALIAS1%"
+			value="resolved value 1"
+		/>
+		<entry name="%TEST.COM.TOP_LOGIC.MODEL.SEARCH.EXPR.TESTSEARCHEXPRESSION__RESOLVE_ALIAS2%"
+			value="resolved value 2"
+		/>
+	</alias>
+</root>

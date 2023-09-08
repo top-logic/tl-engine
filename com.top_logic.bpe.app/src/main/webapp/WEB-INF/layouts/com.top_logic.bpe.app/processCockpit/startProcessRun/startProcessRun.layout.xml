@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="tl-bpe-app/tiles/processExecutionStart.xml"
+	model="selection(com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRunObjects.layout.xml#Objects)"
+	tokenTable="com.top_logic.bpe.app/processCockpit/currentTasks/tasksTable.layout.xml#Table"
+/>

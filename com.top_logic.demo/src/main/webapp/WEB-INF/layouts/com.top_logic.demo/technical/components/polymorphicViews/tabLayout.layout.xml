@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_90fcf82f_83ed_4310_a5ba_29c12fa0e0b7">
+		<tabLabel key="dynamic.d79fa1f5-2bbf-45a3-a5ad-c31ebe5bef33">
+			<en>Polymorphic views</en>
+			<de>Polymorphe Sichten</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicViews/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

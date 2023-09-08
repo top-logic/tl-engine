@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Sicht/Action-Sicht-Anzeigen.xml"
+			template-name-comment="Sicht Anzeigen"
+		>
+			<parameters>
+				<parameter name="Pfad">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Administration > Zugänge > Benutzerkonten"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Knopf/Action-Knopf-Druecken.xml"
+			template-name-comment="Knopf Druecken"
+		>
+			<parameters>
+				<parameter name="Name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Aktualisieren"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+	</actions>
+</action>

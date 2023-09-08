@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="model"/>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="page"
+			value="/jsp/layout/compare/CompareSelector.jsp"
+		/>
+	</params>
+
+	<component class="com.top_logic.layout.compare.DateCompareSelector"
+		model="${model}"
+		name="${namePrefix}VersionSelector"
+		page="${page}"
+		resPrefix="layouts.commons.compare.compareSelector."
+	/>
+</template>

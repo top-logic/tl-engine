@@ -1,0 +1,36 @@
+<h2>Syntax</h2>
+<pre>	<code>revisionAt($date)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Bestimmt die Revision die zu dem gegeben Zeitpunkt gültig war, d.h. die neuste Revision die nicht später als das gegebene Datum erstellt wurde.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>date</td>
+   <td>Zeitpunkt</td>
+   <td>Der Zeitpunkt zu dem die Revision bestimmt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Revision</p>
+<p>Die Revision die zu dem gegebenen Zeitpunkt aktuell war.</p>
+<h2>Beispiele</h2>
+<h3>Beispiel 1</h3>
+<pre>	<code>revisionAt(date(2023,2,6))</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> r245</p>
+<p>Hier wird die Revison ermittelt, die zum Zeitpunkt 6. März 2023 aktuell war. In diesem Beispiel r245.</p>
+<p></p>

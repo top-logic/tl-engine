@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.b4e9869f-fb3e-4a96-999f-a64077b9188a">
+				<en>Create Contract</en>
+				<de>Neuer Vertrag</de>
+			</title>
+		</title>
+		<open-handler id="ID_f57fa72e_4ad8_4564_9440_ca579522e538"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			target="selection(com.top_logic.demo/technical/components/reports/organizationTable.layout.xml#Table)"
+			targetComponent="com.top_logic.demo/technical/components/reports/createContract/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.b4e9869f-fb3e-4a96-999f-a64077b9188a">
+				<en>Create Contract</en>
+				<de>Neuer Vertrag</de>
+			</resourceKey>
+		</open-handler>
+		<forms>
+			<form type="test.report:Contract">
+				<formDefinition>
+					<field attribute="name"/>
+					<columnsLayout>
+						<field attribute="partner"/>
+						<field attribute="owner"/>
+					</columnsLayout>
+					<field attribute="text"/>
+					<other-attributes/>
+				</formDefinition>
+			</form>
+		</forms>
+		<typeOptions type="test.report:Contract"/>
+		<create-handler id="ID_4d2e81d0_a8ad_432a_9492_2d8773a70548"
+			linkOperation="orga -> contract -> $orga.add(`test.report:BusinessUnit#contracts`, $contract)"
+		/>
+	</arguments>
+</config:template-call>

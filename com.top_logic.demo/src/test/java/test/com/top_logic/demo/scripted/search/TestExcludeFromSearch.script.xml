@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Suche"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler"
+			command-label="Erweiterte Suche"
+			command-name="switchAttributedSearchScope"
+			component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+			component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ModelNotExistsAssertionOp"
+			failure-pattern="Failed to find FormMember 'gallery'"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="gallery"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+					tab-path="Suche"
+				/>
+			</model-name>
+		</action>
+	</actions>
+</action>

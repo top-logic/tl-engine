@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<test:structure Version="0.1" xmlns:test="Test-Datenstruktur">
+	<test:ebene1 Name="Teststruktur"                ID="STR001" Nutzer="dau"                                          Aktiv="Ja" Aktiviert="01.01.2016" Land="DE" Sprache="de">
+		<test:ebene2a Name="Unterebene (1) 1"       ID="STR002" Nutzer="dau"      Ampel="grün" Person="Aumann,Dieter" Firma="BOS" Zahl="1000,50">
+			<test:ebene3a Name="Unterebene (1) 1.1" ID="STR003" Nutzer="dau"      />
+			<test:ebene3a Name="Unterebene (1) 1.2" ID="STR004" Nutzer="dau"      />
+		</test:ebene2a>
+		<test:ebene2a Name="Unterebene (1) 2"       ID="STR005" Nutzer="dummy"    Ampel="gelb" Person="Aumann,Dieter" Firma="BOS" Zahl="1500">
+			<test:ebene3a Name="Unterebene (1) 2.1" ID="STR006" Nutzer="dummy"    Ampel="gelb" />
+			<test:ebene3a Name="Unterebene (1) 2.2" ID="STR007" Nutzer="dummy"    />
+		</test:ebene2a>
+
+		<test:ebene2b Name="Unterebene (2) 3"       ID="STR008" Nutzer="guest_de" Ampel="rot"  Person="Mütt,Erna" Zahl="12.000">
+			<test:ebene3b Name="Unterebene (2) 3.1" ID="STR009" Nutzer="guest_en" />
+		</test:ebene2b>
+	</test:ebene1>
+</test:structure>

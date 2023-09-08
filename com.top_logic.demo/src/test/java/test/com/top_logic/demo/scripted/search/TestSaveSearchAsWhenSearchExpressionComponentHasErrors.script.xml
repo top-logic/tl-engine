@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Modellbasierte Suche"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="vereinigt mit "
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+					tab-path="Modellbasierte Suche"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+						value="com.top_logic.model.search.ui.model.TypeSearch"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
+			expected-failure-message="Ergebnistyp: Eingabe darf nicht leer sein."
+		>
+			<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+				command-implementation-comment="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsOpenDialogCommand"
+				command-label="Speichern unter..."
+				command-name="displayDialog_SaveSearchAs"
+				component-implementation-comment="com.top_logic.model.search.ui.selector.SearchSelectorComponent"
+				component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchSelectorComponent"
+				user-id="root"
+			>
+				<arguments/>
+			</failure-action>
+		</action>
+	</actions>
+</action>

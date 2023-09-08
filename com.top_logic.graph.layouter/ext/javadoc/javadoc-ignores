@@ -1,0 +1,48 @@
+com.top_logic.graph.layouter.LayoutContext.java: Invalid camel case word 'TableInterface', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.layouter.algorithm.GraphAlgorithm.java: Missing documentation: com.top_logic.graph.layouter.algorithm.GraphAlgorithm.setGraph
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.HorizontalCoordinateAlgorithm.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.HorizontalCoordinateAlgorithm.setHorizontalNodeCoordinates
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.alignNode
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.getAligns
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.getDirection
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.getMedianIndices
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.getPositions
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.getRoots
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.getVerticalAlignment
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.initPositions
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.setAligns
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.setPositions
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner.setRoots
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalDownAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalDownAligner.getTopNodes
+com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalUpAligner.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalUpAligner.getBottomNodes
+com.top_logic.graph.layouter.algorithm.coordinates.vertical.VerticalCoordinateAlgorithm.java: Missing documentation: com.top_logic.graph.layouter.algorithm.coordinates.vertical.VerticalCoordinateAlgorithm.setVerticalNodeCoordinates
+com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.java: Missing documentation: com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.createNodesMeasure
+com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.java: Missing documentation: com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.getCrossingNumber
+com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.java: Missing documentation: com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.getCrossingTyp1Edges
+com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.java: Missing documentation: com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.getDirection
+com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.java: Missing documentation: com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.getEdgeBottomNode
+com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.java: Missing documentation: com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.getEdges
+com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.java: Missing documentation: com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.joinContainer
+com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.java: Missing documentation: com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.setCrossingNumber
+com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.java: Missing documentation: com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.setCrossingTyp1Edges
+com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.java: Missing documentation: com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer.splitContainer
+com.top_logic.graph.layouter.algorithm.layering.LongestPathLayeringFinder.java: Missing documentation: com.top_logic.graph.layouter.algorithm.layering.LongestPathLayeringFinder._allAssignedVertices
+com.top_logic.graph.layouter.algorithm.layering.LongestPathLayeringFinder.java: Missing documentation: com.top_logic.graph.layouter.algorithm.layering.LongestPathLayeringFinder._currentLayer
+com.top_logic.graph.layouter.algorithm.layering.LongestPathLayeringFinder.java: Missing documentation: com.top_logic.graph.layouter.algorithm.layering.LongestPathLayeringFinder._nodeLayerMapping
+com.top_logic.graph.layouter.algorithm.layering.LongestPathLayeringFinder.java: Missing documentation: com.top_logic.graph.layouter.algorithm.layering.LongestPathLayeringFinder._possibleAssignableVertices
+com.top_logic.graph.layouter.algorithm.node.port.assigner.NodePortAssignAlgorithm.java: Missing documentation: com.top_logic.graph.layouter.algorithm.node.port.assigner.NodePortAssignAlgorithm.assignNodePorts
+com.top_logic.graph.layouter.algorithm.node.port.assigner.edges.DefaultNodePortEdgesAssigner.java: Invalid camel case word 'userObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.layouter.algorithm.node.port.orderer.DefaultNodePortOrderer.java: Invalid camel case word 'NodePortOrder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.layouter.algorithm.node.size.NodeSizeAlgorithm.java: Missing documentation: com.top_logic.graph.layouter.algorithm.node.size.NodeSizeAlgorithm.size
+com.top_logic.graph.layouter.export.I18NConstants.java: Documentation starts with an uppercase letter: com.top_logic.graph.layouter.export.I18NConstants
+com.top_logic.graph.layouter.export.JSONDefaultLayoutGraphExporter.java: Invalid camel case word 'businessObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.layouter.export.JSONDefaultLayoutGraphExporter.java: Invalid camel case word 'businessObjects', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.layouter.export.JSONGraphExporter.java: Missing documentation: com.top_logic.graph.layouter.export.JSONGraphExporter.export
+com.top_logic.graph.layouter.model.LayoutGraph.java: Invalid camel case word 'BusinessObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.layouter.model.LayoutGraph.java: Invalid camel case word 'businessObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.layouter.model.LayoutGraph.java: Missing documentation: com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge.setSegment
+com.top_logic.graph.layouter.model.LayoutGraph.java: Missing documentation: com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode.setX
+com.top_logic.graph.layouter.model.edge.BusinessObjectLayoutEdgePartitioner.java: Invalid camel case word 'userObject', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.layouter.model.edge.LayoutEdgePartitioner.java: Missing documentation: com.top_logic.graph.layouter.model.edge.LayoutEdgePartitioner.getPartition
+com.top_logic.graph.layouter.model.layer.SegmentContainer.java: Missing documentation: com.top_logic.graph.layouter.model.layer.SegmentContainer.setSegments
+com.top_logic.graph.layouter.model.util.LayoutGraphUtil.java: Invalid camel case word 'typeName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.layouter.model.util.LayoutGraphUtilConstants.java: Invalid camel case word 'LayoutGraph', this may only be used within JavaDoc links or HTML code tags.

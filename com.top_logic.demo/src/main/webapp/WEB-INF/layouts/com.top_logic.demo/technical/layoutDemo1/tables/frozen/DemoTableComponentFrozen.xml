@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/technical/layoutDemo1/tables/table1/DemoTableComponent_shared.xml"
+	componentName="DemoTableComponentFrozen"
+	fixedColumns="2"
+	pageSizeOptions="all,5,10,25"
+/>

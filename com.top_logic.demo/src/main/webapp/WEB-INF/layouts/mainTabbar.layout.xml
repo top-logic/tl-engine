@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/maintabbar.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/structure/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/table/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.model.search/search/modelSearch.layout.xml"/>
+			<layout-reference resource="com.top_logic.element/search/searchInput.layout.xml"/>
+			<layout-reference resource="com.top_logic.reporting/search/searchResult.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/search/searchChart.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/security/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/reporting/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/chartJS/index.layout.xml"/>
+			<layout-reference resource="admin/index.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,956 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Objekte anlegen"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Navigation"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path/>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Kinder anlegen"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+							command-label="Generieren..."
+							command-name="generateTypes"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Name des generierten Wurzelelementes"
+											field-name="rootName"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="TestGridConcurrent"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Anzahl der generierten Kinder"
+											field-name="numberChildren"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="5"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Generieren"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ok"
+							user-id="root"
+						/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Navigation"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Zugänge > Benutzerkonten"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="userTestGridConcurrent"
+						/>
+						<parameter name="Vorname"
+							value="userTestGridConcurrent"
+						/>
+						<parameter name="Nachname"
+							value="userTestGridConcurrent"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="userTestGridConcurrent"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Navigation"
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Zugänge > Benutzerkonten"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="Person"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="userTestGridConcurrent"
+													/>
+												</attribute>
+											</key-values>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+										component-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonTableComponent"
+										component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Navigation zur Rollenkomponente"
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Berechtigungsstruktur"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+											tab-path="Administration > Berechtigungen"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+												label="DemoTypes"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Rollen"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Rolle anlegen"
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									command-label="Neu..."
+									command-name="displayDialog_newRoleDialog"
+									component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+									component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+										component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleComponent"
+										component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#NewRole"
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Name:"
+													field-name="name"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="DemoUser"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleCommand"
+									command-label="Speichern"
+									command-name="newRole"
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleComponent"
+									component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#NewRole"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+									command-label="Speichern"
+									command-name="defaultSave"
+									component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+									component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Navigation zur Rollenprofil GUI"
+									user-id="root"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Administration > Berechtigungen > Rollenprofile"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+											columns="Rechte,DemoUser"
+											label="true"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+												<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+													tab-path="Administration > Berechtigungen > Rollenprofile"
+												/>
+												<path>
+													<named-member name="tree"/>
+												</path>
+											</model-name>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Alle anhaken"
+									user-id="root"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+											command-label="Bearbeiten"
+											command-name="switchToAJAXEdit"
+											component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+											component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ExpandAllCommandHandler"
+											command-label="Rollenprofile aufklappen"
+											command-name="expandRoleProfileTree"
+											component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+											component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$SetAllCommandHandler"
+											command-label="Alle an"
+											command-name="setAllAccess"
+											component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+											component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+											command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+											command-label="Speichern"
+											command-name="defaultSave"
+											component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+											component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											user-id="root"
+										>
+											<arguments/>
+										</action>
+									</actions>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Rolle der Person zuordnen"
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerrechte"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="Person"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="userTestGridConcurrent"
+													/>
+												</attribute>
+											</key-values>
+										</selectee>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+											component-implementation-comment="com.top_logic.knowledge.gui.layout.person.PersonTableComponent"
+											component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#RolesPersonTable"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+									command-label="Bearbeiten"
+									command-name="switchToAJAXEdit"
+									component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
+									component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#EditPersonRoles"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="ROOT"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+										<values>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+												label="DemoUser"
+											/>
+										</values>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Rolle vererben"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+									command-label="Speichern"
+									command-name="defaultSave"
+									component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
+									component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#EditPersonRoles"
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path/>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="TestGridConcurrent"/>
+									</structure-path>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="gridEdit"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+											tab-path="Strukturen > Typendemo > Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+													structure-name="DemoTypes"
+												>
+													<structure-path>
+														<node name="TestGridConcurrent"/>
+														<node name="A0"/>
+													</structure-path>
+												</business-object>
+											</node>
+										</path>
+									</model-name>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+								<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+									tab-path="Strukturen > Typendemo > Grid"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comment=""
+							comparision="set-equals"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
+								<table config:interface="com.top_logic.layout.form.FormMemberName">
+									<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+										component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+										component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+									/>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="fieldTable"
+										/>
+									</path>
+								</table>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+										<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+												component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+												component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+													field-label-comment=""
+												>
+													<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestGridConcurrent"/>
+															<node name="A0"/>
+														</structure-path>
+													</business-object>
+												</node>
+											</path>
+										</model-name>
+									</entry>
+								</list>
+							</expected-value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comment=""
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue">
+								<field-name config:interface="com.top_logic.layout.form.FormMemberName">
+									<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+										component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+										component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+									/>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+											field-label-comment=""
+										>
+											<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="TestGridConcurrent"/>
+													<node name="A0"/>
+												</structure-path>
+											</business-object>
+										</node>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="Name"
+										>
+											<attribute-ref attribute-name="name">
+												<type type-name="DemoTypes.All">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="TestGridConcurrent"/>
+													<node name="A0"/>
+												</structure-path>
+											</self-ref>
+										</node>
+									</path>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="A0"
+							/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Nutzer/Nutzer anmelden.xml"
+			template-name-comment="Nutzer anmelden"
+		>
+			<parameters>
+				<parameter name="Username"
+					value="userTestGridConcurrent"
+				/>
+				<parameter name="ProcessId"
+					value="userTestGridConcurrent"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="userTestGridConcurrent"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp">
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="TestGridConcurrent"/>
+									</structure-path>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > Grid"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="gridEdit"
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp">
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+											tab-path="Strukturen > Typendemo > Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+													structure-name="DemoTypes"
+												>
+													<structure-path>
+														<node name="TestGridConcurrent"/>
+														<node name="A0"/>
+													</structure-path>
+												</business-object>
+											</node>
+										</path>
+									</model-name>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+								<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+									tab-path="Strukturen > Typendemo > Grid"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comment=""
+							comparision="set-equals"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
+								<table config:interface="com.top_logic.layout.form.FormMemberName">
+									<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+										component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+										component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+									/>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="fieldTable"
+										/>
+									</path>
+								</table>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+										<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+												component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+												component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+													field-label-comment=""
+												>
+													<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestGridConcurrent"/>
+															<node name="A0"/>
+														</structure-path>
+													</business-object>
+												</node>
+											</path>
+										</model-name>
+									</entry>
+								</list>
+							</expected-value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comment=""
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-name="name"
+							>
+								<table config:interface="com.top_logic.layout.form.FormMemberName">
+									<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+										component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+										component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+									/>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="fieldTable"
+										/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+											component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+											component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+												field-label-comment=""
+											>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+													structure-name="DemoTypes"
+												>
+													<structure-path>
+														<node name="TestGridConcurrent"/>
+														<node name="A0"/>
+													</structure-path>
+												</business-object>
+											</node>
+										</path>
+									</model-name>
+								</row-object>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="A0"
+							/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Clean-Up"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Berechtigungen > Rollen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="DemoUser"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#editRolesTable"
+							tab-path="Administration > Berechtigungen > Rollen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"
+					command-label="Löschen..."
+					command-name="deleteRole"
+					component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+					component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Zugänge"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+							table="Person"
+						>
+							<attributes>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="userTestGridConcurrent"
+									/>
+								</attribute>
+							</attributes>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminPersonTable"
+							tab-path="Administration > Zugänge > Benutzerkonten"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"
+					command-label="Löschen..."
+					command-name="deletePerson"
+					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
+					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestGridConcurrent"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

@@ -1,0 +1,803 @@
+===== Null literal
+null
+-----
+null
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Null"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+/>
+
+===== Property access
+model -> $model.get(`T:others`)
+-----
+model -> $model.get(`T:others`)
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Define"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  name="model"
+>
+  <method name="get">
+    <args>
+    <arg>
+      <type name="others"
+        module="T"
+      />
+    </arg>
+    </args>
+    <var name="model"/>
+  </method>
+</config>
+
+===== Boolean expressions
+$isIgnored or $a == $b and $c == "foobar" || $x == 42 && !(true==false)
+-----
+$isIgnored or $a == $b and $c == "foobar" or $x == 42.0 and !(true == false)
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Or"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+  <var name="isIgnored"/>
+  <and>
+    <eq>
+      <var name="a"/>
+      <var name="b"/>
+    </eq>
+    <eq>
+      <var name="c"/>
+      <string value="foobar"/>
+    </eq>
+  </and>
+  <and>
+    <eq>
+      <var name="x"/>
+      <number value="42.0"/>
+    </eq>
+    <not>
+      <eq>
+        <true/>
+        <false/>
+      </eq>
+    </not>
+  </and>
+</config>
+
+===== Model literals
+all(`my.module:MyType`)
+  .filter(x -> $x.get(`T:other`).get(`TLObject:tType`).get(`TLType:module`)==`other.module`)
+  .filter(y -> $y.get(`T:ref`) == `my.module:OtherType#part`)
+-----
+all(`my.module:MyType`).filter(x -> $x.get(`T:other`).get(`TLObject:tType`).get(`TLType:module`) == `other.module`).filter(y -> $y.get(`T:ref`) == `my.module:OtherType#part`)
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  name="filter"
+>
+  <args>
+  <arg>
+    <define name="y">
+      <eq>
+        <method name="get">
+          <args>
+          <arg>
+            <type name="ref"
+              module="T"
+            />
+          </arg>
+          </args>
+          <var name="y"/>
+        </method>
+        <part name="part"
+          module="my.module"
+          type="OtherType"
+        />
+      </eq>
+    </define>
+  </arg>
+  </args>
+  <method name="filter">
+    <args>
+    <arg>
+      <define name="x">
+        <eq>
+          <method name="get">
+            <args>
+            <arg>
+              <type name="module"
+                module="TLType"
+              />
+            </arg>
+            </args>
+            <method name="get">
+              <args>
+              <arg>
+                <type name="tType"
+                  module="TLObject"
+                />
+              </arg>
+              </args>
+              <method name="get">
+                <args>
+                <arg>
+                  <type name="other"
+                    module="T"
+                  />
+                </arg>
+                </args>
+                <var name="x"/>
+              </method>
+            </method>
+          </method>
+          <module name="other.module"/>
+        </eq>
+      </define>
+    </arg>
+    </args>
+    <staticMethod name="all">
+      <args>
+      <arg>
+        <type name="MyType"
+          module="my.module"
+        />
+      </arg>
+      </args>
+    </staticMethod>
+  </method>
+</config>
+
+===== Singleton literal
+`my.package#SINGLETON`
+-----
+`my.package#SINGLETON`
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$SingletonLiteral"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  module="my.package"
+  name="SINGLETON"
+/>
+
+===== TLEnumeration literal
+`my.package:my.type#my.constant`
+-----
+`my.package:my.type#my.constant`
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$PartLiteral"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  module="my.package"
+  name="my.constant"
+  type="my.type"
+/>
+
+===== Legacy TLEnumeration literal
+`my.package:my.type#1`
+-----
+`my.package:my.type#1`
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$PartLiteral"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  module="my.package"
+  name="1"
+  type="my.type"
+/>
+
+===== Resource key reference
+#"my.resource.key"
+-----
+#"my.resource.key"
+-----
+<config key="my.resource.key"
+  config:interface="com.top_logic.model.search.expr.config.dom.Expr$ResKeyReference"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+/>
+
+===== Resource key reference with single quotes
+#'my.resource.key'
+-----
+#"my.resource.key"
+-----
+<config key="my.resource.key"
+  config:interface="com.top_logic.model.search.expr.config.dom.Expr$ResKeyReference"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+/>
+
+===== Literal resource key
+#('Hallo Welt!'@de, "Hello world!"@en)
+-----
+#("Hallo Welt!"@de, "Hello world!"@en)
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$ResKeyLiteral"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+  <value
+    lang="de"
+    text="Hallo Welt!"
+  />
+  <value
+    lang="en"
+    text="Hello world!"
+  />
+</config>
+
+===== Literal resource key with single translation
+'Hallo Welt!'@de
+-----
+#("Hallo Welt!"@de)
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$ResKeyLiteral"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+  <value
+    lang="de"
+    text="Hallo Welt!"
+  />
+</config>
+
+===== Tuples
+tuple(
+	a -> all(`test:A`), 
+	b? -> all(`test:B`).filter(
+		x -> $a.get(`test:A#values`).contains(
+			$x.get(`test:B#value`))))
+-----
+tuple(a -> all(`test:A`), b? -> all(`test:B`).filter(x -> $a.get(`test:A#values`).contains($x.get(`test:B#value`))))
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Tuple"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+  <coord name="a"
+    optional="false"
+  >
+    <staticMethod name="all">
+      <args>
+      <arg>
+        <type name="A"
+          module="test"
+        />
+      </arg>
+      </args>
+    </staticMethod>
+  </coord>
+  <coord name="b"
+    optional="true"
+  >
+    <method name="filter">
+      <args>
+      <arg>
+        <define name="x">
+          <method name="contains">
+            <args>
+            <arg>
+              <method name="get">
+                <args>
+                <arg>
+                  <part name="value"
+                    module="test"
+                    type="B"
+                  />
+                </arg>
+                </args>
+                <var name="x"/>
+              </method>
+            </arg>
+            </args>
+            <method name="get">
+              <args>
+              <arg>
+                <part name="values"
+                  module="test"
+                  type="A"
+                />
+              </arg>
+              </args>
+              <var name="a"/>
+            </method>
+          </method>
+        </define>
+      </arg>
+      </args>
+      <staticMethod name="all">
+        <args>
+        <arg>
+          <type name="B"
+            module="test"
+          />
+        </arg>
+        </args>
+      </staticMethod>
+    </method>
+  </coord>
+</config>
+
+===== HTML
+x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</p>}}})
+-----
+x -> foo({{{<p class="important {$css}">Some value <b>'{$x}'</b> being output.</p>}}})
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Define"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  name="x"
+>
+  <staticMethod name="foo">
+    <args>
+    <arg>
+      <html>
+        <start tag="p">
+          <attribute name="class">
+          	<sequence>
+              <text value="important "/>
+ 	          <embed>
+ 	            <var name="css"/>
+ 	          </embed>
+          	</sequence>
+          </attribute>
+        </start>
+        <text value="Some value "/>
+        <start tag="b"/>
+        <text value="'"/>
+        <embed>
+          <var name="x"/>
+        </embed>
+        <text value="'"/>
+        <end tag="b"/>
+        <text value=" being output."/>
+        <end tag="p"/>
+      </html>
+    </arg>
+    </args>
+  </staticMethod>
+</config>
+
+===== SafeHTML
+{{{<div><div class="foo"/><div>text<br><p></br><i>italics</p>}}}
+-----
+{{{<div><div class="foo"></div><div>text<br/><p><i>italics</i></p></div></div>}}}
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Html"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+  <start tag="div"/>
+  <start tag="div">
+    <attribute name="class">
+      <text value="foo"/>
+    </attribute>
+  </start>
+  <end tag="div"/>
+  <start tag="div"/>
+  <text value="text"/>
+  <start
+    empty="true"
+    tag="br"
+  />
+  <start tag="p"/>
+  <start tag="i"/>
+  <text value="italics"/>
+  <end tag="i"/>
+  <end tag="p"/>
+  <end tag="div"/>
+  <end tag="div"/>
+</config>
+
+===== Complex Scenario
+model ->
+  all(`tl.graph.demo:A`)
+    .filter(y ->
+      $y.get(`T:owner`).contains($model) and
+      $y.get(`T:ref`).instanceOf(`tl.graph.demo:C`)
+    )
+    .map(z -> $z.get(`T:other`))
+-----
+model -> all(`tl.graph.demo:A`).filter(y -> $y.get(`T:owner`).contains($model) and $y.get(`T:ref`).instanceOf(`tl.graph.demo:C`)).map(z -> $z.get(`T:other`))
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Define"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  name="model"
+>
+  <method name="map">
+    <args>
+    <arg>
+      <define name="z">
+        <method name="get">
+          <args>
+          <arg>
+            <type name="other"
+              module="T"
+            />
+          </arg>
+          </args>
+          <var name="z"/>
+        </method>
+      </define>
+    </arg>
+    </args>
+    <method name="filter">
+      <args>
+      <arg>
+        <define name="y">
+          <and>
+            <method name="contains">
+              <args>
+              <arg>
+                <var name="model"/>
+              </arg>
+              </args>
+              <method name="get">
+                <args>
+                <arg>
+                  <type name="owner"
+                    module="T"
+                  />
+                </arg>
+                </args>
+                <var name="y"/>
+              </method>
+            </method>
+            <method name="instanceOf">
+              <args>
+              <arg>
+                <type name="C"
+                  module="tl.graph.demo"
+                />
+              </arg>
+              </args>
+              <method name="get">
+                <args>
+                <arg>
+                  <type name="ref"
+                    module="T"
+                  />
+                </arg>
+                </args>
+                <var name="y"/>
+              </method>
+            </method>
+          </and>
+        </define>
+      </arg>
+      </args>
+      <staticMethod name="all">
+        <args>
+        <arg>
+          <type name="A"
+            module="tl.graph.demo"
+          />
+        </arg>
+        </args>
+      </staticMethod>
+    </method>
+  </method>
+</config>
+
+===== String quoting
+concat("Some \"String\" with \\", 'Some \"String\"', 'Some "String"', 'Some \'String\'')
+-----
+concat("Some \"String\" with \\", "Some \"String\"", "Some \"String\"", "Some 'String'")
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$StaticMethod"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  name="concat"
+>
+  <args>
+  <arg>
+    <string value="Some &quot;String&quot; with \"/>
+  </arg>
+  <arg>
+    <string value="Some &quot;String&quot;"/>
+  </arg>
+  <arg>
+    <string value="Some &quot;String&quot;"/>
+  </arg>
+  <arg>
+    <string value="Some 'String'"/>
+  </arg>
+  </args>
+</config>
+
+===== Function application
+(obj -> {$obj.set(`my:Type#attr`, "initial-value"); $obj; })(new(`my:Type`))
+-----
+(obj -> {$obj.set(`my:Type#attr`, "initial-value"); $obj; })(new(`my:Type`))
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Apply"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+  <arg config:interface="com.top_logic.model.search.expr.config.dom.Expr$StaticMethod"
+    name="new"
+  >
+    <args>
+    <arg>
+      <type name="Type"
+        module="my"
+      />
+    </arg>
+    </args>
+  </arg>
+  <fun config:interface="com.top_logic.model.search.expr.config.dom.Expr$Define"
+    name="obj"
+  >
+    <block>
+      <method name="set">
+        <args>
+        <arg>
+          <part name="attr"
+            module="my"
+            type="Type"
+          />
+        </arg>
+        <arg>
+          <string value="initial-value"/>
+        </arg>
+        </args>
+        <var name="obj"/>
+      </method>
+      <var name="obj"/>
+    </block>
+  </fun>
+</config>
+
+===== Complex instantiation
+$outer.set(`my:Type#others`, 
+	$values.map(
+		val -> ((other -> {$other.set(`my:Other#val`, $val); $other; })(new(`my:Other`)))))
+-----
+$outer.set(`my:Type#others`, $values.map(val -> (other -> {$other.set(`my:Other#val`, $val); $other; })(new(`my:Other`))))
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  name="set"
+>
+  <var name="outer"/>
+  <args>
+  <arg>
+    <part name="others"
+      module="my"
+      type="Type"
+    />
+  </arg>
+  <arg>
+    <method name="map">
+      <var name="values"/>
+      <args>
+      <arg>
+        <define name="val">
+          <apply>
+            <fun config:interface="com.top_logic.model.search.expr.config.dom.Expr$Define"
+              name="other"
+            >
+              <block>
+                <method name="set">
+                  <args>
+                  <arg>
+                    <part name="val"
+                      module="my"
+                      type="Other"
+                    />
+                  </arg>
+                  <arg>
+                    <var name="val"/>
+                  </arg>
+                  </args>
+                  <var name="other"/>
+                </method>
+                <var name="other"/>
+              </block>
+            </fun>
+            <arg config:interface="com.top_logic.model.search.expr.config.dom.Expr$StaticMethod"
+              name="new"
+            >
+              <args>
+              <arg>
+                <type name="Other"
+                  module="my"
+                />
+              </arg>
+              </args>
+            </arg>
+          </apply>
+        </define>
+      </arg>
+      </args>
+    </method>
+  </arg>
+  </args>
+</config>
+
+===== Blocks with side-effects
+all(`my.module:A`)
+	.filter(x -> $x.instanceOf(`my.module:B`))
+	.foreach(y -> 
+		(foovalue -> 
+			{
+				$y.set(`my.module:B#foo`, $y.get(`my.module:B#bar`));
+				$y.set(`my.module:B#bar`, $foovalue);
+			}
+		).apply($y.get(`my.module:B#foo`)))
+-----
+all(`my.module:A`).filter(x -> $x.instanceOf(`my.module:B`)).foreach(y -> (foovalue -> {$y.set(`my.module:B#foo`, $y.get(`my.module:B#bar`)); $y.set(`my.module:B#bar`, $foovalue); }).apply($y.get(`my.module:B#foo`)))
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  name="foreach"
+>
+  <args>
+  <arg>
+    <define name="y">
+      <method name="apply">
+        <args>
+        <arg>
+          <method name="get">
+            <args>
+            <arg>
+              <part name="foo"
+                module="my.module"
+                type="B"
+              />
+            </arg>
+            </args>
+            <var name="y"/>
+          </method>
+        </arg>
+        </args>
+        <define name="foovalue">
+          <block>
+            <method name="set">
+              <args>
+              <arg>
+                <part name="foo"
+                  module="my.module"
+                  type="B"
+                />
+              </arg>
+              <arg>
+                <method name="get">
+                  <args>
+                  <arg>
+                    <part name="bar"
+                      module="my.module"
+                      type="B"
+                    />
+                  </arg>
+                  </args>
+                  <var name="y"/>
+                </method>
+              </arg>
+              </args>
+              <var name="y"/>
+            </method>
+            <method name="set">
+              <args>
+              <arg>
+                <part name="bar"
+                  module="my.module"
+                  type="B"
+                />
+              </arg>
+              <arg>
+                <var name="foovalue"/>
+              </arg>
+              </args>
+              <var name="y"/>
+            </method>
+          </block>
+        </define>
+      </method>
+    </define>
+  </arg>
+  </args>
+  <method name="filter">
+    <args>
+    <arg>
+      <define name="x">
+        <method name="instanceOf">
+          <args>
+          <arg>
+            <type name="B"
+              module="my.module"
+            />
+          </arg>
+          </args>
+          <var name="x"/>
+        </method>
+      </define>
+    </arg>
+    </args>
+    <staticMethod name="all">
+      <args>
+      <arg>
+        <type name="A"
+          module="my.module"
+        />
+      </arg>
+      </args>
+    </staticMethod>
+  </method>
+</config>
+
+===== Zero fragment
+x->$x.reduce(0.1, c->d->$c + $d)
+-----
+x -> $x.reduce(0.1, c -> d -> $c + $d)
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Define"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  name="x"
+>
+  <method name="reduce">
+    <args>
+    <arg>
+      <number value="0.1"/>
+    </arg>
+    <arg>
+      <define name="c">
+        <define name="d">
+          <add>
+            <var name="c"/>
+            <var name="d"/>
+          </add>
+        </define>
+      </define>
+    </arg>
+    </args>
+    <var name="x"/>
+  </method>
+</config>
+
+===== Variable assignment
+$outer.set(`my:Type#others`, 
+	$values.map(
+		val -> {other = new(`my:Other`); $other.set(`my:Other#val`, $val); $other; } ))
+-----
+$outer.set(`my:Type#others`, $values.map(val -> {other = new(`my:Other`); $other.set(`my:Other#val`, $val); $other; }))
+-----
+<config config:interface="com.top_logic.model.search.expr.config.dom.Expr$Method"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  name="set"
+>
+  <args>
+  <arg>
+    <part name="others"
+      module="my"
+      type="Type"
+    />
+  </arg>
+  <arg>
+    <method name="map">
+      <args>
+      <arg>
+        <define name="val">
+          <block>
+            <assign name="other">
+              <staticMethod name="new">
+                <args>
+                <arg>
+                  <type name="Other"
+                    module="my"
+                  />
+                </arg>
+                </args>
+              </staticMethod>
+            </assign>
+            <method name="set">
+              <args>
+              <arg>
+                <part name="val"
+                  module="my"
+                  type="Other"
+                />
+              </arg>
+              <arg>
+                <var name="val"/>
+              </arg>
+              </args>
+              <var name="other"/>
+            </method>
+            <var name="other"/>
+          </block>
+        </define>
+      </arg>
+      </args>
+      <var name="values"/>
+    </method>
+  </arg>
+  </args>
+  <var name="outer"/>
+</config>
+

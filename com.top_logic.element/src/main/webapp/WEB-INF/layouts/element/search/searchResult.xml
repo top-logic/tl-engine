@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="metaElement"/>
+		<param name="namePrefix"/>
+		<param name="builderClass"/>
+		<param name="columnDefinitions">
+			<!-- Empty by default. -->
+		</param>
+		<param name="columns"
+			value="name"
+		/>
+		<param name="resourcePrefix"
+			value="element.search.table."
+		/>
+		<param name="fixedColumns"
+			value="1"
+		/>
+		<param name="rendererClass"
+			value="com.top_logic.layout.table.renderer.DefaultTableRenderer"
+		/>
+		<param name="accessorClass"
+			value="com.top_logic.knowledge.wrap.WrapperAccessor"
+		/>
+		<param name="componentClass"
+			value="com.top_logic.element.layout.meta.search.AttributedSearchResultComponent"
+		/>
+		<param name="templateName"
+			optional="true"
+		/>
+		<param name="downloadNameKey"
+			value="element.search.table.export.file.name"
+		/>
+		<param name="securityProvider"
+			value="default"
+		/>
+		<param name="selectable"
+			optional="true"
+		/>
+	</params>
+
+	<layout name="${namePrefix}SearchResultAttributes">
+		<components>
+			<!-- Stored queries component -->
+			<component class="${componentClass}"
+				metaElement="${metaElement}"
+				metaElementBuilder="${builderClass}"
+				name="${namePrefix}AttributedSearchResultTable"
+				resPrefix="${resourcePrefix}"
+				securityProviderClass="${securityProvider}"
+				selectable="${selectable}"
+			>
+				<table
+					defaultColumns="${columns}"
+					fixedColumns="${fixedColumns}"
+				>
+					<column-default accessor="${accessorClass}"/>
+					<tableRenderer class="${rendererClass}"
+						fullFooter="true"
+					/>
+					${columnDefinitions}
+				</table>
+				<buttons>
+					<button id="exportExcel"
+						class="com.top_logic.layout.table.export.ExcelExportHandler"
+						downloadNameKey="${downloadNameKey}"
+						templateName="${templateName}"
+					/>
+				</buttons>
+			</component>
+		</components>
+	</layout>
+</template>

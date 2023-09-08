@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<!-- 
+						Note: Must override existing configurations to allow switching to JNDI 
+						configuration without interference with other settings (e.g. SQL dialect) 
+						by adding this fragment over some other DB configuration (e.g. during WAR 
+						build). 
+					-->
+					<pool config:override="true" name="default">
+						<class>com.top_logic.basic.sql.DirectConnectionPool</class>
+						<data-source jndi-name="%JNDI_NAME%" />
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

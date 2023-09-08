@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="tableName"/>
+	</params>
+
+	<include name="com.top_logic.demo/technical/layoutDemo1/tables/table1/DemoTableComponent_shared.xml"
+		builderClass="com.top_logic.demo.layout.demo.table.DemoLargeTableModelBuilder"
+		columns="title,givenName,tooltip_surname,responsability,gender,birthdate,marital,contact,           fillColumn_1, fillColumn_2, fillColumn_3, fillColumn_4, fillColumn_5, fillColumn_6,           fillColumn_7, fillColumn_8, fillColumn_9, fillColumn_10, fillColumn_11, fillColumn_12,           fillColumn_13, fillColumn_14, fillColumn_15, fillColumn_16, fillColumn_17, fillColumn_18,           fillColumn_19, fillColumn_20, fillColumn_21, fillColumn_22, fillColumn_23, fillColumn_24,           fillColumn_25, fillColumn_26, fillColumn_27, fillColumn_28, fillColumn_29, fillColumn_30,           fillColumn_31, fillColumn_32, fillColumn_33, fillColumn_34, fillColumn_35, fillColumn_36,           fillColumn_37, fillColumn_38, fillColumn_39, fillColumn_40, fillColumn_41, fillColumn_42,           fillColumn_43, fillColumn_44, fillColumn_45, fillColumn_46, fillColumn_47, fillColumn_48"
+		componentName="${tableName}"
+		fixedColumns="2"
+		pageSizeOptions="30000"
+		partnerGroup="DemoTableComponentLargeGroup"
+	>
+		<tableOptions>
+			<multiSort>never</multiSort>
+			<columnCustomization>order</columnCustomization>
+		</tableOptions>
+	</include>
+</template>

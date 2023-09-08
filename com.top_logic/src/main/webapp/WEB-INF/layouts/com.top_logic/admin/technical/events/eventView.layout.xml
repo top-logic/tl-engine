@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminTechnicalEventView"
+	helpIDLegacy="tl.admin.technical.eventView.tabber"
+	titleKey="tl.admin.technical.eventView.tabber"
+>
+	<tabInfo label="tl.admin.technical.eventView.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/technical/events/logEntries.xml"/>
+	</components>
+</securityLayout>

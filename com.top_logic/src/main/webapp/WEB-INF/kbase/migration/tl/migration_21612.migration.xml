@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration schema-update="true">
+	<version name="migration_21612"
+		module="tl"
+	/>
+	<processors>
+		<sql file-name-prefix="webinf://kbase/migration/tl/migration_21612_scripts/updateTLProperties" />
+	</processors>
+</migration>

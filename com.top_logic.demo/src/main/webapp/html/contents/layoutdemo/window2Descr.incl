@@ -1,0 +1,9 @@
+
+<p>
+On the leftt side you see a <i>WindowLayout</i> with some more attributes.
+</p>
+<p>
+You can define a help icon with an url to jump to. The second icon is a crossreference icon. 
+It allows to jump to another component when knowing its name. Click on it to jump to the
+third window demo.
+</p>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<!-- Type 'xml' if it contains XML that must not be quoted. -->
+			<!-- Type 'string' if it is no XML and '&quot;' and Co. have to be quoted.. -->
+			<!--
+				But the quoting of values of type 'string' is not yet implemented.
+				:-(
+			-->
+			<t:parameter name="Name"
+				type="string"
+			/>
+			<t:parameter name="ergebnis"
+				type="string"
+			/>
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SetGlobalVariableOp"
+					name="${$ergebnis}"
+				>
+					<t:if condition=" #equals($Name, &quot;ROOT&quot;) ">
+						<t:then>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+								structure-name="DemoTypes"
+							>
+								<structure-path/>
+							</value>
+						</t:then>
+						<t:else>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.layout.tree.TreeDataName"
+									name="${$Name}"
+								/>
+							</value>
+						</t:else>
+					</t:if>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+						name="${$ergebnis}"
+					/>
+					<constraints>
+						<constraint class="com.top_logic.layout.scripting.check.NullCheck"
+							null="false"
+						/>
+					</constraints>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

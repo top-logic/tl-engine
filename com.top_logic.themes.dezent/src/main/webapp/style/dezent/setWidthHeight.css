@@ -1,0 +1,111 @@
+span.accIcon.input-image
+{
+    display: inline-block;
+    width: var(--ICON_SIZE_NORMAL);
+    height: var(--ICON_SIZE_NORMAL);
+}
+
+.trbEntry {
+	display: inline-block;
+}
+
+.BreadCrumbOuter .cLogoutTimer {
+	margin-top: 2px;
+}
+
+.cIntegerInput input.is-input,
+.lFlexible input.is-input,
+.lFlexible input.is-popup,
+select:not( [multiple="multiple"] )
+{
+    height: 22px;
+}
+
+img.type-image[src*='TLEnumeration'],
+.treeNode img[src*="renderingErrorNormal"].errorFragmentImage,
+div.tblCellInnerSpacer > span > [src*="renderingErrorNormal"].errorFragmentImage
+{
+    width: 16px;
+    height: 16px;
+}
+
+img.type-image[src*='TLEnumeration']
+{
+    vertical-align: -0.25em;
+}
+
+.tab > img,
+.activeTab > img
+{
+    height: 14px;
+    width: 14px;
+}
+
+input.button_minus,
+input.button_plus,
+div.attribute > span > img.type-image[src*='inputfield']
+{
+    height: 10px;
+    width: 10px;
+}
+
+input.input-image[src*='dialog-question']
+{
+    vertical-align: -0.7em;
+}
+
+span.cLogoutTimer input
+{
+    vertical-align: -0.6em;
+}
+
+img[src*='top-logic.svg']
+{
+    width: 150px;
+    height: 60px;
+}
+
+.card {
+    width: 18rem;
+    height: 18rem;
+}
+
+div.fptHeader input.is-input
+{
+    height: 30px;
+}
+
+
+.rf_content
+{
+    grid-gap: 0;
+}
+
+.cmdButtons
+{
+    min-height: 20px;
+}
+
+
+label 
+{
+    display: inline-block;
+    margin-right: 4px;
+}
+
+iframe
+{
+     min-height: 26px;
+}
+
+.progressCellFilled,
+td.tl-table__cell .tblCellInnerSpacer
+{
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.cBeacon :is(input, img) {
+	width: 16px;
+	height: 16px;
+}

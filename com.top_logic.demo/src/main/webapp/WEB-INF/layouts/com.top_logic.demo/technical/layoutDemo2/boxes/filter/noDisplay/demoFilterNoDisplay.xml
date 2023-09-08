@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.demo.layout.form.demo.TestBoxesComponentNoDisplay"
+	name="TestBoxesFilterNoDisplay"
+	page="/jsp/test/boxes/TestBoxesFilterNoDisplay.jsp"
+	resPrefix="layouts.layoutdemo.boxes.demoFilter.TestBoxesFilter."
+	securityProviderClass="securityRoot"
+>
+	<commands>
+		<reference command-id="invalidate"/>
+	</commands>
+</component>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings output-format="xml"/>
+		<t:parameters>
+			<t:parameter name="ergebnis"
+				default=""
+				type="string"
+			/>
+
+			<t:parameter name="kontext"
+				default=""
+				type="string"
+			/>
+
+			<t:parameter name="name"
+				type="string"
+			/>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<t:invoke template="script:Variable/Action-Variable-Zuweisen.xml">
+					<t:parameter name="Tester"
+						value="${$Tester}"
+					/>
+					<t:parameter name="Name"
+						value="${$ergebnis}"
+					/>
+					<t:parameter name="Wert">
+						<t:value>
+							<t:if condition=" #equals($kontext, &quot;&quot;)">
+								<t:then>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="${$name}"/>
+										</structure-path>
+									</value>
+								</t:then>
+								<t:else>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+										<model-name config:interface="com.top_logic.element.layout.scripting.ChildNamingScheme$ChildName"
+											name="${$name}"
+										>
+											<parent config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+												name="${$kontext}"
+											/>
+										</model-name>
+									</value>
+								</t:else>
+							</t:if>
+						</t:value>
+					</t:parameter>
+				</t:invoke>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

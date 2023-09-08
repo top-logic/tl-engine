@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="A"
+	p1="p1Value"
+	p2="p2Value"
+>
+	<p4>p4Value</p4>
+	<p5>p5Value</p5>
+</component>

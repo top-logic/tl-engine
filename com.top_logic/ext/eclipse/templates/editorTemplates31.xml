@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates><template name="fileComment" description="" context="java" enabled="true" deleted="false" autoinsert="true">/*
+ * SPDX-FileCopyrightText: ${year} (c) Business Operation Systems GmbH &lt;info@top-logic.com&gt;
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+
+
+/**
+ * 
+ * 
+ * @author     &lt;a href="mailto:${user}@top-logic.com"&gt;${user}&lt;/a&gt;
+ */</template></templates>

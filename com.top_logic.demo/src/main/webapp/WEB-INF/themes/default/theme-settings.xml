@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<boolean name="com.top_logic.layout.Icons.HIDE_APP_TITLE_ON_LOGIN_PAGE"
+		value="true"
+	/>
+	<icon name="DEMO_A"
+		value="/demo/a.png"
+	/>
+	<icon name="DEMO_AS"
+		value="/demo/as.png"
+	/>
+	<icon name="DEMO_B"
+		value="/demo/b.png"
+	/>
+	<icon name="DEMO_BS"
+		value="/demo/bs.png"
+	/>
+	<icon name="DEMO_C"
+		value="/demo/c.png"
+	/>
+	<icon name="DEMO_CS"
+		value="/demo/cs.png"
+	/>
+	<icon name="DEMO_NEW_AP"
+		value="/demo/new-ap.png"
+	/>
+	<icon name="DEMO_NEW_AS"
+		value="/demo/new-as.png"
+	/>
+	<icon name="DEMO_NEW_AS_CHILD"
+		value="/demo/new-as-child.png"
+	/>
+	<icon name="DEMO_NEW_BP"
+		value="/demo/new-bp.png"
+	/>
+	<icon name="DEMO_NEW_BS"
+		value="/demo/new-bs.png"
+	/>
+	<icon name="DEMO_NEW_BS_CHILD"
+		value="/demo/new-bs-child.png"
+	/>
+	<icon name="DEMO_NEW_CP"
+		value="/demo/new-cp.png"
+	/>
+	<icon name="DEMO_NEW_CS"
+		value="/demo/new-cs.png"
+	/>
+	<icon name="DEMO_NEW_CS_CHILD"
+		value="/demo/new-cs-child.png"
+	/>
+	<icon name="ICON_BRIEFCASE"
+		value="css:fas fa-briefcase"
+	/>
+	<icon name="ICON_BROOM"
+		value="css:fas fa-broom"
+	/>
+	<icon name="ICON_CLOUD_UPLOAD_ALT"
+		value="css:fas fa-cloud-upload-alt"
+	/>
+	<icon name="ICON_CALENDAR_ALT"
+		value="css:fas fa-calendar-alt"
+	/>
+	<icon name="ICON_CODE_BRANCH"
+		value="css:fas fa-code-branch"
+	/>
+	<icon name="ICON_COMMENT"
+		value="css:fas fa-comment"
+	/>
+	<icon name="ICON_DOLLY"
+		value="css:fas fa-dolly"
+	/>
+	<icon name="ICON_ENVELOPE"
+		value="css:fas fa-envelope"
+	/>
+	<icon name="ICON_GLOBE"
+		value="css:fas fa-globe"
+	/>
+	<icon name="ICON_HANDSHAKE_DEMO_BLUE"
+		value="css:fas fa-handshake demo-blue"
+	/>
+	<icon name="ICON_LEAVE_DEMO_GREEN"
+		value="css:fas fa-leave demo-green"
+	/>
+	<icon name="ICON_LOCK_DEMO_FUCHSIA"
+		value="css:fas fa-lock demo-fuchsia"
+	/>
+	<icon name="ICON_PARACHUTE_BOX_DEMO_FUCHSIA"
+		value="css:fas fa-parachute-box demo-fuchsia"
+	/>
+	<icon name="ICON_PEN_FANCY"
+		value="css:fas fa-pen-fancy"
+	/>
+	<icon name="ICON_PIGGY_BANK_DEMO_FUCHSIA"
+		value="css:fas fa-piggy-bank demo-fuchsia"
+	/>
+	<icon name="ICON_PLUS"
+		value="css:fas fa-plus"
+	/>
+	<icon name="ICON_PROJECT_DIAGRAM"
+		value="css:fas fa-project-diagram"
+	/>
+	<icon name="ICON_QRCODE"
+		value="css:fas fa-qrcode"
+	/>
+	<icon name="ICON_REMOTE_NODE"
+		value="css:fas fa-project-diagram"
+	/>
+	<icon name="ICON_SEEDLING_DEMO_GREEN"
+		value="css:fas fa-seedling demo-green"
+	/>
+	<icon name="ICON_TABLE"
+		value="css:fas fa-table"
+	/>
+	<icon name="ICON_USER_SECRET"
+		value="css:fas fa-user-secret"
+	/>
+	<icon name="ICONS_DIALOG_INFORMATION"
+		value="/icons/dialog-information.png"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_ERROR"
+		value="/icons/dialog-error.png"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_INFORMATION"
+		expr="%ICONS_DIALOG_INFORMATION%"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_QUESTION"
+		value="/icons/dialog-question.png"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_WARNING"
+		value="/icons/dialog-warning.png"
+	/>
+	<icon name="com.top_logic.demo.layout.gantt.Icons.MILESTONE"
+		value="/mimetypes/tl/Milestone.png"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.TOP_LOGIC"
+		value="/images/logos/top-logic.png"
+	/>
+	<icon name="layouts.demo.tlHome"
+		value="/image_buttons/top-logic.png"
+	/>
+	<icon name="model.DemoTypes.A"
+		value="css:fas fa-beer"
+	/>
+</settings>

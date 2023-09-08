@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<a
+	xmlns:a="z"
+	xmlns:b="y"
+	xmlns:c="x"
+>
+	<b>
+		<a:c/>
+		<c b:bar="foobar"/>
+	</b>
+	<c:b/>
+</a>

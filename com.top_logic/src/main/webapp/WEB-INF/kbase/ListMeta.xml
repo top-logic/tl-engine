@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Definition of some Lists supported by TopLogic -->
+
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+<metaobjects>
+
+<!-- BEGIN FastList -->
+
+<metaobject object_type="MOKnowledgeObject" object_name="FastList" super_class="TLType">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.list.FastList"/>
+	</annotation>
+</annotations>
+<attributes>
+	<reference att_name="default" 
+		mandatory="false"
+	   	history-type="current" 
+	   	branch-global="false" 
+	   	monomorphic="true" 
+	   	is-container="true" 
+	   	deletion-policy="clear-reference" 
+	   	target-type="FastListElt"
+    />
+	<mo_attribute att_name="descr"    		  att_type="String"	    db_size="128" mandatory="false" />
+</attributes>
+<index>
+    <mo_index name="FastListNameIdx" unique="true">
+    <index-parts>
+        <index_part name="name" />
+        <index_part name="module" part="name" />
+    </index-parts>
+    </mo_index>
+</index>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="FastListElt" super_class="TLModelPart" db_name="FAST_LIST_ELT">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.list.FastListElement"/>
+	</annotation>
+</annotations>
+<attributes>
+	<reference att_name="owner" 
+		by-value="true"
+		mandatory="true"
+	   	history-type="current" 
+	   	branch-global="false" 
+	   	monomorphic="true" 
+	   	is-container="false" 
+	   	deletion-policy="delete-referer" 
+	   	target-type="FastList"
+    />
+	<mo_attribute att_name="name"             att_type="String" 	                  db_size="72" mandatory="true"  />
+	<mo_attribute att_name="order"    		  att_type="Integer"    mandatory="true"  db_name="SORT_ORDER" />
+	<mo_attribute att_name="descr"    		  att_type="String"	    mandatory="false" db_size="128"  />
+	<mo_attribute att_name="flags"    		  att_type="Integer"	mandatory="false" hidden="true"/>
+</attributes>
+<index>
+    <mo_index name="FastListEltOwnerNameIdx" unique="true">
+    <index-parts>
+        <index_part name="owner" part="name" />
+        <index_part name="name"  />
+    </index-parts>
+    </mo_index>
+    <mo_index name="FastListEltOwnerOrderIdx">
+    <index-parts>
+        <index_part name="owner" part="name" />
+        <index_part name="order"  />
+    </index-parts>
+    </mo_index>
+</index>
+</metaobject>
+
+</metaobjects>
+</objectlist>

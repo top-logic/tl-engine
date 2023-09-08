@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name,referenceToA,intValue,date"
+		type="test.pdfExport:A"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/pDFExport/newA/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.5aa80593-97be-4711-9bc3-a305c0a6b8f8">
+			<en>All ace</en>
+			<de>Alle As</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.pdfExport:A`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.pdfExport:A`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

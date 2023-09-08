@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-name="demo.technical.tabber"
+			component-name="mainTabbar.layout.xml#mainTabber"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-name="main.layoutdemo1.tabber"
+			component-name="com.top_logic.demo/technical/index.layout.xml#technicalDemo_tabBar"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-name="demo.form.tabber"
+			component-name="com.top_logic.demo/technical/layoutDemo1/index.layout.xml#layout_demo_1_tabBar"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-name="test.form.inline.tabber"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/index.layout.xml#formDemo_tabBar"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-name="demo.form.tabber"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/index.layout.xml#formDemo_tabBar"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+			component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/demoOrderFormContainer.layout.xml#DemoOrderForm"
+			visible="true"
+		/>
+	</actions>
+</action>

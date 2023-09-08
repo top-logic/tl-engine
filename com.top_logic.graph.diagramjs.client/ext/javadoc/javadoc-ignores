@@ -1,0 +1,10 @@
+com.top_logic.graph.diagramjs.client.ajax.CreateConnectionCommandArguments.java: Invalid camel case word 'CreateTLAssociationCommand', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.diagramjs.client.ajax.UpdateGraphCommandArguments.java: Invalid camel case word 'GraphUpdateCommand', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.diagramjs.client.boot.ModuleEntry.java: Invalid camel case word 'diagramJS', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.diagramjs.client.service.DiagramJSGraphControl.java: Invalid camel case word 'diagramJS', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.diagramjs.client.service.DiagramJSHandleFactory.java: Invalid camel case word 'diagramJS', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.diagramjs.client.service.event.ClickEventHandler.java: Invalid camel case word 'diagramJS', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.diagramjs.client.service.event.ElementsMoveEventHandler.java: Missing documentation: com.top_logic.graph.diagramjs.client.service.event.ElementsMoveEventHandler
+com.top_logic.graph.diagramjs.client.service.event.ShapeResizeEventHandler.java: Invalid camel case word 'diagramJS', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.diagramjs.client.service.scope.DiagramJSGraphScope.java: Invalid camel case word 'DiagramJS', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.graph.diagramjs.client.service.scope.DiagramJSGraphScope.java: Invalid camel case word 'graphModel', this may only be used within JavaDoc links or HTML code tags.

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="chartConfig"/>
+		<param name="chartDataSource"/>
+		<param name="types"/>
+		<param name="resPrefix"
+			value="layouts.reporting.flex.chart.configuredChart_shared."
+		/>
+		<param name="chartComponent"
+			value="com.top_logic.reporting.flex.chart.component.CockpitChartComponent"
+		/>
+		<param name="model"
+			value=""
+		/>
+		<param name="options"
+			value=""
+		/>
+		<param name="accessor"
+			value="com.top_logic.knowledge.wrap.WrapperAccessor"
+		/>
+		<param name="imagePostHandler"
+			value="com.top_logic.reporting.flex.chart.component.handler.NoPostHandler"
+		/>
+		<param name="exportObjects"
+			value="LEAF"
+		/>
+		<param name="securityProvider"
+			value=""
+		/>
+		<param name="dialogWidth"
+			value="800"
+		/>
+		<param name="dialogHeight"
+			value="400"
+		/>
+		<param name="dialogDefaultI18n"
+			value="reporting.matrix.chart.openChartDetails"
+		/>
+		<param name="dialogExportFilename"
+			value="reporting.matrix.chart.openChartDetails.export.filename"
+		/>
+		<param name="toolbar"
+			value="true"
+		/>
+		<param name="maximizeRoot"
+			value=""
+		/>
+		<param name="showMaximize"
+			optional="true"
+		/>
+	</params>
+
+	<component class="${chartComponent}"
+		chart-configs="${chartConfig}"
+		image-post-handler="${imagePostHandler}"
+		maximizeRoot="${maximizeRoot}"
+		model="${model}"
+		name="${namePrefix}Chart"
+		page="/jsp/layout/image/chart.jsp"
+		resPrefix="${resPrefix}Chart."
+		securityProviderClass="${securityProvider}"
+		showMaximize="${showMaximize}"
+		toolbar="${toolbar}"
+		types="${types}"
+	>
+		<export-manager class="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager"
+			accessor="${accessor}"
+			export-objects="${exportObjects}"
+		/>
+		${options}
+		${chartDataSource}
+	</component>
+</template>

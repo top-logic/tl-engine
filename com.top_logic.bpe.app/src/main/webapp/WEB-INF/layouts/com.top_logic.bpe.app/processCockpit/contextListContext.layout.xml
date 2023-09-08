@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tileList.template.xml"
+>
+	<arguments name="%LAYOUT_RESPREFIX%tileName"
+		securityObject="securityRoot"
+	>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="all(`tl.bpe.bpml:Collaboration`).filter(x -> $x.get(`tl.bpe.bpml:Collaboration#state`) != `tl.bpe.bpml:ApprovalState#Development`)"
+			modelForElement="null"
+			supportsElement="true"
+			supportsModel="true"
+		/>
+		<preview class="com.top_logic.bpe.app.layout.tiles.CollaborationNumberPreview"
+			description="CollaborationTableTile.description"
+			icon="theme:ICON_QRCODE"
+		/>
+		<component class="com.top_logic.mig.html.layout.LayoutReference$LayoutReferenceComponent"
+			resource="com.top_logic.bpe.app/processCockpit/componentPlaceholderLayout2.layout.xml"
+		/>
+	</arguments>
+</config:template-call>

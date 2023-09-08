@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- This component manages roles. -->
+<layout horizontal="true">
+	<components>
+		<include name="com.top_logic.element/admin/security/roleEditor/rolesTable.xml"
+			namePrefix="editCheckerRoles"
+		>
+			<inject>
+				<layoutInfo size="413"/>
+			</inject>
+		</include>
+		<layout>
+			<components>
+				<component class="com.top_logic.element.layout.security.ExportingEditRolesProfileComponent"
+					buttonComponent="EditCheckerRoleButtons2"
+					columnProvider="com.top_logic.tool.boundsec.gui.profile.RolesProfileColumnProvider"
+					model="selection(editCheckerRolesTable)"
+					name="EditCheckerRole2"
+					nodeFilter="com.top_logic.tool.boundsec.compound.CompoundSecurityFilter"
+					page="/jsp/administration/EditRolesProfileTree.jsp"
+					resPrefix="admin.roles.checker."
+					saveScrollPosition="true"
+					securityProviderClass="securityRoot"
+				>
+					<buttons>
+						<button id="importRolesProfiles"
+							class="com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.OpenRolesProfileImportDialog"
+							clique="exportButtons"
+							disabledImage="theme:ICONS_BUTTON_XML_EXPORT_DISABLED"
+							group="Write"
+							image="theme:ICONS_BUTTON_XML_EXPORT"
+						>
+							<executability>
+								<reference rule-id="InViewMode"/>
+							</executability>
+						</button>
+					</buttons>
+				</component>
+				<buttonbar name="EditCheckerRoleButtons2"/>
+			</components>
+		</layout>
+	</components>
+</layout>

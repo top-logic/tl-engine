@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<root>
+  <foo>
+    <x id="42"/>
+  </foo>
+  <bar>Hello World!</bar>
+</root>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/technical/layoutDemo1/tables/table1/DemoTableComponent_shared.xml"
+	columns="title,givenName,tooltip_surname,responsability,gender,birthdate,marital,contact,classificationDemo,editBoolean"
+/>

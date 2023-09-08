@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			<t:type name="KeyValue">
+				<t:attributes>
+					<t:attribute name="key" type="string"></t:attribute>
+					<t:attribute name="value" type="string"></t:attribute>
+				</t:attributes>
+			</t:type>
+		</t:types>
+		
+		<t:parameters>
+			<t:parameter name="staticParam1" type="string" />
+			<t:parameter name="arguments" multiple="true" type="KeyValue" />
+			<t:parameter name="staticParam2" type="integer" default="5" />
+		</t:parameters>
+	</t:head>
+	<t:body>staticParam1<t:value expr="$staticParam1" />staticParam2<t:value expr="$staticParam2" />
+		<t:foreach var="entry" values="$arguments">
+			<t:value expr="entry.key" />
+			<t:value expr="entry.value" />
+		</t:foreach>
+		
+	</t:body>
+</t:template>

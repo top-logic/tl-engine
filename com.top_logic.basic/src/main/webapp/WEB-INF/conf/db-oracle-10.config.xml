@@ -1,0 +1,16 @@
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<pool name="default">
+						<sql-dialect class="com.top_logic.basic.sql.Oracle10Helper"
+							adjust-from-connection="%DB_ADJUST_FROM_CONNECTION%"
+							charset="%NLS_NCHAR_CHARACTERSET%"
+						/>
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

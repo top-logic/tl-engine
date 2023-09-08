@@ -1,0 +1,1296 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-element.xml"
+					template-name-comment="Create element"
+				>
+					<parameters>
+						<parameter name="Typ"
+							value="Demo B-nicht-unter-A"
+						/>
+						<parameter name="Name"
+							value="B_ClassifcationTest"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="B_ClassifcationTest"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-element.xml"
+							template-name-comment="Create element"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="Demo A"
+								/>
+								<parameter name="Name"
+									value="A0"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="classificationMulti"
+										>
+											<attribute-ref attribute-name="classificationMulti">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A0"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Grün"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="classificationUnorderedMulti"
+										>
+											<attribute-ref attribute-name="classificationUnorderedMulti">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A0"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Baden-Württemberg"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="booleanMandatory"
+										>
+											<attribute-ref attribute-name="booleanMandatory">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A0"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="true"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="booleanRadioMandatory"
+										>
+											<attribute-ref attribute-name="booleanRadioMandatory">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A0"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="false"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="booleanSelectMandatory"
+										>
+											<attribute-ref attribute-name="booleanSelectMandatory">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A0"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="true"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="B_ClassifcationTest"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-element.xml"
+							template-name-comment="Create element"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="Demo A"
+								/>
+								<parameter name="Name"
+									value="A1"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="classificationMulti"
+										>
+											<attribute-ref attribute-name="classificationMulti">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A1"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Gelb"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="classificationUnorderedMulti"
+										>
+											<attribute-ref attribute-name="classificationUnorderedMulti">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A1"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Thüringen"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="booleanMandatory"
+										>
+											<attribute-ref attribute-name="booleanMandatory">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A1"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="true"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="booleanRadioMandatory"
+										>
+											<attribute-ref attribute-name="booleanRadioMandatory">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A1"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="false"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="booleanSelectMandatory"
+										>
+											<attribute-ref attribute-name="booleanSelectMandatory">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A1"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="true"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="B_ClassifcationTest"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-element.xml"
+							template-name-comment="Create element"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="Demo A"
+								/>
+								<parameter name="Name"
+									value="A2"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="classificationMulti"
+										>
+											<attribute-ref attribute-name="classificationMulti">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A2"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Rot"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="classificationUnorderedMulti"
+										>
+											<attribute-ref attribute-name="classificationUnorderedMulti">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A2"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Niedersachsen"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="booleanMandatory"
+										>
+											<attribute-ref attribute-name="booleanMandatory">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A2"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="true"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="booleanRadioMandatory"
+										>
+											<attribute-ref attribute-name="booleanRadioMandatory">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A2"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="false"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="booleanSelectMandatory"
+										>
+											<attribute-ref attribute-name="booleanSelectMandatory">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="B_ClassifcationTest"/>
+													<node name="A2"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="false"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="check"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="B_ClassifcationTest"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Grid"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+					columns="_select,technical,name,classificationUnorderedMulti,classificationMulti"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+							tab-path="Strukturen > Typendemo > Grid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="fieldTable"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SortTableColumnOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+											tab-path="Strukturen > Typendemo > Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-name="fieldTable"
+											/>
+										</path>
+									</model-name>
+									<sort-orders>
+										<sort-order
+											ascending="true"
+											column="classificationUnorderedMulti"
+										/>
+									</sort-orders>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+									user-id="root"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+												tab-path="Strukturen > Typendemo > Grid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+													tab-path="Strukturen > Typendemo > Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="B_ClassifcationTest"/>
+																<node name="A0"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="0"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+									user-id="root"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+												tab-path="Strukturen > Typendemo > Grid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+													tab-path="Strukturen > Typendemo > Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="B_ClassifcationTest"/>
+																<node name="A2"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="1"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+									user-id="root"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+												tab-path="Strukturen > Typendemo > Grid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+													tab-path="Strukturen > Typendemo > Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="B_ClassifcationTest"/>
+																<node name="A1"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="2"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SortTableColumnOp"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+											tab-path="Strukturen > Typendemo > Grid"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+												field-name="fieldTable"
+											/>
+										</path>
+									</model-name>
+									<sort-orders>
+										<sort-order
+											ascending="false"
+											column="classificationUnorderedMulti"
+										/>
+									</sort-orders>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+									user-id="root"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+												tab-path="Strukturen > Typendemo > Grid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+													tab-path="Strukturen > Typendemo > Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="B_ClassifcationTest"/>
+																<node name="A1"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="0"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+									user-id="root"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+												tab-path="Strukturen > Typendemo > Grid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+													tab-path="Strukturen > Typendemo > Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="B_ClassifcationTest"/>
+																<node name="A2"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="1"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+									user-id="root"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
+										<table config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+												tab-path="Strukturen > Typendemo > Grid"
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-name="fieldTable"
+												/>
+											</path>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesGrid"
+													tab-path="Strukturen > Typendemo > Grid"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+															structure-name="DemoTypes"
+														>
+															<structure-path>
+																<node name="B_ClassifcationTest"/>
+																<node name="A0"/>
+															</structure-path>
+														</business-object>
+													</node>
+												</path>
+											</model-name>
+										</row-object>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+										int="2"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="B_ClassifcationTest"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

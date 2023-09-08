@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		type="test.dynamictable:Development"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/newDevelopment/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/newRating/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.f41c9ba0-7280-4b0d-8d61-2d1b7aa6669d">
+			<en>Development projects</en>
+			<de>Entwicklungsprojekte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.dynamictable:Development`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.dynamictable:Development`)"
+			supportsModel="true"
+		/>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.DynamicColumnProviderByExpression"
+				columnLabel="c -> $c.get(`test.dynamictable:Objective#name`)"
+				columnType="`tl.core:Integer`"
+				idPrefix="c82f7cbb-a3cd-4e81-8525-ed312166424f"
+			>
+				<columns><![CDATA[all(`test.dynamictable:Objective`)
+  .sort(comparator(
+    x -> $x.get(`test.dynamictable:Objective#name`)))]]></columns>
+				<accessor><![CDATA[row -> column -> 
+  $row.get(`test.dynamictable:Development#ratings`)
+    .filter(link -> $link.get(`test.dynamictable:Rating#objective`) == $column)
+    .singleElement()
+    .get(`test.dynamictable:Rating#value`)]]></accessor>
+				<updater><![CDATA[row -> column -> value -> {
+  link = $row.get(`test.dynamictable:Development#ratings`)
+    .filter(link -> $link.get(`test.dynamictable:Rating#objective`) == $column)
+    .singleElement();
+  if ($value == null, $link.delete(), {
+    storage = ($link != null) ? $link : {
+      newLink = new(`test.dynamictable:Rating`);
+      $newLink.set(`test.dynamictable:Rating#objective`, $column);
+      $row.add(`test.dynamictable:Development#ratings`, $newLink);
+      $newLink
+    };
+    $storage.set(`test.dynamictable:Rating#value`, $value);
+  })
+}]]></updater>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="ID_dac74ec6_50f2_4c76_9792_4518fa719d74"
+				columnType="tl.core:Integer"
+			>
+				<columnLabel key="dynamic.605d2884-92d4-4deb-b1f5-d987c906d0f6">
+					<en>Best rating</en>
+					<de>Beste Bewertung</de>
+					<tooltip>
+						<en>The rating with the highest value is displayed here.</en>
+						<de>Hier wird die Bewertung mit dem höchsten Wert angezeigt.</de>
+					</tooltip>
+				</columnLabel>
+				<accessor><![CDATA[row -> 
+  $row.get(`test.dynamictable:Development#ratings`)
+  .map(link -> $link.get(`test.dynamictable:Rating#value`))
+  .max()]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="ID_753d4a5e_1a04_4aaa_87ac_b1dc181d2215"
+				columnType="tl.util:IconResource"
+			>
+				<columnLabel key="dynamic.72640fd9-79d2-4add-a4f6-44615ccd86fe">
+					<en>S</en>
+					<de>S</de>
+					<tooltip>
+						<en>Project status</en>
+						<de>Status des Projektes</de>
+					</tooltip>
+				</columnLabel>
+				<accessor><![CDATA[row -> {
+ ratings = $row.get(`test.dynamictable:Development#ratings`);
+ averageRating = $ratings.map(link -> $link.get(`test.dynamictable:Rating#value`)).average();
+ maxRating = $ratings.map(link -> $link.get(`test.dynamictable:Rating#value`)).max();
+ switch {
+  $ratings.size() == 0: null;
+  $averageRating * 1.5 < $maxRating: resource(0,"css:far fa-frown",#("Abweichung zu hoch"@de, "Deviation too high"@en),#("Beste Bewertung weicht mehr als 50% vom Durchschnitt ab: {0}%"@de,"Best rating deviates more than 50% from the average: {0}%"@en).fill((($maxRating/$averageRating)-1)*100));
+  $averageRating * 1.25 < $maxRating: resource(1,"css:far fa-meh",#("Abweichung innerhalb der Toleranz"@de, "Deviation within tolerance"@en),#("Beste Bewertung weicht mehr als 25% vom Durchschnitt ab: {0}%"@de,"Best rating deviates more than 25% from the average: {0}%"@en).fill((($maxRating/$averageRating)-1)*100));
+  default: resource(2,"css:far fa-smile",#("Minimale Abweichung"@de, "Minimum deviation"@en), #("Beste Bewertung weicht weniger als 25% vom Durchschnitt ab."@de,"Best rating deviates less than 25% from the average"@en));
+ }
+}]]></accessor>
+			</configurationProvider>
+		</configurationProviders>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_d4ec0533_f936_4d06_b621_dfccfb3ac9fc"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+				clique="refresh"
+			>
+				<resourceKey key="dynamic.fe62bf65-0eb7-4fe9-ad43-ab8c60a784e2">
+					<en>Update</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+			</button>
+			<button id="ID_ebef0d83_187c_4c3e_b35f_6932c15f1fdd"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.fe4cc45d-3b7d-4679-8f2a-eeabe0b4bbce">
+					<en>Delete project</en>
+					<de>Projekt löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

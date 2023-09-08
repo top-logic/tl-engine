@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			comment=""
+			failure-message=""
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+					structure-name="DemoTypes"
+				>
+					<structure-path>
+						<node name="TestStackedDialogs"/>
+						<node name="A6"/>
+					</structure-path>
+				</selectee>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+				tab-path="Strukturen > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+			command-label="Anzeigen"
+			command-name="gotoCmd"
+			comment=""
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+			failure-message=""
+			user-id="root"
+		>
+			<arguments>
+				<argument name="goto_object">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+						structure-name="DemoTypes"
+					>
+						<structure-path>
+							<node name="TestStackedDialogs"/>
+							<node name="A6"/>
+						</structure-path>
+					</value>
+				</argument>
+			</arguments>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+			command-label="Anzeigen"
+			command-name="gotoCmd"
+			comment=""
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
+			failure-message=""
+			user-id="root"
+		>
+			<arguments>
+				<argument name="goto_object">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+						structure-name="DemoTypes"
+					>
+						<structure-path>
+							<node name="TestStackedDialogs"/>
+							<node name="A6"/>
+						</structure-path>
+					</value>
+				</argument>
+			</arguments>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+			command-label="Anzeigen"
+			command-name="gotoCmd"
+			comment=""
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
+			failure-message=""
+			user-id="root"
+		>
+			<arguments>
+				<argument name="goto_object">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+						structure-name="DemoTypes"
+					>
+						<structure-path>
+							<node name="TestStackedDialogs"/>
+							<node name="A6"/>
+						</structure-path>
+					</value>
+				</argument>
+			</arguments>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+			command-label="Anzeigen"
+			command-name="gotoCmd"
+			comment=""
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
+			failure-message=""
+			user-id="root"
+		>
+			<arguments>
+				<argument name="goto_object">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+						structure-name="DemoTypes"
+					>
+						<structure-path>
+							<node name="TestStackedDialogs"/>
+							<node name="A6"/>
+						</structure-path>
+					</value>
+				</argument>
+			</arguments>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+			comment=""
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
+			failure-message=""
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check no dialog opened"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Knoten anlegen"
+					command-name="openNewElementDialog"
+					component-implementation-comment="com.top_logic.layout.tree.component.TreeComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent$CancelHandler"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesnewElementDialog"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

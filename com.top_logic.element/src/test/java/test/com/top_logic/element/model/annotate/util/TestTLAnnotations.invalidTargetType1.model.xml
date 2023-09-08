@@ -1,0 +1,20 @@
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="test1">
+			<class name="X">
+				<attributes>
+					<reference name="invalidTypeKind" type="X">
+						<annotations>
+							<!-- Is just allowed on TLTypeKind.BOOLEAN! -->
+							<boolean-display presentation="checkbox" />
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>
+				

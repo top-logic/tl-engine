@@ -1,0 +1,14 @@
+<model>
+	<module name="TestModelConfigurationChange">
+		<class name="A">
+			<attributes>
+				<property name="first" type="tl.core:String"/>
+				<reference name="ab" type="B"/>
+				<property name="last" type="tl.core:String"/>
+			</attributes>
+		</class>
+		
+		<class name="B">
+		</class>
+	</module>
+</model>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- The outer component only provides scrollbars for its child. -->
+<template>
+	<params>
+		<param name="componentName"
+			value="TestControlsForm"
+		/>
+		<param name="conf">
+			<!-- No additional configuration -->
+		</param>
+	</params>
+
+	<layout>
+		<components>
+			<component class="com.top_logic.demo.layout.form.demo.TestControlsForm"
+				buttonComponent="${componentName}Buttons"
+				name="${componentName}"
+				page="/jsp/test/layout/TestControlsForm.jsp"
+				resPrefix="layouts.layoutdemo.TestControlsForm_shared.main."
+				securityProviderClass="securityRoot"
+				webFolder="demoWebfolder"
+			>
+				<buttons>
+					<button id="toggleMandatory"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleMandatory"
+					/>
+					<button id="setInvisible"
+						activeImage="theme:com.top_logic.layout.form.control.Icons.TRISTATE_TRUE"
+						activeResourceKey="layouts.layoutdemo.TestControlsForm_shared.main.setInvisible@active"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$SetInvisible"
+						image="theme:com.top_logic.layout.form.control.Icons.TRISTATE_FALSE"
+					/>
+					<button id="setImmutable"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$SetImmutable"
+					/>
+					<button id="toggleFrozen"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleFrozen"
+					/>
+					<button id="toggleBlocked"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleBlocked"
+					/>
+					<button id="toggleVeto"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleVeto"
+					/>
+					<button id="setDisabled"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$SetDisabled"
+					/>
+					<button id="setEditable"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$SetEditable"
+					/>
+					<button id="resetValues"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$ResetValues"
+					/>
+					<button id="changeValues"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$ChangeValues"
+					/>
+					<button id="checkAll"
+						class="com.top_logic.demo.layout.form.demo.TestControlsForm$CheckAll"
+					/>
+					<reference command-id="invalidate"/>
+				</buttons>
+
+				<tables>
+					<table name="selectionTableField">
+						<columns>
+							<column name="string"
+								headStyle="background:red;"
+							/>
+						</columns>
+					</table>
+					<table name="tableField">
+						<columns>
+							<column name="string"
+								headStyle="background:red;"
+							/>
+						</columns>
+					</table>
+				</tables>
+				<dialogs>
+					<component class="com.top_logic.demo.layout.form.demo.TestControlsForm$GotoPersonComponent"
+						name="${componentName}_gotoPerson"
+						page="/jsp/test/layout/TestControlsFormGotoPerson.jsp"
+						resPrefix="layouts.layoutdemo.TestControlsForm_shared.gotoPerson."
+						securityProviderClass="securityRoot"
+					>
+						<dialogInfo
+							height="300"
+							width="400"
+						/>
+					</component>
+				</dialogs>
+				${conf}
+			</component>
+			<buttonbar name="${componentName}Buttons"/>
+		</components>
+	</layout>
+</template>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27205_KeyAttributes_for_Association"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26365_Replace_offerClear_in_selector_template"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl/Ticket_27205_KeyAttributes_for_Association.transform.xslt"
+		/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

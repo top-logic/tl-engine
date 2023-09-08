@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<!-- Layout with toolbar representing a table with a form embedded into the header. -->
+		<layout name="DemoMultipeTableLayoutControl"
+			resPrefix="layouts.demo.table.demoMultipleTables.Layout."
+			resizable="false"
+			toolbar="true"
+		>
+			<components>
+				<component class="com.top_logic.demo.layout.demo.table.DemoMultipleTablesComponent"
+					name="DemoMultipleTables"
+					page="/jsp/demo/table/demoMultipleTables.jsp"
+					resPrefix="layouts.demo.table.demoMultipleTables.DemoMultipleTables."
+					toolbar="false"
+				>
+					<layoutInfo size="32px"/>
+					<tables>
+						<table name="table1"
+							resPrefix="layouts.demo.table.demoMultipleTables.DemoMultipleTables.tables."
+						/>
+
+						<table name="table2"
+							resPrefix="layouts.demo.table.demoMultipleTables.DemoMultipleTables.tables."
+						/>
+					</tables>
+
+					<commands>
+						<command id="invalidate"
+							class="com.top_logic.layout.form.component.InvalidateCommand"
+						/>
+						<command id="rebuildTable"
+							class="com.top_logic.demo.layout.demo.table.DemoMultipleTablesComponent$RebuildTable"
+						/>
+					</commands>
+
+					<toolbar-groups>
+						<toolbar-group name="refresh">
+							<buttons>
+								<button
+									command-id="rebuildTable"
+									image="theme:ICONS_BUTTON_REFRESH"
+									label-key="layouts.demo.table.demoMultipleTables.DemoMultipleTables.rebuildTable"
+								/>
+								<button
+									command-id="invalidate"
+									image="theme:ICONS_BUTTON_REFRESH"
+									label-key="layouts.demo.table.demoMultipleTables.DemoMultipleTables.invalidate"
+								/>
+							</buttons>
+						</toolbar-group>
+					</toolbar-groups>
+				</component>
+
+				<layoutControl componentName="DemoMultipleTables">
+					<componentControlProvider class="com.top_logic.layout.structure.SeparateTableControlProvider"
+						tableName="table1"
+						toolbar="false"
+					/>
+				</layoutControl>
+			</components>
+		</layout>
+
+		<!-- Second table from the form rendered separately. -->
+		<layoutControl name="DemoMultipleTableSeparateTableControlProvider"
+			componentName="DemoMultipleTables"
+		>
+			<componentControlProvider class="com.top_logic.layout.structure.SeparateTableControlProvider"
+				sidebar="true"
+				sidebarMinimized="true"
+				tableName="table2"
+			/>
+		</layoutControl>
+		<component class="com.top_logic.demo.layout.demo.table.DemoMultipleTablesComponent"
+			name="DemoTableWithComponentToolbar"
+			resPrefix="layouts.demo.table.demoMultipleTables.ticket20488."
+		>
+			<commands>
+				<command id="invalidate"
+					class="com.top_logic.layout.form.component.InvalidateCommand"
+				/>
+			</commands>
+
+			<toolbar-groups>
+				<toolbar-group name="refresh">
+					<buttons>
+						<button
+							command-id="invalidate"
+							image="theme:ICONS_BUTTON_REFRESH"
+							label-key="layouts.demo.table.demoMultipleTables.ticket20488.invalidate"
+						/>
+					</buttons>
+				</toolbar-group>
+			</toolbar-groups>
+			<tables>
+				<table name="table1"
+					resPrefix="layouts.demo.table.demoMultipleTables.DemoMultipleTables.tables."
+				/>
+			</tables>
+			<componentControlProvider class="com.top_logic.layout.structure.SeparateTableControlProvider"
+				tableName="table1"
+				toolbar="false"
+			/>
+		</component>
+	</components>
+</layout>

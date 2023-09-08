@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+        <config service-class="com.top_logic.basic.encryption.EncryptionService">
+        	<instance class="com.top_logic.basic.encryption.DummyEncryptionService"
+        		algorithm="AES"
+        		key="b8eb777bb2b74f111aa1d65f881a8c1d"
+        	/>
+        </config>
+	
+		<config service-class="com.top_logic.dsa.DataAccessService">
+			<instance>
+				<adaptors>
+					<adaptor name="testFile">
+						<config class="com.top_logic.dsa.file.FilesystemDataSourceAdaptor"
+							home="./tmp" />
+					</adaptor>
+					<adaptor name="testRepository">
+						<config class="com.top_logic.dsa.repos.RepositoryDataSourceAdaptor">
+                            <repository class="com.top_logic.dsa.repos.file.FileRepository"
+								attic="./tmp/attic"
+								path="./tmp/repository"
+								workarea="./tmp/workarea" />
+						</config>
+					</adaptor>
+            	</adaptors>
+			</instance>
+		</config>
+	</services>
+	<configs>
+		<config config:interface="com.top_logic.dsa.file.DOImporter$Config">
+			<converters>
+				<converter name="DOStandardImporter">
+					<mappings>
+						<mapping name="attribute"
+							tag="dataobject"
+							type="com.top_logic.dsa.file.DOImporter$StandardHandler"
+						/>
+					</mappings>
+				</converter>
+				<converter name="DefaultDOImport">
+					<mappings>
+						<!--  The StandardHandler is quite inflexible, but this matches the KBase format -->
+						<mapping name="dataobject"
+							tag="dataobject"
+							type="com.top_logic.dsa.file.DOImporter$StandardHandler"
+						/>
+						<mapping name="other"
+							tag="other"
+							type="com.top_logic.dsa.file.DOImporter$DataObjectHandler"
+							doId="id???"
+							doType="other"
+						/>
+						<mapping name="date"
+							tag="date"
+							type="com.top_logic.dsa.file.DOImporter$ContentHandler"
+							format="Date:yyyy-MM-dd HH:mm:ss:SSS"
+						/>
+						<mapping name="strictDate"
+							tag="strictDate"
+							type="com.top_logic.dsa.file.DOImporter$ContentHandler"
+							format="StrictDate:yyyy-MM-dd HH:mm:ss:SSS"
+						/>
+						<mapping name="double"
+							tag="double"
+							type="com.top_logic.dsa.file.DOImporter$ContentHandler"
+							format="Double"
+						/>
+						<mapping name="float"
+							tag="float"
+							type="com.top_logic.dsa.file.DOImporter$ContentHandler"
+							format="Float"
+						/>
+						<mapping name="int"
+							tag="int"
+							type="com.top_logic.dsa.file.DOImporter$ContentHandler"
+							format="Integer"
+						/>
+						<mapping name="long"
+							tag="long"
+							type="com.top_logic.dsa.file.DOImporter$ContentHandler"
+							format="Long"
+						/>
+						<!-- <mapping name="do"
+							tag="Record"
+							type="com.top_logic.dsa.file.DOImporter$DataObjectHandler"
+							doId="id"
+							doType="Record"
+						/>-->
+					</mappings>
+				</converter>
+			</converters>
+		</config>
+	</configs>
+</application>

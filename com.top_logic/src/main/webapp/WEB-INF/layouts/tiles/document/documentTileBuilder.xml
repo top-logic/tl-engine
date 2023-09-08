@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="model"/>
+		<param name="securityId"/>
+		<param name="resPrefix"
+			value="layouts.tiles.documents.documentTileBuilder."
+		/>
+		<param name="modelBuilder"
+			value="com.top_logic.mig.html.layout.tiles.document.DisplayDocumentBuilder"
+		/>
+		<param name="formBuilder">
+			<!-- Empty by default -->
+		</param>
+	</params>
+	<builder
+		dialogHeight="350px"
+		dialogWidth="500px"
+		label="${resPrefix}displayDocumentTile.label"
+		parameters="com.top_logic.mig.html.layout.tiles.document.DocumentTileConfig"
+		template="tiles/document/displayDocumentTile.xml"
+	>
+		<arguments>
+			<argument key="model"
+				value="${model}"
+			/>
+			<argument key="modelBuilder"
+				value="${modelBuilder}"
+			/>
+			<argument key="securityId"
+				value="${securityId}"
+			/>
+		</arguments>
+		${formBuilder}
+	</builder>
+</template>

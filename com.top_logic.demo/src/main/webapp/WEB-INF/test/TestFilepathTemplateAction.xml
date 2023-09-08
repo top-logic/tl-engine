@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings output-format="xml"/>
+		<t:parameters>
+			<t:parameter name="name"
+				type="string"
+			/>
+			<!-- Type is one of: Demo A, Demo B, Demo C, Demo B-nicht-unter-A, Demo L, Demo X -->
+			<t:parameter name="type"
+				type="string"
+			/>
+			<t:parameter name="booleanMandatory"
+				default="true"
+				type="string"
+			/>
+			<t:parameter name="booleanRadioMandatory"
+				default="true"
+				type="string"
+			/>
+			<t:parameter name="booleanSelectMandatory"
+				default="true"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			xmlns:config="http://www.top-logic.com/ns/config/6.0"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="${$name}"
+						/>
+						<parameter name="booleanMandatory"
+							value="${$booleanMandatory}"
+						/>
+						<parameter name="booleanRadioMandatory"
+							value="${$booleanRadioMandatory}"
+						/>
+						<parameter name="booleanSelectMandatory"
+							value="${$booleanSelectMandatory}"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

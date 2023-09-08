@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments
+		model="selection(com.top_logic.demo/technical/components/selectionComponent/contextSelector.layout.xml#Selector)"
+		multiple="true"
+		presentation="pop-up-list"
+	>
+		<titleKey key="dynamic.604e4e88-f2d4-4d77-9b7d-2707fc0e7bea">
+			<en>Standard multiple selection</en>
+			<de>Standard-Mehrfachauswahl</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model -> $model.get(`DemoTypes:A#children`)"
+			modelForElement="element -> model -> $model"
+		/>
+		<defaultSelectionProvider class="com.top_logic.model.search.providers.ListSelectionProviderByExpression"
+			function="options -> $options.filter(o -> $o.instanceOf(`DemoTypes:DemoTypes.C.All`))"
+		/>
+	</arguments>
+</config:template-call>

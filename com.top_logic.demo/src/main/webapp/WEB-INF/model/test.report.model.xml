@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.report">
+		<class name="BusinessUnit">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="reportTemplate"
+					type="tl.model.search:Template"
+				/>
+				<reference name="contracts"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Contract"
+				/>
+			</attributes>
+		</class>
+		<class name="Contract">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="owner"
+					kind="forwards"
+					mandatory="true"
+					type="Contacts:PersonContact"
+				/>
+				<property name="text"
+					type="tl.model.wysiwyg:Html"
+				/>
+				<property name="export"
+					type="tl.model.search:Report"
+				>
+					<annotations>
+						<default-value>
+							<default-by-expression
+								in-transaction="false"
+								value="context -> $context.get(`test.report:BusinessUnit#reportTemplate`)"
+							/>
+						</default-value>
+					</annotations>
+				</property>
+				<reference name="partner"
+					kind="forwards"
+					mandatory="true"
+					type="Contacts:CompanyContact"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

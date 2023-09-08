@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!-- No service configuration for tests. -->
+	</services>
+
+	<configs>
+		<config config:interface="test.com.top_logic.layout.scripting.runtime.TestedApplication$Config">
+			<additional-servlets>
+				<additional-servlet
+					resource-name="/api/*"
+					servlet-class="com.top_logic.service.openapi.server.OpenApiServlet"
+				/>
+			</additional-servlets>
+		</config>
+
+		<config config:interface="test.com.top_logic.basic.jsp.TestJSPContent$Config">
+			<ignore>
+				<entry value="jsp/openapi/server/displayAPISpec.jsp"/>
+			</ignore>
+		</config>
+	</configs>
+</application>

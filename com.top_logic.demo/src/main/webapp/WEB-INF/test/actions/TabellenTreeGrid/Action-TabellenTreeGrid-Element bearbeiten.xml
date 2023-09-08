@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<!-- Type 'xml' if it contains XML that must not be quoted. -->
+			<!-- Type 'string' if it is no XML and '&quot;' and Co. have to be quoted.. -->
+			<!--
+				But the quoting of values of type 'string' is not yet implemented.
+				:-(
+			-->
+			<t:parameter name="kontext"
+				type="string"
+			/>
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen > Tree Grid"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					comment=""
+					failure-expected="false"
+					failure-message=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+								tab-path="Tabellen > Tree Grid"
+							/>
+						</component>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+									tab-path="Tabellen > Tree Grid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+										field-label-comment=""
+									>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+											name="${$kontext}"
+										/>
+									</node>
+								</path>
+							</model-name>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
+					failure-message=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

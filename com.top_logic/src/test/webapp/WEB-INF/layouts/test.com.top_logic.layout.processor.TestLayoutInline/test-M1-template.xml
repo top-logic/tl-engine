@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="values"/>
+		<param name="values-with-default">
+			<value name="v1"/>
+			<value name="v2"/>
+			<value name="v3"/>
+		</param>
+		<param name="empty-default-value">
+			<!-- Empty element content. -->
+		</param>
+		<param name="default-overridden-with-empty-value">
+			<value name="x1"/>
+			<value name="x2"/>
+			<value name="x3"/>
+		</param>
+	</params>
+	
+	<component class="A">
+		<values>${values}</values>
+		<other-values>${values-with-default}</other-values>
+		<empty-default>${empty-default-value}</empty-default>
+		<empty-value>${default-overridden-with-empty-value}</empty-value>
+	</component>
+</template>

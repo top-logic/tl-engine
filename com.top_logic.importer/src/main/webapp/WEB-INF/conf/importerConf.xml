@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Importer main configuration file                        -->
+
+<root>
+	<alias>
+        <entry name="%IMPORT_LOG_PATH%" value="%LOG_PATH%" />
+	</alias>
+
+	<properties>
+	</properties>
+</root>

@@ -1,0 +1,70 @@
+<html>
+
+<head>
+	<title>Table cell overflow test</title>
+	
+	<style type="text/css">
+		table {
+			border-spacing: 0px;
+		}
+		
+		th, td {
+			white-space: nowrap;
+			overflow: hidden;
+			
+			padding: 3px;
+			border-style: solid;
+			border-width: 1px;
+			border-color: black;
+			border-bottom-color: red;
+			border-right-color: red;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>Table cell overflow test</h1>
+	
+	<h2>Actual</h2>
+	
+	<table style="table-layout: fixed; width: 420px;">
+		<colgroup>
+			<!-- 
+			<col width="20px;" />
+			<col width="200px;" />
+			<col width="200px;" />
+			 -->
+			<col style="width: 20px;" />
+			<col style="width: 200px;" />
+			<col style="width: 200px;" />
+			<!-- 
+			 -->
+		</colgroup>
+		<thead>
+			<tr>
+				<th style="width: 20px;">C1</th>
+				<th style="width: 200px;">Column 2</th>
+				<th style="width: 200px; white-space: nowrap;">Column with an extremely long name (3)</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td style="width: 20px;">foo</td>
+				<td style="width: 200px;">bar</td>
+				<td style="width: 200px;">foobar</td>
+			</tr>
+			<tr>
+				<td>Some long text</td>
+				<td>Some even longer text</td>
+				<td>Some very long text longer as every other column</td>
+			</tr>
+		</tbody>
+	</table>
+	
+	<h2>Expected (expanded to the page witdth)</h2>
+	
+	<img alt="" src="test-table-cell-overflow.png">
+	
+</body>
+
+</html>

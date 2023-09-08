@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<arguments xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<components>
+		<layout-reference resource="com.top_logic.monitoring/admin/monitor/session/userMonitorWithFailedLogin.layout.xml"/>
+		<layout-reference
+			config:position="after"
+			config:reference="com.top_logic/admin/monitor/memory/memoryMonitor.layout.xml"
+			resource="com.top_logic.monitoring/admin/monitor/memory/memoryMonitorChart.layout.xml"
+		/>
+		<layout-reference resource="com.top_logic.monitoring/admin/monitor/schema/dbSchemaMonitor.layout.xml"/>
+		<layout-reference
+			config:position="after"
+			config:reference="com.top_logic/admin/monitor/performance/performanceMonitor.layout.xml"
+			resource="com.top_logic.monitoring/admin/monitor/performanceChart/performanceChart.layout.xml"
+		/>
+		<layout-reference resource="com.top_logic.monitoring/admin/monitor/history/revisionMonitor.layout.xml"/>
+	</components>
+</arguments>

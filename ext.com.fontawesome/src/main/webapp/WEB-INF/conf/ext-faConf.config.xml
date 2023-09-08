@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.layout.form.control.IconInputControl$Config">
+			<resources>
+				<resource name="fa" resource="/webfonts/fontAwesomeMetadata.json">
+					<icon-mappings>
+						<icon-mapping style="brands" encoded-icon="css:fab fa-${name}" />
+						<icon-mapping style="solid" encoded-icon="css:fas fa-${name}" />
+						<icon-mapping style="regular" encoded-icon="css:far fa-${name}" />						
+					</icon-mappings>
+				</resource>
+			</resources>
+		</config>
+	</configs>
+</application>

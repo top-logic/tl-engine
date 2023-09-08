@@ -1,0 +1,79 @@
+<h2>Syntax</h2>
+<pre><code>zipArchive(
+    name: "archive.zip",
+    entries: [
+        zipEntry(
+            contents: binary("folder/hello.txt", "Hello world!"),
+            comment: "Index file.",
+            time: now(),
+            compress: true
+        ),
+        binary("folder/data.json", $jsonData),
+        ...
+    ],
+    comment: "Project data...",
+    compress: true,
+    level: 9,
+    charset: "utf-8")
+</code></pre>
+<h2>Description</h2>
+<p>Constructs a ZIP archive consisting of the specified files.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>name</td>
+   <td>String</td>
+   <td>Name of the file</td>
+   <td>yes</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>entries</td>
+   <td>List of ZIP entries or binary values</td>
+   <td>List of files to be packed into the archive. These can either consist of <a class="tlObject" data-custom="true" href="?page=zipEntry&amp;uuid=0836fccb-7328-4272-81b6-dae6ed51abd4">ZIP entries</a> or directly represent binary values. To represent a folder structure in the archive, the names of the files must consist of a path separated by <code class="hljs inlineCode">"/"</code>. Binary values in the content only need to be explicitly packed into a ZIP entry if additional information such as comments or compression is to be customized per file.</td>
+   <td>yes</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>comment</td>
+   <td>String</td>
+   <td>Comment about the content. Will be stored in the archive, but has no further meaning.</td>
+   <td>no</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>compress</td>
+   <td>Boolean value</td>
+   <td>Whether the contents should be compressed.</td>
+   <td>no</td>
+   <td><code class="hljs inlineCode">true</code></td>
+  </tr>
+  <tr>
+   <td>level</td>
+   <td>Number</td>
+   <td>Strength of compression (0 to 9)</td>
+   <td>no</td>
+   <td><code class="hljs inlineCode">9</code></td>
+  </tr>
+  <tr>
+   <td>charset</td>
+   <td>Character string</td>
+   <td>The character set used for filenames</td>
+   <td></td>
+   <td>"<code class="hljs inlineCode">utf-8</code>"</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><strong>Type:</strong> binary value</p>
+<p>A representation of a ZIP file. In the above example, it is an archive named "<code class="hljs inlineCode">archive.zip</code>" consisting of the files "<code class="hljs inlineCode">hello.txt</code>" and "<code class="hljs inlineCode">data.json</code>" in the subfolder "<code class="hljs inlineCode">folder</code>". If the value is used as a return value of a custom action of a button, the data can be offered to the user as a download.</p>

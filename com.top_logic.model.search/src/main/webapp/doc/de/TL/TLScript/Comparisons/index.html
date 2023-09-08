@@ -1,0 +1,9 @@
+<p>In TL-Script können sowohl Zahlen, Zeichenketten, Wahrheitswerte und Mengen mit beliebigen Werten von diesen Typen miteinander verglichen werden.</p>
+<h2>Zahlen</h2>
+<p>Zahlen werden dabei nach ihrer natürlichen Ordnung verglichen.</p>
+<h2>Zeichenketten</h2>
+<p>Zeichenketten werden basierend auf ihrer technischen Ordnung verglichen (dabei werden weder Groß- und Kleinbuchstaben noch Buchstaben mit und ohne Akzente miteinander identifiziert). Dabei ist <code class="hljs inlineCode">"A" &lt; "a"</code> und <code class="hljs inlineCode">"Á" != "A"</code>. Für Vergleiche, die eine lexikographische Ordnung erzeugen, stehen spezielle Funktionen zur Verfügung, siehe <a class="tlObject" data-custom="false" href="?page=StringComparisons&amp;uuid=36c8f677-8d7b-47da-9c6e-7f9becd1b725">Zeichenketten vergleichen</a>.</p>
+<h2>Wahreitswert</h2>
+<p>Wenn man Wahrheitswerte, also <code class="hljs inlineCode">true</code> und <code class="hljs inlineCode">false</code> miteinander vergleicht, dann ist <code class="hljs inlineCode">true</code> größer als <code class="hljs inlineCode">false</code>.</p>
+<h2>Mengen</h2>
+<p>Mengen werden elementweise verglichen. Eine Menge <code class="hljs inlineCode">l1</code> ist dann kleiner als eine Menge <code class="hljs inlineCode">l2</code>, wenn es einen Index <code class="hljs inlineCode">n</code> gibt, an dem ihr Element <code class="hljs inlineCode">l1[n]</code> kleiner ist als das Element <code class="hljs inlineCode">l2[n]</code>, aber alle anderen Elemente <code class="hljs inlineCode">l1[k]</code> gleich der Elemente <code class="hljs inlineCode">l2[k]</code> für <code class="hljs inlineCode">k &lt; n</code> sind. Bei diesem Vergleich werden einelementige Mengen und einzelwerte miteinander identifiziert. D.h. eine einelementige Menge ist gleich ihrem einzigen in ihr enthaltenen Wert.</p>

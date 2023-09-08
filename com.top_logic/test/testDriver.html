@@ -1,0 +1,35 @@
+<!doctype html >
+
+<html>
+   <head>
+        <title>Test Driver</title>
+    </head>
+   <body onLoad="window.setTimeout('nextPage()',100)">
+        <form name="showForm" id="show">
+            just refreshes the main page with a List of URLs by using Javascript.<br />
+            <input type="text" name="urlField" size="128"/>
+        </form>
+    </body>
+    <script>
+        pages = new Array (
+
+"http://localhost/top-logic/servlet/DisplayServlet?command=view&oid=7f0dde:e97709b55d:-7fcf&context=true" ,
+"http://localhost/top-logic/servlet/DisplayServlet?command=view&oid=175422:e92e00af4f:-7fda&context=true" ,
+"http://localhost/top-logic/servlet/ResourceViewerServlet?command=download&url=cms%3A//outputs/text.jsp" ,
+"http://localhost/top-logic/servlet/ResourceViewerServlet?command=download&url=cms%3A//outputs/image.jsp",
+"http://localhost/top-logic/servlet/DisplayServlet?oid=175422%3Ae92e00af4f%3A-7fcc"
+);
+        len = pages.length;
+        i   = 0;
+
+        function nextPage() {
+            if (i < len)
+            {
+                page = pages[i++];
+                top.frames.driver.document.showForm.urlField.value=page;
+                top.frames.testMain.location = page;
+                window.setTimeout('nextPage()',1000);
+            }
+        }
+   </script>
+</html>

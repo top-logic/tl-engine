@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="Name"
+				type="string"
+			/>
+			<t:parameter name="kontext"
+				default="-"
+				type="string"
+			/>
+			<t:parameter name="booleanMandatory"
+				default="true"
+				type="string"
+			/>
+			<t:parameter name="booleanRadioMandatory"
+				default="true"
+				type="string"
+			/>
+			<t:parameter name="booleanSelectMandatory"
+				default="true"
+				type="string"
+			/>
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+			<t:parameter name="ergebnis"
+				default="-"
+				type="string"
+			/>
+			<t:parameter name="Typ"
+				default="Demo A"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<t:invoke template="script:demo/select-context.xml">
+					<t:parameter name="kontext"
+						value="${$kontext}"
+					/>
+				</t:invoke>
+
+				<t:invoke template="script:demo/create-element.xml">
+					<t:parameter name="Typ"
+						value="${$Typ}"
+					/>
+					<t:parameter name="Name"
+						value="${$Name}"
+					/>
+					<t:parameter name="booleanMandatory"
+						value="${$booleanMandatory}"
+					/>
+					<t:parameter name="booleanRadioMandatory"
+						value="${$booleanRadioMandatory}"
+					/>
+					<t:parameter name="booleanSelectMandatory"
+						value="${$booleanSelectMandatory}"
+					/>
+				</t:invoke>
+
+				<t:if condition="#equals($ergebnis, &quot;-&quot;)">
+					<t:else>
+						<t:invoke template="script:Variable/Action-Variable-Zuweisen.xml">
+							<t:parameter name="Tester"
+								value="${$Tester}"
+							/>
+							<t:parameter name="Name"
+								value="${$ergebnis}"
+							/>
+							<t:parameter name="Wert">
+								<t:value>
+									<t:if condition=" #equals($kontext, &quot;-&quot;)">
+										<t:then>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="${$Name}"/>
+												</structure-path>
+											</value>
+										</t:then>
+										<t:else>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.element.layout.scripting.ChildNamingScheme$ChildName"
+													name="${$Name}"
+												>
+													<parent config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+														name="${$kontext}"
+													/>
+												</model-name>
+											</value>
+										</t:else>
+									</t:if>
+								</t:value>
+							</t:parameter>
+						</t:invoke>
+					</t:else>
+				</t:if>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

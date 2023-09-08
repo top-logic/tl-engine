@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="metaElementName"/>
+		<param name="model"/>
+		<param name="height"
+			value="660px"
+		/>
+		<param name="width"
+			value="800px"
+		/>
+		<!-- All parameters currently supported by editAttributedDetail.xml -->
+		<param name="resPrefix"
+			optional="true"
+		/>
+		<param name="title"
+			optional="true"
+		/>
+		<param name="deleteCommand"
+			optional="true"
+		/>
+		<param name="applyCommand"
+			optional="true"
+		/>
+		<param name="master"
+			optional="true"
+		/>
+		<param name="defaultFor"
+			optional="true"
+		/>
+		<param name="page"
+			optional="true"
+		/>
+		<param name="editCommandGroups"
+			optional="true"
+		/>
+		<param name="editDialogs"
+			optional="true"
+		/>
+		<param name="securityProvider"
+			optional="true"
+		/>
+		<param name="modifier"
+			optional="true"
+		/>
+		<param name="subConfiguration"
+			optional="true"
+		/>
+		<param name="toolbar"
+			optional="true"
+		/>
+		<param name="componentClass"
+			optional="true"
+		/>
+	</params>
+
+	<securityLayout name="${namePrefix}EditAttributedDialog"
+		horizontal="false"
+		securityDomain="projElement"
+		titleKey="${resPrefix}.dialog.tabber"
+	>
+		<dialogInfo
+			createOpenerButtons="false"
+			defaultI18n="${resPrefix}"
+			height="${height}"
+			openHandlerName="openEditAttributedDialog"
+			openerCommandGroup="Read"
+			resizable="true"
+			width="${width}"
+		/>
+
+		<components>
+			<include name="element/editAttributedDetail.xml"
+				applyCommand="${applyCommand}"
+				componentClass="${componentClass}"
+				defaultFor="${defaultFor}"
+				deleteCommand="${deleteCommand}"
+				editCommandGroups="${editCommandGroups}"
+				editDialogs="${editDialogs}"
+				metaElementName="${metaElementName}"
+				model="${model}"
+				modifier="${modifier}"
+				namePrefix="${namePrefix}"
+				page="${page}"
+				resPrefix="${resPrefix}"
+				securityProvider="${securityProvider}"
+				title="${title}"
+				toolbar="${toolbar}"
+			>
+				<subConfiguration>${subConfiguration}</subConfiguration>
+			</include>
+		</components>
+	</securityLayout>
+</template>

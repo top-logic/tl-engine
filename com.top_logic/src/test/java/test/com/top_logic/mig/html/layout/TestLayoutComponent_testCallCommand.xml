@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.mig.html.layout.SimpleComponent">
+	<commands>
+		<command id="command1"
+			class="test.com.top_logic.mig.html.layout.TestLayoutComponent$TestingCommand"
+			test-value="value1"
+		/>
+		<call id="command2"
+			command-id="command1"
+			group="Write"
+		/>
+	</commands>
+</component>

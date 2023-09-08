@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/documentManagement/contextsContextList.layout.xml#List)">
+		<name key="dynamic.79e03633-053e-4ce2-a3ee-40b1481d06a0">
+			<en>Documents of {0}</en>
+			<de>Dokumente von {0}</de>
+		</name>
+		<forms>
+			<form type="test.webfolder:Context">
+				<formDefinition>
+					<field
+						attribute="objects"
+						fullQualifiedName="test.webfolder:Context#objects"
+						type="test.webfolder:WithDocument"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

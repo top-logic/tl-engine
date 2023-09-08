@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tool.execution.service.CommandApprovalService"
+			config:override="true"
+		>
+			<instance class="com.top_logic.tool.execution.service.ConfiguredCommandApprovalService">
+				<check type="test.commandApproval:StatefulElement">
+					<rule>
+						<contexts>
+							<command-with-group command-group="Write"/>
+						</contexts>
+						<excluded-contexts>
+							<command-of-component
+								command-id="ID_fba654c5_ff92_4d3d_9cf2_329ca3b8f33c"
+								component=""
+							/>
+						</excluded-contexts>
+						<executability>
+							<rule-by-expression show-disabled="true">
+								<decision>x -&gt; $x.get(`test.commandApproval:StatefulElement#state`) == `test.commandApproval:OperationState#ACTIVE` || #("Nur im Zustand aktiv möglich."@de, "Only possible in state active."@en)</decision>
+							</rule-by-expression>
+						</executability>
+					</rule>
+					<rule>
+						<contexts>
+							<command-with-group command-group="Delete"/>
+						</contexts>
+						<excluded-contexts/>
+						<executability>
+							<rule-by-expression show-disabled="true">
+								<decision>x -&gt; $x.get(`test.commandApproval:StatefulElement#state`) != `test.commandApproval:OperationState#ACTIVE` || #("Aktive Vorgänge können nicht gelöscht werden."@de, "Active operations cannot be deleted."@en)</decision>
+							</rule-by-expression>
+						</executability>
+					</rule>
+				</check>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_6fc0ff11_9d30_4870_8f6d_ec3c0693075a"
+		securityDomain="SecurityStructure"
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.afb26f2a-3560-47a6-b6d8-2f930573a174">
+			<en>Polymorphic forms</en>
+			<de>Polymorphe Formulare</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicForms/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

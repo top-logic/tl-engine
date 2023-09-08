@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- meta objects needed by the contact management -->
+	 
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+<metaobjects>
+ 	<metaobject object_type="MOKnowledgeObject" object_name="Contact" super_class="AttributedObject" db_name="CONTACT">
+<attributes>
+  		<mo_attribute att_name="name" 			att_type="String" 	mandatory="true"  db_size="128" />
+		<mo_attribute att_name="FKey" 			att_type="String" 	mandatory="false" db_size="32"  />
+		<mo_attribute att_name="FKey2" 			att_type="String" 	mandatory="false" db_size="32"  />
+		<mo_attribute att_name="remarks"        att_type="String" 	mandatory="false" db_size="254" />
+</attributes>
+<index>
+	 	<mo_index name="ContactFKey" unique="false">
+<index-parts>
+        	<index_part name="FKey"/>
+</index-parts>
+    	</mo_index>
+	 	<mo_index name="ContactFKey2" unique="false">
+<index-parts>
+        	<index_part name="FKey2"/>
+</index-parts>
+    	</mo_index>
+</index>
+	</metaobject>
+
+	<!-- a special association to connect a PersonContact to a (Top-Logic) Person -->
+	<association super_class="Association" object_name="representsUser" db_name="REPRESENTS_USER">
+		<attributes>
+			<source
+				override="true"
+				target-type="Contact"
+			/>
+			<destination
+				override="true"
+				target-type="Person" />
+		</attributes>
+	</association>
+
+</metaobjects>
+</objectlist>

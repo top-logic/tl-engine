@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	SPDX-FileCopyrightText: 2007 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<tableView name="externalLibs"
+	resPrefix="external.library"
+	securityProviderClass="path:opener.currentobject"
+	selectable="true"
+>
+	<modelBuilder class="com.top_logic.layout.version.ExternalLibrariesBuilder"/>
+	<table
+		defaultColumns="name,version,license,organization"
+		defaultSortOrder="name"
+		fixedColumns="1"
+	>
+		<column-default
+			columnWidth="300px"
+			filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+		/>
+		<columns>
+			<column name="name"
+				accessor="com.top_logic.layout.version.DependencyNameAccessor"
+				cellRenderer="com.top_logic.layout.version.DependencyNameCellRenderer"
+			/>
+			<column name="version"
+				accessor="com.top_logic.layout.version.LicenseDataAccessor"
+				columnWidth="100px"
+			/>
+			<column name="license"
+				accessor="com.top_logic.layout.version.LicenseAccessor"
+				cellRenderer="com.top_logic.layout.version.LicenseCellRenderer"
+				sortable="false"
+			/>
+			<column name="organization"
+				accessor="com.top_logic.layout.version.OrganizationAccessor"
+				cellRenderer="com.top_logic.layout.version.OrganizationCellRenderer"
+			/>
+		</columns>
+	</table>
+	<buttons>
+		<button id="exportExcel"
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+			downloadNameKey="external.library.exportFileName"
+		/>
+	</buttons>
+</tableView>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="companyContactView"
+	helpIDLegacy="contact.company.tabber"
+	titleKey="contact.company.tabber"
+>
+	<tabInfo label="contact.company.tabber"/>
+	<components>
+		<include name="com.top_logic.contact/admin/companyContacts/EditCompanyContacts.xml"/>
+	</components>
+</securityLayout>

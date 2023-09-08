@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="kontext"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="Name"
+				type="string"
+			/>
+			<t:parameter name="Typ"
+				type="string"
+			/>
+			<t:parameter name="Parent"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="ergebnis"
+				default=""
+				type="string"
+			/>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment=""
+			failure-message=""
+			user-id="${$Tester}"
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Tabellen > Tree Grid"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.table.ToggleRootVisibilityCommand"
+					command-label="Sichtbarkeit von Root ändern"
+					command-name="toggleRootVisibility"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+					failure-message=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					comment=""
+					failure-message=""
+					window-name=""
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath">
+							<nodes>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+												field-label-comment=""
+											>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+													name="${$Parent}"
+												/>
+											</node>
+										</path>
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+									</model-name>
+								</node>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+												field-label-comment=""
+											>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+													name="${$kontext}"
+												/>
+											</node>
+										</path>
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+											tab-path="Tabellen > Tree Grid"
+										/>
+									</model-name>
+								</node>
+							</nodes>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+							tab-path="Tabellen > Tree Grid"
+						/>
+					</selection-model-name>
+				</action>
+				<t:if condition=" #equals($Typ, &quot;KindA&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+							command-label="A Kind anlegen"
+							command-name="newAChild"
+							comment=""
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+							failure-message=""
+							window-name=""
+						>
+							<arguments/>
+						</action>
+					</t:then>
+				</t:if>
+				<t:if condition=" #equals($Typ, &quot;BruderA&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+							command-label="A Bruder anlegen"
+							command-name="newASibling"
+							comment=""
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+							failure-message=""
+							window-name=""
+						>
+							<arguments/>
+						</action>
+					</t:then>
+				</t:if>
+				<t:if condition=" #equals($Typ, &quot;KindB&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+							command-label="B Kind anlegen"
+							command-name="newBChild"
+							comment=""
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+							failure-message=""
+							window-name=""
+						>
+							<arguments/>
+						</action>
+					</t:then>
+				</t:if>
+				<t:if condition=" #equals($Typ, &quot;BruderB&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+							command-label="B Bruder anlegen"
+							command-name="newBSibling"
+							comment=""
+							component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+							component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+							failure-message=""
+							window-name=""
+						>
+							<arguments/>
+						</action>
+					</t:then>
+				</t:if>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+						tab-path="Tabellen > Tree Grid"
+					/>
+					<field-values>
+						<value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="${$Name}"
+							/>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+									field-label-comment=""
+								>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+										provider-name="com.top_logic.element.layout.grid.NewObject$Naming"
+									>
+										<name/>
+									</business-object>
+								</field>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="Name"
+								>
+									<attribute-ref attribute-name="name">
+										<type type-name="DemoTypes.All">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+								</field>
+							</field-path>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridComponent$GridApplyCommandHandler"
+					command-label="Übernehmen"
+					command-name="gridApplyRowObject"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+					failure-message=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<t:invoke template="script:TabellenTreeGrid/Action-TabellenTreeGrid-Variable zuweisen.xml">
+					<t:parameter name="Name"
+						value="${$Name}"
+					/>
+					<t:parameter name="Parent"
+						value="${$kontext}"
+					/>
+					<t:parameter name="ergebnis"
+						value="${$ergebnis}"
+					/>
+					<t:parameter name="Tester"
+						value="${$Tester}"
+					/>
+				</t:invoke>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

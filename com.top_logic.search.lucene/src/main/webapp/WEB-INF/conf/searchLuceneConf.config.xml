@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+		           <module key="com.top_logic.base.services.SearchFactory$Module" value="true" />
+		           <module key="com.top_logic.knowledge.indexing.lucene.LuceneIndex$Module" value="true" />
+		           <module key="com.top_logic.knowledge.analyze.DefaultAnalyzeService$Module" value="true" />
+		           <module key="com.top_logic.knowledge.indexing.DefaultIndexingService$Module" value="true" />
+				</modules>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.knowledge.analyze.DefaultAnalyzeService">
+			<instance class="com.top_logic.knowledge.analyze.lucene.LuceneAnalyzeService"
+				default-max-count-feature-extractor="20"
+				default-threshold-feature-extractor="0.001"
+				default-max-count-doc-finder="10"
+			/>
+		</config>
+	
+ 		<config service-class="com.top_logic.base.services.SearchFactory">
+			<instance>
+				<dependencies>
+					<dependency key="com.top_logic.knowledge.indexing.lucene.LuceneIndex$Module" value="true"/>
+					<dependency key="com.top_logic.knowledge.service.PersistencyLayer$Module" value="true"/>
+				</dependencies>
+				<search-engines>
+					<search-engine class="com.top_logic.knowledge.searching.lucene.LuceneSearchEngine"
+						display-name="search.engine.name.Lucene"
+					/>
+				</search-engines>
+			</instance>
+		</config>
+	
+        <config service-class="com.top_logic.util.monitor.ApplicationMonitor">
+			<instance class="com.top_logic.util.monitor.ApplicationMonitor">
+				<components>
+					<component name="search" class="com.top_logic.knowledge.indexing.lucene.LuceneMonitor" />
+				</components>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="searchLuceneMessages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.knowledge.indexing.lucene.LuceneIndex">
+			<instance class="com.top_logic.knowledge.indexing.lucene.LuceneIndex"
+				index-location="%LUCENE_PATH%/top-logic"
+			>
+				<document-analyzer-factory class="com.top_logic.knowledge.analyze.lucene.DefaultAnalyzerFactory"
+					document-analyzer="org.apache.lucene.analysis.standard.StandardAnalyzer"
+				>
+					<stop-word-configs>
+						<stop-word-config
+							file="/WEB-INF/conf/searchservice/lucene/stopwords_de.txt"
+							language="de"
+						/>
+						<stop-word-config
+							file="/WEB-INF/conf/searchservice/lucene/stopwords_en.txt"
+							language="en"
+						/>
+					</stop-word-configs>
+				</document-analyzer-factory>
+				<!--
+					<document-analyzer-factory class="com.top_logic.knowledge.analyze.lucene.GermanAnalyzerFactory"
+					german-stemmer-exclusion="/WEB-INF/conf/searchservice/lucene/germanstemex.txt">
+					<stop-word-config ..../>
+					</document-analyzer-factory>
+				-->
+			</instance>
+		</config>
+		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
+			<instance class="com.top_logic.knowledge.indexing.lucene.LuceneIndexingService">
+				<protocols>
+					<protocol value="knowledgerepository" />
+					<protocol value="knowledge" />
+					<protocol value="repository" />
+				</protocols>
+				<meta-objects>
+					<meta-object value="Document" />
+					<meta-object value="GenericObject" />
+				</meta-objects>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-search-lucene" />
+				</modules>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<!--
+			Which LockFactory should Lucene use?
+			No value or empty String means: Default
+			which is currently NativeFSLockFactory as stated in: org.apache.lucene.store.FSDirectory.open(Path)
+			WARNING: If you make the wrong choice here, your Lucene index may silently get corrupted.
+			The SimpleFSLockFactory was chosen, as its locks remain if the JVM shuts down and they are not explicitly removed.
+			In this situation, the Lucene Index might be corrupted.
+			The remaining locks of the SimpleFSLockFactory make it easy to detect that situation."
+		-->
+		<config config:interface="com.top_logic.knowledge.indexing.lucene.LuceneUtils$Config"
+			lock-factory="org.apache.lucene.store.SimpleFSLockFactory"
+		/>
+	</configs>
+</application>

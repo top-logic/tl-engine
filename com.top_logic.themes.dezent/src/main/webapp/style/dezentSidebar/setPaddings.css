@@ -1,0 +1,10 @@
+.BreadCrumbOuter .cLogoutTimer {
+	margin: 0px;
+}
+
+.frmBody span.cmdLink .input-image i { color: var(--ICON_COLOR_DARK_CONTEXT_BASIC); }
+.frmBody span.cmdLink .input-image span::before { color: var(--ICON_COLOR_DARK_CONTEXT_HIGHLIGHT_BG); }
+.frmBody span.cmdLink .input-image span::after { color: var(--ICON_COLOR_DARK_CONTEXT_HIGHLIGHT); }
+
+.frmBody span.cmdLink .input-image i[class*=" overlay-"] span::before { color: var(--IMAGE_BUTTON_BACKGROUND); }
+.frmBody span.cmdLink:hover .input-image i[class*=" overlay-"] span::before { color: var(--IMAGE_BUTTON_BACKGROUND_HOVER); }

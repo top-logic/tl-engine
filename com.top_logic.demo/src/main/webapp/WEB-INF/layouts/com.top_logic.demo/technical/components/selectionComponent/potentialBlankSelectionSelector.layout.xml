@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments
+		model="selection(com.top_logic.demo/technical/components/selectionComponent/contextSelector.layout.xml#Selector)"
+		multiple="true"
+		presentation="pop-up-list"
+	>
+		<titleKey key="dynamic.5383dc25-cada-4474-8f31-d4dd6f1170aa">
+			<en>Potential blank selection</en>
+			<de>Potentielle Leerselektion</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model -> $model.get(`tl.element:StructuredElementContainer#children`)"
+			modelForElement="candidate -> model -> $model"
+		/>
+		<defaultSelectionProvider class="com.top_logic.model.search.providers.ListSelectionProviderByExpression">
+			<function>options -&gt; $options.filter(x -&gt; $x.get(`DemoTypes:DemoTypes.All#name`).stringContains("1"))</function>
+		</defaultSelectionProvider>
+	</arguments>
+</config:template-call>

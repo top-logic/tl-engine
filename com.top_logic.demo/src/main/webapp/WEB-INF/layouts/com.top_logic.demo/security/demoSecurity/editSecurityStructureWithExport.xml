@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="structure"/>
+		<param name="defaultFor"
+			value="DemoSecurity:DemoSecurity.All,DemoSecurity:DemoSecurity.A,DemoSecurity:DemoSecurity.B"
+		/>
+		<param name="componentName"
+			value="${structure}StructureArea"
+		/>
+		<param name="resPrefix"
+			value="layouts.demo.editSecurityStructureWithExport.StructureArea."
+		/>
+	</params>
+
+	<component class="com.top_logic.tool.boundsec.compound.CompoundSecurityProjectLayout"
+		horizontal="true"
+		name="${componentName}"
+		primaryChecker="${structure}Tree"
+		secondaryChecker="${structure}EditLayout"
+		securityDomain="${structure}"
+		titleKey="${resPrefix}tabber"
+	>
+		<components>
+			<treeView name="${structure}Tree"
+				autoFocusSelection="true"
+				resPrefix="layouts.demo.editSecurityStructureWithExport.Tree."
+			>
+				<security-filter selectionRole="DemoSecurity.selection"/>
+				<layoutInfo
+					minSize="100"
+					size="220"
+				/>
+				<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
+					structureName="${structure}"
+				>
+					<has-some-role roles="DemoSecurity.navigation"/>
+				</modelBuilder>
+			</treeView>
+			<tabbar name="${structure}demoStructureTab">
+				<components>
+					<securityLayout name="${structure}EditLayout"
+						helpID="structureDetail.helpID"
+						securityDomain="${structure}"
+						titleKey="layouts.demo.editSecurityStructureWithExport.EditLayout.tabber"
+					>
+						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityTypes.tab"/>
+						<components>
+							<include name="element/editStructureDetail.xml"
+								defaultFor="${defaultFor}"
+								page="/jsp/demo/EditStructuredElement.jsp"
+								structure="${structure}"
+							>
+								<editDialogs>
+									<layout>
+										<dialogInfo
+											defaultI18n="demo.securityExample.DialogA"
+											openerCommandGroup="Write"
+										/>
+
+										<components>
+											<component class="com.top_logic.mig.html.layout.PageComponent"
+												name="DialogA"
+												page="/jsp/layout/security/DialogA.jsp"
+												resPrefix="layouts.demo.editSecurityStructureWithExport.DialogA."
+											/>
+											<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+										</components>
+									</layout>
+
+									<layout>
+										<dialogInfo createOpenerButtons="false"/>
+
+										<components>
+											<component class="com.top_logic.element.layout.structured.AdminElementComponent"
+												modifier=""
+												name="DialogGotoParent"
+												page="/jsp/layout/security/GotoParent.jsp"
+												resPrefix="layouts.demo.editSecurityStructureWithExport.DialogGotoParent."
+												securityProviderClass="default"
+											/>
+											<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+										</components>
+									</layout>
+
+									<layout>
+										<dialogInfo defaultI18n="demo.securityExample.Assistant"/>
+
+										<components>
+											<assistent name="testAssistentSecurity"
+												resPrefix="layouts.demo.editSecurityStructureWithExport.testAssistentSecurity."
+											>
+												<controller class="com.top_logic.demo.layout.security.DemoSecurityAssistentController"
+													firstStep="demoFirstStepSecurity"
+													secondStep="demoSecondStepSecurity"
+												/>
+												<component class="com.top_logic.demo.layout.security.EditParentComponent"
+													name="demoFirstStepSecurity"
+													page="/jsp/layout/security/DialogA.jsp"
+													resPrefix="layouts.demo.editSecurityStructureWithExport.demoFirstStepSecurity."
+													securityProviderClass="securityRoot"
+												>
+													<assistantInfo/>
+												</component>
+
+												<component class="com.top_logic.demo.layout.security.EditParentComponent"
+													name="demoSecondStepSecurity"
+													page="/jsp/layout/security/DialogB.jsp"
+													resPrefix="layouts.demo.editSecurityStructureWithExport.demoSecondStepSecurity."
+													securityProviderClass="securityRoot"
+												>
+													<assistantInfo/>
+												</component>
+											</assistent>
+
+											<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+										</components>
+									</layout>
+								</editDialogs>
+								<subConfiguration>
+									<buttons>
+										<button id="gotoParent"
+											class="com.top_logic.demo.layout.security.EditParentComponent$GotoParentHandler"
+											group="Read"
+											resourceKey="layouts.demo.editSecurityStructureWithExport.gotoParent"
+										/>
+									</buttons>
+								</subConfiguration>
+							</include>
+						</components>
+					</securityLayout>
+					<securityLayout name="${structure}SecurityAEdit"
+						helpID="displayTypeA.helpID"
+						securityDomain="${structure}"
+						titleKey="layouts.demo.editSecurityStructureWithExport.SecurityAEdit.tabber"
+					>
+						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityA.tab"/>
+						<components>
+							<layout>
+								<components>
+									<component class="com.top_logic.demo.layout.security.EditAComponent"
+										model="selection(${structure}Tree)"
+										name="EditAComponent"
+										page="/jsp/layout/security/DisplayA.jsp"
+										resPrefix="layouts.demo.editSecurityStructureWithExport.EditAComponent."
+									/>
+									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+								</components>
+							</layout>
+						</components>
+					</securityLayout>
+					<securityLayout name="${structure}SecurityBEdit"
+						helpID="displayTypeB.helpID"
+						securityDomain="${structure}"
+						titleKey="layouts.demo.editSecurityStructureWithExport.SecurityBEdit.tabber"
+					>
+						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityB.tab"/>
+						<components>
+							<layout>
+								<components>
+									<component class="com.top_logic.demo.layout.security.EditBComponent"
+										model="selection(${structure}Tree)"
+										name="EditBComponent"
+										page="/jsp/layout/security/DisplayB.jsp"
+										resPrefix="layouts.demo.editSecurityStructureWithExport.EditBComponent."
+									/>
+									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+								</components>
+							</layout>
+						</components>
+					</securityLayout>
+					<securityLayout name="${structure}SecurityParentEdit"
+						helpID="displayParent.helpID"
+						securityDomain="${structure}"
+						titleKey="layouts.demo.editSecurityStructureWithExport.SecurityParentEdit.tabber"
+					>
+						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityParent.tab"/>
+						<components>
+							<layout>
+								<components>
+									<!--
+										This component will show the parent of the model shown in its
+										master-component
+									-->
+									<component class="com.top_logic.demo.layout.security.EditParentComponent"
+										model="model(${structure}Edit)"
+										modifier=""
+										name="EditParentComponent"
+										page="/jsp/layout/security/DisplayParent.jsp"
+										resPrefix="layouts.demo.editSecurityStructureWithExport.EditParentComponent."
+										securityProviderClass="default"
+										structure="${structure}"
+									/>
+									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+								</components>
+							</layout>
+						</components>
+					</securityLayout>
+				</components>
+			</tabbar>
+		</components>
+	</component>
+</template>

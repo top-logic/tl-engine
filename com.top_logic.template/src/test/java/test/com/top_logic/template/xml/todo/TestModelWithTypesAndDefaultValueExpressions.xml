@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<t:type name="Type_A">
+				<t:attributes>
+					<t:attribute name="Param_Date" type="string"/>
+					<t:attribute name="Example_Parameter_Default_Value_Expression" type="date">
+						<!-- It is possible to use the template language in the default-value definitions of parameters and type attributes. -->
+						<!-- This requires the default value to be expressed in tags and not attributes. -->
+						<!-- The expressions in the default values can access every parameter defined for the current template. -->
+						<!-- If the default value expression tries to access its own parameter directly or indirectly,
+						the expansion will crash with an StackOverflowError. -->
+						<!-- The parameters accessed don't need to have a default value. -->
+						<t:default>
+							<t:value expr='$Struct_A.Param_Date' />T<t:value expr='$Struct_A.Param_Time' />Z
+						</t:default>
+					</t:attribute>
+					<t:attribute name="Param_Time" type="string"/>
+				</t:attributes>
+			</t:type>
+			
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Struct_A" type="Type_A" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<!-- TODO -->
+	</t:body>
+</t:template>

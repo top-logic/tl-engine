@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Goto OrgUnit Tab"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Administration > Fach. Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Administration > Fach. Administration > Organisationseinheiten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create Head"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path=""
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="templates/contentTree.xml#orgUnit_navigationTree"
+								tab-path="Administration > Fach. Administration > Organisationseinheiten"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Anlegen"
+							command-name="displayDialog_OrgUnitnewElementLayoutDialog"
+							comment=""
+							component-implementation-comment="com.top_logic.contact.layout.orgunit.OrgUnitEditComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitStructureEdit"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitnewElementDialog"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Name"
+											field-name="name"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="TestCreateOrgUnit_head"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateHandler"
+							command-label="Erstellen"
+							command-name="elementCreate"
+							comment=""
+							component-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitnewElementDialog"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							comment=""
+							component-implementation-comment="com.top_logic.contact.layout.orgunit.OrgUnitEditComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitStructureEdit"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create unit"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Anlegen"
+							command-name="displayDialog_OrgUnitnewElementLayoutDialog"
+							comment=""
+							component-implementation-comment="com.top_logic.contact.layout.orgunit.OrgUnitEditComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitStructureEdit"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitnewElementDialog"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Name"
+											field-name="name"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="OrgUnit_1"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateHandler"
+							command-label="Erstellen"
+							command-name="elementCreate"
+							comment=""
+							component-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitnewElementDialog"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							comment=""
+							component-implementation-comment="com.top_logic.contact.layout.orgunit.OrgUnitEditComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitStructureEdit"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create different unit"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestCreateOrgUnit_head"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="templates/contentTree.xml#orgUnit_navigationTree"
+								tab-path="Administration > Fach. Administration > Organisationseinheiten"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Anlegen"
+							command-name="displayDialog_OrgUnitnewElementLayoutDialog"
+							comment=""
+							component-implementation-comment="com.top_logic.contact.layout.orgunit.OrgUnitEditComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitStructureEdit"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitnewElementDialog"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Name"
+											field-name="name"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="OrgUnit_2"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateHandler"
+							command-label="Erstellen"
+							command-name="elementCreate"
+							comment=""
+							component-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitnewElementDialog"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							comment=""
+							component-implementation-comment="com.top_logic.contact.layout.orgunit.OrgUnitEditComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitStructureEdit"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create sub unit"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="TestCreateOrgUnit_head > OrgUnit_1"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="templates/contentTree.xml#orgUnit_navigationTree"
+								tab-path="Administration > Fach. Administration > Organisationseinheiten"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Anlegen"
+							command-name="displayDialog_OrgUnitnewElementLayoutDialog"
+							comment=""
+							component-implementation-comment="com.top_logic.contact.layout.orgunit.OrgUnitEditComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitStructureEdit"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitnewElementDialog"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Name"
+											field-name="name"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="OrgUnit_1.1"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateHandler"
+							command-label="Erstellen"
+							command-name="elementCreate"
+							comment=""
+							component-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitnewElementDialog"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							comment=""
+							component-implementation-comment="com.top_logic.contact.layout.orgunit.OrgUnitEditComponent"
+							component-name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#OrgUnitStructureEdit"
+							failure-message=""
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

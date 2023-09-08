@@ -1,0 +1,187 @@
+<html>
+
+<head>
+	<title>IE thread synchronization test</title>
+	
+	<!-- Import thread library. --> 
+	<script type="text/javascript" src="../../script/tl/thread.js"></script>
+
+	<script type="text/javascript">
+		var monitor = new Lock();
+		var finished;
+
+		// Callback invoked from scriptlets embedded in this page's iframe.	
+		function nextDisplay() {
+			if (monitor.acquire("display")) {
+				log("Received call from display thread.");
+				
+				monitor.release("display");
+			} else {
+				log("Display thread blocked.");
+			}
+		}
+		
+		// Callback invoked after loading of iframe has completed.	
+		function stopDisplay() {
+			log("Display thread finished.");
+			finished = true;
+		}
+		
+		// Tests for potential interleaving of display thread and timer event handlers.
+		function testDisplayThread(button) {
+			finished = false;
+			
+			startTimerThread();		
+			document.getElementById("thread-iframe").src = "display-thread.jsp";
+		}
+		
+		function startTimerThread() {
+			t = new Thread(
+				function() {
+					if (! monitor.acquire("timer")) {
+						log("Timer blocked during monitor access.");
+						return;
+					}
+					try {
+						var dummy = 0;
+						for (var n = 0; n < 100000; n++) {
+							dummy++;
+						}
+						
+						this.tick++;
+						if (this.tick % 8 == 0) {
+							log("Timer thread running (" + dummy + ").");
+						}
+						
+						if (finished || (unloadCount == 20) || (this.tick == 200)) {
+							log("Timer thread stopped.");
+							this.stop();
+						}
+					} finally {
+						monitor.release("timer");
+					}
+				});
+			t.tick = 0;
+			t.delay = 1;
+			t.start();
+		}
+		
+		function onloadCallback(windowRef) {
+			if (monitor.acquire("onload")) {
+				log("Received call from onload thread.");
+				
+				monitor.release("onload");
+			} else {
+				log("Onload thread blocked.");
+			}
+		}
+
+		var unloadCount;
+		function onunloadCallback(windowRef) {
+			unloadCount++;
+			if (monitor.acquire("onunload")) {
+				log("Received call from onunload thread.");
+				
+				monitor.release("onunload");
+			} else {
+				log("Onunload thread blocked.");
+			}
+		}
+
+		function testOnloadThread() {
+			unloadCount = 0;
+			startTimerThread();
+			
+			var t = new Thread(
+				function() {
+					this.tick++;
+					window.open("opener-callback.html", "win" + this.tick, "width=100,height=100,toolbar=no,status=no");		
+					if (this.tick == 3) {
+						this.stop();
+					}
+				});
+			t.tick = 0;
+			t.start();
+		}
+
+		// Function for manually acquiring the monitor object. 
+		var labels = {};
+		function testLock(button, id) {
+			if (monitor.acquire(id)) {
+				if (monitor.depth(id) > 1) {
+					monitor.release(id);
+					monitor.release(id);
+					button.value = labels[id];
+					log("Lock released (" + id + ").");
+				} else {
+					labels[id] = button.value;
+					button.value = "Locked (" + id + ")";
+					log("Access granted (" + id + ").");
+				}
+			} else {
+				log("Access blocked (" + id + ").");
+			}
+		}
+
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+	</script>
+	
+</head>
+
+<body onload="log('Test ready for startup.');">
+
+	<h1>Testing display synchronization</h1>
+	
+	<p>
+	This example shows that <code>script</code> tags executed during page rendering 
+	are not executed concurrently with timer event functions. If such interleaving 
+	would occur, a test run would report that one of the threads has been blocked 
+	during access to the monitor object.
+	</p>
+	
+	<p>
+	Unfortunately, even the concurrency problems observed in 
+	<a href="window-open.html"> the window opening example</a> cannot be reproduced 
+	using this example.
+	</p>
+
+	<h2>Action triggers</h2>
+
+	<p>
+		<button id="test-thread-button" onclick="return testDisplayThread(this);">Test display thread</button>
+	</p>
+
+	<p>
+		<button onclick="return testOnloadThread(this);">Test onload thread</button>
+	</p>
+
+	<p>
+		<button onclick="return testLock(this, 'A');">Acquire lock (A)</button>
+		<button onclick="return testLock(this, 'B');">Acquire lock (B)</button>
+	</p>
+
+	<p>
+		<button id="clear-console-button" onclick="return clearConsole();">Clear console</button>
+	</p>
+	
+	<h2>Display thread iframe</h2>
+
+	<iframe id="thread-iframe" src="static-content.html" width="100%" height="120px"></iframe>
+
+	<h2>Console output</h2>
+	
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+
+</body>
+</html>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Test, that applies and asserts multi row selection in tables."
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#1 > Formulare"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+					<list>
+						<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="string"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="Hello World!"
+									/>
+								</value>
+							</values>
+						</entry>
+						<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="date"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+										value="2017-03-07T06:23:15.000Z"
+									/>
+								</value>
+							</values>
+						</entry>
+					</list>
+				</selectee>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="tableFieldGlobalSelection"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment="Selektiert - Zeile 1, 3"
+			comparision="set-equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
+				<table config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="tableFieldGlobalSelection"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+				</table>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+				<list>
+					<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+						<values>
+							<value>
+								<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="string"
+								/>
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="Hello World!"
+								/>
+							</value>
+						</values>
+					</entry>
+					<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+						<values>
+							<value>
+								<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="date"
+								/>
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+									value="2017-03-07T06:23:15.000Z"
+								/>
+							</value>
+						</values>
+					</entry>
+				</list>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment="Nicht selektiert - Zeile 2"
+			comparision="set-equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
+				<table config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="tableFieldGlobalSelection"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+				</table>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+				<list>
+					<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+						<values>
+							<value>
+								<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="string"
+								/>
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="Hello World!"
+								/>
+							</value>
+						</values>
+					</entry>
+					<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+						<values>
+							<value>
+								<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="date"
+								/>
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+									value="2017-03-07T06:23:15.000Z"
+								/>
+							</value>
+						</values>
+					</entry>
+				</list>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment="Nicht selektiert - Zeile 4"
+			comparision="contains"
+			inverted="true"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
+				<table config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="tableFieldGlobalSelection"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+				</table>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="double"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="13.42"
+						/>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+	</actions>
+</action>

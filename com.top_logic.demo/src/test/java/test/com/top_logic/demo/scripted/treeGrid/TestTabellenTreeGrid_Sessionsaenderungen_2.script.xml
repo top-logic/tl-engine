@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	comment="TestTabellenTreeGrid_Sessionsaenderungen_2"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Nutzer/Nutzer anmelden.xml"
+			template-name-comment="Nutzer anmelden"
+		>
+			<parameters>
+				<parameter name="Username"
+					value="N_01"
+				/>
+				<parameter name="ProcessId"
+					value="N_01"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Sessionsaenderungen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Änderungen aus anderen Sessions"
+				>
+					<actions/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<comment><![CDATA[- Zwei Sessions mit unterschiedlichen Nutzern öffnen. 
+- Sicht Tabellen : Tree Grid 
+- Session A löscht ein Kindelement. 
+- Session B legt ein neues Kindelement an. 
+- In der Session A in der Baumstruktur klicken]]></comment>
+					<actions/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Ein Element löschen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Element loeschen"
+							business-object="TabellenTreeGrid"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="K_01_02"
+								/>
+								<parameter name="Tester"
+									value="N_01"
+								/>
+								<parameter name="Fehlermeldung"
+									value="Ticket #18476: Dialog kann trotz aller Berechtigungen nicht geöffnet werden."
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Ein Element anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Ein Element anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="A Element anlegen"
+							business-object="TabellenTreeGrid"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="KindC"
+								/>
+								<parameter name="ergebnis"
+									value="K_01_03"
+								/>
+								<parameter name="Parent"
+									value="K_01"
+								/>
+								<parameter name="kontext"
+									value="K_01"
+								/>
+								<parameter name="Name"
+									value="Sessionanderung_01_03"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Element anzeigen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Element anzeigen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Element selektieren"
+							business-object="TabellenTreeGrid"
+						>
+							<parameters>
+								<parameter name="Tester"
+									value="N_01"
+								/>
+								<parameter name="Parent"
+									value="K_01"
+								/>
+								<parameter name="kontext"
+									value="K_01_03"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Persöhnliche Einstellungen zurücksetzen."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Persöhnliche Einstellungen zurücksetzen."
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Persoenliche Einstellungen zuruecksetzen"
+							business-object=""
+						/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Löschen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Elemente löschen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Elemente löschen"
+								/>
+								<parameter name="level"
+									value="INFO"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Element loeschen"
+							business-object="TabellenTreeGrid"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="K_01_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Element loeschen"
+							business-object="TabellenTreeGrid"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="K_01_03"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Element loeschen"
+							business-object="TabellenTreeGrid"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="K_01"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Variable/Action-Variable-Alle loeschen.xml"
+			template-name-comment="Variable Alle loeschen"
+		/>
+	</actions>
+</action>

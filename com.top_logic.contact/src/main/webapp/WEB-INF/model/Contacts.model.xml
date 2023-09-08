@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="Contacts">
+			<types>
+				<interface name="Contact.all">
+					<annotations>
+						<legacy-qualified-name qualified-name="Contact.all"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="128"/>
+								<sort-order value="100.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="phone"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="200.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="email"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="254"/>
+								<sort-order value="300.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="remarks"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line/>
+								<size-constraint upper-bound="254"/>
+								<sort-order value="1000.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+					</attributes>
+				</interface>
+				<interface name="Contact.Person">
+					<annotations>
+						<instance-presentation
+							expanded-icon="theme:MIMETYPES_PERSON_CONTACT_16"
+							icon="theme:MIMETYPES_PERSON_CONTACT_16"
+							large-icon="theme:MIMETYPES_LARGE_PERSON_CONTACT_60"
+						/>
+						<legacy-qualified-name qualified-name="Contact.Person"/>
+					</annotations>
+					<attributes>
+						<property name="firstname"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="128"/>
+								<sort-order value="120.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="title"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="130.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="position"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="140.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="phone_mobile"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="210.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="phone_private"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="220.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="fax"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="230.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<reference name="company"
+							kind="forwards"
+							type="Contacts:Contact.Company"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="CompanyContact"/>
+								</constraint>
+								<sort-order value="240.0"/>
+								<delete-protected/>
+							</annotations>
+						</reference>
+						<reference name="boss"
+							kind="forwards"
+							type="Contacts:Contact.Person"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="PersonContact"/>
+								</constraint>
+								<sort-order value="250.0"/>
+								<delete-protected/>
+							</annotations>
+						</reference>
+						<property name="fullName"
+							type="tl.core:String"
+						>
+							<annotations>
+								<sort-order value="260.0"/>
+								<delete-protected/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.contact.business.PersonContact#getFullname()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<reference name="account"
+							multiple="false"
+							type="tl.accounts:Person"
+						>
+							<annotations>
+								<storage-algorithm>
+									<singleton-link-storage
+										monomorphic-table="true"
+										table="representsUser"
+									/>
+								</storage-algorithm>
+								<delete-protected/>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="Contact.all"/>
+					</generalizations>
+				</interface>
+				<interface name="Contact.Company">
+					<annotations>
+						<instance-presentation
+							icon="theme:MIMETYPES_COMPANY_CONTACT_16"
+							large-icon="theme:MIMETYPES_LARGE_COMPANY_CONTACT_60"
+						/>
+						<legacy-qualified-name qualified-name="Contact.Company"/>
+					</annotations>
+					<attributes>
+						<property name="department"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="110.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="street"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="120.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="ZIPCode"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="130.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="city"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="140.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="country"
+							mandatory="true"
+							type="tl.util:Country"
+						>
+							<annotations>
+								<sort-order value="150.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="state"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="160.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="supplier"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<sort-order value="310.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="client"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<sort-order value="320.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="sector"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="40"/>
+								<sort-order value="330.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="FKey"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="9"/>
+								<sort-order value="500.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="FKey2"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="10"/>
+								<sort-order value="510.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<reference name="staff"
+							inverse-reference="company"
+							kind="backwards"
+							multiple="true"
+							type="Contacts:Contact.Person"
+						>
+							<annotations>
+								<sort-order value="520.0"/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<navigate-backwards
+												attribute-name="company"
+												type="Contacts:Contact.Person"
+											/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="Contact.all"/>
+					</generalizations>
+				</interface>
+				<class name="PersonContact">
+					<annotations>
+						<table name="Contact"/>
+						<implementation-binding class-name="com.top_logic.contact.business.PersonContact"/>
+						<main-properties properties="name, email, phone, phone_mobile"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Contact.Person"/>
+					</generalizations>
+				</class>
+				<class name="CompanyContact">
+					<annotations>
+						<table name="Contact"/>
+						<implementation-binding class-name="com.top_logic.contact.business.CompanyContact"/>
+						<main-properties properties="name, city, email, phone" />
+					</annotations>
+					<generalizations>
+						<generalization type="Contact.Company"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminEventMonitor"
+	helpIDLegacy="admin.technical.eventMonitor.tabber"
+	titleKey="admin.technical.eventMonitor.tabber"
+>
+	<tabInfo label="admin.technical.eventMonitor.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/monitor/event/eventMonitor.xml"/>
+	</components>
+</securityLayout>

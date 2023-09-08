@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<t:parameter name="Integer_Max_Value" type="integer" default="9223372036854775807" />
+			
+			<t:parameter name="Integer_Min_Value" type="integer" default="-9223372036854775808" />
+			
+			<t:parameter name="Float_Positive_Infinity_Symbol" type="float" default="∞"/>
+			
+			<t:parameter name="Float_Negative_Infinity_Symbol" type="float" default="-∞"/>
+			
+			<t:parameter name="Float_Positive_Infinity_Text" type="float" default="Infinity"/>
+			
+			<t:parameter name="Float_Negative_Infinity_Text" type="float" default="-Infinity"/>
+			
+			<t:parameter name="Float_NaN" type="float" default="NaN"/>
+			
+			<t:parameter name="Float_Max_Value" type="float" default="1.7976931348623157e+308"/>
+			
+			<t:parameter name="Float_Min_Positive_Value" type="float" default="4.9e-324"/>
+			
+			<t:parameter name="Float_Min_Positive_Normal_Value" type="float" default="2.2250738585072014E-308"/>
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:value expr='$Integer_Max_Value' />
+		
+		<t:value expr='$Integer_Min_Value' />
+		
+		<t:value expr='$Float_Positive_Infinity_Symbol' />
+		
+		<t:value expr='$Float_Negative_Infinity_Symbol' />
+		
+		<t:value expr='$Float_Positive_Infinity_Text' />
+		
+		<t:value expr='$Float_Negative_Infinity_Text' />
+		
+		<t:value expr='$Float_NaN' />
+		
+		<t:value expr='$Float_Max_Value' />
+		
+		<t:value expr='$Float_Min_Positive_Value' />
+		
+		<t:value expr='$Float_Min_Positive_Normal_Value' />
+		
+	</t:body>
+</t:template>

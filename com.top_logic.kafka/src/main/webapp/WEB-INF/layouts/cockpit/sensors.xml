@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="exclude-topics"
+			value=""
+		/>
+		<param name="include-topics"
+			value=""
+		/>
+		<param name="table">
+			<table name="table"
+				defaultColumns="active,name,source,state,id,signal,date,operation,type"
+				defaultSortOrder="name:ascending"
+				fixedColumns="2"
+			>
+				<column-default accessor="com.top_logic.kafka.layout.sensors.SensorAccessor"/>
+				<columns>
+					<column name="active"
+						cellStyle="text-align:center;"
+						columnWidth="40px;"
+						filterProvider=""
+						showHeader="false"
+						sortable="false"
+					/>
+					<column name="state"
+						cellStyle="text-align:center;"
+						columnWidth="90px;"
+					/>
+					<column name="date"
+						cellStyle="text-align:center;"
+						columnWidth="145px;"
+						labelProvider="com.top_logic.layout.provider.DateTimeLabelProvider"
+					/>
+				</columns>
+			</table>
+		</param>
+	</params>
+
+	<layout name="${namePrefix}SensorsCockpitLayout"
+		resPrefix="layouts.cockpit.sensors."
+		resizable="false"
+	>
+		<components>
+			<securityLayout name="${namePrefix}SensorsLayout"
+				titleKey="layouts.cockpit.sensors.tabber"
+			>
+				<components>
+					<component class="com.top_logic.kafka.layout.sensors.ProgressTableComponent"
+						isSecurityMaster="true"
+						name="${namePrefix}SensorsTable"
+						resPrefix="layouts.cockpit.sensors."
+						selectable="false"
+						updater="com.top_logic.kafka.layout.sensors.SensorTableRunnable"
+					>
+						<modelBuilder class="com.top_logic.kafka.layout.sensors.SensorListModelBuilder"
+							exclude-topics="${exclude-topics}"
+							include-topics="${include-topics}"
+						/>
+						${table}
+						<buttons>
+							<button id="exportExcel"
+								class="com.top_logic.layout.table.export.ExcelExportHandler"
+								downloadNameKey="layout.cockpit.sensors.export"
+							/>
+						</buttons>
+					</component>
+				</components>
+			</securityLayout>
+		</components>
+	</layout>
+</template>

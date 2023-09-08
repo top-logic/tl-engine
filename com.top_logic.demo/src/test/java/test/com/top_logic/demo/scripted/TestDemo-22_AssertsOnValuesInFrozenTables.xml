@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Tabellen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Tabellen > Frozen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment=""
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-name="booleanMandatory"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+						component-name="com.top_logic.demo/table/default/demoFrozenTable.layout.xml#DemoTypesFrozenTable"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+					structure-name="DemoTypes"
+				>
+					<structure-path>
+						<node name="TableAssertionTestElements"/>
+						<node name="A23"/>
+					</structure-path>
+				</row-object>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+				boolean="true"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment=""
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-name="float"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+						component-name="com.top_logic.demo/table/default/demoFrozenTable.layout.xml#DemoTypesFrozenTable"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+					structure-name="DemoTypes"
+				>
+					<structure-path>
+						<node name="TableAssertionTestElements"/>
+						<node name="A23"/>
+					</structure-path>
+				</row-object>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleValue"
+				double="3.14159"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment=""
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-name="long"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+						component-name="com.top_logic.demo/table/default/demoFrozenTable.layout.xml#DemoTypesFrozenTable"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+					structure-name="DemoTypes"
+				>
+					<structure-path>
+						<node name="TableAssertionTestElements"/>
+						<node name="A23"/>
+					</structure-path>
+				</row-object>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.LongValue"
+				long="1234567890987654321"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment=""
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-name="string"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+						component-name="com.top_logic.demo/table/default/demoFrozenTable.layout.xml#DemoTypesFrozenTable"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+					structure-name="DemoTypes"
+				>
+					<structure-path>
+						<node name="TableAssertionTestElements"/>
+						<node name="A23"/>
+					</structure-path>
+				</row-object>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+				string="I'm the test element."
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment=""
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-name="date"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+						component-name="com.top_logic.demo/table/default/demoFrozenTable.layout.xml#DemoTypesFrozenTable"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+					structure-name="DemoTypes"
+				>
+					<structure-path>
+						<node name="TableAssertionTestElements"/>
+						<node name="A23"/>
+					</structure-path>
+				</row-object>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateValue"
+				date="2000-12-31T00:00:00.000Z"
+			/>
+		</action>
+	</actions>
+</action>

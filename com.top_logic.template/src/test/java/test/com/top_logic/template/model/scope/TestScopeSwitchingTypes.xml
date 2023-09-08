@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			<t:type name="String_Container_Type">
+				<t:attributes>
+					<t:attribute name="Example_Attribute" type="string" />
+				</t:attributes>
+			</t:type>
+			<t:type name="Integer_Container_Type">
+				<t:attributes>
+					<t:attribute name="Example_Attribute" type="integer" />
+				</t:attributes>
+			</t:type>
+			<t:type name="String_Container_Container_Type">
+				<t:attributes>
+					<t:attribute name="Example_Attribute" type="String_Container_Type" />
+				</t:attributes>
+			</t:type>
+			<t:type name="Integer_Container_Container_Type">
+				<t:attributes>
+					<t:attribute name="Example_Attribute" type="Integer_Container_Type" />
+				</t:attributes>
+			</t:type>
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="String_Parameter" type="String_Container_Container_Type" />
+			<t:parameter name="Integer_Parameter" type="Integer_Container_Container_Type" />
+			<t:parameter name="Both_Booleans_Parameter" type="boolean" multiple="true">
+				<t:default>
+					<t:entry value="true" />
+					<t:entry value="false" />
+				</t:default>
+			</t:parameter>
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:foreach var="flag" values="$Both_Booleans_Parameter">
+			<t:if condition="flag">
+				<t:then>
+					<t:define var="String_Container_Variable" expr="$String_Parameter.Example_Attribute" />
+					<t:value expr="String_Container_Variable.Example_Attribute" />
+				</t:then>
+				<t:else>
+					<t:define var="Integer_Container_Variable" expr="$Integer_Parameter.Example_Attribute" />
+					<t:value expr="Integer_Container_Variable.Example_Attribute" />
+				</t:else>
+			</t:if>
+		</t:foreach>
+		
+	</t:body>
+</t:template>

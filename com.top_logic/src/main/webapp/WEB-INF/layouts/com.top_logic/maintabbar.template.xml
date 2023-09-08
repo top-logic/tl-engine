@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="maintabbar"
+>
+	<properties extends="com.top_logic.layout.editor.config.DialogTemplateParameters">
+		<property name="components"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<options
+				fun="com.top_logic.layout.editor.DynamicComponentOptions"
+				mapping="com.top_logic.layout.editor.DynamicComponentOptionMapping"
+			/>
+			<option-labels value="com.top_logic.layout.editor.DynamicComponentDefinition$Labels"/>
+			<available-templates value="tabbar"/>
+		</property>
+	</properties>
+
+	<include name="templates/mainTabbar.xml"
+		components="${components}"
+	>
+		<dialogs>
+			${dialogs}
+			<include name="com.top_logic/admin/monitor/app/externalLibs.xml">
+				<inject>
+					<dialogInfo
+						createOpenerButtons="false"
+						height="80%"
+						width="80%"
+					>
+						<title title="util.maintenance.displayDialog_externalLibs.title"/>
+						<open-handler id="openLicenseDialog"
+							image="css:tl-icon logo-tl-small"
+							resourceKey="util.maintenance.displayDialog_externalLibs"
+						/>
+					</dialogInfo>
+				</inject>
+			</include>
+		</dialogs>
+	</include>
+</config:template>

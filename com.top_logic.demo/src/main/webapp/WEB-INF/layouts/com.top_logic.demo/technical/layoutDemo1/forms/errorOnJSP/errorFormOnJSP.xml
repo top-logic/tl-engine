@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.demo.layout.form.demo.EmptyForm"
+	displayWithoutModel="true"
+	name="errorForm"
+	page="/jsp/test/layout/ErrorForm.jsp"
+	resPrefix="layouts.layoutdemo.error.errorFormOnJSP.errorForm."
+	securityProviderClass="securityRoot"
+/>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<Configuration
+	com.top_logic.basic.Logger.exceptionLevel="DEBUG"
+	com.top_logic.basic.Logger.traceExceptions="true"
+	com.top_logic.basic.Logger.traceMessages="false"
+	packages="com.top_logic.basic.logging.log4j"
+>
+	<Properties>
+		<!--
+			The Top-Logic alias LOG_PATH is defined in the application configuration.
+			Both occurrences (here and there) have to be changed in the same way.
+		-->
+		<Property name="log.directory">%LOG_PATH%</Property>
+		<Property name="filename.prefix">top-logic</Property>
+		<Property name="pattern.long">%date{ISO8601} %-5level [%thread]: %logger - %message%n%throwable</Property>
+		<Property name="pattern.plain">%message%n%throwable</Property>
+	</Properties>
+	<Appenders>
+		<Console name="STDOUT"
+			target="SYSTEM_OUT"
+		>
+			<PatternLayout pattern="${pattern.plain}"/>
+		</Console>
+		<Console name="STDERR"
+			target="SYSTEM_ERR"
+		>
+			<PatternLayout pattern="${pattern.plain}"/>
+		</Console>
+		<RollingFile name="FILE_APPENDER"
+			fileName="${log.directory}/${filename.prefix}.main.log"
+			filePattern="${log.directory}/${filename.prefix}.main.%i.log"
+		>
+			<PatternLayout pattern="${pattern.long}"/>
+			<DefaultRolloverStrategy
+				fileIndex="min"
+				max="10"
+			/>
+			<SizeBasedTriggeringPolicy size="1 MB"/>
+		</RollingFile>
+		<RollingFile name="SCHEDULER_APPENDER"
+			fileName="${log.directory}/${filename.prefix}.scheduler.log"
+			filePattern="${log.directory}/${filename.prefix}.scheduler.%i.log"
+		>
+			<PatternLayout pattern="${pattern.long}"/>
+			<DefaultRolloverStrategy
+				fileIndex="min"
+				max="10"
+			/>
+			<SizeBasedTriggeringPolicy size="1 MB"/>
+		</RollingFile>
+		<RollingFile name="MEMORY_APPENDER"
+			fileName="${log.directory}/${filename.prefix}.memory.log"
+			filePattern="${log.directory}/${filename.prefix}.memory.%i.log"
+		>
+			<PatternLayout pattern="${pattern.long}"/>
+			<DefaultRolloverStrategy
+				fileIndex="min"
+				max="10"
+			/>
+			<SizeBasedTriggeringPolicy size="1 MB"/>
+		</RollingFile>
+		<RollingFile name="KAFKA_APPENDER"
+			fileName="${log.directory}/${filename.prefix}.kafka.log"
+			filePattern="${log.directory}/${filename.prefix}.kafka.%i.log"
+		>
+			<PatternLayout pattern="${pattern.long}"/>
+			<DefaultRolloverStrategy
+				fileIndex="min"
+				max="10"
+			/>
+			<SizeBasedTriggeringPolicy size="1 MB"/>
+		</RollingFile>
+		<SystemPropertyArbiter
+			propertyName="tl_developerMode"
+			propertyValue="true"
+		>
+			<Socket name="SOCKET_APPENDER"
+				host="localhost"
+				port="4445"
+			>
+				<SerializedLayout/>
+			</Socket>
+		</SystemPropertyArbiter>
+	</Appenders>
+	<Loggers>
+		<Logger name="STDOUT"
+			level="info"
+		>
+			<AppenderRef ref="STDOUT"/>
+		</Logger>
+		<Logger name="STDERR"
+			level="info"
+		>
+			<AppenderRef ref="STDERR"/>
+		</Logger>
+		<Logger name="com.top_logic.util.sched"
+			additivity="false"
+			level="info"
+		>
+			<AppenderRef ref="SCHEDULER_APPENDER"/>
+		</Logger>
+		<Logger name="com.top_logic.kafka"
+			additivity="false"
+			level="info"
+		>
+			<AppenderRef ref="KAFKA_APPENDER"/>
+		</Logger>
+		<Logger name="org.apache.kafka"
+			additivity="false"
+			level="info"
+		>
+			<AppenderRef ref="KAFKA_APPENDER"/>
+		</Logger>
+		<Logger name="kafka"
+			additivity="false"
+			level="info"
+		>
+			<AppenderRef ref="KAFKA_APPENDER"/>
+		</Logger>
+		<Logger name="com.top_logic.util.sched.MemoryObserverThread"
+			additivity="false"
+			level="info"
+		>
+			<AppenderRef ref="MEMORY_APPENDER"/>
+		</Logger>
+		<Logger name="com.top_logic.base.accesscontrol.ExternalAuthenticationServlet"
+			level="debug"
+		>
+			<AppenderRef ref="FILE_APPENDER"/>
+		</Logger>
+		<Logger name="com.top_logic.base.accesscontrol.J2eeRemoteUserAuthenticationServlet"
+			level="debug"
+		>
+			<AppenderRef ref="FILE_APPENDER"/>
+		</Logger>
+
+		<Root level="info">
+			<AppenderRef ref="FILE_APPENDER">
+				<Filters>
+					<ThreadContextMapFilter operator="or" onMatch="DENY" onMismatch="NEUTRAL">
+						<KeyValuePair key="in-kafka-context" value="true"/>
+						<KeyValuePair key="in-tl-sync-context" value="true"/>
+					</ThreadContextMapFilter>
+					<RegexStackTraceFilter regex=".*LOG MARK: 'in-kafka-context' = 'true'\..*" onMatch="DENY" onMismatch="NEUTRAL"/>
+					<RegexStackTraceFilter regex=".*LOG MARK: 'in-tl-sync-context' = 'true'\..*" onMatch="DENY" onMismatch="ACCEPT"/>
+				</Filters>
+			</AppenderRef>
+			<SystemPropertyArbiter
+				propertyName="tl_developerMode"
+				propertyValue="true"
+			>
+				<AppenderRef ref="SOCKET_APPENDER"/>
+			</SystemPropertyArbiter>
+			<AppenderRef ref="KAFKA_APPENDER">
+				<Filters>
+					<ThreadContextMapFilter operator="or" onMatch="ACCEPT" onMismatch="NEUTRAL">
+						<KeyValuePair key="in-kafka-context" value="true"/>
+						<KeyValuePair key="in-tl-sync-context" value="true"/>
+					</ThreadContextMapFilter>
+					<RegexStackTraceFilter regex=".*LOG MARK: 'in-kafka-context' = 'true'\..*" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+					<RegexStackTraceFilter regex=".*LOG MARK: 'in-tl-sync-context' = 'true'\..*" onMatch="ACCEPT" onMismatch="DENY"/>
+				</Filters>
+			</AppenderRef>
+		</Root>
+	</Loggers>
+</Configuration>

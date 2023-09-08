@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/treegrid.template.xml"
+>
+	<arguments
+		adjustSelectionWhenCollapsing="true"
+		defaultColumns="name,canProcess,active,processing"
+		defaultSelection="false"
+		expandSelected="false"
+		rootVisible="false"
+		type="test.dnd.dropon:Processor"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/dropOn/newProcessor/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.c1ccc4ff-77bf-4db3-8c99-3af8e378c83c">
+			<en>Processor table</en>
+			<de>Bearbeitertabelle</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="null"
+			nodePredicate="node->$node.instanceOf(`test.dnd.dropon:Processor`) || $node.instanceOf(`test.dnd.dropon:Root`)"
+			nodesToUpdate="null"
+			parents="node->$node.referers(`test.dnd.dropon:Processor#subprocessors`).union($node.referers(`test.dnd.dropon:Root#processors`))"
+			rootNode="`test.dnd.dropon#ROOT`"
+		>
+			<children><![CDATA[node-> switch($node.type()) {
+    `test.dnd.dropon:Root`: $node.get(`test.dnd.dropon:Root#processors`);
+    default: $node.get(`test.dnd.dropon:Processor#subprocessors`);
+}]]></children>
+		</modelBuilder>
+		<tableDrop class="com.top_logic.model.search.providers.GridDropTargetByExpression"
+			dropType="ROW"
+			handleDrop="draggedObjects->referenceRow->{handleDrop=work -> processor -> $processor.add(`test.dnd.dropon:Processor#processing`, $work);$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}"
+		>
+			<canDrop><![CDATA[draggedObjects->referenceRow->{canDrop=work -> processor -> switch {
+    !$processor.get(`test.dnd.dropon:Processor#active`): false;
+    !$processor.get(`test.dnd.dropon:Processor#canProcess`).containsElement($work.get(`test.dnd.dropon:WorkItem#type`)): false;
+    default: true;
+};$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}]]></canDrop>
+		</tableDrop>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

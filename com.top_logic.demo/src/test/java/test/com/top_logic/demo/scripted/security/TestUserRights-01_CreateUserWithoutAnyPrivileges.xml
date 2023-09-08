@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Zugänge"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Neu..."
+			command-name="displayDialog_newPersonDialog"
+			component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
+			component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
+				tab-path=""
+			/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="Benutzername"
+							field-name="username"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="userWithoutPrivileges"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
+				tab-path=""
+			/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="Vorname"
+							field-name="givenName"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="User"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
+				tab-path=""
+			/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="Nachname"
+							field-name="sn"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Without Privileges"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler"
+			command-label="Erstellen"
+			command-name="newPerson"
+			component-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonComponent"
+			component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
+			command-label="Speichern"
+			command-name="defaultSave"
+			component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
+			component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Passwort ändern"
+			command-name="displayDialog_AdminChangePasswordDialog"
+			component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
+			component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
+				tab-path=""
+			/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="Neues Passwort"
+							field-name="newPassword1"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="root1234"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
+				tab-path=""
+			/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="Passwortwiederholung"
+							field-name="newPassword2"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="root1234"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent$ApplyPasswordCommand"
+			command-label="Passwort ändern"
+			command-name="changePassword"
+			component-implementation-comment="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent"
+			component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminChangePassword"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

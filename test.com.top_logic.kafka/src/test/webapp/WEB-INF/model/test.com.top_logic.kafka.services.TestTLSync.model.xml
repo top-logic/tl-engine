@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="test.com.top_logic.kafka.services.TestTLSync.source">
+			<types>
+				<class name="NodeNotExported">
+					<annotations>
+						<table name="SourceTable1"/>
+						<exported value="false"/>
+					</annotations>
+				</class>
+				<class name="Node">
+					<annotations>
+						<table name="SourceTable1"/>
+						<exported/>
+					</annotations>
+					<attributes>
+						<property name="createRev"
+							type="tl.core:Long"
+						/>
+						<reference name="otherNode"
+							type="test.com.top_logic.kafka.services.TestTLSync.source:Node2"
+						/>
+						<reference name="otherNodeTypeNotExported"
+							type="test.com.top_logic.kafka.services.TestTLSync.source:NodeNotExported"
+						/>
+						<reference name="exportedNotImportedNode"
+							type="test.com.top_logic.kafka.services.TestTLSync.source:Node"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed"/>
+					</generalizations>
+				</class>
+				<class name="Node2">
+					<annotations>
+						<table name="SourceTable1"/>
+						<exported/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.element:Attributed"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+		<module name="test.com.top_logic.kafka.services.TestTLSync.target">
+			<types>
+				<class name="TargetNode">
+					<annotations>
+						<table name="TargetTable1"/>
+						<imported source="test.com.top_logic.kafka.services.TestTLSync.source:Node"/>
+					</annotations>
+					<attributes>
+						<property name="createRev"
+							type="tl.core:Long"
+						/>
+						<reference name="otherNode"
+							type="test.com.top_logic.kafka.services.TestTLSync.target:TargetNode2"
+						/>
+						<reference name="exportedNotImportedNode"
+							type="test.com.top_logic.kafka.services.TestTLSync.target:TargetNode"
+						>
+							<annotations>
+								<imported value="false"/>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed"/>
+					</generalizations>
+				</class>
+
+				<class name="TargetNode2">
+					<annotations>
+						<table name="TargetTable1"/>
+						<imported source="test.com.top_logic.kafka.services.TestTLSync.source:Node2"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.element:Attributed"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

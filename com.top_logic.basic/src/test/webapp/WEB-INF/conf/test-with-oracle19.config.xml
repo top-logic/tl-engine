@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<pool name="oracle19">
+						<class>test.com.top_logic.basic.sql.TestingConnectionPool</class>
+						<read-pool>
+							<maxActive>40</maxActive>
+							<whenExhaustedAction>block</whenExhaustedAction>
+							<maxWait>5000</maxWait>
+							<timeBetweenEvictionRunsMillis>600000</timeBetweenEvictionRunsMillis>
+							<testWhileIdle>true</testWhileIdle>
+							<numTestsPerEvictionRun>10</numTestsPerEvictionRun>
+						</read-pool>
+						<write-pool>
+							<timeBetweenEvictionRunsMillis>600000</timeBetweenEvictionRunsMillis>
+							<testWhileIdle>true</testWhileIdle>
+							<numTestsPerEvictionRun>10</numTestsPerEvictionRun>
+						</write-pool>
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.top_logic.basic.sql.OracleDataSourceProxy</driver-class>
+							<options>
+								<option name="URL" value="%ORACLE19_URL%" />
+								<option name="user" value="%ORACLE19_USER%" />
+								<encrypted-option name="password" value="%ORACLE19_PASSWD%" />
+								<option name="implicitCachingEnabled" value="true" />
+								<option name="optimizerFeatures" value="19.1.0" />
+							</options>
+						</data-source>
+					</pool>
+					<pool name="testUnitOracle19">
+						<class>test.com.top_logic.basic.sql.TestingConnectionPool</class>
+						<read-pool>
+							<maxActive>40</maxActive>
+							<whenExhaustedAction>block</whenExhaustedAction>
+							<maxWait>5000</maxWait>
+							<timeBetweenEvictionRunsMillis>600000</timeBetweenEvictionRunsMillis>
+							<testWhileIdle>true</testWhileIdle>
+							<numTestsPerEvictionRun>10</numTestsPerEvictionRun>
+						</read-pool>
+						<write-pool>
+							<timeBetweenEvictionRunsMillis>600000</timeBetweenEvictionRunsMillis>
+							<testWhileIdle>true</testWhileIdle>
+							<numTestsPerEvictionRun>10</numTestsPerEvictionRun>
+						</write-pool>
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.top_logic.basic.sql.OracleDataSourceProxy</driver-class>
+							<options>
+								<option name="URL" value="%ORACLE19_URL%" />
+								<option name="user" value="%ORACLE19_USER_TEST_UNIT%" />
+								<encrypted-option name="password" value="%ORACLE19_PASSWD%" />
+								<option name="implicitCachingEnabled" value="true" />
+								<option name="optimizerFeatures" value="19.1.0" />
+							</options>
+						</data-source>
+					</pool>
+					<pool name="testMigrationOracle19">
+						<class>test.com.top_logic.basic.sql.TestingConnectionPool</class>
+						<read-pool>
+							<maxActive>40</maxActive>
+							<whenExhaustedAction>block</whenExhaustedAction>
+							<maxWait>5000</maxWait>
+							<timeBetweenEvictionRunsMillis>600000</timeBetweenEvictionRunsMillis>
+							<testWhileIdle>true</testWhileIdle>
+							<numTestsPerEvictionRun>10</numTestsPerEvictionRun>
+						</read-pool>
+						<write-pool>
+							<timeBetweenEvictionRunsMillis>600000</timeBetweenEvictionRunsMillis>
+							<testWhileIdle>true</testWhileIdle>
+							<numTestsPerEvictionRun>10</numTestsPerEvictionRun>
+						</write-pool>
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.top_logic.basic.sql.OracleDataSourceProxy</driver-class>
+							<options>
+								<option name="URL" value="%ORACLE19_URL%" />
+								<option name="user" value="%ORACLE19_USER_TEST_MIGRATION%" />
+								<encrypted-option name="password" value="%ORACLE19_PASSWD%" />
+								<option name="implicitCachingEnabled" value="true" />
+								<option name="optimizerFeatures" value="19.1.0" />
+							</options>
+						</data-source>
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

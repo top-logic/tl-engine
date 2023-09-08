@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="TemplateMessages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.template.xml.source.TemplateSourceFactory">
+			<instance class="com.top_logic.template.xml.source.TemplateSourceFactory"
+				default-protocol="resource"
+			>
+				<protocols>
+					<protocol name="filesystem" 
+						locator="com.top_logic.template.xml.source.TemplateFilesystemLocator"
+					/>
+					<protocol name="resource" 
+						locator="com.top_logic.template.xml.source.TemplateResourceLocator"
+					/>
+				</protocols>
+			</instance>
+		</config>
+	</services>
+		
+</application>

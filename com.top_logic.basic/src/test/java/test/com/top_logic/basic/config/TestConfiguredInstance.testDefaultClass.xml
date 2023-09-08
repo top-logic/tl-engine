@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<config>
+	<a-config x="Hello world!">
+	</a-config>
+	<a x="Hello world!">
+	</a>
+	<b-config />
+	<b />
+
+	<a-config-list>
+		<entry x="Hello world!">
+		</entry>
+		<entry x="Hello moon!">
+		</entry>
+	</a-config-list>
+	<a-list>
+		<entry x="Hello world!">
+		</entry>
+		<entry x="Hello moon!">
+		</entry>
+	</a-list>
+	<b-config-list>
+		<entry />
+	</b-config-list>
+	<b-list>
+		<entry />
+	</b-list>
+
+	<a-config-map>
+		<entry x="Hello world!">
+		</entry>
+		<entry x="Hello moon!">
+		</entry>
+	</a-config-map>
+	<a-map>
+		<entry x="Hello world!">
+		</entry>
+		<entry x="Hello moon!">
+		</entry>
+	</a-map>
+	<b-config-map>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$B3" z="42" />
+		<entry/>
+	</b-config-map>
+	<b-map>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$B3" z="1">
+		</entry>
+	</b-map>
+
+</config>

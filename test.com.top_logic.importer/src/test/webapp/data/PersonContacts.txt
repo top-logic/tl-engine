@@ -1,0 +1,11 @@
+dauDr.  Aumann    Dieter    +49 (170) 100001    +49 (6102) 7993-101    45
+emu     Mütt      Erna      +49 (170) 100002    +49 (6102) 7993-102dau 55
+kmu     Mütt      Karl      +49 (170) 100003    +49 (6102) 7993-103dau 55
+kscProf.Schmidt   Klaus     +49 (170) 100004    +49 (6102) 7993-104dau 32
+pme     Meier     Peter     +49 (170) 100005    +49 (6102) 7993-105emu 41
+iwo     Wolf      Inge      +49 (170) 100006    +49 (6102) 7993-106emu 59
+dbu     Dieter    Busemann  +49 (170) 100007    +49 (6102) 7993-107emu 33
+ewo     Wolf      Erna      +49 (170) 100008    +49 (6102) 7993-108emu 39
+kme     Meyer     Karl      +49 (170) 100009    +49 (6102) 7993-109kmu 36
+mzo     Zoller    Michael   +49 (170) 100010    +49 (6102) 7993-110kmu 22
+        Schneider Markus    +49 (170) 100011    +49 (6102) 7993-111    19

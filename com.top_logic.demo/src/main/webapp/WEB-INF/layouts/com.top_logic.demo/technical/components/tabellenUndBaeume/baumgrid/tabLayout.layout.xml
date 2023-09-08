@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_015e26a6_e078_44ed_bad1_923842bca6ec"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.7428dd70-aa3d-41f2-9fc4-f74e325905c8">
+			<de>Baumgrid</de>
+			<en>Tree Grid</en>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/baumgrid/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

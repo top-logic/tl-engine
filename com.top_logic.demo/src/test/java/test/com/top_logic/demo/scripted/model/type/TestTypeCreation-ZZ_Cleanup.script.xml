@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Modell Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Modell Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+			command-label="Anzeigen"
+			command-name="gotoCmd"
+			component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+			user-id="root"
+		>
+			<arguments>
+				<argument name="goto_object">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+						table="MetaElement"
+					>
+						<attributes>
+							<attribute name="scope">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="TLModule"
+								>
+									<attributes>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="DemoTypes"
+											/>
+										</attribute>
+									</attributes>
+								</value>
+							</attribute>
+							<attribute name="name">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="TopLevelDemoType"
+								/>
+							</attribute>
+						</attributes>
+					</value>
+				</argument>
+			</arguments>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Modell Editor > Eigenschaften"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+			command-label="Löschen..."
+			command-name="delete"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

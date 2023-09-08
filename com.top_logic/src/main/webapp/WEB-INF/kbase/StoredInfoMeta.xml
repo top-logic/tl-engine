@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- 
+    Definition of some associations and objects used in the context of mabBasedPersistancy.
+-->
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+<metaobjects>
+
+	<!-- KA from StoredQuery or StoredReport (currently) to a person who has defined it -->
+	<association super_class="Association" object_name="hasOwner">
+		<attributes>
+		<destination
+			override="true"
+			target-type="Person"
+		/>
+		</attributes>
+	</association>
+
+ 
+	<!-- KA from the StoredQuery or StoredReport (currently) to a group which is allowed to use it -->
+	<association super_class="Association" object_name="hasPublisher">
+		<attributes>
+		<destination
+			override="true"
+			target-type="Group"
+		/>
+		</attributes>
+	</association>
+</metaobjects>
+
+
+
+</objectlist>

@@ -1,0 +1,61 @@
+<h2>Syntax</h2>
+<pre><code>binary(
+    name: "hello.txt",
+    data: "Hello World!",
+    contentType: "text/plain",
+    encoding: "utf-8"
+)</code></pre>
+<h2>Beschreibung</h2>
+<p>Konstruiert einen binären Wert (eine Datei) mit den angegebenen Werten. Ein solcher Wert kann in einem Attribut vom Typ <code class="hljs inlineCode">tl.core:Binary</code> gespeichert und zum Download angeboten werden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>name</td>
+   <td>Zeichenkette</td>
+   <td>Name der Datei</td>
+   <td>ja</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>data</td>
+   <td>Any</td>
+   <td>Dateiinhalt. Wenn der Wert ist selbst ein binärer Wert ist, wird dieser unverändert übernommen. Wenn der Inhaltstyp "application/json" ist, wird eine JSON-Repräsentanz für das Objekt erzeugt. Ansonsten wird die String-Repräsentanz des Wertes verwendet und in dem angegebenen Zeichensatz gespeichert.</td>
+   <td>ja</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>contentType</td>
+   <td>Zeichenkette</td>
+   <td>MIME-Type der Datei, z.B. "<code class="hljs inlineCode">text/plain</code>" für eine Textdatei oder "<code class="hljs inlineCode">application/json</code>" für ein Objekt in JSON-Format.</td>
+   <td>nein</td>
+   <td>Wird aus dem Dateinamen abgeleitet.</td>
+  </tr>
+  <tr>
+   <td>encoding</td>
+   <td>Zeichenkette</td>
+   <td>Der zu verwendende Zeichensatz für textuellen Inhalt. Hat keine Bedeutung, bei anderem Inhalt.</td>
+   <td>nein</td>
+   <td>"<code class="hljs inlineCode">utf-8</code>"</td>
+  </tr>
+  <tr>
+   <td>size</td>
+   <td>Zahl</td>
+   <td>Länge der Binärdaten, <code class="hljs inlineCode">-1</code>, wenn nicht bekannt.</td>
+   <td>nein</td>
+   <td>-1</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><strong>Typ:</strong> Binärwert</p>
+<p>Eine Repräsentanz einer Datei. Im obigen Beispiel ist es eine Textdatei mit Namen "<code class="hljs inlineCode">hello.txt</code>" und dem Inhalt "<code class="hljs inlineCode">Hello world!</code>" kodiert in dem Zeichensatz "<code class="hljs inlineCode">utf-8</code>". Wird der Wert als Rückgabewert einer benutzerdefinierten Aktion eines Knopfes verwendet, werden die Daten dem Nutzer als Download angeboten.</p>

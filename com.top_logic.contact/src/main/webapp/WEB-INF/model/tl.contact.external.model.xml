@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0" xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<modules>
+		<module name="tl.contact.external">
+			<types>
+				<datatype name="ExternalContact" db_type="varchar" db_size="256" binary="true" kind="Custom">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="com.top_logic.contact.external.ExternalContact"
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="SINGLE_EXTERNAL_CONTACT"/>
+						<storage-algorithm>
+							<implementation
+								class="com.top_logic.contact.external.meta.ExternalContactSingletonStorage">
+							</implementation>
+						</storage-algorithm>
+					</annotations>
+				</datatype>
+				
+				<datatype name="ExternalContactSet" db_type="varchar" db_size="4096" binary="true" kind="Custom">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.util.Collection"
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="EXTERNAL_CONTACT"/>
+						<storage-algorithm>
+							<implementation
+								class="com.top_logic.contact.external.meta.ExternalContactStorage">
+							</implementation>
+						</storage-algorithm>
+					</annotations>
+				</datatype>
+			</types>
+		</module>
+	</modules>
+</model>

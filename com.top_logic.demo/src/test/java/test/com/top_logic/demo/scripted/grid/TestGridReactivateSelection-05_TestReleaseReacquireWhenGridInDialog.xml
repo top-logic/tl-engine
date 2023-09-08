@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			comment=""
+			failure-message=""
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name=""
+				tab-path="Tabellen > Grid"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Tests re-acquire token works for grids in dialogs."
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Öffne Baum-Grid"
+					command-name="displayDialog_TreeGridInDialogtreeGridDialog"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					comment=""
+					failure-expected="false"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+									tab-path=""
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+							</model-name>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming$GridNodeName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+										tab-path=""
+									/>
+								</component>
+								<path>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+										<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+												tab-path=""
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+													field-label-comment=""
+												>
+													<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestGrid_Reactivate_Selection"/>
+														</structure-path>
+													</business-object>
+												</node>
+											</path>
+										</model-name>
+									</entry>
+								</path>
+							</model-name>
+						</node>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Select A1, A0, and A1 again, to ensure that form fields are created. During initial openening the component can not swith object in edit mode, because it is still locked by underlying grid."
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming$GridNodeName">
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+												tab-path=""
+											/>
+										</component>
+										<path>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+													<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+														tab-path=""
+													/>
+													<path>
+														<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+															field-label-comment=""
+														>
+															<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																structure-name="DemoTypes"
+															>
+																<structure-path>
+																	<node name="TestGrid_Reactivate_Selection"/>
+																</structure-path>
+															</business-object>
+														</node>
+													</path>
+												</model-name>
+											</entry>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+													<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+														tab-path=""
+													/>
+													<path>
+														<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+															field-label-comment=""
+														>
+															<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																structure-name="DemoTypes"
+															>
+																<structure-path>
+																	<node name="TestGrid_Reactivate_Selection"/>
+																	<node name="A1_TestGrid"/>
+																</structure-path>
+															</business-object>
+														</node>
+													</path>
+												</model-name>
+											</entry>
+										</path>
+									</model-name>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+									tab-path=""
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-label="Bearbeiten"
+							command-name="gridEdit"
+							component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming$GridNodeName">
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+												tab-path=""
+											/>
+										</component>
+										<path>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+													<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+														tab-path=""
+													/>
+													<path>
+														<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+															field-label-comment=""
+														>
+															<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																structure-name="DemoTypes"
+															>
+																<structure-path>
+																	<node name="TestGrid_Reactivate_Selection"/>
+																</structure-path>
+															</business-object>
+														</node>
+													</path>
+												</model-name>
+											</entry>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+													<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+														tab-path=""
+													/>
+													<path>
+														<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+															field-label-comment=""
+														>
+															<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																structure-name="DemoTypes"
+															>
+																<structure-path>
+																	<node name="TestGrid_Reactivate_Selection"/>
+																	<node name="A0_TestGrid"/>
+																</structure-path>
+															</business-object>
+														</node>
+													</path>
+												</model-name>
+											</entry>
+										</path>
+									</model-name>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+									tab-path=""
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming$GridNodeName">
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+											<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+												tab-path=""
+											/>
+										</component>
+										<path>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+													<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+														tab-path=""
+													/>
+													<path>
+														<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+															field-label-comment=""
+														>
+															<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																structure-name="DemoTypes"
+															>
+																<structure-path>
+																	<node name="TestGrid_Reactivate_Selection"/>
+																</structure-path>
+															</business-object>
+														</node>
+													</path>
+												</model-name>
+											</entry>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+													<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+														tab-path=""
+													/>
+													<path>
+														<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+															field-label-comment=""
+														>
+															<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+																structure-name="DemoTypes"
+															>
+																<structure-path>
+																	<node name="TestGrid_Reactivate_Selection"/>
+																	<node name="A1_TestGrid"/>
+																</structure-path>
+															</business-object>
+														</node>
+													</path>
+												</model-name>
+											</entry>
+										</path>
+									</model-name>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+									tab-path=""
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+							</selection-model-name>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					comment=""
+					failure-expected="false"
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+								tab-path=""
+							/>
+						</component>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+									tab-path=""
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+										field-label-comment=""
+									>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+											structure-name="DemoTypes"
+										>
+											<structure-path>
+												<node name="TestGrid_Reactivate_Selection"/>
+												<node name="A1_TestGrid"/>
+											</structure-path>
+										</business-object>
+									</node>
+								</path>
+							</model-name>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
+					failure-message=""
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+									field-label-comment=""
+								>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestGrid_Reactivate_Selection"/>
+											<node name="A1_TestGrid"/>
+										</structure-path>
+									</business-object>
+								</field>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="string"
+								>
+									<attribute-ref attribute-name="string">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="TestGrid_Reactivate_Selection"/>
+											<node name="A1_TestGrid"/>
+										</structure-path>
+									</self-ref>
+								</field>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Edit2"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+							<model-name config:interface="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming$GridNodeName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+										tab-path=""
+									/>
+								</component>
+								<path>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+										<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+												tab-path=""
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+													field-label-comment=""
+												>
+													<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestGrid_Reactivate_Selection"/>
+														</structure-path>
+													</business-object>
+												</node>
+											</path>
+										</model-name>
+									</entry>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+										<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+											<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+												tab-path=""
+											/>
+											<path>
+												<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef"
+													field-label-comment=""
+												>
+													<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+														structure-name="DemoTypes"
+													>
+														<structure-path>
+															<node name="TestGrid_Reactivate_Selection"/>
+															<node name="A0_TestGrid"/>
+														</structure-path>
+													</business-object>
+												</node>
+											</path>
+										</model-name>
+									</entry>
+								</path>
+							</model-name>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+							tab-path=""
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/table/grid/demoGrid.layout.xml#TreeGridInDialogtreeGrid"
+					failure-message=""
+					user-id="root"
+				/>
+			</actions>
+		</action>
+	</actions>
+</action>

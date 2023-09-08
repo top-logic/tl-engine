@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- DEPRECATED: Use "com.top_logic.element/create/genericCreateStructure.xml" to display dynamic forms in the create dialog. -->
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="namePrefixInternal"
+			value="${namePrefix}newElement"
+		/>
+		<param name="detailComponent"
+			value="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
+		/>
+		<param name="dialogName"
+			value="${namePrefixInternal}LayoutDialog"
+		/>
+		<param name="detailComponentName"
+			value="${namePrefixInternal}Dialog"
+		/>
+		<param name="model"
+			value="model(dialogParent())"
+		/>
+		<param name="newModelAction"
+			value="set-parent-model"
+		/>
+		<param name="jSPNewPage"
+			value="/jsp/element/NewElementDialog.jsp"
+		/>
+		<param name="createCommandGroups"
+			optional="true"
+		/>
+		<param name="securityProvider"
+			value="default"
+		/>
+		<param name="newResPrefix"
+			value="element.structure.edit."
+		/>
+		<param name="createComponentConfig">
+			<!-- Empty by default. -->
+		</param>
+	</params>
+
+	<layout name="${dialogName}"
+		resPrefix="${newResPrefix}layout."
+	>
+		<components>
+			<!-- component to edit structured elements -->
+			<component class="${detailComponent}"
+				buttonComponent="${namePrefixInternal}Buttons"
+				commandGroups="${createCommandGroups}"
+				model="${model}"
+				name="${detailComponentName}"
+				newModelAction="${newModelAction}"
+				page="${jSPNewPage}"
+				resPrefix="${newResPrefix}"
+				securityProviderClass="${securityProvider}"
+			>${createComponentConfig}</component>
+			<buttonbar name="${namePrefixInternal}Buttons"/>
+		</components>
+	</layout>
+</template>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/treegrid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
+		partnerGroup="TreeGridPartner"
+		type="DemoTypes:DemoTypes.All"
+	>
+		<name key="dynamic.391d97e2-75b9-448b-9962-e9f897047ed9">
+			<de>Kinder</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="node -> model -> $model"
+			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
+			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
+			rootNode="x -> $x"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

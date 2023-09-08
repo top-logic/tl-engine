@@ -1,0 +1,54 @@
+<h2>Syntax</h2>
+<pre><code>zipEntry(
+    contents: binary("folder/hello.txt", "Hello world!"),
+    comment: "Index file.",
+    time: now(),
+    compress: true)
+</code></pre>
+<h2>Beschreibung</h2>
+<p>Konstruiert einen Eintrag für ein ZIP-Archiv, siehe <code class="hljs inlineCode"><a class="tlObject" data-custom="true" href="?page=zipArchive&amp;uuid=383b2c74-4e4a-4a8c-8dc9-0b7bdca4a550">zipArchive()</a></code>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>contents</td>
+   <td>Binärwert</td>
+   <td>Datei, die in das Archiv eingepackt werden soll. Der Dateiname bestimmt auch den Ordner innerhalb des Archivs. Die Pfade in dem Archiv müssen durch <code class="hljs inlineCode">"/"</code> getrennt werden.</td>
+   <td>ja</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>comment</td>
+   <td>Zeichenkette</td>
+   <td>Bemerkung zum Inhalt. Wird in dem Archiv mit abgelegt, hat aber keine weitere Bedeutung.</td>
+   <td>nein</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>compress</td>
+   <td>Wahrheitswert</td>
+   <td>Ob der Inhalt komprimiert werden sollen.</td>
+   <td>nein</td>
+   <td><code class="hljs inlineCode">true</code></td>
+  </tr>
+  <tr>
+   <td>time</td>
+   <td>Datum oder Zahl</td>
+   <td>Zeitstempel der Datei im Archiv. Eine Zahl wird interpretiert als Anzahl Millisekunden seit dem 1.1.1970 um 00:00 Uhr UTC.</td>
+   <td>nein</td>
+   <td><code class="hljs inlineCode">now()</code></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><strong>Typ:</strong> ZIP-Eintrag (kann nur im Kontext der Erstellung eines ZIP-Archives verwendet werden)</p>
+<p>Ein Eintrag einer ZIP-Datei.</p>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="master"/>
+		<param name="minIDLength"
+			value="3"
+		/>
+		<param name="maxIDLength"
+			value="4"
+		/>
+	</params>
+
+	<layout>
+		<components>
+			<component class="com.top_logic.element.layout.structured.MandatorAdminComponent"
+				buttonComponent="mandatorEditButtons"
+				editRoot="true"
+				maxIDLength="${maxIDLength}"
+				minIDLength="${minIDLength}"
+				model="selection(${master})"
+				name="mandatorEdit"
+				page="/jsp/element/mandator/EditMandator.jsp"
+				resPrefix="cos.admin.mandator.edit."
+				structure="mandatorStructure"
+			>
+				<dialogs>
+					<include name="element/mandator/createMandator.xml">
+						<inject>
+							<dialogInfo
+								height="310"
+								width="380"
+							>
+								<open-handler id="displayDialog_createMandator"
+									clique="create"
+									group="Create"
+									image="theme:ICONS_ADD_BUTTON"
+									resourceKey="cos.admin.mandator.edit.displayDialog_createMandator"
+									target="model(self())"
+									targetComponent="newMandator"
+								/>
+							</dialogInfo>
+						</inject>
+					</include>
+				</dialogs>
+			</component>
+			<buttonbar name="mandatorEditButtons"/>
+		</components>
+	</layout>
+</template>

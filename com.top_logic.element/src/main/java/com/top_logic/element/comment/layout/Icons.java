@@ -1,0 +1,39 @@
+/*
+ * SPDX-FileCopyrightText: 2018 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.element.comment.layout;
+
+import com.top_logic.layout.basic.IconsBase;
+import com.top_logic.layout.basic.ThemeImage;
+
+/**
+ * Icon constants for this package.
+ *
+ * @see ThemeImage
+ */
+@SuppressWarnings("javadoc")
+public class Icons extends IconsBase {
+
+	/**
+	 * Image for the command to edit a comment.
+	 */
+	public static ThemeImage EDIT;
+
+	/**
+	 * Image for the disabled command to edit a comment.
+	 */
+	public static ThemeImage EDIT_DISABLED;
+
+	/**
+	 * Image for the command to quote a comment.
+	 */
+	public static ThemeImage QUOTE;
+
+	/**
+	 * Image for the disabled command to quote a comment.
+	 */
+	public static ThemeImage QUOTE_DISABLED;
+
+}

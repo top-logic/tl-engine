@@ -1,0 +1,51 @@
+<h2>Syntax</h2> 
+<pre>	<code>$calendar.withHour12($hour)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Erstellt einen neuen Kalender aus dem gegebenen Kalender, wobei die <a class="tlObject" data-custom="true" href="?page=hour12&amp;uuid=3134c578-b14c-4402-a4c5-7f2fa64010f1">Stunde im 12-Stunden Format</a> auf <code class="hljs inlineCode">hour</code> gesetzt wird. Durch das Verändern der Stunde können sich auch andere Werte wie zum Beispiel die <a class="tlObject" data-custom="true" href="?page=hour&amp;uuid=7035566c-b509-4dcd-b3b1-c5d9aeaea837">Stunde</a> (24-Stunden Format) verändern.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>calendar</td> 
+   <td>Fachobjekt</td> 
+   <td>Der Kalender, dessen Stunde geändert werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>hour</td> 
+   <td>Zahl</td> 
+   <td>Wert für die neue Stunde, der für den Kalender gesetzt werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
+<p>Ein Kalender mit dem geänderten Wert für die Stunde.</p> 
+<h2>Beispiele</h2> 
+<h3>hour &lt;=12</h3> 
+<pre>	<code>dateTime(2012, 8, 15, 7, 55, 24, 13).toUserCalendar().withHour12(2).hour12()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 2</p> 
+<h3>hour &gt; 12</h3> 
+<pre>	<code>dateTime(2012, 8, 15, 7, 55, 24, 13).toUserCalendar().withHour12(15).hour12()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 3</p> 
+<p>Die Stunde wird ins 12-Stunden-Format umgewandelt.</p> 
+<h3>hour() nach withHour12()</h3> 
+<pre>	<code>dateTime(2012, 8, 15, 7, 55, 24, 13).toUserCalendar().withHour12(15).hour()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 15</p> 
+<p>Setzt man einen neuen Wert für hour12, so wird auch hour geändert.</p>

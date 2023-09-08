@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="filterComponent"/>
+		<param name="chartCreator"/>
+		<param name="model"
+			optional="true"
+		/>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="filterJSP"
+			value="/jsp/reporting/gantt/ganttFilter.jsp"
+		/>
+		<param name="monthsForward"
+			value="12"
+		/>
+		<param name="monthsBack"
+			value="2"
+		/>
+		<param name="depth"
+			value="3"
+		/>
+		<param name="maxDepth"
+			value="10"
+		/>
+		<param name="minDepth"
+			value="0"
+		/>
+		<param name="initialColumns"
+			value="startDate,endDate"
+		/>
+		<param name="updateAutamaticallyOnNewModel"
+			value="true"
+		/>
+		<param name="chartComponent"
+			value="com.top_logic.reporting.chart.gantt.component.GanttComponent"
+		/>
+		<param name="chartExporter"
+			value="com.top_logic.reporting.chart.gantt.ui.GanttChartExporter"
+		/>
+		<param name="pageJSP"
+			value="/jsp/reporting/gantt/ganttPage.jsp"
+		/>
+		<param name="chartComponentControlProvider"
+			value="com.top_logic.reporting.chart.gantt.component.GanttChartLayout"
+		/>
+		<param name="exportExecutability"
+			value="com.top_logic.reporting.chart.gantt.component.GanttExportDialog$PDFExportCommand$ExportExecutability"
+		/>
+		<param name="exportDialog"
+			value="com.top_logic.reporting.chart.gantt.component.GanttExportDialog"
+		/>
+		<param name="exportJSP"
+			value="/jsp/reporting/gantt/ganttExportDialog.jsp"
+		/>
+		<param name="rowsPerPage"
+			value="100"
+		/>
+	</params>
+
+	<layout horizontal="true">
+		<components>
+			<layout>
+				<layoutInfo size="325px"/>
+
+				<components>
+					<component class="${filterComponent}"
+						depth="${depth}"
+						initialColumns="${initialColumns}"
+						maxDepth="${maxDepth}"
+						minDepth="${minDepth}"
+						model="${model}"
+						monthsBack="${monthsBack}"
+						monthsForward="${monthsForward}"
+						multipleSettings="true"
+						name="${namePrefix}GanttFilter"
+						page="${filterJSP}"
+						resPrefix="reporting.chart.gantt.filter."
+						securityProviderClass="model"
+						updateAutamaticallyOnNewModel="${updateAutamaticallyOnNewModel}"
+					>
+						<toolbar-groups>
+							<toolbar-group name="refresh">
+								<buttons>
+									<button
+										command-id="update"
+										image="theme:ICONS_BUTTON_REFRESH"
+										not-executable-image="theme:ICONS_BUTTON_REFRESH_DISABLED"
+									/>
+								</buttons>
+							</toolbar-group>
+						</toolbar-groups>
+					</component>
+				</components>
+			</layout>
+			<layout resPrefix="reporting.chart.gantt.window.">
+				<components>
+					<component class="${chartComponent}"
+						chartCreator="${chartCreator}"
+						chartExporter="${chartExporter}"
+						isSecurityMaster="false"
+						model="selection(${namePrefix}GanttFilter)"
+						name="${namePrefix}GanttChart"
+						page="${pageJSP}"
+						resPrefix="reporting.chart.gantt.display."
+						rowsPerPage="${rowsPerPage}"
+						securityProviderClass="master"
+					>
+						<toolbar-groups>
+							<toolbar-group name="exportButtons">
+								<buttons>
+									<button
+										command-id="openExportDialog"
+										image="theme:ICONS_EXPORT_PDF"
+										not-executable-image="theme:ICONS_EXPORT_PDFDISABLED"
+									/>
+								</buttons>
+							</toolbar-group>
+						</toolbar-groups>
+						<componentControlProvider class="${chartComponentControlProvider}"/>
+
+						<dialogs>
+							<layout name="${namePrefix}GanttExportDialog">
+								<dialogInfo
+									closableUsingX="true"
+									createOpenerButtons="false"
+									defaultI18n="reporting.chart.gantt.export.dialog"
+									executability="${exportExecutability}"
+									height="200"
+									openHandlerName="openExportDialog"
+									openerCommandGroup="Export"
+									width="320"
+								/>
+
+								<components>
+									<component class="${exportDialog}"
+										name="${namePrefix}GanttExportDialogComp"
+										page="${exportJSP}"
+										resPrefix="reporting.chart.gantt.export."
+									/>
+									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+								</components>
+							</layout>
+						</dialogs>
+					</component>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

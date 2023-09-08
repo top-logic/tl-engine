@@ -1,0 +1,45 @@
+<h2>Syntax</h2> 
+<pre>	<code>$object.type()</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Liefert den Typ des Objektes <code class="hljs inlineCode">object</code>.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>object</td> 
+   <td>Fachobjekt</td> 
+   <td>Das Objekt, dessen Typ ermittelte werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
+<p>Der Typ des Objekts <code class="hljs inlineCode">object</code>.</p> 
+<h2>Beispiele</h2> 
+<h3>Einfach Typabfrage</h3> 
+<pre>	<code>{
+   object= new(`my.module:MyClass`);
+   $object.type();
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> my.module:MyType</p> 
+<h3>Typenvergleich</h3> 
+<pre>	<code>{
+   object= new(`my.module:MyClass`);
+   $object.type() == `my.module:MySuperClass`;
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">false</code></p> 
+<p>Anders als <a class="tlObject" data-custom="true" href="?page=instanceOf&amp;uuid=51c1a363-2163-471f-a558-145792d57a68">instanceOf</a> ergibt der Vergleich mit == nur <code class="hljs inlineCode">true</code>, wenn <code class="hljs inlineCode">object</code> genau dem Typ <code class="hljs inlineCode">my.module:MyType</code> und nicht wenn es nur ein Untertyp davon ist.</p>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="jSPDir"
+			value="/jsp/administration/maintenance/"
+		/>
+	</params>
+
+	<layout horizontal="true">
+		<components>
+			<tableView name="${namePrefix}_List"
+				isSecurityMaster="true"
+				resPrefix="admin.maintenance.table."
+				securityProviderClass="securityRoot"
+			>
+				<layoutInfo size="280"/>
+				<modelBuilder class="com.top_logic.util.maintenance.MaintenanceTableModelBuilder"
+					dir="${jSPDir}"
+					extension=".jsp"
+				/>
+				<table
+					defaultColumns="name"
+					defaultSortOrder="name"
+					fixedColumns="0"
+					rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
+				>
+					<columns>
+						<column name="name"
+							accessor="com.top_logic.util.maintenance.EndSectionAccessor"
+							columnWidth="240px"
+						/>
+					</columns>
+				</table>
+			</tableView>
+			<layout>
+				<components>
+					<component class="com.top_logic.util.maintenance.MaintenanceComponent"
+						model="selection(${namePrefix}_List)"
+						name="${namePrefix}_Content"
+						resPrefix="admin.maintenance.page."
+						securityProviderClass="securityRoot"
+					>
+						<!-- Must be rendered with IFRAME to allow maintenance pages to use direct HTTP request processing. -->
+						<componentControlProvider class="com.top_logic.layout.structure.IFrameLayoutControlProvider"/>
+					</component>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

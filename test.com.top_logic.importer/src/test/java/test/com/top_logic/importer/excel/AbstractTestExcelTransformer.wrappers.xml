@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<transformer>
+	<transformers>
+		<transformer name="fast-list-element">
+			<transformer class="com.top_logic.importer.excel.transformer.FastListElementTransformer"
+				fallback-name="Grün">
+				<mappings>
+					<mapping value="Grün" element="tl.beacon.three.green"  />
+					<mapping value="Gelb" element="tl.beacon.three.yellow" />
+					<mapping value="Rot"  element="tl.beacon.three.red"    />
+				</mappings>
+			</transformer>
+		</transformer>
+		<transformer name="fast-list-element-create">
+			<transformer class="com.top_logic.importer.excel.transformer.FastListElementTransformer"
+				create="true" list-name="tl.beacon.three">
+				<mappings>
+					<mapping value="Grün" element="tl.beacon.three.green"  />
+					<mapping value="Gelb" element="tl.beacon.three.yellow" />
+					<mapping value="Rot"  element="tl.beacon.three.red"    />
+				</mappings>
+			</transformer>
+		</transformer>
+		<transformer name="fast-list-element-mandatory">
+			<transformer class="com.top_logic.importer.excel.transformer.FastListElementTransformer" mandatory="true">
+				<mappings>
+					<mapping value="Grün" element="tl.beacon.three.green"  />
+					<mapping value="Gelb" element="tl.beacon.three.yellow" />
+					<mapping value="Rot"  element="tl.beacon.three.red"    />
+				</mappings>
+			</transformer>
+		</transformer>
+
+		<transformer name="person-contact">
+			<transformer class="com.top_logic.importer.excel.transformer.PersonContactTransformer" />
+		</transformer>
+		<transformer name="person-contact-mandatory">
+			<transformer class="com.top_logic.importer.excel.transformer.PersonContactTransformer" mandatory="true" />
+		</transformer>
+
+		<transformer name="org-unit">
+			<transformer class="com.top_logic.importer.excel.transformer.OrgUnitTransformer" guess-unit="true" />
+		</transformer>
+		<transformer name="org-unit-mandatory">
+			<transformer class="com.top_logic.importer.excel.transformer.OrgUnitTransformer" guess-unit="true" mandatory="true" />
+		</transformer>
+	</transformers>
+</transformer>

@@ -1,0 +1,34 @@
+<p>Functions are ubiquitous in TL Script. A function is a script expression that requires one or more inputs to be calculated. Most scripts used to parameterize user interface components in TopLogic must be written as functions. The script usually expects an input (argument) from the surrounding component. In addition to user-defined functions, TL-Script offers a whole range of <a class="tlObject" data-custom="true" href="?page=PredefinedFunctions&amp;uuid=0de662c2-14ff-4176-8d1b-d256e69de761">predefined functions</a>.</p>
+<p>A function consists of the declaration of a parameter, which names the expected input and an expression, which refers to this parameter:</p>
+<pre><code>x -&gt; someExpression($x)
+</code></pre>
+<p>The above script defines a function that expects an argument <code class="hljs inlineCode">x</code> and generates a value by evaluating the expression <code class="hljs inlineCode">someExpression($x)</code>. Here, <code class="hljs inlineCode">someExpression($x)</code> is representative of any TL script expression that uses the variable <code class="hljs inlineCode">x</code>. In this expression the value of the function argument can be accessed with the syntax <code class="hljs inlineCode">$x</code> (see <a class="tlObject" data-custom="false" href="?page=VariableDefinitions&amp;uuid=a353401f-3718-4a8f-b37d-8b8448518215">Variables</a>).</p>
+<p>A function that expects multiple arguments is written as follows:</p>
+<pre><code>x -&gt; y -&gt; someExpression($x, $y)</code></pre>
+<p>Above, a function is defined with two parameters <code class="hljs inlineCode">x</code> and <code class="hljs inlineCode">y</code>.</p>
+<p>Functions can also be stored in a variable to be called at a later time (see <a class="tlObject" data-custom="true" href="?page=apply&amp;uuid=470cd987-afc0-4dc3-b093-a016c8d37d58">Function Application</a>).</p>
+<pre><code>{
+   myFunc = x -&gt; $x * 5;
+
+   $myFunc(10)
+}</code></pre>
+<p>Above script defines a function that multiplies its argument by <code class="hljs inlineCode">5</code> and assigns this function to the variable <code class="hljs inlineCode">myFunc</code>. Then this function is called with the value <code class="hljs inlineCode">10</code> and consequently returns the value <code class="hljs inlineCode">50</code>.</p>
+<h2>Examples</h2>
+<p>For information on calling functions, see <a class="tlObject" data-custom="true" href="?page=apply&amp;uuid=470cd987-afc0-4dc3-b093-a016c8d37d58">Function Application</a>.</p>
+<h3>Function with one parameter</h3>
+<pre>	<code>x -&gt; 5 * $x</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span>/</p>
+<p>The input for <code class="hljs inlineCode">x</code> is multiplied by 5.</p>
+<h3>Function with two parameters</h3>
+<pre>	<code>x -&gt; y -&gt; $x * $y</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span>/</p>
+<p>Multiplies the inputs of <code class="hljs inlineCode">x</code> and <code class="hljs inlineCode">y</code> together.</p>
+<h3>Function in one variable</h3>
+<pre>	<code>{
+   multiply = x -&gt; 5 * $x;
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span> /</p>
+<p>The function for mulitplication is stored in the variable <code class="hljs inlineCode">multiply</code>. This can be accessed with <code class="hljs inlineCode">$multiply</code> to execute it with <a class="tlObject" data-custom="true" href="?page=apply&amp;uuid=470cd987-afc0-4dc3-b093-a016c8d37d58">apply()</a>, for example.</p>

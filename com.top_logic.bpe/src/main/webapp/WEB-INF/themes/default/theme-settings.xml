@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICON_BAN"
+		value="css:fas fa-ban"
+	/>
+	<icon name="ICON_BOLT"
+		value="css:fas fa-bolt"
+	/>
+	<icon name="ICON_CLOCK"
+		value="css:far fa-clock"
+	/>
+	<icon name="ICON_DROPBOX"
+		value="css:fab fa-dropbox"
+	/>
+	<icon name="ICON_ENVELOPE"
+		value="css:fas fa-envelope"
+	/>
+	<icon name="ICON_EXCLAMATION"
+		value="css:fas fa-exclamation"
+	/>
+	<icon name="ICON_PHONE"
+		value="css:fas fa-phone"
+	/>
+	<icon name="ICON_POLL_H"
+		value="css:fas fa-poll-h"
+	/>
+	<icon name="ICON_QUESTION"
+		value="css:fas fa-question"
+	/>
+	<icon name="ICON_STOP_CIRCLE"
+		value="css:fas fa-stop-circle"
+	/>
+	<icon name="ICON_UNDO"
+		value="css:fas fa-undo"
+	/>
+</settings>

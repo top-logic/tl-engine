@@ -1,0 +1,218 @@
+.menuEntryImage,
+
+tr.menuEntryHover,
+
+.ToolBarContainer,
+div.mainTabBar > div.scrollContainer > div.tabContainer > a.tab,
+div.fptTitleContent > span > label,
+
+a.accEntry,
+a.accEntry:link,
+a.accEntry:visited,
+a.accEntry:active,
+span.accIcon.input-image,
+.cFormEditorToolbox [data-tool="true"] > .attribute
+{
+    color: var(--TOOLBAR_BUTTON_ICON_COLOR);
+}
+
+.menuEntryCell:hover {
+	color: var(--LAYOUT_HIGHLIGHT_COLOR);
+}
+
+.tabContainer .activeTab
+{
+    font-weight: bold;
+}
+
+input.fltButton:hover,
+input.fltButton
+{
+    border: none;
+}
+
+a.tcrLink > span
+{
+    color: var(--LAYOUT_MAIN_COLOR);
+}
+
+.cFormEditorToolbox [data-tool="true"] > .attribute
+{
+    border-color: var(--LAYOUT_MAIN_COLOR);
+}
+
+.cIconChooser .input-image:hover
+{
+    background-color: #6d6d6d;
+}
+
+.lcNavigation,
+.ToolBarContainer,
+.TitleTop .TitleName,
+.mainTabBar,
+
+div.mainTabBar > div.scrollContainer,
+div.ToolContainer div.IconContainer .input-image,
+
+div.accRoot,
+a.accEntry
+{
+    background-color: #333;
+}
+
+div.accSelected a.accEntry,
+.cFormEditorToolbox [data-tool="true"] > .attribute
+{
+    background-color: var(--LAYOUT_MAIN_COLOR);
+}
+
+div.accSelected a.accEntry,
+.cFormEditorToolbox [data-tool="true"] > .attribute:hover
+{
+    font-weight: bold;
+    color: #fff;
+}
+
+a.accEntry:hover
+{
+    color: #ffffff;
+}
+
+.tblCellInnerSpacer a.cmdLink {
+	color: #000;
+}
+
+.sblLogo,
+input.is-upload[name="input"]
+{
+    background: #333;
+    color: #fff;
+}
+
+span.quickSearch:hover input,
+span.quickSearch:hover span.cButton input.input-image
+{
+    background: none;
+}
+
+span.quickSearch:hover > span.quickSearchInput
+{
+    background: #fff;
+}
+
+.pdlgContent > .is-control > table.popupMenu
+{
+    background: #333;
+}
+
+.cIconChooser .input-image
+{
+    background-color: #FBFBFD;
+}
+
+div.fptIconBar > span.fptIconWithOverlay > i
+{
+    line-height: 0.93em;
+}
+
+div.IconContainer > ul > li > div > img[src*='audi-logo']
+{
+    margin-top: 9px;
+    width: 80px;
+    height: 28px;
+}
+
+.BreadCrumbOuter .cLogoutTimer {
+	color: var(--TL-cerise);
+}
+
+[data-tool="true"] > .attribute .type-image .columnsLayout,
+[data-tool="true"]:hover > .attribute .type-image .columnsLayout
+{
+    background: URL('../themes/default/icons/columnsLayout_white.svg');
+}
+
+[data-tool="true"] > .attribute .type-image .frame,
+[data-tool="true"]:hover > .attribute .type-image .frame
+{
+    background: URL('../themes/default/icons/frame_white.svg');
+}
+
+[data-tool="true"] > .attribute .type-image .emptyCell,
+[data-tool="true"]:hover > .attribute .type-image .emptyCell
+{
+    background: URL('../themes/default/icons/emptyCell_white.svg');
+}
+
+[data-tool="true"] > .attribute .type-image .separator,
+[data-tool="true"]:hover > .attribute .type-image .separator
+{
+    background: URL('../themes/default/icons/separator_white.svg');
+}
+
+[data-tool="true"] > .attribute .type-image .groupCell,
+[data-tool="true"]:hover > .attribute .type-image .groupCell
+{
+    background: URL('../themes/default/icons/groupCell_white.svg');
+}
+
+[data-tool="true"] > .attribute .type-image .groupCell,
+[data-tool="true"]:hover > .attribute .type-image .groupCell
+{
+    background: URL('../themes/default/icons/groupCell_white.svg');
+}
+
+[data-tool="true"] > .attribute .type-image .table,
+[data-tool="true"]:hover > .attribute .type-image .table
+{
+    background: URL('../themes/default/icons/table_white.svg');
+}
+
+.lcNavigation .input-image.disabled i,
+.ToolBarContainer .input-image.disabled i,
+.TitleTop .TitleName .input-image.disabled i,
+.mainTabBar .input-image.disabled i,
+
+div.mainTabBar > div.scrollContainer .input-image.disabled i,
+div.ToolContainer div.IconContainer .input-image .input-image.disabled i,
+
+div.accRoot .input-image.disabled i,
+a.accEntry .input-image.disabled i,
+tr.cMenuButton.menuEntryDisabled i,
+tr.cMenuButton.menuEntryDisabled:hover i {
+	color: var(--ICON_COLOR_DARK_CONTEXT_DISABLED_BASIC);
+}
+
+.lcNavigation .input-image.disabled i span::before,
+.ToolBarContainer .input-image.disabled i span::before,
+.TitleTop .TitleName .input-image.disabled i span::before,
+.mainTabBar .input-image.disabled i span::before,
+
+div.mainTabBar > div.scrollContainer .input-image.disabled i span::before,
+div.ToolContainer div.IconContainer .input-image .input-image.disabled i span::before,
+
+div.accRoot .input-image.disabled i span::before,
+a.accEntry .input-image.disabled i span::before,
+tr.cMenuButton.menuEntryDisabled i span::before,
+tr.cMenuButton.menuEntryDisabled:hover i span::before {
+	color: var(--ICON_COLOR_DARK_CONTEXT_DISABLED_HIGHLIGHT_BG);
+}
+
+.lcNavigation .input-image.disabled i span::after,
+.ToolBarContainer .input-image.disabled i span::after,
+.TitleTop .TitleName .input-image.disabled i span::after,
+.mainTabBar .input-image.disabled i span::after,
+
+div.mainTabBar > div.scrollContainer .input-image.disabled i span::after,
+div.ToolContainer div.IconContainer .input-image .input-image.disabled i span::after,
+
+div.accRoot .input-image.disabled i span::after,
+a.accEntry .input-image.disabled i span::after,
+tr.cMenuButton.menuEntryDisabled i span::after,
+tr.cMenuButton.menuEntryDisabled:hover i span::after {
+	color: var(--ICON_COLOR_DARK_CONTEXT_DISABLED_HIGHLIGHT);
+}
+
+tr.cMenuButton.menuEntryDisabled .checkbox-select-all span::before {
+	color: var(--ICON_COLOR_HIGHLIGHT_BG);
+}

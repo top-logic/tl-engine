@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	comment="TestTabellenTreeGrid_Sessionsaenderungen_1"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Sessionsaenderungen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<comment><![CDATA[- Zwei Sessions mit unterschiedlichen Nutzern öffnen. 
+- Sicht Tabellen : Tree Grid 
+- Session A löscht ein Kindelement. 
+- Session B legt ein neues Kindelement an. 
+- In der Session A in der Baumstruktur klicken]]></comment>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Alle loeschen"
+							business-object="Variable"
+						/>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Variable zuweisen"
+							business-object="TabellenTreeGrid"
+						>
+							<parameters>
+								<parameter name="ergebnis"
+									value="E_01"
+								/>
+								<parameter name="Name"
+									value="ROOT"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Daten Anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Root Kind anlegen"
+							business-object="TabellenTreeGrid"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="KindA"
+								/>
+								<parameter name="ergebnis"
+									value="K_01"
+								/>
+								<parameter name="kontext"
+									value="E_01"
+								/>
+								<parameter name="Name"
+									value="Sessionanderung_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="A Element anlegen"
+							business-object="TabellenTreeGrid"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="KindB"
+								/>
+								<parameter name="ergebnis"
+									value="K_01_01"
+								/>
+								<parameter name="Parent"
+									value="E_01"
+								/>
+								<parameter name="kontext"
+									value="K_01"
+								/>
+								<parameter name="Name"
+									value="Sessionanderung_01_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="A Element anlegen"
+							business-object="TabellenTreeGrid"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="KindC"
+								/>
+								<parameter name="ergebnis"
+									value="K_01_02"
+								/>
+								<parameter name="Parent"
+									value="K_01"
+								/>
+								<parameter name="kontext"
+									value="K_01"
+								/>
+								<parameter name="Name"
+									value="Sessionanderung_01_02"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Nutzer anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Nutzer anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Nutzer"
+						>
+							<parameters>
+								<parameter name="ergebnis"
+									value="N_01"
+								/>
+								<parameter name="Loginname"
+									value="N_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Passwort setzen.xml"
+							template-name-comment="Passwort setzen"
+						>
+							<parameters>
+								<parameter name="Loginname"
+									value="N_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Nutzer"
+						>
+							<parameters>
+								<parameter name="ergebnis"
+									value="N_02"
+								/>
+								<parameter name="Loginname"
+									value="N_02"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Passwort setzen.xml"
+							template-name-comment="Passwort setzen"
+						>
+							<parameters>
+								<parameter name="Loginname"
+									value="N_02"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Rolle anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Rolle anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Rolle"
+						>
+							<parameters>
+								<parameter name="Berechtigungsstruktur"
+									value="DemoTypes"
+								/>
+								<parameter name="ergebnis"
+									value="R_01"
+								/>
+								<parameter name="Name"
+									value="R_Sessionsaenderung_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Alle Rechte geben"
+							business-object="Rolle"
+						>
+							<parameters>
+								<parameter name="Berechtigungsstruktur"
+									value="DemoTypes"
+								/>
+								<parameter name="Name"
+									value="R_Sessionsaenderung_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Rolle"
+						>
+							<parameters>
+								<parameter name="Berechtigungsstruktur"
+									value="Zentrale Berechtigungen"
+								/>
+								<parameter name="ergebnis"
+									value="R_02"
+								/>
+								<parameter name="Name"
+									value="R_Sessionsaenderung_02"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Alle Rechte geben"
+							business-object="Rolle"
+						>
+							<parameters>
+								<parameter name="Berechtigungsstruktur"
+									value="Zentrale Berechtigungen"
+								/>
+								<parameter name="Name"
+									value="R_Sessionsaenderung_02"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Nutzer Rolle vergeben"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Nutzer Rolle vergeben"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Rolle zuweisen"
+							business-object="Nutzer"
+						>
+							<parameters>
+								<parameter name="Berechtigungsstruktur"
+									value="DemoTypes"
+								/>
+								<parameter name="kontext"
+									value="N_01"
+								/>
+								<parameter name="Rolle"
+									value="R_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Rolle zuweisen"
+							business-object="Nutzer"
+						>
+							<parameters>
+								<parameter name="Berechtigungsstruktur"
+									value="Zentrale Berechtigungen"
+								/>
+								<parameter name="kontext"
+									value="N_01"
+								/>
+								<parameter name="Rolle"
+									value="R_02"
+								/>
+								<parameter name="Knoten"
+									value="SecurityRoot"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Rolle zuweisen"
+							business-object="Nutzer"
+						>
+							<parameters>
+								<parameter name="Berechtigungsstruktur"
+									value="DemoTypes"
+								/>
+								<parameter name="kontext"
+									value="N_02"
+								/>
+								<parameter name="Rolle"
+									value="R_01"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Rolle zuweisen"
+							business-object="Nutzer"
+						>
+							<parameters>
+								<parameter name="Berechtigungsstruktur"
+									value="Zentrale Berechtigungen"
+								/>
+								<parameter name="kontext"
+									value="N_02"
+								/>
+								<parameter name="Rolle"
+									value="R_02"
+								/>
+								<parameter name="Knoten"
+									value="SecurityRoot"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Persöhnliche Einstellungen zurücksetzen."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Persöhnliche Einstellungen zurücksetzen."
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Persoenliche Einstellungen zuruecksetzen"
+							business-object=""
+						/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

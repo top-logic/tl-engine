@@ -1,0 +1,9 @@
+<root>
+	<alias>
+        <entry name="%PAC_CALLBACK_URL%" value="https://www.top-logic.com/tl-demo/servlet/callback" />
+        <entry name="%PAC_CALLBACK_ABSOLUTE%" value="true" />
+        <entry name="%PAC_DOMAIN%" value="google-users" />
+        <entry name="%PAC_CLIENT_ID%" value="834105405473-fko4bnvcecirp419kg0o373gceg5epqp.apps.googleusercontent.com" />
+        <entry name="%PAC_SECRET%" value="5lPKUWxwEsB5JaFo9dkHr7A6" />
+	</alias>
+</root>

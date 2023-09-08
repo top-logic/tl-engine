@@ -1,0 +1,232 @@
+<html>
+<head>
+<title>HttpUnit Tutorial - create pool editor - step 4</title>
+<LINK REL="stylesheet" HREF="tutorial.css" TYPE="text/css">
+</head>
+
+<body>
+<p class="location"><a href="index.html">Tutorial</a>
+<img src="arrow_yellow.gif" width=13 height=9 align=bottom ALT="-&gt;"> <a href="task1.html">Task 1</a>
+<img src="arrow_yellow.gif" width=13 height=9 align=bottom ALT="-&gt;"> Step 4: Validating data entry</p>
+<h1>Testing servlet internals</h1>
+<p class="goals">In this step, you will learn how to:
+<br />&bull; Access a servlet directly during an invocation
+<br />&bull; Extract a table from a web response, using its contents
+<br />&bull; Examine the contents of an HTML table
+<br />&bull; Verify that fields are marked read-only</p>
+<p>We are nearly done with the pool editor. We can now use it to define the contents of the pool; however, we can
+only permit the administrator to open the pool for betting if it is valid. We therefore have to define the validity rules.
+For this tutorial, the only rules that we will insist on is that all teams must have opponents, and that only a game with
+a pair of teams may be selected as the tie-breaker.</p>
+<p>We must also prevent edits to the pool once it has been opened.</p>
+
+<h2>Testing bad inputs</h2>
+
+<p>Validation is often complicated, since we have to not only check the data against our validation rules, we also have
+to recognize the need to validate, and modify the output to show any errors. It would be nice if we could break this into
+pieces and build one at a time. With <code>ServletUnit</code>, we can:<p />
+<pre class="test-code">
+<b>public void</b> testPoolValidation() <b>throws</b> Exception {
+    ServletRunner sr = new ServletRunner( "web.xml" );
+    ServletUnitClient client = sr.newClient();
+    client.setAuthorization( "aUser", "pool-admin" );
+    WebResponse response = client.getResponse( "http://localhost/PoolEditor" );
+    WebForm form = response.getFormWithID( "pool" );
+
+    form.setParameter( "away1", "Detroit Lions" );
+    form.setParameter( "home1", "Denver Broncos" );
+    form.setParameter( "home2", "Baltimore Ravens" );
+    form.setParameter( "tiebreaker", "3" );
+    WebRequest request = form.getRequest( "save", "Open Pool" );           // (1) select the request object directly
+    InvocationContext context = client.newInvocation( request );           // (2) create an invocation context
+
+    PoolEditorServlet servlet = (PoolEditorServlet) context.getServlet();  // (3) locate the invoked servlet
+    servlet.updateBettingPool( context.getRequest() );                     // (4) ask servlet to update the data
+    String[] errors = servlet.getValidationErrors();                       // (5) ask servlet to check the data
+    assertEquals( "Number of errors reported", 2, errors.length );
+    assertEquals( "First error", "Tiebreaker is not a valid game", errors[0] );
+    assertEquals( "Second error", "Game 2 has no away team", errors[1] );
+}
+</pre>
+<p>This test starts out like all the others, but once we have created the request, things venture into new territory:<ol>
+<li>Rather than simply submitting the form, we ask for the request object used to do the submission. This was hidden
+from us in the last test.</li>
+<li>Given the request, we create a context in which we can step through the invocation of the servlet.
+This uses the same mechanisms to locate and initialize the servlet, request, and response objects, but does not actually
+invoke the servlet to process the request.</li>
+<li>We retrieve the initialized servlet and cast it in order to get at its intermediate methods.</li>
+<li>We call the <code>updateBettingPool</code> method (which we need to make package-accessible), passing the request
+object found in the context.</li>
+<li>We can now call a new method in the servlet which will return an array of error messages, which we can compare against
+our expected values for them.</li></ol></p>
+
+<p>This test won't even compile yet, so before proceeding, we should create the new method in the servlet without
+any logic:
+<pre class="servlet-code">
+String[] getValidationErrors() {
+    <b>return</b> new String[0];
+}
+</pre>
+
+<p>Now it compiles and fails, as expected. To make this test pass, we need to implement the new method in the servlet:</p>
+<pre class="servlet-code">
+String[] getValidationErrors() {
+    ArrayList errorList = <b>new</b> ArrayList();
+    BettingPoolGame game = BettingPool.getGames()[ BettingPool.getTieBreakerIndex() ];
+    <b>if</b> (game.getAwayTeam().length() == 0 || game.getHomeTeam().length() == 0) {
+        errorList.add( "Tiebreaker is not a valid game" );
+    }
+    BettingPoolGame[] games = BettingPool.getGames();
+    <b>for</b> (int i = 0; i < games.length; i++) {
+        <b>if</b> (games[i].getAwayTeam().length() == 0 && games[i].getHomeTeam().length() != 0) {
+            errorList.add( "Game " + i + " has no away team" );
+        } else <b>if</b> (games[i].getAwayTeam().length() != 0 && games[i].getHomeTeam().length() == 0) {
+            errorList.add( "Game " + i + " has no home team" );
+        }
+    }
+    String[] errors = (String[]) errorList.toArray( <b>new</b> String[ errorList.size() ] );
+    <b>return</b> errors;
+}
+</pre>
+
+<h2>Displaying the error messages</h2>
+
+<p>Once we are sure of our validation logic, we need to have the error messages displayed. We will arrange to have any error message displayed in the top of row of the table, and we will highlight any cells
+containing bad inputs. We therefore ask for the response from the bad open pool request:<p />
+<pre class="test-code">
+<b>public void</b> testBadPoolOpen() <b>throws</b> Exception {
+    ServletRunner sr = <b>new</b> ServletRunner( "web.xml" );
+    ServletUnitClient client = sr.newClient();
+    client.setAuthorization( "aUser", "pool-admin" );
+    WebResponse response = client.getResponse( "http://localhost/PoolEditor" );
+    WebForm form = response.getFormWithID( "pool" );
+
+    form.setParameter( "away1", "Detroit Lions" );                         // (1) enter bad values into the form
+    form.setParameter( "home1", "Denver Broncos" );
+    form.setParameter( "home2", "Baltimore Ravens" );
+    form.setParameter( "tiebreaker", "3" );
+
+    SubmitButton openButton = form.getSubmitButton( "save", "Open Pool" ); // (2) select the desired submit button
+    response = form.submit( saveButton );                                  // (3) submit the form
+
+    WebTable errorTable = response.getTableWithID( "errors" );             // (4) Look for the error table
+    assertNotNull( "No errors reported", errorTable );
+    errorTable.purgeEmptyCells();                                          // (5) Remove any empty cells from the table
+    String[][] cells = errorTable.asText();                                // (6) Convert non-empty cells to text
+    assertEquals( "Number of error messages provided", 2, cells.length - 1 );
+    assertEquals( "Error message", "Tiebreaker is not a valid game", cells[1][0] );
+    assertEquals( "Error message", "Game 2 has no away team", cells[2][0] );
+}
+</pre>
+<p>Note:<ol>
+<li>We enter known bad values.</li>
+<li>We then select the "Open Pool" button to be included with the form submission.</li>
+<li>We want the response when we submit the form changes.</li>
+<li>We expect to find them in a table with "errors" as its ID.</li>
+<li>We are not interested in any empty cells used for formatting.</li>
+<li>Since we want to examine the textual content of any non-empty cells in the table, we ask that the table be converted
+to a two-dimensional string array. In this case, there should only be one non-blank cell in each row.</li></ol></p>
+
+<p>This test passes once we modify the end of the <code>doPost</code> method :</p>
+<pre class="servlet-code">
+    pw.println( "&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;" );
+    <b>if</b> (request.getParameter( "save" ).equals( "Open Pool" )) {
+        String[] errors = getValidationErrors();
+        <b>if</b> (errors.length != 0) reportErrors( pw, errors );
+    }
+    printBody( pw );
+    pw.println( "&lt;/body&gt;&lt;/html&gt;" );
+}
+
+
+<b>private void</b> reportErrors( PrintWriter pw, String[] errors ) {
+    pw.println( "&lt;table id='errors' width='90%' style='background-color=yellow; " );
+    pw.println( "   border-color: black; border-width: 2; border-style: solid'&gt;" );
+    pw.println( "&lt;tr&gt;&lt;td colspan='2'&gt;&lt;b&gt;Cannot open pool for betting:&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;" );
+    <b>for</b> (int i=0; i &lt; errors.length; i++) {
+        pw.println( "&lt;tr&gt;&lt;td width='5'&gt;&amp;nbsp;&lt;/td&gt;&lt;td&gt;" + errors[i] + "&lt;/td&gt;&lt;/tr&gt;" );
+    }
+    pw.println( "&lt;/table&gt;" );
+}
+</pre>
+<p>Note that we are actually displaying <i>two</i> cells for each error. The first is blank, and is simply used for formatting,
+as many web designers tend to do.  The test code will ignore this, so that if the page is later modified to use stylesheets
+to control its formatting, the test will be unaffected. For this same reason, the tests in this tutorial tend to ignore
+formatting issues in general, and only look at structural elements.
+
+<h2>Closing the pool</h2>
+
+<p>If everything is valid, we should be able close the pool. This will be reflected by a change in state of the BettingPool
+object - which will later be used to change the options available to the users - and should forbid future changes to
+the pool itself. We will test this by verifying that the "save" submit buttons are no longer enabled:<p />
+<pre class="test-code">
+<b>public void</b> testGoodPoolOpen() <b>throws</b> Exception {
+    ServletRunner sr = <b>new</b> ServletRunner( "web.xml" );
+    ServletUnitClient client = sr.newClient();
+    client.setAuthorization( "aUser", "pool-admin" );
+    WebResponse response = client.getResponse( "http://localhost/PoolEditor" );
+    WebForm form = response.getFormWithID( "pool" );
+
+    form.setParameter( "away1", "Detroit Lions" );
+    form.setParameter( "home1", "Denver Broncos" );
+    form.setParameter( "away3", "Indianapolis Colts" );
+    form.setParameter( "home3", "Baltimore Ravens" );
+    form.setParameter( "tiebreaker", "3" );
+    form.getSubmitButton( "save", "Open Pool" ).click();                          // (1) click the submit button
+
+    response = client.getResponse( "http://localhost/PoolEditor" );               // (2) retrieve the page separately
+    form = response.getFormWithID( "pool" );
+    assertNull( "Could still update the pool", form.getSubmitButton( "save" ) );  // (3) look for the buttons
+
+    try {
+        WebRequest request = form.getRequest();
+        request.setParameter( "home3", "Philadelphia Eagles" );                   // (4) try to change an entry
+        fail( "Could still edit the pool" );
+    } catch (IllegalRequestParameterException e) {}
+}
+</pre>
+<p>Note:<ol>
+<li>Since we are not interested in the response this time (because we may ultimately have the browser forwarded to the main page),
+we simply click the submit button. This does the same as calling form.submit(), but does not return a response value.</li>
+<li>We come back to the form as though we were planning on editing it anew.</li>
+<li>We want to ensure that the submit buttons are disabled so the user cannot submit the form.</li>
+<li>We also verify that the fields are now marked readonly, which would prevent us from changing them. If the
+exception is not thrown, the test will be marked as failing.</li></ol></p>
+
+<p>We have to make changes in two places to make this behavior work. The following code change to <code>printBody</code>
+makes the form display read-only once the pool is open:</p>
+<pre class="servlet-code">
+    for (int i = 0; i &lt; games.length; i++) {
+        pw.println( "&lt;tr&gt;&lt;td&gt;" );
+        pw.print( "&lt;input name='home" + i + "' value='" + games[i].getHomeTeam() + "'" );
+        pw.println( getReadOnlyFlag() + "&gt;&lt;/td&gt;" );
+        pw.print( "&lt;td&gt;&lt;input name='away" + i + "' value='" + games[i].getAwayTeam() + "'" );
+        pw.println( getReadOnlyFlag() + "&gt;&lt;/td&gt;" );
+        pw.print( "&lt;td&gt;&lt;input type='radio' name='tiebreaker' value='" + i + "'" + getReadOnlyFlag() );
+        if (i == BettingPool.getTieBreakerIndex()) pw.print( " checked" );
+        pw.println( " /&gt;&lt;/td&gt;&lt;/tr&gt;" );
+    }
+    pw.println( "&lt;/table&gt;" );
+    if (BettingPool.isEditable()) {
+        pw.println( "&lt;input type='submit' name='save' value='Save' /&gt;" );
+        pw.println( "&lt;input type='submit' name='save' value='Open Pool' /&gt;" );
+    }
+    pw.println( "&lt;/form&gt;" );
+}
+
+private String getReadOnlyFlag() {
+    return BettingPool.isEditable() ? "" : " readonly";
+}
+</pre>
+<p>and we have to make a small change to <code>doPost</code> in order to mark the pool open:</p>
+<pre class="servlet-code">
+            String[] errors = getValidationErrors();
+            if (errors.length != 0) reportErrors( pw, errors );
+            else {
+                BettingPool.openPool();
+            }
+        }
+</pre>
+<p>The pool editor is now complete. In the <a href="task2.html">next task</a>, you will address access to the application.</p>
+</body></html>
+

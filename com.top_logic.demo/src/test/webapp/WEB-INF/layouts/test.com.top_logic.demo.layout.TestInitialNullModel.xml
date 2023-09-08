@@ -1,0 +1,6 @@
+<component class="com.top_logic.knowledge.gui.layout.TLMainLayout">
+	<component class="test.com.top_logic.demo.layout.TestInitialNullModel$TestingComponent"
+		model="null()"
+		name="testInitialNullModel"
+	/>
+</component>

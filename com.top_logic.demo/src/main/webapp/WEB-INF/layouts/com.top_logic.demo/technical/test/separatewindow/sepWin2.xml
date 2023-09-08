@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+	</params>
+
+	<layout resizable="false">
+		<components>
+			<component class="com.top_logic.mig.html.layout.SimpleComponent"
+				content="This FormComponent has a Partner-Relation to the FormComponents in all opened separate windows and to the FormComponent in the opening window. Every input (String) can be transmitted to all partners in the opened separate windows"
+				name="${namePrefix}SWPartnerTestComp2descr"
+				resPrefix="layouts.layoutdemo.separateWindow.sepWin2.SWPartnerTestComp2descr."
+			/>
+			<component class="com.top_logic.demo.layout.demo.SeparateWindowPartnerTestComponent"
+				buttonComponent="${namePrefix}SWPartnerTestButtons2"
+				displayWithoutModel="true"
+				name="${namePrefix}SWPartnerTestComp2"
+				page="/jsp/test/layout/SeparateWindowPartnerTest.jsp"
+				resPrefix="layouts.layoutdemo.separateWindow.sepWin2.SWPartnerTestComp2."
+			/>
+			<buttonbar name="${namePrefix}SWPartnerTestButtons2"/>
+		</components>
+	</layout>
+</template>

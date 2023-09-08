@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<schema 
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        targetNamespace="http://top-logic.com/base/service/ajax"
+        xmlns:ajax="http://top-logic.com/base/service/ajax">
+   <annotation>
+    <documentation xml:lang="en">
+     This schema definition should be a normative reference for
+     the xml used as AJAX-Requests in TopLogic. It should be used
+     by testcases to validate the generated XML. As TopLogic
+     is a moving target this script may not be uptodate.
+     
+     It mirrors the jacascript code found in simpelajax.js
+     
+	SPDX-FileCopyrightText: 2007 (c) Business Operation Systems GmbH &lt;info@top-logic.com&gt;
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+    </documentation>
+  </annotation>
+
+  <complexType name="Arguments">
+      <sequence>
+          <element name="argument" minOccurs="0" maxOccurs="unbounded" type="ajax:Argument"/>
+      </sequence>
+  </complexType>
+  
+  <complexType name="Argument">
+      <sequence>
+          <element name="name" type="xsd:string"/>
+          <element name="value" type="xsd:string"/>
+      </sequence>
+  </complexType>
+  
+  <complexType name="Actions">
+      <sequence>
+          <element name="action" type="ajax:ClientAction" minOccurs="0" maxOccurs="unbounded"/>
+      </sequence>
+  </complexType>
+  
+  <complexType abstract="true" name="ClientAction">
+      <sequence/>
+      <xsd:attribute name="context" xsi:type="xsd:normalizedString" />
+  </complexType>
+  
+  <complexType name="JSSnipplet">
+      <complexContent>
+          <extension base="ajax:ClientAction">
+              <sequence>
+                  <element name="code" type="xsd:string"/>
+              </sequence>
+          </extension>
+      </complexContent>
+  </complexType>
+  
+  <complexType name="DOMAction" abstract="true">
+      <complexContent>
+          <extension base="ajax:ClientAction">
+              <sequence>
+                  <element name="id" type="xsd:string"/>
+              </sequence>
+          </extension>
+      </complexContent>
+  </complexType>
+  
+  <complexType name="ContentReplacement">
+      <complexContent>
+          <extension base="ajax:DOMAction">
+              <sequence>
+                  <element name="innerHTML" type="xsd:string"/>
+              </sequence>
+          </extension>
+      </complexContent>
+  </complexType>
+  
+  <complexType name="FragmentInsertion">
+      <complexContent>
+          <extension base="ajax:DOMAction">
+              <sequence>
+                  <element name="placement" type="xsd:string"/>
+                  <element name="fragment">
+                      <complexType>
+                          <sequence>
+                              <any minOccurs="0" maxOccurs="unbounded"/>
+                          </sequence>
+                      </complexType>
+                  </element>
+              </sequence>
+          </extension>
+      </complexContent>
+  </complexType>
+
+  <element name="actions" type="ajax:Actions">
+  </element>
+</schema>

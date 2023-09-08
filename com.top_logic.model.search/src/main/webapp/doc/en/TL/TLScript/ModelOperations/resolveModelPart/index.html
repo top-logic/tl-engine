@@ -1,0 +1,44 @@
+<h2>Syntax</h2>
+<pre>	<code>resolveModelPart($partName)
+</code>
+</pre>
+<h2>Description</h2>
+<p>Resolves a model element using the fully qualified attribute name<code class="hljs inlineCode">partName</code>.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>partName</td>
+   <td>String</td>
+   <td>The fully qualified name of the model element to be resolved.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p>
+<p>The model element with the fully qualified name<code class="hljs inlineCode">partName</code>.</p>
+<h2>Examples</h2>
+<h3>Simple attribute resolution</h3>
+<pre><code>{
+moduleName = "my.module"; className = "MyType"; localAttrName="myAttribute";
+resolveModelPart($moduleName + ":" + $className + "#" + $localAttrName);
+}</code></pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> `my.module:MyType#myAttribute`</p>
+<h3>Simple type resolution</h3>
+<pre><code>{
+moduleName = "my.module"; className = "MyType";
+resolveModelPart($moduleName + ":" + $className);
+}</code></pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> `my.module:MyType`</p>
+<p></p>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Top-Logic Main Configuration File                        -->
+<!-- ======================================================== -->
+<!--                                                          -->
+<!--  Please provide a 'comment="..."' attribute/value pair   -->
+<!--  for each of your tags, if applicable. The text          -->
+<!--  provided there is displayed within the Administration   -->
+<!--  GUI of the application.                                 -->
+<!--                                                          -->
+
+<root>
+    <alias>
+		<!-- Name of the host where the application can be reached. -->
+		<entry name="%HOST%" value="${env:tl_host}"/>
+
+    	<!-- Root of the external application directory. -->
+        <entry name="%STORAGE_PATH%" value="${env:tl_storage_path:%APP_ROOT%/WEB-INF/app-data}" />
+
+		<!-- Base directory for log files. This alias is also used in default logging 
+			configuration files. Therefore it must be written in a syntax which is understood 
+			by logging framework. -->
+        <entry name="%LOG_PATH%" value="${env:tl_log_dir:%STORAGE_PATH%/logs}" />
+        
+    	<!-- Base directory for non-initial data (created by the application itself and not necessarily 
+    	     available before first startup). -->
+        <entry name="%VAR_PATH%" value="%STORAGE_PATH%/var" />
+        
+        <!-- Folder for the built-in document management (web folders). -->
+        <entry name="%DOCUMENTS_PATH%" value="%VAR_PATH%/documents" />
+        
+        <!-- Folder to store dynamic documents in (web folders). -->
+        <entry name="%REPOSITORY_PATH%" value="%DOCUMENTS_PATH%/repository" />
+        
+        <!-- Folder to move deleted dynamic documents to (web folders). -->
+        <entry name="%ATTIC_PATH%" value="%DOCUMENTS_PATH%/attic" />
+        
+        <!-- Storage of dynamic internationalizations. -->
+        <entry name="%VARIANTS_PATH%" value="%VAR_PATH%/variants" />
+        
+        <!-- Dynamically generated configuration data. -->
+        <entry name="%CONF_DATA_PATH%" value="%VAR_PATH%/conf" />
+
+        <!-- Folder for various temporary data. -->
+        <entry name="%TMP_PATH%" value="%VAR_PATH%/tmp" />
+
+        <entry name="%SMTP_ACTIVE%"		value="${env:smtp_active:false}" comment="Switch to disable sending of mails."/>
+        
+        <entry name="%SMTP_SERVER%"		value="${env:smtp_server:localhost}" comment="SMTP server used to send mails."/>
+		<entry name="%SMTP_PROTOCOL%"	value="${env:smtp_protocol:smtps}" />
+		<entry name="%SMTP_STARTTLS%"	value="${env:smtp_starttls:false}" />
+        <entry name="%SMTP_PORT%"		value="${env:smtp_port:-1}" comment="Port of SMTP server, -1 means default port."/>
+        <entry name="%SMTP_LOOKUP_MX%"  value="${env:smtp_lookup_mx:false}" comment="Set this true, if the given SMTP is a DNS entry."/>
+		<entry name="%SMTP_USER%"		value="${env:smtp_user:}" comment="User name for login to the SMTP server."/>
+		<entry name="%SMTP_PASS%"		value="${env:smtp_pass:}" comment="Password for SMTP server login."/>
+		<entry name="%SMTP_TIMEOUT%"    value="${env:smtp_timeout:60000}" />
+		<entry name="%SMTP_CONNECTION_TIMEOUT%"	value="${env:smtp_connection_timeout:60000}" />
+
+        <entry name="%MAIL_DOMAIN%"		value="${env:mail_domain:}" comment="Domain to use when plain username is found."/>
+        <entry name="%MAIL_SENDER%"		value="${env:mail_sender:%SMTP_USER%}"  comment="Sender of system mails ('from' address)."/>
+
+        <entry name="%DEFAULT_EVENT_TYPES%" value="created,modified,deleted" comment="basic log event types" />
+        
+        <entry name="%tl_version_allow_downgrade%" value="${env:tl_version_allow_downgrade:false}" />
+        
+        <entry name="%tl_enable_debug%" value="${env:tl_enable_debug:false}" />
+        <entry name="%tl_enable_scripting%" value="${env:tl_enable_scripting:false}" />
+    </alias>
+</root>

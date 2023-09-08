@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-K1-template.xml">
+	<px class="X">
+		<modelBuilder class="Y"/>
+		
+		<value>Z</value>
+	</px>
+</include>

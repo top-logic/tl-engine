@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Test component with unsatisfied constraint.
+	
+	Component expects positive-number &gt;0.
+-->
+<component class="test.com.top_logic.mig.html.layout.TestLayoutComponent$ComponentWithConstraint"
+	positive-number="-3"
+/>

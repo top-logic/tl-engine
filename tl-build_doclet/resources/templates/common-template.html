@@ -1,0 +1,52 @@
+<div>
+{% macro printTypeRef(type, current) -%}
+	{%- if type.id == current -%}
+		<span class="self" title="This type.">{{ type.id | typeName }}</span>
+	{%- elseif type.id | isExternal -%}
+		<span class="external" title="{{ type.id | qualifiedName }}">{{ type.id | typeName }}</span>
+	{%- else -%}
+		<a href="#{{ type.id }}" title="{{ type.id | qualifiedName }}">{{ type.id | typeName }}</a>
+	{%- endif -%}
+{%- endmacro %}
+
+{% macro printRef(ref, current) -%}
+	{%- if ref.class -%}
+		{%- if ref.member -%}
+			{%- if ref.class != current -%}
+				{{ printTypeRef(ref.class | asType) }}.
+			{%- endif -%}
+			{%- if ref.class | isExternal -%}
+				<span class="external" title="{{ ref.class | qualifiedName }}.{{ ref.member }}">{{ ref.member | simpleMemberName }}</span>
+			{%- else -%}
+				<a href="#{{ ref.class }}#{{ ref.member}}" title="{% if ref.class == current %}{{ref.class | typeName }}.{% else %}{{ ref.class | qualifiedName }}.{% endif %}{{ ref.member }}">{{ ref.member | simpleMemberName }}</a>
+			{%- endif -%}
+		{%- else -%}
+			{{ printTypeRef(ref.class | asType) }}
+		{%- endif -%}
+	{%- elseif ref.package -%}
+		<a href="#{{ ref.package }}.package-info" title="{{ ref.package }}">{{ ref.package | typeName }}</a>
+	{%- endif -%}
+{%- endmacro %}
+
+{% macro printSees(sees, current) %}
+	{% if sees %}
+		<div class="see">
+	  	<p>
+	  	<b>See also</b>:
+	  	</p>
+			<ul>
+				{% for see in sees %}
+					<li>
+					{% if see.class or see.package %}
+						<code>{{ printRef(see, current) }}</code>{% if see.title %}: {% endif %}
+					{% endif %}
+					{% if see.title %}
+						{{ see.title | doc(name) }}
+					{% endif %}
+					</li>
+				{% endfor %}
+			</ul>
+		</div>
+  	{% endif %}
+{% endmacro%}
+</div>

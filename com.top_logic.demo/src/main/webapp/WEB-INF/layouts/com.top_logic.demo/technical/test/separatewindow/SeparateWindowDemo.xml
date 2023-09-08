@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<layout name="SWTreeBoundLayout"
+			horizontal="true"
+		>
+			<components>
+				<component class="com.top_logic.mig.html.layout.SimpleComponent"
+					content="The tree on the right side is the master tree for one inputfield on this page and one inputfield in every dependant separate window"
+					name="SWTreeAdescr"
+					resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWTreeAdescr."
+				>
+					<layoutInfo size="25%"/>
+				</component>
+				<treeView name="SWTreeA"
+					adjustSelectionWhenCollapsing="true"
+					buttonComponent="ewDemo1Buttons"
+					expandSelected="true"
+					modelBuilder="com.top_logic.demo.layout.demo.LRMDemoTreeModelBuilder"
+					resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWTreeA."
+					resource-provider="com.top_logic.demo.layout.demo.DemoTreeNodeModel$LP"
+					securityProviderClass="securityRoot"
+				>
+					<layoutInfo size="25%"/>
+					<windows>
+						<window template="com.top_logic.demo/technical/test/separatewindow/sepWin1.xml">
+							<windowInfo/>
+							<substitutions>
+								<substitution key="namePrefix"
+									value="sepWin1"
+								/>
+								<substitution key="selection"
+									value="model(com.top_logic.demo/technical/test/separatewindow/separateWindowDemo.layout.xml#SWDemoFormInputB2)"
+								/>
+							</substitutions>
+						</window>
+					</windows>
+				</treeView>
+				<layout name="SWDemoFormInput_layout">
+					<components>
+						<component class="com.top_logic.mig.html.layout.SimpleComponent"
+							content="The master of this inputfield is the tree you see on the left side. The inputfield displays the tree's selected node"
+							name="SWDemoFormInputA1descr"
+							resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWDemoFormInputA1descr."
+						/>
+						<component class="com.top_logic.demo.layout.demo.LRMDemoFormComponent"
+							model="selection(SWTreeA)"
+							name="SWDemoFormInputA1"
+							page="/jsp/test/layout/LRMDemoMasterTest.jsp"
+							resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWDemoFormInputA1."
+							securityProviderClass="securityRoot"
+						/>
+						<component class="com.top_logic.mig.html.layout.SimpleComponent"
+							content="This inputfield will be the slave of the respective tree in every opened separate window. The inputfield displays the tree's selected node"
+							name="SWDemoFormInputB2descr"
+							resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWDemoFormInputB2descr."
+						/>
+						<component class="com.top_logic.demo.layout.demo.LRMDemoFormComponent"
+							name="SWDemoFormInputB2"
+							page="/jsp/test/layout/LRMDemoMasterTest.jsp"
+							resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWDemoFormInputB2."
+							securityProviderClass="securityRoot"
+						>
+							<!-- The Master-Attribute of this component will be dynamically set by the referenced component... -->
+						</component>
+					</components>
+				</layout>
+			</components>
+		</layout>
+		<buttonbar name="ewDemo1Buttons"/>
+		<layout name="SWPartnerBoundLayout">
+			<components>
+				<component class="com.top_logic.mig.html.layout.SimpleComponent"
+					content="This FormComponent has a Partner-Relation to the FormComponents in the opened separate windows. Every input (String) can be transmitted to all partners in the opened separate windows"
+					name="SWPartnerTestComp1descr"
+					resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWPartnerTestComp1descr."
+				/>
+				<component class="com.top_logic.demo.layout.demo.SeparateWindowPartnerTestComponent"
+					buttonComponent="SWPartnerTestButtons"
+					displayWithoutModel="true"
+					name="SWPartnerTestComp1"
+					page="/jsp/test/layout/SeparateWindowPartnerTest.jsp"
+					resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWPartnerTestComp1."
+					securityProviderClass="securityRoot"
+				>
+					<windows>
+						<window template="com.top_logic.demo/technical/test/separatewindow/sepWin2.xml">
+							<windowInfo
+								closeIfParentBecomesInvisible="true"
+								multiWindow="true"
+							/>
+							<substitutions>
+								<substitution key="namePrefix"
+									value="sepWin2"
+								/>
+							</substitutions>
+						</window>
+					</windows>
+				</component>
+				<buttonbar name="SWPartnerTestButtons"/>
+			</components>
+		</layout>
+	</components>
+</layout>

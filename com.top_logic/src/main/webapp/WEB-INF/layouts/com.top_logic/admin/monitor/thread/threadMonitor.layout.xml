@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminMonitorThread"
+	helpIDLegacy="util.monitor.thread.layout.tabber"
+	titleKey="util.monitor.thread.layout.tabber"
+>
+	<tabInfo label="util.monitor.thread.layout.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/monitor/thread/threadMonitor.xml"/>
+	</components>
+</securityLayout>

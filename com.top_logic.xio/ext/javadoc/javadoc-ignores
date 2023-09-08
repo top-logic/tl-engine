@@ -1,0 +1,5 @@
+com.top_logic.xio.importer.XmlImporter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.xio.importer.XmlImporter
+com.top_logic.xio.importer.handlers.ConditionalHandler.java: Invalid camel case word 'elseContinuation', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.xio.importer.handlers.DispatchingImporter.java: Missing documentation: com.top_logic.xio.importer.handlers.DispatchingImporter.Config.TagHandler.NAME
+com.top_logic.xio.importer.handlers.Handler.java: Missing documentation: com.top_logic.xio.importer.handlers.Handler.Config.getId
+com.top_logic.xio.importer.handlers.PropertySwitch.java: Missing documentation: com.top_logic.xio.importer.handlers.PropertySwitch.Config.ValueHandler.VALUE

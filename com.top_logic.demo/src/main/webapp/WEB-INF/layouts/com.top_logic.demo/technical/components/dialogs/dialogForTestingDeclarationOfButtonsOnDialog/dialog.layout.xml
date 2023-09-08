@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments helpID="ID_9327ac9d_639b_459d_8266_30ac5ae63b78">
+		<title>
+			<title key="dynamic.2848ef27-3ade-4126-842e-34f23ebe9757">
+				<en>Dialog for testing declarations of buttons on dialog</en>
+				<de>Dialog zum Testen von Deklarationen von Buttons am Dialog</de>
+			</title>
+		</title>
+		<open-handler id="ID_425f605a_e2ce_40ad_b9d5_4f727200db61"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:fas fa-comment-alt"
+		>
+			<resourceKey key="dynamic.2848ef27-3ade-4126-842e-34f23ebe9757">
+				<en>Dialog for testing declaration of buttons on dialog</en>
+				<de>Dialog zum Testen von Deklaration von Buttons am Dialog</de>
+			</resourceKey>
+		</open-handler>
+		<buttons>
+			<button id="ID_5748fe35_eceb_4759_a41c_b4d70e057001"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				image="css:fas fa-info"
+			>
+				<resourceKey key="dynamic.5df30c67-3ef6-4c1d-96ed-fb6a72872bea">
+					<en>Message button</en>
+					<de>Messagebutton</de>
+				</resourceKey>
+				<operation>info("Der Button 'Messagebutton' von Dialog wurde gedrückt!")</operation>
+			</button>
+		</buttons>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/dialogs/dialogForTestingDeclarationOfButtonsOnDialog/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

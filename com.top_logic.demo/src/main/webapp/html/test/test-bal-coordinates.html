@@ -1,0 +1,224 @@
+<html>
+
+<head>
+	<title>BAL test case of viewport computation</title>
+	
+	<style type="text/css">
+		button {
+			margin-right: 2ex;
+		}
+		
+		.bordered {
+			border-style: solid;
+			border-width: 1px; 
+			border-color: black;
+		}
+		
+		.absolute {
+			position: absolute;
+		}
+	</style>
+	
+	<!-- Import thread library. --> 
+	<script type="text/javascript" src="../../script/tl/bal.js"></script>
+	<script type="text/javascript" src="../../script/tl/bal-ie.js"></script>
+
+	<script type="text/javascript">
+		function handleOnLoad() {
+			computePositions();
+			
+			var viewportWidth = BAL.getViewportWidth();
+			
+			var outerDiv = document.getElementById("outer-div");
+			var outerX = BAL.getElementX(outerDiv);
+			var outerY = BAL.getElementY(outerDiv);
+			var outerWidth = BAL.getElementWidth(outerDiv);
+			var outerHeight = BAL.getElementHeight(outerDiv);
+			
+			var innerDiv = document.getElementById("inner-div");
+			var innerY = BAL.getElementY(innerDiv);
+			var innerHeight = BAL.getElementHeight(innerDiv);
+			
+			var horizontalDiv = document.createElement("div");
+			BAL.DOM.addClass(horizontalDiv, "bordered");
+			BAL.DOM.addClass(horizontalDiv, "absolute");
+			BAL.setElementX(horizontalDiv, 0);
+			BAL.setElementY(horizontalDiv, innerY + innerHeight - 25);
+			BAL.setElementHeight(horizontalDiv, 25);
+			BAL.setElementWidth(horizontalDiv, viewportWidth);
+			document.body.appendChild(horizontalDiv);
+			
+			var verticalDiv = document.createElement("div");
+			BAL.DOM.addClass(verticalDiv, "bordered");
+			BAL.DOM.addClass(verticalDiv, "absolute");
+			BAL.setElementX(verticalDiv, outerX + outerWidth - 25);
+			BAL.setElementY(verticalDiv, outerY);
+			BAL.setElementHeight(verticalDiv, outerHeight);
+			BAL.setElementWidth(verticalDiv, 25);
+			document.body.appendChild(verticalDiv);
+		}
+	
+		function computePositions() {
+			var viewportWidth = BAL.getViewportWidth();
+			var viewportHeight = BAL.getViewportHeight();
+			
+			document.getElementById("viewport-width").value=viewportWidth;
+			document.getElementById("viewport-height").value=viewportHeight;
+		
+			var outerDiv = document.getElementById("outer-div");
+			logElementCoordinates("outer", outerDiv);
+			
+			var innerDiv = document.getElementById("inner-div");
+			logElementCoordinates("inner", innerDiv);
+		}
+		
+		function logElementCoordinates(name, element) {
+			var width = BAL.getElementWidth(element);
+			var height = BAL.getElementHeight(element);
+			var x = BAL.getElementX(element);
+			var y = BAL.getElementY(element);
+			
+			document.getElementById(name + "-x").value=x;
+			document.getElementById(name + "-y").value=y;
+			document.getElementById(name + "-width").value=width;
+			document.getElementById(name + "-height").value=height;
+		}
+		
+		function reportMouseCoordinates(event) {
+			event = BAL.getEvent(event); 
+			
+			document.getElementById("event-x").value=event.x;
+			document.getElementById("event-y").value=event.y;
+			
+			document.getElementById("offset-x").value=event.offsetX;
+			document.getElementById("offset-y").value=event.offsetY;
+			
+			document.getElementById("client-x").value=event.clientX;
+			document.getElementById("client-y").value=event.clientY;
+			
+			document.getElementById("layer-x").value=event.layerX;
+			document.getElementById("layer-y").value=event.layerY;
+			
+			document.getElementById("page-x").value=event.pageX;
+			document.getElementById("page-y").value=event.pageY;
+
+			document.getElementById("screen-x").value=event.screenX;
+			document.getElementById("screen-y").value=event.screenY;
+		}
+	
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+	</script>
+</head>
+<body onload="handleOnLoad();">
+
+	<div class="bordered" style="height: 250px; padding: 50px;">
+		Invisible spacer
+	</div>
+
+	<a name="visible-contents"/><h2>Test BAL viewport functions</h2>
+
+    <p>Outer div:</p>
+	<div id="outer-div" onmousemove="reportMouseCoordinates(arguments[0]);" class="bordered" style="margin: 20px; padding: 25px; background-color: red;">
+		<div id="inner-div" class="bordered" style="margin: 15px; padding: 10px; background-color: yellow;">
+	   		<p>Inner div</p>
+		</div>
+	</div>
+
+	<h2>Element positions</h2>
+
+	<table>
+		<thead>
+			<tr><td></td> <td>x</td> <td>y</td> <td>width</td> <td>height</td></tr>
+		</thead>
+		
+		<tbody>
+			<tr>
+				<td>viewport</td> 
+				<td>-</td>
+				<td>-</td>
+				<td><input type="text" id="viewport-width" value="-"/></td>
+				<td><input type="text" id="viewport-height" value="-"/></td>
+			</tr>
+			<tr>
+				<td>outer</td> 
+				<td><input type="text" id="outer-x" value="-"/></td>
+				<td><input type="text" id="outer-y" value="-"/></td>
+				<td><input type="text" id="outer-width" value="-"/></td>
+				<td><input type="text" id="outer-height" value="-"/></td>
+			</tr>
+			<tr>
+				<td>inner</td> 
+				<td><input type="text" id="inner-x" value="-"/></td>
+				<td><input type="text" id="inner-y" value="-"/></td>
+				<td><input type="text" id="inner-width" value="-"/></td>
+				<td><input type="text" id="inner-height" value="-"/></td>
+			</tr>
+		</tbody>
+	</table>
+	
+	<button onclick="computePositions(); return false;">Compute</button>
+	
+	<h2>Mouse coordinates</h2>
+	
+	<form>
+	<table>
+		<thead>
+			<tr><td></td> <td>x</td> <td>y</td></tr>
+		</thead>
+		
+		<tbody>
+			<tr>
+				<td>event</td> 
+				<td><input type="text" id="event-x" value="-"/></td>
+				<td><input type="text" id="event-y" value="-"/></td>
+			</tr>
+			<tr>
+				<td>offset</td> 
+				<td><input type="text" id="offset-x" value="-"/></td>
+				<td><input type="text" id="offset-y" value="-"/></td>
+			</tr>
+			<tr>
+				<td>client</td> 
+				<td><input type="text" id="client-x" value="-"/></td>
+				<td><input type="text" id="client-y" value="-"/></td>
+			</tr>
+			<tr>
+				<td>layer</td> 
+				<td><input type="text" id="layer-x" value="-"/></td>
+				<td><input type="text" id="layer-y" value="-"/></td>
+			</tr>
+			<tr>
+				<td>page</td> 
+				<td><input type="text" id="page-x" value="-"/></td>
+				<td><input type="text" id="page-y" value="-"/></td>
+			</tr>
+			<tr>
+				<td>screen</td> 
+				<td><input type="text" id="screen-x" value="-"/></td>
+				<td><input type="text" id="screen-y" value="-"/></td>
+			</tr>
+		</tbody>
+	</table>
+	</form>
+	
+	<h2>Console output</h2>
+	
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+
+	<div class="bordered" style="height: 2000px; padding: 50px;">
+		Visible spacer
+	</div>
+	
+</body>
+</html>

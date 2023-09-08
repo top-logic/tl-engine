@@ -1,0 +1,22 @@
+High priority:
+o Better JavaScript error reporting: use custom object rather than NOT_FOUND (verify evaluate to false...)
+
+o Writeable 'name' Javascript attribute
+o NoOp request when link is to same page w/o new parameters?
+o Disable content-type header in MIME encoding?
+
+Medium priority:
+o Support optional tags which hide their contents (as in OBJECT, etc.)
+o Check conformance with RFC 2109/2965 - not currently sending $Version=1 string
+o Documentation, Documentation
+
+
+Possibles:
+o Enable client code to write directly to the output stream of a message body request
+o Provide customization for table to text
+
+
+Low priority:
+o history on web window
+o Support digest HTTP Authentication
+

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model 
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="tl.model.wysiwyg">
+			<types>
+				<datatype name="Html" db_type="clob" kind="String">
+					<storage-mapping class="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeStorageMapping" />
+					<annotations>
+						<config-type value="HTML"/>
+						<storage-algorithm>
+							<implementation class="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeStorage" />
+						</storage-algorithm>
+						<render-whole-line />
+					</annotations>
+				</datatype>
+			</types>
+		</module>
+
+	</modules>
+</model>

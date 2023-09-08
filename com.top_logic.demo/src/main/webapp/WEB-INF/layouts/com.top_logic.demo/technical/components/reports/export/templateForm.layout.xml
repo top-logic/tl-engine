@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/reports/contractsTable.layout.xml#Table)">
+		<name key="dynamic.b44bf59d-3055-43a7-86f3-0596ae9bd77a">
+			<en>Template</en>
+			<de>Vorlage</de>
+		</name>
+		<forms>
+			<form type="test.report:Contract">
+				<formDefinition>
+					<field
+						attribute="export"
+						fullQualifiedName="test.report:Contract#export"
+						type="tl.model.search:Report"
+					>
+						<annotations>
+							<render-whole-line/>
+							<input-before-label value="false"/>
+						</annotations>
+					</field>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

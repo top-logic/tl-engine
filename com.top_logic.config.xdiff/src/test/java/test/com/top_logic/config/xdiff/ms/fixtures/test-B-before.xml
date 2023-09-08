@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<r>
+	<a>
+		<v name="v1"><![CDATA[&v1;]]> <![CDATA[&lt;&amp;&gt;&#13;&#10; A&#65;]]>A</v>
+		<v name="v2"/>
+		<v name="v3">&amp;v1; &amp;lt;&amp;amp;&amp;gt;&amp;#13;&amp;#10; A&amp;#65;A</v>
+	</a>
+</r>

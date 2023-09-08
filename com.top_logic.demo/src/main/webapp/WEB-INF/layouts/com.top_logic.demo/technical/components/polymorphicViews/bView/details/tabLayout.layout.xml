@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="">
+		<tabLabel key="dynamic.f092ee2c-fe9c-4c6d-baf1-b3de03d3dd07">
+			<en>Details</en>
+			<de>Details</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicViews/bView/details/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

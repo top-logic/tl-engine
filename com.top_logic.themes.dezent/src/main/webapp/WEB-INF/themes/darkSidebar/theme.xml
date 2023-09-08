@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<theme id="darkSidebar"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	extends="dark,dezentSidebar"
+	state="enabled"
+>
+	<styles>
+		<style name="/style/darkSidebar/setPaddings.css"/>
+	</styles>
+</theme>

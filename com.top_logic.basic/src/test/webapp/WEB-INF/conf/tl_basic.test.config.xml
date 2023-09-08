@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+	
+		<config service-class="com.top_logic.basic.io.BasicFileLog">
+			<instance class="com.top_logic.basic.io.BasicFileLog"
+				basicPath="./tmp/basicFileLog/"
+			>
+				<logTypes>
+					<logType name="test"
+						filename="test"
+						path="test"
+						suffix=".log"
+						useYearMonth="false"
+					/>
+					<logType name="test1"
+						filename="test1"
+						path="test1"
+						suffix=".log1"
+						useYearMonth="false"
+					/>
+					<logType name="test2"
+						filename="test2"
+						path="test2"
+						suffix=".log2"
+						useYearMonth="true"
+					/>
+				</logTypes>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.basic.encryption.EncryptionService">
+			<instance class="com.top_logic.basic.encryption.DummyEncryptionService"
+				algorithm="AES"
+				key="b8eb777bb2b74f111aa1d65f881a8c1d"
+			/>
+		</config>
+		
+		<config service-class="com.top_logic.basic.SystemProperties">
+			<instance class="com.top_logic.basic.SystemProperties">
+				<system-properties>
+					<system-property key="sun.net.client.defaultConnectTimeout" value="2000" />
+					<system-property key="sun.net.client.defaultReadTimeout" value="8000" />
+				</system-properties>
+			</instance>
+		</config>
+	
+        <config service-class="com.top_logic.basic.format.configured.FormatterService">
+			<instance class="com.top_logic.basic.format.configured.FormatterService">
+				<lenient>false</lenient>
+				
+				<formats>
+					<decimal id="testDecimal"
+						normalize="true"
+						pattern="###,###,###,###,##0.00"
+						rounding-mode="HALF_UP"
+					/>
+					<decimal id="testRawDecimal"
+						normalize="false"
+						pattern="###,###,###,###,##0.00"
+						rounding-mode="HALF_UP"
+					/>
+					<decimal id="testDouble"
+						normalize="true"
+						pattern="###,###,###,###,##0.00"
+						result-type="double"
+						rounding-mode="HALF_UP"
+					/>
+					<decimal id="testLong"
+						pattern="###,###,###,###,##0"
+						result-type="long"
+						rounding-mode="HALF_UP"
+					/>
+					<custom-date id="testDateUserTime" pattern="dd.MM.yyyy HH'h'" user-time-zone="true"/>
+					<custom-date id="testDate" pattern="dd.MM.yyyy HH'h'" user-time-zone="false"/>
+					<custom-date id="testNoTimeZoneButLocale" pattern="YYYY ww dd.MM.yyyy HH:mm" user-time-zone="false"/>
+					<date-time id="testDateTime" date-style="medium" time-style="medium"/>
+					<number id="testCurrency" style="currency" />
+					<number id="testPercent" style="percent" />
+					<format id="testGeneric"
+						class="com.top_logic.basic.format.GenericFormatDefinition"
+						format-class="java.text.ChoiceFormat" pattern="1.0&lt;is 1+|2&lt;is more than 2." />
+				</formats>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.col.filter.FilterRegistry$Config">
+			<filters>
+				<filter name="myFilter" filter="test.com.top_logic.basic.col.filter.TestFilterRegistry$MyFilter" />
+			</filters>
+		</config>
+		
+		<config config:interface="test.com.top_logic.basic.TestComment$Config">
+			<ignore>
+				<entry value="test.com.top_logic.basic.col.AbstractTestBidiMap" />
+				<entry value="test.com.top_logic.basic.col.AbstractTestCollection" />
+				<entry value="test.com.top_logic.basic.col.AbstractTestIterator" />
+				<entry value="test.com.top_logic.basic.col.AbstractTestMap" />
+				<entry value="test.com.top_logic.basic.col.AbstractTestMapIterator" />
+				<entry value="test.com.top_logic.basic.col.AbstractTestSet" />
+				<entry value="test.com.top_logic.basic.col.AbstractTestObject" />
+				<entry value="test.com.top_logic.basic.col.BulkTest" />
+				<entry value="com.top_logic.basic.config.template.parser" />
+				<entry value="com.top_logic.basic.text.AbstractMessageFormat" />
+				<entry value="com.top_logic.basic.tooling.eclipse" />
+				<entry value="com.top_logic.basic.version.model" />
+				<entry value="com.top_logic.xref" />
+			</ignore>
+		</config>
+		
+		<config config:interface="test.com.top_logic.basic.TestNameClashClassVsPackage$Config">
+			<ignore>
+				<entry value="com.top_logic.basic.col.filter" />
+				<entry value="com.top_logic.basic.col.mapping" />
+				<entry value="com.top_logic.basic.version" />
+			</ignore>
+		</config>
+		
+	</configs>
+
+</application>

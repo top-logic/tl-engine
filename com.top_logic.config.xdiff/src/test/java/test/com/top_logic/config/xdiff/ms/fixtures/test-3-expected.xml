@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<r>
+	<a a0="v0">
+		<v name="v1" a1a="v1a" a1b="v1b" />
+		<v/>
+		<v name="v3" a3="v3"/>
+	</a>
+</r>

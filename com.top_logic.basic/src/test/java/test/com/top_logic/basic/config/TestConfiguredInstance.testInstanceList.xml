@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config>
+	<a-list>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$A1" x="Hello world!">
+		</entry>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$A2" x="Hello moon!" z="1">
+		</entry>
+	</a-list>
+</config>

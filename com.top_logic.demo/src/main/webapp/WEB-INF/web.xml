@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+  version="3.0"
+>
+    <display-name>TL-Demo</display-name>
+    
+<!-- ======================================================================= -->
+<!--  Custom filter section                                                  -->
+<!-- ======================================================================= -->
+
+<!-- Protect the workarea against users who have not logged in.
+	
+	// Not in use since Workarea is a bad idea for clusters
+
+    <filter>
+        <filter-name>sessionCheckingFilter</filter-name>
+        <filter-class>com.top_logic.base.accesscontrol.SessionCheckingFilter</filter-class>
+    </filter>
+-->
+
+<!-- Enable gzip Compression for urls mappdefined by mapping below
+	<filter>
+        <filter-name>Compression Filter</filter-name>
+        <filter-class>com.top_logic.util.filter.CompressionFilter</filter-class>
+		<init-param>
+		  <param-name>compressionThreshold</param-name>
+		  <param-value>1024</param-value> 
+		   <! - - number of output-bytes until compression will actually start default:1024  - - >
+		</init-param>
+    </filter>
+-->
+
+<!-- Filter Mappings for filters specified above 
+
+    <filter-mapping>
+        <filter-name>sessionCheckingFilter</filter-name>
+        <url-pattern>/workarea/*</url-pattern>
+    </filter-mapping>
+
+	<filter-mapping>
+		<filter-name>Compression Filter</filter-name>
+		<url-pattern>/jsp/test/compress/*</url-pattern>
+	</filter-mapping>
+-->
+
+
+<!-- ======================================================================= -->
+<!--  Listener section                                                       -->
+<!-- ======================================================================= -->
+
+    <listener>
+         <listener-class>com.top_logic.demo.DemoStartStopListener</listener-class>
+    </listener>
+ 
+<!-- ======================================================================= -->
+<!--  Custom servlet section                                                 -->
+<!-- ======================================================================= -->
+
+
+<!-- Deactivated to prevent new services being installed at runtime. -->
+<!--  
+	<servlet>
+		<servlet-name>AdminServlet</servlet-name>
+		<display-name>Axis Admin Servlet</display-name>
+		<servlet-class>org.apache.axis.transport.http.AdminServlet</servlet-class>
+		<load-on-startup>100</load-on-startup>
+	</servlet>
+-->
+
+    <servlet>
+        <!-- Login servlet which logs on the user via simple HTTP basic authentication -->
+        <servlet-name>BasicAuth</servlet-name>
+        <servlet-class>com.top_logic.base.accesscontrol.BasicAuthenticationServlet</servlet-class>
+    </servlet>
+
+<!-- ======================================================================= -->
+<!--  Custom servlet mapping                                                 -->
+<!-- ======================================================================= -->
+
+<!-- Deactivated to prevent new services being installed at runtime. -->
+<!--  
+	<servlet-mapping>
+		<servlet-name>AdminServlet</servlet-name>
+		<url-pattern>/servlet/AdminServlet</url-pattern>
+	</servlet-mapping>
+-->
+
+    <servlet-mapping>
+        <servlet-name>BasicAuth</servlet-name>
+        <url-pattern>/servlet/BasicAuth</url-pattern>
+    </servlet-mapping>
+
+    
+<!-- ======================================================================= -->
+<!--  Configuration of session                                               -->
+<!-- ======================================================================= -->
+
+    <session-config>
+       <!-- Better leave this to the container -->
+       <!-- <session-timeout>2</session-timeout> -->
+    </session-config>
+    
+<!-- =======================================================================     -->
+<!--      Need these for testing only !!! do not copy for top-logic !!!          -->
+<!-- Instead check that your conatiner (e.g. Tomcat) has all the needed mappings -->
+<!-- =======================================================================     -->
+
+    <mime-mapping>
+        <extension>htm</extension>
+        <mime-type>text/html</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>html</extension>
+        <mime-type>text/html</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>java</extension>
+        <mime-type>text/plain</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>js</extension>
+        <mime-type>text/javascript</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>txt</extension>
+        <mime-type>text/plain</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>doc</extension>
+        <mime-type>application/msword</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>xls</extension>
+        <mime-type>application/vnd.ms-excel</mime-type>
+    </mime-mapping> 
+  
+</web-app>

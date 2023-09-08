@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestGenericImportStructure">
+			<annotations>
+				<singletons>
+					<singleton type="TestGenericImportStructureRoot"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="Test.Global">
+					<annotations>
+						<legacy-qualified-name qualified-name="Test.Global"/>
+					</annotations>
+					<attributes>
+						<property name="Testdatum"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<reference name="Chef"
+							kind="forwards"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="Test.Global.Sub">
+					<annotations>
+						<legacy-qualified-name qualified-name="Test.Global.Sub"/>
+					</annotations>
+					<attributes>
+						<property name="TestdatumSub"
+							mandatory="true"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<reference name="ChefSub"
+							kind="forwards"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="Test.Global"/>
+					</generalizations>
+				</interface>
+				<interface name="TestSameTable">
+					<annotations>
+						<legacy-qualified-name qualified-name="TestSameTable"/>
+					</annotations>
+					<attributes>
+						<property name="a"
+							type="tl.core:String"
+						/>
+						<property name="b"
+							type="tl.core:Long"
+						/>
+						<property name="c"
+							type="tl.core:Double"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="TestGenericImport">
+					<annotations>
+						<legacy-qualified-name qualified-name="TestGenericImport"/>
+					</annotations>
+					<attributes>
+						<property name="ident"
+							type="tl.core:String"
+						/>
+						<property name="string"
+							type="tl.core:String"
+						/>
+						<property name="long"
+							type="tl.core:Long"
+						/>
+						<property name="float"
+							type="tl.core:Double"
+						/>
+						<property name="boolean"
+							type="tl.core:Boolean"
+						/>
+						<property name="date"
+							type="tl.core:Date"
+						/>
+						<reference name="wrapper"
+							kind="forwards"
+							type="tl.accounts:Person"
+						/>
+						<reference name="wrapperset"
+							kind="forwards"
+							multiple="true"
+							type="tl.element:StructuredElement"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<class name="TestGenericImportStructureRoot">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="ROOT"/>
+								</default-value>
+							</annotations>
+						</property>
+						<reference name="children"
+							override="true"
+							type="TestGenericImportStructureRootChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="TestGenericImport"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="TestGenericImportStructureElement">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+					</annotations>
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="TestGenericImportStructureElementChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="TestGenericImport"/>
+						<generalization type="TestGenericImportStructure:TestGenericImportStructureRootChild"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="TestGenericImportStructure:TestGenericImportStructureElementChild"/>
+					</generalizations>
+				</class>
+				<interface name="TestGenericImportStructureRootChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="TestGenericImportStructureElementChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+			</types>
+		</module>
+	</modules>
+</model>

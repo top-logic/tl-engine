@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="kontext"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="Name"
+				type="string"
+			/>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment=""
+			failure-message=""
+			user-id=""
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Strukturen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Strukturen > Typendemo > TreeGrid"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp">
+					<selection>
+						<t:if condition=" #equals($kontext, &quot;&quot;)">
+							<t:then>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path=""
+								/>
+							</t:then>
+							<t:else>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+									name="${$kontext}"
+								/>
+							</t:else>
+						</t:if>
+						<selection-state boolean="true"/>
+					</selection>
+					<t:if condition=" #equals($kontext, &quot;&quot;)">
+						<t:then>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</selection-model-name>
+						</t:then>
+						<t:else>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+								tab-path="Strukturen > Typendemo"
+							/>
+						</t:else>
+					</t:if>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CollapseToolbarActionOp"
+					expansion-state="NORMALIZED"
+					user-id="root"
+				>
+					<expandable key="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid.toolbarCollapsedState"
+						config:interface="com.top_logic.layout.scripting.recorder.specialcases.PersonalizedExpandableNamingScheme$Name"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					window-name=""
+				>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Filter"
+									field-name="selectedFilters"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="${$Name}"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+					<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+						context-name="sidebarFilterSelector"
+					>
+						<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+								tab-path="Strukturen > Typendemo > TreeGrid"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="fieldTable"
+								/>
+							</path>
+						</table-name>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

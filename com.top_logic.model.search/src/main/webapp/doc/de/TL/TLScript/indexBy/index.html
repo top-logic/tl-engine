@@ -1,0 +1,74 @@
+<h2>Syntax</h2> 
+<pre>	<code>$list.indexBy($key-fun)
+
+$list.indexBy($key-fun, $clash-fun)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Weist jedem Wert der Liste einen Schlüsselwert hinzu.</p> 
+<p>Im Gegensatz zur <a class="tlObject" data-custom="true" href="?page=groupBy&amp;uuid=0ceea055-4867-461a-9a86-d6ed56272dd8">Gruppierung</a> sind die Werte im resultierenden Wörterbuch keine Listen, sondern Einzelelemente. Daher müssen die brechneten Schlüsselwerte für die Element der Eingabemenge eindeutig sein. Über die Angabe einer optionalen <code class="hljs inlineCode">clash-fun</code> können Schlüsselkonflikte aufgelöst werden.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>list</td> 
+   <td>Menge</td> 
+   <td>Eine Liste, die indiziert werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>key-fun</td> 
+   <td>Funktion</td> 
+   <td>Schlüsselfunktion, nach der die Indizes erzeigt werden sollen.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>clash-fun</td> 
+   <td>Funktion</td> 
+   <td>Clashfunktion, nach der Key-Duplikate aufgelöst werden können. Ohne diese Funktion erzeugen Duplikate Fehlermeldungen.</td> 
+   <td>nein</td> 
+   <td>Keine Auflösung von Duplikaten.</td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
+<p>Ein Wörterbuch, in dem alle Werte der Liste einem Index zugeordnet sind.</p> 
+<h2>Beispiele</h2> 
+<h3>Indizierung nach Namenskürzel</h3> 
+<pre>	<code>list("Smith Joe", "Parker Jane", "Taylor Tom", "Black Tyler", "Brown Erik")
+   .indexBy(name -&gt; $name.subString(0, 3))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ein Wörterbuch mit den Werten:</p> 
+<pre><code>{
+   "Smi":  "Smith Joe",
+   "Par":  "Parker Jane",
+   "Tay":  "Taylor Tom", 
+   "Bla":  "Black Tyler",
+   "Bro":  "Brown Erik"
+}</code></pre> 
+<p>Aus jedem Namen werden die ersten 3 Buchstaben als Index verwendet.</p> 
+<h3>Indizierung nach Namenskürzel mit Clash-Funktion</h3> 
+<pre>	<code>list("Smith Joe", "Parker Jane", "Brown Erik", "Taylor Tom", "Black Tyler", "Brook Ashley", "Browning Dave")
+   .indexBy(name -&gt; $name.subString(0, 3), name1 -&gt; name2 -&gt; $name1 + " and " + $name2)
+</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ein Wörterbuch mit den Werten:</p> 
+<pre><code>{
+   "Smi":  "Smith Joe",
+   "Par":  "Parker Jane",
+   "Tay":  "Taylor Tom", 
+   "Bla":  "Black Tyler",
+   "Bro":  "Brown Erik and Brook Ashley and Browning Dave"
+}</code></pre> 
+<p>​Die drei Namen "Brown Erik", "Brook Ashley", "Browning Dave" erhalten durch die Schlüsselfunktion dieselben Schlüssel. Ohne Clashfunktion würde eine Fehlermeldung herauskommen. In diesem Fall werden die Namen für den Key zusammengesetzt.</p>

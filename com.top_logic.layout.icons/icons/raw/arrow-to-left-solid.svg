@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="visual"
+   viewBox="0 0 22 22"
+   version="1.1"
+   sodipodi:docname="arrow-to-left-solid.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata15">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>selectFilter</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1680"
+     inkscape:window-height="987"
+     id="namedview13"
+     showgrid="false"
+     inkscape:zoom="0.94816591"
+     inkscape:cx="-344.26472"
+     inkscape:cy="151.61243"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="visual" />
+  <defs
+     id="defs4">
+    <style
+       id="style2">.cls-1{fill:#008fb8;}.cls-2{fill:none;stroke:#008fb8;stroke-miterlimit:10;stroke-width:5px;}</style>
+  </defs>
+  <title
+     id="title6">selectFilter</title>
+  <polygon
+     class="cls-1"
+     points="6.8,4.92 16.8,4.92 16.8,14.92 "
+     id="polygon8"
+     transform="matrix(-0.89158009,-0.89158009,0.89158009,-0.89158009,15.477541,30.94189)"
+     style="fill:#008fb8" />
+  <line
+     class="cls-2"
+     x1="21.994993"
+     y1="11.585685"
+     x2="11.278201"
+     y2="11.585685"
+     id="line10"
+     style="fill:none;stroke:#008fb8;stroke-width:6.30442286px;stroke-miterlimit:10" />
+  <rect
+     style="fill:#008fb8;fill-opacity:1;stroke:none;stroke-width:0.29712534;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect840"
+     width="4.0697069"
+     height="21.721308"
+     x="0.093220331"
+     y="0.13886034" />
+</svg>

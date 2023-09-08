@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="model"/>
+		<param name="expandAll"
+			value="false"
+		/>
+	</params>
+
+	<layout>
+		<components>
+			<component class="com.top_logic.demo.table.DemoStructuredEditComponent"
+				columns="default, boolean, booleanMandatory, checklist, checklistSingle, checklistMulti, collection, date, document, list, long, stringSet, string, structure, typedSetOrdered, typedSetUnordered, typedWrapper, typedWrapperFiltered, typedWrapperGenerated, untypedWrapper, float"
+				expandAll="${expandAll}"
+				fixedColumns="2"
+				headerRenderer="com.top_logic.layout.basic.ResourceRenderer"
+				model="${model}"
+				multiSelect="true"
+				name="${namePrefix}StructureEditComponent"
+				objectType="me:DemoTypes.All"
+				onlyOneLevelModify="true"
+				resPrefix="layouts.demo.table.structureEdit.DemoStructureEditComponent."
+				rootVisible="true"
+				saveScrollPosition="true"
+				showSelectionColumn="true"
+				viewModeFixedColumns="3"
+			>
+				<treeModelBuilder class="com.top_logic.element.layout.structured.StructuredElementTreeModelBuilder"/>
+				<compareModelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
+				<tables>
+					<table name="compareTable"
+						fixedColumns="2"
+					>
+						<columns>
+							<column name="name"
+								mandatory="true"
+							>
+								<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"
+									resourceProvider="com.top_logic.mig.html.NoImageResourceProvider"
+								/>
+								<renderer class="com.top_logic.layout.basic.LabelRenderer"/>
+							</column>
+						</columns>
+					</table>
+				</tables>
+			</component>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

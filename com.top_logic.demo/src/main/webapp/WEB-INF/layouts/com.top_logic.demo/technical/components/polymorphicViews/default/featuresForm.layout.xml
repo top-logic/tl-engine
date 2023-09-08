@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/polymorphicViews/objectsTable.layout.xml#Table)">
+		<name key="dynamic.33e831b7-3415-4019-8278-93e43864391a">
+			<en>Features</en>
+			<de>Eigenschaften</de>
+		</name>
+	</arguments>
+</config:template-call>

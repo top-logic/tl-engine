@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID=""
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<title>
+			<title key="dynamic.4440e981-bafb-4bd4-83fd-3d6cfa541f08">
+				<en>New object</en>
+				<de>Neues Objekt</de>
+			</title>
+		</title>
+		<open-handler id="ID_0cc5449a_c870_4e0f_948c_0a6324173a1a"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			clique="create"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			image=""
+			target="selection(self())"
+			targetComponent="com.top_logic.demo/technical/components/polymorphicForms/newObject/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.4440e981-bafb-4bd4-83fd-3d6cfa541f08">
+				<en>New object</en>
+				<de>Neues Objekt</de>
+			</resourceKey>
+		</open-handler>
+		<initialization><![CDATA[form -> context -> if (
+    $form.get(`test.polymorphism:A#name`) == null and 
+    $context != null, 
+       $form.set(`test.polymorphism:A#name`, toString($context.get(`test.polymorphism:A#name`), "- new")))]]></initialization>
+		<typeOptions
+			include-subtypes="true"
+			type="test.polymorphism:A"
+		/>
+		<create-handler id="ID_4d02a979_7e50_4bba_bef2_10212e117f71"
+			clique="save"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			ignoreWarnings="default"
+			image=""
+			linkOperation=""
+		/>
+	</arguments>
+</config:template-call>

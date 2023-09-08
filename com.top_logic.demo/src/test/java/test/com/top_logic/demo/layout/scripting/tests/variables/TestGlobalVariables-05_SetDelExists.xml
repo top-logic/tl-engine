@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.SetGlobalVariableOp"
+			name="Variable_Test_SetDelExists"
+		>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+				string="Value for Test SetDelExists"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.DelGlobalVariableOp"
+			name="Variable_Test_SetDelExists"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.GlobalVariableExistenceAssertionOp"
+			existing="false"
+			name="Variable_Test_SetDelExists"
+		/>
+	</actions>
+</action>

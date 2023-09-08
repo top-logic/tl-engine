@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Defines the Metaobject for a GalleryImage  -->
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+<metaobjects>
+
+<metaobject object_type="MOKnowledgeObject" object_name="GalleryImage" super_class="TLObject" >
+<attributes>
+	<mo_attribute att_name="name" att_type="String"	db_size="250" mandatory="true" />
+</attributes>
+</metaobject>
+
+</metaobjects>
+</objectlist>

@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%MSSQL_HOST%" value="${env:mssql_host:localhost}" />
+        <entry name="%MSSQL_PORT%" value="${env:mssql_port:1042}" />
+        <entry name="%MSSQL_SCHEMA%" value="${env:mssql_schema:test}" />
+        <entry name="%MSSQL_SCHEMA_TEST_UNIT%" value="${env:mssql_schema_testUnit:testUnit}" />
+        <entry name="%MSSQL_SCHEMA_TEST_MIGRATION%" value="${env:mssql_schema_testMigration:testMigration}" />
+        <entry name="%MSSQL_USER%" value="${env:mssql_user:user}" />
+        <entry name="%MSSQL_PASSWD%" value="${env:mssql_passwd:unencrypted:password}" />
+	</alias>
+</root>

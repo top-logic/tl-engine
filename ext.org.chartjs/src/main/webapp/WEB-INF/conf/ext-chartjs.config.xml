@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.gui.JSFileCompiler">
+			<instance>
+				<additional-files>
+					<file resource="webjar:org.webjars/chartjs:/webjars/chartjs:dist/chart.umd.js" />
+				</additional-files>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminCurrencies"
+	helpIDLegacy="admin.currency.tabber"
+	titleKey="admin.currency.tabber"
+>
+	<tabInfo label="admin.currency.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/model/currencies/currencyAdmin.xml"/>
+	</components>
+</securityLayout>

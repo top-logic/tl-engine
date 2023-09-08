@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model 
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="TestSearchExpression">
+			<annotations>
+				<singletons>
+					<singleton type="R" />
+				</singletons>
+			</annotations>
+			<types>
+				<class name="S">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<property name="name" type="tl.core:String"/>
+						<reference name="parent" type="S" aggregate="true"/>
+					</attributes>
+				</class>
+
+				<class name="R">
+					<generalizations>
+						<generalization type="S"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+							override="true"
+						>
+							<annotations>
+								<default-value>
+									<string value="ROOT"/>
+								</default-value>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+				
+				<class name="A">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<property name="name" type="tl.core:String" />
+						<reference name="context" type="S" aggregate="true"/>
+						<property name="str" type="tl.core:String" />
+						<property name="int" type="tl.core:Integer" />
+						<property name="double" type="tl.core:Double" />
+						<reference name="other" type="A" multiple="false"/>
+						<reference name="others" type="A" multiple="true"/>
+						<reference name="list" type="A" multiple="true" ordered="true"/>
+						<reference name="any" type="tl.model:TLObject" multiple="true"/>
+						<reference name="b" type="B" composite="true"/>
+					</attributes>
+				</class>
+				
+				<class name="B">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<property name="name" type="tl.core:String" />
+						<reference name="contents" type="B" composite="true" multiple="true" ordered="true"/>
+						<reference name="content" type="B" composite="true"/>
+						<reference name="others" type="B" multiple="true"/>
+						<reference name="other" type="B" />
+					</attributes>
+				</class>
+				
+				<class name="C">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<generalizations>
+						<generalization type="B"/>
+					</generalizations>
+					<attributes>
+						<reference name="orig" type="B" />
+					</attributes>
+				</class>
+				
+				<class name="D">
+					<attributes>
+						<property name="name" type="tl.core:String" mandatory="true"/>
+						<property name="in" type="tl.core:Double"/>
+						
+						<property name="derivedByte" type="tl.core:Byte">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestSearchExpression:D#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedShort" type="tl.core:Short">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestSearchExpression:D#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedInt" type="tl.core:Integer">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestSearchExpression:D#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedLong" type="tl.core:Long">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestSearchExpression:D#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedFloat" type="tl.core:Float">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestSearchExpression:D#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedDouble" type="tl.core:Double">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestSearchExpression:D#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						
+						<property name="byte" type="tl.core:Byte"/>
+						<property name="short" type="tl.core:Short"/>
+						<property name="int" type="tl.core:Integer"/>
+						<property name="long" type="tl.core:Long"/>
+						<property name="float" type="tl.core:Float"/>
+						<property name="double" type="tl.core:Double"/>
+						
+					</attributes>
+				</class>
+
+				<class name="DefaultProvidingContext">
+					<attributes>
+						<property name="contextValue" type="tl.core:String"></property>
+						<reference name="content" type="WithContextDependingDefault" multiple="true"></reference>
+					</attributes>
+				</class>
+				
+				<class name="WithContextDependingDefault">
+					<attributes>
+						<property name="name" type="tl.core:String"></property>
+						<property name="withDefault" type="tl.core:String">
+							<annotations>
+								<default-value>
+									<default-by-expression 
+										value="context -> $context.get(`TestSearchExpression:DefaultProvidingContext#contextValue`) + ' by default'" 
+										in-transaction="true">
+									</default-by-expression>
+								</default-value>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+				
+				<enum name="MyEnum">
+					<classifiers>
+						<classifier name="A"/>
+						<classifier name="B"/>
+						<classifier name="C"/>
+					</classifiers>
+				</enum>
+			</types>
+		</module>
+	</modules>
+</model>

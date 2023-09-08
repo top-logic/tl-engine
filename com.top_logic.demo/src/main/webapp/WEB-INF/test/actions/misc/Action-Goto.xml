@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="kontext"
+				type="string"
+			/>
+			<t:parameter name="ComponentName"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+			command-label="Anzeigen"
+			command-name="gotoCmd"
+			component-name="rootLayout#masterFrame"
+			user-id="${$Tester}"
+		>
+			<arguments>
+				<argument name="goto_object">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+						name="${$kontext}"
+					/>
+				</argument>
+				<argument name="view">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+						value="${$ComponentName}"
+					/>
+				</argument>
+			</arguments>
+		</action>
+	</t:body>
+</t:template>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="0fc4efd2-334c-46bf-a273-cf717b45245f">
+		<tabLabel key="dynamic.54e0fc98-9dd7-4858-aa20-6fc12fda6a7a">
+			<en>PDF export</en>
+			<de>PDF-Export</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/pDFExport/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

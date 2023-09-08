@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="metaElementAttributes"
+	horizontal="true"
+>
+	<tabInfo label="element.meta.TypePartEditorTab"/>
+
+	<components>
+		<!-- table with MetaAttributes -->
+		<!-- Button component is only necessary for invalidation if model changes. -->
+		<tableView name="metaAttributeTable"
+			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
+			modelBuilder="com.top_logic.element.layout.meta.MetaAttributeTableListModelBuilder"
+			objectType="tl.model:TLProperty, tl.model:TLReference"
+			resPrefix="element.meta.attribute.table."
+			securityProviderClass="master"
+			showMaximize="true"
+		>
+			<layoutInfo size="365"/>
+			<buttons>
+				<button id="showAll"
+					class="com.top_logic.element.layout.meta.ShowAllAttributesCommand"
+					clique="settings"
+				/>
+			</buttons>
+
+			<dialogs>
+				<include name="com.top_logic.element/admin/model/modelEditor/createMetaAttr.xml"
+					namePrefix="createReferenceTypePart"
+					ownerModel="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
+					resPrefix="element.meta.attribute.reference"
+					target="metaAttributeTable"
+					typePartFormBuilder="com.top_logic.element.layout.meta.TLReferenceFormBuilder"
+				>
+					<inject>
+						<dialogInfo
+							defaultI18n="element.meta.attribute.reference.create.dialog"
+							executability="Always"
+							height="430"
+							openButtonSecComp="createReferenceTypePartForm"
+							openerClique="createMenu"
+							openerCommandGroup="Create"
+							width="550"
+						/>
+					</inject>
+				</include>
+				<include name="com.top_logic.element/admin/model/modelEditor/createMetaAttr.xml"
+					namePrefix="createBackReferenceTypePart"
+					ownerModel="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
+					resPrefix="element.meta.attribute.backReference"
+					target="metaAttributeTable"
+					typePartFormBuilder="com.top_logic.element.layout.meta.TLBackReferenceFormBuilder"
+				>
+					<inject>
+						<dialogInfo
+							defaultI18n="element.meta.attribute.backReference.create.dialog"
+							executability="Always"
+							height="430"
+							openButtonSecComp="createBackReferenceTypePartForm"
+							openerClique="createMenu"
+							openerCommandGroup="Create"
+							width="550"
+						/>
+					</inject>
+				</include>
+				<include name="com.top_logic.element/admin/model/modelEditor/createMetaAttr.xml"
+					namePrefix="createOverrideTypePart"
+					ownerModel="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
+					resPrefix="element.meta.attribute.override"
+					target="metaAttributeTable"
+					typePartFormBuilder="com.top_logic.element.layout.meta.TLOverrideFormBuilder"
+				>
+					<inject>
+						<dialogInfo
+							defaultI18n="element.meta.attribute.override.create.dialog"
+							executability="Always"
+							height="430"
+							openButtonSecComp="createOverrideTypePartForm"
+							openerClique="createMenu"
+							openerCommandGroup="Create"
+							width="550"
+						/>
+					</inject>
+				</include>
+				<include name="com.top_logic.element/admin/model/modelEditor/createMetaAttr.xml"
+					namePrefix="createPropertyTypePart"
+					ownerModel="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
+					resPrefix="element.meta.attribute.property"
+					target="metaAttributeTable"
+					typePartFormBuilder="com.top_logic.element.layout.meta.TLPropertyFormBuilder"
+				>
+					<inject>
+						<dialogInfo
+							defaultI18n="element.meta.attribute.property.create.dialog"
+							executability="Always"
+							height="430"
+							openButtonSecComp="createPropertyTypePartForm"
+							openerClique="createMenu"
+							openerCommandGroup="Create"
+							width="550"
+						/>
+					</inject>
+				</include>
+			</dialogs>
+
+			<table
+				configurationProviders="com.top_logic.element.layout.meta.AttributeI18NColumns"
+				defaultColumns="name, id"
+				defaultSortOrder="name"
+				fixedColumns="0"
+				rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
+			>
+				<exporter
+					downloadNameKey="element.meta.attribute.table.exportName"
+					templateName="defaultTemplate.xlsx"
+				/>
+				<columns>
+					<column name="name"
+						accessor="com.top_logic.model.resources.ModelPartLabelAccessor"
+						columnWidth="160px"
+						comparator="com.top_logic.util.TLCollator"
+					/>
+					<column name="id"
+						columnWidth="160px"
+						comparator="com.top_logic.util.TLCollator"
+					>
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getName"
+							type="com.top_logic.model.TLNamedPart"
+						/>
+					</column>
+					<column name="owner"
+						columnWidth="100px"
+					>
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getOwner"
+							type="com.top_logic.model.TLTypePart"
+						/>
+					</column>
+					<column name="type"
+						columnWidth="100px"
+					>
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getType"
+							type="com.top_logic.model.TLTypePart"
+						/>
+					</column>
+					<column name="isBag"
+						columnWidth="30px"
+						comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
+						filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
+					>
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="isBag"
+							type="com.top_logic.model.TLStructuredTypePart"
+						/>
+					</column>
+					<column name="isMandatory"
+						columnWidth="30px"
+						comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
+						filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
+					>
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="isMandatory"
+							type="com.top_logic.model.TLStructuredTypePart"
+						/>
+					</column>
+					<column name="isDerived"
+						columnWidth="30px"
+						comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
+						filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
+					>
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="isDerived"
+							type="com.top_logic.model.DerivedTLTypePart"
+						/>
+					</column>
+					<column name="isMultiple"
+						columnWidth="30px"
+						comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
+						filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
+					>
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="isMultiple"
+							type="com.top_logic.model.TLStructuredTypePart"
+						/>
+					</column>
+					<column name="isOrdered"
+						columnWidth="30px"
+						comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
+						filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
+					>
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="isOrdered"
+							type="com.top_logic.model.TLStructuredTypePart"
+						/>
+					</column>
+				</columns>
+			</table>
+		</tableView>
+
+		<!-- MetaAttribute edit component -->
+		<layout name="metaElement">
+			<components>
+				<editor name="metaAttributeEdit"
+					applyCommand="applyTLStructuredTypePart"
+					defaultFor="tl.model:TLStructuredTypePart"
+					maximizeRoot="metaElementAttributes"
+					model="selection(metaAttributeTable)"
+					resPrefix="element.meta.attribute.edit."
+					securityProviderClass="master"
+					showMaximize="true"
+				>
+					<include name="com.top_logic.element/admin/model/modelEditor/TypePartForm.xml"
+						create="false"
+						showNoModel="false"
+					/>
+
+					<buttons>
+						<button id="deleteAttribute"
+							class="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+							clique="delete"
+							confirm="true"
+							group="Delete"
+							resourceKey="element.meta.attribute.edit.attRemove"
+						>
+							<executability>
+								<reference rule-id="GeneralDelete"/>
+								<rule class="com.top_logic.element.layout.meta.DisableIfDeleteProtected"/>
+							</executability>
+						</button>
+					</buttons>
+				</editor>
+			</components>
+		</layout>
+	</components>
+</layout>

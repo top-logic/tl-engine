@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="DemoInteractiveChart"
+		/>
+		<param name="resPrefix"
+			value="layouts.demo.reporting.flex.demoInteractiveCharts."
+		/>
+	</params>
+
+	<layout name="${namePrefix}Layout"
+		horizontal="true"
+	>
+		<components>
+			<component class="com.top_logic.demo.chart.flex.DemoInteractiveChartSelector"
+				isSecurityMaster="true"
+				name="${namePrefix}Selector"
+				page="/jsp/demo/reporting/flex/demoChartSelector.jsp"
+				resPrefix="${resPrefix}Selector."
+				securityProviderClass="securityRoot"
+				target="${namePrefix}Settings"
+			>
+				<layoutInfo size="200px"/>
+				<charts>
+					<chart name="demo/reporting/flex/interactive/interactive1.xml"/>
+					<chart name="demo/reporting/flex/interactive/interactive2.xml"/>
+					<chart name="demo/reporting/flex/interactive/interactive2_calculated.xml"/>
+					<chart name="demo/reporting/flex/interactive/interactive3.xml"/>
+				</charts>
+			</component>
+
+			<layout name="${namePrefix}ChartView"
+				horizontal="true"
+			>
+				<components>
+					<include name="reporting/flex/chart/chartConfigurator.xml"
+						componentName="${namePrefix}Settings"
+						resPrefix="${resPrefix}Settings."
+					>
+						<applyExecutability>
+							<executability>
+								<rule class="com.top_logic.reporting.flex.chart.component.RequiresBaseConfigRule"/>
+							</executability>
+						</applyExecutability>
+						<inject>
+							<layoutInfo size="350px"/>
+						</inject>
+					</include>
+					<include name="reporting/flex/chart/configuredChart_shared.xml"
+						exportObjects="ROOT"
+						master="${namePrefix}Settings"
+						namePrefix="${namePrefix}Chart"
+						objectType="me:DemoTypes.A"
+						securityProvider="securityRoot"
+					/>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

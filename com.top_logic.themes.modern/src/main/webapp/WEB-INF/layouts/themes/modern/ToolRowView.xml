@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<views>
+		<include name="toolrow/homeButton.xml"/>
+
+		<include name="toolrow/defaultButtons.xml"/>
+
+		<include name="toolrow/customButtons.xml"/>
+
+		<include name="toolrow/adminButtons.xml"/>
+
+		<group>
+			<views>
+				<include name="toolrow/scriptingButtons.xml"/>
+			</views>
+		</group>
+	</views>
+
+	<include name="toolrow/messageArea.xml"/>
+</template>

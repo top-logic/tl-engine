@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<t:type name="Binary_Tree_Node">
+				<t:attributes>
+					<t:attribute name="Left_Child" type="Binary_Tree_Node" default="" />
+					<t:attribute name="Value" type="integer" />
+					<t:attribute name="Right_Child" type="Binary_Tree_Node" default="" />
+				</t:attributes>
+			</t:type>
+			
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Binary_Tree_Root" type="Binary_Tree_Node" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		(
+		<t:if condition="#exists($Binary_Tree_Root.Left_Child)">
+			<t:then>
+				<t:invoke template="self">
+					<t:parameter name="Binary_Tree_Root" value="${$Binary_Tree_Root.Left_Child}" />
+				</t:invoke>
+			</t:then>
+		</t:if>
+		
+		<t:value expr="$Binary_Tree_Root.Value" />
+		
+		<t:if condition="#exists($Binary_Tree_Root.Right_Child)">
+			<t:then>
+				<t:invoke template="self">
+					<t:parameter name="Binary_Tree_Root" value="${$Binary_Tree_Root.Right_Child}" />
+				</t:invoke>
+			</t:then>
+		</t:if>
+		)
+	</t:body>
+</t:template>

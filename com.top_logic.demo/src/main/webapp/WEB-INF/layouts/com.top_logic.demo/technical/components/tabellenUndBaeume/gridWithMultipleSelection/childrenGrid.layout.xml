@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		defaultSelection="false"
+		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
+		multiSelection="true"
+		partnerGroup="GridPartner"
+		type="DemoTypes:DemoTypes.All"
+	>
+		<name key="dynamic.bb55090d-9bec-4f2c-9825-e4487b58bdbe">
+			<en>Children</en>
+			<de>Kinder</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model -> $model.get(`tl.element:StructuredElementContainer#children`)"
+			modelForElement="listElement -> $listElement.get(`DemoTypes:DemoTypes.All#parent`)"
+			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+	<alias>
+        <entry name="%tl_enable_debug%" value="${env:tl_enable_debug:true}" />
+        <entry name="%tl_enable_scripting%" value="${env:tl_enable_scripting:true}" />
+	</alias>
+</root>

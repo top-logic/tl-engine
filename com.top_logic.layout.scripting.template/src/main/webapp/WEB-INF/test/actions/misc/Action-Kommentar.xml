@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="xml" />
+		<t:parameters>
+			<t:parameter name="text" type="string" />
+			<t:parameter name="level" type="string" default="INFO" >
+				<!-- Valid values are: FATAL, ERROR, WARN, INFO and DEBUG -->
+			</t:parameter>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<action
+			xmlns:config="http://www.top-logic.com/ns/config/6.0"
+			class="com.top_logic.layout.scripting.runtime.action.LogMessageActionOp"
+			message="${$text}"
+			level="${$level}" />
+		
+	</t:body>
+</t:template>

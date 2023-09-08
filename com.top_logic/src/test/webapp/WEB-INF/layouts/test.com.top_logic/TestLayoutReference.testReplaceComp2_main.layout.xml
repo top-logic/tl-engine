@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.knowledge.gui.layout.TLMainLayout"
+	name="main"
+>
+	<layout-reference resource="test.com.top_logic/TestLayoutReference.testReplaceComp2_a.layout.xml"/>
+</component>

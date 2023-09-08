@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Event log in cockpit -->
+<include name="com.top_logic/admin/technical/events/eventLog_shared.xml"
+	namePrefix="cockpit"
+/>

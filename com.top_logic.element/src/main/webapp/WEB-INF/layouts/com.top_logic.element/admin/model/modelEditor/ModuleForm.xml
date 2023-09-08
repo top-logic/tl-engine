@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Configuration of the form displaying or creating a TLStructuredTypePart. -->
+<template>
+	<params>
+		<param name="showNoModel"
+			value="false"
+		/>
+	</params>
+
+	<modelBuilder class="com.top_logic.element.layout.meta.TLModuleFormBuilder"
+		showNoModel="${showNoModel}"
+	/>
+</template>

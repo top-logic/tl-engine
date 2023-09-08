@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26048_Remove_Error_Severity_From_Custom_Transaction"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_25421_multiple_forms_inapp"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			table="TemplateLayouts"
+			column="arguments"
+			transform="/WEB-INF/kbase/migration/tl/Ticket_26048_Remove_Error_Severity_From_Custom_Transaction.migration.xsl"
+		>
+		</processor>
+	</processors>
+	<migration>
+	</migration>
+	<post-processors/>
+</migration>

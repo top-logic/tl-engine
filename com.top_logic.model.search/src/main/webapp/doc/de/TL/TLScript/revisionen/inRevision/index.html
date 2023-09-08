@@ -1,0 +1,37 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.inRevision($revision)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Löst das Fachobjekt in der gegeben Revision auf.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Fachobjekt</td>
+   <td>Fachobjekt das in der gegebenen Revision aufgelöst werden soll</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>revision</td>
+   <td>Revision oder Zahl</td>
+   <td>Die Revision oder Commitnummer in der das Fachobjekt angezeigt werden soll. Die Commitnummer muss &gt;=0 sein und existieren.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Das Fachobjekt in der gegebenen Revision oder <code class="hljs inlineCode">null</code>, wenn das Fachobjekt in der Revision nicht existert.</p>
+<p></p>

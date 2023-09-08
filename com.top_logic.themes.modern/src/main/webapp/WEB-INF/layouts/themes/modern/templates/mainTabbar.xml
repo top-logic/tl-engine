@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="components"/>
+		<param name="dialogs">
+			<!-- No dialogs by default. -->
+		</param>
+	</params>
+
+	<tabbar name="mainTabber"
+		components="${components}"
+	>
+		<layoutInfo size="0px"/>
+		<dialogs>
+			<include name="GlobalDialogs.xml"/>
+			${dialogs}
+		</dialogs>
+		<componentControlProvider class="com.top_logic.layout.structure.EmptyLayoutControlProvider"/>
+		<windows>
+			<include name="GlobalWindows.xml"/>
+		</windows>
+		<commands>
+			<reference command-id="reloadI18N"/>
+			<reference command-id="reloadTheme"/>
+			<reference command-id="toggleAlwaysShowKeys"/>
+			<reference command-id="toggleShowAllCommands"/>
+			<reference command-id="releaseLayout"/>
+			<reference command-id="exportLayout"/>
+		</commands>
+		<renderer class="com.top_logic.layout.renderers.DefaultTabBarRenderer"
+			barSize="%MAIN_TAB_BAR_HEIGHT%"
+			tab-bar-class="%MAIN_TAB_BAR_CSS%"
+		/>
+	</tabbar>
+</template>

@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<a>
+	<t:template
+		xmlns:t="http://www.top-logic.com/ns/template/1.0"
+		xmlns:a="http://www.top-logic.com/ns/template/annotation/1.0">
+		<r>
+			<t:foreach
+				var="n"
+				values="$values"><t:value expr="n" /></t:foreach>
+		</r>
+		<r>
+			<t:if condition="$bool">
+				<t:then>text</t:then>
+			</t:if>
+		</r>
+		<r>
+			<t:if condition="$bool">
+				<t:else>text</t:else>
+			</t:if>
+		</r>
+		<t:if condition="$bool">
+			<t:then>
+				<foo />
+			</t:then>
+			<t:else>
+				<bar />
+			</t:else>
+		</t:if>
+		<r>
+			<t:value expr="$str" />
+		</r>
+		<t:template>
+			<t:define
+				var="v"
+				expr="$str" />
+			<r>
+				<t:value expr="v" />
+			</r>
+		</t:template>
+	</t:template>
+</a>

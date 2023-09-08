@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- The well known WebFolder and Document are found here -->
+
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+<metaobjects>
+
+<!-- Note: Documets must be versioned, even in a non-versioned system, since document versions rely on that. -->
+<metaobject object_type="MOKnowledgeObject" object_name="Document" super_class="DublinCore" db_name="DOCUMENT"
+	versioned="true"
+>
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.Document"/>
+	</annotation>
+</annotations>
+<attributes>
+    <mo_attribute att_name="name" att_type="String" mandatory="true"	/>
+    <mo_attribute att_name="size" att_type="Long" mandatory="true"/>
+    <mo_attribute att_name="updateRevisionNumber" att_type="Long" mandatory="true"/>
+
+	<mo_attribute att_name="versionNumber" att_type="Integer" mandatory="false"/>
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="DocumentVersion" super_class="DublinCore" db_name="DOCUMENT_VERSION">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.DocumentVersion"/>
+	</annotation>
+</annotations>
+<attributes>
+    <mo_attribute att_name="revision" att_type="Integer" mandatory="true" />
+    <reference att_name="doc" history-type="historic" mandatory="true" target-type="Document"/>
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="WebFolder" super_class="DublinCore" db_name="WEB_FOLDER">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.WebFolder"/>
+	</annotation>
+</annotations>
+<attributes>
+	<mo_attribute att_name="name" 			att_type="String" mandatory="true"/>
+	<mo_attribute att_name="description" 	att_type="String" mandatory="false"/>
+	<mo_attribute att_name="folderType" 	att_type="String" mandatory="false"/>
+</attributes>
+</metaobject>
+
+<association super_class="Association" object_name="hasFolderContent">
+	<attributes>
+		<source
+			override="true"
+			target-type="WebFolder"
+		/>
+		<!-- exact semantics are (perhaps) found in WebFolder -->
+		<mo_attribute att_name="linkType" att_type="String" mandatory="false"/>
+	</attributes>
+</association>
+
+</metaobjects>
+
+</objectlist>
+

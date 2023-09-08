@@ -1,0 +1,1211 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Navigation"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Technisches Demo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Technisches Demo > Layout-Framework#1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="ForeachControl"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="Alle einfachen form controls"
+								field-name="controls"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="testForeachControl"
+								field-name="testForeachControl"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="foreach"
+								field-name="foreach"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="row-c0"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="+"
+								field-name="addValue"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="Alle einfachen form controls"
+								field-name="controls"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="testForeachControl"
+								field-name="testForeachControl"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="foreach"
+								field-name="foreach"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="row-c0"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="+"
+								field-name="addValue"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="Alle einfachen form controls"
+								field-name="controls"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="testForeachControl"
+								field-name="testForeachControl"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="foreach"
+								field-name="foreach"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="row-c0"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="+"
+								field-name="addRow"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="Alle einfachen form controls"
+								field-name="controls"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="testForeachControl"
+								field-name="testForeachControl"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="foreach"
+								field-name="foreach"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="row-c4"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="+"
+								field-name="addRow"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="Alle einfachen form controls"
+								field-name="controls"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="testForeachControl"
+								field-name="testForeachControl"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="foreach"
+								field-name="foreach"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="row-c6"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="+"
+								field-name="addValue"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="testForeachControl"
+									field-name="testForeachControl"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="foreach"
+									field-name="foreach"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="row-c0"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="values"
+									field-name="values"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="valueGroup-c1"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="valueInput"
+									field-name="valueInput"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="value"
+									field-name="value"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="1.1.2000"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="testForeachControl"
+									field-name="testForeachControl"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="foreach"
+									field-name="foreach"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="row-c0"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="values"
+									field-name="values"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="valueGroup-c2"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="valueInput"
+									field-name="valueInput"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="value"
+									field-name="value"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="2.1.2000"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="testForeachControl"
+									field-name="testForeachControl"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="foreach"
+									field-name="foreach"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="row-c0"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="values"
+									field-name="values"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="valueGroup-c3"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="valueInput"
+									field-name="valueInput"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="value"
+									field-name="value"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="3.1.2000"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="testForeachControl"
+									field-name="testForeachControl"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="foreach"
+									field-name="foreach"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="row-c4"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="values"
+									field-name="values"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="valueGroup-c5"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="valueInput"
+									field-name="valueInput"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="value"
+									field-name="value"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="1.2.2000"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="testForeachControl"
+									field-name="testForeachControl"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="foreach"
+									field-name="foreach"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="row-c6"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="values"
+									field-name="values"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="valueGroup-c7"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="valueInput"
+									field-name="valueInput"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="value"
+									field-name="value"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="1.3.2000"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="testForeachControl"
+									field-name="testForeachControl"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="foreach"
+									field-name="foreach"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="row-c6"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="values"
+									field-name="values"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="valueGroup-c8"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="valueInput"
+									field-name="valueInput"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="value"
+									field-name="value"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="2.3.2000"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="Alle einfachen form controls"
+								field-name="controls"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="testForeachControl"
+								field-name="testForeachControl"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="foreach"
+								field-name="foreach"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="row-c0"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="values"
+								field-name="values"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="valueGroup-c1"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="-"
+								field-name="removeValue"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="Alle einfachen form controls"
+								field-name="controls"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="testForeachControl"
+								field-name="testForeachControl"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="foreach"
+								field-name="foreach"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="row-c4"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="values"
+								field-name="values"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-name="valueGroup-c5"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="-"
+								field-name="removeValue"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+								tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="testForeachControl"
+									field-name="testForeachControl"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="foreach"
+									field-name="foreach"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="row-c0"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="values"
+									field-name="values"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="valueGroup-c2"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="valueInput"
+									field-name="valueInput"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="value"
+									field-name="value"
+								/>
+							</path>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="02.01.2000"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Statusübergänge"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					comment=""
+					component-implementation-comment=""
+					component-name="rootLayout#masterFrame"
+					failure-message=""
+					user-id="root"
+				>
+					<label>Schalte "Mandatory" um</label>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					comment=""
+					component-implementation-comment=""
+					component-name="rootLayout#masterFrame"
+					failure-message=""
+					user-id="root"
+				>
+					<label>Schalte "Mandatory" um</label>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$SetInvisible"
+					command-label="Invisible"
+					command-name="setInvisible"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$SetImmutable"
+					command-label="Immutable"
+					command-name="setImmutable"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$SetDisabled"
+					command-label="Disabled"
+					command-name="setDisabled"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$SetEditable"
+					command-label="Editable"
+					command-name="setEditable"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleFrozen"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<command-label>Schalte "Frozen" um</command-label>
+					<command-name>toggleFrozen</command-name>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleFrozen"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<command-label>Schalte "Frozen" um</command-label>
+					<command-name>toggleFrozen</command-name>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleBlocked"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<command-label>Schalte "Blocked" um</command-label>
+					<command-name>toggleBlocked</command-name>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleBlocked"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<command-label>Schalte "Blocked" um</command-label>
+					<command-name>toggleBlocked</command-name>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleVeto"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<command-label>Schalte "Veto" um</command-label>
+					<command-name>toggleVeto</command-name>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ToggleVeto"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<command-label>Schalte "Veto" um</command-label>
+					<command-name>toggleVeto</command-name>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ChangeValues"
+					command-label="Change"
+					command-name="changeValues"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ChangeValues"
+					command-label="Change"
+					command-name="changeValues"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$ResetValues"
+					command-label="Reset"
+					command-name="resetValues"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm$CheckAll"
+					command-label="Check"
+					command-name="checkAll"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.TestControlsForm"
+					component-name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="TimeInputControl Test"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="timeInputControl"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="21:03"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="timeInputControl"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="13:37"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="IconChooser Test"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="iconChooserControl"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="css:fas fa-sun"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="iconChooserControl"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="css:far fa-moon"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="iconChooserControl"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value=""
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.ControlAction$Op"
+					command="openIconChooser"
+					type="com.top_logic.layout.form.control.IconInputControl"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="rootLayout#masterFrame"
+						tab-path=""
+					/>
+					<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="iconChooserControl"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</model>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.ControlAction$Op"
+					command="switchModeCommand"
+					type="com.top_logic.layout.form.control.IconChooserControl"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="rootLayout#masterFrame"
+						tab-path=""
+					/>
+					<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="iconChooserControl"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</model>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.ControlAction$Op"
+					command="themeImageIntoStringFieldCommand"
+					type="com.top_logic.layout.form.control.IconChooserControl"
+					user-id="root"
+				>
+					<arguments>
+						<argument name="themeImage">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="/icons/searchButton.png"
+							/>
+						</argument>
+					</arguments>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="rootLayout#masterFrame"
+						tab-path=""
+					/>
+					<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="iconChooserControl"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</model>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.ControlAction$Op"
+					command="valueChanged"
+					type="com.top_logic.layout.form.control.TextInputControl"
+					user-id="root"
+				>
+					<arguments>
+						<argument name="value">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value=""
+							/>
+						</argument>
+					</arguments>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="rootLayout#masterFrame"
+						tab-path=""
+					/>
+					<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="rootLayout#masterFrame"
+							tab-path=""
+						/>
+						<matchers>
+							<named-member name="icon-input"/>
+						</matchers>
+					</model>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.ControlAction$Op"
+					command="setThemeImageCommand"
+					type="com.top_logic.layout.form.control.IconChooserControl"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="rootLayout#masterFrame"
+						tab-path=""
+					/>
+					<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="iconChooserControl"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</model>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test visiblity of popup menu field."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Visibility of command1 in menu."
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+								tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Visibility of command2 in menu."
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+								tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					mode="ACTIVE"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="PopupMenu which is just visible if any content is visible."
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Visibility of command1 in menu."
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="false"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					mode="ACTIVE"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="PopupMenu which is just visible if any content is visible."
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Visibility of command2 in menu."
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="false"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					mode="INVISIBLE"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="PopupMenu which is just visible if any content is visible."
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Visibility of command1 in menu."
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					mode="ACTIVE"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="PopupMenu which is just visible if any content is visible."
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Visibility of command2 in menu."
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					mode="ACTIVE"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="PopupMenu which is just visible if any content is visible."
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+						/>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="displayImageControl"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.FileManagerDataValue"
+						content-type="image/jpg"
+						name="/images/test/BOS Buero.jpg"
+					/>
+				</values>
+			</value>
+		</action>
+	</actions>
+</action>

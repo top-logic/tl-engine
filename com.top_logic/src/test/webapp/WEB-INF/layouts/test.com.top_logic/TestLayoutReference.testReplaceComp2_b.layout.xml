@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="unrelated">
+	<layout-reference resource="test.com.top_logic/TestLayoutReference.testReplaceComp2_c.layout.xml"/>
+</layout>

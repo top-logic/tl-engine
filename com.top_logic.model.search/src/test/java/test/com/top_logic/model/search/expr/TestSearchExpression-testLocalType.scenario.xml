@@ -1,0 +1,8 @@
+<objects>
+	<object id="context" type="TestSearchExpression:S">
+		<attribute name="name" value="testLocalType"/>
+		<attribute name="parent">
+			<model-ref name="TestSearchExpression#ROOT"/>
+		</attribute>
+	</object>
+</objects>

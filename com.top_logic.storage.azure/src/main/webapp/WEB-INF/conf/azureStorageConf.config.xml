@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="azureStorageMessages" />
+				</bundles>
+			</instance>
+		</config>
+
+        <config service-class="com.top_logic.dsa.DataAccessService">
+            <instance>
+                <adaptors>
+                    <adaptor name="repository">
+                        <config class="com.top_logic.dsa.repos.RepositoryDataSourceAdaptor">
+                            <repository class="com.top_logic.storage.azure.blob.CloudBasedRepository"
+                                attic="%BLOB_ATTIC%"
+                                connect-string="%BLOB_CONNECT%"
+                                container-name="%BLOB_CONTAINER%"
+                                directory-name="%BLOB_ROOT%"
+                                path="%BLOB_REPOSITORY%"
+                            />
+                        </config>
+                    </adaptor>
+                </adaptors>
+            </instance>
+        </config>
+	</services>
+
+	<configs />			
+</application>

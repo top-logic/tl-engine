@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	
+	<metaobjects>
+		
+		<metaobject object_name="SearchExpressionTable" object_type="MOKnowledgeObject" super_class="AttributedObject">
+			<attributes>
+				<mo_attribute att_name="name" att_type="String" mandatory="true" />
+				<mo_attribute att_name="version" att_type="String" mandatory="true" />
+				<mo_attribute att_name="expression" att_type="Clob" mandatory="true" />
+			</attributes>
+		</metaobject>
+		
+	</metaobjects>
+	
+</objectlist>

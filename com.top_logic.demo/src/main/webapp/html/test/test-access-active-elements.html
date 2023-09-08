@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<script type="text/javascript">
+		function handleOnClick() {
+			var innerIframe = document.getElementById("innerIframe");
+			var innerWindow = innerIframe.contentWindow;
+			
+			var innerFramesOfInnerWindow = innerWindow.frames;
+			var innerInnerDocument = innerFramesOfInnerWindow[0].document;
+			var innerInnerActive = innerInnerDocument.activeElement;
+			if (innerInnerActive != null) {
+				try {
+					alert("tagName = " + innerInnerActive.tagName);
+				} catch(e) {
+					alert(e);
+				}
+			} else {
+				alert("No inner active");
+			}
+		}
+		
+	</script>
+</head>
+<body>
+
+	<iframe id="innerIframe" name="innerIframe" src="test-access-active-elements_0.html" style="height:800px; width:550px;">Missing file 'test-access-active-elements_0.html'</iframe>
+	<div>
+	<button onclick="return handleOnClick();">Access activeElement</button>
+	</div>
+</body>
+</html>

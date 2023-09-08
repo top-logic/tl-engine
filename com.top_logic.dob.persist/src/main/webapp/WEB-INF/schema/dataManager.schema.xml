@@ -1,0 +1,35 @@
+<schema name="dataManager">
+	<tables>
+		<table name="DO_STORAGE" pkey-storage="true">
+			<columns>
+				<column name="TYPE" type="string" size="63" binary="true" mandatory="true" />	
+				<column name="IDENTIFIER" type="id" mandatory="true"/>	
+				<column name="ATTR" type="string" size="254" binary="true" mandatory="true" />	
+				<column name="VAL_TYPE" type="byte" mandatory="true" />	
+				<column name="LVAL" type="long" mandatory="false" />	
+				<column name="DVAL" type="double" mandatory="false" />	
+				<column name="SVAL" type="string" size="254" mandatory="false" />	
+				<column name="TVAL" type="clob" mandatory="false" />	
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="TYPE"/>
+					<column name="IDENTIFIER"/>
+					<column name="ATTR"/>
+				</columns>
+			</primary-key>
+		</table>
+
+		<table name="DATA_OBJECT_BLOB" pkey-storage="true">
+			<columns>
+				<column name="IDENTIFIER" type="id" mandatory="true" />	
+				<column name="VAL" type="blob" mandatory="false" />	
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="IDENTIFIER"/>
+				</columns>
+			</primary-key>
+		</table>
+	</tables>
+</schema>

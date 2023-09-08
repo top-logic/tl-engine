@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Configuration File used for testing only -->
+<root>
+    
+    <properties>
+        <section name="testInheritProperties_1">
+            <entry name="key1" value="value1"/>
+            <entry name="key2" value="value2"/>
+        </section>       
+        <section name="testInheritProperties_2">
+            <entry name="key1" value="value1"/>
+            <entry name="key2" value="value2"/>
+        </section>       
+    </properties>
+
+</root>

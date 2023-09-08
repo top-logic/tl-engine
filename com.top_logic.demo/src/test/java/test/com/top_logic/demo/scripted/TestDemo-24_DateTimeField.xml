@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	time-zone="Europe/Berlin"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Navigation"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Validity of time part."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="dateTimeField"
+									field-name="dateTimeField"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Uhrzeit"
+									field-name="time"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="fff"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment="fff is not a vaild time"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="dateTimeField"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="dateTimeField"
+									field-name="dateTimeField"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Uhrzeit"
+									field-name="time"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="00:00"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment=""
+					user-id="root"
+					validity="VALID"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="dateTimeField"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Validity of day part."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="dateTimeField"
+									field-name="dateTimeField"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Tag"
+									field-name="day"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="fff"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment="fff is not a vaild day"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="dateTimeField"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="dateTimeField"
+									field-name="dateTimeField"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Tag"
+									field-name="day"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="17.03.2016"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment=""
+					user-id="root"
+					validity="VALID"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="dateTimeField"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+							tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+						/>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="dateTimeField"
+									field-name="dateTimeField"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Tag"
+									field-name="day"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="22.09.2016"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Alle einfachen form controls"
+									field-name="controls"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="dateTimeField"
+									field-name="dateTimeField"
+								/>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Uhrzeit"
+									field-name="time"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="13:23"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="false"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="dateTimeField"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+								tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+							/>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateValue"
+						date="2016-09-22T11:23:00.000Z"
+					/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

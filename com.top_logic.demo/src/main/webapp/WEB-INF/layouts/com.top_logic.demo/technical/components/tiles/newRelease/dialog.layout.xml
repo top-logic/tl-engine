@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID=""
+		openMaximized="false"
+		resizable="true"
+		securityProviderClass="securityRoot"
+		width="800px"
+	>
+		<open-handler id="ID_73c6d913_c286_41ca_b41f_1c8f1f7c05b4"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			clique="create"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			image=""
+			securityObject=""
+			target="model(self())"
+			targetComponent="com.top_logic.demo/technical/components/tiles/newRelease/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.f148043f-6535-4a4a-ac3e-89b3d727e6bb">
+				<en>Plan a new release</en>
+				<de>Neues Release planen</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.f148043f-6535-4a4a-ac3e-89b3d727e6bb">
+				<en>Plan a new release</en>
+				<de>Neues Release planen</de>
+			</title>
+		</title>
+		<typeOptions
+			include-subtypes="true"
+			type="test.tiles:Release"
+		/>
+		<create-handler id="ID_48171346_ba6c_41b1_a4ac_1847d020f2e3"
+			clique="save"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			ignoreWarnings="default"
+			image=""
+			linkOperation="project -> release -> $project.add(`test.tiles:Product#releases`, $release)"
+			securityObject=""
+		/>
+	</arguments>
+</config:template-call>

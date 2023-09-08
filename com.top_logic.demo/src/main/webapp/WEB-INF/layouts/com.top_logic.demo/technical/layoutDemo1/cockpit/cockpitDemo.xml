@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.tool.boundsec.CockpitLayout"
+	name="demoCockpit1"
+>
+	<components>
+		<!-- upper frameset with two WindowLayouts -->
+		<layout name="cockpitDemo_layout"
+			horizontal="true"
+		>
+			<components>
+				<!-- window in the left upper corner -->
+				<layout resPrefix="layouts.layoutdemo.cockpitDemo.window1.">
+					<components>
+						<component class="com.top_logic.mig.html.layout.SimpleComponent"
+							content="Window 1"
+							name="window1content"
+							resPrefix="layouts.layoutdemo.cockpitDemo.window1content."
+							toolbar="true"
+						>
+							<layoutInfo scrolleable="true"/>
+						</component>
+					</components>
+				</layout>
+
+				<!-- window in the right upper corner -->
+				<layout resPrefix="layouts.layoutdemo.cockpitDemo.window2.">
+					<components>
+						<component class="com.top_logic.mig.html.layout.IncludeComponent"
+							encodings="Cp1252"
+							files="/html/contents/layoutdemo/cockpit1Descr.incl"
+							name="cockpit1Descr"
+							resPrefix="layouts.layoutdemo.cockpitDemo.cockpit1Descr."
+							toolbar="true"
+						>
+							<layoutInfo scrolleable="true"/>
+						</component>
+					</components>
+				</layout>
+			</components>
+		</layout>
+
+		<!-- window at the bottom -->
+		<layout resPrefix="layouts.layoutdemo.cockpitDemo.window3.">
+			<components>
+				<component class="com.top_logic.mig.html.layout.IncludeComponent"
+					encodings="Cp1252"
+					files="/html/contents/layoutdemo/glocke.incl"
+					name="window1glocke"
+					resPrefix="layouts.layoutdemo.cockpitDemo.window1glocke."
+					toolbar="true"
+				>
+					<layoutInfo scrolleable="true"/>
+				</component>
+			</components>
+		</layout>
+	</components>
+</component>

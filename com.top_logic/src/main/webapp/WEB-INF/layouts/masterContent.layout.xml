@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="templates/masterContent.xml">
+	<mainTabbar>
+		<layout-reference resource="mainTabbar.layout.xml"/>
+	</mainTabbar>
+</include>

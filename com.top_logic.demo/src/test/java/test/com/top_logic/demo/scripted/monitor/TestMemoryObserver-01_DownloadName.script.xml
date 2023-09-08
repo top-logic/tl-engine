@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Monitor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Monitor > Speicherauslastung"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.table.export.ExcelExportHandler"
+			command-label="Nach Excel exportieren..."
+			command-name="exportExcel"
+			component-implementation-comment="com.top_logic.knowledge.monitor.MemoryObserverTableComponent"
+			component-name="com.top_logic/admin/monitor/memory/memoryMonitor.layout.xml#memoryObserverTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<await-progress-dialog
+			auto-close-on-success="false"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			label="Herunterladen"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check and clear download."
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
+						file-name="Speicherauslastung.xlsx"
+					/>
+					<constraints>
+						<constraint class="com.top_logic.layout.scripting.check.NoContentEqualityCheck">
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+								content-type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+								name="Speicherauslastung.xlsx"
+							/>
+						</constraint>
+					</constraints>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"/>
+			</actions>
+		</action>
+	</actions>
+</action>

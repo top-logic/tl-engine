@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="Layout"
+	horizontal="true"
+>
+	<tabInfo label="element.meta.EnumerationEditorTab"/>
+
+	<components>
+		<editor name="Editor"
+			applyCommand="applyTLEnumeration"
+			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
+			resPrefix="element.meta.EnumerationEditor."
+			securityProviderClass="securityRoot"
+		>
+			<include name="com.top_logic.element/admin/model/modelEditor/EnumerationForm.xml"
+				showNoModel="false"
+			/>
+
+			<buttons>
+				<reference command-id="deleteTLModelPart"/>
+			</buttons>
+		</editor>
+	</components>
+</layout>

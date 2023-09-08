@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.VisitTabsOp"
+			component-name="rootLayout#masterFrame"
+		>
+			<ignore-components>
+				<ignore-component name="com.top_logic.element/admin/security/attributeCategoryPermissions/attributeSecurityRelease.layout.xml#adminRoleClassSec"/>
+				<ignore-component name="com.top_logic.demo/technical/layoutDemo1/forms/errorOnJSP/demoErrorJSP.layout.xml#demoErrorJSP"/>
+				<ignore-component name="com.top_logic.demo/technical/layoutDemo1/forms/errorOnJSP/demoErrorJSP.layout.xml#errorForm"/>
+				<ignore-component name="com.top_logic.demo/technical/layoutDemo1/forms/errorInComponent/demoErrorComponent.layout.xml#demoErrorComponent"/>
+				<ignore-component name="com.top_logic.demo/technical/layoutDemo1/forms/error/demoError.layout.xml#demoError"/>
+				<ignore-component name="com.top_logic.demo/technical/layoutDemo1/forms/errorInComponent/demoErrorComponent.layout.xml#errorFormContext"/>
+				<ignore-component name="com.top_logic.demo/technical/layoutDemo1/forms/error/demoError.layout.xml#errorPage"/>
+				<ignore-component name="com.top_logic.demo/technical/test/renderingRobustness/index.layout.xml#renderingRobustness"/>
+			</ignore-components>
+		</action>
+	</actions>
+</action>

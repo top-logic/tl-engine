@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<chart-builder>
+	<data-source class="com.top_logic.reporting.flex.chart.config.datasource.FilteredDataSourceBuilder">
+		<data-source class="com.top_logic.reporting.flex.chart.config.datasource.MetaElementObjectProducer" type="DemoTypes.A" />
+		<filters>
+			<filter
+				class="com.top_logic.reporting.flex.chart.config.datasource.StaticAttributeFilter"
+				meta-attribute="DemoTypes.A#checklist" />
+			<filter
+				class="com.top_logic.reporting.flex.chart.config.datasource.StaticAttributeFilter"
+				meta-attribute="DemoTypes.A#checklistMulti" />
+		</filters>
+	</data-source>
+
+	<model-preparation class="com.top_logic.reporting.flex.chart.config.model.SimpleModelPreparationBuilder"
+		type="DemoTypes.A"
+	>
+		<aggregation-options>
+			<count/>
+			<attribute name="DemoTypes.A#float" operation="SUM"/>
+			<attribute name="DemoTypes.A#float" operation="MIN"/>
+			<attribute name="DemoTypes.A#float" operation="MAX"/>
+			<attribute name="DemoTypes.A#long" operation="AVERAGE"/>
+			<method name="hashCode" operation="MAX" label-key="charts.demo.reporting.flex.interactive.interactive1.maxHashCode"/>
+		</aggregation-options>
+	</model-preparation>
+	
+	<chart-builder class="com.top_logic.reporting.flex.chart.config.chartbuilder.bar.BarChartBuilder" >
+		<color-provider class="com.top_logic.reporting.flex.chart.config.color.ConfiguredColorProvider" />
+	</chart-builder>
+</chart-builder>

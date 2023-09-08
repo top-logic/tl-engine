@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="Username"
+				type="string"
+			/>
+			<t:parameter name="Password"
+				default="root1234"
+				type="string"
+			/>
+			<t:parameter name="ProcessId"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.LoginActionOp"
+			account="${$Username}"
+			password="${$Password}"
+			process-id="${$ProcessId}"
+		/>
+	</t:body>
+</t:template>

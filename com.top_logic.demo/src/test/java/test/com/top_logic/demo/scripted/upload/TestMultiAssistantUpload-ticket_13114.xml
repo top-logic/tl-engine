@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Navigate to assistant"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Technisches Demo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Technisches Demo > Layout-Framework#2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Technisches Demo > Layout-Framework#2 > Assistenten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Technisches Demo > Layout-Framework#2 > Assistenten > im Dialog"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Start assistant"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Assistent starten"
+					command-name="displayDialog_demoAssistentDialog"
+					comment=""
+					component-implementation-comment="com.top_logic.mig.html.layout.SimpleComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#demoAssistentDialog1"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Execute assistant"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Input name"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoFirstStep"
+										tab-path=""
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Name"
+													field-name="name"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="AAAA"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.assistent.CommandChain"
+									command-label="Weiter"
+									command-name="commandChain_formContextValidatingCommand_switchAssistentForward"
+									comment=""
+									component-implementation-comment="com.top_logic.demo.tool.boundsec.assistent.demo.TestingNameInputComponent"
+									component-name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoFirstStep"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="File upload"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoUploadStep"
+										tab-path=""
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="uploadField"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+												base64data="VGVzdGRhdGVp"
+												content-type="text/plain"
+												name="testFile.txt"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.assistent.CommandChain"
+									command-label="Upload &amp; Weiter"
+									command-name="commandChain_upload_switchAssistentForward"
+									comment=""
+									component-implementation-comment="com.top_logic.demo.tool.boundsec.assistent.demo.DemoFileUploadComponent"
+									component-name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoUploadStep"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Multi file upoload"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoAssistentUpload"
+										tab-path=""
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="uploadField"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+												base64data="VGVzdGRhdGVp"
+												content-type="text/plain"
+												name="testFile.txt"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.NonClosingDialogUploadHandler"
+									command-label="Hochladen"
+									command-name="nonClosingUpload"
+									comment=""
+									component-implementation-comment="com.top_logic.tool.boundsec.assistent.AssistantMultiFileUploadComponent"
+									component-name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoAssistentUpload"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message="Ticket #13114: Assistant must not be closed after file upload in multi file upload component."
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoAssistentUpload"
+										tab-path=""
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment=""
+													field-name="uploadField"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+												base64data="VGVzdGRhdGVp"
+												content-type="text/plain"
+												name="testFile2.txt"
+											/>
+										</value>
+									</field-values>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.NonClosingDialogUploadHandler"
+									command-label="Hochladen"
+									command-name="nonClosingUpload"
+									comment=""
+									component-implementation-comment="com.top_logic.tool.boundsec.assistent.AssistantMultiFileUploadComponent"
+									component-name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoAssistentUpload"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.tool.boundsec.assistent.CommandChain"
+									command-label="Weiter"
+									command-name="commandChain_switchAssistentForward"
+									comment=""
+									component-implementation-comment="com.top_logic.tool.boundsec.assistent.AssistantMultiFileUploadComponent"
+									component-name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoAssistentUpload"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Input name 2"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+									comment=""
+									failure-message=""
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoNameInput"
+										tab-path=""
+									/>
+									<field-values>
+										<value>
+											<field-path>
+												<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+													field-label-comment="Name"
+													field-name="name"
+												/>
+											</field-path>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="Name 2"
+											/>
+										</value>
+									</field-values>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.assistent.CommandChain"
+					command-label="Fertigstellen"
+					command-name="commandChain_assistentFinish_switchAssistentShow"
+					comment=""
+					component-implementation-comment="com.top_logic.demo.tool.boundsec.assistent.demo.TestingNameInputComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab2/assistantDialog.layout.xml#Dialog1demoNameInput"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

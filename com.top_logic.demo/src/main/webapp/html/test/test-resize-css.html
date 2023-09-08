@@ -1,0 +1,93 @@
+<html>
+
+<head>
+	<title>JavaScript Resize Test</title>
+	
+	<style type="text/css">
+		button {
+			margin-right: 2ex;
+		}
+		
+		.highlight {
+			background-color: #FFDDDD;
+		}
+	</style>
+
+	<script type="text/javascript">
+
+		function handleOnLoad() {
+			log('Test page ready.');
+		}
+	
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+	</script>
+</head>
+<body id="root" onload="handleOnLoad();">
+<table width="100%" height="100%">
+<tr height="10px">
+<td>
+	<h2>JavaScript Resize Test</h2>
+</td>
+</tr>
+
+<tr>
+<td>
+	<table id="parent" width="100%" height="100%">
+		<tbody>
+			<tr height="75%">
+				<td id="c1" class="highlight">
+					<div style="overflow: auto; height: 100%;">
+					a
+					</div>
+				</td>
+				<td id="c2" width="30%" class="highlight">
+					<div style="overflow: auto; height: 100%;">
+					b
+					</div>
+				</td>
+			</tr>	
+			<tr>
+				<td id="c3" colspan="2" class="highlight">
+					<div style="overflow: auto; height: 100%;">
+						<ol>
+							<li>a</li>
+							<li>b</li>
+							<li>c</li>
+							<li>d</li>
+							<li>e</li>
+							<li>f</li>
+							<li>g</li>
+							<li>h</li>
+							<li>i</li>
+							<li>j</li>
+							<li>k</li>
+						</ol>
+					</div>
+				</td>
+			</tr>	
+		</tbody>
+	</table>
+</td>
+</tr>
+
+<tr height="200px">
+<td>
+	<h2>Console output</h2>
+	<button onclick="return clearConsole();">Clear</button>
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+</td>
+</tr>
+</table>
+</body>
+</html>

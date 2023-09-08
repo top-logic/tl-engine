@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   inkscape:export-filename="D:\local\bhu\desktop\new-as.png"
+   inkscape:export-xdpi="19.785006"
+   inkscape:export-ydpi="19.785006"
+   sodipodi:docname="fptTitleGradient.svg">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3769">
+      <stop
+         style="stop-color:#ffd42a;stop-opacity:0.60056657;"
+         offset="0"
+         id="stop3771" />
+      <stop
+         id="stop3777"
+         offset="0.5"
+         style="stop-color:#ffd42a;stop-opacity:1;" />
+      <stop
+         style="stop-color:#ffd42a;stop-opacity:0.69405097;"
+         offset="1"
+         id="stop3773" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3769"
+       id="linearGradient3775"
+       x1="166.52074"
+       y1="216.56497"
+       x2="166.36865"
+       y2="159.38525"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(1.2511576e-5,0)" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="6.5757577"
+     inkscape:cx="160.88358"
+     inkscape:cy="860.31662"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:snap-object-midpoints="true"
+     inkscape:window-width="1492"
+     inkscape:window-height="922"
+     inkscape:window-x="127"
+     inkscape:window-y="48"
+     inkscape:window-maximized="0"
+     showguides="true"
+     inkscape:guide-bbox="true" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:url(#linearGradient3775);fill-opacity:1;stroke:none"
+       id="rect3767"
+       width="52.313362"
+       height="57.483871"
+       x="159.67741"
+       y="159.0811" />
+    <rect
+       style="fill:none;stroke:none"
+       id="rect3779"
+       width="0.6082949"
+       height="55.963135"
+       x="172.45161"
+       y="160.29768"
+       inkscape:export-filename="C:\local\devel\workspace-toplogic-5.7.4_x2\com.top_logic\webapps\top-logic\themes\default\images\fptHeaderGradient.png"
+       inkscape:export-xdpi="125.43972"
+       inkscape:export-ydpi="125.43972" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Schrift" />
+</svg>

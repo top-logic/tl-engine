@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar ns="http://www.top-logic.com/ns/dynamic-types/1.0" xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <start>
+    <a:documentation>
+RelaxNG schema for the definition of structured elements.
+
+This schema applies to conf/*Factory*.xml files. For validation use the generated 
+version in XML syntax (element.rng).
+
+</a:documentation>
+    <choice>
+      <ref name="defGlobalTypes"/>
+      <ref name="defStructures"/>
+    </choice>
+  </start>
+  <define name="defGlobalTypes">
+    <a:documentation>Container for die Definition von Typen.</a:documentation>
+    <element name="metaelementdefinition">
+      <optional>
+        <attribute name="holderType">
+          <a:documentation>TODO: Sinnlose Definition, die überall angegeben ist, aber hoffentlich 
+ignoriert wird.</a:documentation>
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <zeroOrMore>
+        <ref name="defType">
+          <a:documentation>Definition globaler Typen.</a:documentation>
+        </ref>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="defLocalTypes">
+    <a:documentation>Typzuweisung für das umschließende Strukturelement und optional die Definition 
+lokaler Typen im Inhalt.</a:documentation>
+    <element name="metaelementdefinition">
+      <a:documentation>Typzuweisung und/oder Container für Typdefinitionen (siehe defGlobalTypes und 
+defLocalTypes)</a:documentation>
+      <attribute name="holderType">
+        <a:documentation>Gibt an, wo der Typ gesucht wird, der dem umschließenden Strukturelement 
+zugewiesen werden soll.</a:documentation>
+        <choice>
+          <value>global</value>
+          <a:documentation>Der gesuchte Typ ist ein globaler Typ, der in einer defGlobalTypes 
+Sektion definiert ist. </a:documentation>
+          <value>this</value>
+          <a:documentation>Der gesuchte Typ is ein lokaler Typ, der bei der Instanz des umschließenden 
+Strukturelements definiert ist. (Der korrspondierende Wrapper muss 
+MetaElementHolder implementieren).</a:documentation>
+          <value>parent</value>
+          <a:documentation>Der gesuchte Typ ist ein lokaler Typ, der beim Vaterknoten des 
+umschließenden Strukturelements definiert ist. Der Knotentyp muss 
+ein Untertyp von StructuredElement sein.</a:documentation>
+          <data type="string">
+            <a:documentation>"template" "." templateHolderType
+
+Der Typ wird relativ zu einem zum Originalobjekt in Beziehung stehendem 
+Objekt (dem Template) gesucht. Dieses in Beziehung stehende Objekt wird 
+programmatisch (über die Factory) angegeben. Der Ort ist über 
+templateHolderType angegeben.   
+
+Andernfalls:
+
+Der gesuchte Typ ist ein lokaler Typ, der beim ersten Strukturelement 
+definiert ist, das den angegebenen Typ hat und auf dem Weg vom momentanen 
+Knoten zur Wurzel des Baumes liegt.</a:documentation>
+          </data>
+        </choice>
+      </attribute>
+      <optional>
+        <attribute name="meType">
+          <a:documentation>Lokaler Name des gesuchten Typs relativ zum spezifizierten Typcontainer.</a:documentation>
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <zeroOrMore>
+        <ref name="defType">
+          <a:documentation>Definition lokaler Typen relativ zum umschließenden Strukturelement.</a:documentation>
+        </ref>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="defType">
+    <element name="metaelement">
+      <a:documentation>Typdefinition.</a:documentation>
+      <attribute name="type">
+        <a:documentation>Name des definierten Typs.</a:documentation>
+        <data type="string"/>
+      </attribute>
+      <optional>
+        <attribute name="superType">
+          <a:documentation>Name des Obertyps des definierten Typs.</a:documentation>
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="superHolderType">
+          <a:documentation>Ort, wo der Obertyp zu finden ist. Siehe Attribut holderType in Element metaelementdefinition 
+in Definition defLocalTypes.</a:documentation>
+          <choice>
+            <value>global</value>
+            <value>this</value>
+            <value>parent</value>
+            <data type="string"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <ref name="defTypeProperties">
+          <a:documentation>Statisches Attribute des definierten Typs.</a:documentation>
+        </ref>
+      </optional>
+      <optional>
+        <ref name="defInstanceProperties">
+          <a:documentation>Attribute der Instanzen des definierten Typs.</a:documentation>
+        </ref>
+      </optional>
+    </element>
+  </define>
+  <define name="defTypeProperties">
+    <element name="attributes">
+      <zeroOrMore>
+        <element name="meattribute">
+          <a:documentation>Typattribut.</a:documentation>
+          <attribute name="name">
+            <ref name="defTypePropertyName"/>
+          </attribute>
+          <attribute name="value">
+            <data type="string"/>
+          </attribute>
+        </element>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="defTypePropertyName">
+    <choice>
+      <ref name="defObjectBasePropertsName"/>
+      <value>defaultIcon</value>
+      <a:documentation>Das Bild, mit dem Objekte des umschließenden Typs standardmäßig symbolisiert 
+werden.</a:documentation>
+      <value>largeIcon</value>
+      <a:documentation>Das Bild, mit dem Objekte des umschließenden Typs in Dialog-Titeln symbolisiert 
+werden.</a:documentation>
+      <value>system</value>
+      <a:documentation>Der Typ ist ein eingebauter Typ und wird nicht zur Bearbeitung angeboten. </a:documentation>
+    </choice>
+  </define>
+  <define name="defObjectBasePropertsName">
+    <choice>
+      <value>koType</value>
+      <a:documentation>Der Name des KnowledgeObject-Typs mit dem Instanzen des definierten Typs 
+in der KnowledgeBase abgelegt werden. </a:documentation>
+      <value>wrapperClass</value>
+      <a:documentation>Die Laufzeitklasse die für Objekte des definierten Typs verwendet wird.</a:documentation>
+    </choice>
+  </define>
+  <define name="defInstanceProperties">
+    <element name="metaattributes">
+      <zeroOrMore>
+        <element name="metaattribute">
+          <attribute name="name">
+            <data type="string"/>
+          </attribute>
+          <attribute name="type">
+            <ref name="defInstancePropertyType"/>
+          </attribute>
+          <optional>
+            <attribute name="mandatory">
+              <data type="boolean"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute name="immutable">
+              <data type="boolean"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute name="deleteProtected">
+              <a:documentation>Whether there are programatic references to the attribute. Such attributes 
+cannot be dynamically removed. </a:documentation>
+              <data type="boolean"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute name="sortOrder">
+              <data type="float"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute name="additionalParam">
+              <a:documentation>Read the code :-(</a:documentation>
+              <data type="string"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute name="validityCheck">
+              <a:documentation>Duration during which the value of the attribute is considered to be valid. 
+After the validity period, the attribute is flagged for manual check and 
+approval.</a:documentation>
+              <data type="string"/>
+            </attribute>
+          </optional>
+        </element>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="defInstancePropertyType">
+    <choice>
+      <value>TYPE_BOOLEAN</value>
+      <value>TYPE_LONG</value>
+      <value>TYPE_FLOAT</value>
+      <value>TYPE_STRING</value>
+      <value>TYPE_DATE</value>
+      <value>TYPE_STRING_SET</value>
+      <value>TYPE_CHECKLIST</value>
+      <value>TYPE_COMPLEX</value>
+      <value>TYPE_CALCULATED</value>
+      <value>TYPE_BINARY</value>
+      <value>TYPE_WRAPPER</value>
+      <a:documentation>Referenz auf ein anderes Objekt. Eine Typeinschränkung des referenzierten 
+Objekts findet in "additionalParam" statt.</a:documentation>
+      <value>TYPE_SINGLEWRAPPER</value>
+      <value>TYPE_COLLECTION</value>
+      <value>TYPE_TYPEDSET</value>
+      <value>TYPE_LIST</value>
+      <value>TYPE_CLASSIFICATION</value>
+      <value>TYPE_SINGLE_STRUCTURE</value>
+      <value>TYPE_STRUCTURE</value>
+      <value>TYPE_DAP</value>
+      <value>TYPE_DAP_COLLECTION</value>
+      <value>TYPE_WEBFOLDER</value>
+      <a:documentation>@deprecated Type should be replaced with better expressiveness of the type system. </a:documentation>
+      <value>TYPE_DOCUMENT</value>
+      <a:documentation>@deprecated Type should be replaced with better expressiveness of the type system.</a:documentation>
+      <value>TYPE_EXTERNAL_CONTACT</value>
+      <a:documentation>@deprecated Type should be replaced with better expressiveness of the type system. </a:documentation>
+      <value>TYPE_SINGLE_EXTERNAL_CONTACT</value>
+      <a:documentation>@deprecated Type should be replaced with better expressiveness of the type system. </a:documentation>
+      <value>TYPE_HISTORIC_WRAPPER</value>
+    </choice>
+  </define>
+  <define name="defStructures">
+    <element name="structuredElements">
+      <zeroOrMore>
+        <choice>
+          <ref name="defGlobalTypes"/>
+          <ref name="defStructure"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="defStructure">
+    <element name="structure">
+      <a:documentation>Definition einer Struktur.</a:documentation>
+      <attribute name="name">
+        <a:documentation>Name der Struktur. Bei der Erzeugung des Wurzelelements der Struktur muss 
+dieser Name angegeben werden.</a:documentation>
+        <data type="string"/>
+      </attribute>
+      <optional>
+        <attribute name="rootType">
+          <a:documentation>Name der Strukturelementart des Wurzelelements.</a:documentation>
+          <data type="string"/>
+        </attribute>
+      </optional>
+      <optional>
+        <ref name="listsNode"/>
+      </optional>
+      <oneOrMore>
+        <ref name="defNode"/>
+      </oneOrMore>
+    </element>
+  </define>
+  <define name="listsNode">
+    <element name="lists">
+      <a:documentation>Beschreibung der Listen die an das Root Element der Struktur assoziiert werden</a:documentation>
+      <oneOrMore>
+        <element name="list">
+          <a:documentation>Beschreibung der Liste</a:documentation>
+          <!-- Name der Liste -->
+          <attribute name="name">
+            <data type="string"/>
+          </attribute>
+        </element>
+      </oneOrMore>
+    </element>
+  </define>
+  <define name="defNode">
+    <element name="element">
+      <a:documentation>Definition einer Strukturelementart.</a:documentation>
+      <attribute name="type">
+        <a:documentation>Name der definierten Strukturelementart.</a:documentation>
+        <data type="string"/>
+      </attribute>
+      <interleave>
+        <optional>
+          <ref name="defLocalTypes">
+            <a:documentation>Typzuweisung an das definerte Strukturelement und optional die Definition 
+lokaler Typen. TODO: Was bedeutet das Weglassen der Typzuweisung? Wann führt 
+das nicht zu einem Fehler?</a:documentation>
+          </ref>
+        </optional>
+        <ref name="defNodeProperties">
+          <a:documentation>Statische Attribute der Strukturart. </a:documentation>
+        </ref>
+        <optional>
+          <element name="children">
+            <a:documentation>Definition möglicher Kindelemente des definierten Strukturelements.</a:documentation>
+            <zeroOrMore>
+              <element name="child">
+                <attribute name="name">
+                  <data type="string"/>
+                </attribute>
+              </element>
+            </zeroOrMore>
+          </element>
+        </optional>
+      </interleave>
+    </element>
+  </define>
+  <define name="defNodeProperties">
+    <element name="attributes">
+      <zeroOrMore>
+        <element name="attribute">
+          <attribute name="name">
+            <ref name="defNodePropertyName"/>
+          </attribute>
+          <attribute name="value">
+            <data type="string"/>
+          </attribute>
+        </element>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="defNodePropertyName">
+    <choice>
+      <value>icon</value>
+      <value>openIcon</value>
+      <ref name="defTypePropertyName"/>
+    </choice>
+  </define>
+</grammar>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<editor name="ComponentConfigurationEditor"
+	applyCommand="storeComponentConfiguration"
+	securityProviderClass="securityRoot"
+	titleKey="tl.layouteditor.componentConfigurationEditor.title"
+>
+	<model class="com.top_logic.layout.editor.KeyToLayoutTransformLinking"
+		input="selection(admin/studio/layoutEditor/layoutsTable.layout.xml#LayoutTreeTable)"
+	/>
+	<modelBuilder class="com.top_logic.layout.editor.TLLayoutConfigFormBuilder"/>
+	<buttons>
+		<button id="storeComponentConfiguration"
+			class="com.top_logic.layout.editor.WriteComponentConfigurationIntoFilesystem"
+			clique="apply"
+		>
+			<executability>
+				<reference rule-id="InEditMode"/>
+			</executability>
+		</button>
+	</buttons>
+</editor>

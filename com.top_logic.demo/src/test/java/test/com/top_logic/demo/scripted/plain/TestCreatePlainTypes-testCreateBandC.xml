@@ -1,0 +1,1335 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create plain A"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="myFunnyA"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="myFunnyA"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Knoten anlegen"
+					command-name="openNewElementDialog"
+					component-implementation-comment="com.top_logic.layout.tree.component.TreeComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Typ"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesnewElementDialog"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Demo L"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesnewElementDialog"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="LunderA"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateHandler"
+					command-label="Anlegen"
+					component-implementation-comment="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesnewElementDialog"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Tabellen > Tree Grid"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+							<list>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="myFunnyA"
+								/>
+							</list>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Tabellen > Tree Grid > Demo tree_grid.xml (Unendlicher Baum)"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming$GridNodeName">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+								tab-path="Tabellen > Tree Grid"
+							/>
+							<path>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+										tab-path="Tabellen > Tree Grid"
+									/>
+									<path>
+										<object>
+											<business-object config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+												path="myFunnyA"
+												structure="DemoTypes"
+											/>
+										</object>
+									</path>
+								</entry>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+										tab-path="Tabellen > Tree Grid"
+									/>
+									<path>
+										<object>
+											<business-object config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+												path="myFunnyA > LunderA"
+												structure="DemoTypes"
+											/>
+										</object>
+									</path>
+								</entry>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+							tab-path="Tabellen > Tree Grid"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+					columns="Zeilenselektion,Kommandos,Name,booleanMandatory,booleanRadioMandatory,booleanSelectMandatory,date,float,float (no special configuration),long,string,structure"
+					label="true"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Tabellen > Tree Grid > Demo tree_grid.xml (Unendlicher Baum)"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.model.types.util.CreateLGridChildHandler"
+					command-label="Plain A anlegen"
+					command-name="newPlainA"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+							tab-path="Tabellen > Tree Grid"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="aUnderL"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="booleanMandatory"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Tabellen > Tree Grid > Demo tree_grid.xml (Unendlicher Baum)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="booleanRadioMandatory"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Tabellen > Tree Grid > Demo tree_grid.xml (Unendlicher Baum)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="booleanSelectMandatory"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Tabellen > Tree Grid > Demo tree_grid.xml (Unendlicher Baum)"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridComponent$GridApplyCommandHandler"
+					command-label="Übernehmen"
+					command-name="gridApplyRowObject"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming$GridNodeName">
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+								tab-path="Tabellen > Tree Grid"
+							/>
+							<path>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+										tab-path="Tabellen > Tree Grid"
+									/>
+									<path>
+										<object>
+											<business-object config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+												path="myFunnyA"
+												structure="DemoTypes"
+											/>
+										</object>
+									</path>
+								</entry>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+										tab-path="Tabellen > Tree Grid"
+									/>
+									<path>
+										<object>
+											<business-object config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+												path="myFunnyA > LunderA"
+												structure="DemoTypes"
+											/>
+										</object>
+									</path>
+								</entry>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/treeGrid/demoTreeGrid.layout.xml#treeGrid"
+							tab-path="Tabellen > Tree Grid"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/demo/create-B-plain.xml"
+			template-name-comment="Create B plain"
+		>
+			<parameters>
+				<parameter name="Name"
+					value="plainB"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/demo/create-C-plain.xml"
+			template-name-comment="Create C plain"
+		>
+			<parameters>
+				<parameter name="Name"
+					value="plainC"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Flache Typen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+						tab-path="Strukturen > Flache Typen"
+					/>
+					<path>
+						<object>
+							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+								table="GenericObject"
+							>
+								<attributes>
+									<attribute name="tType">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="DemoPlain"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="A"
+													/>
+												</attribute>
+											</attributes>
+										</value>
+									</attribute>
+									<attribute name="name">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="aUnderL"
+										/>
+									</attribute>
+								</attributes>
+								<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="DemoPlain"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="A"
+											/>
+										</attribute>
+									</attributes>
+								</type>
+							</business-object>
+						</object>
+					</path>
+				</selectee>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+					tab-path="Strukturen > Flache Typen"
+				/>
+				<path>
+					<named-member name="fieldTable"/>
+				</path>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+			columns="Zeilenselektion,Kommandos,name,string,long,typedWrapper,BC.typedWrapperReverse"
+			label="true"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+					tab-path="Strukturen > Flache Typen"
+				/>
+				<path>
+					<named-member name="fieldTable"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="gridEdit"
+			component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+			component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="typedWrapper"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+					tab-path="Strukturen > Flache Typen"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+						table="GenericObject"
+					>
+						<attributes>
+							<attribute name="tType">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="DemoPlain"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="C"
+											/>
+										</attribute>
+									</attributes>
+								</value>
+							</attribute>
+							<attribute name="name">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="plainC"
+								/>
+							</attribute>
+						</attributes>
+						<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+							table="MetaElement"
+						>
+							<attributes>
+								<attribute name="scope">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="TLModule"
+									>
+										<attributes>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="DemoPlain"
+												/>
+											</attribute>
+										</attributes>
+									</value>
+								</attribute>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="C"
+									/>
+								</attribute>
+							</attributes>
+						</type>
+					</value>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+			command-label="Speichern"
+			command-name="gridSave"
+			component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+			component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="BC.typedWrapperReverse"
+			>
+				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+						tab-path="Strukturen > Flache Typen"
+					/>
+					<path>
+						<named-member name="fieldTable"/>
+					</path>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+						tab-path="Strukturen > Flache Typen"
+					/>
+					<path>
+						<object>
+							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+								table="GenericObject"
+							>
+								<attributes>
+									<attribute name="tType">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="DemoPlain"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="C"
+													/>
+												</attribute>
+											</attributes>
+										</value>
+									</attribute>
+									<attribute name="name">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="plainC"
+										/>
+									</attribute>
+								</attributes>
+								<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="DemoPlain"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="C"
+											/>
+										</attribute>
+									</attributes>
+								</type>
+							</business-object>
+						</object>
+					</path>
+				</row-object>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+						table="GenericObject"
+					>
+						<attributes>
+							<attribute name="tType">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="DemoPlain"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="A"
+											/>
+										</attribute>
+									</attributes>
+								</value>
+							</attribute>
+							<attribute name="name">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="aUnderL"
+								/>
+							</attribute>
+						</attributes>
+						<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+							table="MetaElement"
+						>
+							<attributes>
+								<attribute name="scope">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="TLModule"
+									>
+										<attributes>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="DemoPlain"
+												/>
+											</attribute>
+										</attributes>
+									</value>
+								</attribute>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="A"
+									/>
+								</attribute>
+							</attributes>
+						</type>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="gridEdit"
+			component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+			component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="typedWrapper"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+					tab-path="Strukturen > Flache Typen"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+						table="GenericObject"
+					>
+						<attributes>
+							<attribute name="tType">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="DemoPlain"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="B"
+											/>
+										</attribute>
+									</attributes>
+								</value>
+							</attribute>
+							<attribute name="name">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="plainB"
+								/>
+							</attribute>
+						</attributes>
+						<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+							table="MetaElement"
+						>
+							<attributes>
+								<attribute name="scope">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="TLModule"
+									>
+										<attributes>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="DemoPlain"
+												/>
+											</attribute>
+										</attributes>
+									</value>
+								</attribute>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="B"
+									/>
+								</attribute>
+							</attributes>
+						</type>
+					</value>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+			command-label="Speichern"
+			command-name="gridSave"
+			component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+			component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="BC.typedWrapperReverse"
+			>
+				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+						tab-path="Strukturen > Flache Typen"
+					/>
+					<path>
+						<named-member name="fieldTable"/>
+					</path>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+						tab-path="Strukturen > Flache Typen"
+					/>
+					<path>
+						<object>
+							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+								table="GenericObject"
+							>
+								<attributes>
+									<attribute name="tType">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="DemoPlain"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="B"
+													/>
+												</attribute>
+											</attributes>
+										</value>
+									</attribute>
+									<attribute name="name">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="plainB"
+										/>
+									</attribute>
+								</attributes>
+								<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="DemoPlain"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="B"
+											/>
+										</attribute>
+									</attributes>
+								</type>
+							</business-object>
+						</object>
+					</path>
+				</row-object>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+						table="GenericObject"
+					>
+						<attributes>
+							<attribute name="tType">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="DemoPlain"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="A"
+											/>
+										</attribute>
+									</attributes>
+								</value>
+							</attribute>
+							<attribute name="name">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="aUnderL"
+								/>
+							</attribute>
+						</attributes>
+						<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+							table="MetaElement"
+						>
+							<attributes>
+								<attribute name="scope">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="TLModule"
+									>
+										<attributes>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="DemoPlain"
+												/>
+											</attribute>
+										</attributes>
+									</value>
+								</attribute>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="A"
+									/>
+								</attribute>
+							</attributes>
+						</type>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Remove elements."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+								tab-path="Strukturen > Flache Typen"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="GenericObject"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="DemoPlain"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="plainC"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="DemoPlain"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="C"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+							tab-path="Strukturen > Flache Typen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+					command-label="Löschen..."
+					command-name="dispatchingDelete"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+								tab-path="Strukturen > Flache Typen"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="GenericObject"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="DemoPlain"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="plainB"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="DemoPlain"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="B"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+							tab-path="Strukturen > Flache Typen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+					command-label="Löschen..."
+					command-name="dispatchingDelete"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+								tab-path="Strukturen > Flache Typen"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="GenericObject"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="DemoPlain"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="aUnderL"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="DemoPlain"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="A"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+							tab-path="Strukturen > Flache Typen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+					command-label="Löschen..."
+					command-name="dispatchingDelete"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#plainGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="myFunnyA"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Tabellen > Tree Grid"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Tabelle zurücksetzen"
+			user-id="root"
+		>
+			<business-object config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Tabellen > Tree Grid > Demo tree_grid.xml (Unendlicher Baum)"
+					/>
+					<path>
+						<named-member name="fieldTable"/>
+					</path>
+				</default-table-data-owner>
+			</business-object>
+		</action>
+	</actions>
+</action>

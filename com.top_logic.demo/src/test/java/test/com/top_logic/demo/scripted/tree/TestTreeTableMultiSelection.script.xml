@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+					command-label="Generieren..."
+					command-name="generateTypes"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name des generierten Wurzelelementes"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestTreeTableMultiSelection"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Generieren"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Tabellen und Bäume"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="INCREMENTAL"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Demodaten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeTableMultiSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+						<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Demodaten"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Default selection"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Name"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable"
+										tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+									/>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path=""
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="TestTreeTableMultiSelection"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/detailsForm.layout.xml#Form"
+									tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeTableMultiSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</constraint>
+							</constraints>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="One element selected"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="A1"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable"
+									tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/detailsForm.layout.xml#Form"
+									tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeTableMultiSelection > A1"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</constraint>
+							</constraints>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Select more than one element"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+									<list>
+										<entry config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+											path="A1"
+										/>
+										<entry config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+											path="A1 > C2"
+										/>
+									</list>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable"
+									tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/detailsForm.layout.xml#Form"
+									tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface=""/>
+								</constraint>
+							</constraints>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="One element selected"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="A1 > C2"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable"
+									tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/detailsForm.layout.xml#Form"
+									tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeTableMultiSelection > A1 > C2"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</constraint>
+							</constraints>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Deselect to get default selection"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface=""/>
+								<selection-state boolean="false"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable"
+									tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Name"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable"
+										tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+									/>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path=""
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="TestTreeTableMultiSelection"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment=""
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/detailsForm.layout.xml#Form"
+									tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumtabelle mit Mehrfachauswahl"
+								/>
+							</actual-value>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeTableMultiSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</constraint>
+							</constraints>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestTreeTableMultiSelection"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

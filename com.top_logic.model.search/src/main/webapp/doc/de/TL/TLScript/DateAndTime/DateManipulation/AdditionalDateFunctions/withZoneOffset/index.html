@@ -1,0 +1,40 @@
+<h2>Syntax</h2> 
+<pre>	<code>$calendar.withZoneOffset($offset)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Erstellt einen neuen Kalender aus dem gegebenen Kalender, wobei der <a class="tlObject" data-custom="true" href="?page=zoneOffset&amp;uuid=00ae5ac5-7823-4a92-9e13-29f086c75e5f">Zeitzonen-Offset</a> (UTC) auf <code class="hljs inlineCode">offset</code> gesetzt wird. Durch das Verändern des Offsets können sich auch andere Werte wie zum Beispiel die <a class="tlObject" data-custom="true" href="?page=hour&amp;uuid=7035566c-b509-4dcd-b3b1-c5d9aeaea837">Stunde</a> ändern.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>calendar</td> 
+   <td>Fachobjekt</td> 
+   <td>Der Kalender, dessen Zeitzonen-Offset geändert werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>offset</td> 
+   <td>Zahl</td> 
+   <td>Wert für den neuen Zeitzonen-Offset in Millisekunden, der für den Kalender gesetzt werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Fachobjekt</p> 
+<p>Ein Kalender mit dem geänderten Wert für den Zeitzonen-Offset.</p> 
+<h2>Beispiele</h2> 
+<pre>	<code>dateTime(2012, 8, 10, 7, 55, 24, 13).toUserCalendar().withZoneOffset(3600000).zoneOffset()</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span></strong> 3.600.000 </p>

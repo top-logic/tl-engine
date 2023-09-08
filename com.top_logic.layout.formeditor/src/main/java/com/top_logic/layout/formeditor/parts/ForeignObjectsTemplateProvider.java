@@ -1,0 +1,249 @@
+/*
+ * SPDX-FileCopyrightText: 2020 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.formeditor.parts;
+
+import static com.top_logic.layout.form.template.model.Templates.*;
+
+import java.io.IOException;
+import java.util.Collection;
+
+import com.top_logic.basic.IdentifierUtil;
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.element.layout.formeditor.builder.TypedForm;
+import com.top_logic.element.layout.formeditor.implementation.GroupDefinitionTemplateProvider;
+import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.DisplayUnit;
+import com.top_logic.layout.ImageProvider;
+import com.top_logic.layout.ResPrefix;
+import com.top_logic.layout.editor.config.OptionalTypeTemplateParameters;
+import com.top_logic.layout.form.FormContainer;
+import com.top_logic.layout.form.control.Icons;
+import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.form.template.model.Templates;
+import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.table.ConfigKey;
+import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.mig.html.HTMLUtil;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.implementation.AbstractFormElementProvider;
+import com.top_logic.model.form.implementation.FormDefinitionTemplateProvider;
+import com.top_logic.model.form.implementation.FormEditorContext;
+import com.top_logic.model.form.implementation.FormElementTemplateProvider;
+import com.top_logic.model.form.implementation.FormMode;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+
+/**
+ * {@link AbstractFormElementProvider} for {@link ForeignObjects}.
+ * 
+ * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+ */
+public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<ForeignObjects> {
+
+	private static final ImageProvider IMAGE_PROVIDER =
+		ImageProvider.constantImageProvider(Icons.FORM_EDITOR__REFERENCE);
+
+	/**
+	 * Creates a new {@link ForeignObjectsTemplateProvider}.
+	 */
+	public ForeignObjectsTemplateProvider(InstantiationContext context, ForeignObjects config) {
+		super(context, config);
+	}
+
+	@Override
+	public boolean getWholeLine(TLStructuredType modelType) {
+		return true;
+	}
+
+	@Override
+	public boolean getIsTool() {
+		return true;
+	}
+
+	@Override
+	public ImageProvider getImageProvider() {
+		return IMAGE_PROVIDER;
+	}
+
+	@Override
+	public DisplayDimension getDialogWidth() {
+		return DisplayDimension.dim(350, DisplayUnit.PIXEL);
+	}
+
+	@Override
+	public DisplayDimension getDialogHeight() {
+		return DisplayDimension.dim(650, DisplayUnit.PIXEL);
+	}
+
+	@Override
+	public ResKey getLabel(FormEditorContext context) {
+		return I18NConstants.FOREIGN_OBJECTS_LABEL;
+	}
+
+	@Override
+	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+		if (context.getFormMode() == FormMode.DESIGN) {
+			return designTemplate(context);
+		} else {
+			return displayTemplate(context);
+		}
+	}
+
+	private HTMLTemplateFragment displayTemplate(FormEditorContext context) {
+		TLClass targetType = OptionalTypeTemplateParameters.resolve(getConfig());
+		FormDefinitionTemplateProvider globalLayout = TypedConfigUtil.createInstance(getConfig().getLayout());
+		QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
+		QueryExecutor readOnlyExpr = QueryExecutor.compileOptional(getConfig().getReadOnly());
+		TLObject model = context.getModel();
+		Collection<?> objects = SearchExpression.asCollection(itemsExpr.execute(model));
+		QueryExecutor labelExpr = QueryExecutor.compileOptional(getConfig().getLabel());
+		HTMLTemplateFragment[] templates = new HTMLTemplateFragment[objects.size()];
+		FormContainer contentGroup = context.getContentGroup();
+		ConfigKey personalizationKey = ConfigKey.field(contentGroup);
+		personalizationKey = ConfigKey.derived(personalizationKey, "foreignObjects");
+		int index = 0;
+		for (Object obj : objects) {
+			TLObject item = SearchExpression.asTLObjectNonNull(itemsExpr.getSearch(), obj);
+			String itemID = IdentifierUtil.toExternalForm(item.tIdLocal());
+
+			FormContainer innerGroup = new FormGroup("foreignObjects-" + itemID, ResPrefix.NONE);
+			innerGroup.setStableIdSpecialCaseMarker(obj);
+			innerGroup.setImmutable(displayReadOnly(readOnlyExpr, item, model));
+			contentGroup.addMember(innerGroup);
+
+			HTMLTemplateFragment legend = text(label(labelExpr, item));
+			HTMLTemplateFragment contentTemplate;
+			FormEditorContext innerContext;
+			if (globalLayout != null) {
+				innerContext = new FormEditorContext.Builder(context)
+					.formType(targetType)
+					.concreteType(null)
+					.model(item)
+					.contentGroup(innerGroup)
+					.build();
+				contentTemplate = globalLayout.createContentTemplate(innerContext);
+			} else {
+				TypedForm typedForm = TypedForm.lookup(null, item);
+				FormDefinitionTemplateProvider localLayout =
+					TypedConfigUtil.createInstance(typedForm.getFormDefinition());
+				innerContext = new FormEditorContext.Builder(context)
+					.formType(typedForm.getFormType())
+					.concreteType(typedForm.getDisplayedType())
+					.model(item)
+					.contentGroup(innerGroup)
+					.build();
+				contentTemplate = localLayout.createContentTemplate(innerContext);
+			}
+			templates[index] = Templates.fieldsetBoxWrap(legend, member(innerGroup, contentTemplate),
+				ConfigKey.derived(personalizationKey, itemID));
+			index++;
+		}
+		return contentBox(div(templates));
+	}
+
+	private boolean displayReadOnly(QueryExecutor readOnlyExpr, TLObject item, TLObject baseModel) {
+		boolean readOnly;
+		if (readOnlyExpr == null) {
+			readOnly = false;
+		} else {
+			readOnly = SearchExpression.asBoolean(readOnlyExpr.execute(item, baseModel));
+		}
+		return readOnly;
+	}
+
+	private String label(QueryExecutor labelExpr, TLObject item) {
+		if (labelExpr == null) {
+			return MetaLabelProvider.INSTANCE.getLabel(item);
+		} else {
+			return MetaLabelProvider.INSTANCE.getLabel(labelExpr.execute(item));
+		}
+	}
+
+	private HTMLTemplateFragment designTemplate(FormEditorContext context) {
+		ForeignObjects config = getConfig();
+
+		TLClass targetType = OptionalTypeTemplateParameters.resolve(config);
+		FormDefinitionTemplateProvider layout = TypedConfigUtil.createInstance(config.getLayout());
+
+		HTMLTemplateFragment legend;
+		if (targetType != null) {
+			legend = resource(I18NConstants.FOREIGN_OBJECTS_LEGEND_KEY_PREVIEW__TYPE.fill(targetType));
+		} else {
+			legend = empty();
+		}
+		HTMLTemplateFragment contentTemplate;
+		if (targetType == null) {
+			contentTemplate = resource(I18NConstants.FOREIGN_OBJECTS_NO_TYPE_DEFINED);
+		} else if (layout == null) {
+			contentTemplate = resource(I18NConstants.FOREIGN_OBJECTS_NO_DISPLAY_DEFINED);
+		} else {
+			/* The input elements for objects of a different type are created, without having the
+			 * foreign object. Therfore a domain must be set. */
+			context = new FormEditorContext.Builder(context)
+				.formType(targetType)
+				.model(null)
+				.locked(true)
+				.domain(StringServices.randomUUID())
+				.build();
+			contentTemplate = layout.createContentTemplate(context);
+		}
+		/* Lock content of the preview fieldset box. It must not be possible to drop elements in the
+		 * box. */
+		return Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none()).setCssClass("locked");
+	}
+
+	@Override
+	public void renderPDFExport(DisplayContext context, TagWriter out, FormEditorContext renderContext) throws IOException {
+		TLClass targetType = OptionalTypeTemplateParameters.resolve(getConfig());
+		FormElementTemplateProvider globalLayout = TypedConfigUtil.createInstance(getConfig().getLayout());
+		QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
+		Collection<?> objects = SearchExpression.asCollection(itemsExpr.execute(renderContext.getModel()));
+		QueryExecutor labelExpr = QueryExecutor.compileOptional(getConfig().getLabel());
+		for (Object obj : objects) {
+			TLObject item = SearchExpression.asTLObjectNonNull(itemsExpr.getSearch(), obj);
+			FormElementTemplateProvider layout;
+			FormEditorContext innerContext;
+			if (globalLayout != null) {
+				innerContext = new FormEditorContext.Builder(renderContext)
+					.formType(targetType)
+					.concreteType(null)
+					.model(item)
+					.build();
+				layout = globalLayout;
+			} else {
+				TypedForm typedForm = TypedForm.lookup(null, item);
+				layout = TypedConfigUtil.createInstance(typedForm.getFormDefinition());
+				innerContext = new FormEditorContext.Builder(renderContext)
+					.formType(typedForm.getFormType())
+					.concreteType(typedForm.getDisplayedType())
+					.model(item)
+					.build();
+			}
+
+			HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_EXPORT_CSS);
+
+			HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_HEADER_CSS);
+			out.writeText(label(labelExpr, item));
+			out.endTag(HTMLConstants.DIV);
+
+			HTMLUtil.beginDiv(out, GroupDefinitionTemplateProvider.PDF_CONTENT_CSS);
+			layout.renderPDFExport(context, out, innerContext);
+			out.endTag(HTMLConstants.DIV);
+
+			out.endTag(HTMLConstants.DIV);
+		}
+	}
+
+}
+

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- TODO SKO this is ...                      -->
+<!-- ======================================================== -->
+<!--                                                          -->
+<!--  Please provide a 'comment="..."' attribute/value pair   -->
+<!--  for each of your tags, if applicable. The text          -->
+<!--  provided there is displayed within the Administration   -->
+<!--  GUI of the application.                                 -->
+<!--                                                          -->
+
+<root>
+	<alias>
+		<entry name="%DEFAULT_EVENT_TYPES%" value="created,modified,deleted" comment="basic log event types" />
+    </alias>
+    <properties>
+		<section name="DocumentFilterFactory">
+			<entry name="DefaultFilter" value="com.top_logic.base.documentfilter.DispatchingDocumentFilter" />
+		</section>
+		<section name="DispatchingDocumentFilter">
+			<entry name="DocumentFilter" value="com.top_logic.base.documentfilter.MsWordDocumentFilter,
+												com.top_logic.base.documentfilter.RtfDocumentFilter,
+												com.top_logic.base.documentfilter.PdfDocumentFilter,												
+												com.top_logic.base.documentfilter.ExcelDocumentFilter,
+												com.top_logic.base.documentfilter.PowerPointDocumentFilter,
+												com.top_logic.base.documentfilter.PlainDocumentFilter,
+												com.top_logic.base.documentfilter.HtmlDocumentFilter"
+                                                 />
+												<!--  com.top_logic.base.documentfilter.im_insiders.ImInsidersDocumentFilter, com.top_logic.base.documentfilter.xml.XMLDocumentFilter -->
+
+		</section>
+		<section name="XMLContentExtractor" comment="Configure tag names and attributes that should be extracted. Text areas will be extracted anyway.">
+			<!-- Note that more than one attribute name should be separated with comma -->
+			<entry name="attribute" value="value" comment="'value' is an attribute of the tag 'attribute'" />
+		</section>
+		<section name="ICADocumentFilter" comment="Properties for the Intelligent Content Architecture Filter">
+			<!-- This is a CORBA connect string -->
+			<!-- entry name="service" value="corbaloc::localhost:10003/RenditionService" /-->
+			<entry name="extensions" value="doc,dot,xls,ppt,pdf,txt,html,xml,mpp,mpx" />
+			<entry name="mimeTypes" value="application/msword,text/plain,text/html,text/xml,application/vnd.ms-powerpoint,application/pdf,application/vnd.ms-excel,application/vnd.ms-project" />
+		</section>
+		<section name="ImInsidersDocumentFilter">
+			<entry name="DocumentFilterIniPath" value="/WEB-INF/conf/documentfilter/InitParamsRE.txt" />
+			<entry name="extensions" value="doc,dot,xls,ppt,pdf,txt,html,xml,mpp,mpx" />
+			<entry name="mimeTypes" value="application/msword,text/plain,text/html,text/xml,application/vnd.ms-powerpoint,application/pdf,application/vnd.ms-excel,application/vnd.ms-project" />
+		</section>
+		<section name="ExtDocumentFilter">
+			<!-- Format is "from-type|to-type"	"program" 
+             This was done with SuSE Linux 8.1 your mileage may vary ...
+        -->
+			<entry name="text/plain|text/plain" value="cat" />
+			<entry name="text/html|text/plain" value="w3m -S -dump -T text/html" />
+			<entry name="application/pdf|text/plain" value="ps2ascii" />
+			<entry name="application/postscript|text/plain" value="ps2ascii" />
+			<entry name="application/msword|text/plain" value="antiword -" />
+			<!-- These are part of the xlhtml Package but must be tweaked manually -->
+			<entry name="application/vnd.ms-excel|text/plain" value="xls2txt" />
+			<entry name="application/vnd.ms-powerpoint|text/plain" value="ppt2txt" />
+			<entry name="extensions" value="doc,dot,xls,ppt,pdf,ps,txt,html,xml" />
+		</section>
+	</properties>
+</root>

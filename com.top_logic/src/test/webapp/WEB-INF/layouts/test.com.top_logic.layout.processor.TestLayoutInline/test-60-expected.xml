@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="X"
+	i4="inner1value"
+	p1="x-y-inner1value"
+	p2="y-inner1value"
+	p3="z-y-inner1value"
+>
+	<component class="C"
+		conf1="x-y-inner1value"
+		conf2="y-inner1value"
+		conf3="z-y-inner1value"
+	/>
+	<component class="B"
+		conf1="x-y-inner1value"
+		conf2="y-inner1value"
+		conf3="z-y-inner1value"
+	/>
+</component>

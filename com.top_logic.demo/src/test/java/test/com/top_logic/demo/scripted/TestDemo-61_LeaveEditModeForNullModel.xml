@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Gehe zu Unternehmensverwaltung"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Fach. Administration > Unternehmen"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Erzeuge Unternehmen"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Neu..."
+							command-name="displayDialog_addCompanyContactDialog"
+							component-implementation-comment="com.top_logic.contact.layout.company.EditCompanyContactComponent"
+							component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.contact.layout.company.CreateCompanyContactComponent"
+								component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="Name"
+										>
+											<attribute-ref attribute-name="name">
+												<type type-name="Contact.all">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+												</type>
+											</attribute-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Unternehmen 1"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.contact.layout.company.CreateCompanyContactComponent"
+								component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="Straße"
+										>
+											<attribute-ref attribute-name="street">
+												<type type-name="Contact.Company">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+												</type>
+											</attribute-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Kastanienallee 12"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.contact.layout.company.CreateCompanyContactComponent"
+								component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="Postleitzahl"
+										>
+											<attribute-ref attribute-name="ZIPCode">
+												<type type-name="Contact.Company">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+												</type>
+											</attribute-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="00000"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.contact.layout.company.CreateCompanyContactComponent"
+								component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="Stadt"
+										>
+											<attribute-ref attribute-name="city">
+												<type type-name="Contact.Company">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+												</type>
+											</attribute-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Glücksstadt"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.contact.layout.company.CreateCompanyContactComponent"
+								component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="Land"
+										>
+											<attribute-ref attribute-name="country">
+												<type type-name="Contact.Company">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+												</type>
+											</attribute-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+												<model-name config:interface="com.top_logic.util.CountryNamingScheme$CountryName"
+													iso-country-code="DE"
+												/>
+											</entry>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.contact.layout.company.CompanyContactCreateHandler"
+							command-label="Anlegen"
+							command-name="companyContactCreate"
+							component-implementation-comment="com.top_logic.contact.layout.company.CreateCompanyContactComponent"
+							component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.contact.layout.company.EditCompanyContactComponent"
+							component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Gehe in Edit-Modus"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Unternehmen 1"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactTable"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Unternehmen 1"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+						component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactTable"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.contact.layout.company.EditCompanyContactComponent"
+					component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Lösche Unternehmen"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.company.CompanyContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="companyContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.company.EditCompanyContactComponent"
+					component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+						component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactTable"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Verifiziere View-Modus"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+					command-label="Abbrechen"
+					command-name="nothing"
+					component-implementation-comment="com.top_logic.contact.layout.company.EditCompanyContactComponent"
+					component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactEdit"
+					reason-key="tl.executable.hidden"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

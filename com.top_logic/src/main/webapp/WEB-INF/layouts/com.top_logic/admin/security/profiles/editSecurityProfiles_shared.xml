@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	SPDX-FileCopyrightText: 2019 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<template>
+	<params>
+		<param name="model"
+			value="selection(com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree)"
+		/>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="excludedRoles"
+			optional="true"
+		/>
+		<param name="exportButtons">
+			<button id="securityExport"
+				class="com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.ExportRolesProfileHandler"
+				clique="exportButtons"
+				image="theme:ICONS_BUTTON_XML_EXPORT"
+			/>
+			<reference command-id="exportExcel"/>
+		</param>
+	</params>
+
+	<component class="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+		excluded-roles="${excludedRoles}"
+		model="${model}"
+		name="${namePrefix}EditSecurityComponent"
+		resPrefix="main.admin.editSecurityProfiles.component."
+		securityProviderClass="securityRoot"
+	>
+		<componentControlProvider class="com.top_logic.layout.structure.ControlRepresentableCP"/>
+		<tables>
+			<table name="tree"
+				defaultColumns="name"
+				fixedColumns="1"
+			>
+				<tableRenderer class="com.top_logic.layout.table.renderer.DefaultTableRenderer"/>
+				<column-default columnWidth="200px"/>
+				<columns>
+					<column name="name"
+						accessor="com.top_logic.layout.IdentityAccessor"
+						columnWidth="300px"
+						visibility="mandatory"
+					>
+						<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
+					</column>
+					<column name="exportName"
+						accessor="com.top_logic.layout.IdentityAccessor"
+						columnWidth="300px"
+						labelProvider="com.top_logic.tool.boundsec.gui.profile.ExportNameLabels"
+						visibility="hidden"
+					/>
+				</columns>
+			</table>
+		</tables>
+		<buttons>
+			${exportButtons}
+			<reference command-id="expandRoleProfileTree"/>
+			<reference command-id="collapseRoleProfileTree"/>
+			<button id="setAllAccess"
+				access="true"
+				class="com.top_logic.tool.boundsec.gui.profile.SetAccessCommandHandler"
+				disabledImage="theme:ICONS_SELECT_ALL_CHECKBOXES_DISABLED"
+				image="theme:ICONS_SELECT_ALL_CHECKBOXES"
+			>
+				<executability>
+					<reference rule-id="InEditMode"/>
+				</executability>
+			</button>
+			<button id="removeAllAccess"
+				access="false"
+				class="com.top_logic.tool.boundsec.gui.profile.SetAccessCommandHandler"
+				disabledImage="theme:ICONS_REMOVE_CHECKBOX_DISABLED"
+				image="theme:ICONS_REMOVE_CHECKBOX"
+			>
+				<executability>
+					<reference rule-id="InEditMode"/>
+				</executability>
+			</button>
+			<button id="importRolesProfiles"
+				class="com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.OpenRolesProfileImportDialog"
+				disabledImage="theme:EDIT_SECURITY_PROFILES_IMPORT_ICON_DISABLED"
+				group="Write"
+				image="theme:EDIT_SECURITY_PROFILES_IMPORT_ICON"
+			>
+				<executability>
+					<reference rule-id="InViewMode"/>
+				</executability>
+			</button>
+		</buttons>
+	</component>
+</template>

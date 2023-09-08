@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="orgStructure">
+			<annotations>
+				<singletons>
+					<singleton type="OrgRoot"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="OrgUnit.all">
+					<annotations>
+						<legacy-qualified-name qualified-name="OrgUnit.all"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="254"/>
+								<sort-order value="10.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="OrgUnit.base">
+					<annotations>
+						<legacy-qualified-name qualified-name="OrgUnit.base"/>
+						<main-properties properties="name,orgID,boss"/>
+					</annotations>
+					<attributes>
+						<property name="orgID"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<size-constraint upper-bound="10"/>
+								<sort-order value="20.0"/>
+								<delete-protected/>
+								<visibility value="read-only"/>
+							</annotations>
+						</property>
+						<reference name="boss"
+							kind="forwards"
+							type="Contacts:Contact.Person"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="PersonContact"/>
+								</constraint>
+								<sort-order value="20.0"/>
+								<delete-protected/>
+							</annotations>
+						</reference>
+						<reference name="member"
+							kind="forwards"
+							multiple="true"
+							type="Contacts:Contact.Person"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="PersonContact"/>
+								</constraint>
+								<sort-order value="21.0"/>
+								<delete-protected/>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="OrgUnit.all"/>
+					</generalizations>
+				</interface>
+				<interface name="OrgUnit.root">
+					<annotations>
+						<instance-presentation
+							icon="theme:MIMETYPES_ORG_UNIT_16"
+							large-icon="theme:MIMETYPES_LARGE_ORG_UNIT_60"
+						/>
+						<legacy-qualified-name qualified-name="OrgUnit.root"/>
+					</annotations>
+					<generalizations>
+						<generalization type="OrgUnit.all"/>
+					</generalizations>
+				</interface>
+				<interface name="OrgUnit.head">
+					<annotations>
+						<instance-presentation
+							icon="theme:MIMETYPES_ORG_UNIT_16"
+							large-icon="theme:MIMETYPES_LARGE_ORG_UNIT_60"
+						/>
+						<legacy-qualified-name qualified-name="OrgUnit.head"/>
+					</annotations>
+					<generalizations>
+						<generalization type="OrgUnit.base"/>
+					</generalizations>
+				</interface>
+				<interface name="OrgUnit.unit">
+					<annotations>
+						<instance-presentation
+							icon="theme:MIMETYPES_ORG_UNIT_16"
+							large-icon="theme:MIMETYPES_LARGE_ORG_UNIT_60"
+						/>
+						<legacy-qualified-name qualified-name="OrgUnit.unit"/>
+					</annotations>
+					<generalizations>
+						<generalization type="OrgUnit.base"/>
+					</generalizations>
+				</interface>
+				<class name="OrgRoot">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.contact.orgunit.OrganizationRoot"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+							override="true"
+						>
+							<annotations>
+								<delete-protected/>
+
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="Organisationsstruktur"/>
+								</default-value>
+							</annotations>
+						</property>
+						<reference name="children"
+							override="true"
+							type="OrgRootChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="OrgUnit.root"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="OrgHead">
+					<annotations>
+						<table name="OrgUnit"/>
+						<implementation-binding class-name="com.top_logic.contact.orgunit.OrganizationHead"/>
+					</annotations>
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="OrgHeadChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="OrgUnit.head"/>
+						<generalization type="orgStructure:OrgRootChild"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="OrgUnit">
+					<annotations>
+						<table name="OrgUnit"/>
+						<implementation-binding class-name="com.top_logic.contact.orgunit.OrganizationUnit"/>
+					</annotations>
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="OrgUnitChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="OrgUnit.unit"/>
+						<generalization type="orgStructure:OrgHeadChild"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="orgStructure:OrgUnitChild"/>
+					</generalizations>
+				</class>
+				<interface name="OrgRootChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="OrgHeadChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="OrgUnitChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+			</types>
+		</module>
+	</modules>
+</model>

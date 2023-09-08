@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/table/grid/table_grid_shared.xml"
+	nameSuffix="NoDetail"
+	resPrefix="layouts.demo.table.table_grid_no_details.tableGridNoDetail."
+	showDetailOpener="false"
+/>

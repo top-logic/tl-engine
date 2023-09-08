@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="templates/contentTab.xml">
+	<components>
+		<component class="com.top_logic.mig.html.layout.PageComponent"
+			name="testExports"
+			page="/empty.jsp"
+			resPrefix="%LAYOUT_RESPREFIX%"
+			securityProviderClass="securityRoot"
+		>
+			<buttons>
+				<button id="testFixedTable1"
+					class="com.top_logic.demo.layout.demo.export.SimpleFixedTablePPTExporter"
+					columns="5"
+					fixed-table-marker="FIXEDTABLE_MS"
+					rows="7"
+					template-file-name="testFixedTable1.pptx"
+				/>
+				<button id="testFixedTable2"
+					class="com.top_logic.demo.layout.demo.export.SimpleFixedTablePPTExporter"
+					columns="5"
+					fixed-table-marker="FIXEDTABLE_MS"
+					rows="4"
+					template-file-name="testFixedTable2.pptx"
+				/>
+			</buttons>
+		</component>
+	</components>
+</include>

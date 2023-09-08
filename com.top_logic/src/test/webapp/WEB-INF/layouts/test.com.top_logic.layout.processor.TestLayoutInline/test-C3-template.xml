@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="prefix"/>
+		<param name="master"/>
+		<param name="suffix"
+			value="template3"
+		/>
+		<param name="dialogs">
+			<!-- No dialogs. -->
+		</param>
+	</params>
+	<component class="C"
+		master="${master}"
+		prefix="${prefix}"
+	>
+		<dialogs>${dialogs}</dialogs>
+	</component>
+</template>

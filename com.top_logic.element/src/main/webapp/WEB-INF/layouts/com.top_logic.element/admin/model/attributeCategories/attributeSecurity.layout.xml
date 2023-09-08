@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminAttSec"
+	helpIDLegacy="element.admin.fuctional.attSec.tabber"
+	titleKey="element.admin.fuctional.attSec.tabber"
+>
+	<tabInfo label="element.admin.fuctional.attSec.tabber"/>
+	<components>
+		<include name="com.top_logic.element/admin/model/attributeCategories/attSecurity.xml"/>
+	</components>
+</securityLayout>

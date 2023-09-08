@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<t:parameter name="Invoking_String_Attribute" type="string" default="Example Value" />
+			
+			<t:parameter name="Invoking_Xml_Attribute" type="xml">
+				<t:default>
+					<foo><bar fubar="snafu" /></foo>
+				</t:default>
+			</t:parameter>
+			
+			<t:parameter name="Invoking_Boolean_Attribute" type="boolean" default="true" />
+			
+			<t:parameter name="Invoking_Integer_Attribute" type="integer" default="42" />
+			
+			<t:parameter name="Invoking_Float_Attribute" type="float" default="3.14159" />
+			
+			<t:parameter name="Invoking_Date_Attribute" type="date" default="2012-12-31T23:59:59.999Z" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<t:invoke template="TestParameterTypes.xml">
+			
+			<t:parameter name="Invoked_String_Attribute" value="${$Invoking_String_Attribute}" />
+			
+			<t:parameter name="Invoked_Xml_Attribute" value="${$Invoking_Xml_Attribute}" />
+			
+			<t:parameter name="Invoked_Boolean_Attribute" value="${$Invoking_Boolean_Attribute}" />
+			
+			<t:parameter name="Invoked_Integer_Attribute" value="${$Invoking_Integer_Attribute}" />
+			
+			<t:parameter name="Invoked_Float_Attribute" value="${$Invoking_Float_Attribute}" />
+			
+			<t:parameter name="Invoked_Date_Attribute" value="${$Invoking_Date_Attribute}" />
+			
+		</t:invoke>
+	</t:body>
+</t:template>

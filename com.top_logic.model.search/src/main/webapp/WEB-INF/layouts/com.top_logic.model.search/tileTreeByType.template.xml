@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="com.top_logic/tileTree.template.xml"
+	groups="commons"
+	usable-in-context="com.top_logic.mig.html.layout.tiles.IsInTileContext"
+>
+	<properties extends="com.top_logic.layout.editor.config.TypeWithReferenceTemplateParameters,com.top_logic.mig.html.layout.tiles.TileComponentName">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="model"/>
+					<property name="rootNode"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="rootNode"
+			type="com.top_logic.model.search.expr.config.dom.Expr"
+		>
+			<mandatory/>
+		</property>
+	</properties>
+
+	<config name="${name}"
+		model="${model}"
+	>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`${reference}`)"
+			nodePredicate="node->$node.instanceOf(`${type}`)"
+			parents="node->$node.referers(`${reference}`)"
+			rootNode="${rootNode}"
+		/>
+	</config>
+</config:template>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="com.top_logic/layout.template.xml"
+	groups="commons"
+>
+	<properties extends="com.top_logic.layout.editor.config.TypeTemplateParameters">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="type"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+	</properties>
+
+	<config>
+		<components>
+			<config:template-call
+				layout-scope="__tableTemplateScope__"
+				template="com.top_logic/table.template.xml"
+			>
+				<arguments name="${name}"
+					size="300px"
+					type="${type}"
+				>
+					<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+						elements="model->all(`${type}`)"
+						supportsElement="element->$element.instanceOf(`${type}`)"
+					/>
+					<dialogs>
+						<config:template-call template="com.top_logic.model.search/create/genericCreateDialog.template.xml">
+							<arguments>
+								<title title="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"/>
+								<open-handler id="addNewElement"
+									config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+									image="theme:ICONS_ADD_BUTTON"
+									resourceKey="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"
+								/>
+								<typeOptions type="${type}"/>
+								<create-handler id="createNewElement"/>
+							</arguments>
+						</config:template-call>
+					</dialogs>
+					<buttons>
+						<button id="exportExcel"
+							class="com.top_logic.layout.table.export.ExcelExportHandler"
+						/>
+						<button id="deleteSelection"
+							class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+							target="selection(self())"
+						/>
+					</buttons>
+				</arguments>
+			</config:template-call>
+
+			<config:template-call template="com.top_logic.element/form.template.xml">
+				<arguments name="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithForm.template.i18n.detail"
+					model="selection(__tableTemplateScope__#Table)"
+					type="${type}"
+				/>
+			</config:template-call>
+		</components>
+	</config>
+</config:template>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	SPDX-FileCopyrightText: 2005 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<metaobject
+			object_name="Tag"
+			object_type="MOKnowledgeObject"
+			super_class="AttributedObject"
+		>
+			<attributes>
+				<mo_attribute
+					att_name="name"
+					att_type="String"
+					mandatory="true"
+				/>
+				<reference
+					att_name="taggedObj"
+					history-type="historic"
+					mandatory="false"
+					target-type="Object"
+				/>
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="tile"
+>
+	<properties extends="com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="document"
+			type="com.top_logic.model.search.expr.config.dom.Expr"
+		/>
+		<property name="previewIcon"
+			type="com.top_logic.layout.basic.ThemeImage"
+		/>
+		<property name="documentDescription"
+			type="ResKey"
+		>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="tileName"
+			type="String"
+		>
+			<hidden/>
+			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
+		</property>
+		<property name="securityDomain"
+			default="SecurityStructure"
+			type="String"
+		>
+			<nullable/>
+			<options
+				fun="com.top_logic.tool.boundsec.manager.SecurityStructures"
+				mapping="com.top_logic.model.config.TLModelPartMapping"
+			/>
+		</property>
+		<property name="securityObject"
+			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
+			type="com.top_logic.basic.config.PolymorphicConfiguration"
+		/>
+		<property name="helpID"
+			type="String"
+		>
+			<property-editor value="com.top_logic.layout.help.UseHelpEditor"/>
+			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
+		</property>
+	</properties>
+
+	<securityLayout name="TileLayout"
+		helpID="${helpID}"
+		securityDomain="${securityDomain}"
+		titleKey="${name}"
+	>
+		<tile-info name="${tileName}"
+			label="${name}"
+		>
+			<preview class="com.top_logic.model.search.form.DocumentTilePreview"
+				description="${documentDescription}"
+				document="${document}"
+				icon="${previewIcon}"
+				model="${model}"
+			/>
+		</tile-info>
+
+		<form name="Document"
+			isSecurityMaster="true"
+			model="${model}"
+			resPrefix="layouts.tiles.documents.displayDocumentTile."
+			resetInvisible="true"
+			securityObject="${securityObject}"
+			titleKey="${name}"
+		>
+			<modelBuilder class="com.top_logic.model.search.form.DisplayDocumentBuilder"
+				document="${document}"
+			/>
+			<!--
+				Do not use "frmBody" (with margin 10px) as "cssClass", because then setting width and height of
+				pdf document iframe causes scrollbars.
+			-->
+			<componentControlProvider class="com.top_logic.layout.form.declarative.DirectFormControlProvider"
+				cssClass=""
+			/>
+			<buttons>
+				<reference command-id="editComponentCommand"/>
+				<reference command-id="deleteComponentCommand"/>
+			</buttons>
+		</form>
+	</securityLayout>
+</config:template>

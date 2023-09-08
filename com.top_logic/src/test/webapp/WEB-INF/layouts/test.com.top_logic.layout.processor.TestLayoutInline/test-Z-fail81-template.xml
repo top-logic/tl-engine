@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="p1" />
+	</params>
+	
+	<component class="A"
+		p1="${p1}"
+	/>
+</template>

@@ -1,0 +1,13 @@
+<a xmlns:c="http://www.top-logic.com/ns/config/6.0">
+	<b id="c1" c:z="z">
+		<c name="Foobar" another="Foobar"/>
+		<d>
+		<![CDATA[ 
+some			x 
+ content		y  
+  with			z   
+   tailing      
+    whitespace  
+]]></d>
+	</b>
+</a>

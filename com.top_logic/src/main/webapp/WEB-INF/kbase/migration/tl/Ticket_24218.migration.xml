@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration>
+	<version name="Ticket_24218"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket-23398-LockService"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.MigrationProcessor24218" />
+	</processors>
+</migration>

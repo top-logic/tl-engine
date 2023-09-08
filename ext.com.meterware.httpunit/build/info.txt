@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Sealed: false
+HttpUnit-Version: 1.7-patched
+Build-Date: May 23 2018
+Build-Time: 2221

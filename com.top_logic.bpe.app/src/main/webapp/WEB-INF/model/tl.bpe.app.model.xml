@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.bpe.app">
+		<interface name="Entity">
+			<generalizations>
+				<generalization type="tl.element:Attributed"/>
+			</generalizations>
+			<annotations>
+				<table name="BPEntity"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</interface>
+	</module>
+</model>

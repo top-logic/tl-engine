@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<metaobjects>
+		<metaobject object_name="TestLockService" abstract="false" super_class="TLObject">
+		</metaobject>
+	</metaobjects>
+</objectlist>

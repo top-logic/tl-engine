@@ -1,0 +1,754 @@
+ /**
+* JavaCC Grammar File
+*/
+options
+{
+    JDK_VERSION = "1.5";
+    STATIC = false;
+    UNICODE_INPUT = true;
+    JAVA_UNICODE_ESCAPE = false;
+}
+
+PARSER_BEGIN(TemplateParser)
+package com.top_logic.template.parser;
+
+public class TemplateParser
+{
+	public void setTabSize(int size) {
+        jj_input_stream.setTabSize(size);
+   }
+
+   public int getTabSize() {
+        return jj_input_stream.getTabSize(0);
+   }
+}
+
+PARSER_END(TemplateParser)
+
+SKIP :
+{
+    "<%!--" : WithinComment
+}
+
+< WithinComment >
+SKIP :
+{
+    "--%>" : DEFAULT
+}
+
+< WithinComment >
+MORE :
+{
+    < ~[ ] >
+}
+
+/* A template block always ends with "%>". Whitespaces inside a template block are ignored/skipped */
+< Syntax >
+SKIP :
+{
+    " "
+|   "\r"
+|   "\t"
+|   "\n"
+}
+
+/* operators */
+< Syntax >
+TOKEN :
+{
+    < EQ : "==" >
+|   < NE : "!=" >
+|   < GE : ">=" >
+|   < LE : "<=" >
+|   < GT : ">" >
+|   < LT : "<" >
+}
+
+/* boolean operators */
+< Syntax >
+TOKEN :
+{
+    < AND : "&&" >
+|   < OR : "||" >
+|   < NOT : "!" >
+}
+
+/* separators */
+< Syntax >
+TOKEN :
+{
+    < LPAREN : "(" >
+|   < RPAREN : ")" >
+|   < LBRACE : "{" >
+|   < RBRACE : "}" >
+|   < LBRACKET : "[" >
+|   < RBRACKET : "]" >
+|   < SEMICOLON : ";" >
+|   < COMMA : "," >
+|   < DOT : "." >
+|   < COLON : ":" >
+}
+
+/* modelreferences */
+< Syntax >
+TOKEN :
+{
+    < MODREF : "$" >
+|   < FUNCREF : "#" >
+}
+
+/* tags */
+TOKEN :
+{
+    < OPENENDTAG : ("<")+ "%/" > : Syntax
+|   < OPENSTARTTAG : ("<")+ "%" > : Syntax
+}
+
+< Syntax >
+TOKEN :
+{
+    < CLOSEEMPTYTAG : "/%>" > : DEFAULT
+|   < CLOSETAG : "%>" > : DEFAULT
+}
+
+/* functions */
+< Syntax >
+TOKEN :
+{
+    < IF : "if" >
+|   < ELSEIF : "elseif" >
+|   < ELSE : "else" >
+|   < FOREACH : "foreach" >
+|   < ASSIGN : "=" >
+|   < DEFINE : "def" >
+|   < IN : "in" >
+|   < AS : "as" >
+}
+
+/* attribute tokens */
+< Syntax >
+TOKEN :
+{
+    < SQUOTE : "\"" > : Stringmode
+}
+< Stringmode >
+TOKEN :
+{
+    < EQUOTE : "\"" > : Syntax
+|   < STRING_LITERAL :
+        (
+            (~[ "\"", "\\" ])
+        |
+        /* Decode: See com.top_logic.template.tree.ConstantExpression.decode(String) */
+            (
+                "\\"
+                (
+                    [ "n", "t", "b", "r", "f", "\\", "'", "\"" ]
+                    /* Number is interpreted as octal number. It is replaced by the unicode character with this index.*/
+                |   [ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
+                )
+            )
+        )+ >
+}
+
+/* boolean values */
+< Syntax >
+TOKEN :
+{
+    < TRUE : "true" >
+|   < FALSE : "false" >
+}
+
+TOKEN :
+{
+    < LITERAL :
+        (
+            ~[ "<", "%" ]
+        |
+            (
+                ("<")+ ~[ "<", "%" ]
+            )
+        |
+            (
+                ("%")+ ~[ "%", ">" ]
+            )
+        )+ >
+}
+
+
+/* integer literals */
+TOKEN :
+{
+    < INTEGER_LITERAL :
+        < DECIMAL_LITERAL > ([ "l", "L" ])?
+    |   < HEX_LITERAL > ([ "l", "L" ])?
+    |   < OCTAL_LITERAL > ([ "l", "L" ])? >
+|   < #DECIMAL_LITERAL : [ "1"-"9" ] ([ "0"-"9" ])* >
+|   < #HEX_LITERAL : "0" [ "x", "X" ] ([ "0"-"9", "a"-"f", "A"-"F" ])+ >
+|   < #OCTAL_LITERAL : "0" ([ "0"-"7" ])* >
+}
+
+/* strings and identifiers */
+< Syntax >
+TOKEN :
+{
+    < IDENTIFIER :
+        (
+            < LETTER >
+        |   < DIGIT >
+        )
+        (
+            < LETTER >
+        |   < DIGIT >
+        )* >
+|   < #LETTER : [ "_", "a"-"z", "A"-"Z" ] >
+|   < #DIGIT : [ "0"-"9" ] >
+|	< WILDCARD : "*" >
+}
+
+com.top_logic.template.tree.TemplateNode Start() :
+{
+    com.top_logic.template.tree.TemplateNode r;
+}
+{
+    r = Template() < EOF >
+    {
+        return r;
+    }
+}
+
+com.top_logic.template.tree.TemplateNode Template() :
+{
+    java.util.List < com.top_logic.template.tree.TemplateNode > nodes = new java.util.ArrayList < com.top_logic.template.tree.TemplateNode > ();
+    Token t, openTag;
+    com.top_logic.template.tree.TemplateNode f;
+}
+{
+    (
+    	// LOOKAHEAD(2)
+        (
+            t = < LITERAL >
+            {
+                com.top_logic.template.tree.LiteralText lt = new com.top_logic.template.tree.LiteralText(t.image);
+                lt.setColBegin(t.beginColumn);
+                lt.setRowBegin(t.beginLine);
+                lt.setColEnd(t.endColumn);
+                lt.setRowEnd(t.endLine);
+                nodes.add(lt);
+            }
+        |
+			openTag = < OPENSTARTTAG >
+			FunctionStm(nodes, openTag)
+        )
+    )*
+    {
+        return new com.top_logic.template.tree.Template(nodes);
+    }
+}
+
+void FunctionStm(java.util.List < com.top_logic.template.tree.TemplateNode > nodes, Token openTag) :
+{
+    com.top_logic.template.tree.TemplateNode n;
+}
+{
+	{
+		openTag = checkOpenTag(nodes, openTag);
+	}
+    (
+        n = AssignStm(openTag)
+    |
+        n = DefineStm(openTag)
+    |
+        n = IfStm(openTag)
+    |
+        n = ForeachStm(openTag)
+    )
+    {
+    	nodes.add(n);
+    }
+}
+
+/* < OPENSTARTTAG > < ASSIGN > Reference() [ AttributeStm() ] < CLOSETAG > */
+com.top_logic.template.tree.AssignStatement AssignStm(Token openTag) :
+{
+    java.util.Map < String, String > attributes = new java.util.HashMap < String, String > ();
+    com.top_logic.template.tree.Expression expr;
+    Token e;
+}
+{
+    < ASSIGN > expr = Expression() [ attributes = AttributeStm() ] e = < CLOSETAG >
+    {
+        com.top_logic.template.tree.AssignStatement assStm = new com.top_logic.template.tree.AssignStatement(expr, attributes);
+        assStm.setColBegin(openTag.beginColumn);
+        assStm.setRowBegin(openTag.beginLine);
+        assStm.setColEnd(e.endColumn);
+        assStm.setRowEnd(e.endLine);
+        return assStm;
+    }
+}
+
+/* < OPENSTARTTAG > < DEFINE > < LPAREN > <IDENTIFIER> < AS > < EXPRESSION > < RPAREN > [ AttributeStm() ] < CLOSETAG > */
+com.top_logic.template.tree.DefineStatement DefineStm(Token openTag) :
+{
+    java.util.Map < String, String > attributes = new java.util.HashMap < String, String > ();
+    com.top_logic.template.tree.TemplateNode n;
+    Token t, end;
+    com.top_logic.template.tree.Expression expr;
+}
+{
+    < DEFINE > < LPAREN > t = < IDENTIFIER > < AS > expr = Expression() < RPAREN > [ attributes = AttributeStm() ] end = < CLOSETAG >
+    {
+        com.top_logic.template.tree.DefineStatement defStm = new com.top_logic.template.tree.DefineStatement(t.image, expr, attributes);
+        defStm.setColBegin(openTag.beginColumn);
+        defStm.setRowBegin(openTag.beginLine);
+        defStm.setColEnd(end.endColumn);
+        defStm.setRowEnd(end.endLine);
+        return defStm;
+    }
+}
+
+/* < OPENSTARTTAG > < IF > < LPAREN > Expression() < RPAREN > [ AttributeStm() ] < CLOSETAG > Template()[ < OPENSTARTTAG > < ELSE > < CLOSEEMPTYTAG > Template() ]< OPENENDTAG > < IF > < CLOSETAG > */
+com.top_logic.template.tree.TemplateNode IfStm(Token openTag) :
+{
+    java.util.Map < String, String > attributes = new java.util.HashMap < String, String > ();
+    com.top_logic.template.tree.Expression expr;
+    Token e;
+}
+{
+    < IF > < LPAREN > expr = Expression() < RPAREN > [ attributes = AttributeStm() ] < CLOSETAG >
+     
+    {
+        com.top_logic.template.tree.IfStatement ifStm = new com.top_logic.template.tree.IfStatement(expr, attributes);
+        ifStm.setColBegin(openTag.beginColumn);
+        ifStm.setRowBegin(openTag.beginLine);
+    }
+    
+           TemplateIf(ifStm)
+            
+        < OPENENDTAG > < IF > e = < CLOSETAG >
+    {
+        ifStm.setColEnd(e.endColumn);
+        ifStm.setRowEnd(e.endLine);
+        return ifStm;
+    }
+}
+
+void TemplateIf(com.top_logic.template.tree.IfStatement ifStm) :
+{
+    java.util.List < com.top_logic.template.tree.TemplateNode > nodes = new java.util.ArrayList < com.top_logic.template.tree.TemplateNode > ();
+    Token t, openTag;
+    com.top_logic.template.tree.TemplateNode f;
+}
+{
+    (
+    	LOOKAHEAD(2)
+        (
+            t = < LITERAL >
+            {
+                com.top_logic.template.tree.LiteralText lt = new com.top_logic.template.tree.LiteralText(t.image);
+                lt.setColBegin(t.beginColumn);
+                lt.setRowBegin(t.beginLine);
+                lt.setColEnd(t.endColumn);
+                lt.setRowEnd(t.endLine);
+                nodes.add(lt);
+            }
+        |   
+            openTag = < OPENSTARTTAG >
+            {
+            	openTag = checkOpenTag(nodes, openTag);
+            }
+            (
+                f = AssignStm(openTag)
+            |   
+                f = DefineStm(openTag)
+            |   
+                f = IfStm(openTag)
+            |   
+                f = ForeachStm(openTag)
+            )
+            {
+                nodes.add(f);
+            }
+        )
+    )*
+    
+	( 
+		openTag = < OPENSTARTTAG >
+		{
+			openTag = checkOpenTag(nodes, openTag);
+		}
+		elseStm(ifStm) 
+	)?
+    
+    {
+        ifStm.setThenStm(new com.top_logic.template.tree.Template(nodes));
+    }
+}
+
+void elseStm(com.top_logic.template.tree.IfStatement ifStm) :
+{
+    com.top_logic.template.tree.TemplateNode elseStm = null;
+}
+{
+    < ELSE > < CLOSEEMPTYTAG > 
+    elseStm = Template()
+    {
+        ifStm.setElseStm(elseStm);
+    }
+}
+
+com.top_logic.template.tree.Expression Expression() :
+{
+    com.top_logic.template.tree.Expression n;
+}
+{
+    (
+        n = NegatedExpression() 
+        [ 
+        n = OperatorExpression(n) 
+        ]
+    )
+    {
+        return n;
+    }
+}
+
+com.top_logic.template.tree.Expression NegatedExpression() :
+{
+    com.top_logic.template.tree.Expression n;
+}
+{
+    (
+        n = AtomicExpression()
+    |   n = UnaryExpression()
+    )
+    {
+        return n;
+    }
+}
+
+com.top_logic.template.tree.Expression UnaryExpression() :
+{
+    String op;
+    com.top_logic.template.tree.Expression n;
+}
+{
+    op = UnaryOperator() n = NegatedExpression()
+    {
+        return new com.top_logic.template.tree.UnaryExpression(op, n);
+    }
+}
+
+com.top_logic.template.tree.Expression AtomicExpression() :
+{
+    com.top_logic.template.tree.Expression n;
+}
+{
+    (
+        n = FunctionCall()
+    |   n = ConstantExpression()
+    |   n = Reference()
+    |   < LPAREN > n = Expression() < RPAREN >
+    )
+    {
+        return n;
+    }
+}
+
+
+/* < FUNCREF > < IDENTIFIER > < LPAREN > (Expression() (< COMMA > Expression())*)? < RPAREN > */
+com.top_logic.template.tree.Expression FunctionCall() :
+{
+    java.util.List < com.top_logic.template.tree.Expression > expressions = new java.util.ArrayList < com.top_logic.template.tree.Expression > ();
+    com.top_logic.template.tree.Expression n;
+    Token t, f, e;
+    int colBegin = -1, rowBegin = -1;
+    boolean posSet = false;
+}
+{
+    f = < FUNCREF > t = < IDENTIFIER > < LPAREN >
+    {
+    	if (!posSet)
+    	{
+     		colBegin = f.beginColumn;
+      		rowBegin = f.beginLine;
+      		posSet = true;
+    	}
+  	}
+    (
+        n = Expression()
+        {
+            expressions.add(n);
+        }
+        (
+            < COMMA > n = Expression()
+            {
+                expressions.add(n);
+            }
+        )*
+    )?
+    e = < RPAREN >
+    {
+        com.top_logic.template.tree.FunctionCall fc = new com.top_logic.template.tree.FunctionCall(t.image, expressions);
+        fc.setColBegin(colBegin);
+        fc.setRowBegin(rowBegin);
+        fc.setColEnd(e.endColumn);
+        fc.setRowEnd(e.endLine);
+        return fc;
+    }
+}
+
+com.top_logic.template.tree.ConstantExpression ConstantExpression() :
+{
+	Token t = new Token();
+    Token s, e;
+    com.top_logic.template.tree.ConstantExpression c;
+    int colBegin =-1, rowBegin =-1, colEnd =-1, rowEnd =-1;
+}
+{
+	(
+        t = < TRUE >
+        {
+        	c = new com.top_logic.template.tree.ConstantExpression(Boolean.valueOf(t.image));
+        	colBegin = t.beginColumn;
+    		rowBegin = t.beginLine;
+    		colEnd = t.endColumn;
+    		rowEnd = t.endLine;
+        }
+    |   t = < FALSE >
+    	{
+    		c = new com.top_logic.template.tree.ConstantExpression(Boolean.valueOf(t.image));
+    		colBegin = t.beginColumn;
+    		rowBegin = t.beginLine;
+    		colEnd = t.endColumn;
+    		rowEnd = t.endLine;
+    	}
+    |   s = < SQUOTE > (t = < STRING_LITERAL >)? e = < EQUOTE >
+    	{
+    		c =  new com.top_logic.template.tree.ConstantExpression(com.top_logic.template.tree.ConstantExpression.decode(t.image));
+    		colBegin = s.beginColumn;
+    		rowBegin = s.beginLine;
+    		colEnd = e.endColumn;
+    		rowEnd = e.endLine;
+    	}
+    )
+    {
+        c.setColBegin(colBegin);
+        c.setRowBegin(rowBegin);
+        c.setColEnd(colEnd);
+        c.setRowEnd(rowEnd);
+        return c;
+    }
+}
+
+/* Expression() Operator() Expression() */
+com.top_logic.template.tree.BinaryExpression OperatorExpression(com.top_logic.template.tree.Expression expr) :
+{
+    String op;
+    com.top_logic.template.tree.Expression e;
+}
+{
+    op = Operator() e = Expression()
+    {
+        com.top_logic.template.tree.BinaryExpression binExpr = new com.top_logic.template.tree.BinaryExpression(expr, op, e);
+        binExpr.setColBegin(expr.getColBegin());
+        binExpr.setRowBegin(expr.getRowBegin());
+        binExpr.setColEnd(e.getColEnd());
+        binExpr.setRowEnd(e.getRowEnd());
+        return binExpr;
+    }
+}
+
+/*< OPENSTARTTAG > < FOREACH > < LPAREN > FunctionAssignment() < RPAREN > [ AttributeStm() ] < CLOSETAG > Template()< OPENENDTAG > < FOREACH > < CLOSETAG > */
+com.top_logic.template.tree.ForeachStatement ForeachStm(Token openTag) :
+{
+    java.util.Map < String, String > attributes = new java.util.HashMap < String, String > ();
+    com.top_logic.template.tree.TemplateNode n;
+    Token t, end;
+    com.top_logic.template.tree.Expression expr;
+}
+{
+    < FOREACH > < LPAREN > t = < IDENTIFIER > < IN > expr = Expression()  < RPAREN > [ attributes = AttributeStm() ] < CLOSETAG > 
+            n = Template() 
+         < OPENENDTAG > < FOREACH > end = < CLOSETAG >
+    {
+        com.top_logic.template.tree.ForeachStatement feStm = new com.top_logic.template.tree.ForeachStatement(t.image, expr, attributes, n);
+        feStm.setColBegin(openTag.beginColumn);
+        feStm.setRowBegin(openTag.beginLine);
+        feStm.setColEnd(end.endColumn);
+        feStm.setRowEnd(end.endLine);
+        return feStm;
+    }
+}
+
+com.top_logic.template.tree.Reference Reference() :
+{
+    boolean isModelRef = false;
+    String ns = null;
+    java.util.List < String > path = new java.util.ArrayList < String > ();
+    Token n;
+    int colBegin =-1, rowBegin =-1, colEnd =-1, rowEnd =-1;
+    boolean posSet = false;
+}
+{
+    [
+        n = < MODREF >
+        {
+            isModelRef = true;
+            colBegin = n.beginColumn;
+            rowBegin = n.beginLine;
+            posSet = true;
+        }
+    ]
+    [
+        LOOKAHEAD(2)
+        n = < IDENTIFIER >
+        {
+            ns = n.image;
+            if (!posSet)
+            {
+                colBegin = n.beginColumn;
+                colEnd = n.endColumn;
+                rowBegin = n.beginLine;
+                rowEnd = n.endLine;
+                posSet = true;
+            }
+        }
+        < COLON >
+    ]
+    (
+        n = < IDENTIFIER >
+    |   n = < WILDCARD >
+    )
+    {
+        path.add(n.image);
+        if (!posSet)
+        {
+            colBegin = n.beginColumn;
+            colEnd = n.endColumn;
+            rowBegin = n.beginLine;
+            rowEnd = n.endLine;
+        }
+    }
+    (
+        < DOT > n = < IDENTIFIER >
+        {
+            path.add(n.image);
+            colEnd = n.endColumn;
+            rowEnd = n.endLine;
+        }
+    )*
+    {
+        com.top_logic.template.tree.Reference ref = new com.top_logic.template.tree.Reference(isModelRef, ns, path);
+        ref.setColBegin(colBegin);
+        ref.setRowBegin(rowBegin);
+        ref.setColEnd(colEnd);
+        ref.setRowEnd(rowEnd);
+        return ref;
+    }
+}
+
+/* (Attr() < ASSIGN > < QUOTE > AttrValue() < QUOTE >)+ */
+java.util.Map < String, String > AttributeStm() :
+{
+    java.util.Map < String, String > statements = new java.util.HashMap < String, String > ();
+    String key;
+    com.top_logic.template.tree.LiteralText lt;
+}
+{
+    (
+        key = Attr() < ASSIGN >  lt = AttrValue()
+        {
+            statements.put(key, Unescape(lt.getValue()));
+        }
+    )+
+    {
+        return statements;
+    }
+}
+
+/* un-escapes escaped quotation marks */
+String Unescape(String aString) :
+{
+}
+{
+    {
+        if (aString != null)
+        {
+            return aString.replaceAll("\\\\\"", "\"");
+        }
+        return aString;
+    }
+}
+
+Token checkOpenTag(java.util.List<com.top_logic.template.tree.TemplateNode> nodes, Token openTag) :
+{
+}
+{
+	{
+		if (openTag.image.length() > 2) {
+			String text = openTag.image.substring(0, openTag.image.length()-2);
+			com.top_logic.template.tree.LiteralText lt = new com.top_logic.template.tree.LiteralText(text);
+	        lt.setColBegin(openTag.beginColumn);
+	        lt.setRowBegin(openTag.beginLine);
+	        lt.setColEnd(openTag.endColumn - 2);
+	        lt.setRowEnd(openTag.endLine);
+	        openTag.beginColumn = openTag.endColumn - 2;
+	        nodes.add(lt);
+		}
+		return openTag;
+	}
+}
+String Attr() :
+{
+    Token t;
+}
+{
+    
+    t = < IDENTIFIER >
+    {
+        return t.image;
+    }
+}
+
+com.top_logic.template.tree.LiteralText AttrValue() :
+{
+    Token t;
+}
+{
+    < SQUOTE > t = < STRING_LITERAL > < EQUOTE >
+    {
+        return new com.top_logic.template.tree.LiteralText(t.image);
+    }
+}
+String UnaryOperator() : {
+    Token t;
+}
+{
+    (
+        t = < NOT >
+    )
+    {
+        return t.image;
+    }
+}
+
+String Operator() :
+{
+    Token t;
+}
+{
+    (
+        t = < EQ >
+    |   t = < NE >
+    |   t = < GE >
+    |   t = < LE >
+    |   t = < GT >
+    |   t = < LT >
+    |   t = < AND >
+    |   t = < OR >
+    )
+    {
+        return t.image;
+    }
+}

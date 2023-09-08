@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.03f3b7b2-942d-4497-aee0-163806616387">
+				<en>New organization</en>
+				<de>Neue Organisation</de>
+			</title>
+		</title>
+		<open-handler id="ID_a649365b_a330_44af_a809_838ea6b76ba6"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			targetComponent="com.top_logic.demo/technical/components/reports/newOrganization/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.03f3b7b2-942d-4497-aee0-163806616387">
+				<en>New organization</en>
+				<de>Neue Organisation</de>
+			</resourceKey>
+		</open-handler>
+		<forms>
+			<form type="test.report:BusinessUnit">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="test.report:BusinessUnit#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="reportTemplate"
+						fullQualifiedName="test.report:BusinessUnit#reportTemplate"
+						type="tl.model.search:Template"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<typeOptions type="test.report:BusinessUnit"/>
+		<create-handler id="ID_58630d61_e8b8_4ff6_92dd_d2f0782b63c0"/>
+	</arguments>
+</config:template-call>

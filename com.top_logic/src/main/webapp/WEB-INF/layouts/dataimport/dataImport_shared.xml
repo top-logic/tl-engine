@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="importerClass"/>
+		<param name="securityProvderClass"
+			value="securityRoot"
+		/>
+		<param name="assistantClass"
+			value="com.top_logic.tool.dataImport.layout.DataImportAssistant"
+		/>
+		<param name="assistantController">
+			<controller class="com.top_logic.tool.dataImport.layout.DataImportAssistant$DataImportAssistantController"
+				commitStep="${namePrefix}DataImportCommitStep"
+				endStep="${namePrefix}DataImportEndStep"
+				parseStep="${namePrefix}DataImportParseStep"
+				resultStep="${namePrefix}DataImportResultStep"
+				startStep="${namePrefix}DataImportStartStep"
+			/>
+		</param>
+		<param name="closeableUsingX"
+			value="false"
+		/>
+		<param name="statusComponentClass"
+			value="com.top_logic.tool.dataImport.layout.DataImportStatusComponent"
+		/>
+		<param name="startStepComponentClass"
+			value="com.top_logic.tool.dataImport.layout.DataImportStartStepComponent"
+		/>
+		<param name="parseStepComponentClass"
+			value="com.top_logic.tool.dataImport.layout.DataImportProgressStepComponent"
+		/>
+		<param name="resultStepComponentClass"
+			value="com.top_logic.tool.dataImport.layout.DataImportResultStepComponent"
+		/>
+		<param name="commitStepComponentClass"
+			value="com.top_logic.tool.dataImport.layout.DataImportProgressStepComponent"
+		/>
+		<param name="endStepComponentClass"
+			value="com.top_logic.tool.dataImport.layout.DataImportEndStepComponent"
+		/>
+		<param name="statusJSP"
+			value="/jsp/dataimport/DataImportStatus.jsp"
+		/>
+		<param name="startStepJSP"
+			value="/jsp/dataimport/DataImportStartStep.jsp"
+		/>
+		<param name="resultStepJSP"
+			value="/jsp/dataimport/DataImportResultStep.jsp"
+		/>
+		<param name="endStepJSP"
+			value="/jsp/dataimport/DataImportEndStep.jsp"
+		/>
+	</params>
+
+	<layout name="${namePrefix}DataImport">
+		<components>
+			<component class="${statusComponentClass}"
+				buttonComponent="${namePrefix}DataImportStatusButtons"
+				importerClass="${importerClass}"
+				name="${namePrefix}DataImportStatus"
+				page="${statusJSP}"
+				resPrefix="layout.dataimport.status."
+				securityProviderClass="${securityProvderClass}"
+			>
+				<dialogs>
+					<layout name="${namePrefix}DataImportDialog">
+						<dialogInfo
+							closableUsingX="${closeableUsingX}"
+							height="600"
+							openButtonSecComp="${namePrefix}DataImportStatus"
+							openerCommandGroup="Write"
+							width="700"
+						/>
+
+						<components>
+							<component class="${assistantClass}"
+								buttonComponent="${namePrefix}DataImportAssistantButtons"
+								importerClass="${importerClass}"
+								name="${namePrefix}DataImportAssistant"
+								resPrefix="layout.dataimport.assistant."
+								securityProviderClass="${securityProvderClass}"
+							>
+								${assistantController}
+								<component class="${startStepComponentClass}"
+									name="${namePrefix}DataImportStartStep"
+									page="${startStepJSP}"
+									resPrefix="layout.dataimport.start."
+									securityProviderClass="assistant"
+								>
+									<assistantInfo labelKeySuffix="DataImportStartStep"/>
+								</component>
+
+								<component class="${parseStepComponentClass}"
+									closeOnFinish="false"
+									name="${namePrefix}DataImportParseStep"
+									progressComponentHeight="300px"
+									progressComponentWidth="670px"
+									refreshInterval="1"
+									resPrefix="layout.dataimport.parse."
+									scrollUp="true"
+									securityProviderClass="assistant"
+								>
+									<assistantInfo labelKeySuffix="DataImportParseStep"/>
+								</component>
+
+								<component class="${resultStepComponentClass}"
+									name="${namePrefix}DataImportResultStep"
+									page="${resultStepJSP}"
+									resPrefix="layout.dataimport.result."
+									securityProviderClass="assistant"
+								>
+									<assistantInfo labelKeySuffix="DataImportResultStep"/>
+								</component>
+
+								<component class="${commitStepComponentClass}"
+									closeOnFinish="false"
+									name="${namePrefix}DataImportCommitStep"
+									progressComponentHeight="300px"
+									progressComponentWidth="670px"
+									refreshInterval="1"
+									resPrefix="layout.dataimport.commit."
+									scrollUp="true"
+									securityProviderClass="assistant"
+								>
+									<assistantInfo labelKeySuffix="DataImportCommitStep"/>
+								</component>
+
+								<component class="${endStepComponentClass}"
+									name="${namePrefix}DataImportEndStep"
+									page="${endStepJSP}"
+									resPrefix="layout.dataimport.end."
+									securityProviderClass="assistant"
+								>
+									<assistantInfo labelKeySuffix="DataImportEndStep"/>
+								</component>
+							</component>
+							<buttonbar name="${namePrefix}DataImportAssistantButtons"/>
+						</components>
+					</layout>
+				</dialogs>
+			</component>
+			<buttonbar name="${namePrefix}DataImportStatusButtons"/>
+		</components>
+	</layout>
+</template>

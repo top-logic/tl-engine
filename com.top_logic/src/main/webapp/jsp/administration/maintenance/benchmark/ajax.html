@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!--
+	SPDX-FileCopyrightText: 2007 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+--> 
+
+<html>
+<head>
+<script type="text/javascript">
+var myString = "";
+function write(){
+ myString = location.pathname + location.hostname;
+ document.getElementById("headerinfo").appendChild(document.createTextNode(new Date() + ": " + myString + "\r\n"));
+}
+
+function handleonloaded(){
+    log("alive!");
+    
+	function A() {
+    this.B1 = function B(x) {return x*x;}
+    return B;
+    }
+    function C() {
+       return eval("(function (x) {return x*x;})");
+     }
+var b1 = A();
+
+var b2 = A();
+function b3(x) {return x*x;}
+function b4(x) {return x*x;}
+var b5 = C();
+var b6 = C();
+log(b1.B1(5));
+log(b2);
+log(b5);	
+
+
+
+
+    }
+    	function log(message) {
+		document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+	}
+			
+	function clearConsole() {
+		var c = document.getElementById("console");
+		while (c.lastChild != null) {
+			c.removeChild(c.lastChild);
+		}
+	}
+</script>
+<title>Ajax Connection Test Site</title>
+</head>
+<body onload = "handleonloaded()">
+
+
+<span id = "headerinfo"> </span>
+<h2>Console output</h2>
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+</body>
+</html>

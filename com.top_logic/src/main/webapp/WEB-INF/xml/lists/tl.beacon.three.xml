@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<list name="tl.beacon.three" type="Classification" multiselect="false" system="true">
+    <elements>
+        <element name="tl.beacon.three.green" />
+        <element name="tl.beacon.three.yellow" />
+        <element name="tl.beacon.three.red" />
+    </elements>
+</list>

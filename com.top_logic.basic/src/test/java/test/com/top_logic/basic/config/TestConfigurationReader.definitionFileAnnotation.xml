@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config config:interface="test.com.top_logic.basic.config.TestTypedConfiguration$TestConfig"
+	annotation:definition-file="workspace:/com.top_logic/src/test/java/test/com/top_logic/basic/config/file1.xml"
+	xmlns:annotation="http://www.top-logic.com/ns/layout/annotation/1.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<list-without-default>
+		<!-- No definition file re-declaration -->
+		<config/>
+		<!-- enhance definition file -->
+		<config annotation:definition-file="workspace:/com.top_logic/src/test/java/test/com/top_logic/basic/config/file2.xml"/>
+	</list-without-default>
+</config>

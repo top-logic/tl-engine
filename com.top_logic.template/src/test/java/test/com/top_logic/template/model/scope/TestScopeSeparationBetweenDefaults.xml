@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			<t:parameter name="Example_Parameter_A" type="string">
+				<t:default>
+					<t:define var="Example_Variable" expr='"Example Value"' />
+				</t:default>
+			</t:parameter>
+			<t:parameter name="Example_Parameter_B" type="string">
+				<t:default>
+					<t:value expr="Example_Variable" />
+				</t:default>
+			</t:parameter>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<t:value expr="$Example_Parameter_A" />
+		<t:value expr="$Example_Parameter_B" />
+	</t:body>
+</t:template>

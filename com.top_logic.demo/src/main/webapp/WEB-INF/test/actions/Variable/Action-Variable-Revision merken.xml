@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="ergebnis"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<t:invoke template="script:Variable/Action-Variable-Zuweisen.xml">
+			<t:parameter name="Name"
+				value="${$ergebnis}"
+			/>
+			<t:parameter name="Wert">
+				<t:value>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+						<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.LastRevisionNamingScheme$Name"/>
+					</value>
+				</t:value>
+			</t:parameter>
+		</t:invoke>
+	</t:body>
+</t:template>

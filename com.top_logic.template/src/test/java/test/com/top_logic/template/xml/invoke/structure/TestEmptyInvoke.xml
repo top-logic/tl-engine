@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+	</t:head>
+	<t:body>
+		pre
+		<t:invoke template="TestEmpty.xml">
+			
+			<t:parameter name="Example_Structure_Empty" value="" />
+			
+		</t:invoke>
+		post
+	</t:body>
+</t:template>

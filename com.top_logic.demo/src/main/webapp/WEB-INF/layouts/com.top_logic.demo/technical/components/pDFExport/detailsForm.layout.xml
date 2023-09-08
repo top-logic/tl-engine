@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/pDFExport/allAceGrid.layout.xml#Grid)">
+		<name key="dynamic.c290dc79-7520-4774-a0f9-311f26993b27">
+			<en>Details</en>
+			<de>Details</de>
+		</name>
+		<buttons>
+			<default-pdf-export id="ID_9d6a7f86_7841_44ff_bcfd_b69243f98797"
+				pdf-name="{dateFormat('yyyy-MM-dd').format(now())}-{$model}.pdf"
+			>
+				<export-descriptions>
+					<export-description type="test.pdfExport:D">
+						<formDefinition>
+							<static-html wholeLine="true">
+								<content><![CDATA[<h3 style="text-align:center"><span style="font-family:Comic Sans MS,cursive">Lokal angepasster Export!</span></h3>]]></content>
+							</static-html>
+							<columnsLayout>
+								<field
+									attribute="name"
+									fullQualifiedName="test.pdfExport:A#name"
+									type="tl.core:String"
+								/>
+								<field
+									attribute="date"
+									fullQualifiedName="test.pdfExport:D#date"
+									type="tl.core:Date"
+								/>
+							</columnsLayout>
+						</formDefinition>
+					</export-description>
+				</export-descriptions>
+			</default-pdf-export>
+		</buttons>
+	</arguments>
+</config:template-call>

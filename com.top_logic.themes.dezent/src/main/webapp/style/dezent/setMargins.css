@@ -1,0 +1,138 @@
+a.cmdButton,
+a.cmdButton:link,
+a.cmdButton:visited,
+a.cmdButton:active,
+a.cmdButtonHover,
+a.cmdButtonHover:link,
+a.cmdButtonHover:visited,
+a.cmdButtonHover:active,
+a.cmdButtonDisabled,
+a.cmdButtonDisabled:link,
+a.cmdButtonDisabled:visited,
+a.cmdButtonDisabled:active
+{
+    margin: 0 2px;
+}
+
+table.fhrTable,
+div.tblCellInnerSpacer,
+input.tblRowSelector,
+span.tbGroup,
+span.cCollapsibleButtons,
+.BreadCrumbOuter .Right,
+.containerScrollRightButton,
+.containerScrollLeftButton
+{
+    margin: 0;
+}
+
+.tl-table__title-toolbar span.cButton
+{
+    margin-left: 2px;
+}
+
+div.rf_content > ul {
+    margin-top: 4px;
+}
+
+.BreadCrumbOuter
+{
+    margin-top: 6px;
+}
+
+.rf_hr.visible
+{
+    margin: 14px 0;
+}
+
+/*
+input.tblRowSelector
+{
+    margin-top: calc(50% - 4px);
+}
+*/
+
+
+div.fhrContainer {
+    margin-bottom: 14px;
+}
+
+fieldset > div,
+.rf_label {
+    margin-bottom: 4px;
+}
+
+img.cmdImg
+{
+    margin-left: 0;
+}
+
+div.fltList > span.cCheckbox,
+div.checkboxMultiSelectContainer,
+div.cCollapsibleToolbar,
+span.input-image,
+input.is-action,
+a.is-action
+{
+    margin-left: 4px;
+}
+
+span.cmdLink > input[src*='search_simple'],
+span.cButton > input[src*='search_active']
+{
+    margin-left: 7px;
+}
+
+span.input-image,
+input.is-action,
+a.is-action
+{
+    margin-right: 2px;
+}
+
+div.card-text
+{
+    margin-left: 20px;
+}
+
+.dlgDialog :not(.keepInline).rf_inputCellOneLine > div:nth-child(2)
+{
+    margin-bottom: 4px;
+}
+
+h5.card-title
+{
+    text-indent: -20px;
+    margin-left: 20px;
+}
+
+div.tl-table__cell--selected[style*="27px"] > div.tblCellInnerSpacer > input.tblRowSelector
+{
+    margin-top: 7px;
+}
+
+div.tl-table__cell--selected[style*="34px"] > div.tblCellInnerSpacer > input.tblRowSelector
+{
+    margin-top: 8px;
+}
+
+.layoutControl > div > .tabBar {
+    margin-top: 1px;
+}
+
+/* Button in �Aufgabe abschlie�en� (fix) */
+div.mboxContent > form > div > div > table > tbody > tr > td > p:first-child
+{
+    margin-top: 2px;
+}
+
+div.mboxImage img
+{
+    margin-top: 4px;
+}
+
+.i18nTranslationCommand {
+/* Style for the "translation command" aspect field, same as input.is-action*/
+    margin-left: 4px;
+    margin-right: 2px;
+}

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%MYSQL_HOST%" value="${env:mysql_host:[host]}" />
+        <entry name="%MYSQL_PORT%" value="${env:mysql_port:3306}" />
+        <entry name="%MYSQL_SCHEMA%" value="${env:mysql_schema:[schema]}" />
+        <entry name="%MYSQL_USER%" value="${env:mysql_user:[user]}"/>
+        <entry name="%MYSQL_PASSWD%" value="${env:mysql_passwd:unencrypted:[password]}"/>
+        
+        <!-- New SSL config since 8.0.8. See Reference: https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-configuration-properties.html -->
+        <entry name="%MYSQL_SSL_MODE%" value="${env:mysql_ssl_mode:PREFERRED}" />
+        
+        <entry name="%MYSQL_ENABLED_TLS_PROTOCOLS%" value="${env:mysql_enabled_tls_protocols:TLSv1.2,TLSv1.3}" />
+        <entry name="%MYSQL_ENABLED_SSL_CIPHER_SUITES%" value="${env:mysql_enabled_ssl_cipher_suites:}" />
+        
+        <entry name="%MYSQL_CLIENT_CERTIFICATE_KEY_STORE_URL%" value="${env:mysql_client_certificate_key_store_url}"/>
+        <entry name="%MYSQL_CLIENT_CERTIFICATE_KEY_STORE_TYPE%" value="${env:mysql_client_certificate_key_store_type}" />
+        <entry name="%MYSQL_CLIENT_CERTIFICATE_KEY_STORE_PASSWORD%" value="${env:mysql_client_certificate_key_store_password}" />
+        
+        <entry name="%MYSQL_TRUST_CERTIFICATE_KEY_STORE_URL%" value="${env:mysql_trust_certificate_key_store_url}" />
+        <entry name="%MYSQL_TRUST_CERTIFICATE_KEY_STORE_TYPE%" value="${env:mysql_trust_certificate_key_store_type}"/>
+        <entry name="%MYSQL_TRUST_CERTIFICATE_KEY_STORE_PASSWORD%" value="${env:mysql_trust_certificate_key_store_password}"/>
+	</alias>
+</root>

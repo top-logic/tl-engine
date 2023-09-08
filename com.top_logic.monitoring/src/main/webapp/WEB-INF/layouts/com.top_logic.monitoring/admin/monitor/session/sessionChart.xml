@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout horizontal="true">
+	<tabInfo label="reporting.userSession.chart.tab"/>
+	<components>
+		<include name="reporting/flex/chart/chartConfigurator.xml"
+			componentName="UserSessionChartFilter"
+			model="selection(sessionSearch)"
+			resPrefix="reporting.userSession.filter."
+		>
+			<options>
+				<base-config>
+					<data-source class="com.top_logic.monitoring.session.chart.UserSessionDatasource"/>
+
+					<model-preparation class="com.top_logic.monitoring.session.chart.UserSessionModelPreparation"/>
+
+					<chart-builder class="com.top_logic.reporting.flex.chart.config.chartbuilder.xy.XYBarChartBuilder"
+						show-urls="false"
+					>
+						<domain-axis class="com.top_logic.reporting.flex.chart.config.axis.PeriodAxisBuilder"/>
+						<color-provider class="com.top_logic.reporting.flex.chart.config.color.SingleColorProvider"
+							color="#FF5555"
+						/>
+					</chart-builder>
+				</base-config>
+			</options>
+			<inject>
+				<layoutInfo size="225px"/>
+			</inject>
+		</include>
+		<include name="reporting/flex/chart/configuredChart_shared.xml"
+			exportObjects="NONE"
+			master="UserSessionChartFilter"
+			namePrefix="UserSessionChart"
+			objectType=""
+			resPrefix="reporting.userSession.chart."
+			securityProvider="securityRoot"
+		/>
+	</components>
+</layout>

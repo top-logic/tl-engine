@@ -1,0 +1,32 @@
+<objects>
+	<object id="a1" type="TestSearchExpression:A">
+		<attribute name="name" value="A1"/>
+		<attribute name="b">
+			<ref id="b1"/>
+		</attribute>
+	</object>
+	<object id="b1" type="TestSearchExpression:B">
+		<attribute name="name" value="B1"/>
+		<attribute name="contents">
+			<ref id="b11"/>
+			<ref id="b12"/>
+			<ref id="b13"/>
+		</attribute>
+	</object>
+	<object id="b11" type="TestSearchExpression:B">
+		<attribute name="name" value="B11"/>
+		<attribute name="other">
+			<ref id="b12"/>
+		</attribute>
+	</object>
+	<object id="b12" type="TestSearchExpression:B">
+		<attribute name="name" value="B12"/>
+		<attribute name="others">
+			<ref id="b11"/>
+			<ref id="b13"/>
+		</attribute>
+	</object>
+	<object id="b13" type="TestSearchExpression:B">
+		<attribute name="name" value="B13"/>
+	</object>
+</objects>

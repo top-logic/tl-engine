@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<component class="com.top_logic.layout.currency.EditCurrencyListComponent"
+			allowRenaming="true"
+			buttonComponent="editCurrencyListButtons"
+			name="editCurrencyList"
+			page="/jsp/administration/currency/EditCurrencyList.jsp"
+			resPrefix="admin.currency.edit."
+			securityProviderClass="securityRoot"
+		/>
+		<buttonbar name="editCurrencyListButtons"/>
+	</components>
+</layout>

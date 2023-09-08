@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.model.search.ui.GUISearchExpressionEditor"
+	maximizeRoot="modelSearchInputLayout"
+	name="GUISearchExpressionEditor"
+	resPrefix="layouts.model.search.modelSearch.SearchComponent."
+	searchName="developer"
+	securityProviderClass="securityRoot"
+	toolbar="false"
+>
+	<tabInfo label="gui.search.tab"/>
+</component>

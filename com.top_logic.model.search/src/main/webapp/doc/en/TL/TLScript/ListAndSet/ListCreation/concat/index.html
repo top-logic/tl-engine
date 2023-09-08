@@ -1,0 +1,41 @@
+<h2>Syntax</h2> 
+<pre>	<code>concat($s1, $s2, ..., $sN)</code>
+</pre> 
+<h2>Description</h2> 
+<p>Merge the given sets or single values into a set. This can be used to add new elements to a set, since sets are otherwise not editable.</p> 
+<p>If all parts are scalar values, the expression is equivalent to <code class="hljs inlineCode">list($s1, $s2, ..., $sN)</code> (see <a class="tlObject" data-custom="false" href="?page=list&amp;uuid=35597918-0fc4-4a46-98e1-26e01bcd05c3">List from single values</a>).</p> 
+<p>Otherwise the expression is also equivalent to <code class="hljs inlineCode">list($s1, $s2, ..., $sN).flatten()</code> (see <a class="tlObject" data-custom="false" href="?page=flatten&amp;uuid=d19612c5-6070-403f-b332-7cd7a50f7e6f">Flatten</a>).</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>s</td> 
+   <td>Number/string/boolean/business object/set</td> 
+   <td>Sets or single values that are to be combined to a set.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p> 
+<p>A set containing all specified parameters.</p> 
+<h2>Examples</h2> 
+<h3>Concatenation of two lists</h3> 
+<pre>	<code>concat(list(1, 2, 3), list(4, 5, 6))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span> A set with the elements [1, 2, 3, 4, 5, 6].</p> 
+<h3>Concatenation of lists and scalar values</h3> 
+<pre>	<code>concat(list(1, 2, 3), 4, 5, "and so on")</code>
+</pre> 
+<p><strong><span style="color:#3498db">Output:</span> </strong> A set with the elements [1, 2, 3, 4, 5, "and so on"].</p> 
+<p> </p>

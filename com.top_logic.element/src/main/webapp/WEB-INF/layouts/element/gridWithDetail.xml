@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Grid with local dialog used to display details. -->
+<template>
+	<params>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="types"/>
+		<param name="modelBuilder">
+			<modelBuilder class="com.top_logic.element.layout.table.WrapperListModelBuilder"
+				types="${types}"
+			/>
+		</param>
+		<param name="createType"
+			optional="true"
+		/>
+		<param name="openInEdit"
+			optional="true"
+		/>
+		<param name="gridComponent"
+			optional="true"
+		/>
+		<param name="accessor"
+			optional="true"
+		/>
+		<param name="formContextModifier"
+			optional="true"
+		/>
+		<param name="model"
+			optional="true"
+		/>
+		<param name="resPrefix"
+			optional="true"
+		/>
+		<param name="exportName"
+			optional="true"
+		/>
+		<param name="exportNameKey"
+			optional="true"
+		/>
+		<param name="defaultSelection"
+			optional="true"
+		/>
+		<param name="saveClosesDialog"
+			optional="true"
+		/>
+		<param name="showMarkerFields"
+			optional="true"
+		/>
+		<param name="createButtonImage"
+			optional="true"
+		/>
+		<param name="createButtonImageDisabled"
+			optional="true"
+		/>
+		<param name="isSecurityMaster"
+			optional="true"
+		/>
+		<param name="nameColumn"
+			optional="true"
+		/>
+		<param name="columns"
+			optional="true"
+		/>
+		<param name="applyCommand"
+			optional="true"
+		/>
+		<param name="cancelCommand"
+			optional="true"
+		/>
+		<param name="deleteCommand"
+			optional="true"
+		/>
+		<param name="discardCommand"
+			optional="true"
+		/>
+		<param name="editCommand"
+			optional="true"
+		/>
+		<param name="saveCommand"
+			optional="true"
+		/>
+		<param name="dialogs"
+			optional="true"
+		/>
+		<param name="createHandler"
+			optional="true"
+		/>
+		<param name="buttons"
+			optional="true"
+		/>
+		<param name="createButton"
+			optional="true"
+		/>
+		<param name="table"
+			optional="true"
+		/>
+		<param name="gridParameters"
+			optional="true"
+		/>
+		<param name="editAttributedParameters"
+			optional="true"
+		/>
+		<param name="securityProviderClass"
+			optional="true"
+		/>
+		<param name="rowSecurityProviderClass"
+			optional="true"
+		/>
+		<param name="editSecurityProvider"
+			optional="true"
+		/>
+		<param name="editComponentName"
+			value="${namePrefix}Edit"
+		/>
+		<param name="editDialog">
+			<include name="element/editAttributedDetail.xml"
+				metaElementName="${types}"
+				namePrefix="${namePrefix}"
+				securityProvider="${editSecurityProvider}"
+			>
+				<subConfiguration>${editAttributedParameters}</subConfiguration>
+				<inject>
+					<dialogInfo
+						createOpenerButtons="false"
+						executability="Always"
+						height="500"
+						openerCommandGroup="Read"
+						width="680"
+					/>
+				</inject>
+			</include>
+		</param>
+	</params>
+	<include name="element/grid.xml"
+		accessor="${accessor}"
+		applyCommand="${applyCommand}"
+		cancelCommand="${cancelCommand}"
+		columns="${columns}"
+		createButtonImage="${createButtonImage}"
+		createButtonImageDisabled="${createButtonImageDisabled}"
+		createHandler="${createHandler}"
+		createType="${createType}"
+		defaultSelection="${defaultSelection}"
+		deleteCommand="${deleteCommand}"
+		discardCommand="${discardCommand}"
+		editCommand="${editCommand}"
+		editComponentName="${editComponentName}"
+		formContextModifier="${formContextModifier}"
+		gridComponent="${gridComponent}"
+		isSecurityMaster="${isSecurityMaster}"
+		model="${model}"
+		modelBuilder="${modelBuilder}"
+		nameColumn="${nameColumn}"
+		namePrefix="${namePrefix}"
+		openInEdit="${openInEdit}"
+		resPrefix="${resPrefix}"
+		rowSecurityProviderClass="${rowSecurityProviderClass}"
+		saveClosesDialog="${saveClosesDialog}"
+		saveCommand="${saveCommand}"
+		securityProviderClass="${securityProviderClass}"
+		showMarkerFields="${showMarkerFields}"
+		types="${types}"
+	>
+		<buttons>
+			${buttons}
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+				exportName="${exportName}"
+				exportNameKey="${exportNameKey}"
+			/>
+		</buttons>
+		<createButton>${createButton}</createButton>
+		<dialogs>
+			${editDialog}
+			${dialogs}
+		</dialogs>
+		<gridParameters>${gridParameters}</gridParameters>
+		<table>${table}</table>
+	</include>
+</template>

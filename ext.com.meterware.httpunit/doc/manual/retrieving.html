@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>HttpUnit Manual - Retrieving Web Pages</title>
+<LINK REL="stylesheet" HREF="manual.css" TYPE="text/css">
+</head>
+
+<body>
+<h1>Retrieving Web Pages</h1>
+<h2>Explicit Specification of a Page URL</h2>
+<p>The very first step in any interaction with a web site is to obtain a start page. To do this, we create a
+<a href="../api/com/meterware/httpunit/WebConversation.html"><span class="code">WebConversation</span></a> object
+to play the role of the web browser. This object will store browser state such a cookies, windows, and so on. We then ask
+for the page by specifying the desired URL:</p>
+<pre class="code-example">
+WebConversation wc = <b>new</b> WebConversation();
+WebResponse wr = wc.getResponse( "http://www.meterware.com" );
+System.out.println( wr.getText() );
+</pre>
+This example will simply print out the text of the retrieved page. Obviously, given this text, it is easy to search
+for particular strings on the page, if that is desired.

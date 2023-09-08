@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="main.admin.demo.tabber"
+		z_legacy_componentName="adminDemoView"
+		z_legacy_tabBarName="adminDemoView_tabBar"
+		z_legacy_tabLabel="main.admin.demo.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic/admin/technical/events/eventView.layout.xml"/>
+			<layout-reference resource="com.top_logic/admin/model/classifications/adminClassifications.layout.xml"/>
+			<layout-reference resource="com.top_logic/admin/model/checklists/adminChecklists.layout.xml"/>
+			<layout-reference resource="com.top_logic.element/admin/security/profilesLegacy/adminRolesConfigView.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

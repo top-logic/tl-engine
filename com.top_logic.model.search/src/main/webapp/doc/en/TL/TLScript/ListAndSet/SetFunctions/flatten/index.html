@@ -1,0 +1,48 @@
+<h2>Syntax</h2> 
+<pre>	<code>$setOfSets.flatten()</code>
+</pre> 
+<h2>Description</h2> 
+<p>Calculates a set that contains all elements from all element sets in the set <code class="hljs inlineCode">setOfSets</code>.</p> 
+<p>Two-dimensional sets (i.e. sets that contain sets as elements again) are not supported as final result. Therefore, all elements in the inner sets must be unpacked and stored as elements of the outer set instead. One therefore needs <code class="hljs inlineCode">flatten</code><code class="hljs inlineCode">()</code> for example when $<code class="hljs inlineCode">set.map($func)</code> (see <a class="tlObject" data-custom="false" href="?page=map&amp;uuid=c382824b-adb0-468c-8508-c4297b61bb3d">Map</a>) is called and <code class="hljs inlineCode">func</code> itself returns a set.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>setOfSets</td> 
+   <td>Set</td> 
+   <td>A two-dimensional set (set with sets as elements).</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return Value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p> 
+<p>A set containing all the individual elements of the original set elements.</p> 
+<h2>Examples</h2> 
+<h3>Simple two-diemnsional set</h3> 
+<pre>	<code>list(1, 4, 9)
+  .map(x -&gt; concat($x, 2, 3))
+  .flatten()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span> A set with the elements [1, 2, 3, 4, 2, 3, 9, 2, 3].</p> 
+<p>The elements of the three result sets [1, 2, 3], [4, 2, 3], and [9, 2, 3] are unwrapped and inserted as elements of a single set.</p> 
+<h3>Set-valued reference attributes</h3> 
+<p>Assuming that the type <code class="hljs inlineCode">my.module:MyTyp</code> has a set-valued reference attribute <code class="hljs inlineCode">others</code>, then the expression</p> 
+<pre><code>all(`my.module:MyType`)
+  .map(x -&gt; $x.get(`my.module:MyType#others`)
+</code></pre> 
+<p>would return a set of sets with all objects referenced in <code class="hljs inlineCode">others</code>, which is not supported as the end result of, for example, a search. Therefore, the result set must be flattened:</p> 
+<pre><code>all(`my.module:MyType`)
+  .map(x -&gt; $x.get(`my.module:MyType#others`)
+  .flatten()</code></pre> 
+<p> </p>

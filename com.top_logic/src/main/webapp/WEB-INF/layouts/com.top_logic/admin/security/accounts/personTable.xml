@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="columnDefinitions">
+			<columns>
+				<column name="givenName"/>
+				<column name="sn"/>
+				<column name="username"
+					visible="false"
+				/>
+				<column name="initials"
+					visible="false"
+				/>
+				<column name="mail"
+					visible="false"
+				/>
+				<column name="otherMailbox"
+					visible="false"
+				/>
+				<column name="personalTitle"
+					visible="false"
+				/>
+				<column name="telephoneNumber"
+					visible="false"
+				/>
+				<column name="otherTelephone"
+					visible="false"
+				/>
+				<column name="mobile"
+					visible="false"
+				/>
+				<column name="lastLogin"
+					accessor="com.top_logic.knowledge.gui.layout.person.PersonTableComponent$LastLoginAccessor"
+					filterProvider="com.top_logic.layout.table.filter.SimpleDateFilterProvider"
+					visible="false"
+				/>
+				<column name="dataDeviceID"
+					visible="false"
+				/>
+				<column name="authDeviceID"
+					visible="false"
+				/>
+				<column name="restrictedUser"
+					filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
+					visible="false"
+				/>
+			</columns>
+		</param>
+		<param name="columns"
+			value="sn,givenName"
+		/>
+		<param name="fixedColumns"
+			value="0"
+		/>
+		<param name="defaultSortOrder"
+			value="sn"
+		/>
+		<param name="columnWidth"
+			value="186px"
+		/>
+		<param name="exportTemplateName"
+			optional="true"
+		/>
+		<param name="exportDownloadNameKey"
+			value="admin.person.export.file.name"
+		/>
+		<param name="exportButtonComponent"
+			value=""
+		/>
+		<param name="securityProviderClass"
+			value="securityRoot"
+		/>
+		<param name="isSecurityMaster"
+			value="true"
+		/>
+		<param name="builderClass"
+			value="com.top_logic.knowledge.wrap.person.PersonModelBuilder"
+		/>
+		<param name="buttons">
+			<!-- No additional commands by default -->
+		</param>
+	</params>
+
+	<component class="com.top_logic.knowledge.gui.layout.person.PersonTableComponent"
+		buttonComponent="${exportButtonComponent}"
+		isSecurityMaster="${isSecurityMaster}"
+		modelBuilder="${builderClass}"
+		name="${namePrefix}PersonTable"
+		objectType="tl.accounts:Person"
+		partnerGroup="UserTableGroup"
+		resPrefix="admin.person.edit.table."
+		securityProviderClass="${securityProviderClass}"
+		selectable="true"
+		useChangeHandling="false"
+	>
+		<table
+			columnCustomization="selection"
+			defaultColumns="${columns}"
+			defaultSortOrder="${defaultSortOrder}"
+			fixedColumns="${fixedColumns}"
+			rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
+			showTitle="true"
+		>
+			<column-default
+				accessor="com.top_logic.knowledge.wrap.person.PersonAccessor"
+				columnWidth="${columnWidth}"
+				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+			/>
+			${columnDefinitions}
+		</table>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+				downloadNameKey="${exportDownloadNameKey}"
+				templateName="${exportTemplateName}"
+			/>
+			${buttons}
+		</buttons>
+	</component>
+</template>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="model"/>
+		<param name="treeBuilder">
+			<treeBuilder class="com.top_logic.demo.model.types.util.DemoSyntheticNodeTreeTableBuilder"/>
+		</param>
+		<param name="componentControlProvider">
+			<componentControlProvider class="com.top_logic.layout.structure.TableWithSidebar"/>
+		</param>
+		<param name="subConfiguration">
+			<!-- empty by default -->
+		</param>
+		<param name="defaultSelection"/>
+	</params>
+	<layout name="${namePrefix}DemoTypesTreeTableContainer"
+		horizontal="true"
+	>
+		<components>
+			<component class="com.top_logic.demo.table.DemoTreeTableEditComponent"
+				componentControlProvider="${componentControlProvider}"
+				defaultSelection="${defaultSelection}"
+				model="${model}"
+				name="${namePrefix}DemoTypesTreeTable"
+				objectType="me:DemoTypes.All"
+				resPrefix="layouts.demo.table.demoTreeTable.DemoTypesTreeTable."
+				treeBuilder="${treeBuilder}"
+			>
+				<!-- The name of the component and the name of the table has to be equal. -->
+				<table
+					defaultColumns="name, booleanMandatory, date, float, string"
+					defaultSortOrder="date:descending"
+					fixedColumns="1"
+					footerStyle="background:orange;"
+					headerStyle="background:green;"
+					id-column=""
+					pageSizeOptions="10, all"
+					titleStyle="background:yellow;"
+				>
+					<!-- Test case for Ticket #5768. -->
+					<columns>
+						<column name="name"
+							accessor="com.top_logic.layout.IdentityAccessor"
+							mandatory="true"
+						>
+							<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
+							<comparator class="com.top_logic.demo.model.types.util.DemoComparator"/>
+							<!--
+								Hack to show a label for the non TLObject DemoYearGroup. Previous _self column had
+								the AllCellsExist existence tester by default. For type parts like name it is
+								the WrapperValueExistenceTester.
+							-->
+							<cellExistenceTester class="com.top_logic.layout.table.filter.AllCellsExist"/>
+						</column>
+						<column name="string"
+							filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+						/>
+						<column name="boolean"
+							headStyle="background:inherit;"
+						/>
+						<column name="booleanMandatory"
+							sortable="false"
+						/>
+					</columns>
+				</table>
+				${subConfiguration}
+			</component>
+		</components>
+	</layout>
+</template>

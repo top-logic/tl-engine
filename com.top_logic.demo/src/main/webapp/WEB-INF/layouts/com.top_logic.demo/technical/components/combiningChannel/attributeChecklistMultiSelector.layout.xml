@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments
+		multiple="false"
+		presentation="drop-down"
+		types=""
+	>
+		<titleKey key="dynamic.b60e3f5a-ced9-43f6-9cce-67711ad55b33">
+			<en>Attribute checklistMulti</en>
+			<de>Attribut checklistMulti</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="all(`tl5.enum:demo.classification.multi`)"
+			modelForElement="null"
+			supportsElement="x -> $x.instanceOf(`tl5.enum:demo.classification.multi`)"
+			supportsModel="true"
+		/>
+	</arguments>
+</config:template-call>

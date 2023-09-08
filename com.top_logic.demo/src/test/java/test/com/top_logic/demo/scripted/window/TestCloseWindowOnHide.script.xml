@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Tests > Externe Fenster"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.window.OpenWindowCommand"
+			command-label="Externes Fenster 1 öffnen"
+			command-name="openWindow_com_top_logic_demo_technical_test_separatewindow_sepWin1"
+			component-name="com.top_logic.demo/technical/test/separatewindow/separateWindowDemo.layout.xml#SWTreeA"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+			window-name="win_com.top_logic.demo_technical_test_separatewindow_sepWin1.xmlsepWin1"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Fenster"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.window.OpenWindowCommand"
+			command-label="Externes Fenster 1 öffnen"
+			command-name="openWindow_com_top_logic_demo_technical_test_separatewindow_sepWin1"
+			component-implementation-comment="com.top_logic.mig.html.layout.SimpleComponent"
+			component-name="com.top_logic.demo/technical/test/separatewindow/sepWin1.xml#sepWin1SWTreeBdescr"
+			user-id="root"
+			window-name="win_com.top_logic.demo_technical_test_separatewindow_sepWin1.xmlsepWin1"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+			window-name="win_com.top_logic.demo_technical_test_separatewindow_sepWin1.xmlsepWin1Inner"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Fenster"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+			window-name="win_com.top_logic.demo_technical_test_separatewindow_sepWin1.xmlsepWin1"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Form Control Test"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ModelNotExistsAssertionOp"
+			failure-pattern="Component 'sepWin1InnerlayoutDemoTabFrameSepWin' cannot be resolved."
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+				component-name="sepWin1InnerlayoutDemoTabFrameSepWin"
+			/>
+		</action>
+		<action class="com.top_logic.layout.window.WindowCloseActionOp"
+			close-window-name="win_com.top_logic.demo_technical_test_separatewindow_sepWin1.xmlsepWin1"
+			component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
+			component-name="rootLayout#masterFrame"
+			user-id="root"
+		/>
+	</actions>
+</action>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<metaobjects>
+
+		<metaobject object_type="MOKnowledgeObject" object_name="Base"
+			super_class="KnowledgeObject" abstract="true">
+			<annotations>
+				<annotation
+					config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="com.top_logic.knowledge.wrap.DefaultWrapper" />
+				</annotation>
+			</annotations>
+		</metaobject>
+					
+		<metaobject object_type="MOKnowledgeObject" object_name="A" super_class="Base">
+			<attributes>
+				<mo_attribute att_name="foo" att_type="String" db_size="256" mandatory="false"/> 
+			    <reference att_name="b"
+			    	by-value="false"
+			    	mandatory="false"
+			    	history-type="current" 
+			    	branch-global="false" 
+			    	monomorphic="true" 
+			    	is-container="false" 
+			    	deletion-policy="delete-referer" 
+			    	target-type="B"
+				/>
+			</attributes>
+		</metaobject>
+
+		<metaobject object_type="MOKnowledgeObject" object_name="B" super_class="Base">
+			<attributes>
+				<mo_attribute att_name="bar" att_type="String" db_size="256" mandatory="false"/> 
+			</attributes>
+		</metaobject>
+
+	</metaobjects>
+</objectlist>

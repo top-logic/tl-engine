@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<arguments xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<components>
+		<layout-reference
+			config:position="begin"
+			resource="com.top_logic.element/admin/model/dbAdmin/schemaTab.layout.xml"
+		/>
+		<layout-reference
+			config:position="begin"
+			resource="com.top_logic.element/admin/model/modelEditor/adminModel.layout.xml"
+		/>
+	</components>
+</arguments>

@@ -1,0 +1,2 @@
+com.top_logic.migrate.tl_580.Migrate580Rewriters.java: Missing documentation: com.top_logic.migrate.tl_580.Migrate580Rewriters.addRewriters
+com.top_logic.migrate.tl_580._10978.RemoveIsSortedAttribute.java: Invalid camel case word 'isSorted', this may only be used within JavaDoc links or HTML code tags.

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+>
+	<version
+		name="Ticket_25242_Use_legacy_tabbar_template_for_old_layouts"
+		module="tl" />
+	<dependencies>
+		<dependency
+			name="Ticket_25210_Model_references_in_form_definitions" module="tl" />
+	</dependencies>
+	
+	<processors>
+		<processor class="com.top_logic.layout.migration.Ticket25242UseLegacyTabbarTemplatesForOldLayouts"/>
+	</processors>
+</migration>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<tableView name="Table"
+	isSecurityMaster="true"
+	model="selection(com.top_logic.element/admin/model/dbAdmin/tables/tablesTable.layout.xml#Table)"
+>
+	<modelBuilder class="com.top_logic.layout.configEdit.ConfigurationPropertyListModelBuilder"
+		property="com.top_logic.dob.schema.config.MetaObjectConfig#attributes"
+	/>
+	<titleKey>
+		<de>Spalten</de>
+		<en>Columns</en>
+	</titleKey>
+	<table
+		defaultColumns="att_name"
+		defaultSortOrder="att_name"
+		fixedColumns="0"
+	>
+		<column-default accessor="com.top_logic.layout.configEdit.ConfigurationPropertyAccessor"/>
+
+		<columns>
+			<column name="att_name"
+				columnWidth="250px"
+			>
+				<columnLabelKey>
+					<de>Name</de>
+					<en>Name</en>
+				</columnLabelKey>
+				<cellRenderer class="com.top_logic.layout.tree.renderer.RowTypeCellRenderer"/>
+			</column>
+			<column name="db-name-effective"
+				columnWidth="250px"
+			>
+				<columnLabelKey>
+					<de>DB-Name</de>
+					<en>DB Name</en>
+				</columnLabelKey>
+			</column>
+		</columns>
+	</table>
+	<buttons>
+		<button id="removeColumn"
+			class="com.top_logic.layout.configEdit.RemoveConfiguration"
+			clique="delete"
+			group="Delete"
+			item="model(self())"
+			property="attributes"
+			target="selection(self())"
+		>
+			<resourceKey>
+				<de>Spalte löschen</de>
+				<en>Delete column</en>
+			</resourceKey>
+
+			<executability>
+				<rule class="com.top_logic.tool.execution.ExecutableIfChannelActive"
+					channel="editMode(com.top_logic.element/admin/model/dbAdmin/tables/tableDetailsForm.layout.xml#Form)"
+				/>
+			</executability>
+		</button>
+
+		<reference command-id="editLayoutCommand"/>
+		<reference command-id="deleteComponentCommand"/>
+	</buttons>
+	<dialogs>
+		<layout-reference resource="com.top_logic.element/admin/model/dbAdmin/columns/createColumnDialog.layout.xml"/>
+		<layout-reference resource="com.top_logic.element/admin/model/dbAdmin/columns/createReferenceDialog.layout.xml"/>
+	</dialogs>
+</tableView>

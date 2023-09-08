@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+	</params>
+
+	<component class="com.top_logic.layout.scripting.template.gui.templates.TemplateTreeComponent"
+		dontRecord="true"
+		name="${namePrefix}templates"
+		resPrefix="tl.scripting.recorder.templates."
+		rootVisible="false"
+		securityProviderClass="securityRoot"
+		titleKey="tl.scripting.recorder.templates.title"
+	>
+		<layoutInfo size="300px"/>
+		<modelBuilder class="com.top_logic.layout.scripting.template.gui.templates.TemplateTreeBuilder"
+			template-path="%SCRIPT_TEMPLATE_PATH%"
+		/>
+
+		<resource-provider class="com.top_logic.layout.tree.model.TLTreeNodeResourceProvider">
+			<impl class="com.top_logic.layout.scripting.template.gui.templates.TemplateLocationResources"/>
+		</resource-provider>
+
+		<dialogs>
+			<layout name="${namePrefix}instantiation"
+				dontRecord="true"
+				titleKey="tl.scripting.recorder.instantiation.parameters.title"
+			>
+				<dialogInfo
+					createOpenerButtons="false"
+					executability="com.top_logic.layout.scripting.template.gui.templates.IsTemplateSelected"
+					height="400px"
+					openHandlerClass="com.top_logic.layout.scripting.template.gui.templates.OpenOnlyIfSimpleTemplate"
+					openHandlerName="openTemplateInstantiation"
+					openerCommandGroup="System"
+					width="600px"
+				/>
+
+				<components>
+					<component class="com.top_logic.layout.scripting.template.gui.templates.TemplateParameterComponent"
+						buttonComponent="${namePrefix}instantiationButtons"
+						dontRecord="true"
+						model="selection(${namePrefix}templates)"
+						name="${namePrefix}parameters"
+						page="/jsp/layout/scripting/TemplateParameters.jsp"
+						resPrefix="tl.scripting.recorder.instantiation.parameters."
+						securityProviderClass="securityRoot"
+					>
+						<layoutInfo size="100%"/>
+						<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"/>
+
+						<buttons>
+							<button id="record"
+								class="com.top_logic.layout.scripting.template.gui.templates.TemplateInstantiationCommand"
+								group="Create"
+							/>
+							<button id="recordAndClose"
+								class="com.top_logic.tool.boundsec.CommandSequence"
+								group="Create"
+							>
+								<commands>
+									<call
+										command-id="record"
+										group="Create"
+									/>
+									<reference command-id="closeModalDialog"/>
+								</commands>
+							</button>
+						</buttons>
+					</component>
+					<buttonbar name="${namePrefix}instantiationButtons"/>
+				</components>
+			</layout>
+			<include name="scripting/TemplateEditor.xml"
+				builderClass="com.top_logic.layout.scripting.template.gui.templates.TemplateEditBuilder"
+				executability="com.top_logic.layout.scripting.template.gui.templates.IsTemplateSelected"
+				master="${namePrefix}templates"
+				namePrefix="${namePrefix}templateEdit"
+				openHandlerClass="com.top_logic.layout.scripting.template.gui.templates.OpenOnlyIfSimpleTemplate"
+				openHandlerName="openTemplateEdit"
+			/>
+		</dialogs>
+
+		<toolbar-groups>
+			<toolbar-group name="scriptEditing">
+				<buttons>
+					<button
+						command-id="openTemplateInstantiation"
+						image="theme:ICONS_BUTTON_START"
+						not-executable-image="theme:ICONS_BUTTON_START_DISABLED"
+					/>
+					<button
+						command-id="openTemplateEdit"
+						image="theme:ICONS_BUTTON_EDIT"
+						not-executable-image="theme:ICONS_BUTTON_EDIT_DISABLED"
+					/>
+					<button
+						command-id="deleteTemplate"
+						image="theme:ICONS_DELETE_TOOLBAR"
+						not-executable-image="theme:ICONS_DELETE_TOOLBAR_DISABLED"
+					/>
+				</buttons>
+			</toolbar-group>
+		</toolbar-groups>
+
+		<buttons>
+			<button id="exportTemplate"
+				class="com.top_logic.layout.scripting.template.gui.templates.DownloadScriptRecorderTemplateHandler"
+				clique="exportButtons"
+				image="theme:TEMPLATE_EXPORT"
+			>
+				<executability>
+					<rule class="com.top_logic.tool.execution.AlwaysExecutable"/>
+				</executability>
+			</button>
+			<button id="exportAllTemplates"
+				class="com.top_logic.layout.scripting.template.gui.templates.DownloadAllScriptRecorderTemplatesHandler"
+				clique="exportButtons"
+				image="theme:TEMPLATE_EXPORT"
+			>
+				<executability>
+					<rule class="com.top_logic.tool.execution.AlwaysExecutable"/>
+				</executability>
+			</button>
+			<button id="importTemplate"
+				class="com.top_logic.layout.scripting.template.gui.templates.UploadScriptRecorderTemplateHandler"
+				clique="importButtons"
+				image="theme:TEMPLATE_IMPORT"
+			/>
+		</buttons>
+
+		<commands>
+			<command id="deleteTemplate"
+				class="com.top_logic.layout.scripting.template.gui.templates.DeleteTemplateCommand"
+				group="Delete"
+			>
+				<executability>
+					<rule class="com.top_logic.layout.scripting.template.gui.templates.IsTemplateSelected"/>
+				</executability>
+			</command>
+		</commands>
+	</component>
+</template>

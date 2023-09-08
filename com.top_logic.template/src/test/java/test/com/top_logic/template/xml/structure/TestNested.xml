@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<t:type name="Type_Inner_Structure">
+				<t:attributes>
+					<t:attribute name="Attribute_Left" type="string" />
+					<t:attribute name="Attribute_Right" type="string" />
+				</t:attributes>
+			</t:type>
+			
+			<t:type name="Type_Outer_Structure">
+				<t:attributes>
+					<t:attribute name="Attribute_Inner_Structure" type="Type_Inner_Structure" />
+					<t:attribute name="Attribute_String" type="string" />
+				</t:attributes>
+			</t:type>
+			
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Parameter_Outer_Structure" type="Type_Outer_Structure" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:define var="inner" expr="$Parameter_Outer_Structure.Attribute_Inner_Structure" />
+		<t:value expr="$Parameter_Outer_Structure.Attribute_String" />
+		<t:value expr="inner.Attribute_Left" />
+		<t:value expr="inner.Attribute_Right" />
+		
+	</t:body>
+</t:template>

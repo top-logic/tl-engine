@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26906_Add_computed_default_provider_column_to_MetaElement"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26529_Transfer_dynamic_resources_to_new_storage"
+			module="tl"
+		/>
+		<dependency name="Ticket_25881_Remove_model_annotations_from_tables"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_26906_Add_computed_default_provider_column_to_MetaElement.migration.xslt"
+		>
+		</processor>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

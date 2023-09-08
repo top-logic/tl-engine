@@ -1,0 +1,1119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create test data"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-A.xml"
+							template-name-comment="Element Anlegen"
+						>
+							<parameters>
+								<parameter name="ergebnis"
+									value="TestWebFolderAutomaticLockingDemoA"
+								/>
+								<parameter name="Name"
+									value="TestWebFolderAutomaticLockingDemoA"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > 0 Dokumente"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Hochladen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 0 Dokumente"
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="input"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+										base64data="Qmxp"
+										content-type="text/plain"
+										name="Bli.txt"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Hochladen"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Hochladen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 1 Dokumente"
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="input"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+										base64data="Qmxh"
+										content-type="text/plain"
+										name="Bla.txt"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Hochladen"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Hochladen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente"
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="input"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+										base64data="Qmx1Yg"
+										content-type="text/plain"
+										name="Blub.txt"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Hochladen"
+							user-id="root"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create test account"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+							template-name-comment="Nutzer Anlegen"
+						>
+							<parameters>
+								<parameter name="ergebnis"
+									value="TestWebFolderAutomaticLockingUser"
+								/>
+								<parameter name="Loginname"
+									value="TestWebFolderAutomaticLockingUser"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Passwort setzen.xml"
+							template-name-comment="Passwort setzen"
+						>
+							<parameters>
+								<parameter name="Loginname"
+									value="TestWebFolderAutomaticLockingUser"
+								/>
+								<parameter name="Passwort"
+									value="123"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Rolle/Action-Rolle-Anlegen.xml"
+							template-name-comment="Rolle Anlegen"
+						>
+							<parameters>
+								<parameter name="ergebnis"
+									value="TestWebFolderAutomaticLockingRole"
+								/>
+								<parameter name="Name"
+									value="TestWebFolderAutomaticLockingRole"
+								/>
+								<parameter name="Berechtigungsstruktur"
+									value="DemoTypes"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Rollenprofile/Alle Rechte an Rolle geben.xml"
+							template-name-comment="Alle Rechte an Rolle geben"
+						>
+							<parameters>
+								<parameter name="Berechtigungsstruktur"
+									value="DemoTypes"
+								/>
+								<parameter name="Rolle"
+									value="TestWebFolderAutomaticLockingRole"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Action-Nutzer-Rolle zuweisen.xml"
+							template-name-comment="Nutzer Rolle zuweisen"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="TestWebFolderAutomaticLockingUser"
+								/>
+								<parameter name="Rolle"
+									value="TestWebFolderAutomaticLockingRole"
+								/>
+								<parameter name="Berechtigungsstruktur"
+									value="DemoTypes"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test locking"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Lock documents"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Lock explicitly"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+											user-id="root"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Strukturen > Typendemo > 3 Dokumente (manuelle Sperren)"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
+													tab-path="Strukturen > Typendemo > 3 Dokumente (manuelle Sperren)"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+														field-name="rows"
+													/>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+														column-name="_lock"
+													>
+														<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+															provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+														>
+															<name>
+																<part key="element">
+																	<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																		value="Bli.txt"
+																	/>
+																</part>
+															</name>
+														</row-object>
+													</node>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+														field-label-comment="Sperren"
+														field-name="lockField"
+													/>
+												</path>
+											</model-name>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Lock implicitly through update"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+											user-id="root"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Strukturen > Typendemo > 3 Dokumente"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+													tab-path="Strukturen > Typendemo > 3 Dokumente"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+														field-name="rows"
+													/>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+														column-name="_lock"
+													>
+														<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+															provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+														>
+															<name>
+																<part key="element">
+																	<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																		value="Blub.txt"
+																	/>
+																</part>
+															</name>
+														</row-object>
+													</node>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+														field-label-comment="Ersetzen"
+														field-name="updateField"
+													/>
+												</path>
+											</model-name>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+									template="script:/Nutzer/Nutzer anmelden.xml"
+									template-name-comment="Nutzer anmelden"
+								>
+									<parameters>
+										<parameter name="Username"
+											value="TestWebFolderAutomaticLockingUser"
+										/>
+										<parameter name="Password"
+											value="123"
+										/>
+										<parameter name="ProcessId"
+											value="TestWebFolderAutomaticLockingUser"
+										/>
+									</parameters>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Test whether locks are set and the update button is checking them"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Strukturen > Typendemo"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+											change-kind="ABSOLUTE"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<selection>
+												<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+													label-path="TestWebFolderAutomaticLockingDemoA"
+												/>
+												<selection-state boolean="true"/>
+											</selection>
+											<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+												<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+												/>
+											</selection-model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Strukturen > Typendemo > 3 Dokumente"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+											column-label="Name"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+												<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+													<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+														tab-path="Strukturen > Typendemo > 3 Dokumente"
+													/>
+												</default-table-data-owner>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Filteroptionen"
+											>
+												<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+													context-name=""
+												>
+													<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+														<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+															<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+																tab-path="Strukturen > Typendemo > 3 Dokumente"
+															/>
+														</default-table-data-owner>
+													</table-name>
+												</component>
+											</field>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+												<values>
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Bla.txt"
+													/>
+												</values>
+											</value>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Anwenden"
+											>
+												<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+													context-name=""
+												>
+													<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+														<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+															<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+																tab-path="Strukturen > Typendemo > 3 Dokumente"
+															/>
+														</default-table-data-owner>
+													</table-name>
+												</component>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+											comment="Test that a document can be updated when it is neither explicitly locked nor updated by someone else."
+											executable="true"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+												label="Ersetzen"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+											column-label="Name"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+												<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+													<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+														tab-path="Strukturen > Typendemo > 3 Dokumente"
+													/>
+												</default-table-data-owner>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Filteroptionen"
+											>
+												<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+													context-name=""
+												>
+													<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+														<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+															<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+																tab-path="Strukturen > Typendemo > 3 Dokumente"
+															/>
+														</default-table-data-owner>
+													</table-name>
+												</component>
+											</field>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											comment="Test that a document, that has been locked by another user, cannot be updated from someone else at the same time."
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Filteroptionen"
+											>
+												<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+													context-name=""
+												>
+													<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+														<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+															<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+																tab-path="Strukturen > Typendemo > 3 Dokumente"
+															/>
+														</default-table-data-owner>
+													</table-name>
+												</component>
+											</field>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+												<values>
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Bli.txt"
+													/>
+												</values>
+											</value>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Anwenden"
+											>
+												<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+													context-name=""
+												>
+													<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+														<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+															<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+																tab-path="Strukturen > Typendemo > 3 Dokumente"
+															/>
+														</default-table-data-owner>
+													</table-name>
+												</component>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+											executable="false"
+											reason-key="class.com.top_logic.common.webfolder.ui.commands.I18NConstants.UPDATE_NOT_POSSIBLE_BECAUSE_LOCKED"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+												label="Ersetzen"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+											column-label="Name"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+												<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+													<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+														tab-path="Strukturen > Typendemo > 3 Dokumente"
+													/>
+												</default-table-data-owner>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Filteroptionen"
+											>
+												<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+													context-name=""
+												>
+													<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+														<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+															<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+																tab-path="Strukturen > Typendemo > 3 Dokumente"
+															/>
+														</default-table-data-owner>
+													</table-name>
+												</component>
+											</field>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Filteroptionen"
+											>
+												<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+													context-name=""
+												>
+													<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+														<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+															<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+																tab-path="Strukturen > Typendemo > 3 Dokumente"
+															/>
+														</default-table-data-owner>
+													</table-name>
+												</component>
+											</field>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+												<values>
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Blub.txt"
+													/>
+												</values>
+											</value>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Anwenden"
+											>
+												<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+													context-name=""
+												>
+													<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+														<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+															<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+																tab-path="Strukturen > Typendemo > 3 Dokumente"
+															/>
+														</default-table-data-owner>
+													</table-name>
+												</component>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+											comment="Test that a document, that is currently updated by another user, is locked and cannot be updated from someone else at the same time."
+											executable="false"
+											reason-key="class.com.top_logic.common.webfolder.ui.commands.I18NConstants.UPDATE_NOT_POSSIBLE_BECAUSE_LOCKED"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+												label="Ersetzen"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+											column-label="Name"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+												<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+													<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+														name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+														tab-path="Strukturen > Typendemo > 3 Dokumente"
+													/>
+												</default-table-data-owner>
+											</model-name>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
+											user-id="TestWebFolderAutomaticLockingUser"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+												label="Alle anzeigen"
+											>
+												<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+													context-name=""
+												>
+													<table-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+														<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+															<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+																name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+																tab-path="Strukturen > Typendemo > 3 Dokumente"
+															/>
+														</default-table-data-owner>
+													</table-name>
+												</component>
+											</model-name>
+										</action>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Release implicit lock"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+											user-id="root"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Strukturen > Typendemo > 3 Dokumente"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+											component-name="rootLayout#masterFrame"
+											label="Abbrechen"
+											user-id="root"
+										/>
+									</actions>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Release explicit lock"
+								>
+									<actions>
+										<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+											user-id="root"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Strukturen > Typendemo > 3 Dokumente (manuelle Sperren)"
+											/>
+										</action>
+										<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+											failure-expected="false"
+											user-id="root"
+										>
+											<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+												<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
+													tab-path="Strukturen > Typendemo > 3 Dokumente (manuelle Sperren)"
+												/>
+												<path>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+														field-name="rows"
+													/>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+														column-name="_lock"
+													>
+														<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+															provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+														>
+															<name>
+																<part key="element">
+																	<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																		value="Bli.txt"
+																	/>
+																</part>
+															</name>
+														</row-object>
+													</node>
+													<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+														field-label-comment="Entsperren"
+														field-name="unlockField"
+													/>
+												</path>
+											</model-name>
+										</action>
+									</actions>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test update document with root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen > Typendemo > 3 Dokumente"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 3 Dokumente"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-name="rows"
+									/>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+										column-name="_lock"
+									>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+											provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+										>
+											<name>
+												<part key="element">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Bla.txt"
+													/>
+												</part>
+											</name>
+										</row-object>
+									</node>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment="Ersetzen"
+										field-name="updateField"
+									/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="input"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+										base64data="QmxhIGJsYSBibGE"
+										content-type="text/plain"
+										name="Bla.txt"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Aktualisieren"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldLabelAssertionOp"
+							label="2"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 3 Dokumente"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-name="rows"
+									/>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+										column-name="_version"
+									>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+											provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+										>
+											<name>
+												<part key="element">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Bla.txt"
+													/>
+												</part>
+											</name>
+										</row-object>
+									</node>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Größe"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+										<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+											tab-path="Strukturen > Typendemo > 3 Dokumente"
+										/>
+									</default-table-data-owner>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="Bla.txt"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.LongNaming$Name"
+								value="11"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test update document with non-root user"
+					user-id="TestWebFolderAutomaticLockingUser"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 3 Dokumente"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-name="rows"
+									/>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+										column-name="_lock"
+									>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+											provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+										>
+											<name>
+												<part key="element">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Bla.txt"
+													/>
+												</part>
+											</name>
+										</row-object>
+									</node>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment="Ersetzen"
+										field-name="updateField"
+									/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+								<path>
+									<named-member name="input"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+										base64data="QmxhIGJsYSBibGENCkJsYSBibGEgYmxhDQpCbGEgYmxhIGJsYQ0K"
+										content-type="text/plain"
+										name="Bla.txt"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Aktualisieren"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldLabelAssertionOp"
+							label="3"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+									tab-path="Strukturen > Typendemo > 3 Dokumente"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-name="rows"
+									/>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+										column-name="_version"
+									>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+											provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+										>
+											<name>
+												<part key="element">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Bla.txt"
+													/>
+												</part>
+											</name>
+										</row-object>
+									</node>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Größe"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.folder.FolderDataOwner$OwnedFolderDataNaming$FolderName">
+										<owner-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+											tab-path="Strukturen > Typendemo > 3 Dokumente"
+										/>
+									</default-table-data-owner>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="Bla.txt"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.LongNaming$Name"
+								value="39"
+							/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Delete test account"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Rolle/Action-Rolle-Loeschen.xml"
+							template-name-comment="Rolle Loeschen"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="TestWebFolderAutomaticLockingRole"
+								/>
+								<parameter name="Berechtigungsstruktur"
+									value="DemoTypes"
+								/>
+								<parameter name="Name"
+									value="TestWebFolderAutomaticLockingRole"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Nutzer abmelden.xml"
+							template-name-comment="Nutzer abmelden"
+							user-id="TestWebFolderAutomaticLockingUser"
+						/>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Nutzer/Action-Nutzer-Loeschen.xml"
+							template-name-comment="Nutzer Loeschen"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="TestWebFolderAutomaticLockingUser"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Fach. Administration > Personen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="Contact"
+								>
+									<attributes>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="TestWebFolderAutomaticLockingUser"
+											/>
+										</attribute>
+										<attribute name="firstname">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="TestWebFolderAutomaticLockingUser"
+											/>
+										</attribute>
+									</attributes>
+									<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="MetaElement"
+									>
+										<attributes>
+											<attribute name="scope">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="TLModule"
+												>
+													<attributes>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Contacts"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="PersonContact"
+												/>
+											</attribute>
+										</attributes>
+									</type>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+									tab-path="Administration > Fach. Administration > Personen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+							command-label="Löschen"
+							command-name="personContactDelete"
+							component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+							component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					comment="Delete test data"
+					template="script:/Element/Action-Element-Loeschen.xml"
+					template-name-comment="Element Loeschen"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="TestWebFolderAutomaticLockingDemoA"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Variable/Action-Variable-Alle loeschen.xml"
+					template-name-comment="Variable Alle loeschen"
+				/>
+			</actions>
+		</action>
+	</actions>
+</action>

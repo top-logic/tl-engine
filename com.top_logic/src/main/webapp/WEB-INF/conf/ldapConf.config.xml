@@ -1,0 +1,45 @@
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+        <config service-class="com.top_logic.base.security.device.TLSecurityDeviceManager">
+			<instance>
+				<dependencies>
+					<!-- For LDAP security device. -->
+					<dependency key="com.top_logic.base.security.util.CryptSupport" value="true"/>
+				</dependencies>
+				<security-devices>
+					<security-device 
+						id="LdapSecurity"
+						type="auth-with-data"
+						class="com.top_logic.base.security.device.ldap.LDAPAuthenticationAccessDevice"
+						read-only="true"
+						allow-pwd-change="%LDAP_ALLOW_PWD_CHANGE%"
+						allow-ext-authentication="true"
+						domain="%LDAP_DOMAIN%"
+					>
+						<access-service
+							parse-nested-groups="%LDAP_NESTED_GROUPS%"
+							attrib-filter="%LDAP_FILTER%"
+							context-factory="com.sun.jndi.ldap.LdapCtxFactory"
+							authentication-type="simple"
+							provider-url="%LDAP_URL%"
+							base-dn="%LDAP_BASE_DN%"
+							master-principal="%LDAP_PRINCIPAL%"
+							master-credential="%LDAP_CREDENTIAL%"
+						>
+							<access-groups>
+								<access-group name="%LDAP_GROUP_1%" />
+								<access-group name="%LDAP_GROUP_2%" />
+								<access-group name="%LDAP_GROUP_3%" />
+							</access-groups>
+						</access-service>
+						<mappings>
+							<mapping key="genericMapping" value="%LDAP_MAPPING_ALL%"/>
+							<mapping key="person" value="%LDAP_MAPPING_PERSON%" />
+							<mapping key="group" value="%LDAP_MAPPING_GROUP%" />
+						</mappings>	
+					</security-device>
+				</security-devices>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.dob.persist.DataManager">
+			<instance class="com.top_logic.dob.persist.NewDataManager"
+				connection-pool="default"
+			/>
+		</config>
+	</services>
+	
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<schemas>
+						<schema name="dataManager" resource="schema://dataManager.schema.xml"/>
+					</schemas>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

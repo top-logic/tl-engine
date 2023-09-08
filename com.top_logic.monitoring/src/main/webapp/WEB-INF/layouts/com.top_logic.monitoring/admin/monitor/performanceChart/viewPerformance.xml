@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout horizontal="true">
+	<components>
+		<component class="com.top_logic.monitoring.rendering.PerformanceTree"
+			isSecurityMaster="true"
+			name="ViewInfoTreePerformance"
+			resPrefix="tl.admin.technical.view.performance.tree."
+			resource-provider="com.top_logic.monitoring.rendering.LayoutComponentNodeLabelProvider"
+			securityProviderClass="securityRoot"
+		>
+			<layoutInfo size="200"/>
+		</component>
+
+		<component class="com.top_logic.reporting.flex.chart.component.StaticChartComponent"
+			chartConfig="monitoring/rendering/viewPerformanceChart.xml"
+			model="selection(ViewInfoTreePerformance)"
+			name="ViewPerformance"
+			page="/jsp/layout/image/chart.jsp"
+			resPrefix="tl.admin.technical.view.performance."
+			securityProviderClass="securityRoot"
+		>
+			<export-manager class="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager"
+				export-objects="NONE"
+			/>
+		</component>
+	</components>
+</layout>

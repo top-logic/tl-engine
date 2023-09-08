@@ -1,0 +1,2609 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test create node"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Knoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridCreateHandler"
+					command-label="Anlegen"
+					command-name="createAttributedGrid"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestNode1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wait until Kafka has sent and received data."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.RunTaskActionOp"
+							max-sleep="15000"
+							task-name="KafkaProducerTask"
+						/>
+						<action class="com.top_logic.kafka.scripting.WaitForKafkaActionOp"/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Remoteknoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Name"
+					>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode1"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row-object>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestNode1"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test change primitive value"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Knoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+								tab-path="Knoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemo"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Node"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode1"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Node"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="gridEdit"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestNode2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wait until Kafka has sent and received data."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.RunTaskActionOp"
+							max-sleep="15000"
+							task-name="KafkaProducerTask"
+						/>
+						<action class="com.top_logic.kafka.scripting.WaitForKafkaActionOp"/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Remoteknoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Name"
+					>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode2"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row-object>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestNode2"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test create node with reference"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Knoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridCreateHandler"
+					command-label="Anlegen"
+					command-name="createAttributedGrid"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestNode3"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="anderer Knoten"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="TestNode2"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wait until Kafka has sent and received data."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.RunTaskActionOp"
+							max-sleep="15000"
+							task-name="KafkaProducerTask"
+						/>
+						<action class="com.top_logic.kafka.scripting.WaitForKafkaActionOp"/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Remoteknoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+							tab-path="Remoteknoten"
+						/>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="multi-set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="anderer Knoten"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+								tab-path=""
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+								table="KafkaDemoRemote"
+							>
+								<attributes>
+									<attribute name="tType">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</value>
+									</attribute>
+									<attribute name="name">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="TestNode2"
+										/>
+									</attribute>
+								</attributes>
+								<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="kafka.demo"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="RemoteNode"
+											/>
+										</attribute>
+									</attributes>
+								</type>
+							</value>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
+					command-label="Schließen"
+					command-name="closeDialogInView"
+					component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test remove reference"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Knoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+								tab-path="Knoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemo"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Node"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Node"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="gridEdit"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="anderer Knoten"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wait until Kafka has sent and received data."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.RunTaskActionOp"
+							max-sleep="15000"
+							task-name="KafkaProducerTask"
+						/>
+						<action class="com.top_logic.kafka.scripting.WaitForKafkaActionOp"/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Remoteknoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+							tab-path="Remoteknoten"
+						/>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="multi-set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="anderer Knoten"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+								tab-path=""
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
+					command-label="Schließen"
+					command-name="closeDialogInView"
+					component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test set reference."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+							tab-path="Remoteknoten"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Knoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+								tab-path="Knoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemo"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Node"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Node"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="gridEdit"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="anderer Knoten"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="TestNode2"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wait until Kafka has sent and received data."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.RunTaskActionOp"
+							max-sleep="15000"
+							task-name="KafkaProducerTask"
+						/>
+						<action class="com.top_logic.kafka.scripting.WaitForKafkaActionOp"/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Remoteknoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+							tab-path="Remoteknoten"
+						/>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="multi-set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="anderer Knoten"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+								tab-path=""
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+								table="KafkaDemoRemote"
+							>
+								<attributes>
+									<attribute name="tType">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</value>
+									</attribute>
+									<attribute name="name">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="TestNode2"
+										/>
+									</attribute>
+								</attributes>
+								<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="kafka.demo"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="RemoteNode"
+											/>
+										</attribute>
+									</attributes>
+								</type>
+							</value>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
+					command-label="Schließen"
+					command-name="closeDialogInView"
+					component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test change reference"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Knoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+								tab-path="Knoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemo"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Node"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Node"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="gridEdit"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="anderer Knoten"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="TestNode3"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wait until Kafka has sent and received data."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.RunTaskActionOp"
+							max-sleep="15000"
+							task-name="KafkaProducerTask"
+						/>
+						<action class="com.top_logic.kafka.scripting.WaitForKafkaActionOp"/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Remoteknoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+							tab-path="Remoteknoten"
+						/>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="multi-set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="anderer Knoten"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+								tab-path=""
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+								table="KafkaDemoRemote"
+							>
+								<attributes>
+									<attribute name="tType">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</value>
+									</attribute>
+									<attribute name="name">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="TestNode3"
+										/>
+									</attribute>
+								</attributes>
+								<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="kafka.demo"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="RemoteNode"
+											/>
+										</attribute>
+									</attributes>
+								</type>
+							</value>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
+					command-label="Schließen"
+					command-name="closeDialogInView"
+					component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test delete object"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode2"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+							tab-path="Remoteknoten"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Knoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+								tab-path="Knoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemo"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Node"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Node"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.knowledge.gui.layout.form.DeleteSimpleWrapperCommandHandler"
+					command-label="Löschen..."
+					command-name="DeleteSimpleWrapper"
+					component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wait until Kafka has sent and received data."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.RunTaskActionOp"
+							max-sleep="15000"
+							task-name="KafkaProducerTask"
+						/>
+						<action class="com.top_logic.kafka.scripting.WaitForKafkaActionOp"/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Remoteknoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="Remote object was removed"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="1"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test delete referenced object"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Knoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridCreateHandler"
+					command-label="Anlegen"
+					command-name="createAttributedGrid"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestNode3"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="anderer Knoten"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="TestNode2"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wait until Kafka has sent and received data."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.RunTaskActionOp"
+							max-sleep="15000"
+							task-name="KafkaProducerTask"
+						/>
+						<action class="com.top_logic.kafka.scripting.WaitForKafkaActionOp"/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Remoteknoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+							tab-path="Remoteknoten"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+							tab-path="Remoteknoten"
+						/>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
+					command-label="Schließen"
+					command-name="closeDialogInView"
+					component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Knoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+								tab-path="Knoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemo"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Node"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode2"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Node"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.knowledge.gui.layout.form.DeleteSimpleWrapperCommandHandler"
+					command-label="Löschen..."
+					command-name="DeleteSimpleWrapper"
+					component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wait until Kafka has sent and received data."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.RunTaskActionOp"
+							max-sleep="15000"
+							task-name="KafkaProducerTask"
+						/>
+						<action class="com.top_logic.kafka.scripting.WaitForKafkaActionOp"/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Remoteknoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+							tab-path="Remoteknoten"
+						/>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemoRemote"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="RemoteNode"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="RemoteNode"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="multi-set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="anderer Knoten"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+								tab-path=""
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
+					command-label="Schließen"
+					command-name="closeDialogInView"
+					component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Clean up"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Knoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+							tab-path="Knoten"
+						/>
+						<row config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+								tab-path="Knoten"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="KafkaDemo"
+									>
+										<attributes>
+											<attribute name="tType">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="kafka.demo"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Node"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestNode3"
+												/>
+											</attribute>
+										</attributes>
+										<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+											table="MetaElement"
+										>
+											<attributes>
+												<attribute name="scope">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+														table="TLModule"
+													>
+														<attributes>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																	value="kafka.demo"
+																/>
+															</attribute>
+														</attributes>
+													</value>
+												</attribute>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+														value="Node"
+													/>
+												</attribute>
+											</attributes>
+										</type>
+									</business-object>
+								</object>
+							</path>
+						</row>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.knowledge.gui.layout.form.DeleteSimpleWrapperCommandHandler"
+					command-label="Löschen..."
+					command-name="DeleteSimpleWrapper"
+					component-implementation-comment="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+					component-name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/node/nodeView.layout.xml#kafkaNodeGrid"
+								tab-path="Knoten"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="0"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Wait until Kafka has sent and received data."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.RunTaskActionOp"
+							max-sleep="15000"
+							task-name="KafkaProducerTask"
+						/>
+						<action class="com.top_logic.kafka.scripting.WaitForKafkaActionOp"/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Remoteknoten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.kafka.demo/kafka/demo/remote/node/remoteNodeView.layout.xml#kafkaRemoteNodeGrid"
+								tab-path="Remoteknoten"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="0"
+					/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

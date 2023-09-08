@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+	List containing all federal states of Germany 
+ -->
+
+<list name="demo.federalstates" type="Classification" ordered="false">
+	<elements>
+		<element name="demo.federalstate.bb" />
+		<element name="demo.federalstate.hb" />
+		<element name="demo.federalstate.be" />
+		<element name="demo.federalstate.he" />
+		<element name="demo.federalstate.hh" />
+		<element name="demo.federalstate.sh" />
+		<element name="demo.federalstate.th" />
+		<element name="demo.federalstate.ni" />
+		<element name="demo.federalstate.sl" />
+		<element name="demo.federalstate.sn" />
+		<element name="demo.federalstate.rp" />
+		<element name="demo.federalstate.st" />
+		<element name="demo.federalstate.mv" />
+		<element name="demo.federalstate.bw" />
+		<element name="demo.federalstate.nw" />
+		<element name="demo.federalstate.by" />
+	</elements>
+</list>

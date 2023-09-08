@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value=""
+		/>
+		<!-- Override the configured default "StructuredElement", as this component should NOT be the default view for StructuredElements. -->
+		<param name="defaultFor"
+			value=""
+		/>
+		<param name="treeButtons"
+			value=""
+		/>
+		<param name="pageButtons"
+			value=""
+		/>
+		<param name="securityProvider"
+			value="securityRoot"
+		/>
+		<param name="page"
+			value="/jsp/tl.doc/tl.doc.page.edit.jsp"
+		/>
+	</params>
+
+	<layout name="${namePrefix}Container"
+		horizontal="true"
+	>
+		<component class="com.top_logic.doc.component.DocumentationTreeComponent"
+			defaultSelection="false"
+			dragSource="com.top_logic.layout.tree.dnd.DefaultTreeDrag"
+			name="${namePrefix}Tree"
+			rootVisible="false"
+			securityProviderClass="${securityProvider}"
+			titleKey="tl.doc.tree.title"
+			treeDrop="com.top_logic.element.layout.tree.StructuredElementTreeDropTarget"
+		>
+			<layoutInfo size="400"/>
+			<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
+				structureName="tl.doc"
+			/>
+			<buttons>
+				<button id="createPageDialog"
+					class="com.top_logic.doc.create.OpenCreatePageDialogCommand"
+					create-child="false"
+					executability="com.top_logic.element.structured.util.StructureRootDisabledExecRule"
+					image="theme:ICONS_ADD_BUTTON"
+					target="selection(self())"
+				/>
+				<button id="createChildPageDialog"
+					class="com.top_logic.doc.create.OpenCreatePageDialogCommand"
+					image="theme:ICONS_ADD_BUTTON"
+				>
+					<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+						function="model -> if ($model != null, $model, `tl.doc#ROOT`)"
+						input="selection(self())"
+					/>
+				</button>
+				<button id="exportDocumentationAsZip"
+					class="com.top_logic.doc.command.ExportDocumentationAsZipCommand"
+					clique="exportButtons"
+					image="theme:ICONS_EXPORT_ZIP"
+				>
+					<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+						function="model -> if ($model != null, $model, `tl.doc#ROOT`)"
+						input="selection(self())"
+					/>
+				</button>
+				<button id="importDocumentationAsZip"
+					class="com.top_logic.doc.command.ImportDocumentationAsZipCommand"
+					clique="importButtons"
+					image="theme:ICONS_IMPORT"
+				>
+					<target class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+						<impl class="com.top_logic.model.search.providers.ModelProviderByExpression"
+							expr="`tl.doc#ROOT`"
+						/>
+					</target>
+				</button>
+				<button id="exportDocumentationIntoWorkspace"
+					class="com.top_logic.doc.command.ExportDocumentationIntoWorkspaceCommand"
+					clique="exportButtons"
+					executability="IDEOnly"
+					image="theme:ICONS_BUTTON_IDE_EXTRACT"
+				>
+					<target class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+						<impl class="com.top_logic.model.search.providers.ModelProviderByExpression"
+							expr="`tl.doc#ROOT`"
+						/>
+					</target>
+				</button>
+				<button id="importDocumentationFromWorkspace"
+					class="com.top_logic.doc.command.ImportDocumentationFromWorkspaceCommand"
+					clique="importButtons"
+					executability="IDEOnly"
+					image="theme:ICON_FILE_IMPORT"
+				/>
+				<button id="translateEmptyPages"
+					class="com.top_logic.doc.TranslateCommandHandler"
+					clique="additional"
+					image="theme:IMAGE_BUTTONS_DOC_TRANSLATE"
+					language="language(self())"
+					overwrite="true"
+					recursive="true"
+					resourceKey="tl.command.translate.empty.pages"
+					target="selection(self())"
+				/>
+				<button id="validateAllPages"
+					class="com.top_logic.doc.command.validation.ValidatePageCommand"
+					clique="importButtons"
+					image="theme:ICON_VALIDATE_ALL_PAGES"
+					recursive="true"
+				>
+					<target class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+						<impl class="com.top_logic.model.search.providers.ModelProviderByExpression"
+							expr="`tl.doc#ROOT`"
+						/>
+					</target>
+				</button>
+				${treeButtons}
+			</buttons>
+		</component>
+		<!-- createClique is "internal" because the create command should be hidden. The create commands are implemented in com.top_logic.doc.component.DocumentationTreeComponent -->
+		<include name="element/editStructureDetail.xml"
+			createClique="internal"
+			defaultFor="${defaultFor}"
+			editRoot="true"
+			master="${namePrefix}Tree"
+			namePrefix="${namePrefix}Detail"
+			page="${page}"
+			securityProvider="${securityProvider}"
+			structure="tl.doc"
+		>
+			<modifier class="com.top_logic.element.layout.meta.FormContextModificatorComposite">
+				<children>
+					<child class="com.top_logic.element.layout.meta.ControlProviderModificator"
+						attribute="title"
+					>
+						<controlProvider class="com.top_logic.doc.control.TranslatedI18nStringFieldControl$Provider"
+							language="language(${namePrefix}Tree)"
+						/>
+					</child>
+					<child class="com.top_logic.element.layout.meta.ControlProviderModificator"
+						attribute="content"
+					>
+						<controlProvider class="com.top_logic.doc.control.ScrollableTranslatedI18nStructuredTextFieldControl$Provider"
+							language="language(${namePrefix}Tree)"
+						/>
+					</child>
+					<child class="com.top_logic.layout.wysiwyg.ui.SetOpenLinkCommandModificator"
+						field="content"
+					>
+						<commandMapping
+							commandId="setComponentModel"
+							type="tl.doc:Page"
+						/>
+					</child>
+				</children>
+			</modifier>
+			<buttonbarName/>
+			<buttonbar/>
+			<subConfiguration>
+				<buttons>
+					<button id="translatePage"
+						class="com.top_logic.doc.TranslateCommandHandler"
+						clique="additional"
+						image="theme:IMAGE_BUTTONS_DOC_TRANSLATE"
+						language="language(${namePrefix}Tree)"
+						overwrite="true"
+						resourceKey="menu.tl.doc.translate.page"
+					/>
+					<reference command-id="showBookmarkLink"/>
+					<button id="validatePage"
+						class="com.top_logic.doc.command.validation.ValidatePageCommand"
+						clique="importButtons"
+						image="theme:ICON_VALIDATE_PAGE"
+						language="language(${namePrefix}Tree)"
+						target="model(self())"
+					/>
+					${pageButtons}
+				</buttons>
+				<goto-targets>
+					<goto-target
+						component="${namePrefix}Detailtl.docEdit"
+						type="tl.doc:Page"
+					/>
+				</goto-targets>
+			</subConfiguration>
+		</include>
+	</layout>
+</template>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+			user-id="root"
+			visible="true"
+		/>
+	</actions>
+</action>

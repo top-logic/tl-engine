@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="reporting/flex/search/searchResultChart.xml"
+	namePrefix="Search"
+	searchInputComponent="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+	searchResultTable="com.top_logic.reporting/search/searchResult.layout.xml#SearchAttributedSearchResultTable"
+/>

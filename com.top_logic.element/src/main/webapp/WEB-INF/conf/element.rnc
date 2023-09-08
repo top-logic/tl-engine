@@ -1,0 +1,272 @@
+﻿default namespace = "http://www.top-logic.com/ns/dynamic-types/1.0"
+
+##
+## RelaxNG schema for the definition of structured elements.
+##
+## This schema applies to conf/*Factory*.xml files. For validation use the generated 
+## version in XML syntax (element.rng).
+##
+##
+
+start =
+	defGlobalTypes | 
+	defStructures
+
+## Container for die Definition von Typen.
+defGlobalTypes = 
+	element metaelementdefinition {
+		## TODO: Sinnlose Definition, die überall angegeben ist, aber hoffentlich 
+		## ignoriert wird.
+		attribute holderType { xsd:string }?,
+
+		## Definition globaler Typen.
+		defType*
+	}
+
+## Typzuweisung für das umschließende Strukturelement und optional die Definition 
+## lokaler Typen im Inhalt.
+defLocalTypes = 
+	## Typzuweisung und/oder Container für Typdefinitionen (siehe defGlobalTypes und 
+	## defLocalTypes)
+	element metaelementdefinition {
+		## Gibt an, wo der Typ gesucht wird, der dem umschließenden Strukturelement 
+		## zugewiesen werden soll.
+		attribute holderType { 
+			## Der gesuchte Typ ist ein globaler Typ, der in einer defGlobalTypes 
+			## Sektion definiert ist. 
+			token "global" |
+			
+			## Der gesuchte Typ is ein lokaler Typ, der bei der Instanz des umschließenden 
+			## Strukturelements definiert ist. (Der korrspondierende Wrapper muss 
+			## MetaElementHolder implementieren).
+			token "this" | 
+			
+			## Der gesuchte Typ ist ein lokaler Typ, der beim Vaterknoten des 
+			## umschließenden Strukturelements definiert ist. Der Knotentyp muss 
+			## ein Untertyp von StructuredElement sein.
+			token "parent" | 
+			
+			## "template" "." templateHolderType
+			##
+			## Der Typ wird relativ zu einem zum Originalobjekt in Beziehung stehendem 
+			## Objekt (dem Template) gesucht. Dieses in Beziehung stehende Objekt wird 
+			## programmatisch (über die Factory) angegeben. Der Ort ist über 
+			## templateHolderType angegeben.   
+			##
+			## Andernfalls:
+			##
+			## Der gesuchte Typ ist ein lokaler Typ, der beim ersten Strukturelement 
+			## definiert ist, das den angegebenen Typ hat und auf dem Weg vom momentanen 
+			## Knoten zur Wurzel des Baumes liegt.
+			xsd:string
+		},
+		
+		## Lokaler Name des gesuchten Typs relativ zum spezifizierten Typcontainer.
+		attribute meType { xsd:string }?,
+
+		## Definition lokaler Typen relativ zum umschließenden Strukturelement.
+		defType*
+	}
+	
+defType = 
+	## Typdefinition.
+	element metaelement {
+		## Name des definierten Typs.
+		attribute type { xsd:string },
+		
+		## Name des Obertyps des definierten Typs.
+		attribute superType { xsd:string }?,
+		
+		## Ort, wo der Obertyp zu finden ist. Siehe Attribut holderType in Element metaelementdefinition 
+		## in Definition defLocalTypes.
+		attribute superHolderType { 
+			token "global" |
+			token "this" |
+			token "parent" |
+			xsd:string
+		}?,
+		
+		## Statisches Attribute des definierten Typs.
+		defTypeProperties?,
+
+		## Attribute der Instanzen des definierten Typs.
+		defInstanceProperties?
+	}
+	
+defTypeProperties = 
+	element attributes {
+		## Typattribut.
+		element meattribute {
+			attribute name { defTypePropertyName },
+			attribute value { xsd:string }
+		}*
+	}
+
+
+defTypePropertyName = 
+	(
+		defObjectBasePropertsName |
+
+		## Das Bild, mit dem Objekte des umschließenden Typs standardmäßig symbolisiert 
+		## werden.
+		token "defaultIcon" |
+		
+		## Das Bild, mit dem Objekte des umschließenden Typs in Dialog-Titeln symbolisiert 
+		## werden.
+		token "largeIcon" |
+		
+		## Der Typ ist ein eingebauter Typ und wird nicht zur Bearbeitung angeboten. 
+		token "system"
+	)
+
+defObjectBasePropertsName = 
+	(	
+		## Der Name des KnowledgeObject-Typs mit dem Instanzen des definierten Typs 
+		## in der KnowledgeBase abgelegt werden. 
+		token "koType" |
+		
+		## Die Laufzeitklasse die für Objekte des definierten Typs verwendet wird.
+		token "wrapperClass"
+	)
+
+defInstanceProperties = 
+	element metaattributes {
+		element metaattribute {
+			attribute name { xsd:string },
+			attribute type { defInstancePropertyType },
+
+			attribute mandatory { xsd:boolean }?,
+			
+			attribute immutable { xsd:boolean }?,
+			
+			## Whether there are programatic references to the attribute. Such attributes 
+			## cannot be dynamically removed. 
+			attribute deleteProtected { xsd:boolean }?,
+			
+			attribute sortOrder { xsd:float }?,
+
+			## Read the code :-(
+			attribute additionalParam { xsd:string }?,
+			
+			## Duration during which the value of the attribute is considered to be valid. 
+			## After the validity period, the attribute is flagged for manual check and 
+			## approval.
+			attribute validityCheck { xsd:string }?
+		}*
+	}
+	
+defInstancePropertyType = 
+	(
+		token "TYPE_BOOLEAN" |
+		token "TYPE_LONG" | 
+		token "TYPE_FLOAT" | 
+		
+		token "TYPE_STRING" |
+		token "TYPE_DATE" |
+		token "TYPE_STRING_SET" |
+		token "TYPE_CHECKLIST" |
+
+		token "TYPE_COMPLEX" | 
+		token "TYPE_CALCULATED" | 
+		token "TYPE_BINARY" | 
+		
+		## Referenz auf ein anderes Objekt. Eine Typeinschränkung des referenzierten 
+		## Objekts findet in "additionalParam" statt.
+		token "TYPE_WRAPPER" |
+		token "TYPE_SINGLEWRAPPER" | 
+		token "TYPE_COLLECTION" |
+		token "TYPE_TYPEDSET" |
+		token "TYPE_LIST" |
+		
+		token "TYPE_CLASSIFICATION" |
+		token "TYPE_SINGLE_STRUCTURE" | 
+		token "TYPE_STRUCTURE" | 
+		token "TYPE_DAP" |
+		token "TYPE_DAP_COLLECTION" |
+		
+		## @deprecated Type should be replaced with better expressiveness of the type system. 
+		token "TYPE_WEBFOLDER" |
+		
+		## @deprecated Type should be replaced with better expressiveness of the type system.
+		token "TYPE_DOCUMENT" |
+		
+		## @deprecated Type should be replaced with better expressiveness of the type system. 
+		token "TYPE_EXTERNAL_CONTACT" |
+		
+		## @deprecated Type should be replaced with better expressiveness of the type system. 
+		token "TYPE_SINGLE_EXTERNAL_CONTACT" |
+		
+		token "TYPE_HISTORIC_WRAPPER"
+	)	
+
+defStructures = 
+	element structuredElements {
+		(
+			defGlobalTypes |
+			defStructure
+		)*
+	}
+	
+defStructure = 
+	## Definition einer Struktur.
+	element structure {
+		## Name der Struktur. Bei der Erzeugung des Wurzelelements der Struktur muss 
+		## dieser Name angegeben werden.
+		attribute name { xsd:string },
+		
+		## Name der Strukturelementart des Wurzelelements.
+		attribute rootType { xsd:string }?,
+
+		listsNode?,
+		defNode+
+	}	
+
+listsNode = 
+    ## Beschreibung der Listen die an das Root Element der Struktur assoziiert werden
+    element lists {
+        ## Beschreibung der Liste
+        element list {
+            # Name der Liste
+            attribute name {xsd:string}
+        }+
+    }	
+	
+defNode = 
+	## Definition einer Strukturelementart.
+	element element {
+		## Name der definierten Strukturelementart.
+		attribute type { xsd:string },
+
+		(
+			## Typzuweisung an das definerte Strukturelement und optional die Definition 
+			## lokaler Typen. TODO: Was bedeutet das Weglassen der Typzuweisung? Wann führt 
+			## das nicht zu einem Fehler?
+			defLocalTypes? 
+		&
+			## Statische Attribute der Strukturart. 
+			defNodeProperties
+		&
+			## Definition möglicher Kindelemente des definierten Strukturelements.
+			element children {
+				 element child {
+					 attribute name { xsd:string }
+				 }*
+			}?
+		)
+	}
+	
+defNodeProperties = 
+	element attributes {
+		element attribute {
+			attribute name { defNodePropertyName },
+			attribute value { xsd:string }
+		}*
+	}
+	
+defNodePropertyName = 
+	(
+		token "icon" |
+		token "openIcon" |
+		
+		defTypePropertyName
+	)

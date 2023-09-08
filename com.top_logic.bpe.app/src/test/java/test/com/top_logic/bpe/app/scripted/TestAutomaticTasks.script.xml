@@ -1,0 +1,964 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Workflow konfigurieren"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Workflow hochladen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Prozess Editor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Workflow hochladen"
+							command-name="displayDialog_tlBpeModelerEditorUpload"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="BPML"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+										base64data="PGJwbW46ZGVmaW5pdGlvbnMgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeG1sbnM6YnBtbj0iaHR0cDovL3d3dy5vbWcub3JnL3NwZWMvQlBNTi8yMDEwMDUyNC9NT0RFTCIgeG1sbnM6YnBtbmRpPSJodHRwOi8vd3d3Lm9tZy5vcmcvc3BlYy9CUE1OLzIwMTAwNTI0L0RJIiB4bWxuczpkYz0iaHR0cDovL3d3dy5vbWcub3JnL3NwZWMvREQvMjAxMDA1MjQvREMiIHhtbG5zOmRpPSJodHRwOi8vd3d3Lm9tZy5vcmcvc3BlYy9ERC8yMDEwMDUyNC9ESSIgdGFyZ2V0TmFtZXNwYWNlPSJodHRwOi8vYnBtbi5pby9zY2hlbWEvYnBtbiI-PGJwbW46Y29sbGFib3JhdGlvbiBpZD0iQ29sbGFib3JhdGlvbl8wcnhkOTFrIj48YnBtbjpwYXJ0aWNpcGFudCBpZD0iUGFydGljaXBhbnRfMWpmNzNieCIgbmFtZT0iQXV0b21hdGljIFRhc2siIHByb2Nlc3NSZWY9IlByb2Nlc3NfMSIvPjwvYnBtbjpjb2xsYWJvcmF0aW9uPjxicG1uOnByb2Nlc3MgaWQ9IlByb2Nlc3NfMSIgaXNFeGVjdXRhYmxlPSJmYWxzZSI-PGJwbW46bGFuZVNldD48YnBtbjpsYW5lIGlkPSJMYW5lXzFlejJuN3giPjxicG1uOmZsb3dOb2RlUmVmPkV4Y2x1c2l2ZUdhdGV3YXlfMG9nYmI3YjwvYnBtbjpmbG93Tm9kZVJlZj48YnBtbjpmbG93Tm9kZVJlZj5UYXNrXzBiMTg1YXU8L2JwbW46Zmxvd05vZGVSZWY-PGJwbW46Zmxvd05vZGVSZWY-U3RhcnRFdmVudF8wbWVuYmhlPC9icG1uOmZsb3dOb2RlUmVmPjxicG1uOmZsb3dOb2RlUmVmPlRhc2tfMHV0MHV4bzwvYnBtbjpmbG93Tm9kZVJlZj48YnBtbjpmbG93Tm9kZVJlZj5UYXNrXzEzbDI3Zjg8L2JwbW46Zmxvd05vZGVSZWY-PGJwbW46Zmxvd05vZGVSZWY-RW5kRXZlbnRfMHhmcWd1YTwvYnBtbjpmbG93Tm9kZVJlZj48YnBtbjpmbG93Tm9kZVJlZj5FbmRFdmVudF8wZnB1dTlzPC9icG1uOmZsb3dOb2RlUmVmPjxicG1uOmZsb3dOb2RlUmVmPlRhc2tfMTZ1azE3NDwvYnBtbjpmbG93Tm9kZVJlZj48YnBtbjpmbG93Tm9kZVJlZj5UYXNrXzEzYmtxc248L2JwbW46Zmxvd05vZGVSZWY-PGJwbW46Zmxvd05vZGVSZWY-RXhjbHVzaXZlR2F0ZXdheV8wZXR1Zms2PC9icG1uOmZsb3dOb2RlUmVmPjxicG1uOmZsb3dOb2RlUmVmPkVuZEV2ZW50XzByanZ6YWQ8L2JwbW46Zmxvd05vZGVSZWY-PC9icG1uOmxhbmU-PGJwbW46bGFuZSBpZD0iTGFuZV8wOTRvb2IwIj48L2JwbW46bGFuZT48L2JwbW46bGFuZVNldD48YnBtbjpleGNsdXNpdmVHYXRld2F5IGlkPSJFeGNsdXNpdmVHYXRld2F5XzBvZ2JiN2IiPjxicG1uOm91dGdvaW5nPlNlcXVlbmNlRmxvd18wenJ3cWJoPC9icG1uOm91dGdvaW5nPjxicG1uOm91dGdvaW5nPlNlcXVlbmNlRmxvd18wZWR2ODRjPC9icG1uOm91dGdvaW5nPjxicG1uOmluY29taW5nPlNlcXVlbmNlRmxvd18wM2p2M2twPC9icG1uOmluY29taW5nPjwvYnBtbjpleGNsdXNpdmVHYXRld2F5PjxicG1uOnNlcnZpY2VUYXNrIGlkPSJUYXNrXzBiMTg1YXUiIG5hbWU9IkluYyAxIj48YnBtbjpvdXRnb2luZz5TZXF1ZW5jZUZsb3dfMHV0NDdjZDwvYnBtbjpvdXRnb2luZz48YnBtbjppbmNvbWluZz5TZXF1ZW5jZUZsb3dfMHpyd3FiaDwvYnBtbjppbmNvbWluZz48YnBtbjppbmNvbWluZz5TZXF1ZW5jZUZsb3dfMGptNnBnMDwvYnBtbjppbmNvbWluZz48L2JwbW46c2VydmljZVRhc2s-PGJwbW46c3RhcnRFdmVudCBpZD0iU3RhcnRFdmVudF8wbWVuYmhlIiBuYW1lPSJTdGFydCI-PGJwbW46b3V0Z29pbmc-U2VxdWVuY2VGbG93XzE2ZnpmdTA8L2JwbW46b3V0Z29pbmc-PC9icG1uOnN0YXJ0RXZlbnQ-PGJwbW46bWFudWFsVGFzayBpZD0iVGFza18wdXQwdXhvIiBuYW1lPSJTaG93IEIiPjxicG1uOm91dGdvaW5nPlNlcXVlbmNlRmxvd18wZWY4M3M2PC9icG1uOm91dGdvaW5nPjxicG1uOmluY29taW5nPlNlcXVlbmNlRmxvd18xM3NwOWt4PC9icG1uOmluY29taW5nPjwvYnBtbjptYW51YWxUYXNrPjxicG1uOm1hbnVhbFRhc2sgaWQ9IlRhc2tfMTNsMjdmOCIgbmFtZT0iU2hvdyBBIj48YnBtbjpvdXRnb2luZz5TZXF1ZW5jZUZsb3dfMG44OTZnMzwvYnBtbjpvdXRnb2luZz48YnBtbjppbmNvbWluZz5TZXF1ZW5jZUZsb3dfMHV0NDdjZDwvYnBtbjppbmNvbWluZz48L2JwbW46bWFudWFsVGFzaz48YnBtbjplbmRFdmVudCBpZD0iRW5kRXZlbnRfMHhmcWd1YSI-PGJwbW46aW5jb21pbmc-U2VxdWVuY2VGbG93XzBlZHY4NGM8L2JwbW46aW5jb21pbmc-PC9icG1uOmVuZEV2ZW50PjxicG1uOmVuZEV2ZW50IGlkPSJFbmRFdmVudF8wZnB1dTlzIj48YnBtbjppbmNvbWluZz5TZXF1ZW5jZUZsb3dfMTdpdTJpMjwvYnBtbjppbmNvbWluZz48L2JwbW46ZW5kRXZlbnQ-PGJwbW46bWFudWFsVGFzayBpZD0iVGFza18xNnVrMTc0IiBuYW1lPSJDcmVhdGUiPjxicG1uOm91dGdvaW5nPlNlcXVlbmNlRmxvd18wM2p2M2twPC9icG1uOm91dGdvaW5nPjxicG1uOmluY29taW5nPlNlcXVlbmNlRmxvd18xNmZ6ZnUwPC9icG1uOmluY29taW5nPjwvYnBtbjptYW51YWxUYXNrPjxicG1uOnNlcnZpY2VUYXNrIGlkPSJUYXNrXzEzYmtxc24iIG5hbWU9IkluYyAyIj48YnBtbjpvdXRnb2luZz5TZXF1ZW5jZUZsb3dfMTNzcDlreDwvYnBtbjpvdXRnb2luZz48YnBtbjppbmNvbWluZz5TZXF1ZW5jZUZsb3dfMWx5cWE0cDwvYnBtbjppbmNvbWluZz48L2JwbW46c2VydmljZVRhc2s-PGJwbW46ZXhjbHVzaXZlR2F0ZXdheSBpZD0iRXhjbHVzaXZlR2F0ZXdheV8wZXR1Zms2Ij48YnBtbjpvdXRnb2luZz5TZXF1ZW5jZUZsb3dfMWx5cWE0cDwvYnBtbjpvdXRnb2luZz48YnBtbjpvdXRnb2luZz5TZXF1ZW5jZUZsb3dfMGptNnBnMDwvYnBtbjpvdXRnb2luZz48YnBtbjpvdXRnb2luZz5TZXF1ZW5jZUZsb3dfMTdpdTJpMjwvYnBtbjpvdXRnb2luZz48YnBtbjppbmNvbWluZz5TZXF1ZW5jZUZsb3dfMG44OTZnMzwvYnBtbjppbmNvbWluZz48L2JwbW46ZXhjbHVzaXZlR2F0ZXdheT48YnBtbjplbmRFdmVudCBpZD0iRW5kRXZlbnRfMHJqdnphZCI-PGJwbW46aW5jb21pbmc-U2VxdWVuY2VGbG93XzBlZjgzczY8L2JwbW46aW5jb21pbmc-PC9icG1uOmVuZEV2ZW50PjxicG1uOnNlcXVlbmNlRmxvdyBpZD0iU2VxdWVuY2VGbG93XzB6cndxYmgiIG5hbWU9IkFjY2VwdCIgc291cmNlUmVmPSJFeGNsdXNpdmVHYXRld2F5XzBvZ2JiN2IiIHRhcmdldFJlZj0iVGFza18wYjE4NWF1Ii8-PGJwbW46c2VxdWVuY2VGbG93IGlkPSJTZXF1ZW5jZUZsb3dfMWx5cWE0cCIgbmFtZT0iUHJvY2VlZCIgc291cmNlUmVmPSJFeGNsdXNpdmVHYXRld2F5XzBldHVmazYiIHRhcmdldFJlZj0iVGFza18xM2JrcXNuIi8-PGJwbW46c2VxdWVuY2VGbG93IGlkPSJTZXF1ZW5jZUZsb3dfMTZmemZ1MCIgc291cmNlUmVmPSJTdGFydEV2ZW50XzBtZW5iaGUiIHRhcmdldFJlZj0iVGFza18xNnVrMTc0Ii8-PGJwbW46c2VxdWVuY2VGbG93IGlkPSJTZXF1ZW5jZUZsb3dfMGptNnBnMCIgbmFtZT0iUmVqZWN0IiBzb3VyY2VSZWY9IkV4Y2x1c2l2ZUdhdGV3YXlfMGV0dWZrNiIgdGFyZ2V0UmVmPSJUYXNrXzBiMTg1YXUiLz48YnBtbjpzZXF1ZW5jZUZsb3cgaWQ9IlNlcXVlbmNlRmxvd18xM3NwOWt4IiBzb3VyY2VSZWY9IlRhc2tfMTNia3FzbiIgdGFyZ2V0UmVmPSJUYXNrXzB1dDB1eG8iLz48YnBtbjpzZXF1ZW5jZUZsb3cgaWQ9IlNlcXVlbmNlRmxvd18wZWY4M3M2IiBzb3VyY2VSZWY9IlRhc2tfMHV0MHV4byIgdGFyZ2V0UmVmPSJFbmRFdmVudF8wcmp2emFkIi8-PGJwbW46c2VxdWVuY2VGbG93IGlkPSJTZXF1ZW5jZUZsb3dfMGVkdjg0YyIgbmFtZT0iQ2FuY2VsIiBzb3VyY2VSZWY9IkV4Y2x1c2l2ZUdhdGV3YXlfMG9nYmI3YiIgdGFyZ2V0UmVmPSJFbmRFdmVudF8weGZxZ3VhIi8-PGJwbW46c2VxdWVuY2VGbG93IGlkPSJTZXF1ZW5jZUZsb3dfMHV0NDdjZCIgc291cmNlUmVmPSJUYXNrXzBiMTg1YXUiIHRhcmdldFJlZj0iVGFza18xM2wyN2Y4Ii8-PGJwbW46c2VxdWVuY2VGbG93IGlkPSJTZXF1ZW5jZUZsb3dfMTdpdTJpMiIgbmFtZT0iRGVjbGluZSIgc291cmNlUmVmPSJFeGNsdXNpdmVHYXRld2F5XzBldHVmazYiIHRhcmdldFJlZj0iRW5kRXZlbnRfMGZwdXU5cyIvPjxicG1uOnNlcXVlbmNlRmxvdyBpZD0iU2VxdWVuY2VGbG93XzBuODk2ZzMiIHNvdXJjZVJlZj0iVGFza18xM2wyN2Y4IiB0YXJnZXRSZWY9IkV4Y2x1c2l2ZUdhdGV3YXlfMGV0dWZrNiIvPjxicG1uOnNlcXVlbmNlRmxvdyBpZD0iU2VxdWVuY2VGbG93XzAzanYza3AiIHNvdXJjZVJlZj0iVGFza18xNnVrMTc0IiB0YXJnZXRSZWY9IkV4Y2x1c2l2ZUdhdGV3YXlfMG9nYmI3YiIvPjwvYnBtbjpwcm9jZXNzPjxicG1uZGk6QlBNTkRpYWdyYW0gaWQ9IkJQTU5EaWFncmFtXzEiIHhtbG5zOmJwbW5kaT0iaHR0cDovL3d3dy5vbWcub3JnL3NwZWMvQlBNTi8yMDEwMDUyNC9ESSIgeG1sbnM6ZGM9Imh0dHA6Ly93d3cub21nLm9yZy9zcGVjL0RELzIwMTAwNTI0L0RDIiB4bWxuczpkaT0iaHR0cDovL3d3dy5vbWcub3JnL3NwZWMvREQvMjAxMDA1MjQvREkiPjxicG1uZGk6QlBNTlBsYW5lIGlkPSJCUE1OUGxhbmVfMSIgYnBtbkVsZW1lbnQ9IkNvbGxhYm9yYXRpb25fMHJ4ZDkxayI-PGJwbW5kaTpCUE1OU2hhcGUgaWQ9IlBhcnRpY2lwYW50XzFqZjczYnhfZGkiIGJwbW5FbGVtZW50PSJQYXJ0aWNpcGFudF8xamY3M2J4Ij48ZGM6Qm91bmRzIGhlaWdodD0iNTIwIiB3aWR0aD0iMTI0NCIgeD0iMTM4IiB5PSIyMiIvPjwvYnBtbmRpOkJQTU5TaGFwZT48YnBtbmRpOkJQTU5TaGFwZSBpZD0iU3RhcnRFdmVudF8wbWVuYmhlX2RpIiBicG1uRWxlbWVudD0iU3RhcnRFdmVudF8wbWVuYmhlIj48ZGM6Qm91bmRzIGhlaWdodD0iMzYiIHdpZHRoPSIzNiIgeD0iMjA2IiB5PSI3MSIvPjxicG1uZGk6QlBNTkxhYmVsPjxkYzpCb3VuZHMgaGVpZ2h0PSIxNCIgd2lkdGg9IjI0IiB4PSIyMTIiIHk9IjExNCIvPjwvYnBtbmRpOkJQTU5MYWJlbD48L2JwbW5kaTpCUE1OU2hhcGU-PGJwbW5kaTpCUE1ORWRnZSBpZD0iU2VxdWVuY2VGbG93XzE2ZnpmdTBfZGkiIGJwbW5FbGVtZW50PSJTZXF1ZW5jZUZsb3dfMTZmemZ1MCI-PGRpOndheXBvaW50IHg9IjI0MiIgeT0iODkiLz48ZGk6d2F5cG9pbnQgeD0iMjkyIiB5PSI4OSIvPjwvYnBtbmRpOkJQTU5FZGdlPjxicG1uZGk6QlBNTlNoYXBlIGlkPSJNYW51YWxUYXNrXzF1cGZkMjZfZGkiIGJwbW5FbGVtZW50PSJUYXNrXzE2dWsxNzQiPjxkYzpCb3VuZHMgaGVpZ2h0PSI4MCIgd2lkdGg9IjEwMCIgeD0iMjkyIiB5PSI0OSIvPjwvYnBtbmRpOkJQTU5TaGFwZT48YnBtbmRpOkJQTU5TaGFwZSBpZD0iRXhjbHVzaXZlR2F0ZXdheV8wb2diYjdiX2RpIiBicG1uRWxlbWVudD0iRXhjbHVzaXZlR2F0ZXdheV8wb2diYjdiIiBpc01hcmtlclZpc2libGU9InRydWUiPjxkYzpCb3VuZHMgaGVpZ2h0PSI1MCIgd2lkdGg9IjUwIiB4PSI0NDIiIHk9IjY0Ii8-PC9icG1uZGk6QlBNTlNoYXBlPjxicG1uZGk6QlBNTkVkZ2UgaWQ9IlNlcXVlbmNlRmxvd18wM2p2M2twX2RpIiBicG1uRWxlbWVudD0iU2VxdWVuY2VGbG93XzAzanYza3AiPjxkaTp3YXlwb2ludCB4PSIzOTIiIHk9Ijg5Ii8-PGRpOndheXBvaW50IHg9IjQ0MiIgeT0iODkiLz48L2JwbW5kaTpCUE1ORWRnZT48YnBtbmRpOkJQTU5TaGFwZSBpZD0iRW5kRXZlbnRfMHhmcWd1YV9kaSIgYnBtbkVsZW1lbnQ9IkVuZEV2ZW50XzB4ZnFndWEiPjxkYzpCb3VuZHMgaGVpZ2h0PSIzNiIgd2lkdGg9IjM2IiB4PSI1NDIiIHk9IjcxIi8-PC9icG1uZGk6QlBNTlNoYXBlPjxicG1uZGk6QlBNTkVkZ2UgaWQ9IlNlcXVlbmNlRmxvd18wZWR2ODRjX2RpIiBicG1uRWxlbWVudD0iU2VxdWVuY2VGbG93XzBlZHY4NGMiPjxkaTp3YXlwb2ludCB4PSI0OTIiIHk9Ijg5Ii8-PGRpOndheXBvaW50IHg9IjU0MiIgeT0iODkiLz48YnBtbmRpOkJQTU5MYWJlbD48ZGM6Qm91bmRzIGhlaWdodD0iMTQiIHdpZHRoPSIzNSIgeD0iNTAwIiB5PSI3MSIvPjwvYnBtbmRpOkJQTU5MYWJlbD48L2JwbW5kaTpCUE1ORWRnZT48YnBtbmRpOkJQTU5FZGdlIGlkPSJTZXF1ZW5jZUZsb3dfMHpyd3FiaF9kaSIgYnBtbkVsZW1lbnQ9IlNlcXVlbmNlRmxvd18wenJ3cWJoIj48ZGk6d2F5cG9pbnQgeD0iNDY3IiB5PSIxMTQiLz48ZGk6d2F5cG9pbnQgeD0iNDY3IiB5PSIxOTkiLz48ZGk6d2F5cG9pbnQgeD0iNTQyIiB5PSIxOTkiLz48YnBtbmRpOkJQTU5MYWJlbD48ZGM6Qm91bmRzIGhlaWdodD0iMTQiIHdpZHRoPSIzNCIgeD0iNDY1IiB5PSIxNTQiLz48L2JwbW5kaTpCUE1OTGFiZWw-PC9icG1uZGk6QlBNTkVkZ2U-PGJwbW5kaTpCUE1OU2hhcGUgaWQ9IlNlcnZpY2VUYXNrXzB2cGw1YXpfZGkiIGJwbW5FbGVtZW50PSJUYXNrXzBiMTg1YXUiPjxkYzpCb3VuZHMgaGVpZ2h0PSI4MCIgd2lkdGg9IjEwMCIgeD0iNTQyIiB5PSIxNTkiLz48L2JwbW5kaTpCUE1OU2hhcGU-PGJwbW5kaTpCUE1ORWRnZSBpZD0iU2VxdWVuY2VGbG93XzB1dDQ3Y2RfZGkiIGJwbW5FbGVtZW50PSJTZXF1ZW5jZUZsb3dfMHV0NDdjZCI-PGRpOndheXBvaW50IHg9IjY0MiIgeT0iMTk5Ii8-PGRpOndheXBvaW50IHg9IjcwMSIgeT0iMTk5Ii8-PC9icG1uZGk6QlBNTkVkZ2U-PGJwbW5kaTpCUE1OU2hhcGUgaWQ9Ik1hbnVhbFRhc2tfMWh2dHJ2al9kaSIgYnBtbkVsZW1lbnQ9IlRhc2tfMTNsMjdmOCI-PGRjOkJvdW5kcyBoZWlnaHQ9IjgwIiB3aWR0aD0iMTAwIiB4PSI3MDEiIHk9IjE1OSIvPjwvYnBtbmRpOkJQTU5TaGFwZT48YnBtbmRpOkJQTU5TaGFwZSBpZD0iTGFuZV8xZXoybjd4X2RpIiBicG1uRWxlbWVudD0iTGFuZV8xZXoybjd4Ij48ZGM6Qm91bmRzIGhlaWdodD0iMzM3IiB3aWR0aD0iMTIxNCIgeD0iMTY4IiB5PSIyMiIvPjwvYnBtbmRpOkJQTU5TaGFwZT48YnBtbmRpOkJQTU5TaGFwZSBpZD0iTGFuZV8wOTRvb2IwX2RpIiBicG1uRWxlbWVudD0iTGFuZV8wOTRvb2IwIj48ZGM6Qm91bmRzIGhlaWdodD0iMTgzIiB3aWR0aD0iMTIxNCIgeD0iMTY4IiB5PSIzNTkiLz48L2JwbW5kaTpCUE1OU2hhcGU-PGJwbW5kaTpCUE1OU2hhcGUgaWQ9IkV4Y2x1c2l2ZUdhdGV3YXlfMGV0dWZrNl9kaSIgYnBtbkVsZW1lbnQ9IkV4Y2x1c2l2ZUdhdGV3YXlfMGV0dWZrNiIgaXNNYXJrZXJWaXNpYmxlPSJ0cnVlIj48ZGM6Qm91bmRzIGhlaWdodD0iNTAiIHdpZHRoPSI1MCIgeD0iODQyIiB5PSIxNzQiLz48L2JwbW5kaTpCUE1OU2hhcGU-PGJwbW5kaTpCUE1ORWRnZSBpZD0iU2VxdWVuY2VGbG93XzBuODk2ZzNfZGkiIGJwbW5FbGVtZW50PSJTZXF1ZW5jZUZsb3dfMG44OTZnMyI-PGRpOndheXBvaW50IHg9IjgwMSIgeT0iMTk5Ii8-PGRpOndheXBvaW50IHg9Ijg0MiIgeT0iMTk5Ii8-PC9icG1uZGk6QlBNTkVkZ2U-PGJwbW5kaTpCUE1OU2hhcGUgaWQ9IkVuZEV2ZW50XzBmcHV1OXNfZGkiIGJwbW5FbGVtZW50PSJFbmRFdmVudF8wZnB1dTlzIj48ZGM6Qm91bmRzIGhlaWdodD0iMzYiIHdpZHRoPSIzNiIgeD0iOTQyIiB5PSIxODEiLz48L2JwbW5kaTpCUE1OU2hhcGU-PGJwbW5kaTpCUE1ORWRnZSBpZD0iU2VxdWVuY2VGbG93XzE3aXUyaTJfZGkiIGJwbW5FbGVtZW50PSJTZXF1ZW5jZUZsb3dfMTdpdTJpMiI-PGRpOndheXBvaW50IHg9Ijg5MiIgeT0iMTk5Ii8-PGRpOndheXBvaW50IHg9Ijk0MiIgeT0iMTk5Ii8-PGJwbW5kaTpCUE1OTGFiZWw-PGRjOkJvdW5kcyBoZWlnaHQ9IjE0IiB3aWR0aD0iMzciIHg9Ijg5OSIgeT0iMTgxIi8-PC9icG1uZGk6QlBNTkxhYmVsPjwvYnBtbmRpOkJQTU5FZGdlPjxicG1uZGk6QlBNTkVkZ2UgaWQ9IlNlcXVlbmNlRmxvd18xbHlxYTRwX2RpIiBicG1uRWxlbWVudD0iU2VxdWVuY2VGbG93XzFseXFhNHAiPjxkaTp3YXlwb2ludCB4PSI4NjciIHk9IjIyNCIvPjxkaTp3YXlwb2ludCB4PSI4NjciIHk9IjI4MyIvPjxkaTp3YXlwb2ludCB4PSI5NDEiIHk9IjI4MyIvPjxicG1uZGk6QlBNTkxhYmVsPjxkYzpCb3VuZHMgaGVpZ2h0PSIxNCIgd2lkdGg9IjQxIiB4PSI4NjIiIHk9IjI1MSIvPjwvYnBtbmRpOkJQTU5MYWJlbD48L2JwbW5kaTpCUE1ORWRnZT48YnBtbmRpOkJQTU5FZGdlIGlkPSJTZXF1ZW5jZUZsb3dfMTNzcDlreF9kaSIgYnBtbkVsZW1lbnQ9IlNlcXVlbmNlRmxvd18xM3NwOWt4Ij48ZGk6d2F5cG9pbnQgeD0iMTA0MSIgeT0iMjgzIi8-PGRpOndheXBvaW50IHg9IjExMDkiIHk9IjI4MyIvPjwvYnBtbmRpOkJQTU5FZGdlPjxicG1uZGk6QlBNTlNoYXBlIGlkPSJFbmRFdmVudF8wcmp2emFkX2RpIiBicG1uRWxlbWVudD0iRW5kRXZlbnRfMHJqdnphZCI-PGRjOkJvdW5kcyBoZWlnaHQ9IjM2IiB3aWR0aD0iMzYiIHg9IjEyNzEiIHk9IjI2NSIvPjwvYnBtbmRpOkJQTU5TaGFwZT48YnBtbmRpOkJQTU5FZGdlIGlkPSJTZXF1ZW5jZUZsb3dfMGVmODNzNl9kaSIgYnBtbkVsZW1lbnQ9IlNlcXVlbmNlRmxvd18wZWY4M3M2Ij48ZGk6d2F5cG9pbnQgeD0iMTIwOSIgeT0iMjgzIi8-PGRpOndheXBvaW50IHg9IjEyNzEiIHk9IjI4MyIvPjwvYnBtbmRpOkJQTU5FZGdlPjxicG1uZGk6QlBNTlNoYXBlIGlkPSJTZXJ2aWNlVGFza18wdDQwemZjX2RpIiBicG1uRWxlbWVudD0iVGFza18xM2JrcXNuIj48ZGM6Qm91bmRzIGhlaWdodD0iODAiIHdpZHRoPSIxMDAiIHg9Ijk0MSIgeT0iMjQzIi8-PC9icG1uZGk6QlBNTlNoYXBlPjxicG1uZGk6QlBNTlNoYXBlIGlkPSJNYW51YWxUYXNrXzFhb3Yyd3VfZGkiIGJwbW5FbGVtZW50PSJUYXNrXzB1dDB1eG8iPjxkYzpCb3VuZHMgaGVpZ2h0PSI4MCIgd2lkdGg9IjEwMCIgeD0iMTEwOSIgeT0iMjQzIi8-PC9icG1uZGk6QlBNTlNoYXBlPjxicG1uZGk6QlBNTkVkZ2UgaWQ9IlNlcXVlbmNlRmxvd18wam02cGcwX2RpIiBicG1uRWxlbWVudD0iU2VxdWVuY2VGbG93XzBqbTZwZzAiPjxkaTp3YXlwb2ludCB4PSI4NjciIHk9IjE3NCIvPjxkaTp3YXlwb2ludCB4PSI4NjciIHk9IjEyMiIvPjxkaTp3YXlwb2ludCB4PSI1OTIiIHk9IjEyMiIvPjxkaTp3YXlwb2ludCB4PSI1OTIiIHk9IjE1OSIvPjxicG1uZGk6QlBNTkxhYmVsPjxkYzpCb3VuZHMgaGVpZ2h0PSIxNCIgd2lkdGg9IjMyIiB4PSI3MTQiIHk9IjEwNCIvPjwvYnBtbmRpOkJQTU5MYWJlbD48L2JwbW5kaTpCUE1ORWRnZT48L2JwbW5kaTpCUE1OUGxhbmU-PC9icG1uZGk6QlBNTkRpYWdyYW0-PC9icG1uOmRlZmluaXRpb25zPg"
+										content-type="application/octet-stream"
+										name="script-after-decision.bpml"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.bpe.modeler.upload.BPMLUploadCommand"
+							command-label="Hochladen"
+							command-name="upload"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorUploadForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Modelltyp erstellen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Modelltyp/Action-Modelltyp-Erstellen.xml"
+							template-name-comment="Modelltyp Erstellen"
+						>
+							<parameters>
+								<parameter name="Id"
+									value="AutomaticUpdate"
+								/>
+								<parameter name="Deutsch"
+									value="AutomaticUpdate"
+								/>
+								<parameter name="Englisch"
+									value="AutomaticUpdate"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Modelltyp/Action-Modelltyp-AttributAnlegen.xml"
+							template-name-comment="Modelltyp AttributAnlegen"
+						>
+							<parameters>
+								<parameter name="Id"
+									value="count"
+								/>
+								<parameter name="Deutsch"
+									value="count"
+								/>
+								<parameter name="Englisch"
+									value="count"
+								/>
+								<parameter name="Typ"
+									value="Integer"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="switchToAJAXEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+									tab-path="Administration > Development > Modell Editor > Attribute"
+								/>
+								<path>
+									<labeled-member label="Konfiguration"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Anpassungen"/>
+									<named-member name="add"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+										value="com.top_logic.model.annotate.TLDefaultValue"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Wert"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+									tab-path="Administration > Development > Modell Editor > Attribute"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="0"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/Workflow/Action-Workflow-SetzeModellTyp.xml"
+							template-name-comment="Workflow SetzeModellTyp"
+						>
+							<parameters>
+								<parameter name="Pfad"
+									value="script-after-decision > Automatic Task"
+								/>
+								<parameter name="Modelltyp"
+									value="AutomaticUpdate"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Workflow konfigurieren"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+									node-path="script-after-decision > Automatic Task > Create"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Prozess Editor > Workflow"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="switchToAJAXEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler"
+							command-label="Übernehmen"
+							command-name="storeAttributes"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+									node-path="script-after-decision > Automatic Task > Inc 1"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Prozess Editor > Workflow"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Aktion"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+									tab-path="Administration > Development > Prozess Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="x -> $x.set(`tl.bpe.execution:AutomaticUpdate#count`, $x.get(`tl.bpe.execution:AutomaticUpdate#count`) + 1)"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler"
+							command-label="Übernehmen"
+							command-name="storeAttributes"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+									node-path="script-after-decision > Automatic Task > Show A"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Prozess Editor > Workflow"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler"
+							command-label="Übernehmen"
+							command-name="storeAttributes"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+									node-path="script-after-decision > Automatic Task > Inc 2"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Prozess Editor > Workflow"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Aktion"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+									tab-path="Administration > Development > Prozess Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="x -> $x.set(`tl.bpe.execution:AutomaticUpdate#count`, $x.get(`tl.bpe.execution:AutomaticUpdate#count`) + 1)"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+									node-path="script-after-decision > Automatic Task > Create"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Prozess Editor > Workflow"
+							/>
+						</action>
+						<action class="com.top_logic.bpe.execution.engine.FormEditActionOp"
+							user-id="root"
+						>
+							<form-definition>
+								<field
+									attribute="count"
+									visibility="read-only"
+								/>
+							</form-definition>
+							<manual-task config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+								node-path="script-after-decision > Automatic Task > Create"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+									node-path="script-after-decision > Automatic Task > Show A"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Prozess Editor > Workflow"
+							/>
+						</action>
+						<action class="com.top_logic.bpe.execution.engine.FormEditActionOp"
+							user-id="root"
+						>
+							<form-definition>
+								<field attribute="executionNumber"/>
+								<field attribute="count"/>
+							</form-definition>
+							<manual-task config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+								node-path="script-after-decision > Automatic Task > Show A"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+									node-path="script-after-decision > Automatic Task > Show B"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Prozess Editor > Workflow"
+							/>
+						</action>
+						<action class="com.top_logic.bpe.execution.engine.FormEditActionOp"
+							user-id="root"
+						>
+							<form-definition>
+								<field attribute="executionNumber"/>
+								<field attribute="count"/>
+							</form-definition>
+							<manual-task config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+								node-path="script-after-decision > Automatic Task > Show B"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.bpe.modeler.component.state.StateBasedHandler"
+							command-label="Workflow freigeben"
+							command-name="release"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Berechtigungen einstellen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="BPElement"
+								>
+									<branch config:interface=""/>
+									<revision config:interface=""/>
+									<attributes>
+										<attribute name="name">
+											<value config:interface=""/>
+										</attribute>
+										<attribute name="owner">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="BPElement"
+											>
+												<branch config:interface=""/>
+												<revision config:interface=""/>
+												<attributes>
+													<attribute name="name">
+														<value config:interface=""/>
+													</attribute>
+													<attribute name="collaboration">
+														<value config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+															node-path="script-after-decision"
+														/>
+													</attribute>
+													<attribute name="extId">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="Process_1"
+														/>
+													</attribute>
+												</attributes>
+												<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="MetaElement"
+												>
+													<branch config:interface=""/>
+													<revision config:interface=""/>
+													<attributes>
+														<attribute name="scope">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+																table="TLModule"
+															>
+																<branch config:interface=""/>
+																<revision config:interface=""/>
+																<attributes>
+																	<attribute name="name">
+																		<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																			value="tl.bpe.bpml"
+																		/>
+																	</attribute>
+																</attributes>
+															</value>
+														</attribute>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Process"
+															/>
+														</attribute>
+													</attributes>
+												</type>
+											</value>
+										</attribute>
+										<attribute name="extId">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="Lane_1ez2n7x"
+											/>
+										</attribute>
+									</attributes>
+									<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="MetaElement"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+										<attributes>
+											<attribute name="scope">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+													table="TLModule"
+												>
+													<branch config:interface=""/>
+													<revision config:interface=""/>
+													<attributes>
+														<attribute name="name">
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="tl.bpe.bpml"
+															/>
+														</attribute>
+													</attributes>
+												</value>
+											</attribute>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Lane"
+												/>
+											</attribute>
+										</attributes>
+									</type>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Prozess Editor > Workflow"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="switchToAJAXEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Gruppe der Akteure"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+									tab-path="Administration > Development > Prozess Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="root"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Prozess Cockpit"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+							node-path="script-after-decision"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Prozess Cockpit > Alle Prozesse > Alle Prozesse"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+							node-path="script-after-decision > Automatic Task > Start"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.mig.html.layout.tiles.scripting.InlinedTileComponentNaming$InlinedTileName"
+						component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent"
+						component-name="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRunObjects.layout.xml#Objects"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRun.layout.xml#createProcessExecutionNewAttributed"
+								tab-path="Prozess Cockpit > Alle Prozesse > {0} > Prozesslauf starten"
+							/>
+							<path>
+								<labeled-member label="count"/>
+							</path>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="0"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.bpe.app.layout.StartProcessExecutionHandler"
+					command-label="Prozess starten"
+					command-name="startProcessExecution"
+					component-implementation-comment="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"
+					component-name="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRun.layout.xml#createProcessExecutionNewAttributed"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Nächste Aufgabe"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Accept"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="count"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+								tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="1"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+					command-label="Aufgabe abschließen"
+					command-name="finishTask"
+					component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+					component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Nächste Aufgabe"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Reject"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.bpe.layout.scripting.TokenNaming$TokenName"
+							token-id=""
+							token-path="script-after-decision > Automatic Task > Show A"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.bpe.app/processCockpit/currentTasks/tasksTable.layout.xml#Table"
+							tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgaben"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="count"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+								tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+					command-label="Aufgabe abschließen"
+					command-name="finishTask"
+					component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+					component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Nächste Aufgabe"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Proceed"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.bpe.layout.scripting.TokenNaming$TokenName"
+							token-id=""
+							token-path="script-after-decision > Automatic Task > Show B"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.bpe.app/processCockpit/currentTasks/tasksTable.layout.xml#Table"
+							tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgaben"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="count"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+								tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="3"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+					command-label="Aufgabe abschließen"
+					command-name="finishTask"
+					component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+					component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ja"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Workflow-Durchführung > Prozess-Instanz > AutomaticUpdate"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Instanzen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+							<list>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="script-after-decision - Automatic Task"
+								/>
+							</list>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen..."
+					command-name="deleteInstance"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Eigenschaften"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+					command-label="Löschen..."
+					command-name="delete"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+							node-path="script-after-decision"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Prozess Editor > Alle Prozesse"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.knowledge.gui.layout.form.DeleteSimpleWrapperCommandHandler"
+					command-label="Löschen..."
+					command-name="delete"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

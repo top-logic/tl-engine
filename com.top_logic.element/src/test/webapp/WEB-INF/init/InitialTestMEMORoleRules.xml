@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<role-rules config:interface="com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<rules>
+		<rule
+			meta-element="prodElement:ROOT:Product"
+			resource-key="prod.testRoleVersionME"
+			role="prodElement.testRoleVersionME"
+			source-meta-element="prodElement:ROOT:ProductVersion"
+			type="inheritance"
+		>
+			<path>
+				<step association="hasStructureChild"/>
+			</path>
+		</rule>
+		<rule
+			meta-element="prodElement:ROOT:Product"
+			resource-key="prod.testRoleTypeME"
+			role="prodElement.testRoleTypeME"
+			source-meta-element="prodElement:ROOT:ProductType"
+			type="inheritance"
+		>
+			<path>
+				<step association="hasStructureChild"/>
+			</path>
+		</rule>
+		<rule
+			meta-element="prodElement:ROOT:Product"
+			resource-key="prod.testRoleVersionMO"
+			role="prodElement.testRoleVersionMO"
+			source-meta-object="ProductVersion"
+			type="inheritance"
+		>
+			<path>
+				<step association="hasStructureChild"/>
+			</path>
+		</rule>
+		<rule
+			meta-element="prodElement:ROOT:Product"
+			resource-key="prod.testRoleTypeMO"
+			role="prodElement.testRoleTypeMO"
+			source-meta-object="ProductType"
+			type="inheritance"
+		>
+			<path>
+				<step association="hasStructureChild"/>
+			</path>
+		</rule>
+		<rule
+			meta-element="prodElement:ROOT:ProductVersion"
+			resource-key="prod.versionME"
+			role="prodElement.testRoleVersionME,prodElement.testRoleVersionMO,prodElement.testRoleTypeME,prodElement.testRoleTypeMO"
+		>
+			<path>
+				<step
+					attribute="Verantwortlicher"
+					meta-element="prodElement:ROOT:ProductVersion"
+				/>
+			</path>
+		</rule>
+		<rule
+			meta-element="prodElement:ROOT:ProductType"
+			resource-key="prod.typeME"
+			role="prodElement.testRoleVersionME,prodElement.testRoleVersionMO,prodElement.testRoleTypeME,prodElement.testRoleTypeMO"
+		>
+			<path>
+				<step
+					attribute="Verantwortlicher"
+					meta-element="prodElement:ROOT:ProductType"
+				/>
+			</path>
+		</rule>
+	</rules>
+</role-rules>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component>
+	<inner-component class="test.com.top_logic.mig.html.layout.TestLayoutUtils$TestIncrementComponent"
+		name="child1"
+	/>
+</component>

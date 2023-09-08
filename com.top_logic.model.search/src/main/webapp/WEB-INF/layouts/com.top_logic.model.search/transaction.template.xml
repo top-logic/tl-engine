@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$UIOptions, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
+		<property name="open-handler"
+			type="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+		>
+			<item-default/>
+			<non-nullable/>
+		</property>
+		<property name="title"
+			type="PolymorphicConfiguration"
+		>
+			<item-default/>
+			<non-nullable/>
+		</property>
+		<property name="transactionHandler"
+			type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+		>
+			<mandatory/>
+			<non-nullable/>
+			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
+			<acceptable-classifiers
+				unclassified="false"
+				value="customTransaction"
+			/>
+		</property>
+		<property name="securityObject"
+			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
+			type="com.top_logic.basic.config.PolymorphicConfiguration"
+		/>
+		<property name="securityProviderClass"
+			default="dialogParent"
+			type="String"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
+			<hidden/>
+		</property>
+	</properties>
+
+	<layout name="Dialog">
+		<dialogInfo
+			closableUsingX="${closableUsingX}"
+			createOpenerButtons="${createOpenerButtons}"
+			height="${height}"
+			helpID="${helpID}"
+			open-handler="${open-handler}"
+			openMaximized="${openMaximized}"
+			resizable="${resizable}"
+			title="${title}"
+			width="${width}"
+		/>
+
+		<form name="Form"
+			buttonComponent="Buttons"
+			resetInvisible="true"
+			securityObject="${securityObject}"
+			securityProviderClass="${securityProviderClass}"
+			titleKey="layout.com.top_logic.element.transaction.template.Form"
+		>
+			<modelBuilder class="com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression"
+				formType="${formType}"
+				initialization="${initialization}"
+			>
+				<forms>${forms}</forms>
+			</modelBuilder>
+			<buttons>
+				<button>${transactionHandler}</button>
+				<reference command-id="configureCreateFormDefinitionCommand"/>
+				<reference command-id="deleteEditFormDefinitionCommand"/>
+			</buttons>
+		</form>
+
+		<buttonbar name="Buttons"/>
+
+		<buttons>
+			<reference command-id="editDialogCommand"/>
+			<reference command-id="deleteDialogCommand"/>
+		</buttons>
+	</layout>
+</config:template>

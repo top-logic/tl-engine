@@ -1,0 +1,664 @@
+/**
+ * JavaCC Grammar File
+ */
+options
+{
+    JDK_VERSION = "1.7";
+    STATIC = false;
+    UNICODE_INPUT = true;
+    JAVA_UNICODE_ESCAPE = false;
+}
+
+PARSER_BEGIN(SearchExpressionParser)
+/*
+ * SPDX-FileCopyrightText: 2018 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.model.search.expr.parser;
+
+import java.util.List;
+import java.util.ArrayList;
+
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.config.dom.Expr.*;
+import com.top_logic.model.search.expr.config.dom.ExprFactory;
+import com.top_logic.model.search.expr.config.dom.ExprFactory.*;
+
+/**
+ * Parser for custom {@link Expr} syntax.
+ *
+ * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ */
+public class SearchExpressionParser {
+  private ExprFactory _f = new ExprFactory(this);
+
+  private boolean _checkHtml = true;
+
+  public ExprFactory getFactory() {
+	return _f;
+  }
+
+  public void setFactory(ExprFactory f) {
+	_f = f;
+  }
+
+  public void setCheckHtml(boolean checkHtml) {
+    _checkHtml = checkHtml;  
+  }
+}
+PARSER_END(SearchExpressionParser)
+
+<DEFAULT>
+
+SKIP :
+{
+  < SPACE :  " " >
+| < TAB : "\t" >
+| < CR : "\r" >
+| < NL : "\n" >
+| < BLOCK_COMMENT : "/*" ( ~[ "*" ] | "*" ~[ "/" ] )* "*/" >
+| < LINE_COMMENT : "//" ( ~[ "\r", "\n" ] )* [ "\r", "\n" ] >
+}
+
+<DEFAULT>
+
+TOKEN :
+{
+  < TRUE : "true" >
+| < FALSE : "false" >
+| < NULL : "null" >
+| < AND : "and" | "&&" >
+| < OR : "or" | "||" >
+| < THIS : "this" >
+| < TUPLE : "tuple" >
+| < SWITCH : "switch" >
+| < DEFAULT_KEYWORRD : "default" >
+| < NAME : [ "A"-"Z", "a"-"z", "_" ] ([ "A"-"Z", "a"-"z", "_", "0"-"9"])* >
+| < VAR : "$" < NAME > > 
+| < STRING : "'" (~[ "'", "\\" ] | < QUOTE > )* "'" | "\"" (~[ "\"", "\\" ] | < QUOTE > )* "\"" >
+| < RESKEY : "#" < STRING > > 
+| < LANGTAG : "@" (["a"-"z", "A"-"Z"])+ ("-" (["a"-"z", "A"-"Z", "0"-"9"])+)* >
+| < #QUOTE : "\\\\" | "\\'" | "\\\"" >
+| < NUM : ("0" | ( [ "1"-"9" ] ([ "0"-"9" ])* )) ("." ([ "0"-"9" ])+)? >
+| < #MODEL_NAME : ( ~[ "`", ":", "#", " ", "\t", "\n", "\r", "\f" ] )+ >
+| < MODULE : "`" < MODEL_NAME > "`" >
+| < TYPE : "`" < MODEL_NAME > ":" < MODEL_NAME > "`" >
+| < PART : "`" < MODEL_NAME > ":" < MODEL_NAME > "#" < MODEL_NAME > "`" >
+| < SINGLETON : "`" < MODEL_NAME > "#" < MODEL_NAME > "`" >
+| < BLOCK_START : "{" >
+| < BLOCK_END : "}" >
+| < SCRIPT_END : "</script>" >
+| < HTML_START : "{{{" > : HTML
+}
+
+<HTML>
+
+SKIP :
+
+{
+  < #JSP_COMMENT_START: "<%--" >
+| < JSP_COMMENT: < JSP_COMMENT_START > ( ~["-"] | "-" ~["-"] | "--" ~["%"] | "--%" ~[">"] )* "--%>" >
+| < #XML_COMMENT_START: "<!--" >
+| < XML_COMMENT: < XML_COMMENT_START > ( ~["-"] | "-" ~["-"] | "--" ~[">"] )* "-->" >
+}
+
+<HTML>
+
+TOKEN :
+{
+  < EMBEDD: "{" > : DEFAULT
+| < SCRIPT: "<script" < WS > "type" < WS_OPT > "=" < WS_OPT > "\"text/tlscript\"" < WS_OPT > ">" > : DEFAULT
+| < TAG_START : "<" < TAG_NAME > > : TAG
+| < END_TAG : "</" < TAG_NAME > ">" >
+| < #TAG_NAME : [ "A"-"Z", "a"-"z", "_" ] ([ "A"-"Z", "a"-"z", "_", "0"-"9"])* >
+| < HTML_STOP : "}}}" > : DEFAULT
+| < TEXT_CONTENT : ( ~["<", "{", "}", "\\"] | "\\\\" | "\\<" | "\\{" | "\\}" )+ >
+| < #WS : ( [" ", "\t", "\r", "\n"] )+ >
+| < #WS_OPT : ( [" ", "\t", "\r", "\n"] )* >
+}
+
+/*
+  Scanner-Mode for parsing text with embedded expressions.
+
+  This mode must be activated manually before starting the parse process with the alternative parser
+  entry point `#textWithEmbeddedExpressions()`. 
+*/
+
+<TEXT>
+
+TOKEN :
+{
+  < TEXT_EMBEDD: "{" > : DEFAULT
+| < PLAIN_TEXT: ( ~["{", "}", "\\"] | "\\\\" | "\\{" | "\\}" )+ >
+}
+
+<TAG>
+
+SKIP :
+{
+  < TAG_SPACE :  " " >
+| < TAG_TAB : "\t" >
+| < TAG_CR : "\r" >
+| < TAG_NL : "\n" >
+}
+
+<TAG>
+
+TOKEN :
+{
+  < ATTRIBUTE_NAME : [ "A"-"Z", "a"-"z", "_" ] ([ "A"-"Z", "a"-"z", "_", "0"-"9"])* >
+| < EQ : "=" >
+| < QUOT_START : "\"" > : ATTR_CONTENT
+| < TAG_END : ">" > : HTML
+| < END_EMPTY_TAG : "/>" > : HTML
+}
+
+<ATTR_CONTENT>
+
+TOKEN :
+{
+  < EMBEDD_ATTR: "{" > : DEFAULT
+| < QUOT_END : "\"" > : TAG
+| < ATTRIBUTE_TEXT : ( ~[ "{", "}", "\"", "\\" ]  | "\\\\" | "\\\"" | "\\{" | "\\}" )+ >
+}
+
+Expr expr() :
+{
+  Expr expr;
+  Expr v;
+  Token t;
+  Args a;
+}
+{
+  ( LOOKAHEAD(< NAME > "->")
+    t=< NAME > "->" v=expr()
+    { expr=_f.lambda(t.image, v); }
+  | expr=defineExpr()
+  )
+  { return expr; }
+}
+
+Expr defineExpr() :
+{
+  Expr expr;
+  Expr thenExpr;
+  Expr elseExpr;
+}
+{
+  expr=booleanExpr()
+  (
+    "?" thenExpr=booleanExpr()
+    ":" elseExpr=booleanExpr()
+    { expr = _f.ifExpr(expr, thenExpr, elseExpr); }
+  )?
+  { return expr; }
+}
+
+Expr booleanExpr() :
+{
+  Expr expr;
+  Expr right;
+}
+{
+  expr=orExpr()
+  (
+    < OR > right=orExpr()
+    { expr=_f.or(expr, right); }
+  )*
+  { return expr; }
+}
+
+Expr orExpr() :
+{
+  Expr expr;
+  Expr right;
+}
+{
+  expr=andExpr()
+  (
+    < AND > right=andExpr()
+    { expr=_f.and(expr, right); }
+  )*
+  { return expr; }
+}
+
+Expr andExpr() :
+{
+  Expr expr;
+  Expr right;
+}
+{
+  expr=aditiveExpr()
+  (
+    "==" right=aditiveExpr() { expr=_f.eq(expr, right); }
+  | "!=" right=aditiveExpr() { expr=_f.neq(expr, right); }
+  | ">=" right=aditiveExpr() { expr=_f.ge(expr, right); }
+  | ">"  right=aditiveExpr() { expr=_f.gt(expr, right); }
+  | "<=" right=aditiveExpr() { expr=_f.le(expr, right); }
+  | "<"  right=aditiveExpr() { expr=_f.lt(expr, right); }
+  )?
+  { return expr; }
+}
+
+Expr aditiveExpr() :
+{
+  Expr expr;
+  Expr right;
+}
+{
+  expr=multiplicativeExpr()
+  (
+    ( "+" right=multiplicativeExpr() { expr=_f.add(expr, right); }
+    | "-" right=multiplicativeExpr() { expr=_f.sub(expr, right); }
+    )
+  )*
+  { return expr; }
+}
+
+Expr multiplicativeExpr() :
+{
+  Expr expr;
+  Expr right;
+}
+{
+  expr=negatedExpr()
+  (
+    ( "*" right=negatedExpr() { expr=_f.mul(expr, right); }
+    | "/" right=negatedExpr() { expr=_f.div(expr, right); }
+    | "%" right=negatedExpr() { expr=_f.mod(expr, right); }
+    )
+  )*
+  { return expr; }
+}
+
+Expr negatedExpr() :
+{
+  Expr expr;
+  Token n;
+  Args a;
+}
+{
+  ( "!" expr=accessExpr() { expr = _f.not(expr); }
+  | "-" expr=accessExpr() { expr = _f.neg(expr); }
+  | expr=accessExpr()
+  )
+  { return expr; }
+}
+
+Expr accessExpr() :
+{
+  Expr expr, arg, index;
+  Token n;
+  Args a;
+}
+{
+  expr=atomicExpr()
+  (
+    "." n=< NAME >
+    (
+      "(" a=args() ")"
+      { expr=_f.method(n.image, expr, a); }
+    )
+  | "("
+    arg=expr()
+    { expr=_f.apply(expr, arg); }
+    (
+      ","
+	  arg=expr()
+	  { expr=_f.apply(expr, arg); }
+    )*
+    ")"
+  | "[" index=expr() "]"
+    {
+	  expr=_f.at(expr, index);
+    }
+  )*
+  { return expr; }
+}
+
+Expr atomicExpr() :
+{
+  Expr expr, test, key, value;
+  SwitchBuilder sw;
+  DictBuilder dict;
+  List<Expr> exprs;
+  Expr.Tuple.Coord coord;
+  List<Expr.Tuple.Coord> coords;
+  Token t, l = null;
+  Args a;
+}
+{
+  ( < NULL >
+    { expr=_f.nullLiteral(); }
+  | < TRUE >
+    { expr=_f.trueLiteral(); }
+  | < FALSE >
+    { expr=_f.falseLiteral(); }
+  | t=< STRING > (l = < LANGTAG >)?
+    { expr=l == null ? _f.stringLiteral(t.image) : _f.i18nBuilder().add(t.image, l.image).build(); }
+  | t=< RESKEY >
+    { expr=_f.reskeyLiteral(t.image); }
+  | t=< NUM > 
+    { expr=_f.numberLiteral(t.image); }
+  | t=< VAR > 
+    { expr=_f.var(t.image); }
+  | expr=modelLiteral()
+  | t=< TUPLE > { coords=_f.coords(); }
+  	"(" coord=coord() { coords.add(coord); }
+  	(
+  	  ","
+  	  coord=coord() { coords.add(coord); }
+  	)*
+  	")"
+  	{ expr=_f.tuple(coords); }
+  | t=< NAME > "(" a=args() ")"
+    { expr=_f.staticMethod(t.image, a); }
+  | expr=i18n()
+  | "(" expr=expr() ")"
+  | < SWITCH >
+  	{ sw = _f.switchBlock(); }
+    (
+      "(" value = defineExpr() ")"
+      { sw.setValue(value); }
+    )?
+    < BLOCK_START >
+	(
+	  test = defineExpr() ":" expr = expr() ";"
+	  { sw.addCase(test, expr); }
+	)*
+
+	(
+	  < DEFAULT_KEYWORRD > ":" expr = expr() ";"
+	  { sw.setDefault(expr); }
+	)?
+    < BLOCK_END >
+    { expr = sw.toExpr(); } 
+  | "["
+    { exprs=_f.list(); }
+    (
+      expr = expr()
+      { exprs.add(expr); }
+      (
+        "," expr = expr()
+        { exprs.add(expr); }
+  	  )*
+    )?
+    "]"
+    { expr = _f.listConstructor(exprs); } 
+  | LOOKAHEAD( < BLOCK_START > defineExpr() ":")
+    < BLOCK_START >
+    { dict = _f.dictBuilder(); }
+    key = defineExpr() ":" value = expr()
+    { dict.put(key, value); }
+    (
+      "," key = defineExpr() ":" value = expr()
+      { dict.put(key, value); }
+    )*
+    < BLOCK_END >
+    { expr = dict.toExpr(); } 
+  | < BLOCK_START >
+    expr=blockContent()
+    < BLOCK_END >
+  | < HTML_START > expr=html() < HTML_STOP >
+  )
+  { return expr; }
+}
+
+Expr statement() :
+{
+  Expr expr;
+  Token t;
+}
+{
+  ( LOOKAHEAD(< NAME > "=") 
+    t=< NAME > "=" expr=expr()
+    { return _f.assign(t.image, expr); }
+  | expr=expr()
+  	{ return expr; }
+  )
+}
+
+Html html() :
+{
+  Html result = _f.html();
+  HtmlContent content;
+}
+{
+  ( content=htmlContent()
+    { result.getContents().add(content); }
+  )*
+  { return _checkHtml == true ? _f.checkHtml(result) : result; }
+}
+
+HtmlContent htmlContent() :
+{
+  Token t;
+  Expr expr;
+  HtmlContent result;
+}
+{
+  ( result=startTag()
+  | t=< TEXT_CONTENT > { result = _f.textContent(t.image); }
+  | < EMBEDD > expr=blockContent() { result=_f.embeddedExpr(expr); token_source.SwitchTo(HTML); } < BLOCK_END >
+  | < SCRIPT > expr=blockContent() { result=_f.embeddedExpr(expr); token_source.SwitchTo(HTML); } < SCRIPT_END >
+  | t=< END_TAG > { result = _f.endTag(t.image); }
+  )
+  { return result; }
+}
+
+/**
+ * Alternative parser entry point for parsing plain text with embedded expressions.
+ *
+ * <p>
+ * The scanner must be switched to TEXT mode before calling this entry point.
+ * </p>
+ */
+Expr textWithEmbeddedExpressions() :
+{
+  Token t;
+  Expr expr;
+  List<Expr> parts = new ArrayList<Expr>();
+}
+{
+  (
+    t=< PLAIN_TEXT > { parts.add(_f.plainText(t.image)); }
+  | < TEXT_EMBEDD > expr=blockContent() { parts.add(expr); token_source.SwitchTo(TEXT); } < BLOCK_END >
+  )*
+  { return _f.textContent(parts); }
+}
+
+HtmlContent startTag() :
+{
+  Attribute attribute;
+  List<Attribute> attributes = null;
+  Token t;
+  StartTag result;
+}
+{
+  t=< TAG_START >
+  { result = _f.startTag(t.image); }
+  ( attribute=attribute()
+    {
+      result.getAttributes().add(attribute);
+    }
+  )*
+  ( < END_EMPTY_TAG >
+    { result.setEmpty(true); }
+  | < TAG_END >
+  )
+  { return result; }
+}
+
+Attribute attribute() :
+{
+  Token t;
+  AttributeContent content;
+}
+{
+  t=< ATTRIBUTE_NAME >
+  < EQ >
+  ( < QUOT_START >
+	{ content=attributeContents(); }
+    < QUOT_END >
+  )
+  { return _f.attribute(t.image, content); }
+}
+
+AttributeContent attributeContents() :
+{
+  AttributeContent content;
+  AttributeContents concat;
+  AttributeContent result = null;
+}
+{
+  (
+    result=attributeContent()
+    ( content=attributeContent()
+      { concat = _f.concat();
+        concat.getValues().add(result);
+        concat.getValues().add(content);
+        result = concat;
+      }
+      ( content=attributeContent()
+        { concat.getValues().add(content); }
+      )*
+    )?
+  )?
+  { return result==null ? _f.textContent("") : result; }
+}
+
+AttributeContent attributeContent() :
+{
+  Token t;
+  Expr expr;
+  AttributeContent result;
+}
+{
+  ( t=< ATTRIBUTE_TEXT > { result = _f.textContent(t.image); }
+  | < EMBEDD_ATTR > expr=blockContent() { result = _f.embeddedExpr(expr); token_source.SwitchTo(ATTR_CONTENT); } < BLOCK_END >
+  )
+  { return result; }
+}
+
+Expr blockContent() :
+{
+  List<Expr> exprs;
+  Expr expr;
+}
+{
+  { exprs=_f.list(); }
+  expr = statement()
+  { exprs.add(expr); }
+  (
+    ";"
+    (
+      expr = statement()
+      { exprs.add(expr); }
+    )?
+  )*
+  { expr = _f.block(exprs); }
+  { return expr; }
+}
+
+Expr.Tuple.Coord coord() :
+{
+  Token t;
+  boolean optional = false;
+  Expr expr;
+}
+{
+	t=< NAME > ("?" { optional = true; } )? "->" expr=expr()
+	{ return _f.coord(t.image, optional, expr); }
+}
+
+Expr i18n() :
+{
+  I18NBuilder result = _f.i18nBuilder();
+}
+{
+  "#(" i18nContents(result) ")"
+  { return result.build(); }
+}
+
+void i18nContents(I18NBuilder result) :
+{
+  Token s, l;
+}
+{
+  (
+    i18nEntry(result)
+    
+    (
+      ","
+	  i18nEntry(result)
+    )*
+  )
+}
+
+void i18nEntry(I18NBuilder result) :
+{
+  Token s, l;
+}
+{
+  ( s=< STRING > l=< LANGTAG >
+	{ result.add(s.image, l.image); }
+  | s=< NAME > ":" "{"
+	  i18nContents(result.suffix(s.image))
+	"}"
+  )
+}
+
+Args args() :
+{
+  Args result = _f.args();
+}
+{
+  (
+    arg(result)
+    (
+      ","
+      (        arg(result)
+      |
+        // Note: Allow a single trailing comma at the end of the argument list to allow to uniformly format all lines
+        // of an argument list in a one-argument-per line invocation style.
+        { return result; }
+      )
+    )*
+  )?
+  { return result; }
+}
+
+void arg(Args args) :
+{
+  Expr e;
+  Token t;
+  String name = null;
+}
+{
+  ( LOOKAHEAD(< NAME > ":")
+	t=< NAME >
+    ":"
+    { name = t.image; }
+  )?
+  e=expr()
+  { _f.addArg(args, name, e); }
+}
+
+Expr modelLiteral() :
+{
+  Expr result;
+  Token n;
+}
+{
+  ( n=< MODULE >
+    { result=_f.moduleLiteral(n.image); }
+  | n=< TYPE >
+    { result=_f.typeLiteral(n.image); }
+  | n=< PART >
+    { result=_f.partLiteral(n.image); }
+  | n=< SINGLETON >
+    { result=_f.singletonLiteral(n.image); }
+  )
+  { return result; }
+}

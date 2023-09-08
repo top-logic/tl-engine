@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27215_Historic_multiple_references"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27205_KeyAttributes_for_Association"
+			module="tl"
+		/>
+		<dependency name="Ticket_27204_Update_annotations_storage"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- Update database model -->
+		<processor class="com.top_logic.knowledge.service.migration.CreateTablesProcessor">
+			<tables>
+				<table name="hasHistoricValue"
+					compress="0"
+					dbname="HAS_HISTORIC_VALUE"
+					pkey-storage="false"
+				>
+					<columns>
+						<column name="BRANCH"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="IDENTIFIER"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="id"
+						/>
+						<column name="REV_MAX"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="REV_MIN"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="REV_CREATE"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="SOURCE_TYPE"
+							binary="true"
+							mandatory="true"
+							precision="0"
+							size="150"
+							type="string"
+						/>
+						<column name="SOURCE_ID"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="id"
+						/>
+						<column name="DEST_TYPE"
+							binary="true"
+							mandatory="true"
+							precision="0"
+							size="150"
+							type="string"
+						/>
+						<column name="DEST_ID"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="id"
+						/>
+						<column name="DEST_REV"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="DEST_BRC"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="META_ATTRIBUTE_ID"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="id"
+						/>
+						<column name="SORT_ORDER"
+							binary="false"
+							mandatory="false"
+							precision="0"
+							size="12"
+							type="int"
+						/>
+					</columns>
+					<keys>
+						<key name="REV_MAX"
+							compress="0"
+							kind="default"
+						>
+							<columns>
+								<column name="REV_MAX"/>
+							</columns>
+						</key>
+						<key name="REV_MIN"
+							compress="0"
+							kind="default"
+						>
+							<columns>
+								<column name="REV_MIN"/>
+							</columns>
+						</key>
+						<key name="SOURCE"
+							compress="0"
+							kind="default"
+						>
+							<columns>
+								<column name="BRANCH"/>
+								<column name="SOURCE_ID"/>
+								<column name="META_ATTRIBUTE_ID"/>
+								<column name="REV_MAX"/>
+							</columns>
+						</key>
+						<key name="META_ATTRIBUTE"
+							compress="0"
+							kind="default"
+						>
+							<columns>
+								<column name="BRANCH"/>
+								<column name="META_ATTRIBUTE_ID"/>
+								<column name="REV_MAX"/>
+							</columns>
+						</key>
+						<key name="DEST"
+							compress="0"
+							kind="default"
+						>
+							<columns>
+								<column name="BRANCH"/>
+								<column name="DEST_ID"/>
+								<column name="META_ATTRIBUTE_ID"/>
+								<column name="REV_MAX"/>
+							</columns>
+						</key>
+					</keys>
+					<primary-key>
+						<columns>
+							<column name="BRANCH"/>
+							<column name="IDENTIFIER"/>
+							<column name="REV_MAX"/>
+						</columns>
+					</primary-key>
+				</table>
+				<table name="hasMixedValue"
+					compress="0"
+					dbname="HAS_MIXED_VALUE"
+					pkey-storage="false"
+				>
+					<columns>
+						<column name="BRANCH"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="IDENTIFIER"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="id"
+						/>
+						<column name="REV_MAX"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="REV_MIN"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="REV_CREATE"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="SOURCE_TYPE"
+							binary="true"
+							mandatory="true"
+							precision="0"
+							size="150"
+							type="string"
+						/>
+						<column name="SOURCE_ID"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="id"
+						/>
+						<column name="DEST_TYPE"
+							binary="true"
+							mandatory="true"
+							precision="0"
+							size="150"
+							type="string"
+						/>
+						<column name="DEST_ID"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="id"
+						/>
+						<column name="DEST_REV"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="DEST_BRC"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="long"
+						/>
+						<column name="META_ATTRIBUTE_ID"
+							binary="false"
+							mandatory="true"
+							precision="0"
+							size="20"
+							type="id"
+						/>
+						<column name="SORT_ORDER"
+							binary="false"
+							mandatory="false"
+							precision="0"
+							size="12"
+							type="int"
+						/>
+					</columns>
+					<keys>
+						<key name="REV_MAX"
+							compress="0"
+							kind="default"
+						>
+							<columns>
+								<column name="REV_MAX"/>
+							</columns>
+						</key>
+						<key name="REV_MIN"
+							compress="0"
+							kind="default"
+						>
+							<columns>
+								<column name="REV_MIN"/>
+							</columns>
+						</key>
+						<key name="SOURCE"
+							compress="0"
+							kind="default"
+						>
+							<columns>
+								<column name="BRANCH"/>
+								<column name="SOURCE_ID"/>
+								<column name="META_ATTRIBUTE_ID"/>
+								<column name="REV_MAX"/>
+							</columns>
+						</key>
+						<key name="DEST"
+							compress="0"
+							kind="default"
+						>
+							<columns>
+								<column name="BRANCH"/>
+								<column name="DEST_ID"/>
+								<column name="META_ATTRIBUTE_ID"/>
+								<column name="REV_MAX"/>
+							</columns>
+						</key>
+						<key name="META_ATTRIBUTE"
+							compress="0"
+							kind="default"
+						>
+							<columns>
+								<column name="BRANCH"/>
+								<column name="META_ATTRIBUTE_ID"/>
+								<column name="REV_MAX"/>
+							</columns>
+						</key>
+					</keys>
+					<primary-key>
+						<columns>
+							<column name="BRANCH"/>
+							<column name="IDENTIFIER"/>
+							<column name="REV_MAX"/>
+						</columns>
+					</primary-key>
+				</table>
+			</tables>
+		</processor>
+
+		<processor class="com.top_logic.element.model.migration.Ticket27215InsertHistoryType"/>
+
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_27215_Historic_multiple_references.db.transform.xslt"
+		/>
+
+		<!-- Update TL-Model -->
+		<create-datatype name="tl.model:HistoryType"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="com.top_logic.dob.meta.MOReference$HistoryType"
+			/>
+		</create-datatype>
+		<create-property name="tl.model:TLAssociationEnd#historyType"
+			type="tl.model:HistoryType"
+		/>
+
+		<create-property name="tl.model:TLReference#historyType"
+			type="tl.model:HistoryType"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<get-value attribute="end"/>
+								<get-value attribute="historyType"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_27215_Historic_multiple_references.model.transform.xslt"
+		/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

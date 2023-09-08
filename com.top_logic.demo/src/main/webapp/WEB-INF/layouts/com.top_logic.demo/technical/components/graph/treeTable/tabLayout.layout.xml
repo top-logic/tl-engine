@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="">
+		<tabLabel key="dynamic.d947916e-1dda-4c61-bd94-33e49e008c28">
+			<en>Tree table</en>
+			<de>Baumtabelle</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/graph/treeTable/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

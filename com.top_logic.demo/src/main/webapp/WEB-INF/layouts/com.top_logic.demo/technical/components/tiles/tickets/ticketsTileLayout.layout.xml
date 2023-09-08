@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="ID_95686206_ae59_4954_8afb_bd0ba2e69143"
+		securityDomain="SecurityStructure"
+		tileName="ID_48f07cda_9c34_4878_a33f_9c9aec4a33de"
+	>
+		<tileLabel key="dynamic.9bfb4154-e4c3-4c71-b10e-f56e63d640af">
+			<en>Open issues</en>
+			<de>Offene Tickets</de>
+		</tileLabel>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
+			model="selection(com.top_logic.demo/technical/components/tiles/releasesTileLayout.layout.xml#Table)"
+		>
+			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[release -> {
+    open = $release.referers(`test.tiles:Ticket#planedIn`);
+    byState = $open.indexReduce(t -> $t.get(`test.tiles:Ticket#state`), 0, cnt -> t -> $cnt + 1);
+    #("{0} Tickets, davon {1} in Arbeit, {2} zugewiesen, {3} neu"@en, "{0} Tickts, {1} aktive, {2} assigned, {3} new"@en)
+        .fill($open.size(), 
+            $byState[`test.tiles:TicketState#ACTIVE`],
+            $byState[`test.tiles:TicketState#ASSIGNED`], 
+            $byState[`test.tiles:TicketState#NEW`])
+}]]></text>
+			</description>
+		</preview>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tiles/tickets/ticketsInnerLayout.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

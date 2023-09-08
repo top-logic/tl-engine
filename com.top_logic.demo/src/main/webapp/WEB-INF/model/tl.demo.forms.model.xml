@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.demo.forms">
+		<class name="DuplicateObjectInput">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="newName"/>
+						<field attribute="text"/>
+						<field attribute="singleStructure"/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="newName"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> obj -> {
+    origName = $obj
+        .get(`tl.demo.forms:DuplicateObjectInput#orig`)
+        .get(`DemoTypes:A#name`);
+    $value == $origName ? #("Es darf nicht derselbe Name wie im Original verwendet werden"@de) : null;
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="text"
+					type="tl.core:String"
+				/>
+				<reference name="singleStructure"
+					kind="forwards"
+					navigate="true"
+					type="DemoTypes:DemoTypes.C.All"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="form -> $form.container().get(`DemoTypes:A#structure`)"/>
+						</options>
+						<reference-display value="drop-down"/>
+					</annotations>
+				</reference>
+				<reference name="orig"
+					kind="forwards"
+					navigate="true"
+					type="DemoTypes:A"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

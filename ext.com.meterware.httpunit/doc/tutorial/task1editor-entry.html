@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>HttpUnit Tutorial - create pool editor - step 3</title>
+<LINK REL="stylesheet" HREF="tutorial.css" TYPE="text/css">
+</head>
+
+<body>
+<p class="location"><a href="index.html">Tutorial</a>
+<img src="arrow_yellow.gif" width=13 height=9 align=bottom ALT="-&gt;"> <a href="task1.html">Task 1</a>
+<img src="arrow_yellow.gif" width=13 height=9 align=bottom ALT="-&gt;"> Step 3: Submitting edits</p>
+<h1>Submitting a Form</h1>
+<p class="goals">In this step, you will learn how to:
+<br />&bull; Check form default parameter values
+<br />&bull; Create a request from a form
+<br />&bull; Override the default parameter values in a request
+<br />&bull; Submit a form and get a response</p>
+<p>We now have a form which can generate POST requests to define the betting pool. Our next step will be to build
+the code which handles these requests. We will start by simply recording changes, and defer validation until the
+administrator attempts to open the pool. For our demonstration application, we will use in-memory persistence only, and
+will provide ourselves with a way to clear it so that each <code>JUnit</code> test can run independantly.
+
+<h2>Testing pool display</h2>
+
+<p>The first thing we want to test and implement is the display of the current state of the pool. We will do this by
+setting the state directly, using the supplied entity classes and then invoke the form to display the pool. At this time,
+we will also add the set up code to clear the pool before each test:</p>
+<pre class="test-code">
+<b>public void</b> setUp() <b>throws</b> Exception {
+    BettingPool.reset();
+}
+
+<b>public void</b> testPoolDisplay() <b>throws</b> Exception {
+    BettingPool.getGames()[0].setAwayTeam( "New York Jets" );                                // (1) set up data
+    BettingPool.getGames()[0].setHomeTeam( "Philadelphia Eagles" );
+    BettingPool.getGames()[2].setAwayTeam( "St. Louis Rams" );
+    BettingPool.getGames()[2].setHomeTeam( "Chicago Bears" );
+    BettingPool.setTieBreakerIndex(2);
+
+    ServletRunner sr = <b>new</b> ServletRunner( "web.xml" );
+    ServletUnitClient client = sr.newClient();
+    client.setAuthorization( "aUser", "pool-admin" );
+    WebResponse response = client.getResponse( "http://localhost/PoolEditor" );
+
+    WebForm form = response.getFormWithID( "pool" );
+    assertNotNull( "No form found with ID 'pool'", form );
+
+    assertEquals( "Away team 0", "New York Jets", form.getParameterValue( "away0" ) );       // (2) check team names
+    assertEquals( "Home team 0", "Philadelphia Eagles", form.getParameterValue( "home0" ) );
+    assertEquals( "Away team 1", "", form.getParameterValue( "away1" ) );
+    assertEquals( "Home team 1", "", form.getParameterValue( "home1" ) );
+    assertEquals( "Away team 2", "St. Louis Rams", form.getParameterValue( "away2" ) );
+    assertEquals( "Home team 2", "Chicago Bears", form.getParameterValue( "home2" ) );
+
+    assertEquals( "Tie breaker game", "2", form.getParameterValue( "tiebreaker" ) );         // (3) check radio button
+}
+</pre>
+<p>Here we are:<ol>
+<li>Setting up the data that the servlet which read to create the entry form. Here we are using a simple in-memory
+persistence strategy. If the servlet accessed the database, we would have to do JDBC calls here.</li>
+<li>Reading the names of the teams and comparing them to what we initialized. Note the test for the skipped game to
+verify that the defaults come through.</li>
+<li>Checking the state of the radio button. Note that we can use the same method <code>WebForm.getParameterValue</code>
+for each parameter, no matter its type.</li></ol></p>
+
+<p>As before, the above test should initially fail. We then make it work by changing the loop in <code>printBody</code>
+as follows:</p>
+<pre class="servlet-code">
+    BettingPoolGame[] games = BettingPool.getGames();
+    <b>for</b> (int i = 0; i &lt; games.length; i++) {
+        pw.println( "&lt;tr&gt;&lt;td&gt;&lt;input name='home" + i + "' value='" + games[i].getHomeTeam() + "' &gt;&lt;/td&gt;" );
+        pw.println( "&lt;td&gt;&lt;input name='away" + i + "' value='" + games[i].getAwayTeam() + "'&gt;&lt;/td&gt;" );
+        pw.print( "&lt;td&gt;&lt;input type='radio' name='tiebreaker' value='" + i + "'" );
+        if (i == BettingPool.getTieBreakerIndex()) pw.print( " checked" );
+        pw.println( " /&gt;&lt;/td&gt;&lt;/tr&gt;" );
+    }
+</pre>
+
+<h2>Testing pool entry</h2>
+
+<p>Now that we know we can display the current state of the pool, we will verify that we can use the form to change it
+as well:<p />
+<pre class="test-code">
+<b>public void</b> testPoolEntry() <b>throws</b> Exception {
+    ServletRunner sr = <b>new</b> ServletRunner( "web.xml" );
+    ServletUnitClient client = sr.newClient();
+    client.setAuthorization( "aUser", "pool-admin" );
+    WebResponse response = client.getResponse( "http://localhost/PoolEditor" );
+
+    WebForm form = response.getFormWithID( "pool" );
+    assertNotNull( "No form found with ID 'pool'", form );
+
+    form.setParameter( "away1", "Detroit Lions" );                           // (1) enter values into the form
+    form.setParameter( "home1", "Denver Broncos" );
+    form.setParameter( "tiebreaker", "1" );
+
+    SubmitButton saveButton = form.getSubmitButton( "save", "Save" );        // (2) select the desired submit button
+    response = form.submit( saveButton );                                    // (3) submit the form
+
+    assertEquals( "Away team 0", "", form.getParameterValue( "away0" ) );    // (4) verify the response
+    assertEquals( "Home team 0", "", form.getParameterValue( "home0" ) );
+    assertEquals( "Away team 1", "Detroit Lions", form.getParameterValue( "away1" ) );
+    assertEquals( "Home team 1", "Denver Broncos", form.getParameterValue( "home1" ) );
+
+    assertEquals( "Tie breaker game", "1", form.getParameterValue( "tiebreaker" ) );
+}
+</pre>
+<p>This is our first form submission. Take note:<ol>
+<li>We make a call for each parameter that we want to set. Any parameters we do not set will be submitted with their
+default values.</li>
+<li>Since there is more than one button in the form, we ask for the one we want by name and value.</li>
+<li>We submit the form, specifying the desired button.</li>
+<li>We can use the same methods as above to check the new state of the pool. Alternately, we could have examined the
+BettingPool object directly.</li></ol></p>
+
+<p>This test will fail with a 405 response, since we have not defined a handler for the POST message.
+We do so now:</p>
+<pre class="servlet-code">
+<b>protected void</b> doPost( HttpServletRequest request, HttpServletResponse response )
+        <b>throws</b> ServletException, IOException {
+    updateBettingPool( request );
+    response.setContentType( "text/html" );
+    PrintWriter pw = response.getWriter();
+
+    pw.println( "&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;" );
+    printBody( pw );
+    pw.println( "&lt;/body&gt;&lt;/html&gt;" );
+}
+
+<b>void</b> updateBettingPool( HttpServletRequest request ) {
+    BettingPoolGame[] games = BettingPool.getGames();
+    <b>for</b> (int i = 0; i < games.length; i++) {
+        games[i].setAwayTeam( request.getParameter( "away" + i ) );
+        games[i].setHomeTeam( request.getParameter( "home" + i ) );
+    }
+    BettingPool.setTieBreakerIndex( getTieBreakerIndex( request ) );
+}
+
+<b>private</b> int getTieBreakerIndex( HttpServletRequest request ) {
+    <b>try</b> {
+        <b>return</b> Integer.parseInt( request.getParameter( "tiebreaker" ) );
+    } <b>catch</b> (NumberFormatException e) {
+        <b>return</b> 0;
+    }
+}
+</pre>
+<p>Note that we are using the same <code>printBody</code> method as the <code>doGet</code> method does.</p>
+
+<p>We now have the ability to edit the pool entries. Our <a href="task1editor-validation.html">next step</a> is to add
+the validation and handle opening the pool to bettors.
+
+</body></html>
+

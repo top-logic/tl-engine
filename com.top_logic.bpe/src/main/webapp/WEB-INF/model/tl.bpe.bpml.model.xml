@@ -1,0 +1,1241 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.bpe.bpml">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.bpe.bpml.model.impl"
+				interface-package="com.top_logic.bpe.bpml.model"
+			/>
+			<factory value="com.top_logic.bpe.bpml.model.TlBpeBpmlFactory"/>
+		</annotations>
+		<datatype name="BPTimeGranularity"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<enum-storage enum="com.top_logic.bpe.execution.engine.BPTimeGranularity"/>
+		</datatype>
+		<datatype name="DisplayDescription"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="FORM_DEFINITION"/>
+				<export-binding>
+					<store-config
+						root-tag="form"
+						root-type="com.top_logic.model.form.definition.FormDefinition"
+					/>
+				</export-binding>
+			</annotations>
+			<configuration-storage config-interface="com.top_logic.model.form.definition.FormDefinition"/>
+		</datatype>
+		<enum name="ApprovalState">
+			<annotations>
+				<system-enum/>
+			</annotations>
+			<classifier name="Development"/>
+			<classifier name="Released"/>
+			<classifier name="Retired"/>
+		</enum>
+		<interface name="AnnotationContainer">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="annotationDefinitions"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					type="TextAnnotation"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<interface name="Described">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="description"
+					type="tl.model.wysiwyg:Html"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="1000.0"/>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+		<interface name="EventDefinition">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="event"
+					aggregate="true"
+					inverse-reference="definition"
+					kind="backwards"
+					type="Event"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<class name="CancelEventDefinition">
+			<generalizations>
+				<generalization type="EventDefinition"/>
+			</generalizations>
+			<annotations>
+				<table name="BPElement"/>
+				<instance-presentation icon="theme:ICON_BAN"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.CancelEventDefinitionImpl"/>
+			</annotations>
+		</class>
+		<class name="CompensateEventDefinition">
+			<generalizations>
+				<generalization type="EventDefinition"/>
+			</generalizations>
+			<annotations>
+				<table name="BPElement"/>
+				<instance-presentation icon="theme:ICON_UNDO"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.CompensateEventDefinitionImpl"/>
+			</annotations>
+		</class>
+		<class name="ConditionalEventDefinition">
+			<generalizations>
+				<generalization type="EventDefinition"/>
+			</generalizations>
+			<annotations>
+				<table name="BPElement"/>
+				<instance-presentation icon="theme:ICON_QUESTION"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ConditionalEventDefinitionImpl"/>
+			</annotations>
+		</class>
+		<class name="ErrorEventDefinition">
+			<generalizations>
+				<generalization type="EventDefinition"/>
+			</generalizations>
+			<annotations>
+				<table name="BPElement"/>
+				<instance-presentation icon="theme:ICON_EXCLAMATION"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ErrorEventDefinitionImpl"/>
+			</annotations>
+		</class>
+		<class name="EscalationEventDefinition">
+			<generalizations>
+				<generalization type="EventDefinition"/>
+			</generalizations>
+			<annotations>
+				<table name="BPElement"/>
+				<instance-presentation icon="theme:ICON_PHONE"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.EscalationEventDefinitionImpl"/>
+			</annotations>
+		</class>
+		<class name="MessageEventDefinition">
+			<generalizations>
+				<generalization type="EventDefinition"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:ICON_ENVELOPE"/>
+				<table name="BPElement"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.MessageEventDefinitionImpl"/>
+			</annotations>
+		</class>
+		<class name="SignalEventDefinition">
+			<generalizations>
+				<generalization type="EventDefinition"/>
+				<generalization type="Externalized"/>
+			</generalizations>
+			<annotations>
+				<table name="BPElement"/>
+				<instance-presentation icon="theme:ICON_BOLT"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.SignalEventDefinitionImpl"/>
+			</annotations>
+		</class>
+		<class name="TerminateEventDefinition">
+			<generalizations>
+				<generalization type="EventDefinition"/>
+			</generalizations>
+			<annotations>
+				<table name="BPElement"/>
+				<instance-presentation icon="theme:ICON_STOP_CIRCLE"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.TerminateEventDefinitionImpl"/>
+			</annotations>
+		</class>
+		<class name="TimerEventDefinition">
+			<generalizations>
+				<generalization type="EventDefinition"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:ICON_CLOCK"/>
+				<table name="BPElement"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.TimerEventDefinitionImpl"/>
+			</annotations>
+			<attributes>
+				<property name="delayInMillis"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<bpml-extension/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.bpe.bpml.model.impl.TimerEventDefinitionImpl#calculateDelayInMillis()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<property name="delayInUnit"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<bpml-extension/>
+						<value-range min="1.0"/>
+						<sort-order value="11.0"/>
+					</annotations>
+				</property>
+				<property name="timeUnit"
+					type="BPTimeGranularity"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="12.0"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<interface name="Externalized">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="extId"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+		<interface name="Annotated">
+			<generalizations>
+				<generalization type="Externalized"/>
+			</generalizations>
+			<attributes>
+				<reference name="annotationAssociations"
+					inverse-reference="source"
+					kind="backwards"
+					multiple="true"
+					type="AnnotationAssociation"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<class name="AnnotationAssociation">
+			<generalizations>
+				<generalization type="Externalized"/>
+			</generalizations>
+			<annotations>
+				<table name="BPAssociation"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.AnnotationAssociationImpl"/>
+			</annotations>
+			<attributes>
+				<reference name="source"
+					inverse-reference="annotationAssociations"
+					kind="forwards"
+					mandatory="true"
+					type="Annotated"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="source"
+								storage-type="BPAssociation"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="target"
+					inverse-reference="annotationAssociations"
+					kind="forwards"
+					mandatory="true"
+					type="TextAnnotation"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="target"
+								storage-type="BPAssociation"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<interface name="FlowSource">
+			<generalizations>
+				<generalization type="Externalized"/>
+			</generalizations>
+		</interface>
+		<interface name="FlowTarget">
+			<generalizations>
+				<generalization type="Externalized"/>
+			</generalizations>
+		</interface>
+		<interface name="Named">
+			<generalizations>
+				<generalization type="Externalized"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<sort-order value="1.0"/>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+		<class name="Collaboration">
+			<generalizations>
+				<generalization type="Named"/>
+				<generalization type="Iconified"/>
+				<generalization type="Described"/>
+				<generalization type="AnnotationContainer"/>
+			</generalizations>
+			<annotations>
+				<table name="BPCollaboration"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.CollaborationImpl"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+				<property name="myTasksIcon"
+					type="tl.core:Icon"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="2000.0"/>
+					</annotations>
+				</property>
+				<property name="myTasksTitle"
+					type="tl.core:String"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="2001.0"/>
+					</annotations>
+				</property>
+				<property name="myTasksDescription"
+					type="tl.model.wysiwyg:Html"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="2002.0"/>
+					</annotations>
+				</property>
+				<property name="myProcessesIcon"
+					type="tl.core:Icon"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="2010.0"/>
+					</annotations>
+				</property>
+				<property name="myProcessesTitle"
+					type="tl.core:String"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="2011.0"/>
+					</annotations>
+				</property>
+				<property name="myProcessesDescription"
+					type="tl.model.wysiwyg:Html"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="2012.0"/>
+					</annotations>
+				</property>
+				<reference name="state"
+					kind="forwards"
+					type="ApprovalState"
+				>
+					<annotations>
+						<bpml-extension/>
+						<visibility value="read-only"/>
+						<default-value>
+							<classifier value="Development"/>
+						</default-value>
+						<sort-order value="4.0"/>
+					</annotations>
+				</reference>
+				<reference name="participants"
+					composite="true"
+					inverse-reference="collaboration"
+					kind="forwards"
+					multiple="true"
+					type="Participant"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="messageFlows"
+					composite="true"
+					inverse-reference="collaboration"
+					kind="forwards"
+					multiple="true"
+					type="MessageFlow"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="processes"
+					composite="true"
+					inverse-reference="collaboration"
+					kind="forwards"
+					multiple="true"
+					type="Process"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<property name="diagram"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<interface name="Edge">
+			<generalizations>
+				<generalization type="Named"/>
+				<generalization type="Annotated"/>
+			</generalizations>
+			<attributes>
+				<reference name="process"
+					aggregate="true"
+					inverse-reference="edges"
+					kind="backwards"
+					type="Process"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="source"
+					inverse-reference="outgoing"
+					kind="forwards"
+					mandatory="true"
+					type="Node"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="source"
+								storage-type="BPEdge"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="target"
+					inverse-reference="incomming"
+					kind="forwards"
+					mandatory="true"
+					type="Node"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="target"
+								storage-type="BPEdge"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<class name="SequenceFlow">
+			<generalizations>
+				<generalization type="Edge"/>
+			</generalizations>
+			<annotations>
+				<table name="BPEdge"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.SequenceFlowImpl"/>
+			</annotations>
+			<attributes>
+				<property name="rule"
+					type="tl.model.search:Expr"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Lane">
+			<generalizations>
+				<generalization type="Named"/>
+				<generalization type="LaneSet"/>
+				<generalization type="Annotated"/>
+			</generalizations>
+			<annotations>
+				<table name="BPElement"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.LaneImpl"/>
+			</annotations>
+			<attributes>
+				<reference name="owner"
+					aggregate="true"
+					inverse-reference="lanes"
+					kind="backwards"
+					type="LaneSet"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="nodes"
+					inverse-reference="lane"
+					kind="backwards"
+					multiple="true"
+					type="Node"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="MessageFlow">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+			<annotations>
+				<table name="BPFlow"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.MessageFlowImpl"/>
+			</annotations>
+			<attributes>
+				<reference name="collaboration"
+					aggregate="true"
+					inverse-reference="messageFlows"
+					kind="backwards"
+					type="Collaboration"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="source"
+					kind="forwards"
+					mandatory="true"
+					type="FlowSource"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="source"
+								storage-type="BPFlow"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="target"
+					kind="forwards"
+					mandatory="true"
+					type="FlowTarget"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="target"
+								storage-type="BPFlow"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<property name="connectExpession"
+					type="tl.model.search:Expr"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="505.0"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<interface name="Node">
+			<generalizations>
+				<generalization type="Named"/>
+				<generalization type="Annotated"/>
+			</generalizations>
+			<attributes>
+				<reference name="process"
+					aggregate="true"
+					inverse-reference="nodes"
+					kind="backwards"
+					type="Process"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="incomming"
+					inverse-reference="target"
+					kind="backwards"
+					multiple="true"
+					type="Edge"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="outgoing"
+					inverse-reference="source"
+					kind="backwards"
+					multiple="true"
+					type="Edge"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="lane"
+					inverse-reference="nodes"
+					kind="forwards"
+					type="Lane"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<interface name="Event">
+			<generalizations>
+				<generalization type="Node"/>
+			</generalizations>
+			<attributes>
+				<reference name="definition"
+					composite="true"
+					inverse-reference="event"
+					kind="forwards"
+					type="EventDefinition"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<class name="EndEvent">
+			<generalizations>
+				<generalization type="Event"/>
+				<generalization type="FlowSource"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.EndEventImpl"/>
+			</annotations>
+		</class>
+		<interface name="IntermediateEvent">
+			<generalizations>
+				<generalization type="Event"/>
+			</generalizations>
+		</interface>
+		<class name="BoundaryEvent">
+			<generalizations>
+				<generalization type="IntermediateEvent"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.BoundaryEventImpl"/>
+			</annotations>
+			<attributes>
+				<property name="cancelActivity"
+					mandatory="true"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+						<default-value>
+							<boolean value="true"/>
+						</default-value>
+					</annotations>
+				</property>
+				<reference name="attachedTo"
+					inverse-reference="boundaryEvents"
+					kind="forwards"
+					type="Task"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="IntermediateCatchEvent">
+			<generalizations>
+				<generalization type="IntermediateEvent"/>
+				<generalization type="FlowTarget"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.IntermediateCatchEventImpl"/>
+			</annotations>
+		</class>
+		<class name="IntermediateThrowEvent">
+			<generalizations>
+				<generalization type="IntermediateEvent"/>
+				<generalization type="FlowSource"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.IntermediateThrowEventImpl"/>
+			</annotations>
+		</class>
+		<class name="IntermediateMessageThrowEvent">
+			<generalizations>
+				<generalization type="IntermediateThrowEvent"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.IntermediateMessageThrowEventImpl"/>
+			</annotations>
+		</class>
+		<class name="StartEvent">
+			<generalizations>
+				<generalization type="Event"/>
+				<generalization type="FlowTarget"/>
+				<generalization type="Iconified"/>
+				<generalization type="Described"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.StartEventImpl"/>
+			</annotations>
+		</class>
+		<interface name="Gateway">
+			<generalizations>
+				<generalization type="Node"/>
+			</generalizations>
+		</interface>
+		<interface name="DefaultGateway">
+			<generalizations>
+				<generalization type="Gateway"/>
+			</generalizations>
+			<attributes>
+				<reference name="defaultFlow"
+					kind="forwards"
+					type="SequenceFlow"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="self -> $self.get(`tl.bpe.bpml:Node#outgoing`)"/>
+						</options>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<class name="ComplexGateway">
+			<generalizations>
+				<generalization type="DefaultGateway"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ComplexGatewayImpl"/>
+			</annotations>
+		</class>
+		<class name="ExclusiveGateway">
+			<generalizations>
+				<generalization type="DefaultGateway"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ExclusiveGatewayImpl"/>
+			</annotations>
+			<attributes>
+				<property name="automatic"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="InclusiveGateway">
+			<generalizations>
+				<generalization type="DefaultGateway"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.InclusiveGatewayImpl"/>
+			</annotations>
+		</class>
+		<class name="EventBasedGateway">
+			<generalizations>
+				<generalization type="Gateway"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.EventBasedGatewayImpl"/>
+			</annotations>
+		</class>
+		<class name="ParallelGateway">
+			<generalizations>
+				<generalization type="Gateway"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ParallelGatewayImpl"/>
+			</annotations>
+		</class>
+		<class name="Task">
+			<generalizations>
+				<generalization type="Node"/>
+				<generalization type="Iconified"/>
+				<generalization type="Described"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.TaskImpl"/>
+			</annotations>
+			<attributes>
+				<property name="title"
+					type="tl.model.search:Template"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="501.0"/>
+					</annotations>
+				</property>
+				<reference name="boundaryEvents"
+					inverse-reference="attachedTo"
+					kind="backwards"
+					multiple="true"
+					type="BoundaryEvent"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="BusinessRuleTask">
+			<generalizations>
+				<generalization type="Task"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.BusinessRuleTaskImpl"/>
+			</annotations>
+		</class>
+		<class name="CallActivity">
+			<generalizations>
+				<generalization type="Task"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.CallActivityImpl"/>
+			</annotations>
+		</class>
+		<class name="ManualTask">
+			<generalizations>
+				<generalization type="Task"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ManualTaskImpl"/>
+			</annotations>
+			<attributes>
+				<property name="displayDescription"
+					type="DisplayDescription"
+				>
+					<annotations>
+						<gui-type expr="task -> $task.get(`tl.bpe.bpml:Node#process`).get(`tl.bpe.bpml:Process#participant`).get(`tl.bpe.bpml:Participant#modelType`)"/>
+						<template-builder>
+							<function class="com.top_logic.bpe.layout.execution.ManualTaskTemplateBuilder"/>
+						</template-builder>
+						<bpml-extension/>
+						<sort-order value="800.0"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="ReceiveTask">
+			<generalizations>
+				<generalization type="Task"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ReceiveTaskImpl"/>
+			</annotations>
+		</class>
+		<class name="ScriptTask">
+			<generalizations>
+				<generalization type="Task"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ScriptTaskImpl"/>
+			</annotations>
+		</class>
+		<class name="SendTask">
+			<generalizations>
+				<generalization type="Task"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.SendTaskImpl"/>
+			</annotations>
+			<attributes>
+				<property name="receiverRule"
+					type="tl.model.search:Expr"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="401.0"/>
+					</annotations>
+				</property>
+				<property name="contentTemplate"
+					type="tl.model.search:Template"
+				>
+					<annotations>
+						<bpml-extension/>
+						<multi-line rows="10"/>
+						<sort-order value="503.0"/>
+					</annotations>
+				</property>
+				<property name="subjectTemplate"
+					type="tl.model.search:Template"
+				>
+					<annotations>
+						<bpml-extension/>
+						<multi-line/>
+						<sort-order value="502.0"/>
+					</annotations>
+				</property>
+				<reference name="receiverGroups"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="tl.accounts:Group"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="400.0"/>
+						<export-binding>
+							<impl class="com.top_logic.model.search.providers.AttributeValueBindingByExpression"
+								key-attributes="name"
+								key-fun="g -> $g.get(`tl.accounts:Group#name`)"
+								reference-tag="group"
+								resolver-fun="name -> all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#name`) == $name)"
+							/>
+						</export-binding>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="ServiceTask">
+			<generalizations>
+				<generalization type="Task"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ServiceTaskImpl"/>
+			</annotations>
+			<attributes>
+				<property name="action"
+					type="tl.model.search:Expr"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="SubProcess">
+			<generalizations>
+				<generalization type="Task"/>
+				<generalization type="Process"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.SubProcessImpl"/>
+			</annotations>
+		</class>
+		<class name="UserTask">
+			<generalizations>
+				<generalization type="Task"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.UserTaskImpl"/>
+			</annotations>
+		</class>
+		<class name="Participant">
+			<generalizations>
+				<generalization type="Named"/>
+				<generalization type="FlowSource"/>
+				<generalization type="FlowTarget"/>
+				<generalization type="Annotated"/>
+			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ParticipantImpl"/>
+			</annotations>
+			<attributes>
+				<reference name="process"
+					inverse-reference="participant"
+					kind="forwards"
+					type="Process"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="modelType"
+					kind="forwards"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<bpml-extension/>
+						<options>
+							<sub-classes base-class="tl.bpe.execution:ProcessExecution"/>
+						</options>
+						<sort-order value="3.0"/>
+					</annotations>
+				</reference>
+				<property name="taskTitle"
+					type="tl.model.search:Template"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="501.0"/>
+					</annotations>
+				</property>
+				<reference name="collaboration"
+					aggregate="true"
+					inverse-reference="participants"
+					kind="backwards"
+					type="Collaboration"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<property name="dynamicName"
+					type="tl.model.search:Expr"
+				>
+					<annotations>
+						<sort-order value="500.0"/>
+					</annotations>
+				</property>
+				<property name="displayDescription"
+					type="DisplayDescription"
+				>
+					<annotations>
+						<gui-type expr="model -> $model.get(`tl.bpe.bpml:Participant#modelType`)"/>
+						<template-builder>
+							<function class="com.top_logic.bpe.layout.execution.ParticipantTemplateBuilder"/>
+						</template-builder>
+						<bpml-extension/>
+						<sort-order value="800.0"/>
+					</annotations>
+				</property>
+				<property name="exportDescription"
+					type="DisplayDescription"
+				>
+					<annotations>
+						<gui-type expr="model -> $model.get(`tl.bpe.bpml:Participant#modelType`)"/>
+						<template-builder>
+							<function class="com.top_logic.bpe.layout.execution.ParticipantTemplateBuilder"/>
+						</template-builder>
+						<bpml-extension/>
+						<sort-order value="801.0"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Process">
+			<generalizations>
+				<generalization type="Externalized"/>
+				<generalization type="LaneSet"/>
+				<generalization type="AnnotationContainer"/>
+			</generalizations>
+			<annotations>
+				<table name="BPElement"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ProcessImpl"/>
+			</annotations>
+			<attributes>
+				<reference name="collaboration"
+					aggregate="true"
+					inverse-reference="processes"
+					kind="backwards"
+					type="Collaboration"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<property name="isExecutable"
+					mandatory="true"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+				<reference name="participant"
+					inverse-reference="process"
+					kind="backwards"
+					type="Participant"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="nodes"
+					composite="true"
+					inverse-reference="process"
+					kind="forwards"
+					multiple="true"
+					type="Node"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="edges"
+					composite="true"
+					inverse-reference="process"
+					kind="forwards"
+					multiple="true"
+					type="Edge"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="TextAnnotation">
+			<generalizations>
+				<generalization type="Externalized"/>
+			</generalizations>
+			<annotations>
+				<table name="BPAnnotation"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.TextAnnotationImpl"/>
+			</annotations>
+			<attributes>
+				<property name="text"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<multi-line/>
+					</annotations>
+				</property>
+				<reference name="annotationAssociations"
+					inverse-reference="target"
+					kind="backwards"
+					multiple="true"
+					type="AnnotationAssociation"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<interface name="Iconified">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="icon"
+					type="tl.core:Icon"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="2.0"/>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+		<interface name="LaneSet">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="lanes"
+					composite="true"
+					inverse-reference="owner"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="Lane"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="actorGroups"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="tl.accounts:Group"
+				>
+					<annotations>
+						<bpml-extension/>
+						<export-binding>
+							<impl class="com.top_logic.model.search.providers.AttributeValueBindingByExpression"
+								key-attributes="name"
+								key-fun="g -> $g.get(`tl.accounts:Group#name`)"
+								reference-tag="group"
+								resolver-fun="name -> all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#name`) == $name)"
+							/>
+						</export-binding>
+					</annotations>
+				</reference>
+				<property name="actorRule"
+					type="tl.model.search:Expr"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+	</module>
+</model>

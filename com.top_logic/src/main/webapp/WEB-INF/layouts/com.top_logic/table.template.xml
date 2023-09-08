@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.component.Selectable$SelectableConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
+		<annotations>
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="type"/>
+					<property name="defaultColumns"/>
+
+					<property name="model"/>
+					<property name="modelBuilder"/>
+
+					<property name="fixedColumns"/>
+					<property name="partnerGroup"/>
+					<property name="configurationProviders"/>
+
+					<property name="defaultSelection"/>
+					<property name="multiSelection"/>
+					<property name="isSecurityMaster"/>
+					<property name="securityObject"/>
+
+					<property name="dragSource"/>
+					<property name="tableDrop"/>
+					<property name="buttons"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="modelBuilder"
+			instance-type="com.top_logic.mig.html.ListModelBuilder"
+			type="PolymorphicConfiguration"
+		>
+			<mandatory/>
+			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
+		</property>
+		<property name="multiSelection"
+			type="boolean"
+		/>
+		<property name="securityProviderClass"
+			default="securityRoot"
+			type="String"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
+			<hidden/>
+		</property>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			type="List"
+		>
+			<acceptable-classifiers value="table, commons"/>
+		</property>
+		<property name="dragSource"
+			instance-type="com.top_logic.layout.table.dnd.TableDragSource"
+			type="PolymorphicConfiguration"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
+			<acceptable-classifiers
+				unclassified="false"
+				value="table"
+			/>
+		</property>
+		<property name="tableDrop"
+			instance-type="com.top_logic.layout.table.dnd.TableDropTarget"
+			type="PolymorphicConfiguration"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
+			<acceptable-classifiers
+				unclassified="false"
+				value="table"
+			/>
+		</property>
+		<property name="fixedColumns"
+			default="0"
+			type="Integer"
+		/>
+		<property name="size"
+			type="com.top_logic.layout.DisplayDimension"
+		>
+			<hidden/>
+		</property>
+	</properties>
+
+	<tableView name="Table"
+		defaultSelection="${defaultSelection}"
+		dialogs="${dialogs}"
+		isSecurityMaster="${isSecurityMaster}"
+		model="${model}"
+		modelBuilder="${modelBuilder}"
+		objectType="${type}"
+		partnerGroup="${partnerGroup}"
+		securityObject="${securityObject}"
+		securityProviderClass="${securityProviderClass}"
+		selection="${selection}"
+		titleKey="${name}"
+	>
+		<layoutInfo size="${size}"/>
+		<selectionModelFactory multiple="${multiSelection}"/>
+		<table
+			configurationProviders="${configurationProviders}"
+			defaultColumns="${defaultColumns}"
+			dragSource="${dragSource}"
+			fixedColumns="${fixedColumns}"
+			tableDrop="${tableDrop}"
+		/>
+		<buttons>
+			${buttons}
+			<include name="templates/editComponentCommands.xml"/>
+		</buttons>
+	</tableView>
+</config:template>

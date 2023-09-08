@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Layout test</title>
+
+	<style type="text/css">
+		body {
+			margin: 0px;
+			border: 0px;
+			overflow: hidden;
+		}
+		div.lc {
+			position: absolute;
+		}
+		div.content {
+			position: absolute;
+			top:0px;
+			left:0px;
+			bottom: 0px;
+			right: 0px;
+			margin: 1px;
+			border-color: blue;
+			border-width: 1px;
+			border-style: dashed;
+		}
+	</style>
+
+	<script type="text/javascript" src="../../../../../com.top_logic/webapps/top-logic/script/tl/bal.js"></script>
+	<script type="text/javascript" src="../../../../../com.top_logic/webapps/top-logic/script/tl/soap.js"></script>
+	<script type="text/javascript" src="../../../../../com.top_logic/webapps/top-logic/script/tl/layout.js"></script>
+</head>
+
+<body onload="services.layout.initialLayout('root'); window.onresize=function(evt) {services.layout.initialLayout('root')};">
+
+<div class="lc" id="root" data-layout="{horizontal: true}">
+	<div class="lc" data-layout-size="{size: 200, unit: 'px'}">
+		<div class="content">Inner0</div>
+	</div>
+	<div class="lc" data-layout-size="{size: 100, unit: '%'}" data-layout="{horizontal: false}">
+		<div class="lc" data-layout-size="{size: 150, unit: 'px'}">
+			<div class="content">Inner1</div>
+		</div>
+		<div class="lc" data-layout-size="{size: 200, unit: '%'}">
+			<div class="content">Inner2</div>
+		</div>
+		<div class="lc" data-layout-size="{size: 100, unit: '%'}">
+			<div class="content">Inner3</div>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>  	

@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" ignore-whitespaces="true" />
+		<t:parameters>
+			<t:parameter name="Example_Attribute" type="xml">
+				<t:default>
+					<foo>
+						<!--   Surrounded by 3 Spaces on each side   -->
+						<!--			Surrounded by 3 Tabs on each side			-->
+						<!--
+
+
+Surrounded by 3 Linebreaks on each side
+
+
+-->
+						<!--3 Spaces are right   3 Spaces are left-->
+						<!--3 Tabs are right			3 Tabs are left-->
+						<!--3 Linebreaks are right
+
+
+3 Linebreak are left-->
+					</foo>
+					<bar>   Surrounded by 3 Spaces on each side   </bar>
+					<bar>			Surrounded by 3 Tabs on each side			</bar>
+					<bar>
+
+
+Surrounded by 3 Linebreaks on each side
+
+
+</bar>
+					<bar>3 Spaces are right   3 Spaces are left</bar>
+					<bar>3 Tabs are right			3 Tabs are left</bar>
+					<bar>3 Linebreaks are right
+
+
+3 Linebreak are left</bar>
+				</t:default>
+			</t:parameter>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<t:value expr="$Example_Attribute" />
+	</t:body>
+</t:template>

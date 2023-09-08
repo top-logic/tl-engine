@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/TestSearchExpression.model.xml"/>
+					<declaration file="/WEB-INF/model/TestJavaBinding.model.xml"/>
+					<declaration file="/WEB-INF/model/TestTransformUtil.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+	</services>
+</application>

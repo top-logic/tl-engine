@@ -1,0 +1,241 @@
+
+a.s1{
+                        background:var(--SECONDARY_BACKGROUND_COLOR);                      
+}
+
+a.s3{
+                        background:var(--SECONDARY_BACKGROUND_COLOR);                      
+}
+
+.tree div:hover     {   
+                        background:var(--TREE_SELECTION_BG_HOVER); 
+                        text-decoration:none;
+                    }
+                    
+.tree div {   
+	line-height: var(--TREE_NODE_LINE_HEIGHT); 
+}
+
+.tree div.s1  {   
+                        background:var(--TREE_SELECTION_BG); 
+                        text-decoration:none;
+                    }
+
+.tree div.s3  {   
+                        background:var(--TREE_SELECTION_BG); 
+                        text-decoration:none;
+                    }
+
+div.sifSearchElementSelected {
+	color: #646463;
+    background-color: var(--TREE_SELECTION_BG);
+}
+
+.dlgTitleBar {
+    height:21px; 
+}
+
+.dlgTitle {
+    line-height:21px;  
+    vertical-align:middle;
+    padding-left: 5px;
+    padding-right: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+fieldset {
+    padding-top:5px
+}
+
+fieldset legend {
+    background:  var(--LEGEND_BACKGROUND_SELECTED);
+
+    padding-left:      5px;
+    padding-right:     5px;
+    padding-top:       1px;
+    padding-bottom:    1px;
+
+    margin-bottom:     2px;
+}
+
+.tl-table__footer-counter {
+    background-color: var(--TABLE_COUNTER);
+    border-top-color:#CFD1D3;
+    border-top-style:solid;
+    border-top-width:1px;    
+    border-bottom: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    text-align:right;
+}
+
+th.cal_th {
+	border-style: none;
+}
+
+td.tl-table__cell {
+    border-color: var(--TABLE_BORDER_COLOR);
+}
+
+.tl-table__cell {
+    border-left: 0px solid #fff;
+    border-bottom: 0px solid #fff;
+}
+
+tr.tl-table__row:last-child > td, .tl-table__header tr {
+	border-bottom: var(--TR_TBLTR_LASTROW_BORDERBOTTOM);	
+}
+
+table.tl-table--fixed td.tl-table__cell--selected.treeTableTd {
+    border-left-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+}
+
+.sidebarFilterEntry {
+	background: var(--TABLE_FILTER_HEADER_BACKGROUND);
+}
+
+th.treeTableTh {
+    font-family:         var(--TEXT_FAMILY);
+    white-space:         nowrap;
+    color:               black;
+    
+    font-size:           12px; 
+    font-weight:         bold;
+    background-color:    #CFD1D3;
+    white-space:         nowrap;     
+	
+	font-size:           12px;
+    font-weight:         bold;
+    color:               var(--TABLE_TH_COLOR);
+    border-width: 1px;
+    border-color: white;
+    border-style: solid;
+    background:var(--TABLE_TH_BACKGROUND);
+    background-position-y: bottom;
+}
+
+td.treeTableTdFirst {
+    background-color:var(--TD_TREETABLE_FIRST_BACKGROUND);
+    border-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+    border-color: white;
+    border-style: solid;
+    overflow: hidden;
+}
+
+td.treeTableTdFirst span {
+    white-space:  nowrap;
+    vertical-align: middle;
+}
+
+tr.treeSelected td.treeTableTdFirst {
+    white-space:  nowrap;     
+}
+
+td.treeTableTd {
+    background-color:#F5F5F5;
+    border-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+    border-color: white;
+    border-style: solid;
+    overflow: hidden;
+}
+
+td.treeTableTd span {
+    white-space:  nowrap;     
+    vertical-align: middle;
+}
+
+a.cmdLink, a.cmdLink:visited {
+    text-decoration: none;
+}
+
+tr.bold {
+    font-weight: bold;
+}
+
+.welcomeMessage {
+    margin-left: 10px;
+    font-size: 1.5em;
+    font-style: italic;
+}
+
+
+/* WebFolder */
+
+div.folderView .breadcrumb {
+	background: transparent;
+}
+
+div.folderView .breadcrumb .treeNode a.selectableNode,
+div.folderView .breadcrumb .treeNode span.selectableNode,
+div.folderView .breadcrumb .treeNode .unselectableNode,
+div.folderView .breadcrumb .treeNode img {
+    background-color: transparent;
+    color: var(--FOLDERVIEW_COLOR);
+}
+
+div.folderView .breadcrumb .hover .selectableNode,
+div.folderView .breadcrumb .hover a,
+div.folderView .breadcrumb .hover img,
+div.folderView .breadcrumb .hover a.selectableNode,
+div.folderView .breadcrumb .hover span.selectableNode,
+div.folderView .breadcrumb .hover span.menu {
+	background-color: transparent;
+}
+
+.breadcrumbMenuVisible {
+	background: var(--BUTTONMENU_BACKGROUND);
+	color: var(--BREADCRUMB_COLOR);
+	border: 1px solid var(--BREADCRUMB_HOVER_COLOR);
+	padding: 2px 8px 2px 2px;
+}
+
+div.breadcrumbMenuNode:hover {
+	background-color: var(--BREADCRUMB_BG_COLOR);
+	color: var(--BREADCRUMB_HOVER_COLOR);
+}
+
+
+/* WebFolder end */
+
+
+/****************************************************************************
+ DO NOT MOVE "tl-table__cell--selected" before "treeTableTd", because selected table
+ cells shall be look equal in common tables and tree tables. Because the latest
+ selector wins, "tl-table__cell--selected" has to reside after "treeTableTd" in this file.
+*****************************************************************************/
+td.tl-table__cell--selected {
+    font-family:      var(--TEXT_FAMILY);
+    font-size:        var(--FONT_SIZE);
+    white-space:      nowrap;
+    color:            var(--TD_TBLSELECT_COLOR);
+    background-color: var(--TABLE_SELECT_BACKGROUND_COLOR);
+    border-color:     var(--TABLE_SELECT_BACKGROUND_COLOR);
+}
+
+td.tl-table__cell--selected a {
+	color: #7695C3;
+}
+
+/* == refreshProgress.jsp == */
+
+.progressDialog .progressBorder {
+	border: 1px solid blue; 
+ 	padding: 4px; 
+}
+
+/* Tiles */
+.card i.fa-bars {
+    font-size: 1.5em;
+    color: #ced1d2;
+}
+
+.card i.fa-bars:hover {
+    color: #747c7e;
+}
+
+.card .cButton .input-image,
+.card .cButton .input-image:hover {
+	background: none;
+}

@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Configuration File used for testing only                -->
+<!-- ======================================================= -->
+<!--                                                         -->
+<!--  Please provide a 'comment="..."' attribute/value pair  -->
+<!--  for each of your tags, if applicable. The text         -->
+<!--  provided there is displayed within the Administration  -->
+<!--  GUI of the application.                                -->
+<root>
+	<alias> 
+        <!-- Extra entries explicitly for TestAliasManager.-->
+        <entry name="%TEST_VAR%" 	value="./webapp"/>
+        <entry name="%PATH1%" value="%TEST_VAR%/PATH1"/>
+        <entry name="%PATH2%" value="%PATH1%/PATH2"/>
+        <entry name="%NON-PATH1%" value="not a path"/>
+        <entry name="%ALSO%" value="%also"/>
+        <entry name="%NON-PATH2%" value="${ALSO} ${NON-PATH1}"/>
+        
+        <entry name="%ENVIRONMENT1%" value="${env:TestEnvironmentVariable}"/>
+        <entry name="%ENVIRONMENT2%" value="More ${env:TestEnvironmentVariable} replacements ${env:TestEnvironmentVariable2}  inOneVariable"/>
+        <entry name="%ENVIRONMENT3%" value="${env:NotExistingEnvironmentVariable}"/>
+        <entry name="%ENVIRONMENT4%" value="${env:TestEnvironmentVariableWithSpecialChar}"/>
+        <entry name="%ENVIRONMENT5%" value="${env:NotExistingEnvironmentVariable:default-value}"/>
+        <entry name="%ENVIRONMENT6%" value="${env:TestEnvironmentVariable:default-value-not-used}"/>
+        <entry name="%ENVIRONMENT7%" value="${env:NotExistingEnvironmentVariable:\{\:\\default-value\\\:\}}"/>
+        <entry name="%ENVIRONMENT8%" value="${env:NotExistingEnvironmentVariable:}"/>
+    </alias>
+
+    <properties>
+        <section name="TestSingletonRegistry$BrokenRegistry" comment="See test case for usage">
+            <entry 
+            	name="class:java.lang.Boolean" 
+            	value="com.top_logic.basi.IsNotThere" />          
+             <entry 
+            	name="class:java.lang.String" 
+            	value="java.lang.Object" />
+             <entry 
+                name="class:java.lang.Integer" 
+                value="test.com.top_logic.basic.TestSingletonRegistry$BrokenSingleton" />
+             <entry 
+                name="class:java.lang.Double" 
+                value="test.com.top_logic.basic.TestSingletonRegistry$BrokenSingleton2" />
+        </section>
+            	
+        <section name="TestSingletonRegistry$TestRegistry" comment="See test case for usage">
+            <entry 
+            	name="class:test.com.top_logic.basic.TestSingletonRegistry" 
+            	value="valueForTestSingletonRegistry" />
+            <entry 
+            	name="class:test.com.top_logic.basic.TestSingletonRegistry$TestRegistry" 
+            	value="valueForTheTestRegistry" />
+            <entry 
+            	name="class:junit.framework.Assert" 
+            	value="valueForAssert" />
+            <entry 
+            	name="plain:touched" 
+            	value="touchedValue" />
+            <entry 
+            	name="plain:untouched" 
+            	value="untouchedValue" />
+        </section>
+
+        <section name="JDBCPersistencyManager" comment="MySQL DataSource for the ewe">
+            <entry name="connectionPool" value="default" />
+        </section>
+                    
+        <section name="JNDIMapping" comment=".">
+            <entry name="defaultPerson"                     
+                   value="/WEB-INF/database/person1to1.properties" />
+            <entry name="top.person.organizationalPerson.user" 
+                   value="/WEB-INF/database/person1to1.properties" />
+            <entry name="person" 
+                   value="/WEB-INF/database/person.properties" />
+
+            <!-- entry name="cn" value="username" -->
+        </section>
+        
+        <section name="ClientConnectionManager" comment=".">
+            <entry name="hostServer" value="dewi_wsnt_204" />
+        </section>
+
+        <section name="LDAPResultBuilder" comment="The LDAPResultBuilder generates objects from data acquired from an LDAP server. Each entry in this section maps a keyword (usually the value of the 'objectclass' attribute of the data returned) to the class of the object to be built.">
+            <entry name="person" value="com.top_logic.base.security.objects.Person" />
+            <entry name="role" value="com.top_logic.base.roles.Role" />
+        </section>
+
+        <section name="FileResultBuilder" comment="The FileResultBuilder generates objects from data acquired from an XML file. Each entry in this section maps a keyword (usually the value of the 'objectclass' attribute of the data returned) to the class of the object to be built.">
+            <entry name="person" value="com.top_logic.base.security.objects.Person" />
+        </section>
+        
+        <section name="TypeMap" comment="This section contains mappings from MIME file types to short textual descriptions of these types.">
+            <entry name="application/octet-stream"     value="Unknown" />
+            <entry name="application/zip"             value="ZIP file" />
+            <entry name="image/jpeg"                 value="JPEG file" />
+            <entry name="image/gif"                 value="GIF file" />
+            <entry name="text/html"                 value="HTML page" />
+            <entry name="text/plain"                 value="Text file" />
+            <entry name="text/jsp"                     value="Java Server Page" />
+            <entry name="text/xml"                     value="XML file" />
+            <entry name="application/msword"         value="MS Word file" />
+            <entry name="application/vnd.ms-access" value="MS Access Database" />
+            <entry name="application/vnd.ms-excel"     value="MS Excel file" />
+            <entry name="application/vnd.ms-powerpoint" value="MS Powerpoint file" />
+        </section>
+
+        <section name="ContainerRenderer" comment="Some configurations for rendering Containers">
+            <entry name="welcomefiles"     value  ="index.jsp,index.html,index.htm,default.htm"
+                                          comment="The list of possible welcome pages for a Container (WebFolder)" />
+        </section>
+
+        <section name="SymbolFactoryService" comment="."> 
+        </section>
+
+        <section name="LDAPSymbolFactory" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory" />
+        </section>
+
+        <section name="SimpleUserFactory" comment=".">
+        </section>
+
+        <section name="DummyUserFactory" comment=".">
+        </section>
+
+        <section name="SecurityUserService" comment=".">
+        </section>
+
+        <section name="UserInfoService" comment=".">
+        </section>
+
+        <section name="UserService" comment=".">
+        </section>
+
+        <section name="LDAPUserInfoFactory" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory" />
+        </section>
+
+        <section name="LDAPSecurityUserFactory" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory" />
+        </section>
+
+        <section name="AuthenticationService" comment=".">
+        </section>
+
+        <section name="LDAPAuthentication" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory" />
+        </section>
+
+        <section name="ADAuthentication" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory" />
+        </section>
+
+        <section name="FileAuthentication" comment=".">
+        </section>
+
+        <section name="AuthorisationService" comment=".">
+        </section>
+
+        <section name="LDAPAuthorisation" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory" />
+        </section>
+
+        <section name="FileAuthorisation" comment=".">
+        </section>
+
+        <section name="TreeManager" comment=".">
+            <entry name="tree.dir" value="tree" />
+            <entry name="user.dir" value="personal" />
+        </section>
+
+        <section name="GroupFileWriter" comment=".">
+            <entry name="groupfilepath" value="/usr/local/lib/synchronize/db/groups/" />
+        </section>
+
+        <section name="ErrorHandler" comment="Contains error messages thrown from the body of forward() and getProperty() methods.">
+            <!-- Errors thrown in the body of a forward method -->
+            <entry name="f_target" value="An internal error occurred in the servlet the request was forwarded to."/>
+            <entry name="f_io" value="An error occurred in the servlet the request was forwarded to because an I/O operation failed." />
+
+            <!-- Errors thrown in the body of a getProperty method -->
+            <entry name="prop_io" value="The DispatchService.properties file was not found or an I/O operation failed." />
+            <entry name="prop_noFile" value="The ErrorHandler.properties file could not be found." />
+
+            <!-- Text for the error page when a target was not found -->
+            <entry name="target" value="Sorry, could not access a service." />
+            <entry name="source" value="Sorry, could not access the requested portal." />
+        </section>
+
+        <section name="jndi" comment="Properties of the JNDI.">
+            <entry name="java.naming.factory.initial" value="com.sun.jndi.ldap.LdapCtxFactory" />
+            <entry name="java.naming.provider.url" value="ldap://tl:389/DC=int,DC=top-logic,DC=com" />
+            <entry name="java.naming.factory.state" value="com.top_logic.base.changepassword.LdapStateFactory" />
+            <entry name="java.naming.factory.object" value="com.top_logic.base.changepassword.LdapObjectFactory" />
+            <entry name="java.naming.security.principal" value="CN=root_mga,CN=Users,DC=int,DC=top-logic,DC=com" />
+            <entry name="java.naming.security.credentials" value="obelix" />
+        </section>
+
+        <section name="RMI_SERVICE" comment="Properties for Remote Method Invocation used in the multi-upload facility.">
+            <entry name="UPLOAD_RMI_ID" value="FileReciever" comment="The ID string used by the RMI server." />
+            <entry name="RMI_PORT" value="9090" comment="The RMI port for the multi-upload facility." />
+            <entry name="REMOTE_PORT" value="9092" comment="The remote port used for the multi-upload connection." />
+            <entry name="SERVER_TIMEOUT" value="40" comment="Seconds until time-out." />
+        </section>
+
+        <!-- proxy setting for MetaGer class -->
+		<section name="MetaGer">
+			<entry name="proxyHost" value="10.49.1.1" />
+			<entry name="proxyPort" value="3128" />
+		</section>
+
+	    <section name = "BusMonitor" comment="Enabled Recievers to be inited by the Monitor Component">
+	        <entry name = "DocumentMonitor" value = ""/>
+	        <entry name = "UserMonitor" value = ""/>
+	    </section>
+
+        <section name="WebCMS" comment="Settings for Top-Logic WebCMS (aka Web Content Assistant aka Content Assistant Extension)">
+            <entry name="CollectionManagerImpl"     value="com.top_logic.base.cms.pool.xmlpool.XmlCollectionManager" />
+            <entry name="cms.layoutlocation"        value="cms://layouts" />
+            <entry name="cms.inputlocation"         value="cms://inputs"  />
+            <entry name="cms.outputlocation"        value="cms://outputs"/>
+            <entry name="cms.imagelocation"         value="cms://data/images"/>
+            <entry name="cms.stylesheetlocation"    value="cms://layoutmanager/stylesheets"/>
+            <entry name="cms.templatelocation"      value="cms://layoutmanager/templates"/>
+        </section>
+        
+        <section name="WebCMS_Xml" comment="Type/Class mappings for xml implementation">
+            <entry name="text"                      value="com.top_logic.base.cms.pool.xmlpool.XmlElement"/>
+            <entry name="image"                     value="com.top_logic.base.cms.pool.xmlpool.XmlElement"/>
+            <entry name="person"                    value="com.top_logic.base.cms.pool.xmlpool.XmlElement"/>
+            <entry name="date"                      value="com.top_logic.base.cms.pool.xmlpool.XmlElement"/>
+            <entry name="link"                      value="com.top_logic.base.cms.pool.xmlpool.XmlListElement"/>
+            <entry name="comboBox"                  value="com.top_logic.base.cms.pool.xmlpool.XmlTableElement"/>
+            <entry name="cms.datalocation"          value="cms://data"/>        
+        </section>
+        
+        <section name="WebCMS_Db" comment="Type/Class mappings for DB implementation">
+            <entry name="text"                      value="com.top_logic.base.cms.pool.dbpool.DbElement"/>
+            <entry name="image"                     value="com.top_logic.base.cms.pool.dbpool.DbElement"/>
+            <entry name="person"                    value="com.top_logic.base.cms.pool.dbpool.DbElement"/>
+            <entry name="date"                      value="com.top_logic.base.cms.pool.dbpool.DbElement"/>
+            <entry name="link"                      value="com.top_logic.base.cms.pool.dbpool.DbListElement"/>
+            <entry name="comboBox"                  value="com.top_logic.base.cms.pool.dbpool.DbTableElement"/>
+        </section>
+    
+        <!-- *************************** -->
+        <!-- * Ticket System Extension * -->
+        <!-- *************************** -->
+        <section name="TSEProperties">
+            <!-- Priorities available -->
+            <entry name="priorities" value="low,medium,high"
+                   comment="available priorities" />
+            <!-- Resolutions available -->
+            <entry name="resolutions" value="fixed,invalid,wontfix,later,duplicate"
+                   comment="available resolutions" />
+        </section>
+
+    <section name="XMLContentExtractor" 
+             comment="Configure tag names and attributes that should be extracted. Text areas will be extracted anyway.">
+             
+        <!-- Note that more than one attribute name should be separated with comma -->
+        <entry name="attribute" value="value" comment="'value' is an attribute of the tag 'attribute'" />
+    
+    </section>
+
+    <section name="TestDefaultValues$A">
+    	<entry name="plainConfigured" value="88"/>
+    </section>
+
+    <section name="TestDefaultValues$B">
+    	<entry name="plainConfigured" value="99"/>
+    </section>
+
+    </properties>
+</root>    
+

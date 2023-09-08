@@ -1,0 +1,467 @@
+/**
+ * JavaCC Grammar File
+ */
+options
+{
+    JDK_VERSION = "1.6";
+    STATIC = false;
+    UNICODE_INPUT = true;
+    JAVA_UNICODE_ESCAPE = false;
+}
+
+PARSER_BEGIN(ConfigTemplateParser)
+package com.top_logic.basic.config.template.parser;
+
+import java.util.List;
+
+import com.top_logic.basic.config.template.ExprFactory;
+import com.top_logic.basic.config.template.ExprFactory.*;
+import com.top_logic.basic.config.template.TemplateExpression;
+import com.top_logic.basic.config.template.TemplateExpression.*;
+
+/**
+ * Parser that builds an {@link TemplateExpression} tree from its textual representation.
+ * 
+ * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ */
+@SuppressWarnings({ "javadoc", "unused", "synthetic-access" })
+public class ConfigTemplateParser {
+  
+}
+
+PARSER_END(ConfigTemplateParser)
+
+TOKEN :
+{
+  < TAG_START: "<" <XML_NAME> > : XML
+| < END_TAG_START: "</" <XML_NAME> > : XML
+| < STARTEXPR : "{" > : Syntax
+| < ENDTEMPLATE : "}" > : Syntax
+| < LITERAL: ( ~[ "<", "{", "}", "!" ] | "!" ~[] )+ >
+}
+
+< XML >
+SKIP :
+{
+  " "
+| "\r"
+| "\t"
+| "\n"
+}
+
+< XML >
+TOKEN :
+{
+  < XML_NAME: < LOCAL_NAME > ( ":" < LOCAL_NAME > )? >
+| < EQ: "=" >
+| < DQUOT: "\"" > : AttributeValueD
+| < SQUOT: "\'" > : AttributeValueS
+| < EMPTY_TAG_END: "/>" > : DEFAULT
+| < TAG_END: ">" > : DEFAULT
+| < #LOCAL_NAME: < XML_WORD > ( "-" < XML_WORD  > )* >
+| < #XML_WORD: ( ["a" - "z", "A" - "Z", "_"] )+ >
+}
+
+< AttributeValueD >
+TOKEN :
+{
+  < DQUOT_END: "\"" > : XML
+| < STARTEXPR_D : "{" > : Syntax
+| < ENDTEMPLATE_D : "}" > : Syntax
+| < LITERAL_D: ( ~[ "{", "}", "!", "\"" ] | "!" ~[] )+ >
+}
+
+< AttributeValueS >
+TOKEN :
+{
+  < SQUOT_END: "\'" > : XML
+| < STARTEXPR_S : "{" > : Syntax
+| < ENDTEMPLATE_S : "}" > : Syntax
+| < LITERAL_S: ( ~[ "{", "}", "!", "\'" ] | "!" ~[] )+ >
+}
+
+< Syntax >
+SKIP :
+{
+  " "
+| "\r"
+| "\t"
+| "\n"
+}
+
+< Syntax >
+TOKEN :
+{
+  < ENDEXPR : "}" >
+| < STARTTEMPLATE : "{" > : DEFAULT
+| < FOREACH: "foreach" >
+| < THIS: "this" >
+| < IDENTIFIER: < LETTER_NO_DOLLAR > (<LETTER>|<DIGIT>|"-")* >
+| < VARNAME: "$" (<LETTER>|<DIGIT>|"-")* >
+| < FUNNAME: "#" (<LETTER>|<DIGIT>|"-")* >
+| < STRING:
+    (
+      "\""
+      (   (~["\"","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )*
+      "\""
+    |
+      "\'"
+      (   (~["\'","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\'"]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )*
+      "\'"
+    )
+  >
+| < NUMBER: ("-")? ["1"-"9"] (["0"-"9"])* | "0" >
+| < DOT: "." >
+| < COLON: ":" >
+| < QUESTIONMARK: "?" >
+| < PIPE: "|" >
+| < ARROW: "->" >
+| < OPENBRACE: "[" >
+| < CLOSEBRACE: "]" >
+| < OPENPAREN: "(" >
+| < CLOSEPAREN: ")" >
+| < COMMA: "," >
+| < #LETTER: "\u0024" | < LETTER_NO_DOLLAR >> 
+| < #LETTER_NO_DOLLAR:
+      [
+       "\u0041"-"\u005a",
+       "\u005f",
+       "\u0061"-"\u007a",
+       "\u00c0"-"\u00d6",
+       "\u00d8"-"\u00f6",
+       "\u00f8"-"\u00ff",
+       "\u0100"-"\u1fff",
+       "\u3040"-"\u318f",
+       "\u3300"-"\u337f",
+       "\u3400"-"\u3d2d",
+       "\u4e00"-"\u9fff",
+       "\uf900"-"\ufaff"
+      ]
+  >
+|
+  < #DIGIT:
+      [
+       "\u0030"-"\u0039",
+       "\u0660"-"\u0669",
+       "\u06f0"-"\u06f9",
+       "\u0966"-"\u096f",
+       "\u09e6"-"\u09ef",
+       "\u0a66"-"\u0a6f",
+       "\u0ae6"-"\u0aef",
+       "\u0b66"-"\u0b6f",
+       "\u0be7"-"\u0bef",
+       "\u0c66"-"\u0c6f",
+       "\u0ce6"-"\u0cef",
+       "\u0d66"-"\u0d6f",
+       "\u0e50"-"\u0e59",
+       "\u0ed0"-"\u0ed9",
+       "\u1040"-"\u1049"
+      ]
+  >
+}
+
+
+TemplateExpression template() :
+{
+  TemplateBuilder builder = ExprFactory.builder();
+  TemplateExpression embedded;
+  Token t;
+  Tag start;
+}
+{
+  (
+    ( t=< LITERAL > | t=< LITERAL_D > | t=< LITERAL_S > )
+    { builder.append(ExprFactory.literalText(t)); }
+  | < STARTEXPR >
+    embedded=expressionContents()
+    { builder.append(embedded); }
+    <ENDEXPR >
+    { token_source.SwitchTo(DEFAULT); }
+  | < STARTEXPR_D >
+    embedded=expressionContents()
+    { builder.append(embedded); }
+    <ENDEXPR >
+    { token_source.SwitchTo(AttributeValueD); }
+  | < STARTEXPR_S >
+    embedded=expressionContents()
+    { builder.append(embedded); }
+    < ENDEXPR >
+    { token_source.SwitchTo(AttributeValueS); }
+  | start=startTag()
+    { builder.startTag(start); }
+  | t=< END_TAG_START > < TAG_END >
+    { builder.endTag(t); }
+  )*
+  { return builder.build(); }
+}
+
+Tag startTag() :
+{
+  Token t;
+  boolean empty;
+  Tag result;
+}
+{
+  t=< TAG_START >
+  { result = ExprFactory.startTag(t); }
+
+  attributes(result)
+
+  empty=tagEnd()
+  { result.setEmpty(empty); }
+
+  { return result; }
+}
+
+void attributes(Tag tag) :
+{
+  Token n;
+  TemplateExpression value;
+}
+{
+  (
+    n=< XML_NAME > < EQ > value=attrValue()
+    { ExprFactory.setAttribute(tag, n, value); }
+  )*
+}
+
+TemplateExpression attrValue() :
+{
+  TemplateExpression result;
+}
+{
+  (
+    < DQUOT >
+	result=template()
+    < DQUOT_END>
+  |
+    < SQUOT >
+	result=template()
+    < SQUOT_END>
+  )
+  { return result; }
+}
+
+boolean tagEnd() :
+{
+}
+{
+  ( < TAG_END >
+    { return false; }
+  | < EMPTY_TAG_END >
+    { return true; }
+  )
+}
+
+TemplateExpression expressionContents() :
+{
+  Token t;
+  ConfigExpression name;
+  TemplateExpression expr;
+}
+{
+  ( t=< ARROW > name=accessExpression()
+  { expr = ExprFactory.reference(t, name); }
+  | expr=expression()
+  ) 
+  { return expr; }
+}
+
+TemplateExpression expression() :
+{
+  TemplateExpression expr;
+}
+{
+  ( expr = embeddedTemplate()
+  | expr = choiceExpression()
+  | expr = foreach()
+  )
+  { return expr; }
+}
+
+TemplateExpression choiceExpression() : 
+{
+  TemplateExpression expr;
+  TemplateExpression positive, negative = null;
+  TemplateExpression alternative;
+}
+{
+  expr = accessExpression()
+  ( < QUESTIONMARK >
+    positive = expression()
+    ( LOOKAHEAD(< COLON >)
+      < COLON >
+      negative = expression()
+    )?
+    { expr = ExprFactory.choice(expr, positive, negative); }
+  | ( LOOKAHEAD(< PIPE >)
+      < PIPE >
+      alternative = expressionContents()
+      { expr = ExprFactory.alternative(expr, alternative); }
+    )*
+  )
+  { return expr; }
+}
+
+TemplateExpression embeddedTemplate() : 
+{
+  TemplateExpression expr;
+}
+{
+  < STARTTEMPLATE >
+  expr = template()
+  ( < ENDTEMPLATE > | < ENDTEMPLATE_D > | < ENDTEMPLATE_S > ) 
+  { return expr; }
+}
+
+ConfigExpression accessExpression() : 
+{
+  ConfigExpression expr;
+  Token t;
+  Token selector;
+  ConfigExpression index;
+}
+{
+  expr = atomicExpression()
+  ( < DOT >
+    selector = < IDENTIFIER >
+    { expr = ExprFactory.propertyAccess(expr, selector); }
+  | < OPENBRACE >
+    index = accessExpression()
+    t = < CLOSEBRACE >
+    { expr = ExprFactory.collectionAccess(expr, index, t); }
+  )*
+  { return expr; }
+}
+
+ConfigExpression atomicExpression() : 
+{
+  ConfigExpression expr;
+}
+{
+  ( expr = property()
+  | expr = literal()
+  | expr = self()
+  | expr = variable()
+  | expr = function()
+  )
+  { return expr; }
+}
+
+ConfigExpression property() :
+{
+  Token id;
+}
+{
+  id = < IDENTIFIER >
+  { return ExprFactory.propertyAccess(id); }
+}
+
+ConfigExpression literal() : 
+{
+  Token str, num;
+}
+{
+  ( str = < STRING >
+    { return ExprFactory.stringLiteral(str); }
+  | num = < NUMBER >
+    { return ExprFactory.numberLiteral(num); }
+  )
+}
+
+TemplateExpression foreach() : 
+{
+  Token open, close;
+  Token local = null;
+  TemplateExpression collection, iterator = null, separator = null, start = null, stop = null;
+}
+{
+  open=< FOREACH >
+  < OPENPAREN >
+  (
+    LOOKAHEAD(2)
+    local = < IDENTIFIER >
+    < COLON >
+  )?
+  collection = expression()
+  (
+    < COMMA >
+    separator = expression()
+    (
+      < COMMA >
+      iterator = expression()
+      (
+        < COMMA >
+        start = expression()
+        (
+          < COMMA >
+          stop = expression()
+        )?
+      )?
+    )?
+  )?
+  close=< CLOSEPAREN >
+  { return ExprFactory.foreach(open, local == null ? null : local, collection, separator, iterator, start, stop, close); }
+}
+
+ConfigExpression self() : 
+{
+  Token t;
+}
+{
+  t=< THIS >
+  { return ExprFactory.self(t); }
+}
+
+ConfigExpression variable() : 
+{
+  Token name;
+}
+{
+  name = < VARNAME >
+  { return ExprFactory.variable(name); }
+}
+
+ConfigExpression function() : 
+{
+  Token name;
+  Token end;
+  ConfigExpression arg;
+  List<ConfigExpression> args = ExprFactory.expressions();
+}
+{
+  name = < FUNNAME >
+  {end = name;}
+  (
+    < OPENPAREN >
+    (
+      arg = accessExpression()
+	  {
+	    args.add(arg);
+	  }
+	  (
+	    < COMMA >
+	    arg = accessExpression()
+	    {
+	      args.add(arg);
+	    }
+	  )*
+    )?
+    end=< CLOSEPAREN >
+  )?
+  { return ExprFactory.function(name, args, end); }
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_2817fb4d_154c_4c66_b59b_de9f30e0da81"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.876c90e5-df98-4973-8844-6aad3be9f6b4">
+			<en>Transforming Channel</en>
+			<de>Kanaltransformation</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/transformingChannel/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

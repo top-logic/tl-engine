@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Due to errors we sometimes try to access a null - layout.
+	Well here it is.
+-->
+<component class="com.top_logic.knowledge.gui.layout.TLMainLayout">
+	<components>
+		<component class="com.top_logic.mig.html.layout.SimpleComponent"
+			content="This is a null Layout and is the result of some previous error, please report how you where able to see this to BOS GmbH. Thank you"
+			header="Null Layout"
+		/>
+	</components>
+</component>

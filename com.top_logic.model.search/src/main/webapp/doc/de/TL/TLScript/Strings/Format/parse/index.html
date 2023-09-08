@@ -1,0 +1,49 @@
+<h2>Syntax</h2> 
+<pre>	<code>$format.parse($string)
+</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Verwendet das angegebene Format um den angegebenen Text zu parsen und gibt den so gelesenen Wert zurück.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>format</td> 
+   <td>Fachobjekt</td> 
+   <td>Das Format, das verwendet werden soll (z.B. <a class="tlObject" data-custom="true" href="?page=numberFormat&amp;uuid=2599fdcc-824c-4b7c-9006-d873d50f753e">Zahlenformat</a>, <a class="tlObject" data-custom="true" href="?page=dateFormat&amp;uuid=387a7e6c-78f9-46df-812c-e8ef66b29d85">Datumsformat</a>, <a class="tlObject" data-custom="true" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">Nachrichtenformat</a>)</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>string</td> 
+   <td>Zeichenkette</td> 
+   <td>Die Zeichenkette, die geparst werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
+<p>Die geparste Zeichenkette.</p> 
+<h2>Beispiele</h2> 
+<h3>Datumsformat</h3> 
+<pre>	<code>dateFormat("dd-MM-yy").parse("04-12-12")</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 04.12.2012</p> 
+<p>Gibt ein Datumsobjekt zurück. Siehe <a class="tlObject" data-custom="true" href="?page=dateFormat&amp;uuid=387a7e6c-78f9-46df-812c-e8ef66b29d85">Datumsformat</a></p> 
+<h3>Nachrichtenformat</h3> 
+<pre>	<code>messageFormat("Good {0}!").parse("Good Morning!")</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Nachrichtenobjekt</p> 
+<p>Siehe <a class="tlObject" data-custom="true" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">Nachrichtenformat</a></p> 
+<p> </p>

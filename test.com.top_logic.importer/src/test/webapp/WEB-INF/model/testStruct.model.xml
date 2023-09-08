@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="testStruct">
+			<annotations>
+				<package-binding
+					implementation-package="test.com.top_logic.importer.data.struct.impl"
+					interface-package="test.com.top_logic.importer.data.struct"
+				/>
+				<singletons>
+					<singleton type="Root"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="testStruct.Root">
+					<annotations>
+						<legacy-qualified-name qualified-name="testStruct.Root"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="testStruct.All">
+					<annotations>
+						<legacy-qualified-name qualified-name="testStruct.All"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						/>
+						<property name="id"
+							mandatory="true"
+							type="tl.core:String"
+						/>
+						<reference name="responsible"
+							kind="forwards"
+							type="tl.accounts:Person"
+						/>
+						<reference name="beacon"
+							kind="forwards"
+							type="enum:tl.beacon.three"
+						/>
+						<property name="createdBy"
+							mandatory="true"
+							type="tl.accounts:Person"
+						>
+							<annotations>
+								<search-range value="false"/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.knowledge.wrap.Wrapper#getCreator()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="modifiedBy"
+							mandatory="true"
+							type="tl.accounts:Person"
+						>
+							<annotations>
+								<search-range value="false"/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.knowledge.wrap.Wrapper#getModifier()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="createdDate"
+							mandatory="true"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<search-range value="false"/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.knowledge.wrap.Wrapper#getCreated()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="modifiedDate"
+							mandatory="true"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<search-range/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.knowledge.wrap.Wrapper#getModified()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="hashCode"
+							mandatory="true"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<search-range value="false"/>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="java.lang.Object#hashCode()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="testStruct.Context">
+					<annotations>
+						<legacy-qualified-name qualified-name="testStruct.Context"/>
+					</annotations>
+					<attributes>
+						<property name="isActive"
+							type="tl.core:Boolean"
+						/>
+						<property name="activated"
+							type="tl.core:Date"
+						/>
+						<property name="country"
+							type="tl.util:Country"
+						/>
+						<property name="language"
+							type="tl.util:Language"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="testStruct.All"/>
+					</generalizations>
+				</interface>
+				<interface name="testStruct.Sub1">
+					<annotations>
+						<legacy-qualified-name qualified-name="testStruct.Sub1"/>
+					</annotations>
+					<attributes>
+						<property name="costs"
+							type="tl.core:Double"
+						>
+							<annotations>
+								<format format-ref="decimal"/>
+							</annotations>
+						</property>
+						<reference name="company"
+							kind="forwards"
+							type="Contacts:Contact.Company"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="CompanyContact"/>
+								</constraint>
+							</annotations>
+						</reference>
+						<reference name="lead"
+							kind="forwards"
+							type="Contacts:Contact.Person"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="PersonContact"/>
+								</constraint>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="testStruct.All"/>
+					</generalizations>
+				</interface>
+				<interface name="testStruct.Sub2">
+					<annotations>
+						<legacy-qualified-name qualified-name="testStruct.Sub2"/>
+					</annotations>
+					<attributes>
+						<property name="size"
+							type="tl.core:Long"
+						/>
+						<reference name="lead"
+							kind="forwards"
+							type="Contacts:Contact.Person"
+						>
+							<annotations>
+								<constraint>
+									<config-reference name="PersonContact"/>
+								</constraint>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="testStruct.All"/>
+					</generalizations>
+				</interface>
+				<class name="Root">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="test.com.top_logic.importer.data.struct.impl.TestStructRootImpl"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="ROOT"/>
+								</default-value>
+							</annotations>
+						</property>
+						<reference name="children"
+							override="true"
+							type="RootChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="testStruct.Root"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="Context">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="test.com.top_logic.importer.data.struct.impl.TestStructContextImpl"/>
+					</annotations>
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="ContextChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="testStruct.Context"/>
+						<generalization type="testStruct:RootChild"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="Sub1">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="test.com.top_logic.importer.data.struct.impl.TestStructSub1Impl"/>
+					</annotations>
+					<generalizations>
+						<generalization type="testStruct.Sub1"/>
+						<generalization type="testStruct:ContextChild"/>
+					</generalizations>
+				</class>
+				<class name="Sub2">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="test.com.top_logic.importer.data.struct.impl.TestStructSub2Impl"/>
+					</annotations>
+					<generalizations>
+						<generalization type="testStruct.Sub2"/>
+						<generalization type="testStruct:ContextChild"/>
+					</generalizations>
+				</class>
+				<interface name="RootChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="ContextChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+			</types>
+		</module>
+	</modules>
+</model>

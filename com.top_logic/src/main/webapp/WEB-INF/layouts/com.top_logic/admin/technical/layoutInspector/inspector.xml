@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- An inspector for objects. -->
+<template>
+	<params>
+		<param name="namePrefix"/>
+	</params>
+
+	<include name="com.top_logic/admin/technical/layoutInspector/inspector_shared.xml"
+		namePrefix="${namePrefix}"
+	/>
+</template>

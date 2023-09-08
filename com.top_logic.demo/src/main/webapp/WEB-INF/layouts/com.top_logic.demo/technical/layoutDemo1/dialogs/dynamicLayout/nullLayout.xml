@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="dynamicDemoNull">
+	<components>
+		<component class="com.top_logic.mig.html.layout.SimpleComponent"
+			content="Dynamic layout demo null layout. This is shown when model is null. This layout has no button component."
+		/>
+	</components>
+</layout>

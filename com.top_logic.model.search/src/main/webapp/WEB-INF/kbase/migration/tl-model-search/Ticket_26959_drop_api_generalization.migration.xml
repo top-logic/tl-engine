@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26959_drop_api_generalization"
+		module="tl-model-search"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26529_Transfer_dynamic_resources_to_new_storage"
+			module="tl"
+		/>
+		<dependency name="Ticket_26554_Make_WebFolder_references_compositions"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_25732_Fix_search_operations_in_model_baseline"
+			module="tl-model-search"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.layout.tools.rewrite.LayoutMigrationProcessor">
+			<rewriter class="com.top_logic.layout.tools.rewrite.XSLTLayoutRewrite"
+				transform="/WEB-INF/kbase/migration/tl-model-search/Ticket_26959_drop_api_generalization.xslt"
+			>
+				<templates>
+					<template value="com.top_logic/table.template.xml"/>
+					<template value="com.top_logic/tileTable.template.xml"/>
+					<template value="com.top_logic/tileTreetable.template.xml"/>
+					<template value="com.top_logic/treetable.template.xml"/>
+					<template value="com.top_logic/tileTree.template.xml"/>
+					<template value="com.top_logic/tree.template.xml"/>
+					<template value="com.top_logic.element/grid.template.xml"/>
+					<template value="com.top_logic.element/treegrid.template.xml"/>
+				</templates>
+			</rewriter>
+		</processor>
+	</processors>
+	<post-processors/>
+</migration>

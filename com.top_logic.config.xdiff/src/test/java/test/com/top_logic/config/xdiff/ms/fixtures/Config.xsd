@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+  <xs:element name="configuration">
+    <xs:annotation>
+      <xs:documentation>Comment describing your root element</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="components" nillable="false">
+          <xs:annotation>
+            <xs:documentation>Holds the list of component configuration sections.</xs:documentation>
+          </xs:annotation>
+          <xs:complexType mixed="true">
+            <xs:sequence>
+              <xs:element ref="component" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+          </xs:complexType>
+          <xs:unique name="no-duplicate-role-name">
+            <xs:selector xpath="./roledescriptions/machineRole" />
+            <xs:field xpath="@role" />
+          </xs:unique>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="component" abstract="true" />
+  <xs:element name="component" type="component" abstract="true" nillable="true" />
+  <xs:element name="componentRef" substitutionGroup="component" nillable="true">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="component">
+          <xs:attribute name="href" use="required" />
+          <xs:attribute name="name" type="xs:string" use="required" />
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="Environment">
+    <xs:annotation>
+      <xs:documentation>Define the valid values for the config groups</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Dev" />
+      <xs:enumeration value="Test" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="MachineGroup">
+    <xs:annotation>
+      <xs:documentation>Define the valid machine groups values.</xs:documentation>
+    </xs:annotation>
+    <xs:list>
+      <xs:simpleType>
+        <xs:restriction base="xs:string" />
+      </xs:simpleType>
+    </xs:list>
+  </xs:simpleType>
+  <xs:attributeGroup name="ConfigGroup">
+    <xs:annotation>
+      <xs:documentation>Define the environment and machine group attributes</xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="environment" type="Environment" use="optional" />
+    <xs:attribute name="machineGroup" type="MachineGroup" use="optional" />
+  </xs:attributeGroup>
+  <xs:complexType name="Object">
+    <xs:annotation>
+      <xs:documentation>Object type</xs:documentation>
+    </xs:annotation>
+    <xs:attributeGroup ref="ConfigGroup" />
+  </xs:complexType>
+  <xs:complexType name="String">
+    <xs:annotation>
+      <xs:documentation>String type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Integer">
+    <xs:annotation>
+      <xs:documentation>Integer type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:int">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="NonNegativeInteger">
+    <xs:annotation>
+      <xs:documentation>Non-Negative Integer type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:restriction base="Integer">
+        <xs:minInclusive value="0" />
+      </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Boolean">
+    <xs:annotation>
+      <xs:documentation>Boolean type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:boolean">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="DateTime">
+    <xs:annotation>
+      <xs:documentation>DateTime type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:dateTime">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Double">
+    <xs:annotation>
+      <xs:documentation>Double type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:double">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Guid">
+    <xs:annotation>
+      <xs:documentation>GUID type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:integer">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Long">
+    <xs:annotation>
+      <xs:documentation>Long type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:long">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="TimeSpan">
+    <xs:annotation>
+      <xs:documentation>TimeSpan type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:duration">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Time">
+    <xs:annotation>
+      <xs:documentation>Time type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:time">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Type" mixed="true">
+    <xs:annotation>
+      <xs:documentation>.Net Type type</xs:documentation>
+    </xs:annotation>
+    <xs:attributeGroup ref="ConfigGroup" />
+    <xs:attribute name="fullname" use="required" />
+    <xs:attribute name="assembly" use="optional" />
+  </xs:complexType>
+  <xs:complexType name="Directory">
+    <xs:annotation>
+      <xs:documentation>Windows directory</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:restriction base="String">
+        <xs:pattern value="[a-zA-Z]:([\\|/]([\c^: ])*)*" />
+      </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Version">
+    <xs:annotation>
+      <xs:documentation>A version number</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:restriction base="String">
+        <xs:pattern value="([0-9]+).([0-9]+).([0-9]+).([0-9]+)" />
+      </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Uri">
+    <xs:annotation>
+      <xs:documentation>Universal resource identifier</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:anyURI">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="UnsignedLong">
+    <xs:annotation>
+      <xs:documentation>Unsigned long</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:unsignedLong">
+        <xs:attributeGroup ref="ConfigGroup" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+</xs:schema>

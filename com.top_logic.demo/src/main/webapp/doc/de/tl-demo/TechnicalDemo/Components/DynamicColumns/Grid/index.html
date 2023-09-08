@@ -1,0 +1,9 @@
+<p>In der Sicht können in der Tabelle "Ziele" eine globale Liste von abstrakten Zielen angelegt werden. Ein Ziel besteht lediglich aus einem Namen. Jedes&nbsp; Entwicklungsprojekt kann bezüglich der Erfüllung jedes der Ziele bewertet werden. Hierzu erhält die Tabelle der Entwicklungsprojekte für jedes Ziel eine zusätzliche Spalte, in der ein Wert für dieses Ziel eingegeben werden kann. Diese Bewertung wird nicht als direktes Attribut des Entwicklungsprojektes gespeichert, sondern in einem eigenen Bewertungsobjekt. Dieses Bewertungsobjekt ist mit dem Entwicklungsprojekt und dem Ziel verknüpft und speichert die eingegebene Bewertung.</p> 
+<p><img src="ref:image.png" style="opacity:1"></p> 
+<p>Die Konfiguration der Grid-Tabelle enthält eine zusätzliche Spaltenkonfiguration, in der für jedes der Zielobjekte eine Spalte für dieses Ziel erzeugt wird. Die Funktion, welche den Spaltenwert berechnet, sucht das zu dem angezeigten Entwicklungsprojekt und der dargestellten Spalte passende Bewertungsobjekt und liefert dessen Wert als Ergebnis.</p> 
+<p>Die Speicheroperation für einen neu eingegebenen Spaltenwert muss drei Fälle unterscheiden:</p> 
+<ul> 
+ <li>Wenn für das Entwicklungsprojekt und das Ziel noch kein Bewertungsobjekt angelegt wurde, muss ein neues Bewertungsobjekt erzeugt und mit dem Entwicklungsprojekt und dem Ziel verknüpft werden, bevor der eingegebene Wert gespeichert werden kann.</li> 
+ <li>Existiert schon ein Bewertungsobjekt für die Kombination aus Entwicklungsprojekt und Ziel, kann der Wert aktualisiert werden.</li> 
+ <li>Wurde ein vorher existierender Wert gelöscht, muss das Bewertungsobjekt selbst gelöscht werden, damit in der entsprechenden Tabellenzelle nach dem Speichern kein Wert (und nicht beispielsweise der Wert <code class="hljs inlineCode">0</code>) angezeigt wird.</li> 
+</ul>

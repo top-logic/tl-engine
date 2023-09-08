@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<t:parameter name="Invoked_String_Attribute" type="string" />
+			
+			<t:parameter name="Invoked_Xml_Attribute" type="xml" />
+			
+			<t:parameter name="Invoked_Boolean_Attribute" type="boolean" />
+			
+			<t:parameter name="Invoked_Integer_Attribute" type="integer" />
+			
+			<t:parameter name="Invoked_Float_Attribute" type="float" />
+			
+			<t:parameter name="Invoked_Date_Attribute" type="date" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:value expr='$Invoked_String_Attribute' />
+		
+		<t:value expr='$Invoked_Xml_Attribute' />
+		
+		<t:value expr='$Invoked_Boolean_Attribute' />
+		
+		<t:value expr='$Invoked_Integer_Attribute' />
+		
+		<t:value expr='$Invoked_Float_Attribute' />
+		
+		<t:value expr='$Invoked_Date_Attribute' />
+		
+	</t:body>
+</t:template>

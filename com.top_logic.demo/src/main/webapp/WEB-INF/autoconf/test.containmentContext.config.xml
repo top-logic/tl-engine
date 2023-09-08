@@ -1,0 +1,20 @@
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+  <services>
+    <config service-class="com.top_logic.basic.util.ResourcesModule">
+      <instance class="com.top_logic.util.resource.analyzer.IDEResources">
+          <bundles>
+            <bundle name="model.test.containmentContext.messages"/>
+          </bundles>
+      </instance>
+    </config>
+    <config service-class="com.top_logic.util.model.ModelService">
+      <instance class="com.top_logic.element.model.DynamicModelService">
+        <declarations>
+          <declaration file="/WEB-INF/model/test.containmentContext.model.xml"/>
+        </declarations>
+      </instance>
+    </config>
+  </services>
+</application>

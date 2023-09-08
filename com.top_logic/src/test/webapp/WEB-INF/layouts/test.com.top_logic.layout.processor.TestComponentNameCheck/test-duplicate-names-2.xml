@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Failing test with duplicate name in component that is irrelevant for the check that enforces names. -->
+<component class="A"
+	name="a"
+>
+	<childList>
+		<component class="com.top_logic.knowledge.gui.layout.InfoComponent"
+			name="info"
+		/>
+		<component class="com.top_logic.knowledge.gui.layout.InfoComponent"
+			name="info"
+		/>
+	</childList>
+</component>

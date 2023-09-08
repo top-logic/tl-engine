@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- demo main configuration file -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.knowledge.service.FlexDataManagerFactory">
+			<instance class="com.top_logic.knowledge.service.encryption.data.EncryptedFlexDataManagerFactory">
+				<transformer>
+					<types>
+						<type name="DemoTypes" strategy="exclude">
+							<attributes>
+								<attribute name="boolean" strategy="include" />
+							</attributes>
+						</type>
+					</types>
+				</transformer>
+			</instance>
+		</config>
+	</services>
+</application>

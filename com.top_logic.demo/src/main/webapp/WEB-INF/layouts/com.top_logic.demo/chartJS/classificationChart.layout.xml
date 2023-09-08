@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.chart.chartjs/chartjs.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/chartJS/contextTree.layout.xml#Tree)">
+		<name key="dynamic.96a7abfa-0cf8-43ef-8fdf-ec3ae5b72587">
+			<en>Classifications</en>
+			<de>Klassifikationen</de>
+		</name>
+		<data><![CDATA[model -> {
+  // All DemoTypes:A children of the current model.
+  nodes = $model.get(`tl.element:StructuredElementContainer#children`)
+    .filter(x -> $x.instanceOf(`DemoTypes:A`));
+
+  // Group them according to their DemoTypes:A#checklistSingle value.
+  group = $nodes.groupBy(n -> $n.get(`DemoTypes:A#checklistSingle`).singleElement());
+  
+  // Sort the keys according to their labels.
+  keys = $group.keySet().toList().sort(comparator(x -> $x.toString()));
+  
+  // Compute data for the chart configuration.
+  datasets = $keys.map(x -> {
+	'label': $x.toString(),
+  	'data': [$group[$x].size()]
+  });
+  
+  // Produce the chart configuration
+  {
+  	'type': 'bar',
+  	'data': {
+  	    'labels': [#("Anzahl Objekte mit checklistSingle"@de, "Number of objects with checklistSingle"@en)],
+  		'datasets': $datasets
+  	},
+  	'options': {
+		'plugins': {
+            'colorschemes': {
+            	// See https://nagix.github.io/chartjs-plugin-colorschemes/colorchart.html
+                'scheme': 'tableau.Tableau10'
+            }
+        },
+  		'scales': {
+  		    'y': {
+  			    'ticks': {
+  			        'min': 0
+  			    }
+  		    },
+  			'x': {
+  				'gridLines': {
+  					'offsetGridLines': true
+  				}
+  			}
+  		}
+  	}
+  }
+
+}]]></data>
+	</arguments>
+</config:template-call>

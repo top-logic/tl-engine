@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings config:interface="com.top_logic.gui.config.ThemeSettings$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<color name="BUTTON_DISABLED_COLOR"
+		value="#697677"
+	/>
+	<color name="TL-cerise"
+		expr=""
+		value="#BB0A30"
+	/>
+	<color name="TL-atoll"
+		expr=""
+		value="#4C4C4C"
+	/>
+	<color name="TL-gainsboro"
+		value="#d9d9d9"
+	/>
+	<color name="TERTIARY_TEXT_COLOR"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="LINK_VISITED"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="ACCORDION_GROUP_BACKGROUND_COLOR"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="ACCORDION_BEVEL_COLOR"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="ACTIVE_ELEMENT_BORDER_COLOR"
+		expr="%TL-cerise%"
+	/>
+	<color name="ACTIVE_ELEMENT_COLOR"
+		expr="%TL-cerise%"
+	/>
+	<color name="ACCORDION_ICON_COLOR"
+		value="#D9D9D9"
+	/>
+	<color name="TABLE_TITLE"
+		expr="%LAYOUT_HIGHLIGHT_COLOR%"
+	/>
+	<color name="HIGHLIGHT_SECONDARY"
+		expr="%LAYOUT_HIGHLIGHT_COLOR%"
+	/>
+	<color name="BUTTON_BACKGROUND_COLOR_HOVER"
+		expr="%TL-cerise%"
+	/>
+	<string name="BUTTON_BORDER"
+		expr=""
+		value="0px"
+	/>
+	<color name="BREADCRUMB_BG_COLOR"
+		expr="%LAYOUT_HIGHLIGHT_COLOR%"
+	/>
+	<string name="ACCORDION_ICON_SECOND_COLOR"
+		expr="%ICON_COLOR_DARK_CONTEXT_HIGHLIGHT_BG%"
+	/>
+	<color name="ACCORDION_SELECTED_BACKGROUND_COLOR"
+		expr="%LAYOUT_HIGHLIGHT_COLOR%"
+	/>
+	<color name="ACCORDION_HOVER_BACKGROUND_COLOR"
+		expr="%LAYOUT_HIGHLIGHT_COLOR%"
+	/>
+	<icon name="BEACON_BALLS_GREEN"
+		expr=""
+		value="colored:tl-icon circle-light icon-green"
+	/>
+	<icon name="BEACON_BALLS_RED"
+		expr=""
+		value="colored:tl-icon circle-light icon-red"
+	/>
+	<icon name="BEACON_BALLS_YELLOW"
+		expr=""
+		value="colored:tl-icon circle-light icon-yellow"
+	/>
+	<color name="ICON_COLOR_BASIC"
+		expr="%LAYOUT_HIGHLIGHT_COLOR%"
+	/>
+	<color name="ICON_COLOR_CIRCLE_OVERLAY_BASIC"
+		expr="%TL-cerise%"
+	/>
+	<color name="ICON_COLOR_DARK_CONTEXT_BASIC"
+	 	expr="%TL-gainsboro%"
+	 />
+	<color name="ICON_COLOR_DARK_CONTEXT_HIGHLIGHT"
+		expr="%ICON_COLOR_RED%"
+	/>
+	<string name="ICON_COLOR_DARK_CONTEXT_HIGHLIGHT_BG"
+		expr="%ICON_COLOR_WHITE%"
+	/>	
+	<color name="ICON_COLOR_DARK_CONTEXT_DISABLED_BASIC"
+		value="#697677"
+	/>
+	<color name="ICON_COLOR_DARK_CONTEXT_DISABLED_HIGHLIGHT"
+		expr="%ICON_COLOR_DARK_CONTEXT_DISABLED_BASIC%"
+	/>
+	<color name="ICON_COLOR_DISABLED_BASIC"
+		expr="%BUTTON_DISABLED_COLOR%"
+	/>
+	<color name="ICON_COLOR_DISABLED_HIGHLIGHT"
+		expr="%ICON_COLOR_DISABLED_BASIC%"
+	/>
+	<string name="ICON_COLOR_DISABLED_HIGHLIGHT_BG"
+		value="rgba(0, 0, 0, 0.0)"
+	/>
+	<color name="ICON_COLOR_GREEN"
+		value="#009900"
+	/>
+	<color name="ICON_COLOR_GREY"
+		value="#CFD1D2"
+	/>
+	<string name="ICON_COLOR_OVERLAY_DARK_CONTEXT_HIGHLIGHT_BG"
+		expr="%ICON_COLOR_DARK_CONTEXT_HIGHLIGHT_BG%"
+	/>
+	<string name="ICON_COLOR_OVERLAY_DARK_CONTEXT_HIGHLIGHT_BG_HOVER"
+		expr="%ICON_COLOR_DARK_CONTEXT_HIGHLIGHT_BG%"
+	/>
+	<color name="ICON_COLOR_RED"
+		expr="%TL-cerise%"
+	/>
+	<color name="ICON_COLOR_YELLOW"
+		value="#FFAA00"
+	/>
+	<icon name="ICONS_SELECT_ALL_CHECKBOXES"
+		value="colored:tl-icon checkbox-select-all icon-red"
+	/>
+	<color name="LAYOUT_HIGHLIGHT_COLOR"
+		expr="%TL-cerise%"
+	/>
+	<color name="LAYOUT_MAIN_COLOR"
+		expr="%TL-atoll%"
+	/>
+	<color name="SBL_LOGO_COLOR"
+		value="#FFFFFF"
+	/>
+	<color name="TABBAR_SCROLL_BUTTON_HOVER_COLOR"
+		value="#dd8497"
+	/>
+	<color name="TILES_CARD_IMAGE_COLOR"
+		value="#333333"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.GREEN"
+		expr=""
+		value="colored:tl-icon circle-light icon-green"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_GLOBAL_ACTIVE"
+		expr=""
+		value="colored:tl-icon search"
+	/>
+	<icon name="mime.image/bmp"
+		expr=""
+		value="colored:tl-icon image"
+	/>
+	<icon name="mime.image/gif"
+		expr=""
+		value="colored:tl-icon image"
+	/>
+	<icon name="mime.image/png"
+		expr=""
+		value="colored:tl-icon image"
+	/>
+	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_RED"
+		expr=""
+		value="colored:tl-icon paused icon-red"
+	/>
+	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_YELLOW"
+		expr=""
+		value="colored:tl-icon paused icon-yellow"
+	/>
+	<icon name="com.top_logic.layout.inspector.resources.Icons.PUBLIC"
+		expr=""
+		value="colored:tl-icon circle-light icon-green"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.YELLOW"
+		expr=""
+		value="colored:tl-icon circle-light icon-yellow"
+	/>
+	<color name="TL-bg-disabled"
+		expr=""
+		value="#B3B3B3"
+	/>
+	<color name="TL-disabled"
+		value="#697677"
+	/>
+	<icon name="com.top_logic.element.layout.uiconfig.Icons.ADD_ROW_TOP"
+		expr=""
+		value="colored:tl-icon row-top-add"
+	/>
+	<string name="IMAGE_BUTTON_BACKGROUND_DISABLED"
+		expr="%TL-bg-disabled%"
+	/>
+	<icon name="IMAGE_BUTTONS_RESULT_ACTIVE"
+		expr="%IMAGE_BUTTONS_RESULT%"
+	/>
+	<color name="TOOLBAR_BUTTON_ICON_COLOR"
+		value="#d9d9d9"
+	/>
+	<color name="SYSTEM_MESSAGE_COLOR"
+		expr="%ICON_COLOR_RED%"
+	/>
+</settings>

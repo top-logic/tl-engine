@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>TestBrowserHistory</title>
+	<script type="text/javascript">
+	   function setSrc(newSrc){
+
+		   document.getElementById("historyFrame").src = newSrc;
+		   
+	   }; 
+	</script>
+</head>
+<body>
+
+    <iframe id="historyFrame" src="http://www.janko.at/Raetsel/index.htm" style="width:100%;height:50%"></iframe>
+    
+    <button onclick="setSrc('http://www.google.com')">Google</button>
+    <button onclick="setSrc('http://www.top-logic.com')">Top-Logic</button>
+    <button onclick="setSrc('http://www.w3.org/TR/xhtml1/dtds.html')">XHTML-DTD</button>
+    <button onclick="setSrc('http://www.sun.com')">SUN</button>
+</body>
+</html>

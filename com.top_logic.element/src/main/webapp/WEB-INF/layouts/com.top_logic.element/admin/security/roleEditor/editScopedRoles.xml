@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout horizontal="true">
+	<components>
+		<include name="com.top_logic.element/admin/security/roleEditor/rolesTable.xml"
+			namePrefix="editRoles"
+		>
+			<inject>
+				<layoutInfo size="413"/>
+			</inject>
+		</include>
+		<layout>
+			<components>
+				<component class="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+					buttonComponent="EditRoleButtons"
+					defaultFor="tl.accounts:Role"
+					model="selection(editRolesTable)"
+					name="EditRole"
+					page="/jsp/layout/admin/roles/EditRole.jsp"
+					resPrefix="admin.role.edit."
+					saveScrollPosition="true"
+					securityProviderClass="securityRoot"
+				>
+					<dialogs>
+						<layout name="newRoleDialog">
+							<dialogInfo
+								executability="InViewMode"
+								height="280"
+								openerClique="create"
+								openerCommandGroup="Create"
+								width="360"
+							/>
+
+							<components>
+								<component class="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleComponent"
+									buttonComponent="NewRoleButtons"
+									name="NewRole"
+									page="/jsp/layout/admin/roles/NewRole.jsp"
+									resPrefix="admin.role.edit.new."
+									securityProviderClass="securityRoot"
+								/>
+								<buttonbar name="NewRoleButtons"/>
+							</components>
+						</layout>
+					</dialogs>
+				</component>
+				<buttonbar name="EditRoleButtons"/>
+			</components>
+		</layout>
+	</components>
+</layout>

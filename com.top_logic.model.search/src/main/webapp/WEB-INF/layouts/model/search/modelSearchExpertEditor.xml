@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+	name="ExpertModelSearchEditor"
+	resPrefix="layouts.model.search.modelSearch.expert.editor."
+	securityProviderClass="securityRoot"
+	titleKey="model.search.expert.title"
+	toolbar="false"
+>
+	<tabInfo label="expert.search.tab"/>
+	<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+		create="true"
+		formType="com.top_logic.model.search.ui.ExpertSearchExpressionEditor$SearchConfig"
+	/>
+</component>

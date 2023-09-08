@@ -1,0 +1,40 @@
+<h2>Syntax</h2> 
+<pre>	<code>$calendar.withMinute($minute)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Erstellt einen neuen Kalender aus dem gegebenen Kalender, wobei die <a class="tlObject" data-custom="true" href="?page=minute&amp;uuid=18559da6-247e-47d6-8242-e86b3772c75e">Minute</a> auf <code class="hljs inlineCode">minute</code> gesetzt wird. </p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>calendar</td> 
+   <td>Fachobjekt</td> 
+   <td>Der Kalender, dessen Minute geändert werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>minute</td> 
+   <td>Zahl</td> 
+   <td>Wert für die neue Minute, die für den Kalender gesetzt werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Fachobjekt</p> 
+<p>Ein Kalender mit dem geänderten Wert für die Minute.</p> 
+<h2>Beispiele</h2> 
+<pre>	<code>dateTime(2012, 8, 15, 5, 55, 24, 45).toUserCalendar().withMinute(22).minute()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>22 </p>

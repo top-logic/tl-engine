@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="A"
+	master="template1"
+	prefix="custom.template1"
+>
+	<dialogs>
+		<component class="B"
+			master="template1"
+			prefix="custom.template1.template2"
+		>
+			<dialogs>
+				<component class="C"
+					master="template1"
+					prefix="custom.template1.template2.template3"
+				>
+					<dialogs>
+						<!-- No dialogs -->
+					</dialogs>
+				</component>
+			</dialogs>
+		</component>
+	</dialogs>
+</component>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic/admin/model/lists/listAdmin_shared.xml"
+	columns="name"
+	createType="Classification"
+	namePrefix="adminClassification"
+	nameSize="360"
+	resPrefix="tl.admin.classification"
+>
+	<modelBuilder class="com.top_logic.knowledge.gui.layout.list.ClassificationTableModelBuilder"
+		type="Classification"
+	/>
+</include>

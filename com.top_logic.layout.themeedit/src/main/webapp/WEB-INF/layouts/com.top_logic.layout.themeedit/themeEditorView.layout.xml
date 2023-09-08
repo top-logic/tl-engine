@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="themeEditorView"
+	helpIDLegacy="layouts.tl-layout-themeedit.themeEditor.tabber"
+	titleKey="layouts.tl-layout-themeedit.themeEditor.tabber"
+>
+	<tabInfo label="layouts.tl-layout-themeedit.themeEditor.tabber"/>
+	<components>
+		<include name="tl-layout-themeedit/themeEditor.xml"/>
+	</components>
+</securityLayout>

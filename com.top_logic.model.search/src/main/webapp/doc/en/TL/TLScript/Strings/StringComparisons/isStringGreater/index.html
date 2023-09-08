@@ -1,0 +1,68 @@
+<h2>Syntax</h2> 
+<pre>	<code>$string1.isStringGreater($string2)
+
+$string1.isStringGreater($string2, $case-sensitive)
+</code>
+</pre> 
+<h2>Description</h2> 
+<p>Compares the two strings <code class="hljs inlineCode">string1</code> and <code class="hljs inlineCode">string2</code> lexiographically. The comparison is done character by character. As soon as a character of <code class="hljs inlineCode">string1</code> is greater than the character at the same position of <code class="hljs inlineCode">string2</code>, <code class="hljs inlineCode">true</code> is returned.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>string1</td> 
+   <td>String</td> 
+   <td>The string to compare <code class="hljs inlineCode">string2</code> with.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>string2</td> 
+   <td>String</td> 
+   <td>The string to compare <code class="hljs inlineCode">string1</code> with.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>case-senitive</td> 
+   <td>Boolean</td> 
+   <td>Determines whether case sensitivity should be considered.</td> 
+   <td>no</td> 
+   <td><code class="hljs inlineCode">false</code> - case sensitivity is not considered.</td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p> 
+<p>Whether <code class="hljs inlineCode">string1</code> is lexiographically greater than <code class="hljs inlineCode">string2</code>.</p> 
+<h2>Examples</h2> 
+<h3>Simple comparison</h3> 
+<pre>	<code>isStringGreater("def", "abc")</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">true</code></p> 
+<h3>Identical strings</h3> 
+<pre>	<code>isStringGreater("abc" "abc")</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">false</code></p> 
+<h3>Different character length</h3> 
+<pre>	<code>isStringGreater("g", "abcdef")</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">false</code></p> 
+<p>The fact that the first string is shorter than the second is irrelevant in the comparison.</p> 
+<h3>Non-Casesensitive comparison</h3> 
+<pre><code>isStringGreater("abc", "ABC")</code></pre> 
+<p><strong><span style="color:#3498db">Output:</span></strong> <code class="hljs inlineCode">false</code></p> 
+<p>Since no case sensitivity is applied, both strings are the same size.</p> 
+<h3>Casesensitive comparison</h3> 
+<pre><code>isStringGreater("abc", "ABC", true)</code></pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">true</code></p> 
+<p>a is greater than A.</p>

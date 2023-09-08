@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings output-format="xml"/>
+		<t:parameters>
+			<t:parameter name="Name"
+				type="string"
+			/>
+
+			<!-- For example: 'text/plain' -->
+			<t:parameter name="Typ"
+				type="string"
+			/>
+
+			<!-- Base64 encoded -->
+			<t:parameter name="Inhalt"
+				type="string"
+			/>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Download File and check name, content type and binary content."
+			user-id="${$Tester}"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.LabeledFieldRef"
+								label="webFolder"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="rows"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+								column-name="_download"
+								field-label-comment=""
+							>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+									provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+								>
+									<name>
+										<part key="element">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="${$Name}"
+											/>
+										</part>
+									</name>
+								</row-object>
+							</node>
+						</path>
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
+						file-name="${$Name}"
+					/>
+					<constraints>
+						<constraint class="com.top_logic.layout.scripting.check.BinaryFileEqualityCheck">
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+								base64data="${$Inhalt}"
+								content-type="${$Typ}"
+								name="${$Name}"
+							/>
+						</constraint>
+					</constraints>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"/>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

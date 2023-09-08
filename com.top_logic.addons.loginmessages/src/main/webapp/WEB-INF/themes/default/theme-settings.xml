@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICONS_LARGE_LOGIN_MESSAGE60"
+		value="/icons/large/LoginMessage60.png"
+	/>
+	<icon name="ICONS_LOGIN_MESSAGE"
+		value="/icons/LoginMessage.png"
+	/>
+	<icon name="ICONS_LOGIN_MESSAGE_BUTTON"
+		value="/icons/LoginMessageButton.png"
+	/>
+	<icon name="LOGIN_MESSAGE_RESET_ICON"
+		value="css:fas fa-backward"
+	/>
+	<type name="MAIN_LAYOUT_CLASS"
+		value="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+	/>
+</settings>

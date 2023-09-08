@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<fallback-test xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<a-list-configs>
+		<aConfig
+			config:position="begin"
+			intValue="5"
+			stringValue="first"
+		/>
+		<aConfig
+			config:position="end"
+			stringValue="last"
+		/>
+	</a-list-configs>
+</fallback-test>

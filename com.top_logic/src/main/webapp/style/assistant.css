@@ -1,0 +1,38 @@
+.assistantContent {
+	background-color: var(--SECONDARY_BACKGROUND_COLOR);
+	margin: auto;
+	margin-top: 2px;
+	margin-bottom: 2px;
+}
+
+.assistantList {
+	margin: 2px;
+}
+
+.assistantElement {
+	display: inline;
+	margin-right: 25px;
+}
+
+.assistantFirstElement {
+}
+
+.assistantPrev {
+	
+}
+
+.assistantCurrentStep {
+}
+
+.assistantNext {
+	color: #AAAAAA;
+}
+
+.assistantLastElement {
+	margin-right: 0px;
+}
+
+.assistantImage {
+	margin: 3px;
+	vertical-align:middle;
+}

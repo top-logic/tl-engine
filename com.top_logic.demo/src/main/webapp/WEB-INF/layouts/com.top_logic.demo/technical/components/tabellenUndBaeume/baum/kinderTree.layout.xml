@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tree.template.xml"
+>
+	<arguments
+		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
+		partnerGroup="TreePartner"
+	>
+		<name key="dynamic.1a37e14d-3702-4007-ac26-0c907ad0b3fc">
+			<de>Kinder</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="node -> model -> $model"
+			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
+			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
+			rootNode="x -> $x"
+		/>
+	</arguments>
+</config:template-call>

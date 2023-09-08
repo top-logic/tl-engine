@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="xml" />
+		<t:parameters>
+			
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester" type="string" default="root" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<action
+			xmlns:config="http://www.top-logic.com/ns/config/6.0"
+			class="com.top_logic.layout.scripting.runtime.action.ValidatingActionOp"
+			user-id="${$Tester}"/>
+		
+	</t:body>
+</t:template>

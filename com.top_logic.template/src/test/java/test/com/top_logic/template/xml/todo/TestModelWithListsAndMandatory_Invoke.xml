@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+	</t:head>
+	<t:body>
+		<t:invocation file="TestModelWithListsAndMandatoryInvocation.xml">
+			
+			<t:parameter name="Example_List_Mandatory_Integer">
+				<t:value>
+					<t:entry value="3"/>
+					<t:entry value="0"/>
+					<t:entry value="-5"/>
+				</t:value>
+			</t:parameter>
+			
+			<t:parameter name="Example_List_Mandatory_String">
+				<t:value>
+					<t:entry value="alpha"/>
+					<!-- The list itself is mandatory, its entries are not and can therefore be empty. -->
+					<t:entry value=""/>
+					<t:entry value="Delta"/>
+				</t:value>
+			</t:parameter>
+			
+			<t:parameter name="Example_List_Not_Mandatory">
+				<!-- The value tag cannot be omitted, even if it's empty. -->
+				<t:value />
+			</t:parameter>
+			
+		</t:invocation>
+	</t:body>
+</t:template>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID=""
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<open-handler id="ID_c35e3b4b_1f73_47cf_b5b2_af7cb9f2fd51"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			clique="create"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			image="colored:fas fa-globe-americas overlay-add"
+			targetComponent=""
+		>
+			<resourceKey key="dynamic.86ed78b8-d447-43f1-ba43-96f0eb77ea53">
+				<de>Welt anlegen</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.dfc7945d-2efa-4e6d-a179-06ca9500d0cd">
+				<de>Neue Welt</de>
+			</title>
+		</title>
+		<forms>
+			<form type="test.containmentContext:World">
+				<formDefinition>
+					<field attribute="name"/>
+				</formDefinition>
+			</form>
+		</forms>
+		<typeOptions
+			include-subtypes="true"
+			type="test.containmentContext:World"
+		/>
+		<create-handler id="ID_09042898_81a7_411a_8084_c3ce2e6fbe7e"
+			clique="save"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			ignoreWarnings="default"
+			image=""
+			linkOperation=""
+		>
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/containmentContext/worldsTable.layout.xml#Table)"/>
+			</postCreateActions>
+		</create-handler>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="visual"
+   viewBox="0 0 22 22"
+   version="1.1"
+   sodipodi:docname="import-excel.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata10871">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>excelImportButtonIcon</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1680"
+     inkscape:window-height="987"
+     id="namedview10869"
+     showgrid="false"
+     inkscape:pagecheckerboard="true"
+     inkscape:zoom="21.454545"
+     inkscape:cx="-1.7672487"
+     inkscape:cy="9.6509901"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="visual" />
+  <defs
+     id="defs10846">
+    <style
+       id="style10844">.cls-1{fill:none;stroke:#008fb8;stroke-miterlimit:10;stroke-width:2px;}.cls-2{fill:#008fb8;}.cls-3{fill:#fbfbfd;}</style>
+  </defs>
+  <title
+     id="title10848">excelImportButtonIcon</title>
+  <path
+     style="fill:#008fb8;stroke-width:1.11626875"
+     d="M 12.9375 0.037109375 L 11.615234 0.28125 L 0.44726562 2.3730469 L 0.44726562 19.072266 L 12.9375 21.412109 L 12.9375 18.537109 L 13.083984 18.537109 A 4.4650752 4.4650752 0 0 1 12.9375 17.419922 A 4.4650752 4.4650752 0 0 1 13.085938 16.304688 L 12.9375 16.304688 L 12.9375 15.1875 L 13.541016 15.1875 A 4.4650752 4.4650752 0 0 1 17.402344 12.955078 L 12.9375 12.955078 L 12.9375 11.839844 L 17.402344 11.839844 L 17.402344 9.6074219 L 12.9375 9.6074219 L 12.9375 8.4902344 L 17.402344 8.4902344 L 17.402344 6.2578125 L 12.9375 6.2578125 L 12.9375 5.140625 L 18.519531 5.140625 L 18.519531 13.103516 A 4.4650752 4.4650752 0 0 1 20.751953 14.476562 L 20.751953 2.9082031 L 12.9375 2.9082031 L 12.9375 0.037109375 z M 10.707031 2.7246094 L 10.707031 2.9082031 L 10.707031 4.0253906 L 10.707031 18.537109 L 10.707031 18.720703 L 2.6816406 17.220703 L 2.6816406 4.2246094 L 10.707031 2.7246094 z M 9.4121094 7.0507812 L 7.2792969 7.21875 L 6.1621094 9.4511719 L 5.1230469 7.3730469 L 3.3378906 7.5097656 L 5.3359375 10.724609 L 3.1699219 14.285156 L 4.9453125 14.429688 L 6.1621094 12.095703 L 7.4121094 14.642578 L 9.5898438 14.830078 L 7.0546875 10.724609 L 9.4121094 7.0507812 z "
+     id="path10852" />
+  <path
+     style="display:inline;fill:#fbfbfd;stroke-width:1.11626875"
+     d="m 21.868196,17.420517 a 4.4650752,4.4650752 0 0 1 -4.465076,4.465075 4.4650752,4.4650752 0 0 1 -4.465075,-4.465075 4.4650752,4.4650752 0 0 1 4.465075,-4.465075 4.4650752,4.4650752 0 0 1 4.465076,4.465075 z"
+     id="circle10862"
+     inkscape:connector-curvature="0" />
+  <path
+     id="polygon10866"
+     style="fill:#008fb8;stroke-width:1.11626875"
+     d="m 14.958491,17.632607 h 4.889257 L 17.40312,15.187979 Z m 1.328143,-0.334112 v 2.354048 h 2.232219 v -2.354048 z"
+     inkscape:connector-curvature="0" />
+</svg>

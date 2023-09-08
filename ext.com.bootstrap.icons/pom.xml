@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>7.6.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>ext-com-bootstrap-icons</artifactId>
+  
+  <description>Bootstrap Icon Font version 1.9.1</description>
+  <url>https://github.com/twbs/icons/releases/tag/v1.9.1</url>
+  
+  <licenses>
+  	<license>
+  		<name>MIT (MIT License)</name>
+  		<url>https://github.com/twbs/icons/blob/main/LICENSE.md</url>
+  	</license>
+  </licenses>
+  
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+    </dependency>
+  </dependencies>
+</project>

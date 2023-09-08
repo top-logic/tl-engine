@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model 
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="TestJavaBinding">
+			<annotations>
+				<package-binding
+					implementation-package="test.com.top_logic.model.search.model.testJavaBinding.impl"
+					interface-package="test.com.top_logic.model.search.model.testJavaBinding"
+				/>
+			</annotations>
+			<types>
+				<class name="Common">
+					<attributes>
+						<property name="name" type="tl.core:String" mandatory="true"/>
+					</attributes>
+				</class>
+				
+				<class name="A">
+					<generalizations>
+						<generalization type="Common" />
+					</generalizations>
+					<attributes>
+						<reference name="primitives" type="Primitives" multiple="true" ordered="true" />
+						<reference name="enums" type="E" multiple="true" ordered="true" />
+					</attributes>
+				</class>
+				
+				<class name="Primitives">
+					<generalizations>
+						<generalization type="Common" />
+					</generalizations>
+					<attributes>
+						<property name="byte" type="tl.core:Byte" />
+						<property name="short" type="tl.core:Short" />
+						<property name="int" type="tl.core:Integer" />
+						<property name="long" type="tl.core:Long" />
+						<property name="float" type="tl.core:Float" />
+						<property name="double" type="tl.core:Double" />
+					</attributes>
+				</class>
+				
+				<class name="PrimitivesMandatory">
+					<generalizations>
+						<generalization type="Common" />
+					</generalizations>
+					<attributes>
+						<property name="byte" type="tl.core:Byte" mandatory="true" />
+						<property name="short" type="tl.core:Short" mandatory="true" />
+						<property name="int" type="tl.core:Integer" mandatory="true" />
+						<property name="long" type="tl.core:Long" mandatory="true" />
+						<property name="float" type="tl.core:Float" mandatory="true" />
+						<property name="double" type="tl.core:Double" mandatory="true" />
+					</attributes>
+				</class>
+				
+				<class name="PrimitivesDerived">
+					<generalizations>
+						<generalization type="Common"/>
+					</generalizations>
+					<attributes>
+						<property name="in" type="tl.core:Double"/>
+						
+						<property name="derivedByte" type="tl.core:Byte">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedShort" type="tl.core:Short">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedInt" type="tl.core:Integer">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedLong" type="tl.core:Long">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedFloat" type="tl.core:Float">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedDouble" type="tl.core:Double">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+					</attributes>
+				</class>
+				
+				<class name="PrimitivesDerivedMandatory">
+					<generalizations>
+						<generalization type="Common"/>
+					</generalizations>
+					<attributes>
+						<property name="in" type="tl.core:Double"/>
+						
+						<property name="derivedByte" type="tl.core:Byte" mandatory="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedShort" type="tl.core:Short" mandatory="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedInt" type="tl.core:Integer" mandatory="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedLong" type="tl.core:Long" mandatory="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedFloat" type="tl.core:Float" mandatory="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+						<property name="derivedDouble" type="tl.core:Double" mandatory="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:PrimitivesDerived#in`) + 1"/>
+								</storage-algorithm>
+							</annotations>						
+						</property>
+					</attributes>
+				</class>
+				
+				<class name="References">
+					<generalizations>
+						<generalization type="Common"/>
+					</generalizations>
+					<attributes>
+						<reference name="ref" type="Primitives">
+						</reference>
+						
+						<reference name="refMandatory" type="Primitives" mandatory="true">
+						</reference>
+						
+						<reference name="refMultiple" type="Primitives" multiple="true">
+						</reference>
+						
+						<reference name="refMultipleMandatory" type="Primitives" multiple="true" mandatory="true">
+						</reference>
+						
+						<reference name="refOrdered" type="Primitives" multiple="true" ordered="true">
+						</reference>
+						
+						<reference name="refOrderedBag" type="Primitives" multiple="true" ordered="true" bag="true">
+						</reference>
+						
+						<reference name="refBag" type="Primitives" multiple="true" bag="true">
+						</reference>
+					</attributes>
+				</class>
+				
+				<class name="ReferencesDerived">
+					<generalizations>
+						<generalization type="Common"/>
+					</generalizations>
+					<attributes>
+						<reference name="in" type="A" multiple="true">
+						</reference>
+						
+						<reference name="ref" type="Primitives">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:ReferencesDerived#in`).get(`TestJavaBinding:A#primitives`)"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refMandatory" type="Primitives" mandatory="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:ReferencesDerived#in`).get(`TestJavaBinding:A#primitives`)"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refMultiple" type="Primitives" multiple="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:ReferencesDerived#in`).get(`TestJavaBinding:A#primitives`)"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refMultipleMandatory" type="Primitives" multiple="true" mandatory="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:ReferencesDerived#in`).get(`TestJavaBinding:A#primitives`)"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refOrdered" type="Primitives" multiple="true" ordered="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:ReferencesDerived#in`).get(`TestJavaBinding:A#primitives`)"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refOrderedBag" type="Primitives" multiple="true" ordered="true" bag="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:ReferencesDerived#in`).get(`TestJavaBinding:A#primitives`)"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refBag" type="Primitives" multiple="true" bag="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:ReferencesDerived#in`).get(`TestJavaBinding:A#primitives`)"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+					</attributes>
+				</class>
+				
+				<class name="Enums">
+					<generalizations>
+						<generalization type="Common"/>
+					</generalizations>
+					<attributes>
+						<reference name="ref" type="E">
+						</reference>
+						
+						<reference name="refMandatory" type="E" mandatory="true">
+						</reference>
+						
+						<reference name="refMultiple" type="E" multiple="true">
+						</reference>
+						
+						<reference name="refMultipleMandatory" type="E" multiple="true" mandatory="true">
+						</reference>
+						
+						<reference name="refOrdered" type="E" multiple="true" ordered="true">
+						</reference>
+						
+						<reference name="refOrderedBag" type="E" multiple="true" ordered="true" bag="true">
+						</reference>
+						
+						<reference name="refBag" type="E" multiple="true" bag="true">
+						</reference>
+					</attributes>
+				</class>
+				
+				<class name="EnumsDerived">
+					<generalizations>
+						<generalization type="Common"/>
+					</generalizations>
+					<attributes>
+						<reference name="in" type="A" multiple="true">
+						</reference>
+						
+						<reference name="ref" type="E">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:EnumsDerived#in`).get(`TestJavaBinding:A#enums`).toSet()"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refMandatory" type="E" mandatory="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:EnumsDerived#in`).get(`TestJavaBinding:A#enums`).toSet()"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refMultiple" type="E" multiple="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:EnumsDerived#in`).get(`TestJavaBinding:A#enums`).toSet()"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refMultipleMandatory" type="E" multiple="true" mandatory="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:EnumsDerived#in`).get(`TestJavaBinding:A#enums`).toSet()"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refOrdered" type="E" multiple="true" ordered="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:EnumsDerived#in`).get(`TestJavaBinding:A#enums`)"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refOrderedBag" type="E" multiple="true" ordered="true" bag="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:EnumsDerived#in`).get(`TestJavaBinding:A#enums`)"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+						
+						<reference name="refBag" type="E" multiple="true" bag="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestJavaBinding:EnumsDerived#in`).get(`TestJavaBinding:A#enums`)"/>
+								</storage-algorithm>
+							</annotations>						
+						</reference>
+					</attributes>
+				</class>
+				
+				<enum name="E">
+					<classifiers>
+						<classifier name="A"/>
+						<classifier name="B"/>
+						<classifier name="C"/>
+					</classifiers>
+				</enum>
+			</types>
+		</module>
+	</modules>
+</model>

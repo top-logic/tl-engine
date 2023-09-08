@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<fallback-test xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<a-list-configs>
+		<aConfig intValue="15" stringValue="one" />
+		<aConfig />
+		<aConfig stringValue="three" />
+		<bConfig intValue="-2" />
+		<bConfig intValue="15" stringValue="four" />
+	</a-list-configs>
+</fallback-test>

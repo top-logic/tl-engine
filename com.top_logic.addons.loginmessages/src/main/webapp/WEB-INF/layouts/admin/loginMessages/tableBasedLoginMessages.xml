@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="titleKey"
+			value="main.admin.loginMessages.table.title"
+		/>
+		<param name="gridComponentClass"
+			value="com.top_logic.element.layout.grid.GridComponent"
+		/>
+		<param name="loginMessageCreateHandler"
+			value="com.top_logic.element.layout.grid.GridCreateHandler"
+		/>
+		<param name="modifierClass"
+			value="com.top_logic.addons.loginmessages.layout.LoginMessageFormContextModifier"
+		/>
+		<param name="rowSecurityProviderClass"
+			value="com.top_logic.addons.loginmessages.layout.LoginMessageSecurityObjectProvider"
+		/>
+		<param name="elementTypes"
+			value="LoginMessage"
+		/>
+		<param name="columnNames"
+			value="name,message,active,startDate,endDate,confirmDuration"
+		/>
+		<param name="excludeColumns"
+			value=""
+		/>
+		<param name="tableConfiguration">
+			<table name="fieldTable"
+				defaultColumns="${columnNames}"
+				defaultSortOrder="name:ascending"
+				fixedColumns="2"
+			>
+				<column-default accessor="com.top_logic.knowledge.wrap.WrapperAccessor"/>
+				<columns>
+					<column name="confirmDuration"
+						controlProvider="com.top_logic.layout.form.control.IntegerInputControl$Provider"
+					/>
+				</columns>
+			</table>
+		</param>
+	</params>
+
+	<layout>
+		<components>
+			<component class="${gridComponentClass}"
+				elementTypes="${elementTypes}"
+				excludeColumns="${excludeColumns}"
+				modifier="${modifierClass}"
+				name="${namePrefix}LoginMessagesTable"
+				resPrefix="LoginMessage.table."
+				rowSecurityProviderClass="${rowSecurityProviderClass}"
+				securityProviderClass="securityRoot"
+				showClipboardCommands="false"
+				showMarkerFields="false"
+				structureName="LoginMessages"
+				titleKey="${titleKey}"
+			>
+				<buttons>
+					<button id="createAttributedGrid"
+						class="${loginMessageCreateHandler}"
+						clique="main"
+						group="Create"
+						image="theme:ICONS_LOGIN_MESSAGE_BUTTON"
+						resourceKey="LoginMessage.table.newLoginMessage"
+						type="LoginMessages:LoginMessage"
+					/>
+				</buttons>
+				<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"
+					meta-elements="LoginMessages:LoginMessage"
+				/>
+				<tables>${tableConfiguration}</tables>
+				<commands>
+					<command id="resetConfirmed"
+						class="com.top_logic.addons.loginmessages.layout.LoginMessageResetHandler"
+						image="theme:LOGIN_MESSAGE_RESET_ICON"
+					/>
+				</commands>
+				<toolbar-groups>
+					<toolbar-group name="additional">
+						<buttons>
+							<button command-id="resetConfirmed"/>
+						</buttons>
+					</toolbar-group>
+				</toolbar-groups>
+			</component>
+		</components>
+	</layout>
+</template>

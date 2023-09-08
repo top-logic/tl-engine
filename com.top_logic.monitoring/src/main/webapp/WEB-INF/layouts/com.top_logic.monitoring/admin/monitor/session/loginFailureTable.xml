@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="flTemplateFile"
+			optional="true"
+		/>
+		<param name="flDownloadNameKey"
+			value="admin.sys.failedLogins.export.download.name"
+		/>
+	</params>
+
+	<tableView name="failedLoginsComponent"
+		excludeColumns="physicalResource"
+		isSecurityMaster="true"
+		model="selection(sessionSearch)"
+		modelBuilder="com.top_logic.monitoring.session.FailedLoginTableComponent$FailedLoginsModelBuilder"
+		resPrefix="admin.sys.failedLogins."
+		securityProviderClass="securityRoot"
+		selectable="false"
+	>
+		<tabInfo label="admin.sys.failedLogins.tab"/>
+		<table
+			defaultColumns="date,name,ip,server,reason"
+			defaultSortOrder="date:descending"
+			fixedColumns="0"
+		>
+			<column-default
+				accessor="com.top_logic.monitoring.session.FailedLoginTableComponent$FailedLoginsAccessor"
+				columnWidth="240px"
+				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+			/>
+			<columns>
+				<column name="date"
+					comparator="com.top_logic.layout.form.constraints.DateComparator"
+					descendingComparator=""
+					filterProvider="com.top_logic.layout.table.filter.SimpleDateFilterProvider"
+					resourceProvider="com.top_logic.monitoring.session.FailedLoginTableComponent$FailedLoginDateResourceProvider"
+				/>
+			</columns>
+		</table>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+				downloadNameKey="${flDownloadNameKey}"
+				templateName="${flTemplateFile}"
+			/>
+		</buttons>
+	</tableView>
+</template>

@@ -1,0 +1,33 @@
+,s/\bcom\.top_logic\.tool\.form\.FormConstraint\b/com.top_logic.layout.form.FormField/g
+,s/\bcom\.top_logic\.tool\.form\.FormContext\b/com.top_logic.layout.form.model.FormContext/g
+,s/\bcom\.top_logic\.tool\.form\.SizedFormConstraint\b/com.top_logic.layout.form.model.FieldFactory/g
+,s/\bcom\.top_logic\.tool\.form\.select\.SingleSelectFormConstraint\b/com.top_logic.layout.form.model.FieldFactory/g
+,s/\bcom\.top_logic\.tool\.form\.AbstractApplyCommandHandler\b/com.top_logic.knowledge.gui.layout.form.AbstractWrapperApplyCommandHandler/g
+,s/\bcom\.top_logic\.tool\.form\.AbstractDeleteCommandHandler/com.top_logic.knowledge.gui.layout.form.AbstractWrapperDeleteCommandHandler/g
+,s/\bAbstractDeleteCommandHandler\b/AbstractWrapperDeleteCommandHandler/g
+,s/\bcom\.top_logic\.tool\.form\.AbstractCreateCommandHandler\b/com.top_logic.layout.form.component.AbstractCreateCommandHandler/g
+,s/\bcom\.top_logic\.element\.meta\.gui\.AbstractApplyAttributedCommandHandler\b/com.top_logic.element.meta.form.component.AbstractApplyAttributedCommandHandler/g
+,s/\bcom\.top_logic\.tool\.form\.AbstractCreateComponent\b/com.top_logic.layout.form.component.AbstractCreateComponent/g
+,s/\bAbstractApplyCommandHandler\b/AbstractWrapperApplyCommandHandler/g
+,s/\bcom\.top_logic\.tool\.form\.FormComponent\b/com.top_logic.layout.form.component.FormComponent/g
+,s/\bcom\.top_logic\.tool\.form\.EditComponent\b/com.top_logic.layout.form.component.EditComponent/g
+,s/\bcom\.top_logic\.element\.meta\.gui\.EditAttributedComponent\b/com.top_logic.element.meta.form.component.EditAttributedComponent/g
+,s/\bcom\.top_logic\.tool\.form\.EditMode\b/com.top_logic.layout.form.component.EditComponent/g
+,s/\bEditMode\b/EditComponent/g
+,s/\bcom\.top_logic\.element\.meta\.gui\.AttributeFormContext\b/com.top_logic.element.meta.form.AttributeFormContext/g
+,s/\bFormConstraint\b/FormField/g
+,s/\bnew SizedFormConstraint\b/FieldFactory.newSizedFormConstraint/g
+,s/\bnew SingleSelectFormConstraint\b/FieldFactory.newSingleSelectFormConstraint/g
+,s/\bnew FormatFormConstraint\b/FieldFactory.newFormatFormConstraint/g
+,s/\bnew FastListIdConstraint\b/FieldFactory.newFastListIdConstraint/g
+,s/\.getConstraint(/.getField(/g
+,s/\.getDisplayName(/.getLabel(/g
+,s/\.addFormConstraint(/.addMember(/g
+,s/\bform:metaAttributeError\b/meta:metaAttributeError/g
+,s/\bform:metaAttribute\b/meta:metaAttribute/g
+,s/\bform:metaLabel\b/meta:metaLabel/g
+,s/\bform:layoutForm\b/form:form/g
+,s/\btaglib uri="form"/taglib uri="ajaxform"/g
+,s/\bform:collSelect\b/form:select/g
+,s/\bshowMetaAttributes\.inc\b/showMetaAttributeTable.inc/g
+,w

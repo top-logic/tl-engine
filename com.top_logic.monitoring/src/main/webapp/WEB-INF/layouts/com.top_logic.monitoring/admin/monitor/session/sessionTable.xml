@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<tableView name="sysUserMonitor"
+	isSecurityMaster="true"
+	model="selection(sessionSearch)"
+	modelBuilder="com.top_logic.monitoring.session.UserMonitorListModelBuilder"
+	resPrefix="admin.sys.session."
+	securityProviderClass="securityRoot"
+	selectable="false"
+	toolbar="true"
+>
+	<tabInfo label="admin.sys.session.tab"/>
+	<table
+		defaultColumns="date,logout,name,server,machine,id"
+		defaultSortOrder="date:descending"
+		fixedColumns="0"
+	>
+		<column-default
+			accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+			filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+		/>
+		<columns>
+			<column name="date"
+				filterProvider="com.top_logic.layout.table.filter.SimpleDateFilterProvider"
+				labelProvider="com.top_logic.layout.provider.DateTimeLabelProvider"
+			>
+				<excelRenderer class="com.top_logic.tool.export.FormattedValueExcelRenderer"
+					format="dd.mm.yyyy hh:mm:ss"
+				/>
+			</column>
+			<column name="logout"
+				filterProvider="com.top_logic.layout.table.filter.SimpleDateFilterProvider"
+				labelProvider="com.top_logic.layout.provider.DateTimeLabelProvider"
+			>
+				<excelRenderer class="com.top_logic.tool.export.FormattedValueExcelRenderer"
+					format="dd.mm.yyyy hh:mm:ss"
+				/>
+			</column>
+			<column name="name"
+				columnWidth="250px"
+				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+				labelProvider="com.top_logic.knowledge.monitor.UserNameLabelProvider"
+			/>
+			<column name="server"
+				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+			/>
+			<column name="machine"
+				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+			/>
+			<column name="id"
+				columnWidth="300px"
+				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+			/>
+		</columns>
+	</table>
+	<buttons>
+		<button id="exportExcel"
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+			downloadNameKey="admin.sys.sysUserMonitor.export.download.name"
+		/>
+	</buttons>
+</tableView>

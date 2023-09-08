@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- demo main configuration file                         -->
+
+<root>
+	<alias>
+		<entry name="%QUICK_SEARCH_SEARCH_COMPONENT%" value="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput" />
+	</alias>
+	
+	<properties>
+        <section name="Monitoring">
+            <entry name="com.top_logic.event.logEntry.LogEntryReceiver$Module" value="enabled"/>
+        </section>
+		
+<!-- 		<section name="RoleSetup" > -->
+<!-- 			<entry name="DemoSecurity" value="Role1,Role2,Role3" comment="" /> -->
+<!-- 			<entry name="DemoSecurity" value="SecurityAdministrator" comment="" /> -->
+<!-- 		</section> -->
+	
+<!-- 		<section name="InitialGroupManager" > -->
+<!-- 			<entry name="initialGroups" value="securityAdministrators" /> -->
+<!-- 			<entry name="groupRoles.securityAdministrators" value="DemoSecurity.SecurityAdministrator" /> -->
+<!-- 		</section> -->
+        
+		<section name="ConfiguredAttributedTooltips" comment="Attributes to show in ConfiguredAttributedTooltipProvider">
+            <entry name="me:DemoTypes:A" value="name, tl.type, boolean" />
+		</section>
+
+	</properties>
+	
+</root>

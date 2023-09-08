@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="personContactView"
+	helpIDLegacy="contact.person.tabber"
+	titleKey="contact.person.tabber"
+>
+	<tabInfo label="contact.person.tabber"/>
+	<components>
+		<include name="com.top_logic.contact/admin/personContacts/EditPersonContacts.xml"/>
+	</components>
+</securityLayout>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="tl.model.search">
+			<annotations>
+			</annotations>
+			<types>
+
+				<!-- A generic expression attribute. The attributes is displayed and edited 
+					as expression source code. Only the usage of the attribute in custom code 
+					defines the semantics of the expression. -->
+				<datatype name="Expr" kind="Custom" db_type="string">
+					<storage-mapping class="com.top_logic.model.search.persistency.attribute.expr.ExprStorageMapping" />
+					
+					<annotations>
+						<config-type value="EXPR"/>
+						<export-binding impl="com.top_logic.model.io.bindings.StorageMappingExportBinding"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="Code" kind="Custom" db_type="string">
+					<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.String"
+					/>
+					
+					<annotations>
+						<config-type value="CODE"/>
+					</annotations>
+				</datatype>
+
+				<!-- An attribute that is displayed and edited as HTML content with embedded 
+					expressions. The underlying model can be accessed by referencing the variable 
+					$model from embedded expressions. The semantics of the model variable is 
+					completely left to custom code. The expression is never automatically evaluated 
+					by the framework. -->
+				<datatype name="Template" kind="String" db_type="string">
+					<storage-mapping class="com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping" />
+					
+					<annotations>
+						<config-type value="TEMPLATE"/>
+						<export-binding impl="com.top_logic.model.io.bindings.StorageMappingExportBinding"/>
+					</annotations>
+				</datatype>
+
+				<!-- An attribute that is edited like a `Template` attribute but with the 
+					difference that it is automatically evaluated in view mode by passing the 
+					target object as `$model` variable. -->
+				<datatype name="Report" kind="String" db_type="string">
+					<storage-mapping class="com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping" />
+					
+					<annotations>
+						<config-type value="REPORT"/>
+						<export-binding impl="com.top_logic.model.io.bindings.StorageMappingExportBinding"/>
+					</annotations>
+				</datatype>
+
+				<!-- A derived attribute with a configured expression value. The expression 
+					is expected to be a rendering expression producing HTML content. A macro 
+					attribute must be combined with the `<macro>` storage implementation annotation 
+					defining the expression to evaluate. -->
+				<datatype name="Macro" kind="String" db_type="string">
+					<storage-mapping class="com.top_logic.model.search.persistency.attribute.macro.MacroStorageMapping"/> 
+					
+					<annotations>
+						<config-type value="MACRO"/>
+					</annotations>
+				</datatype>
+
+			</types>
+		</module>
+	</modules>
+</model>

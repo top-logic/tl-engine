@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="model(com.top_logic.demo/technical/components/selectionOptions/displayDialog/dialog.layout.xml#Dialog)">
+		<name key="dynamic.c7e8ad58-f433-40bc-87b0-35c05145409c">
+			<en>Dialog display</en>
+			<de>Dialoganzeige</de>
+		</name>
+	</arguments>
+</config:template-call>

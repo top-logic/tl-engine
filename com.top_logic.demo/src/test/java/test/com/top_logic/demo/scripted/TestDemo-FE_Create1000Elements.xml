@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-comment="Strukturen"
+			card-name="demo.structure.tabber"
+			component-name="mainTabbar.layout.xml#mainTabber"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-comment="Typendemo"
+			card-name="demo.structure.demoTypes.tabber"
+			component-name="com.top_logic.demo/structure/index.layout.xml#structureTab_tabBar"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-comment="Typendemo"
+			card-name="layouts.demo.editStructureWithExport.demoStructureDemoTypes.tab"
+			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoStructureTab"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+					structure-name="DemoTypes"
+				>
+					<structure-path/>
+				</selectee>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+				component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+			command-label="Generieren..."
+			command-name="generateTypes"
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="Anzahl der generierten Kinder"
+							field-name="numberChildren"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="1000"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Generieren"
+			user-id="root"
+		/>
+	</actions>
+</action>

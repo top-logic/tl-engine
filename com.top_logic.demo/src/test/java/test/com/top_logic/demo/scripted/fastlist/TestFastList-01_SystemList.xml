@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			comment=""
+			failure-message=""
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name=""
+				tab-path="Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			comment=""
+			failure-message=""
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name=""
+				tab-path="Administration > Demo Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			comment=""
+			failure-message=""
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name=""
+				tab-path="Administration > Demo Administration > Klassifikationen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment=""
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="FastList"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="demo.nonSystemList"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic/admin/model/classifications/adminClassifications.layout.xml#adminClassificationeditListTable"
+							tab-path="Administration > Demo Administration > Klassifikationen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="FastList"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="demo.nonSystemList"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/model/classifications/adminClassifications.layout.xml#adminClassificationeditListTable"
+						tab-path="Administration > Demo Administration > Klassifikationen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="listSwitchToAJAXEdit"
+					comment=""
+					component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent"
+					component-name="com.top_logic/admin/model/classifications/adminClassifications.layout.xml#adminClassificationeditListComponent"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.admin.component.EditListComponent$DeleteListCommandHandler"
+					command-label="Löschen..."
+					command-name="DeleteList"
+					comment=""
+					component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent"
+					component-name="com.top_logic/admin/model/classifications/adminClassifications.layout.xml#adminClassificationeditListComponent"
+					failure-message=""
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/model/classifications/adminClassifications.layout.xml#adminClassificationeditListTable"
+						tab-path="Administration > Demo Administration > Klassifikationen"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment=""
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="FastList"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="demo.systemList"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic/admin/model/classifications/adminClassifications.layout.xml#adminClassificationeditListTable"
+							tab-path="Administration > Demo Administration > Klassifikationen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="FastList"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="demo.systemList"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/model/classifications/adminClassifications.layout.xml#adminClassificationeditListTable"
+						tab-path="Administration > Demo Administration > Klassifikationen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="listSwitchToAJAXEdit"
+					comment=""
+					component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent"
+					component-name="com.top_logic/admin/model/classifications/adminClassifications.layout.xml#adminClassificationeditListComponent"
+					contained-keys=""
+					failure-message=""
+					reason-keys="main.admin.list.edit.notAllowedForSystemLists"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

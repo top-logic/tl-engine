@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+		<entry name="%DB_INIT_ON_STARTUP%" value="true"/>
+		<entry name="%DB_ADJUST_FROM_CONNECTION%" value="true"/>
+	</alias>
+</root>

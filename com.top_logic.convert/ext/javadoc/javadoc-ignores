@@ -1,0 +1,32 @@
+com.top_logic.convert.ConverterMapping.java: Invalid camel case word 'fromMIME', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.ConverterMapping.java: Invalid camel case word 'fromMIMEType', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.ConverterMapping.java: Invalid camel case word 'toMIME', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.ConverterMapping.java: Invalid camel case word 'toMIMEType', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.FormatConverterFactory.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.convert.FormatConverterFactory
+com.top_logic.convert.converters.AbstractFormatConverter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.convert.converters.AbstractFormatConverter
+com.top_logic.convert.converters.AbstractFormatConverter.java: Invalid camel case word 'AbstractFormatConverter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.AbstractFormatConverter.java: Invalid camel case word 'ConverterMapping', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.AbstractFormatConverter.java: Invalid camel case word 'FormatConverter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.AbstractFormatConverter.java: Invalid camel case word 'toMimeType', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.AbstractFormatConverter.java: Missing documentation: com.top_logic.convert.converters.AbstractFormatConverter.TXT_MIMETYPE
+com.top_logic.convert.converters.ExcelFormatConverter.java: Missing documentation: com.top_logic.convert.converters.ExcelFormatConverter.EXCEL_MIMETYPE
+com.top_logic.convert.converters.ExcelXFormatConverter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.convert.converters.ExcelXFormatConverter
+com.top_logic.convert.converters.ExcelXFormatConverter.java: Invalid camel case word 'DocumentFilter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.FormatConverter.java: Invalid camel case word 'InputStream', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.FormatConverter.java: Invalid camel case word 'destinationMimeType', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.FormatConverter.java: Invalid camel case word 'inData', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.FormatConverter.java: Invalid camel case word 'sourceMimeType', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.FormatConverterException.java: Invalid camel case word 'FormatConverterException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.FormatConverterException.java: Invalid camel case word 'RuntimeException', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.HTMLFormatConverter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.convert.converters.HTMLFormatConverter
+com.top_logic.convert.converters.MsWordFormatConverter.java: Missing documentation: com.top_logic.convert.converters.MsWordFormatConverter.MSWORD_MIMETYPE
+com.top_logic.convert.converters.MsWordXFormatConverter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.convert.converters.MsWordXFormatConverter
+com.top_logic.convert.converters.MsWordXFormatConverter.java: Invalid camel case word 'DocumentFilter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.PdfFormatConverter.java: Missing documentation: com.top_logic.convert.converters.PdfFormatConverter.PDF_MIMETYPE
+com.top_logic.convert.converters.PowerPointFormatConverter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.convert.converters.PowerPointFormatConverter
+com.top_logic.convert.converters.PowerPointFormatConverter.java: Invalid camel case word 'DocumentFilter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.PowerPointXFormatConverter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.convert.converters.PowerPointXFormatConverter
+com.top_logic.convert.converters.PowerPointXFormatConverter.java: Invalid camel case word 'DocumentFilter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.RtfFormatConverter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.convert.converters.RtfFormatConverter
+com.top_logic.convert.converters.RtfFormatConverter.java: Invalid camel case word 'DocumentFilter', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.convert.converters.TextPlainConverter.java: Invalid camel case word 'TextPlainConverter', this may only be used within JavaDoc links or HTML code tags.

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="script:/demo/attribute/TestAttributeDefault.template.xml"
+>
+	<parameters>
+		<parameter name="attributeType">
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+				string="String"
+			/>
+		</parameter>
+		<parameter name="defaultValue">
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+				string="any value"
+			/>
+		</parameter>
+	</parameters>
+</action>

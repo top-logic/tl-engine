@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestTypes">
+			<annotations>
+				<package-binding
+					implementation-package="test.com.top_logic.element.structured.model.impl"
+					interface-package="test.com.top_logic.element.structured.model"
+				/>
+				<singletons>
+					<singleton type="ANode"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="A">
+					<annotations>
+						<legacy-qualified-name qualified-name="A"/>
+					</annotations>
+					<attributes>
+						<property name="as1"
+							type="tl.core:String"
+						/>
+						<property name="as2"
+							type="tl.core:String"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="B">
+					<annotations>
+						<legacy-qualified-name qualified-name="B"/>
+					</annotations>
+					<attributes>
+						<property name="bs1"
+							type="tl.core:String"
+						/>
+						<property name="bs2"
+							type="tl.core:String"
+						/>
+						<reference name="simpleRef"
+							kind="forwards"
+							type="tl.element:StructuredElement"
+						>
+							<annotations>
+								<storage-algorithm>
+									<singleton-link-storage table="hasSimpleRefAttValue"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="simpleSetRef"
+							kind="forwards"
+							multiple="true"
+							type="tl.element:StructuredElement"
+						>
+							<annotations>
+								<storage-algorithm>
+									<set-storage table="hasSimpleRefAttValue"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<property name="boolean"
+							type="tl.core:Boolean"
+						/>
+						<reference name="checklist"
+							kind="forwards"
+							multiple="true"
+							type="enum:test.element.checklist"
+						>
+							<annotations>
+								<classification-display value="checklist"/>
+							</annotations>
+						</reference>
+						<reference name="checklistSingle"
+							kind="forwards"
+							type="enum:test.element.classification.single"
+						/>
+						<reference name="checklistMulti"
+							kind="forwards"
+							multiple="true"
+							type="enum:test.element.classification.multi"
+						/>
+						<reference name="collection"
+							kind="forwards"
+							multiple="true"
+							type="tl.model:TLObject"
+						/>
+						<property name="date"
+							type="tl.core:Date"
+						/>
+						<property name="float"
+							type="tl.core:Double"
+						/>
+						<reference name="list"
+							bag="true"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="tl.element:StructuredElement"
+						>
+							<annotations>
+								<options>
+									<config-reference name="empty"/>
+								</options>
+							</annotations>
+						</reference>
+						<property name="long"
+							type="tl.core:Long"
+						/>
+						<property name="stringSet"
+							multiple="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<config-type value="STRING_SET"/>
+								<storage-algorithm>
+									<string-set-storage/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="string"
+							type="tl.core:String"
+						/>
+						<reference name="structure"
+							kind="forwards"
+							multiple="true"
+							type="TestTypes:BNode"
+						/>
+						<reference name="typedSetOrdered"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="tl.element:StructuredElement"
+						/>
+						<reference name="typedSetUnordered"
+							kind="forwards"
+							multiple="true"
+							type="tl.element:StructuredElement"
+						/>
+						<reference name="webFolder"
+							composite="true"
+							kind="forwards"
+							type="tl.folder:WebFolder"
+						>
+							<annotations>
+								<folder-type value="standardFolder"/>
+							</annotations>
+						</reference>
+						<reference name="untypedWrapper"
+							kind="forwards"
+							type="tl.model:TLObject"
+						/>
+						<reference name="typedWrapper"
+							kind="forwards"
+							type="tl.element:StructuredElement"
+						/>
+						<property name="doubleStructureReverse"
+							multiple="true"
+							type="tl.model:TLObject"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<navigate-backwards
+													attribute-name="structure"
+													type="TestTypes:B"
+												/>
+												<navigate-backwards
+													attribute-name="structure"
+													type="TestTypes:B"
+												/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="mandatoryBoolean"
+							mandatory="true"
+							type="tl.core:Tristate"
+						/>
+						<reference name="mandatoryChecklist"
+							kind="forwards"
+							mandatory="true"
+							multiple="true"
+							type="enum:test.element.checklist"
+						>
+							<annotations>
+								<classification-display value="checklist"/>
+							</annotations>
+						</reference>
+						<reference name="mandatoryChecklistSingle"
+							kind="forwards"
+							mandatory="true"
+							type="enum:test.element.classification.single"
+						/>
+						<reference name="mandatoryChecklistMulti"
+							kind="forwards"
+							mandatory="true"
+							multiple="true"
+							type="enum:test.element.classification.multi"
+						/>
+						<reference name="mandatoryCollection"
+							kind="forwards"
+							mandatory="true"
+							multiple="true"
+							type="tl.model:TLObject"
+						/>
+						<property name="mandatoryDate"
+							mandatory="true"
+							type="tl.core:Date"
+						/>
+						<property name="mandatoryFloat"
+							mandatory="true"
+							type="tl.core:Double"
+						/>
+						<reference name="mandatoryList"
+							bag="true"
+							kind="forwards"
+							mandatory="true"
+							multiple="true"
+							ordered="true"
+							type="tl.element:StructuredElement"
+						>
+							<annotations>
+								<options>
+									<config-reference name="empty"/>
+								</options>
+							</annotations>
+						</reference>
+						<property name="mandatoryLong"
+							mandatory="true"
+							type="tl.core:Long"
+						/>
+						<property name="mandatoryStringSet"
+							mandatory="true"
+							multiple="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<config-type value="STRING_SET"/>
+								<storage-algorithm>
+									<string-set-storage/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="mandatoryString"
+							mandatory="true"
+							type="tl.core:String"
+						/>
+						<reference name="mandatoryStructure"
+							kind="forwards"
+							mandatory="true"
+							multiple="true"
+							type="TestTypes:BNode"
+						/>
+						<reference name="mandatoryTypedSetOrdered"
+							kind="forwards"
+							mandatory="true"
+							multiple="true"
+							ordered="true"
+							type="tl.element:StructuredElement"
+						/>
+						<reference name="mandatoryTypedSetUnordered"
+							kind="forwards"
+							mandatory="true"
+							multiple="true"
+							type="tl.element:StructuredElement"
+						/>
+						<reference name="mandatoryWebFolder"
+							composite="true"
+							kind="forwards"
+							mandatory="true"
+							type="tl.folder:WebFolder"
+						>
+							<annotations>
+								<folder-type value="standardFolder"/>
+							</annotations>
+						</reference>
+						<reference name="mandatoryUntypedWrapper"
+							kind="forwards"
+							mandatory="true"
+							type="tl.model:TLObject"
+						/>
+						<reference name="mandatoryTypedWrapper"
+							kind="forwards"
+							mandatory="true"
+							type="tl.element:StructuredElement"
+						/>
+						<reference name="revision"
+							type="tl.core:Revision"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<class name="ANode">
+					<annotations>
+						<table name="StructuredElement"/>
+					</annotations>
+					<attributes>
+						<property name="as1"
+							override="true"
+							type="tl.core:String"
+						/>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="MyNode"/>
+								</default-value>
+							</annotations>
+						</property>
+						<reference name="children"
+							override="true"
+							type="ANodeChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="A"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+						<generalization type="TestTypes:ANodeChild"/>
+						<generalization type="TestTypes:BNodeChild"/>
+					</generalizations>
+				</class>
+				<class name="BNode">
+					<annotations>
+						<table name="BElement"/>
+					</annotations>
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="BNodeChild"
+						/>
+						<reference name="historicInlineReference"
+							kind="forwards"
+							mandatory="false"
+							type="A"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="historicRef"
+										storage-type="BElement"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="B"/>
+						<generalization type="TestTypes:ANodeChild"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="CNode">
+					<annotations>
+						<table name="StructuredElement"/>
+					</annotations>
+					<generalizations>
+						<generalization type="A"/>
+						<generalization type="TestTypes:ANodeChild"/>
+						<generalization type="TestTypes:BNodeChild"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+					<attributes>
+						<reference name="historicReferenceSingle"
+							history-type="historic"
+							multiple="false"
+							type="A"
+						/>
+						<reference name="historicReferenceMulti"
+							history-type="historic"
+							multiple="true"
+							ordered="true"
+							type="A"
+						/>
+						<reference name="mixedReferenceSingle"
+							history-type="mixed"
+							multiple="false"
+							type="A"
+						/>
+						<reference name="mixedReferenceMulti"
+							history-type="mixed"
+							multiple="true"
+							ordered="false"
+							type="A"
+						/>
+						<reference name="compositeReferenceMulti"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="CContent"
+						/>
+					</attributes>
+				</class>
+				<class name="CContent">
+					<generalizations>
+						<generalization type="tl.element:Attributed"/>
+					</generalizations>
+				</class>
+				<interface name="ANodeChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="BNodeChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+			</types>
+		</module>
+	</modules>
+</model>

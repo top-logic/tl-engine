@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Grid with default create object handler. -->
+<template>
+	<params>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="types"/>
+		<param name="modelBuilder"/>
+		<param name="titleKey"
+			optional="true"
+		/>
+		<param name="createType"
+			value="${types}"
+		/>
+		<param name="openInEdit"
+			optional="true"
+		/>
+		<param name="saveClosesDialog"
+			optional="true"
+		/>
+		<param name="showMarkerFields"
+			optional="true"
+		/>
+		<param name="showTechnicalColumn"
+			optional="true"
+		/>
+		<param name="securityProviderClass"
+			optional="true"
+		/>
+		<param name="rowSecurityProviderClass"
+			optional="true"
+		/>
+		<param name="gridComponent"
+			value="com.top_logic.element.layout.grid.GridComponent"
+		/>
+		<param name="accessor"
+			value="com.top_logic.knowledge.wrap.WrapperAccessor"
+		/>
+		<param name="formContextModifier"
+			optional="true"
+		/>
+		<param name="model"
+			optional="true"
+		/>
+		<param name="editComponentName"
+			optional="true"
+		/>
+		<param name="resPrefix"
+			value="layout.element.grid.Grid."
+		/>
+		<param name="exportName"
+			value="Export.xlsx"
+		/>
+		<param name="exportNameKey"
+			value="/s${exportName}"
+		/>
+		<param name="createButtonImage"
+			value="theme:GRID_CREATE_IMAGE"
+		/>
+		<param name="createButtonImageDisabled"
+			value="theme:GRID_CREATE_IMAGE_DISABLED"
+		/>
+		<param name="isSecurityMaster"
+			value="true"
+		/>
+		<param name="nameColumn"
+			value="name"
+		/>
+		<param name="columns"
+			value="${nameColumn}"
+		/>
+		<param name="defaultSelection"
+			optional="true"
+		/>
+		<param name="applyCommand"
+			optional="true"
+		/>
+		<param name="cancelCommand"
+			optional="true"
+		/>
+		<param name="deleteCommand"
+			optional="true"
+		/>
+		<param name="discardCommand"
+			optional="true"
+		/>
+		<param name="editCommand"
+			optional="true"
+		/>
+		<param name="saveCommand"
+			optional="true"
+		/>
+		<param name="dialogs"
+			value=""
+		/>
+		<param name="createHandler"
+			value="com.top_logic.element.meta.gui.DefaultCreateAttributedCommandHandler"
+		/>
+		<param name="buttons">
+			<!-- No additional buttons by default -->
+		</param>
+		<param name="createButton">
+			<button id="createAttributedGrid"
+				class="com.top_logic.element.layout.grid.GridCreateHandler"
+				clique="create"
+				disabledImage="${createButtonImageDisabled}"
+				group="Create"
+				image="${createButtonImage}"
+				type="${createType}"
+			>
+				<create-handler id="createAttributedGrid"
+					class="${createHandler}"
+				/>
+			</button>
+		</param>
+		<param name="table">
+			<table
+				defaultColumns="${columns}"
+				defaultSortOrder="${nameColumn}"
+				fixedColumns="2"
+			>
+				<column-default
+					accessor="${accessor}"
+					columnWidth="200px"
+				/>
+			</table>
+		</param>
+		<param name="gridParameters"
+			value=""
+		/>
+	</params>
+
+	<layout>
+		<components>
+			<component class="${gridComponent}"
+				applyCommand="${applyCommand}"
+				cancelCommand="${cancelCommand}"
+				defaultSelection="${defaultSelection}"
+				deleteCommand="${deleteCommand}"
+				discardCommand="${discardCommand}"
+				editCommand="${editCommand}"
+				editComponentName="${editComponentName}"
+				elementTypes="${types}"
+				isSecurityMaster="${isSecurityMaster}"
+				model="${model}"
+				modelBuilder="${modelBuilder}"
+				modifier="${formContextModifier}"
+				name="${namePrefix}Grid"
+				openInEdit="${openInEdit}"
+				page=""
+				resPrefix="${resPrefix}"
+				rowSecurityProviderClass="${rowSecurityProviderClass}"
+				saveClosesDialog="${saveClosesDialog}"
+				saveCommand="${saveCommand}"
+				securityProviderClass="${securityProviderClass}"
+				showMarkerFields="${showMarkerFields}"
+				showTechnicalColumn="${showTechnicalColumn}"
+				titleKey="${titleKey}"
+			>
+				<buttons>
+					<button id="exportExcelGrid"
+						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+						exportNameKey="${exportNameKey}"
+					/>
+					${createButton}
+					${buttons}
+				</buttons>
+				<dialogs>${dialogs}</dialogs>
+				${gridParameters}
+				<tables>${table}</tables>
+			</component>
+		</components>
+	</layout>
+</template>

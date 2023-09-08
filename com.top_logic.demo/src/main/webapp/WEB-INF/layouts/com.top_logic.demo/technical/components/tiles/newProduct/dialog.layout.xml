@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<open-handler id="ID_802a4231_b704_4b19_920e_6f89e3aec513"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image=""
+			target=""
+			targetComponent="com.top_logic.demo/technical/components/tiles/newProduct/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.467070d8-0f47-4295-b609-a1092d4cba9d">
+				<en>New product</en>
+				<de>Neues Produkt</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.467070d8-0f47-4295-b609-a1092d4cba9d">
+				<en>New product</en>
+				<de>Neues Produkt</de>
+			</title>
+		</title>
+		<typeOptions
+			include-subtypes="true"
+			type="test.tiles:Product"
+		/>
+		<create-handler id="ID_bad5c439_4a25_4a24_b5eb_0d53b277e7d6"/>
+	</arguments>
+</config:template-call>

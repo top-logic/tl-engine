@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tabbar.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/selectionComponent/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/selectionOptions/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/graphGrid/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/transformingChannel/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/commandExecutability/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/gridEditability/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/containmentContext/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/dragAndDrop/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/dropOn/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/transaction/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/combiningChannel/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tiles/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/history/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/componentVisibility/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicForms/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicViews/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/reports/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/pDFExport/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/graph/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/dialogs/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/documentManagement/tabLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

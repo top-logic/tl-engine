@@ -1,0 +1,31 @@
+<schema>
+	<tables>
+		<table name="CLUSTER_NODE">
+			<columns>
+				<column name="ID" type="long" mandatory="true"/>
+				<column name="STATE" type="string" size="32" mandatory="true"/>
+				<column name="LIFE_SIGN" type="long" mandatory="false"/>
+				<column name="CONFIRMED" type="long" mandatory="false"/>
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="ID"/>
+				</columns>
+			</primary-key>
+		</table>
+		
+		<table name="CLUSTER_VALUE">
+			<columns>
+				<column name="NAME" type="string" size="64" mandatory="true"/>
+				<column name="VALUE" type="string" size="256" mandatory="false"/>
+				<column name="OLD_VALUE" type="string" size="256" mandatory="false"/>
+				<column name="SEQ_NUMBER" type="long" mandatory="false" />
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="NAME"/>
+				</columns>
+			</primary-key>
+		</table>
+	</tables>
+</schema>

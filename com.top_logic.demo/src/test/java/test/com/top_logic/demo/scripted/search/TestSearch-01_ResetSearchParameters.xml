@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Test for Ticket #10996"
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="TestSearchA1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="TestSearchA2"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check Ticket #10996"
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+					card-comment="Suche"
+					card-name="searchInput"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Empty search"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+								component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Fachobjekt"
+											field-name="metaElement"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Demo A"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.search.SearchCommandHandler"
+							command-label="Suchen"
+							command-name="searchAttributed"
+							component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+							component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+							card-comment="Suchergebnis"
+							card-name="searchResult"
+							component-name="mainTabbar.layout.xml#mainTabber"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comment="Object TestSearchA1 must be found by empty name search."
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-name="name"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+										component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchResultComponent"
+										component-name="com.top_logic.reporting/search/searchResult.layout.xml#SearchAttributedSearchResultTable"
+									/>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="TestSearchA1"/>
+									</structure-path>
+								</row-object>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="TestSearchA1"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Search by name"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+							card-comment="Suche"
+							card-name="searchInput"
+							component-name="mainTabbar.layout.xml#mainTabber"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+								component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Fachobjekt"
+											field-name="metaElement"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Demo A"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+								component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="Name"
+										>
+											<attribute-ref attribute-name="name">
+												<type type-name="DemoTypes.All">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+												</type>
+											</attribute-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="TestSearchA2"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.search.SearchCommandHandler"
+							command-label="Suchen"
+							command-name="searchAttributed"
+							component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+							component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+							card-comment="Suchergebnis"
+							card-name="searchResult"
+							component-name="mainTabbar.layout.xml#mainTabber"
+							user-id="root"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Search empty again"
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+							card-comment="Suche"
+							card-name="searchInput"
+							component-name="mainTabbar.layout.xml#mainTabber"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+								component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Fachobjekt"
+											field-name="metaElement"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Demo A"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+								component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="Name"
+										>
+											<attribute-ref attribute-name="name">
+												<type type-name="DemoTypes.All">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+												</type>
+											</attribute-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string=""
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.search.SearchCommandHandler"
+							command-label="Suchen"
+							command-name="searchAttributed"
+							component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+							component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+							card-comment="Suchergebnis"
+							card-name="searchResult"
+							component-name="mainTabbar.layout.xml#mainTabber"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comment="Ticket #10996: Object TestSearchA1 must be found, because the search does not restrict anything."
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-name="name"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+										component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchResultComponent"
+										component-name="com.top_logic.reporting/search/searchResult.layout.xml#SearchAttributedSearchResultTable"
+									/>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="TestSearchA1"/>
+									</structure-path>
+								</row-object>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="TestSearchA1"
+							/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Tear down"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestSearchA1"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestSearchA2"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

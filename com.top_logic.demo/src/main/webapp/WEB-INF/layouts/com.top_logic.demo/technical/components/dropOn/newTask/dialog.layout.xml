@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.b1ad15a7-7bd1-43d0-b3a9-aff8acc4589b">
+				<en>New Task</en>
+				<de>Neue Aufgabe</de>
+			</title>
+		</title>
+		<open-handler id="ID_14daa277_ef70_4e9f_9a92_e54ba88057b5"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="css:fas fa-plus"
+			targetComponent="com.top_logic.demo/technical/components/dropOn/newTask/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.b1ad15a7-7bd1-43d0-b3a9-aff8acc4589b">
+				<en>New Task</en>
+				<de>Neue Aufgabe</de>
+			</resourceKey>
+		</open-handler>
+		<forms>
+			<form type="test.dnd.dropon:WorkItem">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="test.dnd.dropon:WorkItem#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="type"
+						fullQualifiedName="test.dnd.dropon:WorkItem#type"
+						type="test.dnd.dropon:WorkType"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<typeOptions type="test.dnd.dropon:WorkItem"/>
+		<create-handler id="ID_fc1b2c6d_61ef_46a7_9c85_ddab55558e76"/>
+	</arguments>
+</config:template-call>

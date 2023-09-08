@@ -1,0 +1,167 @@
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.areAllChangesSeen
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.areAllChildrenSeen
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getCurrentChangedRegion
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getEntryResult
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getHTML
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getName
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getNumOfChangedDestLines
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getNumOfChangedRegions
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getNumOfChangedSourceLines
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getNumOfChildren
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getNumOfDestLines
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getNumOfRegions
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getNumOfSourceLines
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getNumOfUnchangedDestLines
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getNumOfUnchangedRegions
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getNumOfUnchangedSourceLines
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getParent
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getSeenChangedRegions
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getSeenChildren
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getState
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.getStateAsString
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.hasChanges
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.isEntryDirectory
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.isEvaluatedChangedRegion
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.isInitialized
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.markChangedRegionAsEvaluated
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.setAllChangesSeen
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.setAllChildrenSeen
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.setAndMarkCurrentChangedRegion
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.setCurrentChangedRegion
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.setEntryResult
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.setNumOfChangedRegions
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.setParent
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.setSeenChangedRegions
+com.top_logic.config.diff.CompareStatistics.java: Missing documentation: com.top_logic.config.diff.CompareStatistics.validateAllChangesSeen
+com.top_logic.config.diff.DiffStartStopListener.java: Missing documentation: com.top_logic.config.diff.DiffStartStopListener
+com.top_logic.config.diff.RootCompareStatistic.java: Missing documentation: com.top_logic.config.diff.RootCompareStatistic
+com.top_logic.config.diff.RootCompareStatistic.java: Missing documentation: com.top_logic.config.diff.RootCompareStatistic.CompareExecutedListener
+com.top_logic.config.diff.RootCompareStatistic.java: Missing documentation: com.top_logic.config.diff.RootCompareStatistic.CompareExecutedListener.compareExecuted
+com.top_logic.config.diff.RootCompareStatistic.java: Missing documentation: com.top_logic.config.diff.RootCompareStatistic.setCompareExecutedListener
+com.top_logic.config.diff.SimpleTextDiff.java: Invalid camel case word 'SimpleTextDiff', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.SimpleTextDiff.java: Missing documentation: com.top_logic.config.diff.SimpleTextDiff.getStatistic
+com.top_logic.config.diff.SimpleTextDiff.java: Missing documentation: com.top_logic.config.diff.SimpleTextDiff.getTableHeadText1
+com.top_logic.config.diff.SimpleTextDiff.java: Missing documentation: com.top_logic.config.diff.SimpleTextDiff.getTableHeadText2
+com.top_logic.config.diff.SimpleTextDiff.java: Missing documentation: com.top_logic.config.diff.SimpleTextDiff.getText1
+com.top_logic.config.diff.SimpleTextDiff.java: Missing documentation: com.top_logic.config.diff.SimpleTextDiff.getText2
+com.top_logic.config.diff.SimpleTextDiff.java: Missing documentation: com.top_logic.config.diff.SimpleTextDiff.setTableHeadText1
+com.top_logic.config.diff.SimpleTextDiff.java: Missing documentation: com.top_logic.config.diff.SimpleTextDiff.setTableHeadText2
+com.top_logic.config.diff.SimpleTextDiff.java: Missing documentation: com.top_logic.config.diff.SimpleTextDiff.setText1
+com.top_logic.config.diff.SimpleTextDiff.java: Missing documentation: com.top_logic.config.diff.SimpleTextDiff.setText2
+com.top_logic.config.diff.filediff.AbstractLine.java: Invalid camel case word 'LinePart', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.AbstractLine.java: Missing documentation: com.top_logic.config.diff.filediff.AbstractLine.addLinePart
+com.top_logic.config.diff.filediff.AbstractLine.java: Missing documentation: com.top_logic.config.diff.filediff.AbstractLine.getLineParts
+com.top_logic.config.diff.filediff.AbstractLine.java: Missing documentation: com.top_logic.config.diff.filediff.AbstractLine.getText
+com.top_logic.config.diff.filediff.AbstractLine.java: Missing documentation: com.top_logic.config.diff.filediff.AbstractLine.hasEndOfLine
+com.top_logic.config.diff.filediff.AbstractLine.java: Missing documentation: com.top_logic.config.diff.filediff.AbstractLine.internalReset
+com.top_logic.config.diff.filediff.AbstractLine.java: Missing documentation: com.top_logic.config.diff.filediff.AbstractLine.isChanged
+com.top_logic.config.diff.filediff.AbstractLine.java: Missing documentation: com.top_logic.config.diff.filediff.AbstractLine.isUnchanged
+com.top_logic.config.diff.filediff.DiffBuilder.java: Missing documentation: com.top_logic.config.diff.filediff.DiffBuilder.createDiff
+com.top_logic.config.diff.filediff.DiffBuilder.java: Missing documentation: com.top_logic.config.diff.filediff.DiffBuilder.isFirst
+com.top_logic.config.diff.filediff.FileDiff.java: Invalid camel case word 'FileDiff', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.FileDiff.java: Missing documentation: com.top_logic.config.diff.filediff.FileDiff.getRegions
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Invalid camel case word 'FileDiff', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Invalid camel case word 'LinePart', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Invalid camel case word 'diffMatchPatchDiffs', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Invalid camel case word 'fileDiff', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Invalid camel case word 'generateFileDiff', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Invalid camel case word 'normalizedDiffs', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Missing documentation: com.top_logic.config.diff.filediff.FileDiffGenerator.ANCHOR_PREFIX
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Missing documentation: com.top_logic.config.diff.filediff.FileDiffGenerator.CHANGED_TABLEROW_PREFIX
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Missing documentation: com.top_logic.config.diff.filediff.FileDiffGenerator.DIFF_TABLE
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Missing documentation: com.top_logic.config.diff.filediff.FileDiffGenerator.END_PREFIX
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Missing documentation: com.top_logic.config.diff.filediff.FileDiffGenerator.INSTANCE
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Missing documentation: com.top_logic.config.diff.filediff.FileDiffGenerator.TABLE_HEAD
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Missing documentation: com.top_logic.config.diff.filediff.FileDiffGenerator.TABLE_HEAD_LR
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Missing documentation: com.top_logic.config.diff.filediff.FileDiffGenerator.TABLE_ROW
+com.top_logic.config.diff.filediff.FileDiffGenerator.java: Missing documentation: com.top_logic.config.diff.filediff.FileDiffGenerator.generateHtmlToString
+com.top_logic.config.diff.filediff.InputQueue.java: Missing documentation: com.top_logic.config.diff.filediff.InputQueue.isEmpty
+com.top_logic.config.diff.filediff.InputQueue.java: Missing documentation: com.top_logic.config.diff.filediff.InputQueue.peek
+com.top_logic.config.diff.filediff.InputQueue.java: Missing documentation: com.top_logic.config.diff.filediff.InputQueue.peekOrNull
+com.top_logic.config.diff.filediff.InputQueue.java: Missing documentation: com.top_logic.config.diff.filediff.InputQueue.pop
+com.top_logic.config.diff.filediff.LinePart.java: Invalid camel case word 'LinePart', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.LinePart.java: Missing documentation: com.top_logic.config.diff.filediff.LinePart.getDiffIndex
+com.top_logic.config.diff.filediff.LinePart.java: Missing documentation: com.top_logic.config.diff.filediff.LinePart.getDstLine
+com.top_logic.config.diff.filediff.LinePart.java: Missing documentation: com.top_logic.config.diff.filediff.LinePart.getOperation
+com.top_logic.config.diff.filediff.LinePart.java: Missing documentation: com.top_logic.config.diff.filediff.LinePart.getSrcLine
+com.top_logic.config.diff.filediff.LinePart.java: Missing documentation: com.top_logic.config.diff.filediff.LinePart.getText
+com.top_logic.config.diff.filediff.LinePart.java: Missing documentation: com.top_logic.config.diff.filediff.LinePart.isNL
+com.top_logic.config.diff.filediff.LinePart.java: Missing documentation: com.top_logic.config.diff.filediff.LinePart.setDestLine
+com.top_logic.config.diff.filediff.LinePart.java: Missing documentation: com.top_logic.config.diff.filediff.LinePart.setSrcLine
+com.top_logic.config.diff.filediff.Region.java: Missing documentation: com.top_logic.config.diff.filediff.Region.addDestLine
+com.top_logic.config.diff.filediff.Region.java: Missing documentation: com.top_logic.config.diff.filediff.Region.addSourceLine
+com.top_logic.config.diff.filediff.Region.java: Missing documentation: com.top_logic.config.diff.filediff.Region.getDestLines
+com.top_logic.config.diff.filediff.Region.java: Missing documentation: com.top_logic.config.diff.filediff.Region.getSourceLines
+com.top_logic.config.diff.filediff.Region.java: Missing documentation: com.top_logic.config.diff.filediff.Region.isChanged
+com.top_logic.config.diff.filediff.TempLine.java: Invalid camel case word 'LineParts', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.TempLine.java: Invalid camel case word 'TempLines', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.filediff.TempLine.java: Missing documentation: com.top_logic.config.diff.filediff.TempLine.TempDestLine
+com.top_logic.config.diff.filediff.TempLine.java: Missing documentation: com.top_logic.config.diff.filediff.TempLine.TempSourceLine
+com.top_logic.config.diff.filediff.TempLine.java: Missing documentation: com.top_logic.config.diff.filediff.TempLine.accepts
+com.top_logic.config.diff.filediff.TempLine.java: Missing documentation: com.top_logic.config.diff.filediff.TempLine.annotateLine
+com.top_logic.config.diff.filediff.TempLine.java: Missing documentation: com.top_logic.config.diff.filediff.TempLine.flush
+com.top_logic.config.diff.filediff.TempLine.java: Missing documentation: com.top_logic.config.diff.filediff.TempLine.getProducedLines
+com.top_logic.config.diff.filediff.TempLine.java: Missing documentation: com.top_logic.config.diff.filediff.TempLine.isEmpty
+com.top_logic.config.diff.filediff.TempLine.java: Missing documentation: com.top_logic.config.diff.filediff.TempLine.lineIndex
+com.top_logic.config.diff.filediff.TempLine.java: Missing documentation: com.top_logic.config.diff.filediff.TempLine.offerLinePart
+com.top_logic.config.diff.google.diff_match_patch.java: Invalid camel case word 'LinkedList', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.google.diff_match_patch.java: Invalid camel case word 'Match_MaxBits', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.google.diff_match_patch.java: Invalid camel case word 'diff_linesToChars', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.LinesToCharsResult.chars1
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.LinesToCharsResult.chars2
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.LinesToCharsResult.lineArray
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.Operation.DELETE
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.Operation.EQUAL
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.Operation.INSERT
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.Patch.diffs
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.Patch.length1
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.Patch.length2
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.Patch.start1
+com.top_logic.config.diff.google.diff_match_patch.java: Missing documentation: com.top_logic.config.diff.google.diff_match_patch.Patch.start2
+com.top_logic.config.diff.zip.ZipReader.java: Invalid camel case word 'ZipEntry', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.ENCODING
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.State
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.State.CHANGE
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.State.DELETED
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.State.NEW
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.State.NO_CHANGE
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.addChild
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getChildren
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getDest
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getDestEntry
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getDestName
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getName
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getNextEntryResult
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getParent
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getPath
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getPlainName
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getPreviousEntryResult
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getSource
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getSourceEntry
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getSourceName
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getState
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getStateAsString
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.getStatistics
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.initCompareStatistics
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.initRootCompareStatistic
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.isDirectory
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.setNextEntryResult
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.setParent
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.setPreviousEntryResult
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.EntryResult.setUpStateRecursively
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.SEPARATOR
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.SimpleResult
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.SimpleResult.addChild
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.SimpleResult.getChildren
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.SimpleResult.getName
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.SimpleResult.getParent
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.SimpleResult.getPath
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.SimpleResult.getPlainName
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.SimpleResult.isDirectory
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.SimpleResult.setParent
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.buildTree
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.compare
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.getFileNames
+com.top_logic.config.diff.zip.ZipReader.java: Missing documentation: com.top_logic.config.diff.zip.ZipReader.setListener

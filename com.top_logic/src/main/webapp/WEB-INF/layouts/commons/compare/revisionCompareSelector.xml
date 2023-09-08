@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="model"/>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="componentName"
+			value="${namePrefix}VersionSelector"
+		/>
+	</params>
+	<component class="com.top_logic.layout.compare.RevisionCompareComponent"
+		initiallyMinimized="true"
+		model="${model}"
+		modelBuilder="com.top_logic.layout.compare.RevisionModelBuilder"
+		name="${componentName}"
+		resPrefix="layouts.commons.compare.revisionCompareSelector.VersionSelector."
+	>
+		<tables>
+			<table name="revisionTable"
+				defaultSortOrder="name:descending"
+				fixedColumns="2"
+				resPrefix="layouts.commons.compare.revisionCompareSelector.VersionSelector.revisionTable."
+			>
+				<columns>
+					<column name="name"
+						accessor="com.top_logic.layout.IdentityAccessor"
+						labelProvider="com.top_logic.layout.provider.label.RevisionLabelProvider"
+					/>
+					<column name="date"
+						accessor="com.top_logic.layout.compare.RevisionAccessor$DateAccessor"
+						labelProvider="com.top_logic.layout.provider.DateTimeLabelProvider"
+					>
+						<comparator class="com.top_logic.basic.col.NullSafeComparator"
+							base-comparator="com.top_logic.basic.col.ComparableComparator"
+						/>
+					</column>
+					<column name="author"
+						accessor="com.top_logic.layout.compare.RevisionAccessor$AuthorAccessor"
+					/>
+				</columns>
+			</table>
+		</tables>
+		<toolbar-groups>
+			<toolbar-group name="refresh">
+				<buttons>
+					<button command-id="toggleCompareMode"/>
+					<button
+						command-id="refresh"
+						image="theme:ICONS_BUTTON_REFRESH"
+						label-key="layouts.commons.compare.revisionCompareSelector.VersionSelector.refresh"
+					/>
+				</buttons>
+			</toolbar-group>
+		</toolbar-groups>
+		<commands>
+			<command id="toggleCompareMode"
+				class="com.top_logic.layout.compare.ToggleCompareModeHandler"
+				deactivateImage="theme:MISC_COMPARE_COMPARE_MODE_ACTIVE"
+				image="theme:MISC_COMPARE_COMPARE_MODE_INACTIVE"
+			/>
+			<command id="refresh"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+		</commands>
+
+		<componentControlProvider class="com.top_logic.layout.structure.SeparateTableControlProvider"
+			tableName="revisionTable"
+			toolbar="false"
+		/>
+	</component>
+</template>

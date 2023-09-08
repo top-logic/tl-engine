@@ -1,0 +1,77 @@
+<html>
+
+<head>
+	<title>Basic JavaScript Test</title>
+	
+	<style type="text/css">
+		button {
+			margin-right: 2ex;
+		}
+	</style>
+
+	<script type="text/javascript">
+	
+		function add(a, b) {
+			log("add(" + a + ", " + b + ") called");
+			return a + b;
+		}
+		
+		function foo() {
+			log("foo() called");
+			add(2, 3);
+		}
+		
+		function foo2() {
+			log("foo2() called");
+			return add(2, 3);
+		}
+		
+		function bar() {
+			log("bar() called");
+			4 + 5;
+		}
+		
+		function bar2() {
+			log("bar2() called");
+			return 4 + 5;
+		}
+		
+		function handleOnLoad() {
+			log('Test page ready.');
+			log('Result of add(2, 3) is ' + add(2, 3));
+			log('Result of foo() is ' + foo());
+			log('Result of foo2() is ' + foo2());
+			log('Result of bar() is ' + bar());
+			log('Result of bar2() is ' + bar2());
+		}
+	
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+	</script>
+</head>
+<body onload="handleOnLoad();">
+
+	<h2>Test of JavaScript function calls</h2>
+
+	<p>
+	This page demonstrates that a function only returns a value, if it explicitly uses the 
+	<code>return</code> statement. Otherwise, the result of a function invocation is 
+	<code>undefined</code>. To understand the lines logged to the console, one must inspect 
+	the source code of this page.
+	</p>
+
+	<h2>Console output</h2>
+	
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+</body>
+</html>

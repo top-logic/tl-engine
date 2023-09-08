@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_9e8231da_55a1_414b_8cd3_d236d9dae171">
+		<tabLabel key="dynamic.7e976dce-ecfa-42c1-a280-771b79df0691">
+			<en>Tree table "priorityTable"</en>
+			<de>Baumtabelle "priorityTable"</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTable_priorityTable_/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

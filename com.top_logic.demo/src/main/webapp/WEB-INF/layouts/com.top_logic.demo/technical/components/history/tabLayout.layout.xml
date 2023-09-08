@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_656c4fd8_a1ef_4827_b01b_d563a06e33d0"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.26b1214f-7571-4089-badd-85c2e27665d4">
+			<en>History</en>
+			<de>Historie</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/history/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,69 @@
+<archetype-descriptor
+	xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.1.0 https://maven.apache.org/xsd/archetype-descriptor-1.1.0.xsd"
+	name="archetype-app">
+	
+	<requiredProperties>
+		<requiredProperty key="ProfessionalEdition">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}true</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="tlVersion">
+			<defaultValue>${project.version}</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="package">
+			<defaultValue>${groupId.replace("-", "_")}.${artifactId.replace("-", ".")}</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="module">
+			<defaultValue>${artifactId.replace("-", ".")}</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="DisplayName">
+			<defaultValue>#foreach($x in $artifactId.split("-"))#if(!$foreach.first) #end${x.substring(0,1).toUpperCase()}${x.substring(1)}#end</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="ProjectName">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring(0,1).toUpperCase()}${x.substring(1)}#end</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="projectName">
+			<defaultValue>${artifactId.replace("-", "")}</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="packagePath">
+			<defaultValue>${package.replace(".", "/")}</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="CopyrightHolder">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}My Company</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="useChartJS">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}true</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="useBPE">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}true</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="parentArtifactId">
+			<defaultValue>tl-parent-app</defaultValue>
+		</requiredProperty>
+	</requiredProperties>
+
+	<fileSets>
+		<fileSet filtered="true">
+			<directory>.settings</directory>
+		</fileSet>
+		<fileSet filtered="true">
+			<directory>bin</directory>
+		</fileSet>
+		<fileSet filtered="true">
+			<directory>deploy</directory>
+		</fileSet>
+		<fileSet filtered="true">
+			<directory>src</directory>
+		</fileSet>
+		<fileSet filtered="true">
+			<directory/>
+			<includes>
+				<include>.classpath</include>
+				<include>.factorypath</include>
+				<include>.gitignore</include>
+				<include>.project</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+</archetype-descriptor>

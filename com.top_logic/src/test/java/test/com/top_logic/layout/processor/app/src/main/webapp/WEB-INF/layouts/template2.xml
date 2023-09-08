@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="a"/>
+		<param name="b"
+			value="b_default"
+		/>
+		<param name="c"
+			value="${a}-${b}"
+		/>
+		<param name="d">
+			<d foobar="${b}"/>
+		</param>
+		<param name="e">
+			<e1
+				bar="${c}"
+				foo="${a}"
+			>${d}</e1>
+			<e2
+				bar="${c}"
+				foo="${a}"
+			>
+				textBefore
+				${d}
+				textAfter
+				<e3>${d}</e3>
+			</e2>
+		</param>
+		<param name="f">${e}</param>
+	</params>
+	<component name="${a}"
+		bar="${c}"
+		comment="${b}"
+	>
+		<include name="layout3.xml"/>
+		${d}
+		${e}
+		${f}
+	</component>
+</template>

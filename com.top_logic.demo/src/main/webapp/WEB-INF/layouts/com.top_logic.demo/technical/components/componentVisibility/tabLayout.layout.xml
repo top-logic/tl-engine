@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_de8b81b5_b1e6_45c0_80ad_07719f2f80f0"
+		securityDomain="SecurityStructure"
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.03cf9ad5-0f91-4c38-8e03-91b9567cf25b">
+			<en>Component visibility</en>
+			<de>Komponentensichtbarkeit</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/componentVisibility/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

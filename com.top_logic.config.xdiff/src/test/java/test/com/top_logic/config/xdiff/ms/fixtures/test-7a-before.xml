@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<r>
+	<a>
+		<b b="b1"/>
+		<b b="b2"/>
+		<v name="v2">v2value</v>
+		<b b="b3"/>
+		<v name="v3">v3value</v>
+		<b b="b4"/>
+	</a>
+</r>

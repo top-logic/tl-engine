@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0" xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<modules>
+		<module name="tl.core">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.model.core.generated"
+					interface-package="com.top_logic.model.core"
+				/>
+			</annotations>
+			<types>
+				<datatype name="Boolean" db_type="bit" db_size="1" kind="Boolean">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.BooleanMapping" 
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="BOOLEAN"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="Tristate" db_type="bit" db_size="1" kind="Tristate">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.Boolean"
+					/>
+
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="TRISTATE"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="Byte" db_type="tinyint" kind="Integer">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.IntMapping" 
+					/>
+					
+					<annotations>
+						<supports-multiple/>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="LONG"/>
+						<annotation config:interface="com.top_logic.model.annotate.TLSearchRange" value="true"/>
+						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="Short" db_type="smallint" kind="Integer">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.IntMapping" 
+					/>
+
+					<annotations>
+						<supports-multiple/>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="LONG"/>
+						<annotation config:interface="com.top_logic.model.annotate.TLSearchRange" value="true"/>
+						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="Integer" db_type="integer" db_size="12" kind="Integer">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.IntMapping" 
+					/>
+					
+					<annotations>
+						<supports-multiple/>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="LONG"/>
+						<annotation config:interface="com.top_logic.model.annotate.TLSearchRange" value="true"/>
+						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Long" db_type="bigint" db_size="20" kind="Integer">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.LongMapping" 
+					/>
+					
+					<annotations>
+						<supports-multiple/>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="LONG"/>
+						<annotation config:interface="com.top_logic.model.annotate.TLSearchRange" value="true"/>
+						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Float" db_type="float" kind="Float">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.FloatMapping" 
+					/>
+					
+					<annotations>
+						<supports-multiple/>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="FLOAT"/>
+						<annotation config:interface="com.top_logic.model.annotate.TLSearchRange" value="true"/>
+						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Double" db_type="double" kind="Float">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DoubleMapping" 
+					/>
+					
+					<annotations>
+						<supports-multiple/>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="FLOAT"/>
+						<annotation config:interface="com.top_logic.model.annotate.TLSearchRange" value="true"/>
+						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Name" db_type="varchar" db_size="255" kind="String">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.String"
+					/>
+					
+					<annotations>
+						<supports-multiple/>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="STRING"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Key" db_type="varchar" db_size="255" binary="true" kind="String">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.String"
+					/>
+					
+					<annotations>
+						<supports-multiple/>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="STRING"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="String" db_type="varchar" db_size="1333" kind="String">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.String"
+					/>
+					
+					<annotations>
+						<supports-multiple/>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="STRING"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Password" db_type="varchar" db_size="1333" kind="String">
+					<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.PasswordMapping" />
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="PASSWORD"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Text" db_type="clob" kind="String">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.String"
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="STRING"/>
+						<multi-line/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Date" db_type="timestamp" kind="Date">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.util.Date"
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="DATE"/>
+						<annotation config:interface="com.top_logic.model.annotate.TLSearchRange" value="true"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Day" db_type="date" kind="Date">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.util.Date"
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="DAY"/>
+						<annotation config:interface="com.top_logic.model.annotate.TLSearchRange" value="true"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Time" db_type="time" kind="Date">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.util.Date"
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="TIME"/>
+						<annotation config:interface="com.top_logic.model.annotate.TLSearchRange" value="true"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="DateTime" db_type="timestamp" kind="Date">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.util.Date"
+					/>
+					
+					<annotations>
+						<config-type value="DATE_TIME"/>
+						<search-range value="true"/>
+						<format format-ref="medium-date-time"/>
+					</annotations>
+				</datatype>
+			
+				<datatype name="Binary" db_type="blob" kind="Binary">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="com.top_logic.basic.io.binary.BinaryDataSource"
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="BINARY"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="Icon" db_type="string" kind="Custom">
+					<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.IconMapping" />
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="ICON"/>
+					</annotations>
+				</datatype>
+
+				<interface name="Author">
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+					</attributes>			
+				</interface>
+				<class name="Revision">
+					<annotations>
+						<implementation-binding interface-name="com.top_logic.knowledge.service.Revision"/>
+						<instance-presentation icon="theme:mime.Revision"/>
+						<main-properties properties="revision, date, author"/>
+						<table name="Revision"/>
+						<storage-algorithm>
+							<primitive-storage storage-mapping="com.top_logic.element.meta.kbbased.storage.mappings.RevisionAsLong"/>
+						</storage-algorithm>
+					</annotations>
+					<attributes>
+						<property name="revision"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.knowledge.service.Revision#getCommitNumber()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="date"
+							type="tl.core:DateTime"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.knowledge.service.Revision#resolveDate()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+								<delete-protected/>
+								<format format-ref="date-time"/>
+							</annotations>
+						</property>
+						<property name="author"
+							type="tl.core:Author"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.knowledge.service.Revision#resolveAuthor()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="log"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<method-call method="com.top_logic.knowledge.service.Revision#getLog()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+								<delete-protected/>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+			</types>
+		
+		</module>
+	</modules>
+</model>

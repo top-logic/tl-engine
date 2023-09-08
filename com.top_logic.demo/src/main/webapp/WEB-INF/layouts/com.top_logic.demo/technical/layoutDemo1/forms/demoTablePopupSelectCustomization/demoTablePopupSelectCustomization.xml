@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="demoTablePopupSelectCustomization"
+		/>
+	</params>
+
+	<form name="${namePrefix}Editor"
+		modelBuilder="com.top_logic.demo.layout.form.demo.DemoTablePopupSelectCustomization"
+		page="/jsp/test/layout/table/DemoTablePopupSelectCustomization.jsp"
+		resPrefix="class.com.top_logic.demo.layout.form.demo.I18NConstants.CUSTOM_SELECT_DIALOG_TABLES"
+	/>
+</template>

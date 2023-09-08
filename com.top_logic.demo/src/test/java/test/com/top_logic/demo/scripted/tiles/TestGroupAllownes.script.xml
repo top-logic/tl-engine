@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+					command-label="Generieren..."
+					command-name="generateTypes"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name des generierten Wurzelelementes"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestGroupAllowness"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Generieren"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout"
+			/>
+		</action>
+		<action class="com.top_logic.mig.html.layout.tiles.scripting.UpdateCompositeTileActionOp"
+			component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+			tiles=""
+			user-id="root"
+		/>
+		<action class="com.top_logic.mig.html.layout.tiles.scripting.UpdateCompositeTileActionOp"
+			component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+			tiles="tiledemoTypeOverview"
+			user-id="root"
+		/>
+		<action class="com.top_logic.mig.html.layout.tiles.scripting.DisplayTileActionOp"
+			component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+			component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+			tile-path="Demotypen-Übersicht"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test new empty Group is allowed"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="TestGroupAllowness"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileDemoTypesTreeTable"
+							tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.AddGroupCommand"
+					command-label="Gruppe hinzufügen..."
+					command-name="addTileGroup"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestGruppe1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileAllowedNaming">
+						<arguments/>
+						<base-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+							component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+							tile-path="Demotypen-Übersicht > Inhalt > TestGruppe1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test group is allowed, also when all tiles are not allowed"
+		>
+			<actions>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.DisplayTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tile-path="Demotypen-Übersicht > Inhalt > TestGruppe1"
+					user-id="root"
+				/>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.UpdateCompositeTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tiles="tiledemoTypeComment"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="Comments not defined on Type B"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileAllowedNaming">
+						<arguments/>
+						<base-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+							component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+							tile-path="Demotypen-Übersicht > Inhalt > TestGruppe1 > Kommentare"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="false"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand"
+					command-label="Übergeordnete Kachel"
+					command-name="stepOutTile"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="Group tile contains only non allowed tiles, but must be allowed to be able to add allowed tile"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileAllowedNaming">
+						<arguments/>
+						<base-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+							component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+							tile-path="Demotypen-Übersicht > Inhalt > TestGruppe1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test context group is allowed when the context is allowed. Otherwise group can not be modified."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand"
+					command-label="Übergeordnete Kachel"
+					command-name="stepOutTile"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileDemoTypesTreeTable"
+								tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout"
+							/>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestGroupAllowness > A4"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestGroupAllowness > A4 > C8"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileDemoTypesTreeTable"
+							tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileAllowedNaming">
+						<arguments/>
+						<base-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+							component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+							tile-path="Demotypen-Übersicht > Inhalt > TestGruppe1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test group is allowed when one of its parts is allowed."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand"
+					command-label="Übergeordnete Kachel"
+					command-name="stepOutTile"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestGroupAllowness > A4"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileDemoTypesTreeTable"
+							tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileAllowedNaming">
+						<arguments/>
+						<base-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+							component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+							tile-path="Demotypen-Übersicht > Inhalt > TestGruppe1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.DisplayTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tile-path="Demotypen-Übersicht > Inhalt > TestGruppe1"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileAllowedNaming">
+						<arguments/>
+						<base-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+							component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+							tile-path="Demotypen-Übersicht > Inhalt > TestGruppe1 > Kommentare"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.UpdateCompositeTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tiles="tiledemoTypeComment,tileeditDemoType"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand"
+					command-label="Übergeordnete Kachel"
+					command-name="stepOutTile"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand"
+					command-label="Übergeordnete Kachel"
+					command-name="stepOutTile"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestGroupAllowness > A4 > C9"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileDemoTypesTreeTable"
+							tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment="Editor is allowed"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileAllowedNaming">
+						<arguments/>
+						<base-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+							component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+							component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+							tile-path="Demotypen-Übersicht > Inhalt > TestGruppe1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.DisplayTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tile-path=""
+					user-id="root"
+				/>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.UpdateCompositeTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tiles=""
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
+					template-name-comment="Persoenliche Einstellungen zuruecksetzen"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestGroupAllowness"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

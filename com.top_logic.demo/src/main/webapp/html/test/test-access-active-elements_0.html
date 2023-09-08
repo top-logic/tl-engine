@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<script type="text/javascript">
+		function triggerAccess() {
+			var outer = parent;
+			window.setTimeout(
+					function(){
+						parent.handleOnClick();
+					}
+					,2000);
+		}
+	</script>
+</head>
+<body>
+	<h1>Inner Document</h1>
+	<iframe id="innerIframe" name="innerIframe" src="test-access-active-elements_0_0.html" style="height:700px; width:500px">Missing file 'test-access-active-elements_0_0.html'</iframe>
+</body>
+</html>

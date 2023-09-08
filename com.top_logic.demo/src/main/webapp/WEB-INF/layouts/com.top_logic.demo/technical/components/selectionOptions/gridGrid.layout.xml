@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name,min,max,value,values,num,nums,str,strs"
+		detailComponent="com.top_logic.demo/technical/components/selectionOptions/displayDialog/dialog.layout.xml#Dialog"
+		showDetailOpener="true"
+		type="test.optionprovider:WithOptions"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/selectionOptions/newObjectDialog/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/selectionOptions/displayDialog/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/selectionOptions/createMultipleObjects____/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.3ef1d365-3274-494a-b359-1e8586e614fe">
+			<en>Grid</en>
+			<de>Grid</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.optionprovider:WithOptions`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.optionprovider:WithOptions`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_527736e0_32e3_4bb0_9dcc_306a4f82279e"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+				clique="create"
+				createContext="model->$model"
+				createType="test.optionprovider:WithOptions"
+				group="Create"
+				image="colored:tl-icon row-top-add"
+			>
+				<resourceKey key="dynamic.31ac883a-da6b-4fae-b64b-1331b4dd3c1f">
+					<en>New row</en>
+					<de>Neue Zeile</de>
+				</resourceKey>
+				<checkScopeProvider class="com.top_logic.layout.basic.check.SelfCheckProvider"/>
+			</button>
+			<button id="ID_a2e067b4_e232_4d66_bdf3_b41bf5f5f9d6"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.0cf12d82-954f-4b3b-a9c6-524a8616e956">
+					<en>Delete line</en>
+					<de>Zeile löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

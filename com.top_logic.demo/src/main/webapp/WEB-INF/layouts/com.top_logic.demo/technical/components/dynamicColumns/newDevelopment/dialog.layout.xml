@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID=""
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<open-handler id="ID_69e11d7a_ef6f_44e8_8aea_3872604ffe44"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			clique="create"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			image=""
+			targetComponent="com.top_logic.demo/technical/components/dynamicColumns/newDevelopment/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.a3817507-7aa6-44b5-a70a-a12a38594886">
+				<en>New development project</en>
+				<de>Neues Entwicklungsprojekt</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.a3817507-7aa6-44b5-a70a-a12a38594886">
+				<en>Create a development project</en>
+				<de>Entwicklungsprojekt anlegen</de>
+			</title>
+		</title>
+		<typeOptions
+			include-subtypes="true"
+			type="test.dynamictable:Development"
+		/>
+		<create-handler id="ID_037fb7e8_75b9_498e_a659_fc902be17eb7"
+			clique="save"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			ignoreWarnings="default"
+			image=""
+			linkOperation=""
+		/>
+	</arguments>
+</config:template-call>

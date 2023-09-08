@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory">
+			<instance>
+				<clients>
+					<keycloak name="pac4j-keycloak">
+						<domain>%PAC_DOMAIN%</domain>
+						<client-id>%PAC_CLIENT_ID%</client-id>
+						<secret>%PAC_SECRET%</secret>
+						<base-uri>%PAC_KEYCLOAK_BASE_URI%</base-uri>
+						<realm>%PAC_KEYCLOAK_REALM%</realm>
+					</keycloak>
+				</clients>
+			</instance>
+		</config>
+	</services>
+</application>

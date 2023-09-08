@@ -1,0 +1,80 @@
+<objects>
+	<object id="context" type="TestSearchExpression:S">
+		<attribute name="name" value="testSimpleSearch"/>
+		<attribute name="parent">
+			<model-ref name="TestSearchExpression#ROOT"/>
+		</attribute>
+	</object>
+	<object id="childContext" type="TestSearchExpression:S">
+		<attribute name="name" value="child"/>
+		<attribute name="parent">
+			<ref id="context"/>
+		</attribute>
+	</object>
+	<object id="a0" type="TestSearchExpression:A">
+		<attribute name="name" value="A0"/>
+		<attribute name="context">
+			<ref id="childContext"/>
+		</attribute>
+		<attribute name="str" value="foo"/>
+		<attribute name="int" value="10"/>
+	</object>
+	<object id="otherA1" type="TestSearchExpression:A">
+		<attribute name="name" value="A1"/>
+		<attribute name="context">
+			<ref id="childContext"/>
+		</attribute>
+		<attribute name="str" value="foo"/>
+	</object>
+	<object id="a1" type="TestSearchExpression:A">
+		<attribute name="name" value="A1"/>
+		<attribute name="context">
+			<ref id="context"/>
+		</attribute>
+		<attribute name="str" value="foo"/>
+		<attribute name="int" value="10"/>
+	</object>
+	<object id="a2" type="TestSearchExpression:A">
+		<attribute name="name" value="A2"/>
+		<attribute name="context">
+			<ref id="context"/>
+		</attribute>
+		<attribute name="str" value="bar"/>
+		<attribute name="int" value="0"/>
+	</object>
+	<object id="a3" type="TestSearchExpression:A">
+		<attribute name="name" value="A3"/>
+		<attribute name="other" />
+		<attribute name="int" value="5"/>
+	</object>
+    <object id="a4" type="TestSearchExpression:A">
+	     <attribute name="name" value="A4"/>
+	     <attribute name="other">
+             <ref id="a0"/>
+	     </attribute>
+	     <attribute name="others">
+             <ref id="a0"/>
+             <ref id="a3"/>
+	     </attribute>
+	 </object>
+	 <object id="a5" type="TestSearchExpression:A">
+         <attribute name="name" value="A5"/>
+         <attribute name="other">
+	         <ref id="otherA1"/>
+         </attribute>
+         <attribute name="others">
+			<ref id="a4"/>
+			<ref id="a3"/>
+         </attribute>
+	 </object>
+	 <object id="a6" type="TestSearchExpression:A">
+		<attribute name="name" value="A6"/>
+		<attribute name="other">
+	        <ref id="otherA1"/>
+		</attribute>
+		<attribute name="others">
+	        <ref id="a4"/>
+	        <ref id="a0"/>
+	        <ref id="a5"/>
+		</attribute>
+	 </object></objects>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="kontext"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="Uebergeordnete"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="Untergeordnete"
+				default=""
+				type="string"
+			/>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment=""
+			failure-message=""
+			user-id=""
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.OpenTreeFilterOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+							tab-path="Strukturen > Typendemo > TreeGrid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="fieldTable"
+							/>
+						</path>
+					</model-name>
+				</action>
+				<t:if condition=" !#equals($Uebergeordnete, &quot;&quot;)">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							comment=""
+							failure-message=""
+							user-id=""
+							window-name=""
+						>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="filterOptionsContent"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Übergeordnete Elemente anzeigen"
+											field-name="includeParents"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="${$Uebergeordnete}"
+									/>
+								</value>
+							</field-values>
+							<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+								context-name="filterOptions"
+							>
+								<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+									<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+										tab-path="Strukturen > Typendemo > TreeGrid"
+									/>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="fieldTable"
+										/>
+									</path>
+								</table-name>
+							</model-name>
+						</action>
+					</t:then>
+				</t:if>
+				<t:if condition=" !#equals($Untergeordnete, &quot;&quot;)">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							comment=""
+							failure-message=""
+							user-id=""
+							window-name=""
+						>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="filterOptionsContent"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Untergeordnete Elemente anzeigen"
+											field-name="includeChildren"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="${$Untergeordnete}"
+									/>
+								</value>
+							</field-values>
+							<model-name config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+								context-name="filterOptions"
+							>
+								<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+									<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+										tab-path="Strukturen > Typendemo > TreeGrid"
+									/>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="fieldTable"
+										/>
+									</path>
+								</table-name>
+							</model-name>
+						</action>
+					</t:then>
+				</t:if>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					comment=""
+					failure-expected="false"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Übernehmen"
+					>
+						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name="filterOptions"
+						>
+							<table-name config:interface="com.top_logic.layout.form.FormMemberName">
+								<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+									tab-path="Strukturen > Typendemo > TreeGrid"
+								/>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+										field-label-comment=""
+										field-name="fieldTable"
+									/>
+								</path>
+							</table-name>
+						</component>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="masterComponent"/>
+		<param name="securityProvider"
+			value="default"
+		/>
+		<param name="extension"
+			value=""
+		/>
+		<param name="controller">
+			<controller class="com.top_logic.importer.dispatching.DispatchingEVAAssistantController"
+				errorStep="${namePrefix}ErrorStep"
+				importHandler="com.top_logic.importer.dispatching.DispatchingEVAAssistantController$DummyDispatchingImporter"
+				importer-names="${importerNames}"
+				inputStep="${namePrefix}InputStep"
+				outputStep="${namePrefix}OutputStep"
+				processStep="${namePrefix}ProcessStep"
+			>
+				<uploadHandler id="upload"
+					class="com.top_logic.importer.dispatching.DispatchingAssistentFileUploadComponent$DispatchingUploadHandler"
+				/>
+			</controller>
+		</param>
+		<param name="uploadComponent"
+			value="com.top_logic.importer.dispatching.DispatchingAssistentFileUploadComponent"
+		/>
+		<param name="importerNames"
+			value=""
+		/>
+		<param name="resPrefix"
+			value="tl.import.eva."
+		/>
+		<param name="inputJSP"
+			value="/jsp/layout/assistant/import/ChooseFileAndImporter.jsp"
+		/>
+		<param name="processJSP"
+			value="/jsp/layout/assistant/import/Error.jsp"
+		/>
+		<param name="errorJSP"
+			value="/jsp/layout/assistant/import/Error.jsp"
+		/>
+		<param name="processWidth"
+			value="450px"
+		/>
+		<param name="processHeight"
+			value="150px"
+		/>
+		<param name="componentName"
+			value="${namePrefix}ImportEVA"
+		/>
+		<param name="showStepsToolbar"
+			value="false"
+		/>
+		<param name="titleKey"
+			optional="true"
+		/>
+	</params>
+	<include name="commons/importEVA.xml"
+		componentName="${componentName}"
+		controller="${controller}"
+		errorJSP="${errorJSP}"
+		extension="${extension}"
+		inputJSP="${inputJSP}"
+		masterComponent="${masterComponent}"
+		namePrefix="${namePrefix}"
+		processHeight="${processHeight}"
+		processJSP="${processJSP}"
+		processWidth="${processWidth}"
+		resPrefix="${resPrefix}"
+		securityProvider="${securityProvider}"
+		showStepsToolbar="${showStepsToolbar}"
+		titleKey="${titleKey}"
+		uploadComponent="${uploadComponent}"
+	/>
+</template>

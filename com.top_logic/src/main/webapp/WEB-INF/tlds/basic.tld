@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE taglib
+  PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN"
+  "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd">
+
+<!-- a tag library descriptor -->
+
+<taglib>
+  <!-- after this the default space is
+	"http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd"
+   -->
+
+  <!-- The version number of this tag library -->
+  <tlibversion>1.0</tlibversion>
+
+  <!-- The JSP specification version required to function -->
+  <jspversion>1.1</jspversion>
+
+  <!-- The short name of this tag library -->
+  <shortname>basic</shortname>
+  
+  <!-- General information about this tag library -->
+   <info>Defines tags necessary to set up a JSP conforming to VS standards</info>
+
+	<tag>
+		<name>html</name>
+		<tagclass>com.top_logic.base.taglibs.basic.HtmlTag</tagclass>
+		<bodycontent>jsp</bodycontent>
+		<info>Generates XML header with XHTML doctype and html tag.</info>
+	</tag>
+	
+	<tag>
+		<name>view</name>
+		<tagclass>com.top_logic.base.taglibs.basic.ViewTag</tagclass>
+		<bodycontent>empty</bodycontent>
+		<info>Displays a configured component view.</info>
+		<attribute>
+			<name>name</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>The XML-defined name of the configured view.</description>
+			 -->
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>hasView</name>
+		<tagclass>com.top_logic.base.taglibs.basic.HasViewTag</tagclass>
+		<bodycontent>jsp</bodycontent>
+		<info>Conditionally evaluates the body, if the view with the given name is defined at the context component and it is visible.</info>
+		<attribute>
+			<name>name</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>The XML-defined name of the configured view.</description>
+			 -->
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>notHasView</name>
+		<tagclass>com.top_logic.base.taglibs.basic.NotHasViewTag</tagclass>
+		<bodycontent>jsp</bodycontent>
+		<info>Conditionally evaluates the body, if the view with the given name is not defined at the context component or it is not visible.</info>
+		<attribute>
+			<name>name</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>The XML-defined name of the configured view.</description>
+			 -->
+		</attribute>
+	</tag>
+	
+	<tag>
+		<name>fieldset</name>
+		<tagclass>com.top_logic.layout.form.boxes.reactive_tag.GroupCellTag</tagclass>
+		<bodycontent>jsp</bodycontent>
+		<info>Generates a fieldset that does not overlap with table content.</info>
+		
+		<attribute>
+			<name>cssClass</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Custom CSS class to add the the top-level containers of the generated boxes.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>style</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>The CSS style to add to the generated groupCell.</description>
+			-->
+		</attribute>
+		<attribute>
+			<name>titleKey</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Resource key for the internationalized title.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>titleKeyConst</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Resource key constant for the internationalized title.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>titleKeySuffix</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Suffix to the components resource prefix for the internationalized title.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>titleText</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>The plain (already internationalized) title text.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>personalizationName</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Personalization name for storing the expansion state.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>initiallyCollapsed</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Whether the fieldset should be collapsed when first displayed without and user modification.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>groupName</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Name of the form group to take the expansion state from.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>preventCollapse</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Whether this group should never be rendered collapsed, even if a group name was specified.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>legend</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Whether title decoration should be rendered.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>border</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Whether a border should be drawn around the box. Default provided by theme.</description>
+			 -->
+		</attribute>
+		<attribute>
+			<name>columns</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>firstColumnWidth</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>labelAbove</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>wholeLine</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<!-- 
+			<description>Whether the form group is rendered over the whole line, even when it is in a multicolumn container.</description>
+			 -->
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>legend</name>
+		<tagclass>com.top_logic.layout.form.boxes.reactive_tag.CellTitleTag</tagclass>
+		<bodycontent>jsp</bodycontent>
+		<info>Generates a legend for a fieldset.</info>
+	</tag>
+	
+   <tag>
+	    <name>text</name>
+	    <tagclass>com.top_logic.base.taglibs.basic.TextTag</tagclass>
+	    <bodycontent>empty</bodycontent>
+	    <info>Encodes the given text.</info>
+
+	    <attribute>
+	       <name>value</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	    <attribute>
+	       <name>key</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	    <attribute>
+	       <name>i18n</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	    <attribute>
+	       <name>cssClass</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	</tag>
+	
+	<tag>
+		<name>script</name>
+		<tagclass>com.top_logic.base.taglibs.basic.ScriptTag</tagclass>
+		<bodycontent>jsp</bodycontent>
+		<info>Writes a JavaScript script tag.</info>
+	</tag>
+	
+   <tag>
+	    <name>tag</name>
+	    <tagclass>com.top_logic.base.taglibs.basic.GenericTag</tagclass>
+	    <bodycontent>jsp</bodycontent>
+	    <info>Writes a HTML tag using TagWriter.</info>
+
+	    <attribute>
+	       <name>name</name>
+	       <required>true</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	</tag>
+	
+   <tag>
+	    <name>attribute</name>
+	    <tagclass>com.top_logic.base.taglibs.basic.GenericAttribute</tagclass>
+	    <bodycontent>jsp</bodycontent>
+	    <info>Writes a HTML tag using TagWriter.</info>
+
+	    <attribute>
+	       <name>name</name>
+	       <required>true</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	    <attribute>
+	       <name>value</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	</tag>
+	
+   <!-- To be called inside the <head> ... </head> section. Writes a <link rel=stylesheet... 
+        statement to the page, where the JSP author can specify which .css file shall be used. 
+	    Otherwise, a default stylesheet	will be used. Also the tag for the favicon is added. -->
+    <tag>
+	    <name>cssLink</name>
+	    <tagclass>com.top_logic.gui.ThemeBasedCSSTag</tagclass>
+	    <bodycontent>empty</bodycontent>
+	    <info>Prints link to specified stylesheet</info>
+	    <!-- Specifies the URL to the stylesheet -->
+	    <attribute>
+	       <name>href</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+		<!-- if true the stylesheet is not cached -->
+		<attribute>
+		   <name>reload</name>
+		   <required>false</required>
+		   <rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+   <!-- To be called inside the <head> ... </head> section. Writes a <link rel=shortcut icon... 
+        statement to the page. This tag must not be used if the cssLink-tag is already used. -->
+    <tag>
+	    <name>favicon</name>
+	    <tagclass>com.top_logic.gui.FaviconTag</tagclass>
+	    <bodycontent>empty</bodycontent>
+	    <info>Prints link to specified favicon.</info>
+	    <!-- Specifies the URL to the favicons -->
+	    <attribute>
+	       <name>shortcutIcon</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	    <attribute>
+	       <name>icon</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	</tag>
+
+
+   <!-- To be called inside the <head> ... </head> section. Writes a 
+        <script language=Javascript...>, containing "/top-logic/script/" +
+        value of the "file" parameter. If "i18n" is set to true, an
+        additional script import statement for the resources file
+        corresponding to the user's language preference will be inserted.
+    -->
+	<tag>
+	    <name>js</name>
+	    <tagclass>com.top_logic.base.taglibs.basic.JSIncludeTag</tagclass>
+	    <bodycontent>empty</bodycontent>
+	    <info>Creates a link to a specified Javascript files and adds i18n import.</info>
+	    <!-- Specifies the (file) name of the script to be included. The path
+             to the script will be added (e. g., /top-logic/script/), as will be the
+             file extension ".js"
+             If left empty, some default script files will be included. Refer to the
+             class for more information.-->
+	    <attribute>
+	       <name>name</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+
+        <attribute>
+	       <name>i18n</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	    <!-- if true the javascript is loaded every time -->
+	    <attribute>
+	       <name>reload</name>
+	       <required>false</required>
+	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	</tag>
+	
+	<tag>
+	    <name>bal</name>
+	    <tagclass>com.top_logic.base.taglibs.basic.BALIncludeTag</tagclass>
+	    <bodycontent>empty</bodycontent>
+	    <info>
+	    	Loads all necessary JavaScripts for the Browser Abstraction Layer (dependent 
+	    	on the current user agent). 
+	    </info>
+	</tag>
+
+   <!-- To be called inside the <body> ... </body> section. 
+        Initializes the overlib (see .../script/overlib.js) by inserting
+        a JavaScript import statement and a <div> in the code.
+	-->
+	<tag>
+	    <name>overlib</name>
+	    <tagclass>com.top_logic.base.taglibs.basic.InitOverlibTag</tagclass>
+	    <bodycontent>empty</bodycontent>
+	    <info>Initializes the overlib. Use in body section of a JSP.</info>
+	</tag>
+
+
+    <!-- Extracts all parameters from the request and writes them into hidden fields to be passed
+        to the next module. Otherwise, the parameters will be lost. -->
+	<tag>
+	    <name>extractParam</name>
+	    <tagclass>com.top_logic.base.taglibs.basic.ExtractParamTag</tagclass>
+            <bodycontent>empty</bodycontent>
+	    <info>Passes the parameters from the current request to the next</info>
+    </tag>
+	
+    <!-- Writes a <img src=ImageName.../> 
+        statement to the page, where the JSP author can specify which image file shall be used. -->
+	<tag>
+	    <name>image</name>
+	    <tagclass>com.top_logic.base.taglibs.basic.ImageTag</tagclass>
+	    <bodycontent>empty</bodycontent>
+	    <info>Write the image tags in JSP</info>
+	    
+	    <attribute>
+	    	       <name>src</name>
+	    	       <required>false</required>
+	    	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	    
+		<attribute>
+			<name>srcKey</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	    
+		<attribute>
+			<name>icon</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	    
+	    <attribute>
+	    	       <name>border</name>
+	    	       <required>false</required>
+	    	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	    
+	    <attribute>
+	      	       <name>width</name>
+	      	       <required>false</required>
+	       	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	    
+	    <attribute>
+	               <name>height</name>
+	    	       <required>false</required>
+	    	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	    
+	    <attribute>
+	               <name>alt</name>
+	    	       <required>false</required>
+	    	       <rtexprvalue>true</rtexprvalue>
+	    </attribute>
+
+		<attribute>
+			<name>altKey</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		
+		<attribute>
+			<name>tooltip</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		
+		<attribute>
+			<name>tooltipCaption</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		
+		<attribute>
+			<name>tooltipKey</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		
+		<attribute>
+			<name>cssClass</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+   	<tag>
+	    <name>access</name>
+	    <tagclass>com.top_logic.base.taglibs.basic.AccessControlTag</tagclass>
+	    <bodycontent>JSP</bodycontent>
+	    <info>Check access restrictions.</info>
+	    
+	    <attribute>
+	        <name>commandGroup</name>
+	    	<required>false</required>
+	    	<rtexprvalue>true</rtexprvalue>
+	    </attribute>
+
+	    <attribute>
+	        <name>refusedMessage</name>
+	    	<required>false</required>
+	    	<rtexprvalue>true</rtexprvalue>
+	    </attribute>
+
+	    <attribute>
+	        <name>refusedPage</name>
+	    	<required>false</required>
+	    	<rtexprvalue>true</rtexprvalue>
+	    </attribute>
+	</tag>
+
+</taglib>
+
+
+

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<root xmlns:foo="http://example.com/NS/foo" encoding="iso-8859-1" no-attribute-indent="true">
+	<additional-namespaces>
+		<additional-namespace prefix="foo" uri="http://example.com/NS/foo"/>
+	</additional-namespaces>
+</root>

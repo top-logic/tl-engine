@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- DEPRECATED: Use "com.top_logic.element/create/genericCreate.xml". -->
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="type"
+			value=""
+		/>
+		<param name="structure"
+			value=""
+		/>
+		<param name="element"
+			value=""
+		/>
+		<param name="detailComponent"
+			value="com.top_logic.element.meta.gui.DefaultCreateAttributedComponent"
+		/>
+		<param name="create-handler"
+			value="createAttributed"
+		/>
+		<param name="model"
+			value="model(dialogParent())"
+		/>
+		<param name="modifier"
+			optional="true"
+		/>
+		<param name="newModelAction"
+			value="set-parent-model"
+		/>
+		<param name="page"
+			value="/jsp/element/NewAttributedDialog.jsp"
+		/>
+
+		<param name="createCommandGroups"
+			optional="true"
+		/>
+		<param name="executabilityRule"
+			value="InViewMode"
+		/>
+		<param name="securityProvider"
+			value="default"
+		/>
+		<param name="securityDomain"
+			optional="true"
+		/>
+		<param name="height"
+			value="660px"
+		/>
+		<param name="width"
+			value="800px"
+		/>
+		<param name="resPrefix"
+			value="layout.element.attributed.new"
+		/>
+		<param name="buttonI18N"
+			value="${resPrefix}"
+		/>
+		<param name="openerButton"
+			optional="true"
+		/>
+		<param name="openerImage"
+			optional="true"
+		/>
+		<param name="openerImageDisabled"
+			optional="true"
+		/>
+		<param name="openHandlerClass"
+			optional="true"
+		/>
+		<param name="createAttributedParameters"
+			value=""
+		/>
+	</params>
+
+	<securityLayout name="${namePrefix}CreateAttributedDialog"
+		horizontal="false"
+		securityDomain="${securityDomain}"
+		titleKey="${resPrefix}.dialog.tabber"
+	>
+		<dialogInfo
+			createOpenerButtons="${openerButton}"
+			defaultI18n="${buttonI18N}"
+			disabledImage="${openerImageDisabled}"
+			executability="${executabilityRule}"
+			height="${height}"
+			image="${openerImage}"
+			openHandlerClass="${openHandlerClass}"
+			openHandlerName="${namePrefix}OpenCreateAttributedDialog"
+			openerCommandGroup="Create"
+			resizable="true"
+			width="${width}"
+		/>
+
+		<components>
+			<!-- component to create attributed objects -->
+			<component class="${detailComponent}"
+				commandGroups="${createCommandGroups}"
+				create-handler="${create-handler}"
+				element="${element}"
+				model="${model}"
+				modifier="${modifier}"
+				name="${namePrefix}NewAttributed"
+				newModelAction="${newModelAction}"
+				page="${page}"
+				resPrefix="${resPrefix}"
+				securityProviderClass="${securityProvider}"
+				structure="${structure}"
+				type="${type}"
+			>${createAttributedParameters}</component>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</securityLayout>
+</template>

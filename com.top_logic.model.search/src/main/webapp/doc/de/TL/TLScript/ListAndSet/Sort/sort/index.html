@@ -1,0 +1,54 @@
+<h2>Syntax</h2> 
+<pre>	<code>$set.sort()
+
+$set.sort($comparator)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Sortiert die Menge <code class="hljs inlineCode">set</code>. Die Reihenfolge der Sortierung kann durch die <a class="tlObject" data-custom="true" href="?page=desc&amp;uuid=fa8d0e30-d443-4e3c-abdf-d11414ab2f9d">Vergleichsumkehr</a> umgekehrt werden.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set</td> 
+   <td>Menge</td> 
+   <td>Eine Menge von Elementen, die sortiert werden sollen.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>comparator</td> 
+   <td>Funktion</td> 
+   <td>Eine Vergleichsfunktion, mit deren Hilfe die Elemente sortiert werden sollen. Die Vergleichsfunktion kann aus einer Zugriffsfunktion erzeugt werden, siehe <a class="tlObject" data-custom="true" href="?page=comparator&amp;uuid=5835844a-f9cb-4317-b881-972ada6aa453">Vergleichsfunktion</a>.</td> 
+   <td>nein</td> 
+   <td>Die Elemente werden direkt miteinander verglichen. Das ist allerdings nur sinnvoll für primitive Werte, für die ein kanonischer Vergleich definiert ist. Objekte sind nicht direkt miteinander vergleichbar und brauchen daher eine Vergleichsfunktion. Eine Vergleichsfunktion erwartet zwei Argumente <code class="hljs inlineCode">x</code> und <code class="hljs inlineCode">y</code>. Als Ergebnis erhält man einen Wert kleiner, gleich oder größer als <code class="hljs inlineCode">0</code>, falls <code class="hljs inlineCode">x</code> kleiner, gleich oder größer als <code class="hljs inlineCode">y</code> ist.</td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ: </strong></span>Menge</p> 
+<p>Die neu Sortierte Menge <code class="hljs inlineCode">set</code>.</p> 
+<h2>Beispiele</h2> 
+<h3>Einfacher Vergleich mit Zahlen</h3> 
+<pre>	<code>list(8, 10, 5, 6).sort() </code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Menge mit den Elementen [5, 6, 8, 10].</p> 
+<h3>Vergleich mit Vergleichsfunktion</h3> 
+<pre>	<code>list("z", "a", "f")
+  .sort(x -&gt; y -&gt; {
+    if ($x &lt; $y, 
+      -1, 
+      if ($x &gt; $y, 1, 0));
+  })</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit den Elementen ["a", "f", "z"].</p> 
+<p>Dieses Beispiel könnte auch mit einem <a class="tlObject" data-custom="true" href="?page=compare&amp;uuid=9b99eaf6-0a4d-4f83-a4b0-c22005a44494">Vergleichswert</a> vereinfacht werden.</p> 
+<p> </p>

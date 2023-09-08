@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="searchResult"
+	helpIDLegacy="reporting.chart.result.tabber"
+	horizontal="false"
+	titleKey="reporting.chart.result.tabber"
+>
+	<tabInfo id="searchResult"
+		image="theme:IMAGE_BUTTONS_RESULT"
+		label="reporting.chart.result.tabber"
+		rendered="false"
+	/>
+	<components>
+		<include name="search/searchReportingResultTable.xml"/>
+	</components>
+</securityLayout>

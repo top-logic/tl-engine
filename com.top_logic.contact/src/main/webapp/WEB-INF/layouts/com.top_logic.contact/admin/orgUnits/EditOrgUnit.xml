@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- This component manages groups. -->
+<template>
+	<params>
+		<param name="master"/>
+	</params>
+
+	<include name="com.top_logic.contact/admin/orgUnits/EditOrgUnit_shared.xml"
+		masterComponent="${master}"
+	/>
+</template>

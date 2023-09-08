@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.polymorphism">
+		<class name="A">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="propA"
+					type="tl.core:String"
+				/>
+				<property name="propAB"
+					type="tl.core:String"
+				/>
+				<property name="propADefault"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.model.provider.UuidDefaultProvider"/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="B">
+			<generalizations>
+				<generalization type="A"/>
+			</generalizations>
+			<attributes>
+				<property name="propAB"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<string value="Value for B"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="propBC"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+		<class name="C">
+			<generalizations>
+				<generalization type="B"/>
+			</generalizations>
+			<attributes>
+				<property name="propBC"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<create-visibility value="hidden"/>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<property name="propAB"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<string value="Value for B"/>
+						</default-value>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.mig.html.layout.IncludeComponent"
+	encodings="Cp1252"
+	files="/html/contents/layoutdemo/window1Descr.incl"
+	name="window1Descr"
+	resPrefix="layouts.layoutdemo.window.windowDemo1_1A.window1Descr."
+/>

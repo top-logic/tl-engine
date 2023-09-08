@@ -1,0 +1,40 @@
+<h2>Syntax</h2> 
+<pre>	<code>$calendar.withWeek($week)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Erstellt einen neuen Kalender aus dem gegebenen Kalender, wobei die <a class="tlObject" data-custom="true" href="?page=week&amp;uuid=2de54ebb-1ee3-483d-874e-6e64772653cc">Kalenderwoche</a> auf <code class="hljs inlineCode">week</code> gesetzt wird. Durch das Verändern der Kalenderwoche können sich auch andere Werte wie zum Beispiel der <a class="tlObject" data-custom="true" href="?page=month&amp;uuid=99e4d3c1-d5f2-4285-bdf8-be318d17e7d6">Monat</a> ändern.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>calendar</td> 
+   <td>Fachobjekt</td> 
+   <td>Der Kalender, dessen Kalenderwoche geändert werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>week</td> 
+   <td>Zahl</td> 
+   <td>Wert für die neue Kalenderwoche, der für den Kalender gesetzt werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Fachobjekt</p> 
+<p>Ein Kalender mit dem geänderten Wert für die Kalenderwoche.</p> 
+<h2>Beispiele</h2> 
+<pre>	<code>dateTime(2012, 8, 10, 7, 55, 24, 13).toUserCalendar().withWeek(15).week()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 15 </p>

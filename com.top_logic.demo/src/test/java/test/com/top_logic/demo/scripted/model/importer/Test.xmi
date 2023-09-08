@@ -1,0 +1,617 @@
+<?xml version="1.0" encoding="UTF-8"?><xmi:XMI xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:OMF_x0020_Extension_x0020_Profile="http://www.aris.com/profiles/OMF/1.0/ExtensionProfile.xmi" xmlns:StandardProfile="http://www.omg.org/spec/UML/20131001/StandardProfile.xmi" xmlns:UML_x0020_1.4_x0020_Compatibility_x0020_Profile="http://www.aris.com/profiles/OMF/1.0/ExtendedStandardProfile.xmi" xmlns:OMF_x0020_Meta_x0020_Profile="http://www.aris.com/profiles/OMF/1.0/MetaProfile.xmi" xmlns:uml="http://www.omg.org/spec/UML/20131001" xmi:version="2.5">
+  <xmi:Documentation exporter="ARIS UML Designer" exporterVersion="10.0.11.0.1400208" timestamp="2020-09-14T09:03:51+02:00"/>
+  <uml:Package xmi:id="e9321d71-ec3c-11ea-36d3-0050569f65d0" xmi:uuid="e9321d71-ec3c-11ea-36d3-0050569f65d0">
+    <visibility>public</visibility>
+    <URI nil="true"/>
+    <identifier nil="true"/>
+    <name>Test</name>
+    <templateParameter nil="true"/>
+    <packagedElement xmi:id="92be49f1-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49f1-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Association">
+      <isFinalSpecialization>false</isFinalSpecialization>
+      <isDerived>false</isDerived>
+      <visibility>public</visibility>
+      <isLeaf>false</isLeaf>
+      <isAbstract>false</isAbstract>
+      <identifier nil="true"/>
+      <name>hat</name>
+      <representation nil="true"/>
+      <memberEnd xmi:idref="92be49f3-eced-11ea-36d3-0050569f65d0"/>
+      <memberEnd xmi:idref="92be49f7-eced-11ea-36d3-0050569f65d0"/>
+      <templateParameter nil="true"/>
+      <ownedEnd xmi:id="92be49f3-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49f3-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name nil="true"/>
+        <association xmi:idref="92be49f1-eced-11ea-36d3-0050569f65d0"/>
+        <type xmi:idref="e9321d73-ec3c-11ea-36d3-0050569f65d0"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="cea065fd-fb49-40ea-a69c-4081bfa32698" xmi:uuid="cea065fd-fb49-40ea-a69c-4081bfa32698" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>0</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="00b81c06-6eb6-4ecb-9321-733c97aa56b9" xmi:uuid="00b81c06-6eb6-4ecb-9321-733c97aa56b9" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>*</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedEnd>
+      <ownedEnd xmi:id="92be49f7-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49f7-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Auftraggeber</name>
+        <association xmi:idref="92be49f1-eced-11ea-36d3-0050569f65d0"/>
+        <type xmi:idref="e9321d79-ec3c-11ea-36d3-0050569f65d0"/>
+        <templateParameter nil="true"/>
+      </ownedEnd>
+    </packagedElement>
+    <packagedElement xmi:id="e9321d79-ec3c-11ea-36d3-0050569f65d0" xmi:uuid="e9321d79-ec3c-11ea-36d3-0050569f65d0" xmi:type="uml:Class">
+      <isFinalSpecialization>false</isFinalSpecialization>
+      <visibility>public</visibility>
+      <isAbstract>false</isAbstract>
+      <isActive>false</isActive>
+      <isLeaf>false</isLeaf>
+      <identifier nil="true"/>
+      <name>Kunde</name>
+      <classifierBehavior nil="true"/>
+      <representation nil="true"/>
+      <templateParameter nil="true"/>
+      <ownedAttribute xmi:id="e9321d7b-ec3c-11ea-36d3-0050569f65d0" xmi:uuid="e9321d7b-ec3c-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Vorname</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="c20c3ae4-0eaf-42ea-9de9-52f6c6774191" xmi:uuid="c20c3ae4-0eaf-42ea-9de9-52f6c6774191" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="35042de0-f0ed-4f6c-9236-d55bf0efa6a1" xmi:uuid="35042de0-f0ed-4f6c-9236-d55bf0efa6a1" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:id="e9321d7d-ec3c-11ea-36d3-0050569f65d0" xmi:uuid="e9321d7d-ec3c-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Nachnme</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="9fb47b4a-9f65-4224-9dc8-e4106b5436c6" xmi:uuid="9fb47b4a-9f65-4224-9dc8-e4106b5436c6" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="2c7000bd-6d06-4348-a9d6-0817b8e7a690" xmi:uuid="2c7000bd-6d06-4348-a9d6-0817b8e7a690" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:id="92be49d4-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49d4-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Firmenname</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="4fd56a4c-7516-48a7-84cd-aa1ce8c9c8f1" xmi:uuid="4fd56a4c-7516-48a7-84cd-aa1ce8c9c8f1" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="c9f0435b-bd1d-4ba6-ab13-d1a1f11fa2dd" xmi:uuid="c9f0435b-bd1d-4ba6-ab13-d1a1f11fa2dd" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:id="92be49da-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49da-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Firmenabteilung</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="93e1013a-e783-4fcc-a4d0-4a2099d1a716" xmi:uuid="93e1013a-e783-4fcc-a4d0-4a2099d1a716" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="14ebb65c-fbcb-4aae-98c4-e6e32ac794dd" xmi:uuid="14ebb65c-fbcb-4aae-98c4-e6e32ac794dd" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+    </packagedElement>
+    <packagedElement xmi:id="92be49fb-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49fb-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Association">
+      <isFinalSpecialization>false</isFinalSpecialization>
+      <isDerived>false</isDerived>
+      <visibility>public</visibility>
+      <isLeaf>false</isLeaf>
+      <isAbstract>false</isAbstract>
+      <identifier nil="true"/>
+      <name>ist_zugeordnet</name>
+      <representation nil="true"/>
+      <memberEnd xmi:idref="92be49fd-eced-11ea-36d3-0050569f65d0"/>
+      <memberEnd xmi:idref="27fb68d0-ecf2-11ea-36d3-0050569f65d0"/>
+      <templateParameter nil="true"/>
+      <ownedEnd xmi:id="92be49fd-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49fd-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name nil="true"/>
+        <association xmi:idref="92be49fb-eced-11ea-36d3-0050569f65d0"/>
+        <type xmi:idref="e9321d73-ec3c-11ea-36d3-0050569f65d0"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="aa1ff4ad-0cf9-44cf-bd99-e65029e7aeed" xmi:uuid="aa1ff4ad-0cf9-44cf-bd99-e65029e7aeed" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>0</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="0a000ea0-da8c-40d8-ba10-049be86be3e2" xmi:uuid="0a000ea0-da8c-40d8-ba10-049be86be3e2" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>*</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedEnd>
+      <ownedEnd xmi:id="27fb68d0-ecf2-11ea-36d3-0050569f65d0" xmi:uuid="27fb68d0-ecf2-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Mitglied</name>
+        <association xmi:idref="92be49fb-eced-11ea-36d3-0050569f65d0"/>
+        <type xmi:idref="92be49e4-eced-11ea-36d3-0050569f65d0"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="93cd2052-33ad-4468-afec-85e773ef7647" xmi:uuid="93cd2052-33ad-4468-afec-85e773ef7647" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="b4320137-7f1a-47af-8ddd-ccde4b85fdd9" xmi:uuid="b4320137-7f1a-47af-8ddd-ccde4b85fdd9" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedEnd>
+    </packagedElement>
+    <packagedElement xmi:id="e9321d73-ec3c-11ea-36d3-0050569f65d0" xmi:uuid="e9321d73-ec3c-11ea-36d3-0050569f65d0" xmi:type="uml:Class">
+      <isFinalSpecialization>false</isFinalSpecialization>
+      <visibility>public</visibility>
+      <isAbstract>false</isAbstract>
+      <isActive>false</isActive>
+      <isLeaf>false</isLeaf>
+      <identifier nil="true"/>
+      <name>Projekt</name>
+      <classifierBehavior nil="true"/>
+      <representation nil="true"/>
+      <templateParameter nil="true"/>
+      <ownedAttribute xmi:id="e9321d75-ec3c-11ea-36d3-0050569f65d0" xmi:uuid="e9321d75-ec3c-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Projektnummer</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#Integer"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="038f552a-25bc-4eba-9b0c-0440bd75494e" xmi:uuid="038f552a-25bc-4eba-9b0c-0440bd75494e" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="3f19d1ae-c09f-485b-a4d0-e29b8a8d3c53" xmi:uuid="3f19d1ae-c09f-485b-a4d0-e29b8a8d3c53" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:id="92be49eb-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49eb-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Stundenaufwand</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#Integer"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="0a5f92c3-0e16-4cec-b74c-f4327e591cc7" xmi:uuid="0a5f92c3-0e16-4cec-b74c-f4327e591cc7" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="a2b9c2e2-672e-4132-b2af-aaf6cef00d8b" xmi:uuid="a2b9c2e2-672e-4132-b2af-aaf6cef00d8b" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:id="92be49ee-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49ee-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Kosten</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#Integer"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="a353a714-e89c-435a-b688-1a044c8370bc" xmi:uuid="a353a714-e89c-435a-b688-1a044c8370bc" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="1ab3f815-1cb7-4f98-9fdf-6499d53ca624" xmi:uuid="1ab3f815-1cb7-4f98-9fdf-6499d53ca624" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:id="27fb8fe3-ecf2-11ea-36d3-0050569f65d0" xmi:uuid="27fb8fe3-ecf2-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Leistungsbeschreibung</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="7d3064a5-aa58-45e6-97ec-fdc7157a9796" xmi:uuid="7d3064a5-aa58-45e6-97ec-fdc7157a9796" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="dc91713e-7460-4125-b734-470dffee62a1" xmi:uuid="dc91713e-7460-4125-b734-470dffee62a1" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:id="27fb8fe6-ecf2-11ea-36d3-0050569f65d0" xmi:uuid="27fb8fe6-ecf2-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Projektname</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="089cda8d-6c08-47da-acb3-92f264181070" xmi:uuid="089cda8d-6c08-47da-acb3-92f264181070" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="91c4fac7-3b48-464a-ada9-03594f5ace74" xmi:uuid="91c4fac7-3b48-464a-ada9-03594f5ace74" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+    </packagedElement>
+    <packagedElement xmi:id="92be49e4-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49e4-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Class">
+      <isFinalSpecialization>false</isFinalSpecialization>
+      <visibility>public</visibility>
+      <isAbstract>false</isAbstract>
+      <isActive>false</isActive>
+      <isLeaf>false</isLeaf>
+      <identifier nil="true"/>
+      <name>Mitarbeiter</name>
+      <classifierBehavior nil="true"/>
+      <representation nil="true"/>
+      <templateParameter nil="true"/>
+      <ownedAttribute xmi:id="12c0c1b0-ecf0-11ea-36d3-0050569f65d0" xmi:uuid="12c0c1b0-ecf0-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Vorname</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="c20c3ae4-0eaf-42ea-9de9-52f6c6774191" xmi:uuid="c20c3ae4-0eaf-42ea-9de9-52f6c6774191" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="35042de0-f0ed-4f6c-9236-d55bf0efa6a1" xmi:uuid="35042de0-f0ed-4f6c-9236-d55bf0efa6a1" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:id="19681860-ecf0-11ea-36d3-0050569f65d0" xmi:uuid="19681860-ecf0-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Nachnme</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="9fb47b4a-9f65-4224-9dc8-e4106b5436c6" xmi:uuid="9fb47b4a-9f65-4224-9dc8-e4106b5436c6" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="2c7000bd-6d06-4348-a9d6-0817b8e7a690" xmi:uuid="2c7000bd-6d06-4348-a9d6-0817b8e7a690" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:id="1967a332-ecf0-11ea-36d3-0050569f65d0" xmi:uuid="1967a332-ecf0-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Firmenabteilung</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="93e1013a-e783-4fcc-a4d0-4a2099d1a716" xmi:uuid="93e1013a-e783-4fcc-a4d0-4a2099d1a716" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="14ebb65c-fbcb-4aae-98c4-e6e32ac794dd" xmi:uuid="14ebb65c-fbcb-4aae-98c4-e6e32ac794dd" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:id="92be49e8-eced-11ea-36d3-0050569f65d0" xmi:uuid="92be49e8-eced-11ea-36d3-0050569f65d0" xmi:type="uml:Property">
+        <isReadOnly>false</isReadOnly>
+        <isID>false</isID>
+        <isStatic>false</isStatic>
+        <isLeaf>false</isLeaf>
+        <identifier nil="true"/>
+        <isDerived>false</isDerived>
+        <isDerivedUnion>false</isDerivedUnion>
+        <isUnique>true</isUnique>
+        <isOrdered>false</isOrdered>
+        <aggregation>none</aggregation>
+        <visibility nil="true"/>
+        <name>Stundensatz</name>
+        <association nil="true"/>
+        <type href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#Integer"/>
+        <templateParameter nil="true"/>
+        <lowerValue xmi:id="42d99774-4e1c-47eb-8d74-71d789f060c8" xmi:uuid="42d99774-4e1c-47eb-8d74-71d789f060c8" xmi:type="uml:LiteralInteger">
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <value>1</value>
+          <name>LiteralInteger</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </lowerValue>
+        <upperValue xmi:id="bba51cbf-053c-4568-99c6-516a62e7e41e" xmi:uuid="bba51cbf-053c-4568-99c6-516a62e7e41e" xmi:type="uml:LiteralUnlimitedNatural">
+          <value>1</value>
+          <visibility>public</visibility>
+          <identifier nil="true"/>
+          <name>LiteralUnlimitedNatural</name>
+          <type nil="true"/>
+          <templateParameter nil="true"/>
+        </upperValue>
+      </ownedAttribute>
+    </packagedElement>
+  </uml:Package>
+</xmi:XMI>

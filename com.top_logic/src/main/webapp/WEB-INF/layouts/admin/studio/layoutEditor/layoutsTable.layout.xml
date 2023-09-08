@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="LayoutEditor">
+	<components>
+		<component class="com.top_logic.layout.editor.LayoutKeySelector"
+			name="LayoutKeySelector"
+			securityProviderClass="securityRoot"
+			titleKey="tl.layouteditor.layoutKeySelector.title"
+		>
+			<layoutInfo size="65px"/>
+		</component>
+		<tree-table name="LayoutTreeTable"
+			model="selection(LayoutKeySelector)"
+			rootVisible="true"
+			securityProviderClass="securityRoot"
+			titleKey="tl.layouteditor.layoutTable.title"
+		>
+			<treeBuilder class="com.top_logic.layout.editor.LayoutKeyTreeBuilder"/>
+			<table
+				defaultColumns="name,layoutKey"
+				defaultSortOrder="name"
+				fixedColumns="1"
+				resPrefix="tl.layouteditor.layoutTable"
+			>
+				<columns>
+					<column name="name"
+						columnWidth="300px"
+						filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+					>
+						<accessor class="com.top_logic.layout.IdentityAccessor"/>
+						<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer">
+							<contentRenderer class="com.top_logic.layout.table.renderer.UniformCellRenderer">
+								<renderer class="com.top_logic.layout.basic.ResourceRenderer">
+									<resourceProvider class="com.top_logic.layout.provider.LabelResourceProvider"
+										label-provider="com.top_logic.layout.editor.LayoutKeyLabelProvider"
+									/>
+								</renderer>
+							</contentRenderer>
+						</cellRenderer>
+						<sortKeyProvider class="com.top_logic.layout.LabelMapping"
+							labels="com.top_logic.layout.editor.LayoutKeyLabelProvider"
+						/>
+					</column>
+					<column name="layoutKey"
+						columnWidth="400px"
+					>
+						<accessor class="com.top_logic.layout.IdentityAccessor"/>
+					</column>
+				</columns>
+			</table>
+			<buttons>
+				<reference command-id="invalidate"/>
+			</buttons>
+		</tree-table>
+	</components>
+</layout>

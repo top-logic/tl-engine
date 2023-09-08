@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-fragment
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee/web-fragment_3_0.xsd"
+	id="tl-auth-pac4j" 
+	version="3.0"
+	metadata-complete="true"
+>
+    <name>tl-auth-pac4j</name>
+
+	<filter>
+		<filter-name>Pac4jSecurityFilter</filter-name>
+		<filter-class>org.pac4j.jee.filter.SecurityFilter</filter-class>
+	</filter>
+
+	<filter>
+		<filter-name>Pac4jCallbackFilter</filter-name>
+		<filter-class>org.pac4j.jee.filter.CallbackFilter</filter-class>
+	</filter>
+
+	<filter-mapping>
+	    <filter-name>Pac4jSecurityFilter</filter-name>
+	    <url-pattern>/servlet/openid</url-pattern>
+	</filter-mapping>
+
+	<filter-mapping>
+	    <filter-name>Pac4jCallbackFilter</filter-name>
+	    <url-pattern>/servlet/callback</url-pattern>
+	</filter-mapping>
+
+	<servlet>
+		<display-name>External authentication with the Pac4j library.</display-name>
+		<servlet-name>Pac4jAuthenticationServlet</servlet-name>
+		<servlet-class>com.top_logic.security.auth.pac4j.servlet.Pac4jAuthenticationServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>Pac4jAuthenticationServlet</servlet-name>
+		<url-pattern>/servlet/openid</url-pattern>
+	</servlet-mapping>
+</web-fragment>

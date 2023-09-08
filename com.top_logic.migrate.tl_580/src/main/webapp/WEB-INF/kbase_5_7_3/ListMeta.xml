@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Definition of some Lists supported by TopLogic -->
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+
+<!-- BEGIN TLList -->
+<metaobjects>
+
+<metaobject object_type="MOKnowledgeObject" object_name="TLList" super_class="KnowledgeObject" db_name="TL_LIST">
+<attributes>
+	<mo_attribute att_name="name"             att_type="String"	db_size="64" mandatory="true"  />
+	<mo_attribute att_name="type"             att_type="String" db_size="32" mandatory="true"  />
+	<mo_attribute att_name="description"      att_type="String" db_size="128" mandatory="false" />
+	<mo_attribute att_name="isMultiselect"    att_type="Boolean"			  mandatory="false" />
+    <!-- mo_index name="TLListTypeNameIdx">
+        <index_part name="type" />
+        <index_part name="name" />
+    </mo_index -->
+</attributes>
+</metaobject>
+
+<!-- KA from TLList to an entry -->
+<association super_class="Association" object_name="hasEntry" >
+<attributes>
+	<mo_attribute att_name="sortOrder"   att_type="Integer" mandatory="true" />
+	<mo_attribute att_name="displayName" att_type="String" mandatory="false" db_size="32" />
+</attributes>
+</association>
+
+<!-- BEGIN FastList -->
+
+<metaobject object_type="MOKnowledgeObject" object_name="FastList" super_class="KnowledgeObject" db_name="FAST_LIST">
+<attributes>
+	<mo_attribute att_name="type"             att_type="String" 	db_size="32" mandatory="true"  />
+  	<mo_attribute att_name="parId"    		  att_type="String"	    db_size="32" mandatory="false" />
+	<mo_attribute att_name="name"             att_type="String" 	db_size="64" mandatory="true"  />
+	<mo_attribute att_name="descr"    		  att_type="String"	    db_size="128" mandatory="false" />
+	<mo_attribute att_name="defId"    		  att_type="String"	    mandatory="false" />
+	<mo_attribute att_name="multi"    		  att_type="Boolean"	mandatory="false" />
+</attributes>
+<index>
+    <mo_index name="FastListParIdx" unique="false">
+<index-parts>
+        <index_part name="parId" />
+        <index_part name="name" />
+</index-parts>
+    </mo_index>
+</index>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="OrderedList" super_class="FastList" db_name="ORDER_LIST">
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="FastListElt" super_class="KnowledgeObject" db_name="FAST_LIST_ELT">
+<attributes>
+	<mo_attribute att_name="parId"    		  att_type="String"	    mandatory="true"  />
+	<mo_attribute att_name="name"             att_type="String" 	                  db_size="72" mandatory="true"  />
+	<mo_attribute att_name="order"    		  att_type="Integer"    mandatory="true"  db_name="SORT_ORDER" />
+	<mo_attribute att_name="descr"    		  att_type="String"	    mandatory="false" db_size="128"  />
+	<mo_attribute att_name="flags"    		  att_type="Integer"	mandatory="false" />
+</attributes>
+<index>
+    <mo_index name="FastListEltParIdx">
+<index-parts>
+        <index_part name="parId" />
+        <index_part name="order"  />
+        <index_part name="name"  />
+</index-parts>
+    </mo_index>
+</index>
+</metaobject>
+
+</metaobjects>
+</objectlist>

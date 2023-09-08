@@ -1,0 +1,273 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-build</artifactId>
+		<version>7.6.0-SNAPSHOT</version>
+
+		<relativePath>../tl-parent-build</relativePath>
+	</parent>
+
+	<artifactId>tl-parent-core</artifactId>
+
+	<description>
+		Parent for TopLogic modules. 
+	
+		A TopLogic fragment module is not a runnable application by itself but can only be used from other fragment 
+		modules and applications.
+	</description>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<packaging>pom</packaging>
+	
+	<modules>
+		<module>internal</module>
+	</modules>
+
+	<properties>
+		<skipTests>true</skipTests>
+		<skipTestsWar>false</skipTestsWar>
+		<warSourceExcludes></warSourceExcludes>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet.jsp</groupId>
+			<artifactId>jsp-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- Test framework -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>ext-com-meterware-httpunit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!--
+			Settings required to include the bootstrap classes into the Eclipse launcher classpath.
+			
+			Note: The h2 runtime dependency for IDE startup must be overridden here, because the parent module 
+			declares a test-only dependency to h2.
+		-->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ide-jetty</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- apache-jsp JspC requires the ant tools but fails to declare a corresponding dependency. -->
+		<dependency>
+		    <groupId>org.apache.ant</groupId>
+		    <artifactId>ant</artifactId>
+		    <version>1.10.13</version>
+		    <scope>test</scope>
+		    
+		    <exclusions>
+		    	<!-- Declares a dependency to tools.jar - prevent it from being searched for. -->
+		    	<exclusion>
+		    		<groupId>com.sun</groupId>
+		    		<artifactId>tools</artifactId>
+		    	</exclusion>
+		    </exclusions>
+		</dependency>
+
+		<!-- Database for test. -->
+		<dependency>
+		    <groupId>com.h2database</groupId>
+		    <artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+        <plugins>
+			<plugin>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-maven-plugin</artifactId>
+				<version>7.6.0-SNAPSHOT</version>
+
+				<executions>
+					<execution>
+						<id>resolve-engine-components</id>
+						<goals>
+							<goal>resolve</goal>
+						</goals>
+					</execution>
+					
+					<execution>
+						<id>mark-as-toplogic-component</id>
+						<goals>
+							<goal>touch</goal>
+						</goals>
+						<configuration>
+	  						<path>classes/META-INF/tl-module-with-resources</path>
+						</configuration>
+					</execution>
+					
+					<execution>
+						<id>mark-tests-as-toplogic-component</id>
+						<goals>
+							<goal>touch</goal>
+						</goals>
+						<configuration>
+	  						<path>test-classes/META-INF/tl-module-with-resources</path>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			        
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<useIncrementalCompilation>false</useIncrementalCompilation>
+
+					<annotationProcessors>com.top_logic.build.processor.TypeIndexer</annotationProcessors>
+
+					<annotationProcessorPaths>
+						<annotationProcessorPath>
+							<groupId>com.top-logic</groupId>
+							<artifactId>tl-build-processor</artifactId>
+						    <version>${tl.version}</version>
+							<classifier>jar-with-dependencies</classifier>
+						</annotationProcessorPath>
+					</annotationProcessorPaths>
+				</configuration>
+
+				<dependencies>
+					<dependency>
+						<groupId>com.top-logic</groupId>
+						<artifactId>tl-build-processor</artifactId>
+						<version>7.6.0-SNAPSHOT</version>
+						<classifier>jar-with-dependencies</classifier>
+					</dependency>
+				</dependencies>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>test-jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<configuration>
+					<!-- <attachClasses>true</attachClasses> -->
+					<classifier>web-fragment</classifier>
+					
+					<!-- 
+						Note: The file 'WEB-INF/web.xml' must be packaged into the fragment war to allow deploying 
+						the app from its repository artifacts by a deploy module created later on.
+					-->
+					<packagingExcludes>WEB-INF/lib/**,WEB-INF/classes/**</packagingExcludes>
+				</configuration>
+
+				<executions>
+					<execution>
+						<id>war-fragment</id>
+						
+						<!-- Not in phase package, because running the tests tend to leave rubbish in the folders. -->
+						<phase>process-classes</phase>
+						
+						<goals>
+							<goal>war</goal>
+						</goals>
+						<configuration>
+							<warSourceExcludes>${warSourceExcludes}</warSourceExcludes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>test-war-fragment</id>
+
+						<!-- Not in phase package, because running the tests tend to leave rubbish in the folders. -->
+						<phase>process-test-classes</phase>
+
+						<goals>
+							<goal>war</goal>
+						</goals>
+
+						<configuration>
+							<skip>${skipTestsWar}</skip>
+
+							<warSourceDirectory>${basedir}/src/test/webapp</warSourceDirectory>
+							<webappDirectory>${project.build.directory}/${project.build.finalName}-test</webappDirectory>
+
+							<!-- Note: The classifier of the test-jar "tests" must be a prefix 
+								of this classifier for the test war to be automatically found when analyzing 
+								the class path. -->
+							<classifier>tests-web-fragment</classifier>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<skipTests>${skipTests}</skipTests>
+					<dependenciesToScan>
+						<dependency>com.top-logic:tl-basic</dependency>
+					</dependenciesToScan>
+
+					<includes>
+						<include>test/TestAll.java</include>
+					</includes>
+				</configuration>
+			</plugin>
+		</plugins>
+        <pluginManagement>
+        	<plugins>
+        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        		<plugin>
+        			<groupId>org.eclipse.m2e</groupId>
+        			<artifactId>lifecycle-mapping</artifactId>
+        			<version>1.0.0</version>
+        			<configuration>
+        				<lifecycleMappingMetadata>
+        					<pluginExecutions>
+        						<pluginExecution>
+        							<pluginExecutionFilter>
+        								<groupId>com.top-logic</groupId>
+        								<artifactId>tl-maven-plugin</artifactId>
+										<versionRange>[${tl.version},)</versionRange>
+        								<goals>
+        									<goal>resolve</goal>
+        									<goal>touch</goal>
+        									<goal>generate-java</goal>
+        								</goals>
+        							</pluginExecutionFilter>
+        							<action>
+        								<ignore></ignore>
+        							</action>
+        						</pluginExecution>
+        					</pluginExecutions>
+        				</lifecycleMappingMetadata>
+        			</configuration>
+        		</plugin>
+        	</plugins>
+        </pluginManagement>
+	</build>
+</project>

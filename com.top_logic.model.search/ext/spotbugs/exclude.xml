@@ -1,0 +1,7 @@
+<FindBugsFilter>
+	<Match>
+		<Or>
+			<Package name="~com\.top_logic\.model\.search\.expr\.parser.*" />
+		</Or>
+	</Match>
+</FindBugsFilter>

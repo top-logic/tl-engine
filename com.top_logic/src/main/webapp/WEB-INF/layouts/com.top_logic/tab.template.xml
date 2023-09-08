@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="tabbar"
+>
+	<properties>
+		<property name="tabLabel"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="components"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<hidden/>
+			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplatesDefault"/>
+			<layout-templates value="com.top_logic/contentLayout.template.xml"/>
+		</property>
+		<property name="tabIcon"
+			type="com.top_logic.layout.basic.ThemeImage"
+		/>
+		<property name="tabVisible"
+			default="true"
+			type="boolean"
+		>
+			<hidden/>
+		</property>
+		<property name="securityDomain"
+			default="SecurityStructure"
+			type="String"
+		>
+			<nullable/>
+			<options
+				fun="com.top_logic.tool.boundsec.manager.SecurityStructures"
+				mapping="com.top_logic.model.config.TLModelPartMapping"
+			/>
+		</property>
+		<property name="helpID"
+			type="String"
+		>
+			<nullable/>
+			<property-editor value="com.top_logic.layout.help.UseHelpEditor"/>
+			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
+		</property>
+	</properties>
+
+	<securityLayout name="TabLayout"
+		components="${components}"
+		helpID="${helpID}"
+		securityDomain="${securityDomain}"
+		titleKey="${tabLabel}"
+	>
+		<tabInfo
+			image="${tabIcon}"
+			label="${tabLabel}"
+			rendered="${tabVisible}"
+		/>
+	</securityLayout>
+</config:template>

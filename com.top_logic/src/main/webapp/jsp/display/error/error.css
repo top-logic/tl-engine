@@ -1,0 +1,18 @@
+/*
+	Copyright 2005 Business Operation Systems GmbH
+	
+	Since the System may be unstable I use constant format for the error pages
+*/
+
+body {
+	font-family:sans-serif;
+	margin-left: 3em;
+}
+span.link   { margin:10pt;			  }
+table.error	{ width:95%;
+			  text-align:left;
+			  border-style:none;
+              border-spacing:5pt;	  }
+td.pre		{ white-space:pre;		}
+small,.small {font-size:9pt;}
+	

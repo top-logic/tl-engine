@@ -1,0 +1,2842 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Persistent report security"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create user"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Rolle/Action-Rolle-Anlegen.xml"
+				>
+					<parameters>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="publisher"
+							/>
+						</parameter>
+						<parameter name="Berechtigungsstruktur">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Zentrale Berechtigungen"
+							/>
+						</parameter>
+						<parameter name="ergebnis"
+							value="publisher"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Nutzer"
+				>
+					<parameters>
+						<parameter name="Vorname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+						<parameter name="Nachname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+						<parameter name="ergebnis">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Rolle zuweisen"
+					business-object="Nutzer"
+				>
+					<parameters>
+						<parameter name="kontext">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+						<parameter name="Rolle">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="publisher"
+							/>
+						</parameter>
+						<parameter name="Berechtigungsstruktur">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Zentrale Berechtigungen"
+							/>
+						</parameter>
+						<parameter name="Knoten"
+							value="SecurityRoot"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Nutzer"
+				>
+					<parameters>
+						<parameter name="Vorname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_2"
+							/>
+						</parameter>
+						<parameter name="Nachname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_2"
+							/>
+						</parameter>
+						<parameter name="Loginname">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_2"
+							/>
+						</parameter>
+						<parameter name="ergebnis">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_2"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Rolle zuweisen"
+					business-object="Nutzer"
+				>
+					<parameters>
+						<parameter name="kontext">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_2"
+							/>
+						</parameter>
+						<parameter name="Rolle">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="publisher"
+							/>
+						</parameter>
+						<parameter name="Berechtigungsstruktur">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Zentrale Berechtigungen"
+							/>
+						</parameter>
+						<parameter name="Knoten"
+							value="SecurityRoot"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Assign role profiles"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Administration > Berechtigungen"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+						tab-path="Administration > Berechtigungen"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Berechtigungsstruktur"
+									field-name="structure"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="Zentrale Berechtigungen"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Administration > Berechtigungen > Rollenprofile"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Setze Rechte für OwnerRole"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+							columns="Rechte,OwnerRole"
+							label="true"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<named-member name="tree"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Druecken"
+							business-object="Knopf"
+						>
+							<parameters>
+								<parameter name="Name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Bearbeiten"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Druecken"
+							business-object="Knopf"
+						>
+							<parameters>
+								<parameter name="Name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Rollenprofile aufklappen"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Häkchen setzen"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Suche (Lesen)"
+												/>
+											</object>
+											<named-member name="OwnerRole"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Suche (Lesen)"
+												/>
+											</object>
+											<named-member name="OwnerRole"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Suche (Anfragen ändern)"
+												/>
+											</object>
+											<named-member name="OwnerRole"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Suchergebnis (Lesen)"
+												/>
+											</object>
+											<named-member name="OwnerRole"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Auswertungen (Lesen)"
+												/>
+											</object>
+											<named-member name="OwnerRole"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Auswertungen (Anfragen ändern)"
+												/>
+											</object>
+											<named-member name="OwnerRole"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+									business-action="Druecken"
+									business-object="Knopf"
+								>
+									<parameters>
+										<parameter name="Name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="Speichern"
+											/>
+										</parameter>
+									</parameters>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Setze Rechte für publisher"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+							columns="Rechte,publisher"
+							label="true"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<named-member name="tree"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Druecken"
+							business-object="Knopf"
+						>
+							<parameters>
+								<parameter name="Name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Bearbeiten"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Druecken"
+							business-object="Knopf"
+						>
+							<parameters>
+								<parameter name="Name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Rollenprofile aufklappen"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Häkchen setzen"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Suche (Lesen)"
+												/>
+											</object>
+											<named-member name="publisher"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Suche (Lesen)"
+												/>
+											</object>
+											<named-member name="publisher"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Suche (Anfragen ändern)"
+												/>
+											</object>
+											<named-member name="publisher"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Suche (Anlegen)"
+												/>
+											</object>
+											<named-member name="publisher"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Suche (Suche veröffentlichen)"
+												/>
+											</object>
+											<named-member name="publisher"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Suchergebnis (Lesen)"
+												/>
+											</object>
+											<named-member name="publisher"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Auswertungen (Lesen)"
+												/>
+											</object>
+											<named-member name="publisher"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Auswertungen (Anlegen)"
+												/>
+											</object>
+											<named-member name="publisher"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Auswertungen (Suche veröffentlichen)"
+												/>
+											</object>
+											<named-member name="publisher"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+									business-action="Druecken"
+									business-object="Knopf"
+								>
+									<parameters>
+										<parameter name="Name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="Speichern"
+											/>
+										</parameter>
+									</parameters>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Save report"
+			user-id="User_TestPersistentReportSecurity_1"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Suche"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+						tab-path="Suche"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Fachobjekt"
+									field-name="metaElement"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="Demo A"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Suchen"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Auswertungen"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="save report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart-builder"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="view"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Diagrammtyp"
+											field-name="chartType"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Kuchen"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="model-preparation"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Einteilungen"
+											field-name="partitions"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="add"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="boolean"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.chart.component.ChartConfigComponent$ApplySettings"
+							command-label="Aktualisieren"
+							command-name="apply"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Speichern unter..."
+							command-name="displayDialog_Searchreporting_flex_search_searchResultChart_SaveDialog"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Name"
+											field-name="name"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="TestPersistentReportSecurity SaveReport"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.CreateReportCommand"
+							command-label="Anlegen"
+							command-name="newStoredConfigChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.NewStoredConfigChartReportComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="test success"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="false"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Auswertung"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+										tab-path="Auswertungen"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+										table-name="FlexReport"
+									>
+										<key-values>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+													string="TestPersistentReportSecurity SaveReport"
+												/>
+											</attribute>
+										</key-values>
+									</entry>
+								</list>
+							</expected-value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+							mode="ACTIVE"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Auswertung"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+									tab-path="Auswertungen"
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="true"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="&quot;Nicht gesetzt&quot;"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+										tab-path="Auswertungen"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="false"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="test loading a report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Auswertung"
+											field-name="reportSelection"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list/>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Auswertung"
+											field-name="reportSelection"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="TestPersistentReportSecurity SaveReport"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="true"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="&quot;Nicht gesetzt&quot;"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+										tab-path="Auswertungen"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="false"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="test deleting a report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.DeleteReportCommand"
+							command-label="Löschen..."
+							command-name="deleteStoredConfigChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultStoredReportSelector"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="false"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Auswertung"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+										tab-path="Auswertungen"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list/>
+							</expected-value>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer abmelden.xml"
+					template-name-comment="Nutzer abmelden"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Save and publish report"
+			user-id="User_TestPersistentReportSecurity_1"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Suche"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+						tab-path="Suche"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Fachobjekt"
+									field-name="metaElement"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="Demo A"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Suchen"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Auswertungen"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="save report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart-builder"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="view"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Diagrammtyp"
+											field-name="chartType"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Kuchen"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="model-preparation"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Einteilungen"
+											field-name="partitions"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="add"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="boolean"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.chart.component.ChartConfigComponent$ApplySettings"
+							command-label="Aktualisieren"
+							command-name="apply"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Speichern unter..."
+							command-name="displayDialog_Searchreporting_flex_search_searchResultChart_SaveDialog"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Name"
+											field-name="name"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="TestPersistentReportSecurity SavePublish"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Details für die Veröffentlichung"
+											field-name="publishGroup"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Veröffentlichen"
+											field-name="publishQuery"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="true"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Details für die Veröffentlichung"
+											field-name="publishGroup"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Gruppen"
+											field-name="visibleGroups"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="users"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.CreateReportCommand"
+							command-label="Anlegen"
+							command-name="newStoredConfigChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.NewStoredConfigChartReportComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="test publishing by loading the report with another user"
+					user-id="User_TestPersistentReportSecurity_2"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anzeigen"
+							business-object="Sicht"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Suche"
+									/>
+								</parameter>
+								<parameter name="Tester">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="User_TestPersistentReportSecurity_2"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+								tab-path="Suche"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Fachobjekt"
+											field-name="metaElement"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Demo A"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Druecken"
+							business-object="Knopf"
+						>
+							<parameters>
+								<parameter name="Name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Suchen"
+									/>
+								</parameter>
+								<parameter name="Tester">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="User_TestPersistentReportSecurity_2"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anzeigen"
+							business-object="Sicht"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Auswertungen"
+									/>
+								</parameter>
+								<parameter name="Tester">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="User_TestPersistentReportSecurity_2"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Auswertung"
+											field-name="reportSelection"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="TestPersistentReportSecurity SavePublish"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="true"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="&quot;Nicht gesetzt&quot;"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+										tab-path="Auswertungen"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="false"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="tear down"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.DeleteReportCommand"
+							command-label="Löschen..."
+							command-name="deleteStoredConfigChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultStoredReportSelector"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer abmelden.xml"
+					template-name-comment="Nutzer abmelden"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Change and save report"
+			user-id="User_TestPersistentReportSecurity_1"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Suche"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+						tab-path="Suche"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Fachobjekt"
+									field-name="metaElement"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="Demo A"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Suchen"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Auswertungen"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="save report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart-builder"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="view"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Diagrammtyp"
+											field-name="chartType"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Kuchen"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="model-preparation"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Einteilungen"
+											field-name="partitions"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="add"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="boolean"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.chart.component.ChartConfigComponent$ApplySettings"
+							command-label="Aktualisieren"
+							command-name="apply"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Speichern unter..."
+							command-name="displayDialog_Searchreporting_flex_search_searchResultChart_SaveDialog"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Name"
+											field-name="name"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="TestPersistentReportSecurity Change"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.CreateReportCommand"
+							command-label="Anlegen"
+							command-name="newStoredConfigChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.NewStoredConfigChartReportComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="change and save report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-name="model-preparation"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Einteilungen"
+											field-name="partitions"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-name="content"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+											<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+												int="0"
+											/>
+										</field>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Einteilung nach Wahrheitswert &quot;boolean&quot;"
+											field-name="item"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="&quot;Nicht gesetzt&quot;"
+											field-name="add-empty"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="true"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.SaveReportCommand"
+							command-label="Speichern"
+							command-name="writeSearchChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultStoredReportSelector"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="test loading a report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Auswertung"
+											field-name="reportSelection"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list/>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Auswertung"
+											field-name="reportSelection"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="TestPersistentReportSecurity Change"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="true"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="&quot;Nicht gesetzt&quot;"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+										tab-path="Auswertungen"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="true"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="tear down"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.DeleteReportCommand"
+							command-label="Löschen..."
+							command-name="deleteStoredConfigChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultStoredReportSelector"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer abmelden.xml"
+					template-name-comment="Nutzer abmelden"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Publish report afterwards"
+			user-id="User_TestPersistentReportSecurity_1"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Suche"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+						tab-path="Suche"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Fachobjekt"
+									field-name="metaElement"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="Demo A"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Suchen"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Auswertungen"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="save report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart-builder"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="view"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Diagrammtyp"
+											field-name="chartType"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Kuchen"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="model-preparation"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Einteilungen"
+											field-name="partitions"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="add"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="boolean"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.chart.component.ChartConfigComponent$ApplySettings"
+							command-label="Aktualisieren"
+							command-name="apply"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Speichern unter..."
+							command-name="displayDialog_Searchreporting_flex_search_searchResultChart_SaveDialog"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Name"
+											field-name="name"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="TestPersistentReportSecurity Publish"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.CreateReportCommand"
+							command-label="Anlegen"
+							command-name="newStoredConfigChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.NewStoredConfigChartReportComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="publish report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-name="publishGroup"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Veröffentlicht"
+											field-name="publishQuery"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="true"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-name="publishGroup"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Gruppen"
+											field-name="visibleGroups"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="users"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.SaveReportCommand"
+							command-label="Speichern"
+							command-name="writeSearchChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultStoredReportSelector"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="test publishing by loading the report with another user"
+					user-id="User_TestPersistentReportSecurity_2"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anzeigen"
+							business-object="Sicht"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Suche"
+									/>
+								</parameter>
+								<parameter name="Tester">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="User_TestPersistentReportSecurity_2"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+								tab-path="Suche"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Fachobjekt"
+											field-name="metaElement"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Demo A"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Druecken"
+							business-object="Knopf"
+						>
+							<parameters>
+								<parameter name="Name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Suchen"
+									/>
+								</parameter>
+								<parameter name="Tester">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="User_TestPersistentReportSecurity_2"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anzeigen"
+							business-object="Sicht"
+						>
+							<parameters>
+								<parameter name="Pfad">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Auswertungen"
+									/>
+								</parameter>
+								<parameter name="Tester">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="User_TestPersistentReportSecurity_2"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Auswertung"
+											field-name="reportSelection"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="TestPersistentReportSecurity Publish"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="true"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="&quot;Nicht gesetzt&quot;"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+										tab-path="Auswertungen"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="false"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="tear down"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.DeleteReportCommand"
+							command-label="Löschen..."
+							command-name="deleteStoredConfigChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultStoredReportSelector"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer abmelden.xml"
+					template-name-comment="Nutzer abmelden"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Unpublish report"
+			user-id="User_TestPersistentReportSecurity_1"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Suche"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+						tab-path="Suche"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Fachobjekt"
+									field-name="metaElement"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="Demo A"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Suchen"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Auswertungen"
+							/>
+						</parameter>
+						<parameter name="Tester">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="save report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart-builder"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="view"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Diagrammtyp"
+											field-name="chartType"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="Kuchen"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="chart"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="model-preparation"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Einteilungen"
+											field-name="partitions"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment=""
+											field-name="add"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="boolean"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.chart.component.ChartConfigComponent$ApplySettings"
+							command-label="Aktualisieren"
+							command-name="apply"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Speichern unter..."
+							command-name="displayDialog_Searchreporting_flex_search_searchResultChart_SaveDialog"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Name"
+											field-name="name"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="TestPersistentReportSecurity Unpublish"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Details für die Veröffentlichung"
+											field-name="publishGroup"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Veröffentlichen"
+											field-name="publishQuery"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="true"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+								tab-path=""
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Details für die Veröffentlichung"
+											field-name="publishGroup"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Gruppen"
+											field-name="visibleGroups"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+										<list>
+											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+												label="users"
+											/>
+										</list>
+									</value>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.CreateReportCommand"
+							command-label="Anlegen"
+							command-name="newStoredConfigChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.NewStoredConfigChartReportComponent"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_CreateReport"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="unpublish report"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+								tab-path="Auswertungen"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-name="publishGroup"
+										/>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+											field-label-comment="Veröffentlicht"
+											field-name="publishQuery"
+										/>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+										boolean="false"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.SaveReportCommand"
+							command-label="Speichern"
+							command-name="writeSearchChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultStoredReportSelector"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="tear down"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.reporting.flex.search.handler.DeleteReportCommand"
+							command-label="Löschen..."
+							command-name="deleteStoredConfigChartReport"
+							component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultStoredReportSelector"
+							component-name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_QuerySelector"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer abmelden.xml"
+					template-name-comment="Nutzer abmelden"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Revert role profiles"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Administration > Berechtigungen"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+						tab-path="Administration > Berechtigungen"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Berechtigungsstruktur"
+									field-name="structure"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="Zentrale Berechtigungen"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Administration > Berechtigungen > Rollenprofile"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+					columns="Rechte,OwnerRole"
+					label="true"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+							tab-path="Administration > Berechtigungen > Rollenprofile"
+						/>
+						<path>
+							<named-member name="tree"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Bearbeiten"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Rollenprofile aufklappen"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Häkchen setzen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Suche (Lesen)"
+										/>
+									</object>
+									<named-member name="OwnerRole"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Suche (Lesen)"
+										/>
+									</object>
+									<named-member name="OwnerRole"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Suche (Anlegen)"
+										/>
+									</object>
+									<named-member name="OwnerRole"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Suche (Suche veröffentlichen)"
+										/>
+									</object>
+									<named-member name="OwnerRole"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Suche (Anfragen ändern)"
+										/>
+									</object>
+									<named-member name="OwnerRole"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Suchergebnis (Lesen)"
+										/>
+									</object>
+									<named-member name="OwnerRole"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Auswertungen (Lesen)"
+										/>
+									</object>
+									<named-member name="OwnerRole"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Auswertungen (Anlegen)"
+										/>
+									</object>
+									<named-member name="OwnerRole"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Auswertungen (Suche veröffentlichen)"
+										/>
+									</object>
+									<named-member name="OwnerRole"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									tab-path="Administration > Berechtigungen > Rollenprofile"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Auswertungen (Anfragen ändern)"
+										/>
+									</object>
+									<named-member name="OwnerRole"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Druecken"
+							business-object="Knopf"
+						>
+							<parameters>
+								<parameter name="Name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Speichern"
+									/>
+								</parameter>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Delete user"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.DelGlobalVariableOp"
+					name="publisher"
+				/>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Rolle/Action-Rolle-Loeschen.xml"
+					template-name-comment="Rolle Loeschen"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="Zentrale Berechtigungen"
+							/>
+						</parameter>
+						<parameter name="Name">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="publisher"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Nutzer"
+				>
+					<parameters>
+						<parameter name="kontext">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_1"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Nutzer"
+				>
+					<parameters>
+						<parameter name="kontext">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="User_TestPersistentReportSecurity_2"
+							/>
+						</parameter>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

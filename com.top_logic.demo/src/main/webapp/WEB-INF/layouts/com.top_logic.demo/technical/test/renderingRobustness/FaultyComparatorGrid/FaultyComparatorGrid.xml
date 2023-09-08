@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="nameSuffix"
+			value="FaultyComparatorGrid"
+		/>
+		<param name="resPrefix"
+			value="demo.test.FaultyComparatorGrid"
+		/>
+		<param name="showMarkerFields"
+			value="true"
+		/>
+		<param name="showDetailOpener"
+			value="true"
+		/>
+		<param name="selectionModelFactory">
+			<selectionModelFactory class="com.top_logic.element.layout.grid.GridComponent$DefaultMultiSelectionModelFactory"/>
+		</param>
+		<param name="defaultColumns"
+			value="name,date,float,long,string,structure"
+		/>
+		<param name="dialogs">
+			<!-- No dialogs by default. -->
+		</param>
+	</params>
+
+	<layout horizontal="true">
+		<components>
+			<!-- Note: The following component is a test case for correct technical column width without row markers, see Ticket #20756. -->
+			<grid name="tableGrid${nameSuffix}"
+				elementTypes="Root,A,B,BNotUnderA,C,L"
+				ignoreWarnings="true"
+				isSecurityMaster="true"
+				page=""
+				resPrefix="${resPrefix}"
+				selectionModelFactory="${selectionModelFactory}"
+				showClipboardCommands="false"
+				showDetailOpener="${showDetailOpener}"
+				showMarkerFields="${showMarkerFields}"
+				structureName="DemoTypes"
+			>
+				<buttons>
+					<button id="exportExcelGrid"
+						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+						exportNameKey="/sTypes_Demo.xlsx"
+					/>
+				</buttons>
+				<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"
+					meta-elements="DemoTypes:DemoTypes.Root, DemoTypes:DemoTypes.All"
+				/>
+				<modifier class="com.top_logic.demo.edit.DemoFormContextModificator"/>
+				<componentControlProvider class="com.top_logic.layout.structure.TableWithSidebar"/>
+				<tables>
+					<table
+						defaultColumns="${defaultColumns}"
+						defaultSortOrder="name"
+						fixedColumns="2"
+					>
+						<column-default
+							accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+							columnWidth="200px"
+						/>
+						<columns>
+							<column name="name"
+								comparator="com.top_logic.demo.layout.form.demo.FaultyComparator"
+							/>
+							<column name="primitiveAttributes"
+								columnLabelKey="demo.demoTypes.primitiveAttributes"
+							>
+								<columns>
+									<column name="numericAttributes"
+										columnLabelKey="demo.demoTypes.numericAttributes"
+									>
+										<columns>
+											<column name="float"
+												columnWidth="80px"
+												cssClass="tblRight"
+												excelRenderer="com.top_logic.demo.layout.demo.table.DemoColoredCellRenderer"
+											/>
+											<column name="long"
+												columnWidth="80px"
+												cssClass="tblRight"
+											/>
+										</columns>
+									</column>
+
+									<column name="booleanAttributes"
+										columnLabelKey="demo.demoTypes.booleanAttributes"
+									>
+										<columns>
+											<column name="boolean"/>
+											<column name="booleanMandatory"/>
+										</columns>
+									</column>
+
+									<column name="string"/>
+									<!-- Accessor is redeclared here as test for #20084. -->
+									<column name="date"
+										accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+									/>
+								</columns>
+							</column>
+						</columns>
+					</table>
+				</tables>
+				<dialogs>${dialogs}</dialogs>
+			</grid>
+		</components>
+	</layout>
+</template>

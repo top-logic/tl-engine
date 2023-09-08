@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.05691cfc-87cd-4e71-bf16-f6fdab8c03fd">
+				<en>New library element</en>
+				<de>Neues Bibliothekselement</de>
+			</title>
+		</title>
+		<open-handler id="ID_2a1db2b5_c1a7_4792_bead_9d278b0b84cc"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			targetComponent="com.top_logic.demo/technical/components/dragAndDrop/newLibraryElement/newLibraryElementDialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.05691cfc-87cd-4e71-bf16-f6fdab8c03fd">
+				<en>New library element</en>
+				<de>Neues Bibliothekselement</de>
+			</resourceKey>
+			<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+				input="selection(self())"
+			>
+				<function><![CDATA[model -> if ($model.size() <= 1,  $model.singleElement(), null)]]></function>
+			</target>
+		</open-handler>
+		<initialization><![CDATA[obj -> context -> {
+if($obj.type() == `test.dnd:Machine` && $context.type() == `test.dnd:Location`, $obj.set(`test.dnd:Machine#location`, $context), null);
+}]]></initialization>
+		<typeOptions class="com.top_logic.model.search.providers.CreateTypeOptionsByExpression"
+			include-subtypes="true"
+		>
+			<possible-types><![CDATA[context -> switch {
+  $context.instanceOf(`test.dnd:Library`): `test.dnd:NamedPlanElement`;
+  $context.instanceOf(`test.dnd:Factory`): `test.dnd:Floor`;
+  $context.instanceOf(`test.dnd:Floor`): `test.dnd:Location`;
+  $context.instanceOf(`test.dnd:Location`): list(`test.dnd:Entry`, `test.dnd:Machine`);
+}]]></possible-types>
+		</typeOptions>
+		<create-handler id="ID_eb57a001_e8e7_415f_9416_311ce9a13ef5">
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/dragAndDrop/templateLibraryGrid.layout.xml#Grid)"/>
+			</postCreateActions>
+			<linkOperation><![CDATA[context -> obj -> {
+  context = $context == null ? `test.dnd#LIBRARY` : $context;
+  switch ($context.type()) {
+    `test.dnd:Library`: $context.add(`test.dnd:Library#elements`, $obj);
+    `test.dnd:Factory`: $context.add(`test.dnd:Factory#floors`, $obj);
+    `test.dnd:Floor`: $context.add(`test.dnd:Floor#locations`, $obj);
+    `test.dnd:Location`: {
+      switch($obj.type()) {
+        `test.dnd:Machine`: $obj.set(`test.dnd:Machine#location`, $context);
+        `test.dnd:Entry`: $context.set(`test.dnd:Location#entry`, $obj);
+      }
+    };
+  }
+}]]></linkOperation>
+		</create-handler>
+	</arguments>
+</config:template-call>

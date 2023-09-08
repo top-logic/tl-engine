@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	SPDX-FileCopyrightText: 2004 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="modelBuilder">
+			<modelBuilder class="com.top_logic.knowledge.gui.layout.list.ClassificationTableModelBuilder"
+				type=""
+			/>
+		</param>
+		<param name="createType"
+			value=""
+		/>
+		<param name="master"
+			value=""
+		/>
+		<param name="fixedColumns"
+			value="0"
+		/>
+		<param name="tableWidth"
+			value="413"
+		/>
+		<param name="columns"
+			value="name,classificationType"
+		/>
+		<param name="defaultSortOrder"
+			value="name"
+		/>
+		<param name="nameSize"
+			value="280"
+		/>
+		<param name="typeSize"
+			value="90"
+		/>
+		<param name="resPrefix"
+			value="main.admin.list"
+		/>
+		<param name="allowRemovingElementsInUse"
+			value="true"
+		/>
+	</params>
+
+	<layout name="${namePrefix}listAdminView"
+		horizontal="true"
+		resPrefix="${resPrefix}."
+	>
+		<components>
+			<tableView name="${namePrefix}editListTable"
+				model="selection(${master})"
+				modelBuilder="${modelBuilder}"
+				objectType="tl.model:TLEnumeration"
+				resPrefix="${resPrefix}.table."
+				securityProviderClass="securityRoot"
+			>
+				<layoutInfo size="${tableWidth}"/>
+				<table
+					defaultColumns="${columns}"
+					defaultSortOrder="${defaultSortOrder}"
+					fixedColumns="${fixedColumns}"
+				>
+					<column-default
+						accessor="com.top_logic.knowledge.wrap.list.FastListAccessor"
+						filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+					/>
+					<columns>
+						<column name="name"
+							accessor="com.top_logic.layout.IdentityAccessor"
+							columnWidth="${nameSize}px"
+							sortKeyProvider="com.top_logic.layout.LabelMapping"
+						/>
+						<column name="classificationType"
+							columnWidth="${typeSize}px"
+						>
+							<resourceProvider class="com.top_logic.mig.html.I18NResourceProvider"
+								resPrefix="main.admin.list.table.select."
+							/>
+						</column>
+					</columns>
+				</table>
+			</tableView>
+			<layout>
+				<components>
+					<component class="com.top_logic.layout.admin.component.EditListComponent"
+						allowRemovingElementsInUse="${allowRemovingElementsInUse}"
+						buttonComponent="${namePrefix}editListComponentButtons"
+						model="selection(${namePrefix}editListTable)"
+						name="${namePrefix}editListComponent"
+						page="/jsp/layout/admin/list/EditListComponent.jsp"
+						resPrefix="main.admin.list.edit."
+						securityProviderClass="securityRoot"
+					>
+						<tables>
+							<table name="field_tablelist">
+								<column-default filterProvider=""/>
+							</table>
+						</tables>
+						<dialogs>
+							<layout name="${namePrefix}newListDialog">
+								<dialogInfo
+									defaultI18n="${resPrefix}.edit.displayDialog_newListDialog"
+									executability="InViewMode"
+									height="315"
+									openerClique="create"
+									openerCommandGroup="Create"
+									width="480"
+								/>
+
+								<components>
+									<component class="com.top_logic.layout.admin.component.EditListComponent$NewListComponent"
+										buttonComponent="${namePrefix}newListComponentButtons"
+										listtype="${createType}"
+										model="selection(${master})"
+										name="${namePrefix}newListComponent"
+										page="/jsp/layout/admin/list/NewListComponent.jsp"
+										resPrefix="${resPrefix}.edit.new."
+										securityProviderClass="securityRoot"
+									/>
+									<buttonbar name="${namePrefix}newListComponentButtons"/>
+								</components>
+							</layout>
+						</dialogs>
+					</component>
+					<buttonbar name="${namePrefix}editListComponentButtons"/>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

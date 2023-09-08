@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<t:type name="Example_Type_Singleton">
+				<t:attributes>
+					<t:attribute name="Example_Attribute" type="string"/>
+				</t:attributes>
+			</t:type>
+			
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Example_Structure_Singleton" type="Example_Type_Singleton" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:value expr="$Example_Structure_Singleton.Example_Attribute" />
+		
+	</t:body>
+</t:template>

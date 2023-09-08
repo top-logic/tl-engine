@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Demo Dialog for testing auto-resize to show all contents. -->
+<layout name="dialogInline1">
+	<components>
+		<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+			buttonComponent="dialogInline1Buttons"
+			name="infoDialogInline1"
+			page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
+			resPrefix="layouts.layoutdemo.dialog.dialogInline1.infoDialogInline1."
+			securityProviderClass="securityRoot"
+		>
+			<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"/>
+		</component>
+		<buttonbar name="dialogInline1Buttons"/>
+	</components>
+</layout>

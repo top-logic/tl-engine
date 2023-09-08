@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="testCanNotOverride">
+			<class name="X">
+				<attributes>
+					<reference name="reference"
+						type="X"
+					>
+						<annotations>
+							<annotation config:interface="test.com.top_logic.element.model.annotate.util.TestTLAnnotations$PreventOverrideAnnotation"/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+			<class name="XOverride">
+				<attributes>
+					<reference name="reference"
+						override="true"
+						type="X"
+					>
+						<annotations>
+							<!-- Illegal Override -->
+							<annotation config:interface="test.com.top_logic.element.model.annotate.util.TestTLAnnotations$PreventOverrideAnnotation"/>
+						</annotations>
+					</reference>
+				</attributes>
+				<generalizations>
+					<generalization type="X"/>
+				</generalizations>
+			</class>
+		</module>
+	</modules>
+</model>

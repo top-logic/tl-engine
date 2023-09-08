@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminLoginMessagesEditView"
+	helpIDLegacy="LoginMessage.table.tabber"
+	titleKey="LoginMessage.table.tabber"
+>
+	<tabInfo label="LoginMessage.table.tabber"/>
+	<components>
+		<include name="admin/loginMessages/loginMessagesTable.xml"/>
+	</components>
+</securityLayout>

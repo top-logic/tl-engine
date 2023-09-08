@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminRolesAdminView"
+	helpIDLegacy="main.admin.roles.admin.tabber"
+	titleKey="main.admin.roles.admin.tabber"
+>
+	<tabInfo label="main.admin.roles.admin.tabber"/>
+	<components>
+		<include name="com.top_logic.element/admin/security/roleEditor/editScopedRoles.xml"/>
+	</components>
+</securityLayout>

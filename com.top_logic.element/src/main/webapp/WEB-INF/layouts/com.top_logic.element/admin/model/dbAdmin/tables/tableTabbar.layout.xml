@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tabbar.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.element/admin/model/dbAdmin/tables/tableTab.layout.xml"/>
+			<layout-reference resource="com.top_logic.element/admin/model/dbAdmin/columns/columnsTab.layout.xml"/>
+			<layout-reference resource="com.top_logic.element/admin/model/dbAdmin/usage/usageTab.layout.xml"/>
+			<layout-reference resource="com.top_logic.element/admin/model/dbAdmin/binding/bindingTab.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

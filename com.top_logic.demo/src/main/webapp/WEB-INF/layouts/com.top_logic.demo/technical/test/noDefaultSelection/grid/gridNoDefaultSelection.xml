@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="element/grid.xml"
+	columns="name"
+	createButton=""
+	createType=""
+	defaultSelection="false"
+	model="selection(com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesVersionSelector)"
+	namePrefix="noDefaultSelection"
+	types="DemoTypes:DemoTypes.All"
+>
+	<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
+
+	<table>
+		<table
+			defaultColumns="name"
+			fixedColumns="2"
+		/>
+	</table>
+
+	<buttons>
+		<reference command-id="clearSelection"/>
+	</buttons>
+</include>

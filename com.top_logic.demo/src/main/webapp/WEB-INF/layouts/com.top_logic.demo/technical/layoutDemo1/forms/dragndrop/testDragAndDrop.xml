@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="testDragAndDrop"
+		/>
+		<param name="resPrefix"
+			value="layouts.layoutdemo.dnd"
+		/>
+	</params>
+
+	<layout name="${namePrefix}Layout"
+		horizontal="true"
+	>
+		<layout name="${namePrefix}LayoutTree">
+			<layoutInfo size="300"/>
+
+			<treeView name="${namePrefix}OrderedTree"
+				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTreeModelBuilder"
+				titleKey="${resPrefix}.orderedTree.title"
+				treeDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTreeDrop"
+			/>
+
+			<treeView name="${namePrefix}DefaultTree"
+				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTreeModelBuilder"
+				titleKey="${resPrefix}.defaultTree.title"
+				treeDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoSimpleTreeDrop"
+			/>
+		</layout>
+
+		<layout name="${namePrefix}LayoutForm">
+			<form name="${namePrefix}Form"
+				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndFormBuilder"
+				resPrefix="${resPrefix}.form"
+			/>
+
+			<layout name="${namePrefix}LayoutTreeTable"
+				horizontal="true"
+			>
+				<treeView name="${namePrefix}GlobalTree"
+					dragSource="com.top_logic.layout.tree.dnd.NoTreeDrag"
+					dropTarget="com.top_logic.demo.layout.demo.dnd.handlers.DemoComponentDrop"
+					modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTreeModelBuilder"
+					titleKey="${resPrefix}.globalTree.title"
+				/>
+				<tableView name="${namePrefix}TableGlobal"
+					dropTarget="com.top_logic.demo.layout.demo.dnd.handlers.DemoComponentDrop"
+					modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTableBuilder"
+					titleKey="${resPrefix}.globalTable.title"
+				>
+					<table>
+						<columns>
+							<column name="name"
+								accessor="com.top_logic.layout.IdentityAccessor"
+								columnLabelKey="${resPrefix}.table.nameColumn"
+							/>
+						</columns>
+					</table>
+				</tableView>
+
+				<tableView name="${namePrefix}TableFixedGlobal"
+					dropTarget="com.top_logic.demo.layout.demo.dnd.handlers.DemoComponentDrop"
+					modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTableBuilder"
+					titleKey="${resPrefix}.globalFixedTable.title"
+				>
+					<table fixedColumns="0">
+						<columns>
+							<column name="name"
+								accessor="com.top_logic.layout.IdentityAccessor"
+								columnLabelKey="${resPrefix}.table.nameColumn"
+								columnWidth="250px"
+							/>
+						</columns>
+					</table>
+				</tableView>
+
+				<component class="com.top_logic.mig.html.layout.SimpleComponent"
+					content="Generic component"
+					dropTarget="com.top_logic.demo.layout.demo.dnd.handlers.DemoComponentDrop"
+					name="genericDrop"
+					titleKey="${resPrefix}.genericDrop.title"
+				/>
+			</layout>
+		</layout>
+
+		<layout name="${namePrefix}LayoutVerticalTable">
+			<layoutInfo size="300"/>
+
+			<tableView name="${namePrefix}TableDefault"
+				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTableBuilder"
+				titleKey="${resPrefix}.defaultTable.title"
+			>
+				<table
+					dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
+					tableDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTableDrop"
+				>
+					<columns>
+						<column name="name"
+							accessor="com.top_logic.layout.IdentityAccessor"
+							columnLabelKey="${resPrefix}.table.nameColumn"
+						/>
+					</columns>
+				</table>
+			</tableView>
+
+			<tableView name="${namePrefix}TableDefaultRow"
+				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTableBuilder"
+				titleKey="${resPrefix}.defaultRowTable.title"
+			>
+				<table
+					dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
+					tableDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoRowTableDrop"
+				>
+					<columns>
+						<column name="name"
+							accessor="com.top_logic.layout.IdentityAccessor"
+							columnLabelKey="${resPrefix}.table.nameColumn"
+						/>
+					</columns>
+				</table>
+			</tableView>
+
+			<tableView name="${namePrefix}TableFixed"
+				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTableBuilder"
+				titleKey="${resPrefix}.fixedTable.title"
+			>
+				<table
+					dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
+					fixedColumns="0"
+					tableDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoOrderedTableDrop"
+				>
+					<columns>
+						<column name="name"
+							accessor="com.top_logic.layout.IdentityAccessor"
+							columnLabelKey="${resPrefix}.table.nameColumn"
+							columnWidth="250px"
+						/>
+					</columns>
+				</table>
+			</tableView>
+
+			<tableView name="${namePrefix}TableFixedRow"
+				modelBuilder="com.top_logic.demo.layout.demo.dnd.DemoDndTableBuilder"
+				titleKey="${resPrefix}.fixedRowTable.title"
+			>
+				<table
+					dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
+					fixedColumns="0"
+					tableDrop="com.top_logic.demo.layout.demo.dnd.handlers.DemoRowTableDrop"
+				>
+					<columns>
+						<column name="name"
+							accessor="com.top_logic.layout.IdentityAccessor"
+							columnLabelKey="${resPrefix}.table.nameColumn"
+							columnWidth="250px"
+						/>
+					</columns>
+				</table>
+			</tableView>
+		</layout>
+	</layout>
+</template>

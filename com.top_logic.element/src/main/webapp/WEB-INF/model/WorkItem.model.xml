@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="WorkItem">
+			<types>
+				<interface name="WorkItem.WorkItem">
+					<annotations>
+						<instance-presentation icon="theme:MIMETYPES_WORK_ITEM"/>
+						<legacy-qualified-name qualified-name="WorkItem.WorkItem"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						>
+							<annotations>
+								<multi-line value="false"/>
+								<size-constraint upper-bound="1024"/>
+								<sort-order value="100.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<reference name="subject"
+							kind="forwards"
+							type="tl.model:TLObject"
+						>
+							<annotations>
+								<sort-order value="33.0"/>
+								<delete-protected/>
+							</annotations>
+						</reference>
+						<property name="state"
+							type="tl.core:String"
+						>
+							<annotations>
+								<sort-order value="200.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="type"
+							type="tl.core:String"
+						>
+							<annotations>
+								<sort-order value="300.0"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<reference name="assignees"
+							kind="forwards"
+							multiple="true"
+							type="tl.accounts:Person"
+						>
+							<annotations>
+								<sort-order value="3.0"/>
+								<delete-protected/>
+							</annotations>
+						</reference>
+						<reference name="responsible"
+							kind="forwards"
+							type="tl.accounts:Person"
+						>
+							<annotations>
+								<sort-order value="250.0"/>
+								<delete-protected/>
+							</annotations>
+						</reference>
+					</attributes>
+				</interface>
+				<class name="WorkItem">
+					<annotations>
+						<table name="WorkItem"/>
+						<implementation-binding class-name="com.top_logic.element.workItem.wrap.PersistentWrapperWorkItem"/>
+					</annotations>
+					<generalizations>
+						<generalization type="WorkItem.WorkItem"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

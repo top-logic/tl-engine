@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+		 			  
+<html>
+
+<!-- Test how the LoginPage will reopen itself to
+     the top-Frame -->
+
+  <head>
+    <title>Login Test</title>
+    <script language="JavaScript" type="text/javascript"> <!--
+	    window.open ("../../main/LoginPage.jsp");
+    --> </script>
+  </head>
+  <frameset id="horFrame" rows="*,*">
+    <frameset id="vertFrame1" cols="*,*">
+        <frame src="../../main/LoginPage.jsp" name="name1" />
+        <frame src="../../main/LoginPage.jsp" name="name2" />
+      </frameset>
+    <frameset id="vertFrame2" cols="*,*">
+        <frame src="../../main/LoginPage.jsp" name="name3" />
+        <frame src="../../main/LoginPage.jsp" name="name4" />
+    </frameset>
+  </frameset>
+</html>

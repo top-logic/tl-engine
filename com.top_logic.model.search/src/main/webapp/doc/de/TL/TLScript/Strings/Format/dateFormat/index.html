@@ -1,0 +1,47 @@
+<h2>Syntax</h2> 
+<pre>	<code>dateFormat($pattern)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Konstruiert ein Datumsformat mit dem angegebenen Muster für entweder <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe.</p> 
+<p>Siehe <a href="https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html">SimpleDateFormat</a>.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>pattern</td> 
+   <td>Zeichenkette</td> 
+   <td> <p>Das Pattern in dem formatiert werden soll. Folgende Zeichen sind möglich:</p> 
+    <ul> 
+     <li>y – Jahr</li> 
+     <li>M - Monat im Jahr</li> 
+     <li>d - Tag im Monat</li> 
+     <li>für weitere Symbole siehe <a href="https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html">SimpleDateFormat</a>.</li> 
+    </ul> </td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<p> </p> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
+<p>Ein Datumsformat, das nun für <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe verwendet werden kann.</p> 
+<h2>Beispiele</h2> 
+<h3>Format</h3> 
+<pre>	<code>dateFormat("dd-MM-yy").format(date(2012, 11, 5))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 05-12-2012</p> 
+<h3>Parse</h3> 
+<pre>	<code>dateFormat("dd-MM-yy").parse("04-12-12")</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 04.12.2012</p> 
+<p> </p>

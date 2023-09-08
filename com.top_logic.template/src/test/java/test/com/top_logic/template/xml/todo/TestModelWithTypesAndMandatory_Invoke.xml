@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+	</t:head>
+	<t:body>
+		<t:invocation file="TestModelWithTypesAndMandatory.xml">
+			
+			<!-- Set the structure to the empty value, as it's not mandatory. -->
+			<t:parameter name="Example_Structure_Not_Mandatory" value="" />
+			
+		</t:invocation>
+	</t:body>
+</t:template>

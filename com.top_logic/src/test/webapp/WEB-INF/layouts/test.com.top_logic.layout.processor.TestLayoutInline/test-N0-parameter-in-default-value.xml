@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<r>
+	<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-N1-template.xml" p0="p"/>
+	<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-N1-template.xml" p0="p" value="x1" />
+	<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-N1-template.xml" p0="p">
+		<values-with-default>
+			<value name="#{value}"/>
+			<value name="y2"/>
+		</values-with-default>
+	</include>
+</r>

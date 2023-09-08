@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="cockpit/chartCockpitTable.xml"
+	model="selection(DemoTypesVersionSelector)"
+	namePrefix="DemoChartCockpit"
+	type="DemoTypes:DemoTypes.All"
+>
+	<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
+</include>

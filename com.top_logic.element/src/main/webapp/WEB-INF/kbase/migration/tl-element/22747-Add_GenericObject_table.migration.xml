@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration schema-update="true">
+	<version name="22747-Add_GenericObject_table"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="migration_21612"
+			module="tl"
+		/>
+	</dependencies>
+	<migration>
+		<type-mapping/>
+		
+		<!-- TODO #22747: Add table-type for new table. -->
+
+	</migration>
+</migration>

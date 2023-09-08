@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Main configuration file -->
+<root>
+	<alias />
+
+	<properties>
+
+		<section name="ConfiguredAttributedTooltips">
+			<entry name="me:tl.bpe.execution:Token" value="processExecution,startDate,durationInMinutes" />
+		</section>
+		
+	</properties>
+</root>

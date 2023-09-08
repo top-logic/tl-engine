@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tabbar.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/reports/details/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/reports/export/tabLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

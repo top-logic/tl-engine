@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="demo.form.tabber"
+		z_legacy_componentName="formDemo"
+		z_legacy_tabBarName="formDemo_tabBar"
+		z_legacy_tabLabel="demo.form.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/dragndrop/testDragAndDrop.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/dragndrop/inapp/inAppDragAndDrop.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/layoutProblems/testLayoutProblemsContainer.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/error/demoError.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/errorOnJSP/demoErrorJSP.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/errorInComponent/demoErrorComponent.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/frame/demoOrderFormContainer.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/declarative/declarativeFormComponentDemo.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/declarative/declarativeFormConfiguredType.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/demoTablePopupSelectCustomization/demoTablePopupSelectCustomization.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

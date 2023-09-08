@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor=""
+		model="selection(com.top_logic.demo/technical/components/componentVisibility/demoTypesTree.layout.xml#Tree)"
+		saveClosesDialog="true"
+		showNoModel="true"
+		type=""
+	>
+		<name key="dynamic.373a1e41-a5fb-45d9-a0f2-82db08f642b3">
+			<en>Basic information</en>
+			<de>Basisinformationen</de>
+		</name>
+		<forms/>
+	</arguments>
+</config:template-call>

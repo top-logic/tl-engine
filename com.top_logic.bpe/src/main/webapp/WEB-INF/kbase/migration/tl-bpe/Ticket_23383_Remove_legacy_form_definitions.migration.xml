@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration>
+	<version name="Ticket_23383_Remove_legacy_form_definitions"
+		module="tl-bpe"
+	/>
+	<dependencies>
+		<dependency name="migration_23393"
+			module="tl"
+		/>
+	</dependencies>
+	<migration>
+		<type-mapping/>
+		<steps>
+			<step name="Drop legacy form definitions">
+				<rewriter class="com.top_logic.knowledge.service.db2.migration.rewriters.AttributeRewriter"
+					types="BPNode, Task"
+				>
+					<algorithm class="com.top_logic.knowledge.service.db2.migration.rewriters.XsltValueTransform"
+						attribute="displayDescription"
+						transform="/WEB-INF/kbase/migration/tl-bpe/Ticket_23383_Remove_legacy_form_definitions.migration.xsl"
+					>
+					</algorithm>
+				</rewriter>
+				<rewriter class="com.top_logic.knowledge.service.db2.migration.rewriters.AttributeRewriter"
+					types="BPNode"
+				>
+					<algorithm class="com.top_logic.knowledge.service.db2.migration.rewriters.XsltValueTransform"
+						attribute="exportDescription"
+						transform="/WEB-INF/kbase/migration/tl-bpe/Ticket_23383_Remove_legacy_form_definitions.migration.xsl"
+					>
+					</algorithm>
+				</rewriter>
+			</step>
+		</steps>		
+	</migration>
+</migration>

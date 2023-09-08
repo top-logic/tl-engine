@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<fallback-test xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<a-list-configs>
+		<aConfig config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A"
+			intValue="-2" stringValue="two"></aConfig>
+		<aConfig stringValue="five" intValue="-2"
+			config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A" />
+		<aConfig stringValue="six" intValue="-2"
+			config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A" />
+		<aConfig config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A"
+			intValue="-2" stringValue="one"></aConfig>
+		<aConfig config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A"
+			stringValue="three" intValue="-1"></aConfig>
+		<aConfig config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$B"
+			intValue="15" stringValue="four" />
+	</a-list-configs>
+</fallback-test>

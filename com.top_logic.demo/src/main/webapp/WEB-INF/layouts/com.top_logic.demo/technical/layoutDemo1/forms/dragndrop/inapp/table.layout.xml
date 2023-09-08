@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		isSecurityMaster="false"
+		type="DemoTypes:DemoTypes.All"
+	>
+		<name key="dynamic.0a83aa57-a7dd-4d6c-8df8-f25a4315ebaa">
+			<de>Table</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`DemoTypes:DemoTypes.All`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
+			supportsModel="true"
+		/>
+		<dragSource class="com.top_logic.model.search.providers.TableDragSourceByExpression"
+			canDrag="source -> if($source!= `DemoTypes#ROOT`,$source.get(`DemoTypes:DemoTypes.All#name`).stringContains('1'), true)"
+		/>
+		<tableDrop class="com.top_logic.model.search.providers.TableDropTargetByExpression"
+			canDrop="draggedObjects->referenceRow->{canDrop=source -> target -> $target.get(`DemoTypes:DemoTypes.All#name`).stringStartsWith('C');$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}"
+			dropType="ORDERED"
+		>
+			<handleDrop><![CDATA[draggedObjects->referenceRow->{handleDrop=source -> target -> {
+  info($source + " -> " + $target);
+  oldParent = $source.get(`DemoTypes:DemoTypes.All#parent`);
+  oldSiblings = $oldParent.get(`tl.element:StructuredElementContainer#children`).filter(element -> $element != $source);
+  $oldParent.set(`tl.element:StructuredElementContainer#children`, $oldSiblings);
+  newSiblings = concat($target.get(`tl.element:StructuredElementContainer#children`), $source);
+  $target.set(`tl.element:StructuredElementContainer#children`, $newSiblings);
+};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}
+]]></handleDrop>
+		</tableDrop>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

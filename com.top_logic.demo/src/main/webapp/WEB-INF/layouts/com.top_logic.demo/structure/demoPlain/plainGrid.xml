@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Grid displaying the plain demo types. -->
+<template>
+	<params>
+		<!-- "structure" is needed by contentStructure.xml -->
+		<param name="structure"/>
+	</params>
+
+	<include name="element/grid.xml"
+		columns="name,string,long"
+		namePrefix="plain"
+		types="DemoPlain:DemoPlain.All"
+	>
+		<buttons>
+			<button id="createPlainA"
+				class="com.top_logic.element.layout.grid.GridCreateHandler"
+				image="theme:DEMO_NEW_AP"
+				type="DemoPlain:A"
+			/>
+			<button id="createPlainB"
+				class="com.top_logic.element.layout.grid.GridCreateHandler"
+				image="theme:DEMO_NEW_BP"
+				type="DemoPlain:B"
+			/>
+		</buttons>
+		<modelBuilder class="com.top_logic.element.layout.table.WrapperListModelBuilder"
+			types="DemoPlain:DemoPlain.All"
+		/>
+		<dialogs>
+			<include name="element/createAttributed.xml"
+				namePrefix="createPlainC"
+				newModelAction="set-parent-selection"
+				openerImage="theme:DEMO_NEW_CP"
+				resPrefix="layouts.demo.plain.createPlainC"
+				securityDomain="${structure}"
+				type="DemoPlain:C"
+			/>
+		</dialogs>
+	</include>
+</template>

@@ -1,0 +1,41 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.revision()</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Ermittelt die Revision in der ein Fachobjekt vorliegt.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Fachobjekt</td>
+   <td>Das Fachobjekt für das die Revision ermittelt werden soll</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Revision</p>
+<p>Die Revision des Fachobjektes, wenn es ein historischer Stand ist oder <code class="hljs inlineCode">CURRENT</code> für ein aktuelles Objekt.</p>
+<h2>Beispiele</h2>
+<h3>Beispiel 1</h3>
+<pre>	<code>$historicObject.revision()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> r42</p>
+<p>Wenn das gegebene Fachobjekt <code class="hljs inlineCode">historicObject</code> in Revision r42 vorliegt.</p>
+<h3>Beispiel 2</h3>
+<pre>	<code>$currentObject.revision()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">CURRENT</code></p>
+<p>Wenn das gegebene Fachobjekt <code class="hljs inlineCode">currentObject</code> kein historisches, sondern ein aktuelles Objekt ist.</p>
+<p></p>

@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<!-- output-encoding: Mandatory: false, Default: utf-8 -->
+		<!-- output-byte-order-mark: Mandatory: false, Default: true, if there is one for the output format -->
+		<!-- output-format: Mandatory: true, Values: 'text' or 'xml' -->
+		<!-- output-xml-header: Mandatory: false, Default: true-->
+		<!-- ignore-whitespaces: Mandatory: false, Default: true
+		Means not all whitespaces, but whitespaces next to tags and comments.
+		Also, whitespaces outside of <t:body> are always ignored. Whitespaces within <t:text> are never ignored. -->
+		<t:settings
+			output-encoding='utf-8'
+			output-byte-order-mark="true"
+			output-format="text"
+			output-xml-header="true"
+			ignore-whitespaces="true" />
+		<t:parameters />
+	</t:head>
+	<t:body />
+</t:template>

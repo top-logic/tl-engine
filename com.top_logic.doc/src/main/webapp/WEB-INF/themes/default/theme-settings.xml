@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICON_VALIDATE_PAGE"
+		value="css:fas fa-check"
+	/>
+	<icon name="ICON_VALIDATE_ALL_PAGES"
+		value="css:fas fa-check-double"
+	/>
+	<icon name="IMAGE_BUTTONS_DOC"
+		value="css:fas fa-book"
+	/>
+	<icon name="IMAGE_BUTTONS_DOC_TRANSLATE"
+		value="css:fas fa-language"
+	/>
+	<icon name="IMAGE_BUTTONS_GENERATE_DOC_PAGES"
+		value="css:fas fa-folder-plus"
+	/>
+	<icon name="IMAGE_BUTTONS_GOTO_HELP_COMPONENT"
+		value="css:fas fa-external-link-alt"
+	/>
+	<icon name="model.tl.doc.Page.icon"
+		value="css:fas fa-book"
+	/>
+	<icon name="ICON_FILE_IMPORT"
+		value="css:fas fa-file-import"
+	/>
+	<icon name="com.top_logic.doc.create.Icons.CREATE_ICON"
+		value="css:fas fa-plus"
+	/>
+	<icon name="com.top_logic.doc.command.Icons.OPEN_DOCUMENTATION"
+		value="css:fas fa-book"
+	/>
+</settings>

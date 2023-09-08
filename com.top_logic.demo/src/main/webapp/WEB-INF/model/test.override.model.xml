@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.override">
+		<interface name="N">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<sort-order value="0.0"/>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+		<interface name="I">
+			<generalizations>
+				<generalization type="N"/>
+			</generalizations>
+			<annotations>
+				<main-properties properties="name,root"/>
+			</annotations>
+			<attributes>
+				<reference name="root"
+					kind="forwards"
+					navigate="true"
+					type="R"
+				/>
+			</attributes>
+		</interface>
+		<class name="A">
+			<generalizations>
+				<generalization type="I"/>
+			</generalizations>
+			<annotations>
+				<main-properties properties="name,goLeft,left,right,root"/>
+			</annotations>
+			<attributes>
+				<reference name="root"
+					override="true"
+					type="R"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[x -> ($x.get(`test.override:A#goLeft`) ? 
+ $x.get(`test.override:A#left`) : 
+ $x.get(`test.override:A#right`)).get(`test.override:I#root`)]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="left"
+					kind="forwards"
+					navigate="true"
+					type="I"
+				/>
+				<reference name="right"
+					kind="forwards"
+					navigate="true"
+					type="I"
+				/>
+				<property name="goLeft"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+		<class name="R">
+			<generalizations>
+				<generalization type="I"/>
+			</generalizations>
+			<annotations>
+				<main-properties properties="name,parent,root"/>
+			</annotations>
+			<attributes>
+				<reference name="root"
+					override="true"
+					type="R"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.recursion(n -> $n.get(`test.override:R#parent`)).lastElement()"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="parent"
+					kind="forwards"
+					navigate="true"
+					type="R"
+				/>
+			</attributes>
+		</class>
+		<class name="S">
+			<generalizations>
+				<generalization type="I"/>
+			</generalizations>
+			<annotations>
+				<main-properties properties="name,root"/>
+			</annotations>
+		</class>
+	</module>
+</model>

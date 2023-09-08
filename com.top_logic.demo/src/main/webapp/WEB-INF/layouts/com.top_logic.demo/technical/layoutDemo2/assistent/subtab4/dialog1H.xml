@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="demoAssistentDialogH">
+	<dialogInfo/>
+
+	<components>
+		<component class="com.top_logic.tool.boundsec.assistent.AssistentProgressComponent"
+			horizontal="true"
+			model="selection(Dialog1HtestAssistent)"
+			name="dialog1HProgress"
+			resPrefix="layouts.layoutdemo.assistent.dialog1H.dialog1HProgress."
+		>
+			<layoutInfo size="80px"/>
+		</component>
+
+		<include name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab1/demoAssistant.xml"
+			namePrefix="Dialog1H"
+		/>
+	</components>
+</layout>

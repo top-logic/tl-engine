@@ -1,0 +1,150 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			<t:type name="Level_1_Type">
+				<t:attributes>
+					<t:attribute name="Left_Attribute" type="string" />
+					<t:attribute name="Right_Attribute" type="string" />
+				</t:attributes>
+			</t:type>
+			<t:type name="Level_2_Type">
+				<t:attributes>
+					<t:attribute name="Level_1_Attribute" type="Level_1_Type" />
+					<t:attribute name="Integer_Attribute" type="integer" />
+				</t:attributes>
+			</t:type>
+			<t:type name="Level_3_Type">
+				<t:attributes>
+					<t:attribute name="Level_2_Attribute" type="Level_2_Type" />
+					<t:attribute name="Float_Attribute" type="float" />
+				</t:attributes>
+			</t:type>
+			<t:type name="Level_4_Type">
+				<t:attributes>
+					<t:attribute name="Level_3_Attribute" type="Level_3_Type" />
+					<t:attribute name="Boolean_Attribute" type="boolean" />
+				</t:attributes>
+			</t:type>
+			<t:type name="Level_5_Type">
+				<t:attributes>
+					<t:attribute name="Level_4_Attribute" type="Level_4_Type" />
+					<t:attribute name="Xml_Attribute" type="xml" />
+				</t:attributes>
+			</t:type>
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Level_5_Parameter" type="Level_5_Type" multiple="true" />
+			<t:parameter name="String_Parameter" type="string" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:foreach var="Level_5_Parameter_Entry" values="$Level_5_Parameter">
+			xxx Loop Start xxx
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Right_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Right_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Integer_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Integer_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Float_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Float_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Boolean_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Boolean_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Xml_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Xml_Attribute" />
+			<t:value expr="$String_Parameter" />
+			<t:value expr="$String_Parameter" />
+			
+			<t:define var="Level_5_Variable_1" expr="$String_Parameter" />
+			<t:define var="Level_5_Variable_2" expr="Level_5_Parameter_Entry" />
+			<t:define var="Level_4_Variable_1" expr="Level_5_Parameter_Entry.Xml_Attribute" />
+			<t:define var="Level_4_Variable_2" expr="Level_5_Parameter_Entry.Level_4_Attribute" />
+			<t:define var="Level_3_Variable_1" expr="Level_5_Parameter_Entry.Level_4_Attribute.Boolean_Attribute" />
+			<t:define var="Level_3_Variable_2" expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute" />
+			<t:define var="Level_2_Variable_1" expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Float_Attribute" />
+			<t:define var="Level_2_Variable_2" expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute" />
+			<t:define var="Level_1_Variable_1" expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Integer_Attribute" />
+			<t:define var="Level_1_Variable_2" expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute" />
+			<t:define var="Level_0_Variable_1" expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Right_Attribute" />
+			<t:define var="Level_0_Variable_2" expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			
+			<t:value expr="Level_5_Variable_1" />
+			<t:value expr="Level_5_Variable_1" />
+			<t:value expr="Level_5_Variable_2.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_5_Variable_2.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_4_Variable_1" />
+			<t:value expr="Level_4_Variable_1" />
+			<t:value expr="Level_4_Variable_2.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_4_Variable_2.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_3_Variable_1" />
+			<t:value expr="Level_3_Variable_1" />
+			<t:value expr="Level_3_Variable_2.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_3_Variable_2.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_2_Variable_1" />
+			<t:value expr="Level_2_Variable_1" />
+			<t:value expr="Level_2_Variable_2.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_2_Variable_2.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_1_Variable_1" />
+			<t:value expr="Level_1_Variable_1" />
+			<t:value expr="Level_1_Variable_2.Left_Attribute" />
+			<t:value expr="Level_1_Variable_2.Left_Attribute" />
+			<t:value expr="Level_0_Variable_1" />
+			<t:value expr="Level_0_Variable_1" />
+			<t:value expr="Level_0_Variable_2" />
+			<t:value expr="Level_0_Variable_2" />
+			
+			<t:define var="Level_5_Variable_3" expr="Level_5_Parameter_Entry" />
+			<t:define var="Level_4_Variable_3" expr="Level_5_Variable_3.Level_4_Attribute" />
+			<t:define var="Level_3_Variable_3" expr="Level_4_Variable_3.Level_3_Attribute" />
+			<t:define var="Level_2_Variable_3" expr="Level_3_Variable_3.Level_2_Attribute" />
+			<t:define var="Level_1_Variable_3" expr="Level_2_Variable_3.Level_1_Attribute" />
+			<t:define var="Level_0_Variable_3" expr="Level_1_Variable_3.Left_Attribute" />
+			
+			<t:value expr="Level_0_Variable_3" />
+			<t:value expr="Level_0_Variable_3" />
+			<t:value expr="Level_1_Variable_3.Left_Attribute" />
+			<t:value expr="Level_1_Variable_3.Left_Attribute" />
+			<t:value expr="Level_1_Variable_3.Right_Attribute" />
+			<t:value expr="Level_1_Variable_3.Right_Attribute" />
+			<t:value expr="Level_2_Variable_3.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_2_Variable_3.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_2_Variable_3.Integer_Attribute" />
+			<t:value expr="Level_2_Variable_3.Integer_Attribute" />
+			<t:value expr="Level_3_Variable_3.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_3_Variable_3.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_3_Variable_3.Float_Attribute" />
+			<t:value expr="Level_3_Variable_3.Float_Attribute" />
+			<t:value expr="Level_4_Variable_3.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_4_Variable_3.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_4_Variable_3.Boolean_Attribute" />
+			<t:value expr="Level_4_Variable_3.Boolean_Attribute" />
+			<t:value expr="Level_5_Variable_3.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_5_Variable_3.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_5_Variable_3.Xml_Attribute" />
+			<t:value expr="Level_5_Variable_3.Xml_Attribute" />
+			
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Left_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Right_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Level_1_Attribute.Right_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Integer_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Level_2_Attribute.Integer_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Float_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Level_3_Attribute.Float_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Boolean_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Level_4_Attribute.Boolean_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Xml_Attribute" />
+			<t:value expr="Level_5_Parameter_Entry.Xml_Attribute" />
+			<t:value expr="$String_Parameter" />
+			<t:value expr="$String_Parameter" />
+			xxx Loop End xxx
+		</t:foreach>
+		
+	</t:body>
+</t:template>

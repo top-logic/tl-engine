@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="outer1"
+			value="outer1value"
+		/>
+		<param name="outer2"
+			value="outer2value"
+		/>
+	</params>
+	<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-72-template.xml"
+		param1="x-#{param2}"
+		param2="y-${outer1}"
+		param3="z-#{param2}"
+	>
+		<param4>
+			<component class="B"
+				conf1="#{param1}"
+				conf2="#{param2}"
+				conf3="#{param3}"
+				conf4="${outer1}"
+			/>
+		</param4>
+
+		<inject>
+			<component class="C"
+				conf1="#{param1}"
+				conf2="#{param2}"
+				conf3="#{param3}"
+				conf4="${outer2}"
+			/>
+		</inject>
+	</include>
+</template>

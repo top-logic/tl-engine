@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.reporting.remote.common.ReportFactory">
+			<instance class="com.top_logic.reporting.remote.common.ReportFactory"
+				client-reporter-class="com.top_logic.reporting.queue.QueueReporter"
+			/>
+		</config>
+
+        <config service-class="com.top_logic.layout.provider.LabelProviderService">
+            <instance>
+                <label-providers>
+		            <provider kind="CODE" type="com.top_logic.reporting.report.view.name.Namable" implementation="com.top_logic.reporting.report.view.name.NamableResourceProvider" />
+		            <provider kind="CODE" type="com.top_logic.reporting.report.model.filter.DateInterval" implementation="com.top_logic.reporting.report.model.filter.DateIntervalLabelProvider" />
+                </label-providers>
+            </instance>
+        </config>
+
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="ReportingMessages" />
+				</bundles>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				
+				<cliques>
+					<clique name="ganttFilterSetting" display="menu"/>
+				</cliques>
+				<handlers>
+					<handler id="publishabelNewStoredReport" class="com.top_logic.reporting.layout.flexreporting.component.PublishableNewStoredReportComponent$PublishableNewStoredReportCommandHandler"
+						clique="create"/>
+		            <handler id="newAttributedQuery" class="com.top_logic.element.layout.meta.search.PublishableNewQueryComponent$PublishableNewQueryCommandHandler"
+						clique="create"/>
+		            <handler id="reportingSaveAttributedQuery" class="com.top_logic.element.layout.meta.search.PublishableSaveQueryCommandHandler"
+						clique="save"/>
+				    <!--  
+		            <handler id="refreshChart" class="com.top_logic.reporting.layout.flexreporting.component.ChartConfigurationComponent$RefreshChartCommand"
+						clique="refresh"/>
+					-->
+					<handler id="reportingSearchAttributed" class="com.top_logic.reporting.layout.meta.search.ReportingCommandSupport$ReportingSearchCommandHandler"/>
+		            <handler id="writeReport" class="com.top_logic.reporting.layout.meta.search.ReportingCommandSupport$WriteReportCommandHandler"
+		            	resourceKey="reporting.chart.writeReport"
+		            />
+		            <handler id="deleteReport" class="com.top_logic.reporting.layout.meta.search.ReportingCommandSupport$DeleteReportCommandHandler"
+						clique="delete"/>
+		            <handler id="resetStoredReport" class="com.top_logic.reporting.layout.meta.search.ReportingCommandSupport$ResetStoredReportCommandHandler"
+						clique="reset"
+						resourceKey="reporting.chart.resetStoredReport"	
+					/>
+		            <handler id="chartGotoDetails" class="com.top_logic.reporting.layout.meta.search.ChartGotoAwareGotoHandler"/>
+		            <handler id="RefreshChartCommand" class="com.top_logic.reporting.chart.component.AbstractFixedReportComponent$RefreshChartCommandHandler"
+						clique="refresh"/>
+					<handler id="setHomepage" class="com.top_logic.reporting.tool.ReportingSetHomepageHandler"/>
+
+					<handler id="ganttPdfExport" class="com.top_logic.reporting.chart.gantt.component.GanttExportDialog$PDFExportCommand" group="Export"/>
+        			<handler id="applyFilterProgress" class="com.top_logic.reporting.view.component.progress.ApplyFilterProgressCommandHandler"  />
+        			<handler id="applyFilterCommand" class="com.top_logic.reporting.view.component.ApplyFilterCommandHandler" 
+						clique="refresh"/>
+        			<handler id="manageFilterSettings" class="com.top_logic.reporting.chart.gantt.component.ManageMultipleFilterSettings"
+        				clique="ganttFilterSetting"
+        				image="theme:com.top_logic.layout.table.renderer.Icons.EDIT_NAMED_TABLE_SETTINGS"
+        			/>
+        			<handler id="loadFilterSettings" class="com.top_logic.reporting.chart.gantt.component.LoadNamedFilterSetting"
+        				clique="ganttFilterSetting"
+        				image="theme:com.top_logic.layout.table.renderer.Icons.LOAD_NAMED_TABLE_SETTINGS"
+        			/>
+				</handlers>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+			            <declaration resource="webinf://kbase/ReportMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+		
+		<config config:interface="com.top_logic.reporting.chart.gantt.ui.GanttChartConfig">
+			<element-type-colors>
+				<color-config elementName="Default" start-color="#9BC4FF" end-color="#336799" border-color="#336799" />
+				<color-config elementName="Disabled" start-color="#E6E6E6" end-color="#B4B4B4" border-color="#B4B4B4" />
+			</element-type-colors>
+		</config>
+		
+		<config config:interface="com.top_logic.reporting.data.processing.transformator.TransformatorFactory$Config">
+			<transformators>
+				<transformator 
+					name="GetFirstEntryTransformator"
+					display-key="pos.analysis.data.transformatornames.getfirst"
+					indices="0"
+					class="com.top_logic.reporting.data.processing.transformator.common.EntryExtractor"
+				/>
+				<transformator 
+					name="GetSecondEntryTransformator"
+					display-key="pos.analysis.data.transformatornames.getsecond"
+					indices="1"
+					class="com.top_logic.reporting.data.processing.transformator.common.EntryExtractor"
+				/>
+			</transformators>
+		</config>
+	</configs>
+	
+</application>

@@ -1,0 +1,204 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-build</artifactId>
+		<version>7.6.0-SNAPSHOT</version>
+
+		<relativePath>../tl-parent-build</relativePath>
+	</parent>
+
+	<artifactId>tl-parent-gwt</artifactId>
+
+	<description>
+		Parent module for TopLogic GWT modules. 
+	</description>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<packaging>pom</packaging>
+
+	<properties>
+		<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+
+		<skipTests>true</skipTests>
+		<skipTestsWar>true</skipTestsWar>
+
+		<warSourceExcludes></warSourceExcludes>
+
+		<!-- gwt-dev itself has an internal duplication in its class path. -->		
+		<skipDependencyCheck>true</skipDependencyCheck>
+
+		<!-- gwt does not full understand Java 11 syntax. -->		
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- ensure all GWT deps use the same version (unless overridden) -->
+			<dependency>
+				<groupId>org.gwtproject</groupId>
+				<artifactId>gwt</artifactId>
+				<version>2.10.0</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<!-- Output classes directly into the webapp, so that IDEs and "mvn process-classes" 
+			update them in DevMode -->
+		<outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
+
+		<pluginManagement>
+			<plugins>
+				<!-- GWT Maven Plugin -->
+				<plugin>
+					<groupId>net.ltgt.gwt.maven</groupId>
+					<artifactId>gwt-maven-plugin</artifactId>
+					<version>1.0-rc-8</version>
+
+					<executions>
+						<execution>
+							<id>gwt-compile</id>
+							<goals>
+								<goal>compile</goal>
+							</goals>
+
+							<!-- Note: The default phase is prepare-package, but the war fragment packaging 
+								already happens in phase process-classes. Therefore, the GWT compilation must 
+								happen before. -->
+							<phase>compile</phase>
+						</execution>
+						
+						<execution>
+							<id>gwt-test</id>
+							<goals>
+								<goal>test</goal>
+							</goals>
+						</execution>
+					</executions>
+
+					<configuration>
+						<moduleName>${gwt.module}</moduleName>
+						<failOnError>true</failOnError>
+						<!-- GWT compiler 2.8 requires 1.8, hence define sourceLevel here if 
+							you use a different source language for java compilation -->
+						<sourceLevel>1.8</sourceLevel>
+						<!-- Compiler configuration -->
+						<compilerArgs>
+							<!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
+							<arg>-generateJsInteropExports</arg>
+							<arg>-compileReport</arg>
+							<arg>-XcompilerMetrics</arg>
+						</compilerArgs>
+						<!-- DevMode configuration -->
+						<warDir>${project.build.directory}/${project.build.finalName}</warDir>
+						<classpathScope>compile+runtime</classpathScope>
+					</configuration>
+				</plugin>
+
+	  			<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+	  			<plugin>
+	  				<groupId>org.eclipse.m2e</groupId>
+	  				<artifactId>lifecycle-mapping</artifactId>
+	  				<version>1.0.0</version>
+	  				<configuration>
+	  					<lifecycleMappingMetadata>
+	  						<pluginExecutions>
+	  							<pluginExecution>
+	  								<pluginExecutionFilter>
+	  									<groupId>
+	  										net.ltgt.gwt.maven
+	  									</groupId>
+	  									<artifactId>
+	  										gwt-maven-plugin
+	  									</artifactId>
+	  									<versionRange>
+	  										[1.0-rc-8,)
+	  									</versionRange>
+	  									<goals>
+	  										<goal>compile</goal>
+	  									</goals>
+	  								</pluginExecutionFilter>
+	  								<action>
+	  									<ignore></ignore>
+	  								</action>
+	  							</pluginExecution>
+	  						</pluginExecutions>
+	  					</lifecycleMappingMetadata>
+	  				</configuration>
+	  			</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-war-plugin</artifactId>
+					<configuration>
+						<!-- <attachClasses>true</attachClasses> -->
+						<classifier>web-fragment</classifier>
+						<packagingExcludes>WEB-INF/web.xml,WEB-INF/lib/**,WEB-INF/classes/**</packagingExcludes>
+					</configuration>
+
+					<executions>
+						<execution>
+							<id>war-fragment</id>
+							<phase>package</phase>
+							<goals>
+								<goal>war</goal>
+							</goals>
+
+							<configuration>
+								<warSourceExcludes>${warSourceExcludes}</warSourceExcludes>
+							</configuration>
+						</execution>
+
+						<execution>
+							<id>test-war-fragment</id>
+							<phase>package</phase>
+							<goals>
+								<goal>war</goal>
+							</goals>
+
+							<configuration>
+								<warSourceDirectory>${basedir}/src/test/webapp</warSourceDirectory>
+								<webappDirectory>${project.build.directory}/${project.build.finalName}-test</webappDirectory>
+
+								<!-- Note: The classifier of the test-jar "tests" must be a prefix 
+									of this classifier for the test war to be automatically found when analyzing 
+									the class path. -->
+								<classifier>tests-web-fragment</classifier>
+							</configuration>
+						</execution>
+					</executions>
+
+					<dependencies>
+						<dependency>
+							<groupId>org.codehaus.plexus</groupId>
+							<artifactId>plexus-utils</artifactId>
+							<version>3.5.1</version>
+						</dependency>
+					</dependencies>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
+		<plugins>
+			<!-- Skip normal test execution, we use gwt:test instead -->
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

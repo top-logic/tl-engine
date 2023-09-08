@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/treegrid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		detailComponent=""
+		isSecurityMaster="false"
+		multiSelection="false"
+		rootVisible="true"
+		showDetailOpener="false"
+		type="DemoTypes:DemoTypes.All"
+	>
+		<name key="dynamic.50ec8e3a-f6c9-48a8-aa4e-502d8d80e4dc">
+			<de>TreeGrid</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="null"
+			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
+			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
+			rootNode="`DemoTypes#ROOT`"
+		/>
+		<dragSource class="com.top_logic.model.search.providers.GridDragSourceByExpression"
+			canDrag="source -> if($source!= `DemoTypes#ROOT`,$source.get(`DemoTypes:DemoTypes.All#name`).stringContains('1'), true)"
+		/>
+		<tableDrop class="com.top_logic.model.search.providers.GridDropTargetByExpression"
+			canDrop="draggedObjects->referenceRow->{canDrop=source -> target -> $source.get(`DemoTypes:DemoTypes.All#parent`) != $target.get(`DemoTypes:DemoTypes.All#parent`);$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}"
+			dropType="ORDERED"
+		>
+			<handleDrop><![CDATA[draggedObjects->referenceRow->{handleDrop=source -> target -> {
+  info($source + " -> " + $target);
+  oldParent = $source.get(`DemoTypes:DemoTypes.All#parent`);
+  oldSiblings = $oldParent.get(`tl.element:StructuredElementContainer#children`).filter(element -> $element != $source);
+  $oldParent.set(`tl.element:StructuredElementContainer#children`, $oldSiblings);
+  newSiblings = concat($target.get(`tl.element:StructuredElementContainer#children`), $source);
+  $target.set(`tl.element:StructuredElementContainer#children`, $newSiblings);
+};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}
+]]></handleDrop>
+		</tableDrop>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

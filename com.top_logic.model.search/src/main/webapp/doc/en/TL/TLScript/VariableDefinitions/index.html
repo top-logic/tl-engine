@@ -1,0 +1,29 @@
+<h2>Syntax</h2> 
+<pre>	<code>{
+  var1 = $expr1;
+  var2 = $expr2;
+
+  $result-expression-using-var1-and-var2; 
+}</code>
+</pre> 
+<h2>Description</h2> 
+<p>Values can be stored in a variable. This can be useful if one value is needed for several calculations. It is important to note that a "variable" in TL-Script can never change its value after it has been defined.</p> 
+<p>Variables can be passed as function arguments (see <a class="tlObject" data-custom="false" href="?page=Functions&amp;uuid=8f4a805f-125a-4905-8df3-65aa54e20947">Functions</a>) or explicitly defined themselves as shown above. The above example assigns to the variables <code class="hljs inlineCode">var1</code> and <code class="hljs inlineCode">var2</code> the result of the evaluations of the expressions <code class="hljs inlineCode">expr1</code> and <code class="hljs inlineCode">expr2</code>. The result of the total expression is the evaluation of <code class="hljs inlineCode">result-expression-using-var1-and-var2</code>. This expression can access the variables <code class="hljs inlineCode">$var1</code> and <code class="hljs inlineCode">$var2</code> defined above.</p> 
+<p>A defined variable <code class="hljs inlineCode">var = ...;</code> can be accessed with <code class="hljs inlineCode">$var</code>. The variable is only visible in the block where it was defined.</p> 
+<h2>Examples</h2> 
+<pre>	<code>{
+   x = 5;
+   y = 6;
+
+   $x * $y;
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span> 30</p> 
+<pre>	<code>{
+   x = "Hello";
+   y = ", how are you?";
+
+   toString($x, $y);
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span> "Hello, how are you?"</p>

@@ -1,0 +1,1217 @@
+{
+  "/icons/add2Clipboard": {
+    "label": "Add to clipboard",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+	  "active",
+      "disabled"
+    ]
+  },
+  "/icons/addBookmark": {
+    "label": "Add bookmark",
+    "search": {
+      "terms": [
+      	"star",
+      	"plus"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+  "/icons/addButton": {
+    "label": "Add",
+    "search": {
+      "terms": [
+      	"plus"
+      ]
+    },
+    "styles": [
+	  "active",
+      "disabled"
+    ]
+  },
+  "/icons/addColumnLeft": {
+    "label": "Add column left",
+    "search": {
+      "terms": [
+      	"table"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/addRow": {
+    "label": "Add row",
+    "search": {
+      "terms": [
+      	"table"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/addRowTop": {
+    "label": "Add row top",
+    "search": {
+      "terms": [
+      	"table"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/buttonBackground": {
+    "label": "Add button background",
+    "search": {
+      "terms": [
+      	"blue",
+      	"modern"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonBurgerMenu": {
+    "label": "Burger menu",
+    "search": {
+      "terms": [
+      	"bars",
+      	"three"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/buttonClear": {
+    "label": "Clear",
+    "search": {
+      "terms": [
+      	"cross"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonCut": {
+    "label": "Cut",
+    "search": {
+      "terms": [
+      	"scissors"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonEdit": {
+    "label": "Edit",
+    "search": {
+      "terms": [
+      	"pencil"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonEmpty": {
+    "label": "Empty",
+    "search": {
+      "terms": [
+      	"clear"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/buttonGroup": {
+    "label": "Group",
+    "search": {
+      "terms": [    	
+      	"recorder"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+	]
+  },
+    "/icons/buttonInspector": {
+    "label": "Inspector",
+    "search": {
+      "terms": [
+      	"cursor"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/buttonMissing": {
+    "label": "Missing",
+    "search": {
+      "terms": [
+      	"question mark",
+      	"tag"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonNewElement": {
+    "label": "New Element",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonOk": {
+    "label": "Ok",
+    "search": {
+      "terms": [
+      	"checkmark"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonPaste": {
+    "label": "Paste",
+    "search": {
+      "terms": [
+      	"document"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonPause": {
+    "label": "Pause",
+    "search": {
+      "terms": [
+      	"recorder"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/buttonRecord": {
+    "label": "Record",
+    "search": {
+      "terms": [
+      	"recorder"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/buttonRefresh": {
+    "label": "Refresh",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonSave": {
+    "label": "Save",
+    "search": {
+      "terms": [
+      	"disc"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonStart": {
+    "label": "Start",
+    "search": {
+      "terms": [
+      	"recorder"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonStepInto": {
+    "label": "Step into",
+    "search": {
+      "terms": [
+      	"arrow",
+      	"recorder"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonStepOut": {
+    "label": "Step out",
+    "search": {
+      "terms": [
+      	"arrow",
+      	"recorder"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonStepOver": {
+    "label": "Step over",
+    "search": {
+      "terms": [
+      	"recorder"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonStop": {
+    "label": "Stop",
+    "search": {
+      "terms": [
+      	"recorder"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonTime": {
+    "label": "Time",
+    "search": {
+      "terms": [
+      	"recorder",
+      	"clock",
+      	"watch"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonUngroup": {
+    "label": "Ungroup",
+    "search": {
+      "terms": [
+      	"recorder"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/buttonXmlExport": {
+    "label": "XML export",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/calendar": {
+    "label": "Calendar",
+    "search": {
+      "terms": [
+      	"date",
+      	"time"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/cancelButton": {
+    "label": "Cancel button",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/cancelMenu": {
+    "label": "Cancel menu",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/clearChooser": {
+    "label": "Clear chooser",
+    "search": {
+      "terms": [
+      	"cross"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/clipboardButtonIcon": {
+    "label": "Clipboard",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/clock": {
+    "label": "Clock",
+    "search": {
+      "terms": [
+      	"date",
+      	"hours",
+      	"time"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/closeDialog": {
+    "label": "Close dialog",
+    "search": {
+      "terms": [
+      	"cross"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/collapseAll": {
+    "label": "Collapse all",
+    "search": {
+      "terms": [
+      	"minus"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/Columns": {
+    "label": "Columns",
+    "search": {
+      "terms": [
+      	"table"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/configure": {
+    "label": "Configure",
+    "search": {
+      "terms": [
+      	"tools"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/deleteButton": {
+    "label": "Delete button",
+    "search": {
+      "terms": [
+      	"cross"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/deleteMenu": {
+    "label": "Delete menu",
+    "search": {
+      "terms": [
+      	"cross"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/deleteToolbar": {
+    "label": "Delete toolbar",
+    "search": {
+      "terms": [
+      	"cross"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/docCommit": {
+    "label": "Commit document",
+    "search": {
+      "terms": [
+      	"document",
+      	"upload"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/docLocked": {
+    "label": "Locked document",
+    "search": {
+      "terms": [
+      	"document"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/Document5": {
+    "label": "Delete document",
+    "search": {
+      "terms": [
+      	"cross"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/Document8": {
+    "label": "Commit document",
+    "search": {
+      "terms": [
+      	"commit",
+      	"upload"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/docUnlock": {
+    "label": "Unlock document",
+    "search": {
+      "terms": [
+      	"document"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/download": {
+    "label": "Download",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/downloadButton": {
+    "label": "Download",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/downloadFolder": {
+    "label": "Download folder",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/excelImportButtonIcon": {
+    "label": "Import excel",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/expandAll": {
+    "label": "Expand all",
+    "search": {
+      "terms": [
+      	"plus"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/exportExcel": {
+    "label": "Export excel",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/exportGrid": {
+    "label": "Export grid",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/exportGridPPT": {
+    "label": "Export grid powerpoint",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/exportPDF": {
+    "label": "Export PDF",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/exportPowerpoint": {
+    "label": "Export Powerpoint",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/exportWord": {
+    "label": "Export word",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/FileInfo": {
+    "label": "File info",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/filterGlobal": {
+    "label": "Filter global",
+    "search": {
+      "terms": [
+      	"magnifying glass"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/filterGlobalActive": {
+    "label": "Filter global active",
+    "search": {
+      "terms": [
+      	"magnifying glass"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/filterOptions": {
+    "label": "Filter Options",
+    "search": {
+      "terms": [
+      	"gear"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/gridCancel": {
+    "label": "Grid cancel",
+    "search": {
+      "terms": [
+      	"arrow"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/help": {
+    "label": "Help",
+    "search": {
+      "terms": [
+      	"questionmark"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/historyBack": {
+    "label": "History back",
+    "search": {
+      "terms": [
+      	"arrow"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/historyForward": {
+    "label": "History forward",
+    "search": {
+      "terms": [
+      	"arrow"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/info": {
+    "label": "Info",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/invertSelection": {
+    "label": "Invert selection",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/menuInspector": {
+    "label": "Menu inspector",
+    "search": {
+      "terms": [
+      	"cursor",
+      	"tag"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/moveRowDown": {
+    "label": "",
+    "search": {
+      "terms": [
+      	"arrows",
+      	"table"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/moveRowLeft": {
+    "label": "Move row left",
+    "search": {
+      "terms": [
+      	"arrows",
+      	"table"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/moveRowRight": {
+    "label": "Move row right",
+    "search": {
+      "terms": [
+      	"arrow",
+      	"table"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/moveRowToBottom": {
+    "label": "Move row to bottom",
+    "search": {
+      "terms": [
+      	"arrows",
+      	"table"      	
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/moveRowToTop": {
+    "label": "Move row to top",
+    "search": {
+      "terms": [
+      	"arrows",
+      	"table"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/moveRowUp": {
+    "label": "Move row up",
+    "search": {
+      "terms": [
+      	"arrow",
+      	"table"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/newFolder": {
+    "label": "New folder",
+    "search": {
+      "terms": [
+      	"create"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/newMilestone": {
+    "label": "New milestone",
+    "search": {
+      "terms": [
+      	"create"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/newSubproject": {
+    "label": "New subproject",
+    "search": {
+      "terms": [
+      	"create"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/newWorkpackage": {
+    "label": "New workpackage",
+    "search": {
+      "terms": [
+      	"create"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/openChooser": {
+    "label": "Open chooser",
+    "search": {
+      "terms": [
+      	"arrow"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/openSelector": {
+    "label": "Open selector",
+    "search": {
+      "terms": [
+      	"arrow"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/openTextEditor": {
+    "label": "Open text editor",
+    "search": {
+      "terms": [
+      	"arrow"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/placeholder": {
+    "label": "Placeholder",
+    "search": {
+      "terms": [
+      	"landscape",
+      	"missing image"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/refresh": {
+    "label": "Refresh",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/removeCheckbox": {
+    "label": "Remove checkbox",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/removeClipboard": {
+    "label": "Remove clipboard",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/removeElement": {
+    "label": "Remove element",
+    "search": {
+      "terms": [
+      	"cross"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/removeFilter": {
+    "label": "Remove filter",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/removeNode": {
+    "label": "Remove node",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/removeNode_disabled": {
+    "label": "",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/removeSelected": {
+    "label": "Remove selected",
+    "search": {
+      "terms": [
+      	"cross"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/renderingErrorNormal": {
+    "label": "Rendering error normal",
+    "search": {
+      "terms": [
+      	"road sign"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/saveButtonIcon": {
+    "label": "Save",
+    "search": {
+      "terms": [
+      	"disc"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/saveButtonModified": {
+    "label": "Save modified",
+    "search": {
+      "terms": [
+      	"disc"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/search": {
+    "label": "Search",
+    "search": {
+      "terms": [
+      	"magnifying glass"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/searchButton": {
+    "label": "Search button",
+    "search": {
+      "terms": [
+      	"magnifying glass"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/selectAllCheckboxes": {
+    "label": "Select all checkboxes",
+    "search": {
+      "terms": [
+      	"checkmark"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/selectFilter": {
+    "label": "Select filter",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/selectSiblings": {
+    "label": "Select siblings",
+    "search": {
+      "terms": [
+      	"checkmark"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/selectType": {
+    "label": "Select type",
+    "search": {
+      "terms": [
+      	"tree bars"
+      ]
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/sortButtonIcon": {
+    "label": "Sort button",
+    "search": {
+      "terms": [
+      	"arrows"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/tblColumnConfig": {
+    "label": "Table column config",
+    "search": {
+      "terms": [
+      	"arrows"
+      ]
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/upload": {
+    "label": "Upload",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active",
+      "disabled"
+    ]
+  },
+    "/icons/urlLink": {
+    "label": "URL link",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/windowMaximize": {
+    "label": "Maximize window",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/windowMinimize": {
+    "label": "Minimize window",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active"
+    ]
+  },
+    "/icons/windowNormalize": {
+    "label": "Normalize window",
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      "active"
+    ]
+  }
+}

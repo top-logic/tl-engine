@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="FaultyComparatorTableContainer"
+	horizontal="true"
+>
+	<components>
+		<layoutControl name="FaultyComparatorTableSidebar"
+			componentName="TableComponentFaultyComparator"
+		>
+			<layoutInfo size="200px"/>
+			<componentControlProvider class="com.top_logic.layout.structure.TableFilterLayoutControlProvider"
+				initiallyMinimized="true"
+			/>
+		</layoutControl>
+		<tableView name="TableComponentFaultyComparator"
+			objectType="me:DemoTypes.A"
+			resPrefix="demo.test.FaultyComparatorTable"
+		>
+			<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"
+				meta-elements="DemoTypes:A"
+			/>
+
+			<table
+				defaultColumns="name, boolean, booleanMandatory, date, float, long, string, singleStructure"
+				defaultSortOrder="name"
+				fixedColumns="3"
+				footerStyle="height:50px;background:orange;"
+				headerStyle="height: 35px; background:green;"
+				pageSizeOptions="10, all"
+				titleStyle="background:yellow; height:50px"
+			>
+				<tableRenderer class="com.top_logic.demo.table.DemoTableRenderer"
+					numberHeaderRows="2"
+				/>
+
+				<column-default columnWidth="200px"/>
+				<columns>
+					<column name="name"
+						comparator="com.top_logic.demo.layout.form.demo.FaultyComparator"
+						headStyle="background:red;"
+					/>
+					<column name="primitiveAttributes"
+						columnLabel="Primitive Attributes"
+					>
+						<columns>
+							<column name="numericAttributes"
+								columnLabelKey="demo.demoTypes.numericAttributes"
+							>
+								<columns>
+									<column name="float"
+										columnWidth="80px"
+										cssClass="tblRight"
+									/>
+									<column name="long"
+										columnWidth="80px"
+										cssClass="tblRight"
+									/>
+								</columns>
+							</column>
+
+							<column name="booleanAttributes"
+								columnLabelKey="demo.demoTypes.booleanAttributes"
+							>
+								<columns>
+									<column name="boolean"
+										headStyle="background:inherit;"
+									/>
+
+									<!-- Test case for Ticket #5768. -->
+									<column name="booleanMandatory"
+										sortable="false"
+									/>
+								</columns>
+							</column>
+
+							<column name="string"/>
+						</columns>
+					</column>
+					<column name="singleStructure">
+						<renderer class="com.top_logic.layout.basic.ResourceRenderer"
+							useImage="false"
+							useLink="false"
+							useToolTip="false"
+						/>
+					</column>
+					<column name="twoInputs"
+						controlProvider="com.top_logic.layout.form.template.DefaultFormFieldControlProvider"
+						fieldProvider="com.top_logic.demo.table.DemoTwoFieldProvider"
+						sortable="false"
+					/>
+				</columns>
+			</table>
+		</tableView>
+	</components>
+</layout>

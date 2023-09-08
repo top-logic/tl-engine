@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model>
+
+	<module name="m1">
+		<datatype name="D" db_type="varchar" kind="String">
+			<storage-mapping 
+				class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+				application-type="java.lang.String"
+			/>
+		</datatype>
+		
+		<datatype name="E" db_type="varchar" kind="String">
+			<storage-mapping 
+				class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+				application-type="java.lang.String"
+			/>
+		</datatype>
+
+		<datatype name="DIns" db_type="varchar" kind="String">
+			<storage-mapping 
+				class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+				application-type="java.lang.String"
+			/>
+		</datatype>
+		
+		<enum name="Vals">
+			<classifier name="A"/>
+			<classifier name="A1"/>
+			<classifier name="C"/>
+			<classifier name="A2"/>
+			<classifier name="B"/>
+		</enum>
+
+		<enum name="ValsNew">
+			<classifier name="X"/>
+			<classifier name="Y"/>
+		</enum>
+
+		<class name="New">
+		</class>
+
+		<class name="Incompatible">
+			<attributes>
+				<property name="name" type="D"/>
+			</attributes>
+		</class>
+	
+		<class name="A">
+			<attributes>
+				<property name="foo" type="D"/>
+				<property name="bar" type="E"/>
+
+				<reference name="val" type="Vals"/>
+				<reference name="valNew" type="ValsNew"/>
+			</attributes>
+		</class>
+
+		<class name="B">
+		</class>
+
+		<class name="C">
+		</class>
+
+		<class name="X">
+			<generalizations>
+				<generalization type="B"/>
+				<generalization type="C"/>
+				<generalization type="New"/>
+				<generalization type="A"/>
+			</generalizations>
+			<attributes>
+				<property name="foo" type="D" override="true"/>
+			</attributes>
+		</class>
+
+		<!-- Class with reordered part -->
+		<class name="Y">
+			<attributes>
+				<property name="a" type="D"/>
+				<property name="m" type="D"/>
+				<property name="b" type="D"/>
+				<property name="c" type="D"/>
+			</attributes>
+		</class>
+
+		<!-- Class with implicitly incompatible part (value type is incompatible) -->
+		<class name="Z">
+			<attributes>
+				<property name="a" type="E"/>
+			</attributes>
+		</class>
+
+		<!-- Class with reordered incompatible part -->
+		<class name="K">
+			<attributes>
+				<property name="a" type="D"/>
+				<property name="m" type="E"/>
+				<property name="b" type="D"/>
+				<property name="c" type="D"/>
+			</attributes>
+		</class>
+
+		<!-- Class properties with changed mandatory state -->
+		<class name="M">
+			<attributes>
+				<property name="c" type="D" mandatory="true"/>
+				<property name="a" type="D"/>
+				<property name="b" type="D"/>
+			</attributes>
+		</class>
+
+		<!-- Class with annotation changes -->
+		<class name="N">
+			<annotations>
+				<implementation-binding interface-name="foo.bar.NN"/>
+			</annotations>
+			<attributes>
+				<property name="a" type="D">
+					<annotations>
+						<css-class value="nice"/>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+
+	<!-- Module with annotation changes -->
+	<module name="m2">
+		<annotations>
+			<package-binding interface-package="foo.bar.baz"/>
+		</annotations>
+	</module>
+
+</model>

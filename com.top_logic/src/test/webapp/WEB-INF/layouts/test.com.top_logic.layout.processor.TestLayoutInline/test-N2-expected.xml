@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<r>
+	<component class="A" p1="p">
+		<singleton name="v1"/>
+		<other-values>
+			<value name="v1"/>
+			<value name="v2"/>
+			<value name="v3"/>
+		</other-values>
+	</component>
+	<component class="A" p1="p">
+		<singleton name="x1"/>
+		<other-values>
+			<value name="x1"/>
+			<value name="v2"/>
+			<value name="v3"/>
+		</other-values>
+	</component>
+	<component class="A" p1="p">
+		<singleton name="v1"/>
+		<other-values>
+			<value name="v1"/>
+			<value name="y2"/>
+		</other-values>
+	</component>
+</r>

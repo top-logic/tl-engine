@@ -1,0 +1,50 @@
+div#tbl-container {
+	width:800px;
+	height:400px;
+	overflow: auto;
+	scrollbar-base-color: #ffeaff;
+}
+
+table {
+	table-layout: fixed;
+	border-collapse: collapse;
+	background-color: WhiteSmoke;
+}
+
+div#tbl-container table th {
+	width: 100px;
+}
+
+thead th,thead th.locked {
+	font-size: 14px;
+	font-weight: bold;
+	text-align: center;
+	background-color: navy;
+	color: white;
+	border-right: 1px solid silver;
+	position: relative;
+	cursor: default;
+}
+
+thead th {
+	top: expression(document .     getElementById("tbl-container") .   
+		 scrollTop-2 ); /*IE5+ only*/
+	z-index: 20;
+}
+
+thead th.locked {
+	z-index: 30;
+}
+
+td.locked,th.locked {
+	background-color: #ffeaff;
+	font-weight: bold;
+	border-right: 1px solid silver;
+	left: expression(document .     getElementById("tbl-container") .
+		  scrollLeft); /*IE5+ only*/
+	position: relative;
+	z-index: 10;
+}
+
+col.locked {
+}

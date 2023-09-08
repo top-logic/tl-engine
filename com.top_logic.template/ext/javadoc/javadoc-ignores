@@ -1,0 +1,92 @@
+com.top_logic.template.TemplateFormat.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.template.TemplateFormat
+com.top_logic.template.TemplateTypes.java: Missing documentation: com.top_logic.template.TemplateTypes.TYPE_NAME_BOOLEAN
+com.top_logic.template.TemplateTypes.java: Missing documentation: com.top_logic.template.TemplateTypes.TYPE_NAME_DATE
+com.top_logic.template.TemplateTypes.java: Missing documentation: com.top_logic.template.TemplateTypes.TYPE_NAME_FLOAT
+com.top_logic.template.TemplateTypes.java: Missing documentation: com.top_logic.template.TemplateTypes.TYPE_NAME_INTEGER
+com.top_logic.template.TemplateTypes.java: Missing documentation: com.top_logic.template.TemplateTypes.TYPE_NAME_ROOT
+com.top_logic.template.TemplateTypes.java: Missing documentation: com.top_logic.template.TemplateTypes.TYPE_NAME_STRING
+com.top_logic.template.TemplateTypes.java: Missing documentation: com.top_logic.template.TemplateTypes.TYPE_NAME_XML
+com.top_logic.template.TemplateTypes.java: Missing documentation: com.top_logic.template.TemplateTypes.buildEmptyThisType
+com.top_logic.template.TemplateTypes.java: Missing documentation: com.top_logic.template.TemplateTypes.buildFormatMap
+com.top_logic.template.TemplateTypes.java: Missing documentation: com.top_logic.template.TemplateTypes.buildTypesMap
+com.top_logic.template.expander.TemplateExpander.java: Invalid camel case word 'expansionModel', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.expander.TemplateExpander.java: Missing documentation: com.top_logic.template.expander.TemplateExpander.expandTemplate
+com.top_logic.template.model.CheckResult.java: Missing documentation: com.top_logic.template.model.CheckResult
+com.top_logic.template.model.CheckResult.java: Missing documentation: com.top_logic.template.model.CheckResult.getIds
+com.top_logic.template.model.CheckResult.java: Missing documentation: com.top_logic.template.model.CheckResult.getNode
+com.top_logic.template.model.CheckResult.java: Missing documentation: com.top_logic.template.model.CheckResult.getReferences
+com.top_logic.template.model.CheckResult.java: Missing documentation: com.top_logic.template.model.CheckResult.getTemplateAreas
+com.top_logic.template.model.ExpansionModel.java: Invalid camel case word 'ExpansionModel', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.model.ExpansionModel.java: Invalid camel case word 'ExpansionModels', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.model.ExpansionModel.java: Invalid camel case word 'nameSpace', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.model.ModelCheckVisitor.java: Invalid camel case word 'ModelCheck', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.model.ModelCheckVisitor.java: Invalid camel case word 'ModelChecker', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.model.ModelCheckVisitor.java: Missing documentation: com.top_logic.template.model.ModelCheckVisitor.checkModel
+com.top_logic.template.model.ModelCheckVisitor.java: Missing documentation: com.top_logic.template.model.ModelCheckVisitor.getDerivedMO
+com.top_logic.template.model.ModelCheckVisitor.java: Missing documentation: com.top_logic.template.model.ModelCheckVisitor.isError
+com.top_logic.template.model.SyntaxCheckVisitor.java: Invalid camel case word 'SyntaxCheck', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.model.TemplateArea.java: Invalid camel case word 'TemplateArea', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.model.TemplateArea.java: Missing documentation: com.top_logic.template.model.TemplateArea
+com.top_logic.template.model.TemplateArea.java: Missing documentation: com.top_logic.template.model.TemplateArea.getColumnEnd
+com.top_logic.template.model.TemplateArea.java: Missing documentation: com.top_logic.template.model.TemplateArea.getRowEnd
+com.top_logic.template.model.TemplateProblem.java: Invalid camel case word 'TemplateProblem', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.model.TemplateProblem.java: Missing documentation: com.top_logic.template.model.TemplateProblem.Type
+com.top_logic.template.model.TemplateProblem.java: Missing documentation: com.top_logic.template.model.TemplateProblem.getName
+com.top_logic.template.model.TemplateProblem.java: Missing documentation: com.top_logic.template.model.TemplateProblem.getResKey
+com.top_logic.template.model.function.EqualsFunction.java: Missing documentation: com.top_logic.template.model.function.EqualsFunction.FUNCTION_NAME
+com.top_logic.template.model.function.ExistsFunction.java: Missing documentation: com.top_logic.template.model.function.ExistsFunction.FUNCTION_NAME
+com.top_logic.template.model.function.IsEmptyFunction.java: Missing documentation: com.top_logic.template.model.function.IsEmptyFunction.FUNCTION_NAME
+com.top_logic.template.tree.DefineStatement.java: Invalid camel case word 'ForeachStm', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.tree.DumpVisitor.java: Missing documentation: com.top_logic.template.tree.DumpVisitor.toString
+com.top_logic.template.tree.ForeachStatement.java: Invalid camel case word 'ForeachStm', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.ATTR_END
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.ATTR_ID
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.ATTR_SEPARATOR
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.ATTR_START
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.colBegin
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.colEnd
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.getColEnd
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.getRowEnd
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.rowBegin
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.rowEnd
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.setColEnd
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.setRowEnd
+com.top_logic.template.tree.TemplateNode.java: Missing documentation: com.top_logic.template.tree.TemplateNode.visit
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.none
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitAssignStatement
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitAttributeValue
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitBinaryExpression
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitConstantExpression
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitDefineStatement
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitForeachStatement
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitFunctionCall
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitIfStatement
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitInvokeStatement
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitLiteralText
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitReference
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitTemplate
+com.top_logic.template.tree.TemplateVisitor.java: Missing documentation: com.top_logic.template.tree.TemplateVisitor.visitUnaryExpression
+com.top_logic.template.writer.TemplateStringBufferWriter.java: Invalid camel case word 'StringBuilder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.ATTRIBUTE_ELEMENT
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.BODY_ELEMENT
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.DEFAULT_ATTRIBUTE
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.DEFAULT_ELEMENT
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.ENTRY_ELEMENT
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.HEAD_ELEMENT
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.IGNORE_WHITESPACES_ATTRIBUTE
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.MANDATORY_ATTRIBUTE
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.MULTIPLE_ATTRIBUTE
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.NAME_ATTRIBUTE
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.OUTPUT_BYTE_ORDER_MARK_ATTRIBUTE
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.OUTPUT_ENCODING_ATTRIBUTE
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.OUTPUT_FORMAT_ATTRIBUTE
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.OUTPUT_XML_HEADER_ATTRIBUTE
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.PARAMETERS_ELEMENT
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.PARAMETER_ELEMENT
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.SETTINGS_ELEMENT
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.TYPES_ELEMENT
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.TYPE_ATTRIBUTE
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.TYPE_ELEMENT
+com.top_logic.template.xml.TemplateSchema.java: Missing documentation: com.top_logic.template.xml.TemplateSchema.VALUE_ATTRIBUTE
+com.top_logic.template.xml.TemplateXMLParser.java: Invalid camel case word 'templateDir', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.template.xml.source.TemplateSourceFactory.java: Invalid camel case word 'templateReference', this may only be used within JavaDoc links or HTML code tags.

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="model"/>
+		<param name="tableClass"
+			value="com.top_logic.element.comment.layout.CommentTableComponent"
+		/>
+		<param name="modelBuilder">
+			<modelBuilder class="com.top_logic.element.comment.layout.CommentTableModelBuilder"/>
+		</param>
+		<param name="createComponentClass"
+			value="com.top_logic.element.comment.layout.CommentDialogComponent"
+		/>
+		<param name="commentsAttribute"
+			value="comments"
+		/>
+		<param name="securityProviderClass"
+			optional="true"
+		/>
+		<param name="rendererClass"
+			value="com.top_logic.element.comment.layout.CommentTableRenderer"
+		/>
+		<param name="editRight"
+			value="Read"
+		/>
+		<param name="editExecutability"
+			value="com.top_logic.tool.execution.HistoricDataHideHistoricRule, com.top_logic.element.comment.layout.CommentDialogComponent$OwnerExecutabilityRule"
+		/>
+		<param name="quoteRight"
+			value="Read"
+		/>
+		<param name="quoteExecutability"
+			value="com.top_logic.tool.execution.HistoricDataHideHistoricRule"
+		/>
+		<param name="createRight"
+			value="Read"
+		/>
+		<param name="createExecutability"
+			value="com.top_logic.tool.execution.HistoricDataHideHistoricRule"
+		/>
+		<param name="dialogHeight"
+			value="400"
+		/>
+		<param name="dialogWidth"
+			value="550"
+		/>
+	</params>
+
+	<layout>
+		<components>
+			<component class="${tableClass}"
+				attribute="${commentsAttribute}"
+				editCommentComponentName="edit${namePrefix}EditComment"
+				model="${model}"
+				modelBuilder="${modelBuilder}"
+				name="${namePrefix}CommentTable"
+				quoteCommentComponentName="new${namePrefix}QuoteComment"
+				resPrefix="element.comments.commentTable."
+				securityProviderClass="${securityProviderClass}"
+				selectable="false"
+			>
+				<table
+					defaultColumns="name"
+					defaultFilterProvider=""
+					defaultSortOrder="name:descending"
+					pageSizeOptions="10"
+				>
+					<column-default
+						accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+						filterProvider=""
+					/>
+					<columns>
+						<column name="name"
+							accessor="com.top_logic.layout.IdentityAccessor"
+						/>
+					</columns>
+					<tableRenderer class="${rendererClass}"/>
+				</table>
+				<dialogs>
+					<layout name="${namePrefix}QuoteCommentDialog">
+						<dialogInfo
+							createOpenerButtons="false"
+							height="${dialogHeight}"
+							width="${dialogWidth}"
+						>
+							<open-handler id="quoteCommentOpenerHandler"
+								class="com.top_logic.tool.boundsec.SimpleOpenDialog"
+								executability="${quoteExecutability}"
+								group="${quoteRight}"
+								resourceKey="element.comments.commentTable.quoteCommentOpenerHandler"
+								target="selection(self())"
+							/>
+						</dialogInfo>
+
+						<components>
+							<component class="${createComponentClass}"
+								model="selection(${namePrefix}CommentTable)"
+								name="new${namePrefix}QuoteComment"
+								page="/jsp/comments/QuoteComment.jsp"
+								resPrefix="element.comments.new.dialog."
+							/>
+							<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+						</components>
+					</layout>
+					<layout name="${namePrefix}EditCommentDialog">
+						<dialogInfo
+							createOpenerButtons="false"
+							height="${dialogHeight}"
+							width="${dialogWidth}"
+						>
+							<open-handler id="editCommentOpenerHandler"
+								class="com.top_logic.tool.boundsec.SimpleOpenDialog"
+								executability="${editExecutability}"
+								group="${editRight}"
+								resourceKey="element.comments.commentTable.editCommentOpenerHandler"
+								target="selection(self())"
+							/>
+						</dialogInfo>
+
+						<components>
+							<component class="${createComponentClass}"
+								editComment="true"
+								model="selection(${namePrefix}CommentTable)"
+								name="edit${namePrefix}EditComment"
+								page="/jsp/comments/EditComment.jsp"
+								resPrefix="element.comments.new.dialog."
+							/>
+							<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+						</components>
+					</layout>
+					<layout name="${namePrefix}NewCommentDialog">
+						<dialogInfo
+							executability="${createExecutability}"
+							height="${dialogHeight}"
+							openButtonSecComp="${namePrefix}CommentTable"
+							openHandlerName="openNewCommentDialog"
+							openerCommandGroup="${createRight}"
+							width="${dialogWidth}"
+						/>
+
+						<components>
+							<component class="${createComponentClass}"
+								name="new${namePrefix}EditComment"
+								page="/jsp/comments/NewComment.jsp"
+								resPrefix="element.comments.new.dialog."
+							/>
+							<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+						</components>
+					</layout>
+				</dialogs>
+			</component>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

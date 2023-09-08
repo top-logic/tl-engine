@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/transaction.template.xml"
+>
+	<arguments
+		formType="tl.demo.forms:DuplicateObjectInput"
+		height="300px"
+		width="400px"
+	>
+		<title class="com.top_logic.layout.component.title.ModelTitle"
+			model="model(com.top_logic.demo/technical/components/transaction/inputDialog.layout.xml#Form)"
+		>
+			<key key="dynamic.23a8aa6e-a370-40c0-a444-2ee4cd63f235">
+				<en>Duplicate {0}</en>
+				<de>{0} Duplizieren</de>
+			</key>
+		</title>
+		<open-handler id="ID_21c8e279_f906_405e_96ab_612048a5b78f"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:far fa-clone"
+			target="selection(self())"
+			targetComponent="com.top_logic.demo/technical/components/transaction/inputDialog.layout.xml#Form"
+		>
+			<resourceKey key="dynamic.85893f7d-c5ca-4fc9-945b-a60191181ed4">
+				<en>Duplicate selection</en>
+				<de>Selektion duplizieren</de>
+			</resourceKey>
+		</open-handler>
+		<initialization><![CDATA[form -> model -> {
+  newName=#("Kopie von {0}"@de, "Copy of {0}"@en).fill($model);
+  $form.set(`tl.demo.forms:DuplicateObjectInput#newName`, toString($newName));
+  $form.set(`tl.demo.forms:DuplicateObjectInput#orig`, $model);
+}]]></initialization>
+		<transactionHandler id="perform"
+			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+			clique="main"
+			closeDialog="true"
+			confirm="false"
+			disabledImage=""
+			group="Write"
+			ignoreWarnings="default"
+			image="css:fas fa-check"
+		>
+			<resourceKey key="dynamic.85893f7d-c5ca-4fc9-945b-a60191181ed4">
+				<en>Duplicate</en>
+				<de>Duplizieren</de>
+			</resourceKey>
+			<confirmMessage key="dynamic.709ca113-9f48-402d-bda6-f585ac2031f5">
+				<de>Soll wirklich eine Kopie angelegt werden?</de>
+			</confirmMessage>
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/transaction/allAsTable.layout.xml#Table)"/>
+			</postCreateActions>
+			<operation><![CDATA[form -> model -> {
+ result = $model.copy();
+ name=$form.get(`tl.demo.forms:DuplicateObjectInput#newName`);
+ text=$form.get(`tl.demo.forms:DuplicateObjectInput#text`);
+ select=$form.get(`tl.demo.forms:DuplicateObjectInput#singleStructure`);
+ $result.set(`DemoTypes:DemoTypes.All#name`, $name);
+ $result.set(`DemoTypes:DemoTypes.A#text`, $text);
+ if ($select != null, {
+   $result.set(`DemoTypes:DemoTypes.A#singleStructure`, $select);
+ });
+ $result;
+}]]></operation>
+		</transactionHandler>
+	</arguments>
+</config:template-call>

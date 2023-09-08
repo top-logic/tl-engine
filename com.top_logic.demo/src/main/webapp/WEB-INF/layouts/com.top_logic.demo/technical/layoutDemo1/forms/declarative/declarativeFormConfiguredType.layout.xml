@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="declarativeFormConfiguredType"
+	titleKey="demo.form.declarative.configured.tabber"
+>
+	<tabInfo label="demo.form.declarative.configured.tabber"/>
+	<components>
+		<include name="com.top_logic.demo/technical/layoutDemo1/forms/declarative/declarativeFormDemo.xml"
+			formType="com.top_logic.basic.config.ConfigurationItem"
+			namePrefix="DeclarativeFormConfigured"
+			resPrefix="layouts.layoutdemo.form.declarativeFormComponentDemo.DeclarativeFormConfiguredType"
+		>
+			<modelToFormMapping class="com.top_logic.layout.form.declarative.mapping.DeclarativeConfigItem">
+				<descriptor res-prefix="com.top_logic.demo.layout.form.declarative.config.TypeDemos">
+					<property name="primitive-types"
+						default="com.top_logic.demo.layout.form.declarative.config.PrimitiveTypes"
+						type="com.top_logic.demo.layout.form.declarative.config.PrimitiveTypes"
+					/>
+					<property name="constraints"
+						default="com.top_logic.demo.layout.form.declarative.config.DemoDeclarativeConstraints"
+						type="com.top_logic.demo.layout.form.declarative.config.DemoDeclarativeConstraints"
+					>
+						<display-minimized/>
+					</property>
+					<property name="primitive-object-types"
+						default="com.top_logic.demo.layout.form.declarative.config.PrimitiveObjectTypes"
+						type="com.top_logic.demo.layout.form.declarative.config.PrimitiveObjectTypes"
+					>
+						<item-display value="monomorphic"/>
+					</property>
+				</descriptor>
+			</modelToFormMapping>
+		</include>
+	</components>
+</securityLayout>

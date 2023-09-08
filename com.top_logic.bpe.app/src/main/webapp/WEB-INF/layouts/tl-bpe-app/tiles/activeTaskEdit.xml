@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="tokenTable"
+			value="TokenTable"
+		/>
+	</params>
+
+	<include name="element/editAttributedDetail.xml"
+		componentClass="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+		defaultFor="tl.bpe.execution:Token"
+		deleteCommand=""
+		metaElementName="tl.bpe.execution:Token"
+		model="selection(${tokenTable})"
+		namePrefix="EditActiveTask"
+		page="/jsp/processExecution/EditTask.jsp"
+		securityProvider="securityRoot"
+	>
+		<subConfiguration>
+			<buttons>
+				<button id="finishTask"
+					class="com.top_logic.bpe.app.layout.FinishTaskCommand"
+					tokenTable="${tokenTable}"
+				>
+					<executability>
+						<rule class="com.top_logic.bpe.app.layout.ActiveTaskComponent$FinishTaskRule"/>
+					</executability>
+				</button>
+			</buttons>
+		</subConfiguration>
+	</include>
+</template>

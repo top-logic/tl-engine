@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#1 > Formulare"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.ControlAction$Op"
+			command="openSelector"
+			type="com.top_logic.layout.form.control.SelectionControl"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path=""
+			/>
+			<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="selectionControlTreeTableInfinite"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+			</model>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+				expand="true"
+			>
+				<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path=""
+					/>
+					<matchers>
+						<named-member name="selectionTable"/>
+						<form-context/>
+					</matchers>
+				</context-model>
+				<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+					path="A1"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+				expand="true"
+			>
+				<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path=""
+					/>
+					<matchers>
+						<named-member name="selectionTable"/>
+						<form-context/>
+					</matchers>
+				</context-model>
+				<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+					path="A1 > A1.2"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+				expand="true"
+			>
+				<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path=""
+					/>
+					<matchers>
+						<named-member name="selectionTable"/>
+						<form-context/>
+					</matchers>
+				</context-model>
+				<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+					path="A1 > A1.2 > A1.2.3"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="INCREMENTAL"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="A1 > A1.2 > A1.2.3 > A1.2.3.3"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+				<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path=""
+					/>
+					<matchers>
+						<named-member name="selectionTable"/>
+						<form-context/>
+					</matchers>
+				</owner>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path=""
+				/>
+				<matchers>
+					<labeled-member label="Übernehmen"/>
+					<named-member name="buttons"/>
+					<form-context/>
+				</matchers>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="multi-set-equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="selectionControlTreeTableInfinite"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
+				<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="selectionControlTreeTableInfinite"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+				</context-name>
+				<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+					<values>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="A1 > A1.2 > A1.2.3 > A1.2.3.3"
+						/>
+					</values>
+				</local-name>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.ControlAction$Op"
+			command="openSelector"
+			type="com.top_logic.layout.form.control.SelectionControl"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path=""
+			/>
+			<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="selectionControlTreeTableInfinite"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+					tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+				/>
+			</model>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="INCREMENTAL"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="A1 > A1.2 > A1.2.3 > A1.2.3.1"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+				<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path=""
+					/>
+					<matchers>
+						<named-member name="selectionTable"/>
+						<form-context/>
+					</matchers>
+				</owner>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path=""
+				/>
+				<matchers>
+					<labeled-member label="Übernehmen"/>
+					<named-member name="buttons"/>
+					<form-context/>
+				</matchers>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="multi-set-equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="selectionControlTreeTableInfinite"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
+				<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="selectionControlTreeTableInfinite"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
+						tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (inline)"
+					/>
+				</context-name>
+				<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+					<values>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="A1 > A1.2 > A1.2.3 > A1.2.3.1"
+						/>
+					</values>
+				</local-name>
+			</expected-value>
+		</action>
+	</actions>
+</action>

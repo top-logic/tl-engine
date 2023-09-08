@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Basic definition of Objects you will usually need as super classes. -->
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+<metaobjects>
+
+<metaobject object_type="MOKnowledgeObject" object_name="DemoTypes" abstract="false" super_class="StructuredElement">
+	<attributes>
+		<mo_attribute att_name="stringLengthConstraint" att_type="String" mandatory="false" db_size="10"/>
+		<reference att_name="inlineReference"
+			target-type="DemoTypes"
+			mandatory="false"
+			history-type="current"
+			deletion-policy="clear-reference"
+		/>
+		<mo_attribute att_name="text1333" att_type="String" mandatory="false" db_size="1333"/>
+		<mo_attribute att_name="text2000" att_type="String" mandatory="false" db_size="2000"/>
+		<mo_attribute att_name="text4000" att_type="String" mandatory="false" db_size="4000"/>
+	</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="DemoTypesC" abstract="false" super_class="StructuredElement">
+</metaobject>
+
+<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasDemoTypesCAttValue" />
+
+</metaobjects>
+</objectlist>

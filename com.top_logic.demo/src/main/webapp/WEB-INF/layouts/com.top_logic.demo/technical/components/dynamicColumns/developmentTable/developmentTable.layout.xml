@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		isSecurityMaster="false"
+		type="test.dynamictable:Development"
+	>
+		<name key="dynamic.d38be7b3-881b-4963-b2aa-19c3aad07245">
+			<en>Development projects</en>
+			<de>Entwicklungsprojekte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.dynamictable:Development`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.dynamictable:Development`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_c33d7fd2_44c7_4a22_98f3_102e2d71e42e"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+				clique="refresh"
+			>
+				<resourceKey key="dynamic.a83efe70-0460-474d-9f31-e45bc905b329">
+					<en>Update</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+			</button>
+		</buttons>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.DynamicColumnProviderByExpression"
+				columnLabel="c -> $c.get(`test.dynamictable:Objective#name`)"
+				columnType="`tl.core:Integer`"
+				columns="all(`test.dynamictable:Objective`).sort(comparator(x -> $x.get(`test.dynamictable:Objective#name`)))"
+				idPrefix="c82f7cbb-a3cd-4e81-8525-ed312166424f"
+				updater=""
+			>
+				<accessor><![CDATA[row -> column -> 
+  $row.get(`test.dynamictable:Development#ratings`)
+  .filter(link -> $link.get(`test.dynamictable:Rating#objective`) == $column)
+  .singleElement()
+  .get(`test.dynamictable:Rating#value`)]]></accessor>
+			</configurationProvider>
+		</configurationProviders>
+	</arguments>
+</config:template-call>

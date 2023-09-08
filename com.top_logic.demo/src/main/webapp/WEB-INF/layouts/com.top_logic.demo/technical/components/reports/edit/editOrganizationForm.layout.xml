@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments>
+		<name key="dynamic.8294d088-a37f-4ffb-893e-412c32915fd5">
+			<en>Edit organization</en>
+			<de>Organisation bearbeiten</de>
+		</name>
+		<forms>
+			<form type="test.report:BusinessUnit">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="test.report:BusinessUnit#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="reportTemplate"
+						fullQualifiedName="test.report:BusinessUnit#reportTemplate"
+						type="tl.model.search:Template"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

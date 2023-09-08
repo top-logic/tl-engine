@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- $Id: modelWysiwygConf.config.xml 317616 2023-02-06 16:14:35Z bhu $ -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
+			<instance>
+				<dependencies>
+					<!-- The implementation com.top_logic.model.wysiwyg.report.HtmlReportTagProvider depends on it.  -->
+					<dependency key="com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService" value="true" />
+				</dependencies>
+				<attribute-settings>
+					<attribute-setting config-name="HTML" legacy-type-code="1">
+						<column-info>
+							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
+								<labelProvider class="com.top_logic.layout.form.control.FirstLineLabelProvider">
+									<fullTextProvider class="com.top_logic.layout.wysiwyg.ui.HTMLTextExtractor"/>
+								</labelProvider>
+								<tooltipRenderer class="com.top_logic.layout.wysiwyg.ui.HTMLRenderer"/>
+							</renderer>
+							<editControlProvider class="com.top_logic.layout.wysiwyg.ui.StructuredTextPopupControl$CP">
+								<labelProvider class="com.top_logic.layout.form.control.FirstLineLabelProvider">
+									<fullTextProvider class="com.top_logic.layout.wysiwyg.ui.HTMLTextExtractor"/>
+								</labelProvider>
+								<tooltipRenderer class="com.top_logic.layout.wysiwyg.ui.HTMLRenderer"/>
+							</editControlProvider>
+							<comparator class=""/>
+							<sortKeyProvider class="com.top_logic.layout.wysiwyg.ui.HTMLTextExtractor" />
+						</column-info>
+						<field-provider impl="com.top_logic.model.wysiwyg.fieldprovider.StructuredTextFieldProvider"/>
+						<tag-provider impl="com.top_logic.model.wysiwyg.fieldprovider.StructuredTextTagProvider"/>
+						<export-binding impl="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeValueBinding"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="I18N_HTML" legacy-type-code="1">
+						<column-info>
+							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
+								<labelProvider class="com.top_logic.layout.form.control.FirstLineLabelProvider">
+									<fullTextProvider class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLTextExtractor"/>
+								</labelProvider>
+								<tooltipRenderer class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLRenderer"/>
+							</renderer>
+							<editControlProvider class="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextPopupControl$CP"
+								dialogHeight="750"
+							>
+								<labelProvider class="com.top_logic.layout.form.control.FirstLineLabelProvider">
+									<fullTextProvider class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLTextExtractor"/>
+								</labelProvider>
+								<tooltipRenderer class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLRenderer"/>
+							</editControlProvider>
+							<comparator class=""/>
+							<sortKeyProvider class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLTextExtractor" />
+						</column-info>
+						<field-provider impl="com.top_logic.model.wysiwyg.fieldprovider.I18NStructureTextFieldProvider"/>
+						<tag-provider impl="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructureTextTagProvider"/>
+					</attribute-setting>
+
+					<!-- Enhancements for datatypes defined in tl-model-search -->
+					<!-- START [ -->
+					<attribute-setting config-name="TEMPLATE" legacy-type-code="1">
+						<tag-provider>
+							<impl class="com.top_logic.model.wysiwyg.fieldprovider.StructuredTextTagProvider"
+								feature-set="macro"
+							/>
+						</tag-provider>
+					</attribute-setting>
+		
+					<attribute-setting config-name="REPORT" legacy-type-code="1">
+						<tag-provider impl="com.top_logic.model.wysiwyg.report.HtmlReportTagProvider"/>
+					</attribute-setting>
+		
+					<attribute-setting config-name="MACRO" legacy-type-code="1">
+					</attribute-setting>
+					<!-- ] END -->
+				</attribute-settings>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/tl.model.wysiwyg.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="modelWysiwygMessages" />
+					<bundle name="model.tl.model.wysiwyg.messages" />
+				</bundles>
+			</instance>
+		</config>
+		
+	</services>
+	
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/StructuredTextMeta.xml"/>
+						<declaration resource="webinf://kbase/I18NStructuredTextMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+	
+	<defaults>
+	</defaults>
+	
+</application>

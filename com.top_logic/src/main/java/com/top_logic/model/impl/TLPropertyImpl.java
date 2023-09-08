@@ -1,0 +1,29 @@
+/*
+ * SPDX-FileCopyrightText: 2010 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.model.impl;
+
+import com.top_logic.model.TLModel;
+import com.top_logic.model.TLProperty;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLType;
+
+/**
+ * Default implementation of {@link TLProperty}.
+ * 
+ * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ */
+abstract class TLPropertyImpl<O extends TLStructuredType> extends AbstractStructuredTypePart<O> implements TLProperty {
+
+	/* package protected */ TLPropertyImpl(TLModel model, String name) {
+		super(model, name);	
+	}
+
+	@Override
+	public void setType(TLType value) {
+		internalSetType(value);
+	}
+	
+}

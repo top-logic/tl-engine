@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+	groups="dialogs"
+>
+	<properties>
+		<property name="name"
+			type="ResKey"
+		>
+			<formatted-default value="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="openerIcon"
+			type="com.top_logic.layout.basic.ThemeImage"
+		>
+			<formatted-default value="theme:ICONS_ADD_BUTTON"/>
+		</property>
+		<property name="typeOptions"
+			instance-type="com.top_logic.element.layout.create.CreateTypeOptions"
+			type="PolymorphicConfiguration"
+		>
+			<item-default/>
+			<non-nullable/>
+			<implementation-class-default value="com.top_logic.element.layout.create.ConstantCreateTypeOptions"/>
+		</property>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="openDialogID"
+			type="String"
+		>
+			<complex-default value="com.top_logic.layout.RandomIDProvider"/>
+			<hidden/>
+		</property>
+		<property name="createID"
+			type="String"
+		>
+			<complex-default value="com.top_logic.layout.RandomIDProvider"/>
+			<hidden/>
+		</property>
+	</properties>
+
+	<config typeOptions="${typeOptions}">
+		<open-handler id="${openDialogID}"
+			class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			image="${openerIcon}"
+			resourceKey="${name}"
+			target="${model}"
+			targetComponent="Editor"
+		/>
+		<create-handler id="${createID}"
+			class="com.top_logic.model.search.providers.GenericCreateHandlerByExpression"
+		/>
+		<title class="com.top_logic.layout.component.title.ConstantTitle"
+			title="${name}"
+		/>
+	</config>
+</config:template>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.f2812228-1c34-4dd4-b241-855fe19dfed4">
+				<en>Create a development project</en>
+				<de>Entwicklungsprojekt anlegen</de>
+			</title>
+		</title>
+		<open-handler id="ID_71608777_5b03_4fe4_a0f9_aa7ab8c7d0ae"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			target="selection(com.top_logic.demo/technical/components/dynamicColumns/developmentTreeTable/developmentTreeTable.layout.xml#TreeTable)"
+			targetComponent="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeTable/createDevelopment/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.f2812228-1c34-4dd4-b241-855fe19dfed4">
+				<en>New development project</en>
+				<de>Neues Entwicklungsprojekt</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="test.dynamictable:Development"/>
+		<create-handler id="ID_bc8664a1_f3f7_4e47_acc9_b40fa691a232">
+			<linkOperation><![CDATA[context -> obj -> {
+  switch ($context.type()) {
+   `test.dynamictable:AllDevelopments`: `test.dynamictable#ROOT`.add(`test.dynamictable:AllDevelopments#developments`, $obj);
+   `test.dynamictable:Development`: $context.add(`test.dynamictable:Development#parts`, $obj);
+  }
+}]]></linkOperation>
+		</create-handler>
+	</arguments>
+</config:template-call>

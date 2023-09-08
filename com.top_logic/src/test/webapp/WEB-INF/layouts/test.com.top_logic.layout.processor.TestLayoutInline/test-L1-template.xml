@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="px">
+			<pz class="X">
+				<modelBuilder class="Y"/>
+				
+				<value>Z</value>
+			</pz>
+		</param>
+		
+		<param name="pEmpty">
+			<!-- Empty value -->
+		</param>
+	</params>
+	
+	<component class="A"
+		py="${px}"
+		empty="${pEmpty}"
+	/>
+</template>

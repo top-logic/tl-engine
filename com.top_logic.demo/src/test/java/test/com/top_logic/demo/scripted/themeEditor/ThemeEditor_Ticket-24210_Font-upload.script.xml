@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Tech. Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Theme Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Theme erstellen"
+			command-name="displayDialog_themEditorCreateThemeDialog"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorThemeTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="ID"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateTheme"
+					tab-path=""
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="ThemeFont"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Erweitert"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateTheme"
+					tab-path=""
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="modern"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.themeedit.browser.providers.theme.CreateThemeHandler"
+			command-label="Erstellen"
+			command-name="createTheme"
+			component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+			component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateTheme"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+					name="ThemeFont"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Theme Editor > Themes"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Theme Editor > Ressourcen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Ressource hochladen"
+			command-name="displayDialog_themEditorResourceUploadDialog"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorResourceList"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Ressourcen-Datei"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorResourceUploadForm"
+					tab-path=""
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+						base64data="AAEAAAAOAIAAAwBgRkZUTYDZT5QAAAW4AAAAHEdERUYAMQAGAAAFmAAAACBPUy8yPPVZmgAAAWgAAABWY21hcOWDEQUAAAHQAAABSmN2dCAAAwA_AAADHAAAAARnYXNw__8AAwAABZAAAAAIZ2x5ZrJu7AkAAAMsAAAAoGhlYWQT8eqCAAAA7AAAADZoaGVhAJwAaQAAASQAAAAkaG10eAEsAAsAAAHAAAAAEGxvY2EAeABQAAADIAAAAAptYXhwAEgASQAAAUgAAAAgbmFtZcnADnoAAAPMAAABj3Bvc3TU59tMAAAFXAAAADQAAQAAAAEAADcHA3dfDzz1AAsAZAAAAADaTdZiAAAAANpN1mIAAwAAADUAXQAAAAgAAgAAAAAAAAABAAAAXQAAAAkAZAAAAAAANQABAAAAAAAAAAAAAAAAAAAABAABAAAABAAYAAIAAAAAAAIAAAABAAEAAABAAC4AAAAAAAEAZAGQAAUACABBAEYAAAAOAEEARgAAADAABAAZAAACAAUDAAAAAAAAAAAAABAAAAAAAAAAAAAAAFBmRWQAQPK58rkAUP_sAAkAXQAAAAAAAQAAAAAAAABkAAMAAAAAAGQAAABkAAgAAAADAAAAAwAAABwAAQAAAAAARAADAAEAAAAcAAQAKAAAAAYABAABAAIAAPK5__8AAAAA8rn__wAADUoAAQAAAAAAAAAAAQYAAAEAAAAAAAAAAQIAAAACAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAD8AAAAoACgAKABQAAAAAgADAAAAHABCAAMABwAusQEALzyyBwQA7TKxBgXcPLIDAgDtMgCxAwAvPLIFBADtMrIHBgH8PLIBAgDtMjM1MxUnMzUjAxkWExNCQgM8AAABAAgAMAA1AF0AFwAANyY3NhUWBwYnJjM2FxYHBjU0NzYXFiMiJQkHAwENEAIBBAYGCggDDBEBAQMGShEBAQMGBwkHAwENEAIBBAYGCggDAAAADACWAAEAAAAAAAEADQAcAAEAAAAAAAIABAA0AAEAAAAAAAMAIwCBAAEAAAAAAAQABwC1AAEAAAAAAAUACwDVAAEAAAAAAAYABwDxAAMAAQQJAAEAGgAAAAMAAQQJAAIACAAqAAMAAQQJAAMARgA5AAMAAQQJAAQADgClAAMAAQQJAAUAFgC9AAMAAQQJAAYADgDhAFQATAAgAEkAYwBvAG4AIABGAG8AbgB0AHMAAFRMIEljb24gRm9udHMAAGYAbwBuAHQAAGZvbnQAAEYAbwBuAHQARgBvAHIAZwBlACAAMgAuADAAIAA6ACAAdABsAC0AZgBvAG4AdAAgADoAIAAyADIALQAxAC0AMgAwADIAMAAARm9udEZvcmdlIDIuMCA6IHRsLWZvbnQgOiAyMi0xLTIwMjAAAHQAbAAtAGYAbwBuAHQAAHRsLWZvbnQAAFYAZQByAHMAaQBvAG4AIAAxAC4AMAAAVmVyc2lvbiAxLjAAAHQAbAAtAGYAbwBuAHQAAHRsLWZvbnQAAAACAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAQAAAABAAIBAgl6ZWljaG51bmcAAAAB__8AAgABAAAADgAAABgAAAAAAAIAAQADAAMAAQAEAAAAAgAAAAAAAQAAAADMPaLPAAAAANpN1mIAAAAA2k3WYg"
+						content-type="application/x-font-ttf"
+						name="tl-font.ttf"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.themeedit.browser.dialogs.UploadResource"
+			command-label="Hochladen"
+			command-name="upload"
+			component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+			component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorResourceUploadForm"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Name"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Theme Editor > Ressourcen > Ressourcen"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+					name="tl-font.ttf"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="tl-font.ttf"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.themeedit.browser.providers.theme.DeleteThemeHandler"
+			command-label="Löschen"
+			command-name="deleteTheme"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorThemeTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

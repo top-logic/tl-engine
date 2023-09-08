@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.knowledge.gui.layout.TLMainLayout"
+	name="masterFrame"
+	titleKey="/sTitle of TestBoundHelper MasterFrame"
+>
+	<components>
+		<layout name="child_1">
+			<components>
+				<component class="com.top_logic.mig.html.layout.PageComponent"
+					defaultFor="test.com.top_logic.tool.boundsec.TestBoundHelper$Child1BoundObject"
+					name="child_11"
+					page="empty.jsp"
+				/>
+			</components>
+		</layout>
+		<layout name="child_2">
+			<components>
+				<component class="com.top_logic.mig.html.layout.PageComponent"
+					defaultFor="test.com.top_logic.tool.boundsec.TestBoundHelper$Child2BoundObject"
+					name="child_21"
+					page="empty.jsp"
+				/>
+			</components>
+		</layout>
+	</components>
+</component>

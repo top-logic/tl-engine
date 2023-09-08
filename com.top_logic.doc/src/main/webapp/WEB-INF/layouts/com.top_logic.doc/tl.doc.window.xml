@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+	</params>
+
+	<include name="templates/contentTab.xml">
+		<components>
+			<!-- TODO #25919: Is the namePrefix still necessary? -->
+			<layout name="${namePrefix}Container"
+				horizontal="true"
+			>
+				<layout name="${namePrefix}SearchContainer"
+					horizontal="false"
+					resizable="false"
+				>
+					<layoutInfo size="250px"/>
+					<layoutControl>
+						<layoutInfo size="30px"/>
+						<componentControlProvider class="com.top_logic.themes.modern.layout.structure.LayoutViewProvider">
+							<view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration"
+								cssClass="margin5"
+								name="docSearchWrapper1"
+								tag="div"
+							>
+								<content-view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration"
+									cssClass="tlDocSearchContainer"
+									name="docSearchWrapper2"
+									tag="div"
+								>
+									<content-view class="com.top_logic.element.layout.meta.search.quick.QuickSearchViewConfiguration"
+										include-types="tl.doc:Page"
+										name="documentationSearch"
+										no-search-component="true"
+									>
+										<goto-targets>
+											<goto-target
+												component="${namePrefix}Detail"
+												type="tl.doc:Page"
+											/>
+										</goto-targets>
+									</content-view>
+								</content-view>
+							</view>
+						</componentControlProvider>
+					</layoutControl>
+					<component class="com.top_logic.doc.component.DocumentationViewerTree"
+						name="${namePrefix}Tree"
+						resPrefix="%LAYOUT_RESPREFIX%Tree."
+						rootVisible="false"
+						securityProviderClass="securityRoot"
+					>
+						<layoutInfo size="400"/>
+						<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
+							structureName="tl.doc"
+						/>
+					</component>
+				</layout>
+				<component class="com.top_logic.element.layout.structured.AdminElementComponent"
+					applyCommand=""
+					deleteCommand=""
+					model="selection(${namePrefix}Tree)"
+					name="${namePrefix}Detail"
+					page="/jsp/tl.doc/tl.doc.page.edit.jsp"
+					resPrefix="%LAYOUT_RESPREFIX%Detail."
+				>
+					<goto-targets>
+						<goto-target
+							component="${namePrefix}Detail"
+							type="tl.doc:Page"
+						/>
+					</goto-targets>
+					<modifier class="com.top_logic.element.layout.meta.FormContextModificatorComposite">
+						<children>
+							<child class="com.top_logic.element.layout.meta.ControlProviderModificator"
+								attribute="title"
+								controlProvider="com.top_logic.doc.control.TranslatedI18nStringFieldControl$Provider"
+							/>
+							<child class="com.top_logic.element.layout.meta.ControlProviderModificator"
+								attribute="content"
+								controlProvider="com.top_logic.doc.control.TranslatedI18nStructuredTextFieldControl$Provider"
+							/>
+						</children>
+					</modifier>
+					<buttons>
+						<reference command-id="gotoHelpLayout"/>
+					</buttons>
+				</component>
+			</layout>
+		</components>
+	</include>
+</template>

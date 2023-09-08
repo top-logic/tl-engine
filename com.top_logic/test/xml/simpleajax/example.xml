@@ -1,0 +1,11 @@
+<!-- No XML header, because this is a fragment being checked in context. -->
+<ajax:actions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://top-logic.com/base/service/ajax simpleajax.xsd" 
+         xmlns:ajax="http://top-logic.com/base/service/ajax">
+    <action xsi:type="ajax:JSSnipplet">
+        <code>someCode</code>
+    </action>
+    <!-- action xsi:type="ajax:DOMAction"> 
+        <id>testDOMAction</id>  is abstratc, well
+    </action -->
+</ajax:actions>

@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#1"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#1 > Formulare"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="INCREMENTAL"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="expandable"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value=" Some multi- line text with many usless lines. "
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="int"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+										value="42"
+									/>
+								</value>
+							</values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+						<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+							<algorithm class="com.top_logic.mig.html.GenericSelectionModelOwner$AnnotatedModel"/>
+							<reference config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="tableListField"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+									tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+								/>
+							</reference>
+						</owner>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					comparision="set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+						<model-name config:interface="com.top_logic.mig.html.SelectionNaming$Name">
+							<selection-model config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+								<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+									<algorithm class="com.top_logic.mig.html.GenericSelectionModelOwner$AnnotatedModel"/>
+									<reference config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+										<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+											label="tableListField"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+												tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+											/>
+										</model-name>
+									</reference>
+								</owner>
+							</selection-model>
+						</model-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+								<entries>
+									<entry>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="expandable"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=" Some multi- line text with many usless lines. "
+										/>
+									</entry>
+									<entry>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="int"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="42"
+										/>
+									</entry>
+								</entries>
+							</entry>
+						</list>
+					</expected-value>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+							<list>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+									<entries>
+										<entry>
+											<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="string"
+											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="Hello World!"
+											/>
+										</entry>
+									</entries>
+								</entry>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+									<entries>
+										<entry>
+											<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="expandable"
+											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value=" Some multi- line text with many usless lines. "
+											/>
+										</entry>
+										<entry>
+											<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="int"
+											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+												int="42"
+											/>
+										</entry>
+									</entries>
+								</entry>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+									<entries>
+										<entry>
+											<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="date"
+											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+												value="2017-03-07T06:23:15.000Z"
+											/>
+										</entry>
+									</entries>
+								</entry>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+									<entries>
+										<entry>
+											<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="double"
+											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleValue"
+												double="13.42"
+											/>
+										</entry>
+									</entries>
+								</entry>
+							</list>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+						<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+							<algorithm class="com.top_logic.mig.html.GenericSelectionModelOwner$AnnotatedModel"/>
+							<reference config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="tableListField"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+									/>
+								</model-name>
+							</reference>
+						</owner>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					comparision="set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+						<model-name config:interface="com.top_logic.mig.html.SelectionNaming$Name">
+							<selection-model config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+								<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+									<algorithm class="com.top_logic.mig.html.GenericSelectionModelOwner$AnnotatedModel"/>
+									<reference config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+										<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+											label="tableListField"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+												tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+											/>
+										</model-name>
+									</reference>
+								</owner>
+							</selection-model>
+						</model-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+								<entries>
+									<entry>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="string"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="Hello World!"
+										/>
+									</entry>
+								</entries>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+								<entries>
+									<entry>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="expandable"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=" Some multi- line text with many usless lines. "
+										/>
+									</entry>
+									<entry>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="int"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+											int="42"
+										/>
+									</entry>
+								</entries>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+								<entries>
+									<entry>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="date"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+											value="2017-03-07T06:23:15.000Z"
+										/>
+									</entry>
+								</entries>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+								<entries>
+									<entry>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="double"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleValue"
+											double="13.42"
+										/>
+									</entry>
+								</entries>
+							</entry>
+						</list>
+					</expected-value>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="INCREMENTAL"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+							<entries>
+								<entry>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="date"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+										value="2017-03-07T06:23:15.000Z"
+									/>
+								</entry>
+							</entries>
+						</selectee>
+						<selection-state boolean="false"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+						<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+							<algorithm class="com.top_logic.mig.html.GenericSelectionModelOwner$AnnotatedModel"/>
+							<reference config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="tableListField"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+									/>
+								</model-name>
+							</reference>
+						</owner>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+							<list>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+									<entries>
+										<entry>
+											<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="string"
+											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="Hello World!"
+											/>
+										</entry>
+									</entries>
+								</entry>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+									<entries>
+										<entry>
+											<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="int"
+											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+												int="42"
+											/>
+										</entry>
+									</entries>
+								</entry>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+									<entries>
+										<entry>
+											<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="date"
+											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+												value="2017-03-07T06:23:15.000Z"
+											/>
+										</entry>
+									</entries>
+								</entry>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapValue">
+									<entries>
+										<entry>
+											<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="double"
+											/>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleValue"
+												double="13.42"
+											/>
+										</entry>
+									</entries>
+								</entry>
+							</list>
+						</selectee>
+						<selection-state boolean="false"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+						<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+							<algorithm class="com.top_logic.mig.html.GenericSelectionModelOwner$AnnotatedModel"/>
+							<reference config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="tableListField"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+										tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+									/>
+								</model-name>
+							</reference>
+						</owner>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					comparision="set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+						<model-name config:interface="com.top_logic.mig.html.SelectionNaming$Name">
+							<selection-model config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+								<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+									<algorithm class="com.top_logic.mig.html.GenericSelectionModelOwner$AnnotatedModel"/>
+									<reference config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+										<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+											label="tableListField"
+										>
+											<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												name="com.top_logic.demo/technical/layoutDemo1/forms/frame/testControlsFormContainer.layout.xml#TestControlsForm"
+												tab-path="Technisches Demo > Layout-Framework#1 > Formulare > Form Controls (IFrame)"
+											/>
+										</model-name>
+									</reference>
+								</owner>
+							</selection-model>
+						</model-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list/>
+					</expected-value>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

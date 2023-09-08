@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<tableView name="DemoTypesTable"
+	objectType="me:DemoTypes.A"
+	resPrefix="layouts.demo.table.demoTable.DemoTypesTable."
+>
+	<modelBuilder class="com.top_logic.mig.html.SecurityListModelBuilder">
+		<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"
+			meta-elements="DemoTypes:A"
+		/>
+		<filter delegationDestination="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"/>
+	</modelBuilder>
+
+	<table
+		defaultColumns="name, text, boolean, booleanMandatory, date, float, long, string"
+		defaultSortOrder="boolean, date:descending"
+		filterProvider="com.top_logic.demo.layout.demo.table.DemoGlobalTableFilterProvider"
+		footerStyle="background:orange;"
+		headerStyle="background:green;"
+		maxColumns="10"
+		pageSizeOptions="10, all"
+		rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
+		titleStyle="background:yellow;"
+	>
+		<columns>
+			<column name="primitiveAttributes"
+				columnLabel="Primitive Attributes"
+			>
+				<columns>
+					<column name="booleanAttributes"
+						columnLabelKey="demo.demoTypes.booleanAttributes"
+					>
+						<columns>
+							<!-- Test case for Ticket #5768. -->
+							<column name="boolean"
+								headStyle="background:inherit;"
+							/>
+							<column name="booleanMandatory"
+								excelRenderer="com.top_logic.demo.layout.demo.table.DemoBooleanExcelRenderer"
+								sortable="false"
+							/>
+						</columns>
+					</column>
+					<column name="integerAttributes"
+						columnLabelKey="demo.demoTypes.integerAttributes"
+					>
+						<columns>
+							<column name="long"/>
+							<column name="longConstraint"/>
+						</columns>
+					</column>
+					<column name="string"
+						filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+					/>
+					<column name="text">
+						<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer"/>
+					</column>
+					<column name="float"
+						cssClassProvider="com.top_logic.demo.layout.demo.table.DemoFloatCssClassProvider"
+					/>
+				</columns>
+			</column>
+			<column name="name"
+				accessor="com.top_logic.layout.IdentityAccessor"
+				headStyle="background:red;"
+				renderer="com.top_logic.layout.basic.BookmarkRenderer"
+				selectable="false"
+				sortKeyProvider="com.top_logic.layout.LabelMapping"
+			/>
+		</columns>
+		<configurationProviders>
+			<id-column value=""/>
+		</configurationProviders>
+	</table>
+
+	<buttons>
+		<button id="exportExcel"
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+			downloadNameKey="/sAllA.xls"
+		/>
+	</buttons>
+
+	<dialogs>
+		<include name="com.top_logic.demo/technical/layoutDemo1/tables/frozenLarge/DemoLargeTableComponentFrozen.xml"
+			tableName="LargeTableComponentFrozenTableDialog"
+		>
+			<inject>
+				<dialogInfo
+					defaultI18n="demo.table.demoLargeTableDialog"
+					height="450"
+					image="theme:ICONS_OPEN_SELECTOR"
+					width="720"
+				/>
+			</inject>
+		</include>
+	</dialogs>
+</tableView>

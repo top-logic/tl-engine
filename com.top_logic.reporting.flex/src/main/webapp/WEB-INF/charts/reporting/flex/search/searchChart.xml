@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<chart-builder class="com.top_logic.reporting.flex.search.chart.SearchResultInteractiveChartBuilder" >
+	<data-source class="com.top_logic.reporting.flex.search.chart.SearchResultDataSource"
+		search-component="SearchConfigureChartClassificationFilterComponent"
+	/>
+
+	<model-preparation class="com.top_logic.reporting.flex.search.chart.GenericModelPreparationBuilder">
+	</model-preparation>
+	
+	<chart-builder class="com.top_logic.reporting.flex.search.chart.SearchChartBuilder" >
+	</chart-builder>
+</chart-builder>

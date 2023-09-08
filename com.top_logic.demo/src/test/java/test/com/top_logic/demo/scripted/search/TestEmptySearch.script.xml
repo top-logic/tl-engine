@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Modellbasierte Suche > Normal"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="multi-set-equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Ergebnistyp"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Modellbasierte Suche > Normal"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
+			expected-failure-message="Ergebnistyp: Eingabe darf nicht leer sein."
+		>
+			<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+				command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
+				command-label="Suchergebnisse aktualisieren"
+				command-name="refreshSearch"
+				component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
+				component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+				user-id="root"
+			>
+				<arguments/>
+			</failure-action>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Ergebnistyp"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Modellbasierte Suche > Normal"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Entfernen"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Modellbasierte Suche > Normal"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
+			expected-failure-message="Es wurde keine Suchausdruck ausgewählt."
+		>
+			<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+				command-implementation-comment="com.top_logic.model.search.ui.SearchCommand"
+				command-label="Suchergebnisse aktualisieren"
+				command-name="refreshSearch"
+				component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
+				component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+				user-id="root"
+			>
+				<arguments/>
+			</failure-action>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Modellbasierte Suche > Expert"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Suchausdruck"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Modellbasierte Suche > Expert"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
+			expected-failure-message="Suchausdruck: Eingabe darf nicht leer sein."
+		>
+			<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+				command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
+				command-label="Suchergebnisse aktualisieren"
+				command-name="refreshSearch"
+				component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
+				component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+				user-id="root"
+			>
+				<arguments/>
+			</failure-action>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Modellbasierte Suche > Expert"
+				/>
+			</model-name>
+		</action>
+	</actions>
+</action>

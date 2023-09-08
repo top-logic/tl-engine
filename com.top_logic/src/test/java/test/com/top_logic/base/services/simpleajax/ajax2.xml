@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+	<env:Header>
+		<sequence xmlns="http://top-logic.com/base/services/cs"
+			env:role="http://top-logic.com/sequence" tx="17397" />
+		<source xmlns="http://top-logic.com/base/services/cs">masterFrame_0_t_0_b</source>
+	</env:Header>
+	<env:Body>
+		<execute xmlns="http://top-logic.com/base/services/ajax">
+			<component xmlns="http://top-logic.com/base/services/cs"
+				env:role="http://top-logic.com/component" source="masterFrame_0_t_0_b"
+				target="masterFrame_0_t_0_b" />
+			<command>tabSwitch</command>
+			<arguments>
+				<argument>
+					<name>tab</name>
+					<value>
+						<int xmlns="http://top-logic.com/ns/xml-value">13</int>
+					</value>
+				</argument>
+			</arguments>
+		</execute>
+	</env:Body>
+</env:Envelope>

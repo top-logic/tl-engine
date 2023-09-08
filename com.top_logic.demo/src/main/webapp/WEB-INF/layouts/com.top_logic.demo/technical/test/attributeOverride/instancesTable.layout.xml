@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,root"
+		isSecurityMaster="false"
+		type="test.override:I"
+	>
+		<name key="dynamic.8f977ef0-0842-4f53-80b9-03e5ec29b142">
+			<en>Table with instances</en>
+			<de>Tabelle mit Instanzen</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.override:I`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.override:I`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_dadc6d1e_165f_428a_8cde_a418b5003dae"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				confirm="true"
+				disabledImage=""
+				group="Delete"
+				image=""
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.1c4040df-8cd2-46b8-93c0-22e216b07883">
+					<en>Delete element</en>
+					<de>Element löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/test/attributeOverride/newElementWithGenericForm/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/attributeOverride/newElementWithSpecializedForm/dialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

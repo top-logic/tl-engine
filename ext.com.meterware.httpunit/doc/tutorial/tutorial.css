@@ -1,0 +1,15 @@
+PRE { font-family: "courier new", courier; font-size: 8pt;
+      margin-left: 2%; margin-right: 2%;
+      padding-top: .5em; padding-bottom: .5em; padding-right: .5em; padding-left: .5em;
+      border-color: black; border-width: 2; border-style: solid }
+PRE.test-code { background-color: #cccccc }
+PRE.servlet-code { background-color: #cceeee }
+OL { margin-top: 0 }
+P.goals { font-family: helvetica, ariel, sans-serif; font-size: x-small;
+          background-color: #ffffdd; border-color: black; border-style: solid;
+          border-top-width: 2px; border-bottom-width: 2px; border-left-width: 0px; border-right-width: 0px }
+P.location { font-family: helvetica, ariel, sans-serif; font-size: x-small;
+          background-color: #ffff66; border-color: #dddddd; border-style: solid;
+          padding-bottom: 4px; padding-left: 4px; padding-top: 4px;
+          border-top-width: 0px; border-bottom-width: 2px; border-left-width: 0px; border-right-width: 0px }
+UL { margin-top: 0 }

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Show (and edit) the security of a contract -->
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="resPrefix"/>
+		<param name="accessor"
+			value="com.top_logic.element.journal.MessageJournalAccessor"
+		/>
+		<param name="componentClass"
+			value="com.top_logic.element.journal.ShowHistoryDialog"
+		/>
+		<param name="master"
+			value=""
+		/>
+	</params>
+
+	<securityLayout name="${namePrefix}showFullSupplierHistory"
+		horizontal="false"
+		titleKey="${resPrefix}tabber"
+	>
+		<components>
+			<component class="${componentClass}"
+				buttonComponent="${namePrefix}showFullSupplierHistoryDialogButtons"
+				isSecurityMaster="true"
+				model="selection(${master})"
+				name="${namePrefix}showFullSupplierHistoryDialog"
+				page="/jsp/journal/ShowHistoryDialog.jsp"
+				resPrefix="layouts.journal.showFullHistory_aliased.showFullSupplierHistoryDialog."
+				securityProviderClass="master"
+			>
+				<!-- placeholder which is necessary to enable custumized tables in derived classes. -->
+				<tables>
+					<table name="journal">
+						<column-default accessor="${accessor}"/>
+					</table>
+				</tables>
+			</component>
+			<buttonbar name="${namePrefix}showFullSupplierHistoryDialogButtons"/>
+		</components>
+	</securityLayout>
+</template>

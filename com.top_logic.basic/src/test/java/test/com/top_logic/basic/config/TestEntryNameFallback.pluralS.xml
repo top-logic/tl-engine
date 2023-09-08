@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<test xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<list-configs>
+		<list-config />
+		<list-config />
+	</list-configs>
+</test>

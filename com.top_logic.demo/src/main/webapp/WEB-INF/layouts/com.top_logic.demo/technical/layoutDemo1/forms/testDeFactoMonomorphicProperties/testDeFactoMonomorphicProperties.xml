@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="TestDeFactoMonomorphicProperties"
+		/>
+	</params>
+
+	<include name="com.top_logic.demo/technical/layoutDemo1/forms/declarative/declarativeFormDemo.xml"
+		formType="com.top_logic.demo.layout.form.declarative.tests.TestDeFactoMonomorphicProperties"
+		namePrefix="${namePrefix}"
+		resPrefix="layouts.layoutdemo.form.testDeFactoMonomorphicProperties"
+	/>
+</template>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Configuration File used for testing ThreadContext. This file must exists to be able to read corresponding .config.xml -->
+<root>
+</root>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="dynamicDemoDefault">
+	<components>
+		<component class="com.top_logic.mig.html.layout.SimpleComponent"
+			content="Dynamic layout demo default layout. This is shown when resolver can not resolve layout for model."
+		/>
+		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+	</components>
+</layout>

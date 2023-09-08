@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/layoutPlaceholder.template.xml"
+>
+	<arguments>
+		<components>
+			<component class="com.top_logic.layout.editor.components.ComponentPlaceholder"
+				name="com.top_logic.demo/technical/components/dropOn/treeGrid/componentPlaceholderLayout.layout.xml#placeholder"
+			/>
+		</components>
+	</arguments>
+</config:template-call>

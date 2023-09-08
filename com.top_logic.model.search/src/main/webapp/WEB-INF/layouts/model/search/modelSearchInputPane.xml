@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.model.search.ui.SearchComponent"
+	name="SearchComponent"
+	searchExpressionEditorsTabbarName="ModelSearchTabBar"
+	searchExpressionSelectorName="SearchSelectorComponent"
+	showMaximize="true"
+	titleKey="layouts.model.search.modelSearch.SearchComponent.title"
+	toolbar="true"
+>
+	<include name="model/search/modelSearchSelector.xml"/>
+
+	<tabbar name="ModelSearchTabBar">
+		<component-resolvers>
+			<component-resolver class="com.top_logic.model.search.ui.selector.UpdateSearchExpressionSelection"/>
+		</component-resolvers>
+
+		<include name="model/search/modelSearchGuiEditor.xml"/>
+		<include name="model/search/modelSearchExpertEditor.xml"/>
+	</tabbar>
+
+	<buttons>
+		<button id="refreshSearch"
+			class="com.top_logic.model.search.ui.RefreshSearchHandler"
+			clique="refresh"
+		/>
+	</buttons>
+</component>

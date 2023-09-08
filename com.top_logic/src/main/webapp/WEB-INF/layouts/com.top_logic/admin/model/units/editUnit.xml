@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout horizontal="true">
+	<components>
+		<tableView name="AdminUnitTable"
+			isSecurityMaster="true"
+			modelBuilder="com.top_logic.layout.table.UnitTableModelBuilder"
+			objectType="tl.units:Unit"
+			resPrefix="admin.unit.edit.table."
+			securityProviderClass="securityRoot"
+		>
+			<layoutInfo size="413"/>
+			<table
+				defaultSortOrder="sortOrder"
+				fixedColumns="0"
+			>
+				<column-default
+					accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+					filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+				/>
+				<columns>
+					<column name="name"
+						columnWidth="110px"
+						sortKeyProvider="com.top_logic.layout.LabelMapping"
+					/>
+					<column name="format"
+						columnWidth="150px"
+						labelProvider="com.top_logic.layout.provider.DefaultLabelProvider"
+					/>
+					<column name="sortOrder"
+						columnWidth="110px"
+					/>
+				</columns>
+			</table>
+		</tableView>
+		<layout>
+			<components>
+				<component class="com.top_logic.layout.unit.EditUnitComponent"
+					model="selection(AdminUnitTable)"
+					name="EditUnit"
+					page="/jsp/unit/EditUnit.jsp"
+					resPrefix="admin.unit.edit."
+					securityProviderClass="master"
+				>
+					<dialogs>
+						<layout name="newUnitDialog">
+							<dialogInfo
+								executability="InViewMode"
+								height="290"
+								openHandlerClass="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+								openerCommandGroup="Delete"
+								width="400"
+							/>
+
+							<components>
+								<component class="com.top_logic.layout.unit.NewUnitComponent"
+									name="NewUnit"
+									page="/jsp/unit/NewUnit.jsp"
+									resPrefix="admin.unit.edit.new."
+									securityProviderClass="dialogParent"
+								/>
+								<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+							</components>
+						</layout>
+					</dialogs>
+				</component>
+				<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+			</components>
+		</layout>
+	</components>
+</layout>

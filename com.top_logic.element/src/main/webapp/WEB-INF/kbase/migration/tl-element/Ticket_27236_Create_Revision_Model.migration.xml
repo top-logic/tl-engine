@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27236_Create_Revision_Model"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27205_KeyAttributes_for_Association"
+			module="tl"
+		/>
+		<dependency name="Ticket_27215_Historic_multiple_references"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_27236_Create_Revision_Model.db.transform.xslt"
+		/>
+
+		<update-annotations name="tl.core">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.model.core.generated"
+					interface-package="com.top_logic.model.core"
+				/>
+				<factory value="com.top_logic.element.model.DefaultModelFactory"/>
+			</annotations>
+		</update-annotations>
+
+		<create-class name="tl.core:Author"
+			abstract="true"
+			primary-generalization="tl.model:TLObject"
+		/>
+		<create-property name="tl.core:Author#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+
+		<create-class name="tl.core:Revision"
+			primary-generalization="tl.model:TLObject"
+		>
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.knowledge.service.Revision"/>
+				<instance-presentation icon="theme:mime.Revision"/>
+				<main-properties properties="revision, date, author"/>
+				<table name="Revision"/>
+				<storage-algorithm>
+					<primitive-storage storage-mapping="com.top_logic.element.meta.kbbased.storage.mappings.RevisionAsLong"/>
+				</storage-algorithm>
+			</annotations>
+		</create-class>
+		<create-property name="tl.core:Revision#revision"
+			type="tl.core:Long"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.knowledge.service.Revision#getCommitNumber()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.core:Revision#date"
+			type="tl.core:DateTime"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.knowledge.service.Revision#resolveDate()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+				<delete-protected/>
+				<format format-ref="date-time"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.core:Revision#author"
+			type="tl.core:Author"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.knowledge.service.Revision#resolveAuthor()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.core:Revision#log"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.knowledge.service.Revision#getLog()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+
+		<add-class-generalizations name="tl.accounts:Person">
+			<generalizations>
+				<generalization type="tl.core:Author"/>
+			</generalizations>
+		</add-class-generalizations>
+		<remove-class-generalizations name="tl.accounts:Person">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</remove-class-generalizations>
+		<mark-override name="tl.accounts:Person#name"
+			definition="tl.core:Author#name"
+		/>
+
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_27236_Create_Revision_Model.model.transform.xslt"
+		/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

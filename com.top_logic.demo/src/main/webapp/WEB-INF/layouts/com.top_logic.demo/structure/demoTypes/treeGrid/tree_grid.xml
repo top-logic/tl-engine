@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="modelBuilder"/>
+		<param name="model"
+			optional="true"
+		/>
+		<param name="partnerGroup"
+			optional="true"
+		/>
+		<param name="elementTypes"
+			value="DemoTypes:Root, DemoTypes:A, DemoTypes:B, DemoTypes:BNotUnderA, DemoTypes:C, DemoTypes:L"
+		/>
+		<param name="resetInvisible"
+			optional="true"
+		/>
+		<param name="defaultFor">
+			<!-- Empty by default. -->
+		</param>
+		<param name="additionalButtons">
+			<!-- Empty by default. -->
+		</param>
+		<param name="titleKey">
+			<!-- Empty by default. -->
+		</param>
+		<param name="multiSelection"
+			value="true"
+		/>
+	</params>
+
+	<layout name="${namePrefix}treeGridDialog"
+		horizontal="true"
+	>
+		<componentControlProvider class="com.top_logic.layout.structure.MaximizableLayout"/>
+
+		<components>
+			<layoutControl name="${namePrefix}treeGridSidebar"
+				componentName="${namePrefix}treeGrid"
+			>
+				<layoutInfo size="200px"/>
+				<componentControlProvider class="com.top_logic.layout.structure.TableFilterLayoutControlProvider"/>
+			</layoutControl>
+			<grid name="${namePrefix}treeGrid"
+				adjustSelectionWhenCollapsing="false"
+				defaultFor="${defaultFor}"
+				defaultSelection="false"
+				elementTypes="${elementTypes}"
+				isSecurityMaster="true"
+				maximizeRoot="${namePrefix}treeGridDialog"
+				model="${model}"
+				modelBuilder="${modelBuilder}"
+				modifier="com.top_logic.demo.edit.DemoFormContextModificator"
+				page=""
+				partnerGroup="${partnerGroup}"
+				resPrefix="layouts.demo.table.tree_grid.treeGrid."
+				resetInvisible="true"
+				showMinimize="false"
+				titleKey="${titleKey}"
+			>
+				<selectionModelFactory multiple="${multiSelection}"/>
+				<buttons>
+					<button id="exportExcelGrid"
+						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+						exportNameKey="/sTypes_Demo.xls"
+					/>
+					<button id="toggleRootVisibility"
+						class="com.top_logic.demo.table.ToggleRootVisibilityCommand"
+						image="theme:ICON_GLOBE"
+						resourceKey="layouts.demo.table.tree_grid.toggleRootVisibility"
+					/>
+					<button id="newASibling"
+						class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+						contextSelector="com.top_logic.element.layout.grid.SibblingCreateContext"
+						group="Create"
+						image="theme:DEMO_NEW_AS"
+						nodeType="A"
+						resourceKey="layouts.demo.table.tree_grid.newASibling"
+					/>
+					<button id="newAChild"
+						class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+						contextSelector="com.top_logic.element.layout.grid.ChildCreateContext"
+						group="Create"
+						image="theme:DEMO_NEW_AS_CHILD"
+						nodeType="A"
+						resourceKey="layouts.demo.table.tree_grid.newAChild"
+					/>
+					<button id="newBSibling"
+						class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+						contextSelector="com.top_logic.element.layout.grid.SibblingCreateContext"
+						group="Create"
+						image="theme:DEMO_NEW_BS"
+						nodeType="B"
+						resourceKey="layouts.demo.table.tree_grid.newBSibling"
+					/>
+					<button id="newBChild"
+						class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+						contextSelector="com.top_logic.element.layout.grid.ChildCreateContext"
+						group="Create"
+						image="theme:DEMO_NEW_BS_CHILD"
+						nodeType="B"
+						resourceKey="layouts.demo.table.tree_grid.newBChild"
+					/>
+					<button id="newCSibling"
+						class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+						contextSelector="com.top_logic.element.layout.grid.SibblingCreateContext"
+						group="Create"
+						image="theme:DEMO_NEW_CS"
+						nodeType="C"
+						resourceKey="layouts.demo.table.tree_grid.newCSibling"
+					/>
+					<button id="newCChild"
+						class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
+						contextSelector="com.top_logic.element.layout.grid.ChildCreateContext"
+						group="Create"
+						image="theme:DEMO_NEW_CS_CHILD"
+						nodeType="C"
+						resourceKey="layouts.demo.table.tree_grid.newCChild"
+					/>
+					${additionalButtons}
+				</buttons>
+				<tables>
+					<table
+						defaultColumns="name,date,float,floatDefault,long,string,structure"
+						defaultSortOrder="name"
+						fixedColumns="2"
+					>
+						<column-default
+							accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+							columnWidth="200px"
+						>
+							<additionalHeaders>
+								<byExpression
+									label="values -> $values.filter(entry -> $entry.isEmpty()).size()"
+									resKey="class.com.top_logic.layout.table.model.evaluation.I18NConstants.HEADER_NULL_COUNT__VALUE"
+								/>
+							</additionalHeaders>
+						</column-default>
+						<columns>
+							<column name="technical">
+								<additionalHeaders/>
+							</column>
+							<column name="name"
+								mandatory="true"
+							>
+								<additionalHeaders/>
+							</column>
+							<column name="float"
+								columnWidth="80px"
+								cssClass="tblRight"
+							>
+								<additionalHeaders>
+									<byExpression
+										label="values -> max($values)"
+										resKey="class.com.top_logic.layout.table.model.evaluation.I18NConstants.HEADER_MAX__VALUE"
+									/>
+									<byExpression
+										label="values -> min($values)"
+										resKey="class.com.top_logic.layout.table.model.evaluation.I18NConstants.HEADER_MIN__VALUE"
+									/>
+								</additionalHeaders>
+							</column>
+							<column name="floatDefault"
+								columnWidth="120px"
+							>
+								<additionalHeaders>
+									<byExpression
+										label="values -> average($values)"
+										resKey="class.com.top_logic.layout.table.model.evaluation.I18NConstants.HEADER_AVERAGE__VALUE"
+									/>
+									<byExpression
+										label="values -> sum($values)"
+										resKey="class.com.top_logic.layout.table.model.evaluation.I18NConstants.HEADER_SUM__VALUE"
+									/>
+								</additionalHeaders>
+							</column>
+							<column name="long"
+								columnWidth="80px"
+								cssClass="tblRight"
+							/>
+						</columns>
+					</table>
+				</tables>
+			</grid>
+		</components>
+	</layout>
+</template>

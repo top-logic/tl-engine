@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/treetable.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
+		type="DemoTypes:DemoTypes.All"
+	>
+		<name key="dynamic.b7e1370a-fe10-475f-bdd9-e06a66a257fa">
+			<en>Tree table</en>
+			<de>Baumtabelle</de>
+			<tooltip>
+				<en>"Children" of a node are the values of the "priorityTable" attribute</en>
+				<de>"Kinder" eines Knotens sind die Werte des Attributes "priorityTable"</de>
+			</tooltip>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`DemoTypes:DemoTypes.A#priorityTable`)"
+			finite="false"
+			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
+			parents="node->$node.referers(`DemoTypes:DemoTypes.A#priorityTable`)"
+			rootNode="model -> $model"
+		/>
+	</arguments>
+</config:template-call>

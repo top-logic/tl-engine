@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<tableView name="StatementMonitorTable"
+	resPrefix="util.monitor.db.layout."
+	securityProviderClass="securityRoot"
+>
+	<modelBuilder class="com.top_logic.mig.html.IdentityListModelBuilder"/>
+
+	<table
+		defaultColumns="tableName, time, calls, rows, stack, statement"
+		defaultSortOrder="time:descending,calls:descending"
+		fixedColumns="0"
+	>
+		<columns>
+			<column name="tableName"
+				accessor="com.top_logic.util.monitor.db.StatementAccessor$Table"
+				columnWidth="250px"
+				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+			/>
+			<column name="statement"
+				accessor="com.top_logic.util.monitor.db.StatementAccessor"
+				columnWidth="600px"
+				resourceProvider="com.top_logic.util.monitor.db.SQLResourceProvider"
+			>
+				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+					show-option-entries="false"
+				/>
+			</column>
+			<column name="time"
+				accessor="com.top_logic.util.monitor.db.StatementAccessor$Time"
+				cellStyle="text-align:right;"
+				columnWidth="75px"
+				labelProvider="com.top_logic.util.monitor.db.NanoSecondsLabelProvider"
+			>
+				<filterProvider class="com.top_logic.util.monitor.db.NanoSecondsFilterProvider"
+					show-option-entries="false"
+				/>
+			</column>
+			<column name="timeAvg"
+				accessor="com.top_logic.util.monitor.db.StatementAccessor$TimeAvg"
+				cellStyle="text-align:right;"
+				columnWidth="75px"
+				labelProvider="com.top_logic.util.monitor.db.NanoSecondsLabelProvider"
+			>
+				<filterProvider class="com.top_logic.util.monitor.db.NanoSecondsFilterProvider"
+					show-option-entries="false"
+				/>
+			</column>
+			<column name="timeMax"
+				accessor="com.top_logic.util.monitor.db.StatementAccessor$TimeMax"
+				cellStyle="text-align:right;"
+				columnWidth="75px"
+				labelProvider="com.top_logic.util.monitor.db.NanoSecondsLabelProvider"
+			>
+				<filterProvider class="com.top_logic.util.monitor.db.NanoSecondsFilterProvider"
+					show-option-entries="false"
+				/>
+			</column>
+			<column name="calls"
+				accessor="com.top_logic.util.monitor.db.StatementAccessor$Calls"
+				cellStyle="text-align:right;"
+				columnWidth="75px"
+				filterProvider="com.top_logic.layout.table.filter.SimpleComparableFilterProvider"
+			/>
+			<column name="rows"
+				accessor="com.top_logic.util.monitor.db.StatementAccessor$Rows"
+				cellStyle="text-align:right;"
+				columnWidth="75px"
+				filterProvider="com.top_logic.layout.table.filter.SimpleComparableFilterProvider"
+			/>
+			<column name="rowsAvg"
+				accessor="com.top_logic.util.monitor.db.StatementAccessor$RowsAvg"
+				cellStyle="text-align:right;"
+				columnWidth="75px"
+				filterProvider="com.top_logic.layout.table.filter.SimpleComparableFilterProvider"
+			/>
+			<column name="rowsMax"
+				accessor="com.top_logic.util.monitor.db.StatementAccessor$RowsMax"
+				cellStyle="text-align:right;"
+				columnWidth="75px"
+				filterProvider="com.top_logic.layout.table.filter.SimpleComparableFilterProvider"
+			/>
+			<column name="stack"
+				accessor="com.top_logic.util.monitor.db.StatementAccessor$Stacktrace"
+				columnWidth="50px"
+				excelRenderer="com.top_logic.layout.renderers.ThrowableExportRenderer"
+				labelProvider="com.top_logic.layout.provider.label.StackTraceLabelProvider"
+				renderer="com.top_logic.layout.renderers.ThrowableColumnRenderer"
+				sortable="false"
+			>
+				<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+					show-option-entries="false"
+				/>
+			</column>
+		</columns>
+	</table>
+
+	<buttons>
+		<button id="exportExcel"
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+			downloadNameKey="/sstatement-log.xls"
+		/>
+		<button id="clearMonitoring"
+			class="com.top_logic.util.monitor.db.ClearCommand"
+			disabledImage="theme:ICONS_BUTTON_CLEAR_DISABLED"
+			executability="com.top_logic.util.monitor.db.HasDataCollected"
+			image="theme:ICONS_BUTTON_CLEAR"
+			resourceKey="util.monitor.db.command.clearMonitoring"
+		/>
+		<button id="refreshMonitoring"
+			class="com.top_logic.util.monitor.db.RefreshMonitoringCommand"
+			disabledImage="theme:ICONS_BUTTON_REFRESH_DISABLED"
+			executability="com.top_logic.util.monitor.db.VisibleIfRunning"
+			image="theme:ICONS_BUTTON_REFRESH"
+			resourceKey="util.monitor.db.command.refreshMonitoring"
+		/>
+		<button id="startMonitoring"
+			class="com.top_logic.util.monitor.db.StartMonitoringCommand"
+			disabledImage="theme:ICONS_BUTTON_START_DISABLED"
+			image="theme:ICONS_BUTTON_START"
+			resourceKey="util.monitor.db.command.startMonitoring"
+		>
+			<executability>
+				<rule class="com.top_logic.util.monitor.db.MonitoringEnabled"/>
+				<rule class="com.top_logic.util.monitor.db.VisibleIfNotRunning"/>
+			</executability>
+		</button>
+		<button id="stopMonitoring"
+			class="com.top_logic.util.monitor.db.StopMonitoringCommand"
+			disabledImage="theme:ICONS_BUTTON_STOP_DISABLED"
+			executability="com.top_logic.util.monitor.db.VisibleIfRunning"
+			image="theme:ICONS_BUTTON_STOP"
+			resourceKey="util.monitor.db.command.stopMonitoring"
+		/>
+	</buttons>
+</tableView>

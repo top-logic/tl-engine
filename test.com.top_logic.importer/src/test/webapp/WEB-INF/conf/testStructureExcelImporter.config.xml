@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.importer.ImporterService">
+			<instance class="com.top_logic.importer.ImporterService">
+				<importers>
+					<importer name="structureExcel">
+						<parser class="com.top_logic.importer.excel.ExcelStructureImportParser"
+							mixed-mode="true"
+							header-row="-1" first-row="-1" header-key-word="ID"
+							sheet="StructureThree"
+							structure="testStruct"
+							uid="ID"
+							extensions=".xlsx,.xls">
+							<extractors>
+								<extractor class="com.top_logic.importer.excel.extractor.ExcelStructureExtractor" uid="ID">
+									<columns>
+										<column name="#[A]" level="1" title="#[A]" type="Context" uid="ID" />
+										<column name="#[B]" level="2" title="#[B]" type="Sub1"    />
+										<column name="#[C]" level="3" title="#[C]" type="Sub2"    />
+									</columns>
+								</extractor>
+							</extractors>
+							<mappings>
+								<mapping name="Nutzer"    attribute="responsible" >
+									<transformer class="com.top_logic.importer.excel.transformer.PersonTransformer" />
+								</mapping>
+								<mapping name="Ampel"     attribute="beacon"      add-null-value="false">
+									<transformer class="com.top_logic.importer.excel.transformer.FastListElementTransformer$SingleFastListElementTransformer"
+										fallback-name="Grün">
+										<mappings>
+											<mapping value="Grün" element="tl.beacon.three.green"  />
+											<mapping value="Gelb" element="tl.beacon.three.yellow" />
+											<mapping value="Rot"  element="tl.beacon.three.red"    />
+										</mappings>
+									</transformer>
+								</mapping>
+								<mapping name="Person"    attribute="lead"        >
+									<transformer class="com.top_logic.importer.excel.transformer.PersonContactTransformer" />
+								</mapping>
+								<mapping name="Firma"     attribute="company"     >
+									<transformer class="com.top_logic.importer.excel.transformer.CompanyContactTransformer" />
+								</mapping>
+								<mapping name="Zahl"      attribute="costs"       >
+									<transformer class="com.top_logic.importer.excel.transformer.DoubleTransformer" />
+								</mapping>
+								<mapping name="Aktiv"     attribute="isActive"    >
+									<transformer class="com.top_logic.importer.excel.transformer.BooleanTransformer" true="Ja" />
+								</mapping>
+								<mapping name="Aktiviert" attribute="activated"   >
+									<transformer class="com.top_logic.importer.excel.transformer.DateTransformer" format="dd.MM.yyyy" />
+								</mapping>
+								<mapping name="Land"      attribute="country"     />
+								<mapping name="Sprache"   attribute="language"    />
+							</mappings>
+						</parser>
+						<performer class="com.top_logic.importer.base.StructuredDataImportPerformer"
+							root-name="Root"
+							create-command-handler="createElement"
+							object-provider="test.com.top_logic.importer.structure.TestStructObjectProvider">
+							<mappings>
+								<mapping name="Root"    type="Root"    class="com.top_logic.importer.handler.structured.GoIntoDOImportHandler" /> 
+								<mapping name="Context" type="Root"    class="com.top_logic.importer.handler.structured.StructuredElementDOImportHandler" /> 
+								<mapping name="Sub1"    type="Context" class="com.top_logic.importer.handler.structured.StructuredElementDOImportHandler" /> 
+								<mapping name="Sub2"    type="Context" class="com.top_logic.importer.handler.structured.StructuredElementDOImportHandler" /> 
+<!-- 
+								<mapping name="SubSub1" type="Sub2"    class="com.top_logic.importer.handler.structured.GoIntoDOImportHandler" /> 
+								<mapping name="SubSub2" type="Sub2"    class="com.top_logic.importer.handler.structured.GoIntoDOImportHandler" /> 
+ -->
+							</mappings>
+						</performer>
+					</importer>
+				</importers>
+			</instance>
+		</config>
+	</services>
+
+	<configs />
+</application>

@@ -1,0 +1,15 @@
+.lcNavigation,
+.mainTabBar
+{
+    background-color: var(--TL-white-grey);
+}
+
+.BreadCrumbOuter
+{
+    background-color: rgba(var(--TL-iron-rgb), 0.5);
+}
+
+.firstLevelTabBar
+{
+    background-color: rgba(255, 255, 255, 0.0);
+}

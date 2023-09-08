@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<Configuration
+	com.top_logic.basic.Logger.exceptionLevel="DEBUG"
+	com.top_logic.basic.Logger.traceExceptions="true"
+	com.top_logic.basic.Logger.traceMessages="false"
+>
+	<Properties>
+		<!--
+			The Top-Logic alias LOG_PATH is defined in the application configuration.
+			Both occurrences (here and there) have to be changed in the same way.
+		-->
+		<Property name="log.directory">%LOG_PATH%</Property>
+		<Property name="filename.prefix">top-logic</Property>
+		<Property name="pattern.long">%date{ISO8601} %-5level [%thread]: %logger - %message%n%throwable</Property>
+		<Property name="pattern.plain">%message%n%throwable</Property>
+	</Properties>
+	<Appenders>
+		<Console name="STDOUT"
+			target="SYSTEM_OUT"
+		>
+			<PatternLayout pattern="${pattern.long}"/>
+		</Console>
+		<Console name="STDERR"
+			target="SYSTEM_ERR"
+		>
+			<PatternLayout pattern="${pattern.plain}"/>
+		</Console>
+		<RollingFile name="FILE_APPENDER"
+			fileName="${log.directory}/${filename.prefix}.main.log"
+			filePattern="${log.directory}/${filename.prefix}.main.%i.log"
+		>
+			<PatternLayout pattern="${pattern.long}"/>
+			<DefaultRolloverStrategy
+				fileIndex="min"
+				max="10"
+			/>
+			<SizeBasedTriggeringPolicy size="1 MB"/>
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+		<Logger name="STDOUT"
+			level="info"
+		>
+			<AppenderRef ref="STDOUT"/>
+		</Logger>
+		<Logger name="STDERR"
+			level="info"
+		>
+			<AppenderRef ref="STDERR"/>
+		</Logger>
+		<Root level="info">
+			<AppenderRef ref="STDOUT"/>
+			<AppenderRef ref="FILE_APPENDER"/>
+		</Root>
+	</Loggers>
+</Configuration>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/objectTiles.template.xml"
+>
+	<arguments name="%LAYOUT_RESPREFIX%tileName"
+		model="selection(com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List)"
+		tileName="ID_75e0cb16_f34e_46fe_8709_50d9792e8cda"
+	>
+		<modelBuilder class="com.top_logic.bpe.app.layout.StartEventListModelBuilder"/>
+		<preview class="com.top_logic.bpe.app.layout.tiles.StartEventTilePreview"
+			icon="theme:ICON_PLAY"
+		/>
+		<component class="com.top_logic.mig.html.layout.LayoutReference$LayoutReferenceComponent"
+			resource="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRun.layout.xml"
+		/>
+	</arguments>
+</config:template-call>

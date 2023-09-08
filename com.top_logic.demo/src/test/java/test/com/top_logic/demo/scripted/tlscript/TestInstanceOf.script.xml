@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Modellbasierte Suche > Expert"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Modellbasierte Suche > Expert"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+ singleton = `DemoTypes#ROOT`;
+ classifier = `tl5.enum:demo.federalstates#demo.federalstate.bb`;
+ singletonInstanceOfType = $singleton.instanceOf(`DemoTypes:Root`);
+ historicSingletonInstanceOfType = $singleton.inRevision($singleton.createRevision()).instanceOf(`DemoTypes:Root`);
+ historicSingletonInstanceOfDifferentType = $singleton.inRevision($singleton.createRevision()).instanceOf(`DemoTypes:A`);
+ classifierInstanceOfEnum = $classifier.instanceOf(`tl5.enum:demo.federalstates`);
+ historicClassifierInstanceOfEnum = $classifier.inRevision($classifier.modifiedRevision()).instanceOf(`tl5.enum:demo.federalstates`);
+ historicClassifierInstanceOfDifferentEnum = $classifier.inRevision($classifier.modifiedRevision()).instanceOf(`tl5.enum:demo.systemList`);
+ !$singletonInstanceOfType ? "Singleton must be instance of its type." :
+ (!$historicSingletonInstanceOfType ? "Historic singleton must be instance of its current type.": 
+ (!$classifierInstanceOfEnum ? "Classifier must be instance of its enumeration.": 
+ (!$historicClassifierInstanceOfEnum ? "Historic classifier must be instance of its current enumeration.": 
+ ($historicSingletonInstanceOfDifferentType ? "Historic singleton must not be be instance of a different.": 
+ ($historicClassifierInstanceOfDifferentEnum ? "Historic classifier must not be instance of different enumeration.": 
+ true)))));
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
+			command-label="Suchergebnisse aktualisieren"
+			command-name="refreshSearch"
+			component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
+			component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
+						tab-path="Modellbasierte Suche"
+					/>
+					<path>
+						<named-member name="result"/>
+					</path>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+				value="true"
+			/>
+		</action>
+	</actions>
+</action>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="element/grid.xml"
+	columns="name"
+	createButton=""
+	createType=""
+	model="provider(com.top_logic.element.layout.table.WrapperStructureModelBuilder$WrapperStructureModelProvider)"
+	namePrefix="plainStructure"
+	types="DemoPlain:A,DemoPlain:B"
+>
+	<modelBuilder class="com.top_logic.element.layout.table.WrapperStructureModelBuilder">
+		<root-objects types="DemoPlain:B"/>
+		<child-attributes>
+			<child-attribute name="DemoPlain:B#typedWrapperReverse"/>
+		</child-attributes>
+	</modelBuilder>
+
+	<table>
+		<table
+			defaultColumns="name"
+			fixedColumns="2"
+		>
+			<column-default columnWidth="200px"/>
+			<columns>
+				<column name="name"
+					columnWidth="320px"
+				>
+					<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"
+						resourceProvider="com.top_logic.element.layout.grid.TreeGridTypeProvider"
+					/>
+				</column>
+			</columns>
+		</table>
+	</table>
+</include>

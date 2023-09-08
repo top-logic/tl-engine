@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Testing the HttpOnly</title>
+	
+	<script type="text/javascript">
+		function testAccess() {
+			var failure = document.cookie.indexOf("JSESSIONID") >= 0;
+		
+ 			var out = document.getElementById("out");
+ 			out.innerHTML = "";
+			out.appendChild(
+				document.createTextNode(
+					(failure ? "Failed: " : "OK: ") + 
+					"Cookies: '" + document.cookie + "'"));
+		}
+	</script>
+</head>
+<body>
+
+<h1>Test for the HttpOnly flag of the Session Cookie</h1>
+
+<p>
+This test checks whether the browser suppresses reading the session cookie from JavaScript.
+</p>
+
+<p>
+	<button onclick="return testAccess(); ">Show cookies</button>
+</p>
+
+<div id="out">
+Press button to test.
+</div>
+
+</body>
+</html>  	

@@ -1,0 +1,50 @@
+<h2>Syntax</h2> 
+<pre>	<code>$match.regexEnd()
+
+$match.regexEnd($index)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Liefert die Endposition des gegebenen <a class="tlObject" data-custom="true" href="?page=regexSearch&amp;uuid=74b294a0-955f-4fc0-b55e-793641445745">Suchtreffers</a> im Suchtext.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>match</td> 
+   <td>Fachobjekt</td> 
+   <td>Die Liste von <a class="tlObject" data-custom="true" href="?page=regexSearch&amp;uuid=74b294a0-955f-4fc0-b55e-793641445745">Suchtreffern</a>, von denen die Startpositionen ermittelt werden sollen.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>index</td> 
+   <td>Zahl</td> 
+   <td>Nur Gruppen mit dem Index werden berücksichtigt</td> 
+   <td>nein</td> 
+   <td>0 - liefert den vollständigen Text des Suchtreffers</td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p> 
+<p>Eine Menge mit Endpositionen für jeden Suchtreffer.</p> 
+<h2>Beispiele</h2> 
+<h3>Ohne Index</h3> 
+<pre>	<code>regex("b+a").regexSearch("XXXbbbaYYYbba").regexEnd()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> [7, 13]</p> 
+<p>Das Zeichen nach dem <code class="hljs inlineCode">a</code> des ersten Suchtreffers hat in der Zeichenkette die Position 7 (Zählung beginnt bei 0). Das Zeichen nach dem <code class="hljs inlineCode">a</code> des zweiten Suchtreffers hat in der Zeichenkette die Position 10.</p> 
+<h3>Mit Index</h3> 
+<pre>	<code>regex("(b+)a").regexSearch("XXXbbbaYYYbba").regexEnd(1)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> [6, 12]</p> 
+<p>Es wird nur die Gruppe (b+) betrachtet, statt des ganzen Suchtreffers. Das Zeichen nach dem letzte <code class="hljs inlineCode">b</code> des ersten Suchtreffers hat in der Zeichenkette die Position 4. Das Zeichen nach dem letzte <code class="hljs inlineCode">b</code> des zweiten Suchtreffers hat in der Zeichenkette die Position 11.</p> 
+<p> </p>

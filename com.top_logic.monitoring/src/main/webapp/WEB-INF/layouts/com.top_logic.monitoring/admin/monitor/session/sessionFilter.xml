@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.monitoring.session.SessionSearchComponent"
+	isSecurityMaster="true"
+	name="sessionSearch"
+	page="/jsp/monitoring/session/sessionSearchForm.jsp"
+	resPrefix="layouts.monitoring.session.sessionFilter.sessionSearch."
+	securityProviderClass="securityRoot"
+	toolbar="false"
+>
+	<commands>
+		<command id="update"
+			class="com.top_logic.monitoring.session.SessionSearchComponent$Update"
+		/>
+	</commands>
+
+	<toolbar-groups>
+		<toolbar-group name="refresh">
+			<buttons>
+				<button
+					command-id="update"
+					image="theme:ICONS_BUTTON_REFRESH"
+					label-key="tl.command.refresh"
+					not-executable-image="theme:ICONS_BUTTON_REFRESH_DISABLED"
+				/>
+			</buttons>
+		</toolbar-group>
+	</toolbar-groups>
+</component>

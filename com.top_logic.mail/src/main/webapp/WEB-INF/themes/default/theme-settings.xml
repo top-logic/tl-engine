@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="mime.MailExt"
+		value="/mimetypes/MailExt.png"
+	/>
+	<icon name="mime.tl.mail.MailFolder"
+		value="/mimetypes/MailFolder.png"
+	/>
+	<icon name="mime.tl.mail.Mail"
+		value="/mimetypes/Mail.png"
+	/>
+</settings>

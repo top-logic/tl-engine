@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check visibility"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Löschen..."
+					user-id="root"
+				>
+					<business-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+						component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+						component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+						tile-path="Group1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Löschen..."
+					user-id="root"
+				>
+					<business-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+						component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+						component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+						tile-path="Group2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Löschen..."
+					user-id="root"
+				>
+					<business-object config:interface="com.top_logic.mig.html.layout.tiles.scripting.TileLayoutNaming$TileLayoutName"
+						component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+						component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+						tile-path="Group3"
+					/>
+				</action>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.UpdateCompositeTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tiles="tileTestControlsForm,tiledemoTypeOverview"
+					user-id="root"
+				/>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.DisplayTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tile-path="Control tests"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileTestControlsForm"
+					visible="true"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileDemoTypesTreeTable"
+					visible="false"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand"
+					command-label="Übergeordnete Kachel"
+					command-name="stepOutTile"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.DisplayTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tile-path="Demotypen-Übersicht"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileTestControlsForm"
+					visible="false"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileDemoTypesTreeTable"
+					visible="true"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.mig.html.layout.tiles.component.StepOutTileCommand"
+					command-label="Übergeordnete Kachel"
+					command-name="stepOutTile"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check existence"
+		>
+			<actions>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.UpdateCompositeTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tiles="tileTestControlsForm"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ModelNotExistsAssertionOp"
+					failure-pattern="Search for component 'com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileDemoTypesTreeTable' in &quot;Technisches Demo > Layout-Framework#2 > Kachel-Layout&quot; failed"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileDemoTypesTreeTable"
+						tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout"
+					/>
+				</action>
+				<action class="com.top_logic.mig.html.layout.tiles.scripting.UpdateCompositeTileActionOp"
+					component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+					component-name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#TilesContainer"
+					tiles="tiledemoTypeOverview"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ModelNotExistsAssertionOp"
+					failure-pattern="Search for component 'com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileTestControlsForm' in &quot;Technisches Demo > Layout-Framework#2 > Kachel-Layout&quot; failed"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/layoutDemo2/tiles/tileLayoutDemo.layout.xml#tileTestControlsForm"
+						tab-path="Technisches Demo > Layout-Framework#2 > Kachel-Layout"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
+			template-name-comment="Persoenliche Einstellungen zuruecksetzen"
+		/>
+	</actions>
+</action>

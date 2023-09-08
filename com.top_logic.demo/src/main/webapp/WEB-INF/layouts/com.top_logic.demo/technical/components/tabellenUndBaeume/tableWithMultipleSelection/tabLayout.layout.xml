@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_34a3aa07_a43a_4079_a49f_208b8e326bd8">
+		<tabLabel key="dynamic.d1c0cfd6-def5-4b58-8643-3a6f115b83a6">
+			<en>Table with multiple selection</en>
+			<de>Tabelle mit Mehrfachauswahl</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/tableWithMultipleSelection/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

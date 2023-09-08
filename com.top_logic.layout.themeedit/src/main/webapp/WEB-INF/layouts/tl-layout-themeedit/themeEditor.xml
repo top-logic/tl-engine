@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="themEditor"
+		/>
+		<param name="resPrefix"
+			value="layouts.tl-layout-themeedit.themeEditor"
+		/>
+	</params>
+
+	<layout name="${namePrefix}Layout"
+		horizontal="true"
+	>
+		<tableView name="${namePrefix}ThemeTable"
+			securityProviderClass="securityRoot"
+			titleKey="${resPrefix}.themes.table.title"
+		>
+			<layoutInfo size="300px"/>
+			<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.ThemeListModelBuilder"/>
+
+			<table
+				id-column="name"
+				resPrefix="${resPrefix}.themes.table.columns"
+			>
+				<columns>
+					<column name="name">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getId"
+							type="com.top_logic.gui.config.ThemeConfig"
+						/>
+					</column>
+				</columns>
+			</table>
+
+			<dialogs>
+				<layout name="${namePrefix}CreateThemeDialog"
+					titleKey="${resPrefix}.themes.create.title"
+				>
+					<dialogInfo
+						defaultI18n="${resPrefix}.themes.create.dialog"
+						height="350"
+						image="theme:ICON_PLUS"
+						width="450"
+					/>
+
+					<components>
+						<form name="${namePrefix}CreateTheme"
+							buttonComponent="${namePrefix}CreateThemeButtonBar"
+							resetInvisible="true"
+							securityProviderClass="securityRoot"
+						>
+							<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeFormBuilder"
+								create="true"
+							/>
+
+							<buttons>
+								<button id="createTheme"
+									class="com.top_logic.layout.themeedit.browser.providers.theme.CreateThemeHandler"
+									clique="create"
+									group="Create"
+									resourceKey="${resPrefix}.themes.create"
+								/>
+							</buttons>
+						</form>
+						<buttonbar name="${namePrefix}CreateThemeButtonBar"/>
+					</components>
+				</layout>
+			</dialogs>
+			<buttons>
+				<button id="deleteTheme"
+					class="com.top_logic.layout.themeedit.browser.providers.theme.DeleteThemeHandler"
+					clique="delete"
+					confirm="true"
+					group="Delete"
+					resourceKey="${resPrefix}.themes.delete"
+					target="selection(self())"
+				>
+					<executability>
+						<rule class="com.top_logic.tool.execution.EmptyTableModelDisabledRule"/>
+						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotExtendedRule"/>
+						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"/>
+					</executability>
+				</button>
+				<button id="exportTheme"
+					class="com.top_logic.layout.themeedit.browser.providers.theme.download.DownloadThemeHandler"
+					clique="exportButtons"
+					image="theme:THEME_EXPORT"
+				/>
+				<button id="importTheme"
+					class="com.top_logic.layout.themeedit.browser.providers.theme.upload.UploadThemeHandler"
+					clique="importButtons"
+					image="theme:THEME_IMPORT"
+				/>
+				<button id="reloadTheme"
+					class="com.top_logic.tool.boundsec.CommandSequence"
+					clique="refresh"
+					group="Read"
+				>
+					<commands>
+						<call id="reloadThemeInternal"
+							class="com.top_logic.layout.themeedit.browser.providers.FastThemeReload"
+							group="Read"
+						/>
+						<call id="invalidateThemeEditor"
+							class="com.top_logic.mig.html.layout.InvalidateComponentCommand"
+							component-name="${namePrefix}VariablesTable"
+							group="Read"
+						/>
+					</commands>
+				</button>
+			</buttons>
+		</tableView>
+
+		<tabbar name="${namePrefix}StylesTabBar">
+			<include name="tl-layout-themeedit/settings.xml"
+				namePrefix="${namePrefix}"
+				resPrefix="${resPrefix}"
+			/>
+
+			<include name="tl-layout-themeedit/variables.xml"
+				namePrefix="${namePrefix}"
+				resPrefix="${resPrefix}"
+			/>
+
+			<include name="tl-layout-themeedit/styles.xml"
+				namePrefix="${namePrefix}"
+				resPrefix="${resPrefix}"
+			/>
+
+			<include name="tl-layout-themeedit/resources.xml"
+				namePrefix="${namePrefix}"
+				resPrefix="${resPrefix}"
+			/>
+		</tabbar>
+	</layout>
+</template>

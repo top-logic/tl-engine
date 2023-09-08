@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="com.top_logic/table.template.xml"
+	groups="commons"
+>
+	<properties extends="com.top_logic.layout.editor.config.TypeTemplateParameters">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="type"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="defaultColumns"
+			element-type="String"
+			type="List"
+		>
+			<hidden/>
+			<derived fun="com.top_logic.layout.editor.DefaultColumnsProvider">
+				<args>
+					<ref value="type"/>
+				</args>
+			</derived>
+			<format value="com.top_logic.basic.config.CommaSeparatedStrings"/>
+		</property>
+	</properties>
+
+	<config name="${name}"
+		defaultColumns="_actions,${defaultColumns}"
+		type="${type}"
+	>
+		<dialogs>
+			<config:template-call template="com.top_logic.model.search/create/genericCreateDialog.template.xml">
+				<arguments>
+					<title title="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"/>
+					<open-handler id="addRow"
+						config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+						image="theme:ICONS_ADD_BUTTON"
+						resourceKey="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"
+					/>
+					<typeOptions type="${type}"/>
+					<create-handler id="createRow">
+						<postCreateActions>
+							<setModel target="selection(__enclosingLayoutScope__#Table)"/>
+						</postCreateActions>
+					</create-handler>
+				</arguments>
+			</config:template-call>
+
+			<config:template-call
+				layout-scope="__editDialog__"
+				template="com.top_logic/dialog.template.xml"
+			>
+				<arguments createOpenerButtons="false">
+					<title>
+						<title key="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.editDialogTitle"/>
+					</title>
+					<open-handler id="editRow"
+						config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+						image="theme:ICONS_BUTTON_EDIT"
+						target="selection(self())"
+						targetComponent="__editForm__#Form"
+					>
+						<resourceKey key="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.editButton"/>
+						<postCreateActions>
+							<setEditMode>
+								<target name="__editForm__#Form"/>
+							</setEditMode>
+						</postCreateActions>
+					</open-handler>
+					<components>
+						<config:template-call
+							layout-scope="__editForm__"
+							template="com.top_logic.element/form.template.xml"
+						>
+							<arguments>
+								<name key="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.editFormTitle"/>
+							</arguments>
+							<layoutInfo/>
+						</config:template-call>
+					</components>
+				</arguments>
+			</config:template-call>
+		</dialogs>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`${type}`)"
+			supportsElement="element->$element.instanceOf(`${type}`)"
+		/>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.layout.table.provider.ButtonColumnProvider"
+				columnId="_actions"
+				width="40px"
+			>
+				<columnLabel key="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.buttonColumn"/>
+				<buttons>
+					<button id="openEditDialog"
+						class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+						dialog-name="__editDialog__#Dialog"
+						group="Write"
+						image="theme:ICONS_BUTTON_EDIT"
+						targetComponent="__editForm__#Form"
+					>
+						<resourceKey key="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.edit"/>
+						<postCreateActions>
+							<setEditMode>
+								<target name="__editForm__#Form"/>
+							</setEditMode>
+						</postCreateActions>
+					</button>
+				</buttons>
+			</configurationProvider>
+		</configurationProviders>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="deleteRow"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</config>
+</config:template>

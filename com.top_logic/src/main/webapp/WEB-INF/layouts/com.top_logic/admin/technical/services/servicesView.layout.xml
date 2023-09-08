@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_412e132a_488e_485d_837c_d8a9648720ae"
+		tabIcon=""
+		tabLabel="tl.admin.technical.services.tabber"
+	>
+		<components>
+			<layout horizontal="true">
+				<components>
+					<tableView name="TLServiceList"
+						securityProviderClass="securityRoot"
+						titleKey="tl.services.table.title"
+					>
+						<modelBuilder class="com.top_logic.layout.admin.component.TLServiceConfigListModelBuilder"/>
+
+						<layoutInfo size="390px"/>
+
+						<table
+							defaultColumns="status,name"
+							defaultSortOrder="name:ascending"
+							fixedColumns="0"
+							id-column="name"
+						>
+							<columns>
+								<column name="status"
+									columnLabelKey="tl.services.table.column.status.title"
+									columnWidth="35px"
+									filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
+									showHeader="false"
+								>
+									<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+										method="isActive"
+										type="com.top_logic.basic.module.BasicRuntimeModule"
+									/>
+									<renderer class="com.top_logic.layout.admin.component.TLServiceStatusRenderer"/>
+								</column>
+								<column name="name"
+									accessor="com.top_logic.layout.IdentityAccessor"
+									columnLabelKey="tl.services.table.column.i18NName.title"
+									columnWidth="300px"
+								>
+									<comparator class="com.top_logic.basic.col.MappedComparator"
+										mapping="com.top_logic.layout.LabelMapping"
+										valueOrder="com.top_logic.util.TLCollator"
+									/>
+								</column>
+								<column name="technicalName"
+									columnLabelKey="tl.services.table.column.technicalName.title"
+									columnWidth="300px"
+								>
+									<accessor class="com.top_logic.layout.admin.component.TLServiceTechnicalNameAccessor"/>
+								</column>
+							</columns>
+						</table>
+
+						<buttons>
+							<button id="stopService"
+								class="com.top_logic.layout.admin.component.TLStopServiceHandler"
+								image="theme:STOP_SERVICE"
+								target="selection(TLServiceList)"
+							/>
+							<button id="startService"
+								class="com.top_logic.layout.admin.component.TLStartServiceHandler"
+								image="theme:START_SERVICE"
+								target="selection(TLServiceList)"
+							/>
+							<button id="restartService"
+								class="com.top_logic.layout.admin.component.TLRestartServiceHandler"
+								image="theme:RESTART_SERVICE"
+								target="selection(TLServiceList)"
+							/>
+						</buttons>
+					</tableView>
+
+					<editor name="ServiceConfigEditor"
+						applyCommand="storeCustomServiceConfig"
+						editCommand="customEdit"
+						model="selection(TLServiceList)"
+						securityProviderClass="securityRoot"
+						showMaximize="true"
+						titleKey="tl.services.editor.title"
+					>
+						<component-resolvers>
+							<component-resolver class="com.top_logic.layout.admin.component.TLServicesCommandProvider"/>
+						</component-resolvers>
+						<modelBuilder class="com.top_logic.layout.admin.component.TLServiceConfigEditorFormBuilder">
+							<customizations>
+								<property name="com.top_logic.basic.module.ModuleSystem$ModuleConfiguration#key">
+									<annotations>
+										<options
+											fun="com.top_logic.layout.form.util.ModuleSystemFormUtils$AllModules"
+											mapping="com.top_logic.layout.form.util.ModuleSystemFormUtils$ModuleClassMapping"
+										/>
+										<control-provider value="com.top_logic.layout.form.template.SelectionControlProvider"/>
+										<option-labels value="com.top_logic.layout.form.util.ModuleSystemFormUtils$ModuleLabel"/>
+									</annotations>
+								</property>
+							</customizations>
+						</modelBuilder>
+
+						<buttons>
+							<button id="storeCustomServiceConfig"
+								class="com.top_logic.layout.admin.component.TLSaveServiceConfigHandler"
+								clique="create"
+								group="Create"
+								image="theme:SAVE_SERVICE_CONFIGURATION"
+							/>
+
+							<button id="customEdit"
+								class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+								clique="edit"
+							>
+								<executability>
+									<reference rule-id="SwitchToEditMode"/>
+									<rule class="com.top_logic.layout.admin.component.ModuleHasConfigurationRule"/>
+									<rule class="com.top_logic.layout.admin.component.TLServiceInAppExecutabilityRule"/>
+								</executability>
+							</button>
+							<button id="resetServiceConfig"
+								class="com.top_logic.layout.admin.component.TLResetServiceConfigHandler"
+								image="theme:RESET_SERVICE_CONFIGURATION"
+							>
+								<executability>
+									<rule class="com.top_logic.layout.admin.component.HasInAppServiceConfigExecutabilityRule"/>
+								</executability>
+							</button>
+						</buttons>
+					</editor>
+				</components>
+			</layout>
+		</components>
+	</arguments>
+</config:template-call>

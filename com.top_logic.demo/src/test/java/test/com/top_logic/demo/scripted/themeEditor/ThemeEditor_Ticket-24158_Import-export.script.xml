@@ -1,0 +1,570 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Theme initialisieren"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Tech. Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Theme Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Theme erstellen"
+					command-name="displayDialog_themEditorCreateThemeDialog"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorThemeTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateTheme"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="ThemeTest"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Erweitert"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateTheme"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="modern"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.themeedit.browser.providers.theme.CreateThemeHandler"
+					command-label="Erstellen"
+					command-name="createTheme"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateTheme"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="ThemeTest"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Theme Editor > Themes"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Theme Editor > Eigenschaften"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorSettingsForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+					command-label="Abbrechen"
+					command-name="nothing"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorSettingsForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Theme Editor > Variablen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Themevariable erstellen"
+					command-name="displayDialog_themEditorCreateVariableDialog"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorVariablesTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateVariable"
+							tab-path=""
+						/>
+						<path>
+							<labeled-member label="Themevariable Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<labeled-member label="Themevariable Konfiguration"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.gui.config.ThemeSetting$StringSetting"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateVariable"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Var"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Wert"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateVariable"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Hallo Welt"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.themeedit.browser.providers.CreateThemeVariableHandler"
+					command-label="Erstellen"
+					command-name="createThemeVariable"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorCreateVariable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Theme Editor > Styles"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.themeedit.browser.providers.stylesheet.OpenCreateStyleSheetDialogHandler"
+					command-label="Stylesheet anlegen"
+					command-name="addStyleSheet"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorStylesTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name der Stylesheet-Datei"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="themeTest.css"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Erstellen"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorStylesEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Theme Editor > Styles > Style-Sheet"
+						/>
+						<path>
+							<named-member name="styleData"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="div { border: 1px solid black; }"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorStylesEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Theme Editor > Ressourcen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.themeedit.browser.providers.resources.OpenCreateResourceFolderDialogHandler"
+					command-label="Verzeichnis erstellen"
+					command-name="createResourceFolder"
+					component-implementation-comment="com.top_logic.layout.tree.component.TreeComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorFolderTree"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Verzeichnispfad"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="bar"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Erstellen"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Ressource hochladen"
+					command-name="displayDialog_themEditorResourceUploadDialog"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorResourceList"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Ressourcen-Datei"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorResourceUploadForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+								base64data="PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8-CjwhLS0gQ3JlYXRlZCB3aXRoIElua3NjYXBlIChodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy8pIC0tPgoKPHN2ZwogICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iCiAgIHhtbG5zOmNjPSJodHRwOi8vY3JlYXRpdmVjb21tb25zLm9yZy9ucyMiCiAgIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyIKICAgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogICB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgd2lkdGg9IjY0cHgiCiAgIGhlaWdodD0iNjRweCIKICAgaWQ9InN2ZzI5ODUiCiAgIHZlcnNpb249IjEuMSIKICAgaW5rc2NhcGU6dmVyc2lvbj0iMC40OC4zLjEgcjk4ODYiCiAgIHNvZGlwb2RpOmRvY25hbWU9ImJ1dHRvblN0ZXBPdmVyLnN2ZyIKICAgaW5rc2NhcGU6ZXhwb3J0LWZpbGVuYW1lPSJDOlxsb2NhbFxkZXZlbFx3b3Jrc3BhY2UtdG9wbG9naWMtaGVhZDdcY29tLnRvcF9sb2dpY1x3ZWJhcHBcdGhlbWVzXGRlZmF1bHRcaWNvbnNcYnV0dG9uU3RlcE92ZXIucG5nIgogICBpbmtzY2FwZTpleHBvcnQteGRwaT0iMzEuNTQ5OTk5IgogICBpbmtzY2FwZTpleHBvcnQteWRwaT0iMzEuNTQ5OTk5Ij4KICA8ZGVmcwogICAgIGlkPSJkZWZzMjk4NyI-CiAgICA8bGluZWFyR3JhZGllbnQKICAgICAgIGlkPSJsaW5lYXJHcmFkaWVudDM5NDAiPgogICAgICA8c3RvcAogICAgICAgICBzdHlsZT0ic3RvcC1jb2xvcjojZDFlM2ZmO3N0b3Atb3BhY2l0eToxOyIKICAgICAgICAgb2Zmc2V0PSIwIgogICAgICAgICBpZD0ic3RvcDM5NDIiIC8-CiAgICAgIDxzdG9wCiAgICAgICAgIHN0eWxlPSJzdG9wLWNvbG9yOiM5M2JjZmY7c3RvcC1vcGFjaXR5OjAuMjkwNTAyNzk7IgogICAgICAgICBvZmZzZXQ9IjEiCiAgICAgICAgIGlkPSJzdG9wMzk0NCIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ-CiAgICA8bGluZWFyR3JhZGllbnQKICAgICAgIGlkPSJsaW5lYXJHcmFkaWVudDM5MTQiPgogICAgICA8c3RvcAogICAgICAgICBzdHlsZT0ic3RvcC1jb2xvcjojZmZmZmZmO3N0b3Atb3BhY2l0eTowLjY1MDk4MDQxOyIKICAgICAgICAgb2Zmc2V0PSIwIgogICAgICAgICBpZD0ic3RvcDM5MTYiIC8-CiAgICAgIDxzdG9wCiAgICAgICAgIHN0eWxlPSJzdG9wLWNvbG9yOiNmZmZmZmY7c3RvcC1vcGFjaXR5OjAuMjAxMTE3MzI7IgogICAgICAgICBvZmZzZXQ9IjEiCiAgICAgICAgIGlkPSJzdG9wMzkxOCIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ-CiAgICA8bGluZWFyR3JhZGllbnQKICAgICAgIGlkPSJsaW5lYXJHcmFkaWVudDM3NzQiPgogICAgICA8c3RvcAogICAgICAgICBzdHlsZT0ic3RvcC1jb2xvcjojYTVjNGYyO3N0b3Atb3BhY2l0eTowLjU3NTQxOTAxOyIKICAgICAgICAgb2Zmc2V0PSIwIgogICAgICAgICBpZD0ic3RvcDM3NzYiIC8-CiAgICAgIDxzdG9wCiAgICAgICAgIHN0eWxlPSJzdG9wLWNvbG9yOiNhNWM0ZjI7c3RvcC1vcGFjaXR5OjAuMjEyMjkwNTsiCiAgICAgICAgIG9mZnNldD0iMSIKICAgICAgICAgaWQ9InN0b3AzNzc4IiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudAogICAgICAgaWQ9ImxpbmVhckdyYWRpZW50Mzc2MyI-CiAgICAgIDxzdG9wCiAgICAgICAgIHN0eWxlPSJzdG9wLWNvbG9yOiMzODU3ODU7c3RvcC1vcGFjaXR5OjE7IgogICAgICAgICBvZmZzZXQ9IjAiCiAgICAgICAgIGlkPSJzdG9wMzc2NSIgLz4KICAgICAgPHN0b3AKICAgICAgICAgc3R5bGU9InN0b3AtY29sb3I6I2E1YzRmMjtzdG9wLW9wYWNpdHk6MTsiCiAgICAgICAgIG9mZnNldD0iMSIKICAgICAgICAgaWQ9InN0b3AzNzY3IiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudAogICAgICAgaW5rc2NhcGU6Y29sbGVjdD0iYWx3YXlzIgogICAgICAgeGxpbms6aHJlZj0iI2xpbmVhckdyYWRpZW50Mzc2MyIKICAgICAgIGlkPSJsaW5lYXJHcmFkaWVudDM3NjkiCiAgICAgICB4MT0iMzAuNTQ1NDUyIgogICAgICAgeTE9IjM5Ljk0ODg3OSIKICAgICAgIHgyPSIzMi4xODE4MTIiCiAgICAgICB5Mj0iNzMuMDk1OTQiCiAgICAgICBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgLz4KICAgIDxsaW5lYXJHcmFkaWVudAogICAgICAgaW5rc2NhcGU6Y29sbGVjdD0iYWx3YXlzIgogICAgICAgeGxpbms6aHJlZj0iI2xpbmVhckdyYWRpZW50Mzc3NCIKICAgICAgIGlkPSJsaW5lYXJHcmFkaWVudDM3ODAiCiAgICAgICB4MT0iMTcuNjU3MzU2IgogICAgICAgeTE9Ii0xMi4wMDE4NzciCiAgICAgICB4Mj0iMzIuMzE4MTgiCiAgICAgICB5Mj0iNDIuNzEzMDYyIgogICAgICAgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiCiAgICAgICBncmFkaWVudFRyYW5zZm9ybT0idHJhbnNsYXRlKC0wLjM2MzYzNjM2LDAuMzYzNjM2MzYpIiAvPgogICAgPGxpbmVhckdyYWRpZW50CiAgICAgICBpbmtzY2FwZTpjb2xsZWN0PSJhbHdheXMiCiAgICAgICB4bGluazpocmVmPSIjbGluZWFyR3JhZGllbnQzNzc0LTYiCiAgICAgICBpZD0ibGluZWFyR3JhZGllbnQzNzgwLTkiCiAgICAgICB4MT0iMzIuMzE4MTgiCiAgICAgICB5MT0iLTEuNzI3MjczMiIKICAgICAgIHgyPSIzMi4zMTgxOCIKICAgICAgIHkyPSIzOS40ODAyMjUiCiAgICAgICBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgLz4KICAgIDxsaW5lYXJHcmFkaWVudAogICAgICAgaWQ9ImxpbmVhckdyYWRpZW50Mzc3NC02Ij4KICAgICAgPHN0b3AKICAgICAgICAgc3R5bGU9InN0b3AtY29sb3I6I2ZmZmZmZjtzdG9wLW9wYWNpdHk6MC41ODgyMzUzMjsiCiAgICAgICAgIG9mZnNldD0iMCIKICAgICAgICAgaWQ9InN0b3AzNzc2LTUiIC8-CiAgICAgIDxzdG9wCiAgICAgICAgIHN0eWxlPSJzdG9wLWNvbG9yOiNmZmZmZmY7c3RvcC1vcGFjaXR5OjA7IgogICAgICAgICBvZmZzZXQ9IjEiCiAgICAgICAgIGlkPSJzdG9wMzc3OC01IiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudAogICAgICAgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCgxLjEsMCwwLDEuMDMyNjA4NywtMy4xOTA5MDk3LC0zLjA0MDUxMzYpIgogICAgICAgeTI9IjM5LjQ4MDIyNSIKICAgICAgIHgyPSIzMi4zMTgxOCIKICAgICAgIHkxPSItMS43MjcyNzMyIgogICAgICAgeDE9IjMyLjMxODE4IgogICAgICAgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiCiAgICAgICBpZD0ibGluZWFyR3JhZGllbnQzNzk3LTciCiAgICAgICB4bGluazpocmVmPSIjbGluZWFyR3JhZGllbnQzNzc0LTYtNCIKICAgICAgIGlua3NjYXBlOmNvbGxlY3Q9ImFsd2F5cyIgLz4KICAgIDxsaW5lYXJHcmFkaWVudAogICAgICAgaWQ9ImxpbmVhckdyYWRpZW50Mzc3NC02LTQiPgogICAgICA8c3RvcAogICAgICAgICBzdHlsZT0ic3RvcC1jb2xvcjojZmZmZmZmO3N0b3Atb3BhY2l0eTowLjU4ODIzNTMyOyIKICAgICAgICAgb2Zmc2V0PSIwIgogICAgICAgICBpZD0ic3RvcDM3NzYtNS0wIiAvPgogICAgICA8c3RvcAogICAgICAgICBzdHlsZT0ic3RvcC1jb2xvcjojZmZmZmZmO3N0b3Atb3BhY2l0eTowOyIKICAgICAgICAgb2Zmc2V0PSIxIgogICAgICAgICBpZD0ic3RvcDM3NzgtNS0zIiAvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudAogICAgICAgaW5rc2NhcGU6Y29sbGVjdD0iYWx3YXlzIgogICAgICAgeGxpbms6aHJlZj0iI2xpbmVhckdyYWRpZW50Mzc3NC0yIgogICAgICAgaWQ9ImxpbmVhckdyYWRpZW50Mzc4MC00IgogICAgICAgeDE9IjMyLjMxODE4IgogICAgICAgeTE9Ii03LjE4MzczMzUiCiAgICAgICB4Mj0iMzIuMzE4MTgiCiAgICAgICB5Mj0iNDYuNzY2MjgxIgogICAgICAgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIC8-CiAgICA8bGluZWFyR3JhZGllbnQKICAgICAgIGlkPSJsaW5lYXJHcmFkaWVudDM3NzQtMiI-CiAgICAgIDxzdG9wCiAgICAgICAgIHN0eWxlPSJzdG9wLWNvbG9yOiNhNWM0ZjI7c3RvcC1vcGFjaXR5OjAuNTAyNzkzMzE7IgogICAgICAgICBvZmZzZXQ9IjAiCiAgICAgICAgIGlkPSJzdG9wMzc3Ni0zIiAvPgogICAgICA8c3RvcAogICAgICAgICBzdHlsZT0ic3RvcC1jb2xvcjojYTVjNGYyO3N0b3Atb3BhY2l0eTowLjExNzMxODQ0OyIKICAgICAgICAgb2Zmc2V0PSIxIgogICAgICAgICBpZD0ic3RvcDM3NzgtMSIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ-CiAgICA8bGluZWFyR3JhZGllbnQKICAgICAgIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMS4wOTQ2NDI5LDAsMCwxLjEyMDQ4MTksLTIuOTc0NTEzOCwtMy42ODUxMDM5KSIKICAgICAgIHkyPSI0Ni43NjYyODEiCiAgICAgICB4Mj0iMzIuMzE4MTgiCiAgICAgICB5MT0iLTcuMTgzNzMzNSIKICAgICAgIHgxPSIzMi4zMTgxOCIKICAgICAgIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIgogICAgICAgaWQ9ImxpbmVhckdyYWRpZW50Mzg2NiIKICAgICAgIHhsaW5rOmhyZWY9IiNsaW5lYXJHcmFkaWVudDM3NzQtMiIKICAgICAgIGlua3NjYXBlOmNvbGxlY3Q9ImFsd2F5cyIgLz4KICAgIDxsaW5lYXJHcmFkaWVudAogICAgICAgaW5rc2NhcGU6Y29sbGVjdD0iYWx3YXlzIgogICAgICAgeGxpbms6aHJlZj0iI2xpbmVhckdyYWRpZW50MzkxNCIKICAgICAgIGlkPSJsaW5lYXJHcmFkaWVudDM5MjAiCiAgICAgICB4MT0iNS42MzYzNjM3IgogICAgICAgeTE9IjguMjcyNzI3NSIKICAgICAgIHgyPSI1OCIKICAgICAgIHkyPSI4LjI3MjcyNzUiCiAgICAgICBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIKICAgICAgIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMS4wMDcwMTIsMCwwLDEsLTAuMDQzMDI4NDYsMCkiIC8-CiAgICA8cmFkaWFsR3JhZGllbnQKICAgICAgIGlua3NjYXBlOmNvbGxlY3Q9ImFsd2F5cyIKICAgICAgIHhsaW5rOmhyZWY9IiNsaW5lYXJHcmFkaWVudDM5NDAiCiAgICAgICBpZD0icmFkaWFsR3JhZGllbnQzOTU2IgogICAgICAgY3g9IjguMzE0MzczIgogICAgICAgY3k9Ii0xLjMxODU4NDQiCiAgICAgICBmeD0iOC4zMTQzNzMiCiAgICAgICBmeT0iLTEuMzE4NTg0NCIKICAgICAgIHI9IjI1Ljk1NDU0NCIKICAgICAgIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMi4zOTIwNzU1LDAsMCwwLjIzMzc5NjY5LC05LjY2NDE3NTksOC4zNTM3MzUpIgogICAgICAgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIC8-CiAgPC9kZWZzPgogIDxzb2RpcG9kaTpuYW1lZHZpZXcKICAgICBpZD0iYmFzZSIKICAgICBwYWdlY29sb3I9IiNmZmZmZmYiCiAgICAgYm9yZGVyY29sb3I9IiM2NjY2NjYiCiAgICAgYm9yZGVyb3BhY2l0eT0iMS4wIgogICAgIGlua3NjYXBlOnBhZ2VvcGFjaXR5PSIwLjAiCiAgICAgaW5rc2NhcGU6cGFnZXNoYWRvdz0iMiIKICAgICBpbmtzY2FwZTp6b29tPSIxMSIKICAgICBpbmtzY2FwZTpjeD0iLTAuNzI3MjcyNjQiCiAgICAgaW5rc2NhcGU6Y3k9IjMwLjkzMzM4MSIKICAgICBpbmtzY2FwZTpjdXJyZW50LWxheWVyPSJsYXllcjYiCiAgICAgc2hvd2dyaWQ9InRydWUiCiAgICAgaW5rc2NhcGU6ZG9jdW1lbnQtdW5pdHM9InB4IgogICAgIGlua3NjYXBlOmdyaWQtYmJveD0idHJ1ZSIKICAgICBpbmtzY2FwZTp3aW5kb3ctd2lkdGg9IjE5MjAiCiAgICAgaW5rc2NhcGU6d2luZG93LWhlaWdodD0iMTAxOSIKICAgICBpbmtzY2FwZTp3aW5kb3cteD0iLTkiCiAgICAgaW5rc2NhcGU6d2luZG93LXk9Ii05IgogICAgIGlua3NjYXBlOndpbmRvdy1tYXhpbWl6ZWQ9IjEiIC8-CiAgPG1ldGFkYXRhCiAgICAgaWQ9Im1ldGFkYXRhMjk5MCI-CiAgICA8cmRmOlJERj4KICAgICAgPGNjOldvcmsKICAgICAgICAgcmRmOmFib3V0PSIiPgogICAgICAgIDxkYzpmb3JtYXQ-aW1hZ2Uvc3ZnK3htbDwvZGM6Zm9ybWF0PgogICAgICAgIDxkYzp0eXBlCiAgICAgICAgICAgcmRmOnJlc291cmNlPSJodHRwOi8vcHVybC5vcmcvZGMvZGNtaXR5cGUvU3RpbGxJbWFnZSIgLz4KICAgICAgICA8ZGM6dGl0bGUgLz4KICAgICAgPC9jYzpXb3JrPgogICAgPC9yZGY6UkRGPgogIDwvbWV0YWRhdGE-CiAgPGcKICAgICBpbmtzY2FwZTpncm91cG1vZGU9ImxheWVyIgogICAgIGlkPSJsYXllcjUiCiAgICAgaW5rc2NhcGU6bGFiZWw9InRyYW5zcGFyZW50ZXIgUmFuZCAxcHgiCiAgICAgc29kaXBvZGk6aW5zZW5zaXRpdmU9InRydWUiPgogICAgPHJlY3QKICAgICAgIHN0eWxlPSJmaWxsOiNmZmZmZmY7ZmlsbC1vcGFjaXR5OjA7c3Ryb2tlOm5vbmUiCiAgICAgICBpZD0icmVjdDM3ODciCiAgICAgICB3aWR0aD0iNjIuNzU1NTA1IgogICAgICAgaGVpZ2h0PSI2Mi43NTg4NzMiCiAgICAgICB4PSIwLjcyMDI3ODgiCiAgICAgICB5PSIwLjU5ODU1ODcyIgogICAgICAgcnk9IjYuNDUwNDg2NyIKICAgICAgIGlua3NjYXBlOmV4cG9ydC1maWxlbmFtZT0iQzpcVXNlcnNcYXJ1XERlc2t0b3BccGF0aDM5MzgucG5nIgogICAgICAgaW5rc2NhcGU6ZXhwb3J0LXhkcGk9IjMxLjgyIgogICAgICAgaW5rc2NhcGU6ZXhwb3J0LXlkcGk9IjMxLjgyIiAvPgogIDwvZz4KICA8ZwogICAgIGlkPSJsYXllcjEiCiAgICAgaW5rc2NhcGU6bGFiZWw9ImhpbnRlcmdydW5kIgogICAgIGlua3NjYXBlOmdyb3VwbW9kZT0ibGF5ZXIiCiAgICAgc29kaXBvZGk6aW5zZW5zaXRpdmU9InRydWUiPgogICAgPHJlY3QKICAgICAgIHN0eWxlPSJmaWxsOnVybCgjbGluZWFyR3JhZGllbnQzNzY5KTtmaWxsLW9wYWNpdHk6MTtzdHJva2U6bm9uZSIKICAgICAgIGlkPSJyZWN0Mzc2MSIKICAgICAgIHdpZHRoPSI1NS44MTgyMDMiCiAgICAgICBoZWlnaHQ9IjU2LjA5MDkzOSIKICAgICAgIHg9IjQuMDkwOTA5IgogICAgICAgeT0iNC4wOTA5MDkiCiAgICAgICByeT0iMCIKICAgICAgIGlua3NjYXBlOmV4cG9ydC1maWxlbmFtZT0iQzpcVXNlcnNcYXJ1XERlc2t0b3BccGF0aDM5MzgucG5nIgogICAgICAgaW5rc2NhcGU6ZXhwb3J0LXhkcGk9IjMxLjgyIgogICAgICAgaW5rc2NhcGU6ZXhwb3J0LXlkcGk9IjMxLjgyIiAvPgogIDwvZz4KICA8ZwogICAgIGlua3NjYXBlOmdyb3VwbW9kZT0ibGF5ZXIiCiAgICAgaWQ9ImxheWVyMiIKICAgICBpbmtzY2FwZTpsYWJlbD0iYm9nZW4gbWl0dGlnIgogICAgIHNvZGlwb2RpOmluc2Vuc2l0aXZlPSJ0cnVlIj4KICAgIDxwYXRoCiAgICAgICBzdHlsZT0iZmlsbDp1cmwoI2xpbmVhckdyYWRpZW50Mzc4MCk7ZmlsbC1vcGFjaXR5OjE7c3Ryb2tlOm5vbmUiCiAgICAgICBkPSJNIDYuMTgxODE4MSw0Mi45OTk5OTkgNi4wOTA5MDksNC4xODE4MTgyIGwgNTEuNzI3Mjc0LC0wLjA5MDkwOSAwLDE4LjM2MzYzNjggYyAwLDAgLTE5LjAxOTUxMSwwLjI0OTI1MyAtMjkuMzM3Njk0LDQuNDYxMzc1IEMgMTguMTYyMzA3LDMxLjEyODA0MiA2LjE4MTgxODEsNDIuOTk5OTk5IDYuMTgxODE4MSw0Mi45OTk5OTkgeiIKICAgICAgIGlkPSJwYXRoMzc3MiIKICAgICAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiCiAgICAgICBzb2RpcG9kaTpub2RldHlwZXM9ImNjY2N6YyIKICAgICAgIGlua3NjYXBlOmV4cG9ydC14ZHBpPSIzMS44MiIKICAgICAgIGlua3NjYXBlOmV4cG9ydC15ZHBpPSIzMS44MiIKICAgICAgIGlua3NjYXBlOmV4cG9ydC1maWxlbmFtZT0iQzpcVXNlcnNcYXJ1XERlc2t0b3BccGF0aDM5MzgucG5nIiAvPgogIDwvZz4KICA8ZwogICAgIGlua3NjYXBlOmdyb3VwbW9kZT0ibGF5ZXIiCiAgICAgaWQ9ImxheWVyMyIKICAgICBpbmtzY2FwZTpsYWJlbD0iZ3Jvw59lciBCb2dlbiIKICAgICBzdHlsZT0iZGlzcGxheTppbmxpbmUiCiAgICAgc29kaXBvZGk6aW5zZW5zaXRpdmU9InRydWUiPgogICAgPHBhdGgKICAgICAgIHN0eWxlPSJmaWxsOnVybCgjbGluZWFyR3JhZGllbnQzODY2KTtmaWxsLW9wYWNpdHk6MTtzdHJva2U6bm9uZSIKICAgICAgIGQ9Ik0gNC4yNzI3MjY3LDQ0Ljk1NDU0NiA0LjA5MDkwODUsMy45NTQ1NDU4IGwgNTUuODE4MTgzNSwwIC0wLjA5MDkxLDE4LjQ1ODkyNzIgYyAwLDAgLTIyLjAzNjk0NCwwLjMxMjE0NCAtMzIuMDU4OTQxLDQuNjY4MTEyIEMgMTcuNzM3MjQ1LDMxLjQzNzU1NCA0LjI3MjcyNjcsNDQuOTU0NTQ2IDQuMjcyNzI2Nyw0NC45NTQ1NDYgeiIKICAgICAgIGlkPSJwYXRoMzc3Mi0yIgogICAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIKICAgICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NjY3pjIgogICAgICAgaW5rc2NhcGU6ZXhwb3J0LXhkcGk9IjMxLjgyIgogICAgICAgaW5rc2NhcGU6ZXhwb3J0LXlkcGk9IjMxLjgyIgogICAgICAgaW5rc2NhcGU6ZXhwb3J0LWZpbGVuYW1lPSJDOlxVc2Vyc1xhcnVcRGVza3RvcFxwYXRoMzkzOC5wbmciIC8-CiAgPC9nPgogIDxnCiAgICAgaW5rc2NhcGU6Z3JvdXBtb2RlPSJsYXllciIKICAgICBpZD0ibGF5ZXI0IgogICAgIGlua3NjYXBlOmxhYmVsPSJzY2hsYWdsaWNodCIKICAgICBzb2RpcG9kaTppbnNlbnNpdGl2ZT0idHJ1ZSI-CiAgICA8cGF0aAogICAgICAgc3R5bGU9ImZpbGw6dXJsKCNyYWRpYWxHcmFkaWVudDM5NTYpO2ZpbGwtb3BhY2l0eToxO3N0cm9rZTpub25lIgogICAgICAgZD0iTSA2LjA5MDkwOTEsNC40NTQ1NDU1IDYsMTcuMjcyNzI4IGMgMCwwIDEyLjE2MTUyNiwtNC40NDk5ODEgMjEuMTc4MTQ5LC01LjE0MDc5MSA5LjAxNjYyNCwtMC42OTA4MTEgMzAuNzMwOTQyLC0yLjg1OTIwOTggMzAuNzMwOTQyLC0yLjg1OTIwOTggbCAwLC00LjkwOTA5MDggeiIKICAgICAgIGlkPSJwYXRoMzkzOCIKICAgICAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiCiAgICAgICBzb2RpcG9kaTpub2RldHlwZXM9ImNjemNjYyIKICAgICAgIGlua3NjYXBlOmV4cG9ydC14ZHBpPSIzMS44MiIKICAgICAgIGlua3NjYXBlOmV4cG9ydC15ZHBpPSIzMS44MiIgLz4KICA8L2c-CiAgPGcKICAgICBpbmtzY2FwZTpncm91cG1vZGU9ImxheWVyIgogICAgIGlkPSJsYXllcjciCiAgICAgaW5rc2NhcGU6bGFiZWw9IlN5bWJvbCBCRyIKICAgICBzb2RpcG9kaTppbnNlbnNpdGl2ZT0idHJ1ZSIgLz4KICA8ZwogICAgIGlua3NjYXBlOmdyb3VwbW9kZT0ibGF5ZXIiCiAgICAgaWQ9ImxheWVyNiIKICAgICBpbmtzY2FwZTpsYWJlbD0iU3ltYm9sIj4KICAgIDxwYXRoCiAgICAgICBzdHlsZT0iZmlsbDojMDBjZjAwO2ZpbGwtb3BhY2l0eToxO3N0cm9rZTojMDA4MDAwO3N0cm9rZS13aWR0aDoxLjc3MDY4MTk4O3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2UtbWl0ZXJsaW1pdDo0O3N0cm9rZS1vcGFjaXR5OjEiCiAgICAgICBkPSJNIDI4LjM1MTE0NCw2LjgxNDAxMjMgQyAxOS43NDc4MzMsNi41NjYxNCA2LjU2MzYwNSw4LjU4MTE2NTMgNi41NjM2MDUsMjAuMjkzMTI4IDYuMjQxODE3OSwzMi4wNzU4NTQgNi4zMjg0MTY2LDQ1LjU4MTYyMiA2LjMyODQxNjYsNDYuMDAxNTA5IGMgMCwwLjQxOTg4OCAxMi41NzEwMjQ0LDAuMjg0MDkyIDEyLjU3MTAyNDQsMC4yODQwOTIgMC4yMTA2NDgsMC40ODM0OTEgLTAuMjE5MTAzLC0xMi4wMDE0MDcgLTAuMTM1NzQ1LC0xNS43MzI4NjcgMC4wODMzNiwtMy43MzE0NTkgLTAuNzM2MTM4LC0xMi4wOTA5OTcgNy43NjkyNjgsLTEyLjA5MDk5NyA4LjUwNTQwNiwwIDEwLjc5NDMxLDMuNzUzMjcgMTAuNjAyMjczLDE0LjA2NTM0MSBsIC02LjgxMjUsMCBjIC0wLjc3NDk5Nyw4Ljc0ZS00IC0xLjUzMzcwNiwwLjQ0OTUwNCAtMS45MDc5MjIsMS4xMjgxNjcgLTAuMzc0MjE2LDAuNjc4NjYzIC0wLjM0ODY5NywxLjU1OTcxNyAwLjA2NDE3LDIuMjE1NTgzIGwgMTIuNTkzNzUsMjAuNDA2MjUgYyAwLjc4MjcyMywxLjIzNzU4OSAyLjkwNDc3NywxLjIzNzU4OSAzLjY4NzUsMCBsIDEyLjU5Mzc1LC0yMC40MDYyNSBjIDAuNDEyODY5LC0wLjY1NTg2NiAwLjQzODM4OCwtMS41MzY5MiAwLjA2NDE3LC0yLjIxNTU4MyAtMC4zNzQyMTQsLTAuNjc4NjYzIC0xLjEzMjkyMywtMS4xMjcyOTMgLTEuOTA3OTIsLTEuMTI4MTY3IGwgLTcsMCAwLC0xMS4wNjI1IGMgMCwtMTMuNTI1MTI1NCAtMTEuNTU1NzgsLTE0LjQwMjY5MzQgLTIwLjE1OTA5MSwtMTQuNjUwNTY1NyB6IgogICAgICAgaWQ9InBhdGgzMDY5IgogICAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIKICAgICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iemN6Y3p6Y2NzY2NjY3NjY2N6IiAvPgogIDwvZz4KPC9zdmc-Cg"
+								content-type="image/svg+xml"
+								name="buttonStart.svg"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.themeedit.browser.dialogs.UploadResource"
+					command-label="Hochladen"
+					command-name="upload"
+					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorResourceUploadForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Theme exportieren"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.themeedit.browser.providers.theme.download.DownloadThemeHandler"
+					command-label="Theme exportieren"
+					command-name="exportTheme"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorThemeTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.AwaitProgressActionOp"
+					component-name="export/exportDialog.layout.xml#ProgressExportView"
+					max-sleep="300000"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+					command-label="Schließen"
+					command-name="closeModalDialog"
+					component-implementation-comment="com.top_logic.tool.export.progress.ExportDownloadComponent"
+					component-name="export/gridExportDialog.layout.xml#GridExportDownload"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.themeedit.browser.providers.theme.DeleteThemeHandler"
+			command-label="Löschen"
+			command-name="deleteTheme"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorThemeTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Theme importieren"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.themeedit.browser.providers.theme.upload.UploadThemeHandler"
+					command-label="Theme importieren"
+					command-name="importTheme"
+					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+					component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorThemeTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Theme Datei"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+								base64data="UEsDBBQACAgIAFlsT1QAAAAAAAAAAAAAAAAiAAAAV0VCLUlORi90aGVtZXMvVGhlbWVUZXN0L3RoZW1lLnhtbD2PQW-DMAyFz-RXoGjXJttlmhChUqXttlvvE00MjZQ4KDGl_fczsO72bL_nz26P9xjqG-TiExr5pl5lDWiT8zgaOdNw-JD1sROipStEqL0z8ryqMxSSorIJBz82Hgny0Fsw0qaoKE0_IY3eqtA_0kxqC4PzpC45LQWymnK6ecfcfaa2pV8px9PsA_dfPtn9nRwEpvCNWJqdZeSVaGq0XpZlBR12EGM1Fr179Dv_ISq4E6ArRkbek5E7hXriGwH7SwAnRSeqttAjQGH1J2vsI3v0Vuj_ZzU9lbKlSL1G9TPb7tPuF1BLBwhMb5Dd5AAAAE8BAABQSwMEFAAICAgAWWxPVAAAAAAAAAAAAAAAACsAAABXRUItSU5GL3RoZW1lcy9UaGVtZVRlc3QvdGhlbWUtc2V0dGluZ3MueG1sNY7LDsIgEEXX5SsIcSvoxpimtAs37jW6NASnlYRCA9PH5zta3U1O7px7q2bpPZ8gZReDFnu5ExyCjU8XOi1GbLdHwZuasSoDIsHMbQyt60oXEFJrLGhhYy8xDg8fO2dlNzq5ZuT1BT1cfo-b0xcKVlBlyOWa0eKFOJRKzfP8kWxXCSlVyGrNqAPNYjUrqoyJVDyYnmpvJpGsgGVIWnyuyfiR-Nl4H_kdPBJUNavUf3v9BlBLBwjwqb7vsgAAAO8AAABQSwMEFAAICAgAWWxPVAAAAAAAAAAAAAAAAB0AAABzdHlsZS9UaGVtZVRlc3QvdGhlbWVUZXN0LmNzc0vJLFOoVkjKL0pJLbJSMCyoUCjOz8lMUUjKSUzOtlaoBQBQSwcIbEVMcCIAAAAgAAAAUEsDBBQACAgIAHBsT1QAAAAAAAAAAAAAAAAVAAAAdGhlbWVzL1RoZW1lVGVzdC9iYXIvAwBQSwcIAAAAAAIAAAAAAAAAUEsDBBQACAgIAHBsT1QAAAAAAAAAAAAAAAAkAAAAdGhlbWVzL1RoZW1lVGVzdC9iYXIvYnV0dG9uU3RhcnQuc3Zn7VrbbuNIDn3PV2jdL91YS677xZP0ADONGczDYoDpbuxLgIUiyba2ZcmQ5DjJz-zH7I8tqZslW0nsJL0XYG0ksVisYpE8RbLoXP54t06c2ygv4iy9mlCPTJwoDbIwTpdXk69ffnHNxClKPw39JEujq0maTX78eHH5J9d1fs4jv4xCZxeXK-e39FsR-JvIeb8qy818Ntvtdl7cEL0sX84-OK778eLisrhdXjiOA3LTYh4GV5NmwmabJxVjGMyiJFpHaVnMqEdnkz17sGcPUHp8GwXZep2lRTUzLd71mPNw0XHjbna8YqLW2hlhM8Zc4HCL-7T079zhVNjj2FRGCJnB2J7zNK75XQKmeHQz1WhfOph_Az_dhJbgFdk2D6IFzIy8NCpnn7586gZd4oVl2Fumtf5A7sAlqb-Oio0fRMWspVfzd3FYrq4mSmzuqudVFC9XZY8Qh1cT0JBZI6vnHoBozdAsN-9GiCeMxz3q5NYYVTG1O5-HWYBbuZrcbMsySz-X0eZ3mOi1RuxWi-42WV66iziJ6gk_z6-TLPCT6zC6jZLrXZZ_qxRyy2yTZMs4cFeRH-prQIkHpL9VtOtddONvNtflClBWwNSFv03K6zgAHF0fbGGTjm_hLtyAfzj1pAAX2lGe-wOej8B0CdIKZK6NiE9gRV2NwSggIfLzX3M_jAH_NV_NORzhVpBmDswqQLWWF8xa3idgGiS6QZZk-fxdSCO-WPxQkTKwT1zez-kPk_2cbLEoIvAw6dEqJ8MMkMUmzux0aZbfBIfSiMcskYRpOyaWjosVndjL2VD_s81FxRnmWlSvQwWUJNYQcYbdqDrLbuNiGaGUas5Otxs1b2Y3rc-xmy8DsWCHCkgtBbXkdLtpfZ7dxsUyyhByJ5tN6zc0m-JnmI0bqY186enUSr7aWqPSxq2k9Aut1AZH2EYSBbC-n-z8-6ITUmXB-SqPIGu_G7Hnk-a2-2UohFwAnYA366j3SLWeFcboHi8DKvOogXePF6iae8RKKzrispH1NY1LyPrbIso_Y6L5Pf1aRHuLfA_dtXhSd0MGulMNgUpzqQa6u5R5hFCj9aHyHLUf6C6Ypyknip2o_CHXl9xPC6hR1leTEj8mUCW-h-qEq_o93X_88L0t56pnbOceIOfIIJXxPM3gzdnzxgOQCUMYk2-EnNGQDFq9NqtIYxiX41nlsaDsnhdoRgWfE4578s4KNSNAXPtlHt-9h_J0SuAN9xzOFDF66kJJagm8q49EEEkRlk-7dNz7jyBlDFWnHagx51vt6tPB7_ZCx2Mn6YUIdF9fUL0Mgy75d6PQ5f-JlAdGZs8FL3FC8NKQ37jm_Dn4YuRXnlaKGfpdgxd7fUWJ9wjOz6ooe058uWAsxKkR4iz80LePYsQKJZhtYhllRBhqpy7zrBYQwAzGMmUkJdx-eMbDj8eyEeC8aSwzSr3kJLw0jr3mMOL18anbJRvWYNKr6xs9MKjxWJUchgdRDo_gMdOLi689WogmlNVgmUIhRgQnzAgoxHr1F873k7e1miADqw1FcNurUYM7VJ1TAYDbE--rjApwk3DmOvJijHcxzptfTZj0LN4Gjmv5Y1sBtsGXWsrKWHCH5JBxlYKjZT2lBNXSTkG0BMnyw1lB8nKGrZ7qU9f2whZWeBtHu4vORDd-59ONv4yqYASGrZNYM3CT5WGUt0Oqeg2GmnhVt3Mvhn7EVbtxMj5erPww24HlDgcfsgxsRekhHb0HuKqAy5Q4Gr6vrmQQsbk5nrvNc7Cdm_j3EehT_WnVKVbZbpmjXcp8Gx3ODLNgi11id1vbvelN9jhwrntzk92NL7CLU9DTbbqddH-KDzna_icl1D7CghZ4bOz-ibG1fxev44coxATSQGUdlX7ol_4eFi2FWdu2_S7zcDH_49MvXUoLgvlfs_zbPgkhg3-TbWHjXcbFBmQwR8z75cd4Dc7GTvWf79YJALQbGDCX95tov2i9bB7VnejR5n0YrGOcNPtcxknyGwrppd5m0bhMol4-njW7b_NkT7nLWat99bQ88nG23ayzMGqwM9lbrXqWh4ZP_Jsoaa6mGx-xF-XOH34aOrRDUHdE47SI0iLGLxoaDLXWh2DYatSUDwvQtqs38aFXbxZlnn2L5mmWDlMiLgOV3D5RtK13uINLKck-DXQ9eBwxphf67vAgawY1kenlEiRKa6Q0ep88cyArT0ioF9Re5pPtdQhheXHt59vrT1HxDWqa641frrjlpuuNj63R9cfNSOo-7I8b1kXJ5cDJrROPokbjxFWM3lvm2zQ8PvujuHi5ZwHh74_7UvbD0NX0GVcreuhqKT0opxjhR66WysObKbd9V4uKRmzf00c09DP5H_DvqYf4KBM1_r_JllHqQLgp4-XJDkb9TnawISc5GDb6F0fVnURDpwIq8erlqMY1U9EMMidxZNMmEFU1Vo07UJuZpi9mnAAeieNS60HGkZRiKSIsk9xxmfU44k7AikJRrqXzswNTqWKc6CnH64Ahgj2ym2PawwCllfO1Hq230xQgnOUupOxbv9zmUR9k-6oG3IjhHzJyAK-H4M0w9BZ4fh0O-SM4hHn__AekkZ8Qjy0Qa2iFcbGBuQBHhNZ3ASlcpE4HqagvGEpPhagLY-U08cPIKa9J0iBKq8AEd0CJWKyBShGlMGxhiRaljHmEAyAFNnYpo0I4LtwSCXAJABoUzoZShijVnuaaCYkohepdSvHIdo5p4ygdvxf-H6dHJXiD0yJYJf4yiYNV-TZIPL7SnRMu69CHGBEV6qSjpgCSyvttEKQMQhuVTE1dYBPWGuowCHLaUAH3MulRQbSlDoZKpVgVUhVgmVIH7hyaEysYdkaMhPremnFiAqJgeVsfgzGwgV_eCGoPALb_krSqH4HJ5_v1TZY4P_36PEiaDZwrWT0p-TnovSMkWBDyCNJg1BDS1tz19W4OGVcTCETWtHQMoiB6DjtNwz7x71mcDqlQYER5Ave0ci5aWid2CGqG7QEKMXCqIHoKQhnHyGc9LbThHKhSKSoc_MsVkVPjScCqgtTekRj-swREUgMkJiAEazvFgAp1v8SZnBkBWJ8KiXMVY32awu_5JBQU1fHxBGhsDJ4iqSlhVZAGVmLZKA2_NidKGJxpuIBz5SLJUsKnzXeIcNyQSLnUEMldKuE8MbhOwFwCGirsPWpOhbTIprmq-pE4Fw6X1Q4kAWWZGtDACEQKovC8wxwrOIVUpCVnGgmKMKb5lEKeAkMJCufVRfMyzExBJUZDZNBgTC0iF_IP9SRUSbggxgy47yDJQqBgrGqYgtkqLbgWjCKX0pBFeUWCuxEsBStIq2mlFnZ-pgzsALcpDsLRchbyF3oKds0kGtvTBsIW7NJjMGSsAxUWEVrrPQWbshr33FvCHawhYGvYbsL_NpGwIyRxww1aC1RSlYvq_bjdhlo96tjXKAJacmYZug301QCozgQ1qTIBGFLDfiD6Ueq1u4AH7kkmwb5oN7SE1LgDCMCEKcuBCrumsgreSFbgPiX1WOAkve_mXxM4HyBwPkDsLDBZ46-HfvC7xDbGx4t_AVBLBwghZJNAZgoAAM8oAABQSwECFAAUAAgICABZbE9UTG-Q3eQAAABPAQAAIgAAAAAAAAAAAAAAAAAAAAAAV0VCLUlORi90aGVtZXMvVGhlbWVUZXN0L3RoZW1lLnhtbFBLAQIUABQACAgIAFlsT1Twqb7vsgAAAO8AAAArAAAAAAAAAAAAAAAAADQBAABXRUItSU5GL3RoZW1lcy9UaGVtZVRlc3QvdGhlbWUtc2V0dGluZ3MueG1sUEsBAhQAFAAICAgAWWxPVGxFTHAiAAAAIAAAAB0AAAAAAAAAAAAAAAAAPwIAAHN0eWxlL1RoZW1lVGVzdC90aGVtZVRlc3QuY3NzUEsBAhQAFAAICAgAcGxPVAAAAAACAAAAAAAAABUAAAAAAAAAAAAAAAAArAIAAHRoZW1lcy9UaGVtZVRlc3QvYmFyL1BLAQIUABQACAgIAHBsT1QhZJNAZgoAAM8oAAAkAAAAAAAAAAAAAAAAAPECAAB0aGVtZXMvVGhlbWVUZXN0L2Jhci9idXR0b25TdGFydC5zdmdQSwUGAAAAAAUABQCJAQAAqQ0AAAAA"
+								content-type="application/zip"
+								name="theme-ThemeTest.zip"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Importieren"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Theme auf Vollständigkeit testen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Theme"
+					>
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Theme Editor > Themes"
+							/>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="ThemeTest"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="ThemeTest"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Theme Editor > Variablen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Wert"
+					>
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Theme Editor > Variablen > Variablen"
+							/>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Var"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Hallo Welt"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Theme Editor > Styles"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Theme Editor > Styles > Style-Sheet"
+							/>
+							<path>
+								<named-member name="styleData"/>
+							</path>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="div { border: 1px solid black; }"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Theme Editor > Ressourcen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="bar"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Theme Editor > Ressourcen > Verzeichnisse"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Name"
+					>
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Theme Editor > Ressourcen > Ressourcen"
+							/>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="buttonStart.svg"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="buttonStart.svg"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.themeedit.browser.providers.theme.DeleteThemeHandler"
+			command-label="Löschen"
+			command-name="deleteTheme"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="com.top_logic.layout.themeedit/themeEditorView.layout.xml#themEditorThemeTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

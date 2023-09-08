@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<!-- If a list is mandatory, it is _not_ valid to give an empty list. -->
+			<t:parameter name="Example_List_Mandatory_Integer" multiple="true" type="integer" mandatory="true" />
+			
+			<!-- But it is valid for its entries to be empty (strings or xmls). -->
+			<t:parameter name="Example_List_Mandatory_String" multiple="true" type="string" mandatory="true" />
+			
+			<!-- If a list is not mandatory, it still needs to have a value, but it's allowed to be empty. -->
+			<t:parameter name="Example_List_Not_Mandatory" multiple="true" type="string" mandatory="false" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<!-- TODO -->
+	</t:body>
+</t:template>

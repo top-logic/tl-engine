@@ -1,0 +1,20 @@
+<html>
+<head>
+<script type="text/javascript">
+	function onLoad() {
+		opener.winOnLoadWindow(window);
+		return true;
+	}
+	
+	function onUnload() {
+		opener.winOnUnloadWindow(window);
+		return true;
+	}
+</script>
+</head>
+
+
+<body id="c1" onload="return onLoad();" onunload="return onUnload();">
+	<h1>Window content</h1>
+</body>
+</html>

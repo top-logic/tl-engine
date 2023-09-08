@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26398_remove_table_interfaces"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26117_security_object"
+			module="tl"
+		/>
+		<dependency name="Ticket_26398_remove_table_interfaces"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_25800_inconsistent_signature_create_handler"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_26398_remove_table_interfaces"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-mail"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<processors>
+		<change-part-type
+			source="tl.tables:DemoTypesTableInterface"
+			target="DemoTypes:DemoTypes.All"
+		/>
+		<change-part-type
+			source="tl.tables:DemoTypesCTableInterface"
+			target="DemoTypes:C"
+		/>
+		<change-reference-type
+			reference="DemoPlain:DemoPlain.A#collection"
+			target="tl.model:TLObject"
+		/>
+		<change-reference-type
+			reference="DemoPlain:DemoPlain.A#untypedWrapper"
+			target="tl.model:TLObject"
+		/>
+
+		<change-reference-type
+			reference="DemoTypes:DemoTypes.A#collection"
+			target="tl.model:TLObject"
+		/>
+		<change-reference-type
+			reference="DemoTypes:DemoTypes.A#untypedWrapper"
+			target="tl.model:TLObject"
+		/>
+
+		<change-part-type
+			part="DemoTypes:DemoTypes.X#collection"
+			target="tl.model:TLObject"
+		/>
+		<change-part-type
+			part="DemoTypes:DemoTypes.X#untypedWrapper"
+			target="tl.model:TLObject"
+		/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:tl="http://www.top-logic.com/report"
+	elementFormDefault="qualified">
+	<!-- report definition -->
+	<xsd:element name="report">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="businessObjectProducer"  type="businessObjectProducer-type" />
+				<xsd:element name="partitionFunctions"      type="partitionFunction-type"/>
+				<xsd:element name="aggregationFunctions"    type="aggregationFunction-type" />
+				<xsd:element name="presentation"            type="presentation-type" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+	<!-- end -->
+	
+	<!-- Type definitions -->
+	<xsd:complexType name="businessObjectProducer-type">
+		<xsd:sequence>
+			<xsd:element name="class"      type="xsd:string" />
+			<xsd:element name="objectType" type="xsd:string" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="partitionFunction-type">
+		<xsd:choice minOccurs="1" maxOccurs="2">
+			<xsd:element name="datePartitionFunction"	        type="date-partition" />
+			<xsd:element name="numberPartitionFunction"         type="number-partition" />
+			<xsd:element name="classificationPartitionFunction" type="classification-partition" />
+			<xsd:element name="stringPartitionFunction"         type="string-partition" />
+			<xsd:element name="samePartitionFunction"           type="same-partition" />
+			<xsd:element name="paymentPartitionFunction"        type="payment-partition" />
+		</xsd:choice>
+	</xsd:complexType>
+	
+	<xsd:complexType name="aggregationFunction-type">
+		<xsd:sequence>
+			<xsd:element name="function" type="function-type" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="function-type">
+		<xsd:sequence>
+			<xsd:element name="type"             type="xsd:string" />
+			<xsd:element name="accessor"         type="accessor-type" />
+			<xsd:element name="ignoreNullValues" type="xsd:boolean" />
+			<xsd:element name="attribute"        type="xsd:string" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="accessor-type">
+		<xsd:sequence>
+			<xsd:element name="class" type="xsd:string" />
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="date-partition">
+		<xsd:sequence>
+			<xsd:element name="attribute"            type="xsd:string" />
+			<xsd:element name="ignoreNullValues"     type="xsd:boolean" />
+			<xsd:element name="dateIntervalCriteria" type="date-interval-criteria" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="number-partition">
+		<xsd:sequence>
+			<xsd:element name="attribute"              type="xsd:string" />
+			<xsd:element name="ignoreNullValues"       type="xsd:boolean" />
+			<xsd:element name="numberIntervalCriteria" type="number-intervall-criteria" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="classification-partition">
+		<xsd:sequence>
+			<xsd:element name="attribute"        type="xsd:string" />
+			<xsd:element name="ignoreNullValues" type="xsd:boolean" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="string-partition"></xsd:complexType>
+
+	<xsd:complexType name="payment-partition">
+		<xsd:sequence>
+			<xsd:element name="attribute"                    type="xsd:string" />
+			<xsd:element name="ignoreNullValues"             type="xsd:boolean" />
+			<xsd:element name="constantDateIntervalCriteria" type="date-interval-criteria" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="same-partition">
+		<xsd:sequence>
+			<xsd:element name="attribute"        type="xsd:string" />
+			<xsd:element name="ignoreNullValues" type="xsd:boolean" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="date-interval-criteria">
+		<xsd:sequence>
+			<xsd:element name="begin">
+				<xsd:complexType>
+					<xsd:simpleContent>
+						<xsd:extension base="nullDate">
+							<xsd:attribute name="relative" type="xsd:string" />
+						</xsd:extension>
+					</xsd:simpleContent>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="end">
+				<xsd:complexType>
+					<xsd:simpleContent>
+						<xsd:extension base="nullDate">
+							<xsd:attribute name="relative" type="xsd:string" />
+						</xsd:extension>
+					</xsd:simpleContent>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="dateGranularity" type="granularity" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:simpleType name="granularity">
+		<xsd:union memberTypes="xsd:int xsd:string" />
+	</xsd:simpleType>
+	
+	<xsd:complexType name="number-intervall-criteria">
+		<xsd:sequence>
+			<xsd:element name="begin"             type="number" />
+			<xsd:element name="end"               type="number" />
+			<xsd:element name="numberGranularity" type="number" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:simpleType name="number">
+		<xsd:union memberTypes="xsd:decimal xsd:double xsd:int xsd:integer xsd:float" />
+	</xsd:simpleType>
+	
+	<xsd:complexType name="presentation-type">
+		<xsd:sequence>
+			<xsd:element name="chartType"          type="xsd:string" />
+			<xsd:element name="peakValues"         type="xsd:boolean" minOccurs="0" maxOccurs="1"/>
+			<xsd:element name="paymentAccumulated" type="xsd:boolean" minOccurs="0" maxOccurs="1"/>
+			<xsd:element name="targetArea"         type="target"      minOccurs="0" maxOccurs="1"/>
+			<xsd:element name="colors"             type="colors"      minOccurs="0" maxOccurs="1"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="target">
+		<xsd:sequence>
+			<xsd:element name="from"  type="xsd:string" />
+			<xsd:element name="to"    type="xsd:string" />
+			<xsd:element name="label" type="xsd:string" minOccurs="0" maxOccurs="1" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="colors">
+		<xsd:sequence>
+			<xsd:element name="definition" type="definition" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="definition">
+		<xsd:sequence>
+			<xsd:element name="functionName" type="xsd:string"/>
+			<xsd:element name="color"        type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+		
+	<!-- type definition for empty date elements -->
+	<xsd:simpleType name="nullDate">
+		<xsd:union memberTypes="xsd:dateTime emptyString" />
+	</xsd:simpleType>
+
+	<xsd:simpleType name="emptyString">
+		<xsd:restriction base="xsd:string">
+			<xsd:length value="0"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+	<!-- end -->
+</xsd:schema>

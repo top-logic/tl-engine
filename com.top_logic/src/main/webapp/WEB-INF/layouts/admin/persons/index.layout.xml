@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="main.admin.persons.tabber"
+		z_legacy_componentName="adminPersonsView"
+		z_legacy_tabBarName="adminPersonsView_tabBar"
+		z_legacy_tabLabel="main.admin.persons.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml"/>
+			<layout-reference resource="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml"/>
+			<layout-reference resource="com.top_logic/admin/security/groups/adminGroupsView.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,5 @@
+lib/**
+bin/launch/**
+webapp/WEB-INF/conf/devel*-mysql.xml
+webapp/WEB-INF/conf/devel-oracle*
+deploy/private/webapp/WEB-INF/conf/tl_basic.bos.xml

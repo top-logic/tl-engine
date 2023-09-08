@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="resPrefix"/>
+	</params>
+	<tiles>
+		<include name="tiles/tileTemplate_shared.xml"
+			resPrefix="${resPrefix}tileTestControlsForm."
+			securityDomain="SecurityStructure"
+			tileName="${namePrefix}TestControlsForm"
+		>
+			<component>
+				<include name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsForm_shared.xml"
+					componentName="${namePrefix}TestControlsForm"
+				>
+					<conf>
+						<componentControlProvider class="com.top_logic.layout.structure.IFrameLayoutControlProvider"/>
+					</conf>
+				</include>
+			</component>
+			<tileConfig>
+				<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+					description="${resPrefix}tileTestControlsForm.description"
+					icon="theme:ICON_QRCODE"
+				/>
+			</tileConfig>
+		</include>
+		<include name="tiles/tileTemplate_shared.xml"
+			resPrefix="${resPrefix}demoTypeOverview."
+			securityDomain="DemoTypes"
+			tileName="${namePrefix}demoTypeOverview"
+		>
+			<component>
+				<include name="com.top_logic.demo/structure/demoTypes/treeTable/tree_table_shared.xml"
+					defaultSelection="false"
+					namePrefix="${namePrefix}"
+				>
+					<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+						<impl class="com.top_logic.model.search.providers.ModelProviderByExpression"
+							expr="`DemoTypes#ROOT`"
+						/>
+					</model>
+					<subConfiguration>
+						<component-resolvers>
+							<component-resolver class="com.top_logic.mig.html.layout.tiles.component.SelectableContextTileResolver"/>
+						</component-resolvers>
+					</subConfiguration>
+				</include>
+			</component>
+			<tileConfig>
+				<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+					description="${resPrefix}demoTypeOverview.description"
+					icon="theme:ICON_PROJECT_DIAGRAM"
+				/>
+				<tiles>
+					<include name="tiles/tileTemplate_shared.xml"
+						resPrefix="${resPrefix}demoTypeComment."
+						securityDomain="DemoTypes"
+						tileName="${namePrefix}demoTypeComment"
+					>
+						<component>
+							<include name="commons/comments/comments.xml"
+								model="selection(${namePrefix}DemoTypesTreeTable)"
+								namePrefix="${namePrefix}DemoTypesComments"
+							>
+								<modelBuilder class="com.top_logic.demo.model.types.util.DemoACommentTableModelBuilder"/>
+							</include>
+						</component>
+						<tileConfig>
+							<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+								description="${resPrefix}demoTypeComment.description"
+								icon="theme:ICON_COMMENT"
+							/>
+						</tileConfig>
+					</include>
+					<include name="tiles/tileTemplate_shared.xml"
+						resPrefix="${resPrefix}editDemoType."
+						securityDomain="DemoTypes"
+						tileName="${namePrefix}editDemoType"
+					>
+						<component>
+							<include name="com.top_logic.demo/structure/demoTypes/detail/editStructureDetail.xml"
+								master="${namePrefix}DemoTypesTreeTable"
+								namePrefix="${namePrefix}"
+								structure="DemoTypes"
+							/>
+						</component>
+						<tileConfig>
+							<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+								description="${resPrefix}editDemoType.description"
+								icon="theme:ICON_PEN_FANCY"
+							/>
+						</tileConfig>
+					</include>
+					<include name="tiles/tileTemplate_shared.xml"
+						resPrefix="${resPrefix}gantt."
+						securityDomain="DemoTypes"
+						tileName="${namePrefix}gantt"
+					>
+						<component>
+							<include name="com.top_logic.demo/structure/demoTypes/gantt/demoGantt.xml"
+								model="selection(${namePrefix}DemoTypesTreeTable)"
+							/>
+						</component>
+						<tileConfig>
+							<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+								description="${resPrefix}gantt.description"
+								icon="theme:ICON_CALENDAR_ALT"
+							/>
+						</tileConfig>
+					</include>
+				</tiles>
+			</tileConfig>
+		</include>
+		<include name="com.top_logic.demo/technical/layoutDemo2/tiles/demoTileList_shared.xml"
+			namePrefix="inlined${namePrefix}"
+			resPrefix="${resPrefix}"
+		>
+			<tileProvider>
+				<tileProvider class="com.top_logic.mig.html.layout.tiles.component.InlinedTileProvider"/>
+			</tileProvider>
+		</include>
+		<include name="com.top_logic.demo/technical/layoutDemo2/tiles/demoTileList_shared.xml"
+			namePrefix="${namePrefix}"
+			resPrefix="${resPrefix}"
+		/>
+	</tiles>
+	<builders>
+		<builder
+			label="${resPrefix}customDemoATile.label"
+			parameters="com.top_logic.demo.layout.demo.tile.CustomDemoATile"
+			template="com.top_logic.demo/technical/layoutDemo2/tiles/demoATile.xml"
+		/>
+	</builders>
+</template>

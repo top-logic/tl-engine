@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_4422d883_bc44_41b3_a6f1_2bac5785f2a7"
+		securityDomain=""
+		tabIcon="css:fas fa-globe-americas"
+	>
+		<tabLabel key="dynamic.6c686da0-488e-4da2-ba41-575b78f150e5">
+			<en>Containment Context</en>
+			<de>Kompositionskontext</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/containmentContext/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

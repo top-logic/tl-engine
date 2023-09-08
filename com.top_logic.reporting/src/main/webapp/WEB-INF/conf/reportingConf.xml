@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<root>
+	<alias />		
+	
+	<properties>
+
+		<section name="ClientRmiReporter" comment="config for client part of report rmi communication">
+			<entry name="rmiRegistry_ip"    value="127.0.0.1" />
+			<entry name="rmiRegistry_port"  value="8082" />
+		</section>	
+		
+        <section name="OperatorFactory" comment="List of known operators for processing data.">
+            <entry name ="report.data.numeric.min"  value="com.top_logic.reporting.data.processing.operator.common.NumericValueMinOperator"/>
+            <entry name ="report.data.numeric.max"  value="com.top_logic.reporting.data.processing.operator.common.NumericValueMaxOperator"/>
+            <entry name ="report.data.numeric.sum"  value="com.top_logic.reporting.data.processing.operator.common.NumericValueSumOperator"/>
+            <entry name ="report.data.numeric.diff" value="com.top_logic.reporting.data.processing.operator.common.NumericValueDiffOperator"/>
+            <entry name ="report.data.date.min"     value="com.top_logic.reporting.data.processing.operator.common.DateMinOperator"/>
+            <entry name ="report.data.date.max"     value="com.top_logic.reporting.data.processing.operator.common.DateMaxOperator"/>
+        </section>
+    
+		<section name="PartitionFunctionFactory" comment="Configuration for PartitionFuctionFactory">
+			<entry name="function:classificationPartitionFunction" value="com.top_logic.reporting.report.model.partition.function.ClassificationPartitionFunction"/>
+			<entry name="function:datePartitionFunction"           value="com.top_logic.reporting.report.model.partition.function.DatePartitionFunction"/>
+			<entry name="function:numberPartitionFunction"         value="com.top_logic.reporting.report.model.partition.function.NumberPartitionFunction"/>
+			<entry name="function:samePartitionFunction"           value="com.top_logic.reporting.report.model.partition.function.SamePartitionFunction"/>
+			<entry name="function:stringPartitionFunction"         value="com.top_logic.reporting.report.model.partition.function.StringPartitionFunction"/>
+		</section>
+		
+		<section name="AggregationFunctionFactory" comment="Configuration for AggregationFunctionFactory">
+		  <entry name="class"  value="com.top_logic.reporting.report.model.aggregation.AggregationFunctionFactory"/>
+		  <entry name="function:avg"    value="com.top_logic.reporting.report.model.aggregation.AverageFunction"/>
+		  <entry name="function:count"  value="com.top_logic.reporting.report.model.aggregation.CountFunction"/>
+		  <entry name="function:countUnique" value="com.top_logic.reporting.report.model.aggregation.CountUniqueFunction"/>
+		  <entry name="function:lower"  value="com.top_logic.reporting.report.model.aggregation.LowerQuartil"/>
+		  <entry name="function:max"    value="com.top_logic.reporting.report.model.aggregation.MaxFunction"/>
+		  <entry name="function:median" value="com.top_logic.reporting.report.model.aggregation.MedianFunction"/>
+		  <entry name="function:min"    value="com.top_logic.reporting.report.model.aggregation.MinFunction"/>
+		  <entry name="function:sum"    value="com.top_logic.reporting.report.model.aggregation.SumFunction"/>
+		  <entry name="function:upper"  value="com.top_logic.reporting.report.model.aggregation.UpperQuartil"/>
+		</section>
+		
+	</properties>
+</root>

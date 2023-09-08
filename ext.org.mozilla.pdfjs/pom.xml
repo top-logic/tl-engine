@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>7.6.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>ext-org-mozilla-pdfjs</artifactId>
+  
+  <description>PDF.js version 2.0.943 - a general-purpose, web standards-based platform for parsing and rendering PDFs.</description>
+  <url>https://mozilla.github.io/pdf.js/</url>
+  
+  <licenses>
+  	<license>
+  		<name>Apache-2.0 (Apache License (v 2.0))</name>
+  		<url>https://github.com/mozilla/pdf.js/blob/v2.0.943/LICENSE</url>
+  		<comments>https://github.com/mozilla/pdf.js/blob/v2.0.943/AUTHORS</comments>
+  	</license>
+  </licenses>
+  
+  <dependencies/>
+</project>

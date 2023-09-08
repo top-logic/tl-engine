@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminGroupEditView"
+	helpIDLegacy="main.admin.groups.tabber"
+	titleKey="main.admin.groups.tabber"
+>
+	<tabInfo label="main.admin.groups.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/security/groups/editGroups.xml"/>
+	</components>
+</securityLayout>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="dialogs">
+			<!-- No dialogs. -->
+		</param>
+	</params>
+	<component class="A">
+		<dialogs>${dialogs}</dialogs>
+	</component>
+</template>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26117_security_object"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26048_Remove_Error_Severity_From_Custom_Transaction"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.layout.tools.rewrite.LayoutMigrationProcessor"
+			rewriter="com.top_logic.layout.tools.ticket26117.SecurityProviderRewriter"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

@@ -1,0 +1,40 @@
+<h2>Syntax</h2> 
+<pre>	<code>union($set1,$set2, ..., $setN)
+</code>
+</pre> 
+<h2>Description</h2> 
+<p>Calculates the union of the sets <code class="hljs inlineCode">set1,... setN</code>.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set</td> 
+   <td>Set</td> 
+   <td>Sets that are to be combined into a single set.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p> 
+<p>A set containing all elements of the sets <code class="hljs inlineCode">set1,... setN</code>. No duplicates will be added, even if multiple sets contain the same elements.</p> 
+<h2>Examples</h2> 
+<h3>Simple union</h3> 
+<pre>	<code>union(list(1, 2, 3), list(4, 5, 6), list(7, 8, 9))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> A set with the elements [1, 2, 3, 4, 5, 6, 7, 8, 9].</p> 
+<h3>Union of duplicates</h3> 
+<pre>	<code>union(list(1, 2, 3), list(1, 2, 3, 4, 5))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> A set with the elements [1, 2, 3, 4, 5].</p> 
+<p>The numbers 1 and 2 are added only once, because a set must not contain duplicates.</p>

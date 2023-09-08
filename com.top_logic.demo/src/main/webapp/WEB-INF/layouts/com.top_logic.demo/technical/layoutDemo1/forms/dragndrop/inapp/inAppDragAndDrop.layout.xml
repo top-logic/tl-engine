@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_93414e7e_c30c_41c1_8457_6e3c44439d2d"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.1d782be7-d142-42b2-8b7f-85f156d0f8c1">
+			<de>In-App Drag and Drop</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/dragndrop/inapp/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<component class="com.top_logic.demo.layout.form.demo.model.DemoButtonComponent"
+			buttonComponent="DemoButtonComponentButtons"
+			displayWithoutModel="true"
+			name="DemoButtonComponent"
+			page="/jsp/test/layout/demoButtonComponent.jsp"
+			resPrefix="layouts.layoutdemo.DemoButtonComponent.DemoButtonComponent."
+			securityProviderClass="securityRoot"
+		/>
+		<buttonbar name="DemoButtonComponentButtons"/>
+	</components>
+</layout>

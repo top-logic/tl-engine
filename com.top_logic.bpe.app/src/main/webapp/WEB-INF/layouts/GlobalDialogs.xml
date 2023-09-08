@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<layout-reference resource="export/exportDialog.layout.xml"/>
+	<layout-reference resource="export/gridExportDialog.layout.xml"/>
+	<layout-reference resource="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml"/>
+	<layout-reference resource="reporting/flex/chart/chartDetailsDialog.layout.xml"/>
+</template>

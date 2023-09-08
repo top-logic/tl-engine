@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- BoundLayout showing the edit part for product structure -->
+<template>
+	<params>
+		<param name="masterComponent"/>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="editComponent"
+			value="com.top_logic.contact.layout.orgunit.OrgUnitEditComponent"
+		/>
+		<param name="createComponent"
+			value="com.top_logic.element.layout.structured.StructuredElementCreateComponent"
+		/>
+		<param name="editJSP"
+			value="/jsp/contact/orgUnit/OrgUnitOverview.jsp"
+		/>
+		<param name="createJSP"
+			value="/jsp/element/NewElementDialog.jsp"
+		/>
+		<param name="structureName"
+			value="orgStructure"
+		/>
+		<param name="defaultFor"
+			value="orgStructure:OrgUnit,orgStructure:OrgUnit.all"
+		/>
+		<param name="resPrefix"
+			value="contact.OrgUnit.overview."
+		/>
+		<param name="editRoot"
+			value="true"
+		/>
+	</params>
+
+	<layout name="${namePrefix}OrgUnitEditView">
+		<components>
+			<component class="${editComponent}"
+				defaultFor="${defaultFor}"
+				editRoot="${editRoot}"
+				model="selection(${masterComponent})"
+				name="${namePrefix}OrgUnitStructureEdit"
+				page="${editJSP}"
+				resPrefix="${resPrefix}"
+				structure="${structureName}"
+			>
+				<dialogs>
+					<include name="element/createStructuredElement.xml"
+						detailComponent="${createComponent}"
+						jSPNewPage="${createJSP}"
+						model="null()"
+						namePrefix="${namePrefix}OrgUnit"
+					>
+						<inject>
+							<dialogInfo
+								height="250"
+								width="450"
+							>
+								<open-handler id="displayDialog_${namePrefix}OrgUnitnewElementLayoutDialog"
+									clique="create"
+									executability="CreateElementRule"
+									group="Create"
+									resourceKey="layouts.contact.EditOrgUnit_Shared.newOrgUnit"
+									target="model(self())"
+									targetComponent="${namePrefix}OrgUnitnewElementDialog"
+								/>
+							</dialogInfo>
+						</inject>
+					</include>
+				</dialogs>
+			</component>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

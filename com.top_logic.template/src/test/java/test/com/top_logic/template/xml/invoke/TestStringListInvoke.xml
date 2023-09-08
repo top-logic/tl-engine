@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+	</t:head>
+	<t:body>
+		<t:invoke template="TestStringList.xml">
+			
+			<t:parameter name="String_List_Parameter">
+				<t:entry value="one"/>
+				<t:entry value="two"/>
+				<t:entry value="three"/>
+			</t:parameter>
+			
+		</t:invoke>
+	</t:body>
+</t:template>

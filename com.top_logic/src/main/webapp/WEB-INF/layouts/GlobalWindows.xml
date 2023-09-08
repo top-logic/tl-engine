@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- It is expected that this file is included into component with name "mainTabber". -->
+<template>
+	<window template="scripting/ScriptRecorder.xml">
+		<windowInfo
+			closeIfParentBecomesInvisible="false"
+			createOpenerButtons="false"
+			height="780"
+			width="1300"
+		>
+			<open-handler id="openScriptRecorder"
+				class="com.top_logic.layout.window.OpenWindowCommand"
+				executability="com.top_logic.layout.debug.ScriptingEnabledExecutability"
+				image="theme:IMAGE_BUTTONS_SCRIPT_RECORDER22"
+				resourceKey="menu.Recorder"
+			/>
+		</windowInfo>
+	</window>
+</template>

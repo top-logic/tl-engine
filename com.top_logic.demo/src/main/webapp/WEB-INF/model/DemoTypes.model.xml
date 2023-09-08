@@ -1,0 +1,2421 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="DemoTypes">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.demo.model.types.wrap"
+				interface-package="com.top_logic.demo.model.types"
+			/>
+			<roles>
+				<role name="DemoTypes.Navigation"/>
+				<role name="DemoTypes.Selection"/>
+				<role name="DemoTypes.Administrator"/>
+				<role name="DemoTypes.BAdministrator"/>
+				<role name="DemoTypes.BooleanAdministrator"/>
+				<role name="DemoTypes.StringAdministrator"/>
+				<role name="DemoTypes.DateAdministrator"/>
+				<role name="DemoTypes.Responsible"/>
+			</roles>
+			<singletons>
+				<singleton type="Root">
+					<role-assignments>
+						<role-assignment
+							group="demoTypeAdministrators"
+							role="DemoTypes.Administrator"
+						/>
+						<role-assignment
+							group="demoTypeBAdministrators"
+							role="DemoTypes.BAdministrator"
+						/>
+					</role-assignments>
+				</singleton>
+			</singletons>
+		</annotations>
+		<datatype name="DemoTime"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<enum-storage enum="java.util.concurrent.TimeUnit"/>
+		</datatype>
+		<datatype name="DemoVec"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="CONFIGURATION"/>
+			</annotations>
+			<configuration-storage config-interface="com.top_logic.demo.model.struct.DemoVec"/>
+		</datatype>
+		<datatype name="com.top_logic.demo.model.types.util.EncryptedLongMapping.DemoTypes.A.encryptedLong"
+			db_size="255"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="LONG"/>
+				<search-range/>
+			</annotations>
+			<demo-encrypted-long-mapping/>
+		</datatype>
+		<datatype name="com.top_logic.demo.model.types.util.EncryptedLongMapping.DemoTypes.X.encryptedLong"
+			db_size="255"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="LONG"/>
+				<search-range/>
+			</annotations>
+			<demo-encrypted-long-mapping/>
+		</datatype>
+		<enum name="DemoEnum">
+			<classifier name="FirstOption"/>
+			<classifier name="MiddleOption"/>
+			<classifier name="LastOption"/>
+		</enum>
+		<interface name="AChild">
+			<generalizations>
+				<generalization type="tl.element:StructuredElement"/>
+			</generalizations>
+		</interface>
+		<interface name="BChild">
+			<generalizations>
+				<generalization type="tl.element:StructuredElement"/>
+			</generalizations>
+		</interface>
+		<interface name="BNotUnderAChild">
+			<generalizations>
+				<generalization type="tl.element:StructuredElement"/>
+			</generalizations>
+		</interface>
+		<interface name="CChild">
+			<generalizations>
+				<generalization type="tl.element:StructuredElement"/>
+			</generalizations>
+		</interface>
+		<interface name="DemoTypes.All">
+			<generalizations>
+				<generalization type="tl.element:StructuredElement"/>
+			</generalizations>
+			<annotations>
+				<table name="DemoTypes"/>
+				<legacy-qualified-name qualified-name="DemoTypes.All"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</interface>
+		<interface name="DemoTypes.A">
+			<generalizations>
+				<generalization type="DemoTypes.All"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:model.DemoTypes.A"/>
+				<main-properties properties="name,boolean,string,float,date"/>
+				<legacy-qualified-name qualified-name="DemoTypes.A"/>
+				<dynamic-icon>
+					<icon-by-expression>
+						<icon><![CDATA[x -> {
+  icon = $x.get(`DemoTypes:A#icon`);
+  important = $x.get(`DemoTypes:A#float`) >= 0.9;
+  if ($important, {
+    $icon == null ? "css:fas fa-beer demo-red" : $icon + " demo-red";
+  }, {
+    $icon;
+  })
+}]]></icon>
+					</icon-by-expression>
+				</dynamic-icon>
+			</annotations>
+			<attributes>
+				<property name="boolean"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression check="value->self->if($value and !$self.get(`DemoTypes:DemoTypes.A#booleanMandatory`), #('Darf nur gesetzt werden, wenn auch booleanMandatory gesetzt ist'@de, 'Must only be checked, if booleanMandatory is checked also.'@en))"/>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="booleanNullable"
+					type="tl.core:Tristate"
+				/>
+				<property name="booleanMandatory"
+					mandatory="true"
+					type="tl.core:Tristate"
+				/>
+				<property name="booleanRadio"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<boolean-display presentation="radio"/>
+					</annotations>
+				</property>
+				<property name="booleanRadioNullable"
+					type="tl.core:Tristate"
+				>
+					<annotations>
+						<boolean-display presentation="radio"/>
+					</annotations>
+				</property>
+				<property name="booleanRadioMandatory"
+					mandatory="true"
+					type="tl.core:Tristate"
+				>
+					<annotations>
+						<boolean-display presentation="radio"/>
+					</annotations>
+				</property>
+				<property name="booleanSelect"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<boolean-display presentation="select"/>
+					</annotations>
+				</property>
+				<property name="booleanSelectNullable"
+					type="tl.core:Tristate"
+				>
+					<annotations>
+						<boolean-display presentation="select"/>
+					</annotations>
+				</property>
+				<property name="booleanSelectMandatory"
+					mandatory="true"
+					type="tl.core:Tristate"
+				>
+					<annotations>
+						<boolean-display presentation="select"/>
+					</annotations>
+				</property>
+				<property name="booleanWithAttributeSecurity"
+					type="tl.core:Boolean"
+				/>
+				<property name="offset"
+					type="DemoVec"
+				/>
+				<property name="timeUnit"
+					type="DemoTime"
+				/>
+				<property name="createdBy"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.knowledge.wrap.Wrapper#getCreator()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="modifiedBy"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.demo.model.types.DemoTypesA#getModifier()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="createdDate"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.knowledge.wrap.Wrapper#getCreated()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="modifiedDate"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<search-range/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.knowledge.wrap.Wrapper#getModified()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="urlString"
+					type="tl.util:URL"
+				/>
+				<property name="html"
+					type="tl.model.wysiwyg:Html"
+				/>
+				<reference name="checklist"
+					kind="forwards"
+					multiple="true"
+					type="tl5.enum:demo.checklist"
+				>
+					<annotations>
+						<classification-display value="checklist"/>
+					</annotations>
+				</reference>
+				<reference name="checklistSingle"
+					kind="forwards"
+					type="tl5.enum:demo.classification.single"
+				/>
+				<reference name="checklistMulti"
+					kind="forwards"
+					multiple="true"
+					type="tl5.enum:demo.classification.multi"
+				/>
+				<reference name="classificationSingle"
+					kind="forwards"
+					type="tl5.enum:tl.beacon.three"
+				/>
+				<reference name="classificationLocal"
+					kind="forwards"
+					type="DemoEnum"
+				/>
+				<reference name="classificationSingleLegacy"
+					kind="forwards"
+					type="tl5.enum:tl.beacon.three"
+				/>
+				<reference name="classificationMulti"
+					kind="forwards"
+					multiple="true"
+					type="tl5.enum:tl.beacon.three"
+				/>
+				<reference name="classificationSinglePopup"
+					kind="forwards"
+					type="tl5.enum:tl.beacon.three"
+				>
+					<annotations>
+						<classification-display value="pop-up"/>
+					</annotations>
+				</reference>
+				<reference name="classificationMultiDropdown"
+					kind="forwards"
+					multiple="true"
+					type="tl5.enum:tl.beacon.three"
+				>
+					<annotations>
+						<classification-display/>
+					</annotations>
+				</reference>
+				<reference name="classificationUnorderedMulti"
+					kind="forwards"
+					multiple="true"
+					type="tl5.enum:demo.federalstates"
+				/>
+				<reference name="classificationUnorderedSingle"
+					kind="forwards"
+					type="tl5.enum:demo.federalstates"
+				/>
+				<reference name="classificationUnorderedSinglePopup"
+					kind="forwards"
+					type="tl5.enum:demo.federalstates"
+				>
+					<annotations>
+						<classification-display value="pop-up"/>
+					</annotations>
+				</reference>
+				<reference name="classificationUnorderedMultiDropdown"
+					kind="forwards"
+					multiple="true"
+					type="tl5.enum:demo.federalstates"
+				>
+					<annotations>
+						<classification-display/>
+					</annotations>
+				</reference>
+				<reference name="collection"
+					kind="forwards"
+					multiple="true"
+					type="tl.model:TLObject"
+				/>
+				<property name="color"
+					type="tl.util:Color"
+				/>
+				<property name="icon"
+					type="tl.core:Icon"
+				>
+					<annotations>
+						<default-value>
+							<icon value="css:fas fa-star"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="complexCountry"
+					type="tl.util:Country"
+				/>
+				<property name="complexLanguage"
+					type="tl.util:Language"
+				/>
+				<reference name="complexUnit"
+					kind="forwards"
+					type="tl.units:AbstractUnit"
+				/>
+				<reference name="comments"
+					kind="forwards"
+					multiple="true"
+					type="tl.comments:Comment"
+				/>
+				<property name="date"
+					type="tl.core:Date"
+				/>
+				<property name="date2"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<format format="d. MMMMM y"/>
+						<storage-algorithm>
+							<primitive-storage>
+								<storage-mapping class="com.top_logic.element.meta.complex.DateToLongMapping"/>
+							</primitive-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="dateTime"
+					type="tl.core:DateTime"
+				/>
+				<property name="binary"
+					type="tl.core:Binary"
+				>
+					<annotations>
+						<accepted-types value="image/*"/>
+					</annotations>
+				</property>
+				<reference name="document"
+					kind="forwards"
+					type="tl.folder:Document"
+				>
+					<annotations>
+						<storage-algorithm>
+							<document-storage folder-path="webFolder"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<property name="encryptedLong"
+					type="com.top_logic.demo.model.types.util.EncryptedLongMapping.DemoTypes.A.encryptedLong"
+				/>
+				<property name="float"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<format format-ref="decimal"/>
+					</annotations>
+				</property>
+				<property name="floatPercent"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<format format-ref="percent"/>
+						<input-size value="4"/>
+					</annotations>
+				</property>
+				<property name="floatConstraint"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<format format="#,###,###0.000"/>
+						<value-range
+							max="10.0"
+							min="-10.0"
+						/>
+					</annotations>
+				</property>
+				<property name="floatDefault"
+					type="tl.core:Double"
+				/>
+				<reference name="historicWrapper"
+					kind="forwards"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<storage-algorithm>
+							<historic-storage/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="inlineReference"
+					inverse-reference="inlineReferenceReverse"
+					kind="forwards"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="inlineReference"
+								storage-type="DemoTypes"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="inlineReferenceReverse"
+					inverse-reference="inlineReference"
+					kind="backwards"
+					multiple="true"
+					type="DemoTypes.A"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.referers(`DemoTypes:DemoTypes.A#inlineReference`)"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="list"
+					bag="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<constraint>
+							<config-reference name="HasEvenNumberInName"/>
+						</constraint>
+						<options>
+							<config-reference name="Siblings"/>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="priorityTable"
+					bag="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<options>
+							<config-reference name="Siblings"/>
+						</options>
+						<reference-display value="table"/>
+						<main-properties properties="name,boolean,string,float,date"/>
+						<search-relevant value="false"/>
+					</annotations>
+				</reference>
+				<property name="long"
+					type="tl.core:Long"
+				/>
+				<property name="longConstraint"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<value-range
+							max="10.0"
+							min="-10.0"
+						/>
+					</annotations>
+				</property>
+				<reference name="responsible"
+					kind="forwards"
+					type="tl.accounts:Person"
+				/>
+				<property name="stringSet"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<config-type value="STRING_SET"/>
+						<storage-algorithm>
+							<string-set-storage/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="string"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-size value="200"/>
+					</annotations>
+				</property>
+				<property name="stringWithAttributeSecurity"
+					type="tl.core:String"
+				/>
+				<property name="text"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<css-class value="myClass"/>
+						<size-constraint upper-bound="128000"/>
+					</annotations>
+				</property>
+				<property name="text1333"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<size-constraint upper-bound="1333"/>
+					</annotations>
+				</property>
+				<property name="text2000"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<size-constraint upper-bound="2000"/>
+					</annotations>
+				</property>
+				<property name="text4000"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<size-constraint upper-bound="4000"/>
+					</annotations>
+				</property>
+				<property name="stringLengthConstraint"
+					type="tl.core:String"
+				>
+					<annotations>
+						<size-constraint upper-bound="10"/>
+						<input-size value="20"/>
+					</annotations>
+				</property>
+				<property name="stringHidden"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<property name="expr"
+					type="tl.model.search:Expr"
+				/>
+				<property name="report"
+					type="tl.model.search:Report"
+				/>
+				<property name="template"
+					type="tl.model.search:Template"
+				/>
+				<reference name="structure"
+					inverse-reference="structureReverse"
+					kind="forwards"
+					multiple="true"
+					type="C"
+				/>
+				<reference name="singleStructure"
+					kind="forwards"
+					type="C"
+				/>
+				<reference name="typedSetOrdered"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="C"
+				>
+					<annotations>
+						<storage-algorithm>
+							<set-storage table="hasDemoTypesCAttValue"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="typedSetUnordered"
+					kind="forwards"
+					multiple="true"
+					type="C"
+				/>
+				<reference name="webFolder"
+					composite="true"
+					kind="forwards"
+					type="tl.folder:WebFolder"
+				>
+					<annotations>
+						<folder-type value="standardFolder"/>
+					</annotations>
+				</reference>
+				<reference name="typedWrapperC"
+					inverse-reference="typedWrapperCReverse"
+					kind="forwards"
+					type="C"
+				>
+					<annotations>
+						<storage-algorithm>
+							<singleton-link-storage table="hasDemoTypesCAttValue"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="typedWrapper"
+					kind="forwards"
+					type="DemoTypes.All"
+				/>
+				<reference name="typedWrapperFiltered"
+					kind="forwards"
+					type="C"
+				>
+					<annotations>
+						<constraint>
+							<config-reference name="IsAssignable"/>
+						</constraint>
+					</annotations>
+				</reference>
+				<reference name="typedWrapperGenerated"
+					kind="forwards"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<options>
+							<config-reference name="Siblings"/>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="untypedWrapper"
+					kind="forwards"
+					type="tl.model:TLObject"
+				/>
+				<property name="derivedPath"
+					multiple="true"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<storage-algorithm>
+							<query expr="x -> $x.get(`DemoTypes:DemoTypes.A#structure`).get(`DemoTypes:DemoTypes.BC#structureReverse`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<reference name="person"
+					kind="forwards"
+					type="tl.accounts:Person"
+				/>
+				<reference name="containment"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="DemoPlain:A"
+				/>
+				<reference name="gallery"
+					bag="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="tl.imagegallery:GalleryImage"
+				/>
+				<reference name="dependency1"
+					kind="forwards"
+					type="A"
+				/>
+				<reference name="dependency2"
+					kind="forwards"
+					type="C"
+				>
+					<annotations>
+						<constraint>
+							<config-reference name="ChildOfDependency1"/>
+						</constraint>
+						<reference-display value="drop-down"/>
+					</annotations>
+				</reference>
+				<property name="idString"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.element.structured.util.NumberHandlerDefaultProvider"
+								date-pattern=""
+								number-pattern="0000"
+								pattern="%NUMBER%"
+								sequence-name="AAA"
+							>
+								<dynamic-sequence-name class="com.top_logic.element.structured.util.ContextAwareSequenceName"/>
+							</provider>
+						</default-value>
+						<create-visibility value="hidden"/>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+				<property name="idLong"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<default-value>
+							<default-by-expression in-transaction="true">
+								<value>nextId(`DemoTypes:A`, "idLong")</value>
+							</default-by-expression>
+						</default-value>
+						<create-visibility value="hidden"/>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+				<property name="i18NStringNormal"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="i18NStringShortLength"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<delete-protected/>
+						<size-constraint upper-bound="10"/>
+					</annotations>
+				</property>
+				<property name="i18NStringMultiLine"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<delete-protected/>
+						<multi-line/>
+					</annotations>
+				</property>
+				<property name="i18NHTMLNormal"
+					type="tl.model.i18n:I18NHtml"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="xml"
+					type="tl.model.search:Code"
+				>
+					<annotations>
+						<code-editor-language value="ace/mode/xml"/>
+						<render-whole-line/>
+					</annotations>
+				</property>
+				<property name="json"
+					type="tl.util:JSON"
+				/>
+				<property name="password"
+					type="tl.core:Password"
+				/>
+				<property name="intList"
+					bag="true"
+					multiple="true"
+					ordered="true"
+					type="tl.core:Integer"
+				/>
+				<property name="floatSet"
+					multiple="true"
+					type="tl.core:Float"
+				/>
+				<property name="intListDerived"
+					bag="true"
+					multiple="true"
+					ordered="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.get(`DemoTypes:A#intList`).map(v -> $v + 1)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="keywordSet"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<collection-separator
+							format-separator="; "
+							parse-separator="[,;:\s]"
+							regular-expression="true"
+						/>
+					</annotations>
+				</property>
+				<reference name="historicReferences"
+					history-type="historic"
+					kind="forwards"
+					multiple="true"
+					type="DemoTypes.A"
+				/>
+				<property name="urlLink"
+					type="tl.util:Resource"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[x -> 
+    resource(icon:"css:fas fa-search-plus", label:#("Search me on Google!"@en, "Such mich mit Google!"@de), url:"http://www.google.com/search?q=" + $x.get(`DemoTypes:A#name`))]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+		<class name="A">
+			<generalizations>
+				<generalization type="DemoTypes.A"/>
+				<generalization type="RootChild"/>
+				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="BChild"/>
+				<generalization type="BNotUnderAChild"/>
+				<generalization type="CChild"/>
+			</generalizations>
+			<types>
+				<interface name="DemoTypes.C">
+					<annotations>
+						<instance-presentation icon="theme:DEMO_CS"/>
+						<legacy-qualified-name qualified-name="DemoTypes.C"/>
+					</annotations>
+					<generalizations>
+						<generalization type="DemoTypes.C.All"/>
+					</generalizations>
+				</interface>
+				<class name="C">
+					<annotations>
+						<table name="DemoTypesC"/>
+					</annotations>
+					<generalizations>
+						<generalization
+							scope="this"
+							type="DemoTypes.C"
+						/>
+						<generalization type="C"/>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</class>
+			</types>
+			<attributes>
+				<reference name="children"
+					override="true"
+					type="AChild"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<interface name="DemoTypes.BC">
+			<generalizations>
+				<generalization type="DemoTypes.All"/>
+			</generalizations>
+			<annotations>
+				<legacy-qualified-name qualified-name="DemoTypes.BC"/>
+			</annotations>
+			<attributes>
+				<reference name="structureReverse"
+					inverse-reference="structure"
+					kind="backwards"
+					multiple="true"
+					type="DemoTypes.A"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<navigate-backwards
+										attribute-name="structure"
+										type="DemoTypes:DemoTypes.A"
+									/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="typedWrapperCReverse"
+					inverse-reference="typedWrapperC"
+					kind="backwards"
+					multiple="true"
+					type="DemoTypes.A"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<navigate-backwards
+										attribute-name="typedWrapperC"
+										type="DemoTypes:DemoTypes.A"
+									/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<interface name="DemoTypes.B">
+			<generalizations>
+				<generalization type="DemoTypes.BC"/>
+			</generalizations>
+			<annotations>
+				<legacy-qualified-name qualified-name="DemoTypes.B"/>
+			</annotations>
+			<attributes>
+				<property name="stringInBAndC"
+					type="tl.core:String"
+				/>
+				<reference name="enumInBAndC"
+					kind="forwards"
+					type="tl5.enum:demo.classification.single"
+				/>
+				<property name="genericInBAndC"
+					type="tl.core:Long"
+				/>
+			</attributes>
+		</interface>
+		<class name="B">
+			<generalizations>
+				<generalization type="DemoTypes.B"/>
+				<generalization type="AChild"/>
+				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="CChild"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:ICON_PARACHUTE_BOX_DEMO_FUCHSIA"/>
+			</annotations>
+			<attributes>
+				<reference name="children"
+					override="true"
+					type="BChild"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="BNotUnderA">
+			<generalizations>
+				<generalization type="DemoTypes.B"/>
+				<generalization type="RootChild"/>
+				<generalization type="tl.element:StructuredElementContainer"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:ICON_PIGGY_BANK_DEMO_FUCHSIA"/>
+			</annotations>
+			<attributes>
+				<reference name="children"
+					override="true"
+					type="BNotUnderAChild"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<interface name="DemoTypes.C.All">
+			<generalizations>
+				<generalization type="DemoTypes.BC"/>
+			</generalizations>
+			<annotations>
+				<legacy-qualified-name qualified-name="DemoTypes.C.All"/>
+			</annotations>
+			<attributes>
+				<property name="stringInBAndC"
+					type="tl.core:String"
+				/>
+				<reference name="enumInBAndC"
+					kind="forwards"
+					type="tl5.enum:demo.classification.multi"
+				/>
+				<property name="genericInBAndC"
+					type="tl.core:String"
+				/>
+				<property name="isAssignable"
+					type="tl.core:Boolean"
+				/>
+				<property name="dependentDate"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<marker-factory>
+							<implementation class="com.top_logic.demo.model.annotations.DemoMarkerFactory"/>
+						</marker-factory>
+					</annotations>
+				</property>
+				<property name="macro"
+					type="tl.model.search:Macro"
+				>
+					<annotations>
+						<storage-algorithm>
+							<macro expr="self -> $self.get(`tl.element:StructuredElement#parent`).get(`DemoTypes:DemoTypes.A#template`).apply($self)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<reference name="priorityTableDialogConfig"
+					bag="true"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<reference-display value="table"/>
+						<main-properties properties="name,boolean,string,float,date"/>
+						<search-relevant value="false"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<interface name="C">
+			<generalizations>
+				<generalization type="DemoTypes.C.All"/>
+				<generalization type="AChild"/>
+				<generalization type="BChild"/>
+				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="CChild"/>
+			</generalizations>
+			<annotations>
+				<table name="DemoTypesC"/>
+				<implementation-binding class-name="com.top_logic.demo.model.types.wrap.CImpl"/>
+				<create-scope
+					create-type="C"
+					scope-ref="A"
+				/>
+			</annotations>
+			<attributes>
+				<reference name="children"
+					override="true"
+					type="CChild"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
+		<interface name="DemoTypes.L">
+			<generalizations>
+				<generalization type="DemoTypes.All"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:ICON_LEAVE_DEMO_GREEN"/>
+				<legacy-qualified-name qualified-name="DemoTypes.L"/>
+			</annotations>
+			<attributes>
+				<property name="dateWithDefault"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<default-value>
+							<default-by-expression value="context -> if ($context.get(`DemoTypes:DemoTypes.A#date`) != null, $context.get(`DemoTypes:DemoTypes.A#date`).toSystemCalendar().withYearAdded(1).toDate(), now().toUserCalendar().withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate())"/>
+						</default-value>
+					</annotations>
+				</property>
+				<reference name="plainChildren"
+					kind="forwards"
+					multiple="true"
+					ordered="true"
+					type="DemoPlain:DemoPlain.All"
+				/>
+			</attributes>
+		</interface>
+		<class name="L">
+			<generalizations>
+				<generalization type="DemoTypes.L"/>
+				<generalization type="AChild"/>
+				<generalization type="BChild"/>
+				<generalization type="BNotUnderAChild"/>
+				<generalization type="CChild"/>
+				<generalization type="tl.element:StructuredElement"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:ICON_SEEDLING_DEMO_GREEN"/>
+			</annotations>
+		</class>
+		<interface name="DemoTypes.X">
+			<generalizations>
+				<generalization type="DemoTypes.All"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:ICON_HANDSHAKE_DEMO_BLUE"/>
+				<legacy-qualified-name qualified-name="DemoTypes.X"/>
+				<main-properties properties="name,boolean,string,float,date"/>
+			</annotations>
+			<attributes>
+				<property name="boolean"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="boolean"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="booleanNullable"
+					type="tl.core:Tristate"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="booleanNullable"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="booleanMandatory"
+					mandatory="true"
+					type="tl.core:Tristate"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="booleanMandatory"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="booleanRadio"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<boolean-display presentation="radio"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="booleanRadio"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="booleanRadioNullable"
+					type="tl.core:Tristate"
+				>
+					<annotations>
+						<boolean-display presentation="radio"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="booleanRadioNullable"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="booleanRadioMandatory"
+					mandatory="true"
+					type="tl.core:Tristate"
+				>
+					<annotations>
+						<boolean-display presentation="radio"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="booleanRadioMandatory"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="booleanSelect"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<boolean-display presentation="select"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="booleanSelect"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="booleanSelectNullable"
+					type="tl.core:Tristate"
+				>
+					<annotations>
+						<boolean-display presentation="select"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="booleanSelectNullable"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="booleanSelectMandatory"
+					mandatory="true"
+					type="tl.core:Tristate"
+				>
+					<annotations>
+						<boolean-display presentation="select"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="booleanSelectMandatory"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="booleanWithAttributeSecurity"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="booleanWithAttributeSecurity"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="createdBy"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="createdBy"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="modifiedBy"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="modifiedBy"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="createdDate"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="createdDate"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="modifiedDate"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<search-range/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="modifiedDate"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="checklist"
+					multiple="true"
+					type="tl5.enum:demo.checklist"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="checklist"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="checklistSingle"
+					type="tl5.enum:demo.classification.single"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="checklistSingle"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="checklistMulti"
+					multiple="true"
+					type="tl5.enum:demo.classification.multi"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="checklistMulti"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="classificationSingle"
+					type="tl5.enum:tl.beacon.three"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationSingle"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="classificationMulti"
+					multiple="true"
+					type="tl5.enum:tl.beacon.three"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationMulti"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="classificationSinglePopup"
+					type="tl5.enum:tl.beacon.three"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationSinglePopup"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="classificationMultiDropdown"
+					multiple="true"
+					type="tl5.enum:tl.beacon.three"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationMultiDropdown"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="classificationUnorderedMulti"
+					multiple="true"
+					type="tl5.enum:demo.federalstates"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationUnorderedMulti"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="classificationUnorderedSingle"
+					type="tl5.enum:demo.federalstates"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationUnorderedSingle"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="classificationUnorderedSinglePopup"
+					type="tl5.enum:demo.federalstates"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationUnorderedSinglePopup"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="classificationUnorderedMultiDropdown"
+					multiple="true"
+					type="tl5.enum:demo.federalstates"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="classificationUnorderedMultiDropdown"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="collection"
+					multiple="true"
+					type="tl.model:TLObject"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="collection"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="complexCountry"
+					type="tl.util:Country"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="complexCountry"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="complexLanguage"
+					type="tl.util:Language"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="complexLanguage"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="complexUnit"
+					type="tl.units:AbstractUnit"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="complexUnit"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="comments"
+					multiple="true"
+					type="tl.comments:Comment"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="comments"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="date"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="date"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="date2"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<format format="d. MMMMM y"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="date2"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="dateTime"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="dateTime"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="binary"
+					type="tl.core:Binary"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="binary"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="document"
+					type="tl.folder:Document"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="document"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="encryptedLong"
+					type="com.top_logic.demo.model.types.util.EncryptedLongMapping.DemoTypes.X.encryptedLong"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="encryptedLong"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="float"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<format format-ref="decimal"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="float"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="floatPercent"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<format format-ref="percent"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="floatPercent"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="floatConstraint"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<format format="#,###,###0.000"/>
+						<value-range
+							max="10.0"
+							min="-10.0"
+						/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="floatConstraint"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="floatDefault"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="floatDefault"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="historicWrapper"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="historicWrapper"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="html"
+					type="tl.model.wysiwyg:Html"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="html"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="inlineReference"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="inlineReference"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="list"
+					bag="true"
+					multiple="true"
+					ordered="true"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="list"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="priorityTable"
+					bag="true"
+					multiple="true"
+					ordered="true"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="priorityTable"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="long"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="long"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="longConstraint"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<value-range
+							max="10.0"
+							min="-10.0"
+						/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="longConstraint"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="responsible"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="responsible"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="stringSet"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<config-type value="STRING_SET"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="stringSet"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="string"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="string"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="stringWithAttributeSecurity"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="stringWithAttributeSecurity"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="text"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<size-constraint upper-bound="128000"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="text"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="stringLengthConstraint"
+					type="tl.core:String"
+				>
+					<annotations>
+						<size-constraint upper-bound="10"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="stringLengthConstraint"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="stringHidden"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="stringHidden"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="structure"
+					multiple="true"
+					type="C"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="structure"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="singleStructure"
+					type="C"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<type-of type="DemoTypes:DemoTypes.A"/>
+										<get-value attribute="singleStructure"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="typedSetOrdered"
+					multiple="true"
+					ordered="true"
+					type="C"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="typedSetOrdered"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="typedSetUnordered"
+					multiple="true"
+					type="C"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="typedSetUnordered"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="webFolder"
+					type="tl.folder:WebFolder"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="webFolder"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="typedWrapperC"
+					type="C"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="typedWrapperC"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="typedWrapper"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="typedWrapper"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="typedWrapperFiltered"
+					type="C"
+				>
+					<annotations>
+						<constraint>
+							<config-reference name="IsAssignable"/>
+						</constraint>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="typedWrapperFiltered"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="typedWrapperGenerated"
+					type="C"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="typedWrapperGenerated"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="untypedWrapper"
+					type="tl.model:TLObject"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="untypedWrapper"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="person"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="person"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="gallery"
+					bag="true"
+					multiple="true"
+					ordered="true"
+					type="tl.imagegallery:GalleryImage"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="gallery"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="i18NStringNormal"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="i18NStringNormal"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="i18NStringShortLength"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="i18NStringShortLength"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+						<size-constraint upper-bound="10"/>
+					</annotations>
+				</property>
+				<property name="i18NStringMultiLine"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="i18NStringMultiLine"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+						<multi-line/>
+					</annotations>
+				</property>
+				<property name="i18NHTMLNormal"
+					type="tl.model.i18n:I18NHtml"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="i18NHTMLNormal"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+		<class name="X">
+			<generalizations>
+				<generalization type="DemoTypes.X"/>
+				<generalization type="AChild"/>
+				<generalization type="tl.element:StructuredElement"/>
+			</generalizations>
+			<annotations>
+				<table name="GenericObject"/>
+			</annotations>
+		</class>
+		<class name="P">
+			<generalizations>
+				<generalization type="DemoTypes.All"/>
+				<generalization type="BChild"/>
+				<generalization type="BNotUnderAChild"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:ICON_LOCK_DEMO_FUCHSIA"/>
+				<delete-constraints>
+					<delete-constraint expr="x->if($x.get(`DemoTypes:P#protected`), #('Objekt geschützt.'@de, 'Object protected.'@en))"/>
+				</delete-constraints>
+			</annotations>
+			<attributes>
+				<property name="protected"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+		<class name="PP">
+			<generalizations>
+				<generalization type="P"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:ICON_LOCK_DEMO_FUCHSIA"/>
+				<delete-constraints>
+					<delete-constraint expr="x->if($x.get(`DemoTypes:PP#moreProtected`), #'model.demo.demoTypes.errorObjectSpeciallyProtected__name'.fill($x.get(`DemoTypes:PP#name`)))"/>
+				</delete-constraints>
+			</annotations>
+			<attributes>
+				<property name="moreProtected"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+		<class name="PX">
+			<generalizations>
+				<generalization type="P"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="theme:ICON_LOCK_DEMO_FUCHSIA"/>
+				<delete-constraints override="true">
+					<custom-constraint class="com.top_logic.demo.model.annotations.DemoDeleteConstraint"/>
+				</delete-constraints>
+			</annotations>
+			<attributes>
+				<property name="alternativeProtected"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+		<interface name="DemoTypes.Root">
+			<generalizations>
+				<generalization type="tl.element:StructuredElement"/>
+			</generalizations>
+			<annotations>
+				<legacy-qualified-name qualified-name="DemoTypes.Root"/>
+			</annotations>
+		</interface>
+		<class name="Root">
+			<generalizations>
+				<generalization type="DemoTypes.Root"/>
+				<generalization type="tl.element:StructuredElementContainer"/>
+			</generalizations>
+			<annotations>
+				<table name="DemoTypes"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+						<default-value>
+							<string value="ROOT"/>
+						</default-value>
+					</annotations>
+				</property>
+				<reference name="children"
+					override="true"
+					type="RootChild"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<interface name="RootChild">
+			<generalizations>
+				<generalization type="tl.element:StructuredElement"/>
+			</generalizations>
+		</interface>
+	</module>
+</model>

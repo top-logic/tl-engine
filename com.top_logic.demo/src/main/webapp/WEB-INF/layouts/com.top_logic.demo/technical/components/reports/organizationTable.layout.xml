@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		type="test.report:BusinessUnit"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/reports/newOrganization/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/reports/edit/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.68f8574f-71e9-4b01-a6d0-3d49a25ea712">
+			<en>Organization</en>
+			<de>Organisation</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.report:BusinessUnit`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.report:BusinessUnit`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_50f5a728_7244_44a7_a253_838d35a9608c"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.a1e5769a-97e1-4546-bd45-5a26701253bb">
+					<en>Delete organization</en>
+					<de>Organisation löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

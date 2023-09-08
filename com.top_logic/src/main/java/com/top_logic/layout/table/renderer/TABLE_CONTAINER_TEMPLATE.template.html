@@ -1,0 +1,27 @@
+<div id="{id}_table"
+	class="tl-height-100 tl-stacking-context tl-vstack tl-line_height--normal"
+	data-complexwidget="true"
+>
+	{title}
+	<div style="min-height:0;position:relative;overflow:hidden;" class="tl-flex--fill">
+		<div id="{id}_scrollContainer"
+			style="display:flex;"
+			class="tl-height-100 tl-width-100 tl-overflow--auto"
+		>
+			<!-- 
+				border-collapse:separate is necessary because some table elements are sticky
+				see: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
+			 -->
+			<table class="tl-table {hasFixedColumns ? 'tl-table--fixed'}"
+				cellpadding="0"
+			>
+				{colgroup}
+				{header}
+				{body}
+			</table>
+		</div>
+	</div>
+	<div class="tl-table__footer">
+		{footer}
+	</div>
+</div>

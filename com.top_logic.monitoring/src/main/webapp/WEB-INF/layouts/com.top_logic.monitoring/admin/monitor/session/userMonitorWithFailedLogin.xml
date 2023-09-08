@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- $Id: userMonitorWithFailedLogin.xml 317347 2023-01-30 15:31:59Z bhu $ -->
+<template>
+	<params>
+		<param name="flSupportExport"
+			value="true"
+		/>
+		<param name="flTemplateFile"
+			value="defaultTemplate.xls"
+		/>
+		<param name="flDownloadNameKey"
+			value="admin.sys.failedLogins.export.download.name"
+		/>
+	</params>
+
+	<layout name="userMonitorLayout"
+		resPrefix="layouts.monitoring.session.userMonitorWithFailedLogin.userMonitorLayout."
+		toolbar="true"
+	>
+		<components>
+			<include name="com.top_logic.monitoring/admin/monitor/session/sessionFilter.xml">
+				<inject>
+					<layoutInfo size="30px"/>
+				</inject>
+			</include>
+
+			<tabbar name="userMonitorTabBar">
+				<components>
+					<include name="com.top_logic.monitoring/admin/monitor/session/sessionTable.xml"/>
+					<include name="com.top_logic.monitoring/admin/monitor/session/sessionChart.xml"/>
+					<include name="com.top_logic.monitoring/admin/monitor/session/loginFailureTable.xml"
+						flDownloadNameKey="${flDownloadNameKey}"
+						flTemplateFile="${flTemplateFile}"
+					/>
+				</components>
+			</tabbar>
+		</components>
+	</layout>
+</template>

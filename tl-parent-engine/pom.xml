@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<version>7.6.0-SNAPSHOT</version>
+		<artifactId>tl-parent-all</artifactId>
+		
+		<relativePath>../tl-parent-all</relativePath>
+	</parent>
+
+	<artifactId>tl-parent-engine</artifactId>
+	
+	<description>Aggregator module that builds all projects of the TopLogice application engine runtime.</description>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<packaging>pom</packaging>
+
+	<modules>
+		<!-- Build tooling -->
+		<module>../tl-build_doclet</module>
+		<module>../tl-build_processor</module>
+		<module>../tl-maven-plugin</module>
+		<module>../tl-tools-resources</module>
+	
+		<!-- Archetypes -->
+		<module>../tl-archetype-deploy</module>
+
+		<!-- Module parents -->
+		<module>../tl-parent-app</module>
+		<module>../tl-parent-core</module>
+		<module>../tl-parent-build</module>
+		<module>../tl-parent-gwt</module>
+
+
+		<!-- JavaScript libraries created with GWT -->
+		<module>../com.top_logic.ajax.client</module>
+		<module>../com.top_logic.client.diagramjs</module>
+		<module>../com.top_logic.graph.diagramjs.client</module>
+
+		<!-- TopLogic -->
+		<module>../com.top_logic</module>
+		<module>../com.top_logic.addons.loginmessages</module>
+		<module>../com.top_logic.ajax.server</module>
+		<module>../com.top_logic.ajax.shared</module>
+		<module>../com.top_logic.basic</module>
+		<module>../com.top_logic.basic.core</module>
+		<module>../com.top_logic.basic.db</module>
+		<module>../com.top_logic.basic.db.schema</module>
+		<module>../com.top_logic.basic.logging</module>
+		<module>../com.top_logic.basic.logging.log4j</module>
+		<module>../com.top_logic.basic.logging.logback</module>
+		<module>../com.top_logic.basic.shared</module>
+		<module>../com.top_logic.bpe</module>
+		<module>../com.top_logic.bpe.app</module>
+		<module>../com.top_logic.bpe.modeler</module>
+		<module>../com.top_logic.common.json</module>
+		<module>../com.top_logic.chart.chartjs</module>
+		<module>../com.top_logic.common.remote</module>
+		<module>../com.top_logic.config.diff</module>
+		<module>../com.top_logic.config.xdiff</module>
+		<module>../com.top_logic.contact</module>
+		<module>../com.top_logic.convert</module>
+		<module>../com.top_logic.dob</module>
+		<module>../com.top_logic.dob.persist</module>
+		<module>../com.top_logic.doc</module>
+		<module>../com.top_logic.doc.app</module>
+		<module>../com.top_logic.dsa</module>
+		<module>../com.top_logic.element</module>
+		<module>../com.top_logic.graph.common</module>
+		<module>../com.top_logic.graph.diagramjs</module>
+		<module>../com.top_logic.graph.diagramjs.server</module>
+		<module>../com.top_logic.graph.layouter</module>
+		<module>../com.top_logic.graph.server</module>
+		<module>../com.top_logic.ide.jetty</module>
+		<module>../com.top_logic.importer</module>
+		<module>../com.top_logic.kafka</module>
+		<module>../com.top_logic.kafka.server</module>
+		<module>../com.top_logic.layout.codeedit</module>
+		<module>../com.top_logic.layout.formeditor</module>
+		<module>../com.top_logic.layout.icons</module>
+		<module>../com.top_logic.layout.scripting.template</module>
+		<module>../com.top_logic.layout.themeedit</module>
+		<module>../com.top_logic.layout.wysiwyg</module>
+		<module>../com.top_logic.layout.wysiwyg.highlighter</module>
+		<module>../com.top_logic.layout.wysiwyg.youtube</module>
+		<module>../com.top_logic.mail</module>
+		<module>../com.top_logic.model.search</module>
+		<module>../com.top_logic.model.wysiwyg</module>
+		<module>../com.top_logic.monitoring</module>
+		<module>../com.top_logic.office</module>
+		<module>../com.top_logic.reporting</module>
+		<module>../com.top_logic.reporting.common</module>
+		<module>../com.top_logic.reporting.flex</module>
+		<module>../com.top_logic.reporting.office</module>
+		<module>../com.top_logic.search.base</module>
+		<module>../com.top_logic.search.lucene</module>
+		<module>../com.top_logic.security.auth.pac4j</module>
+		<module>../com.top_logic.storage.azure</module>
+		<module>../com.top_logic.template</module>
+		<module>../com.top_logic.themes.dezent</module>
+		<module>../com.top_logic.themes.modern</module>
+		<module>../com.top_logic.umljs</module>
+		<module>../com.top_logic.xio</module>
+		<module>../com.top_logic.xref</module>
+
+        <!-- Service modules. -->
+ 		<module>../com.top_logic.service.openapi.common</module>
+ 		<module>../com.top_logic.service.openapi.client</module>
+		<module>../com.top_logic.service.openapi.server</module>
+
+		<!-- Migration utilities -->
+		<module>../com.top_logic.migrate.tl</module>
+		<module>../com.top_logic.migrate.tl_580</module>
+
+		<!-- Supported DB drivers -->
+		<module>../ext.com.ibm.db2</module>
+
+		<!-- External dependencies -->
+		<module>../ext.com.bootstrap.icons</module>
+		<module>../ext.com.ckeditor</module>
+		<module>../ext.com.fontawesome</module>
+		<module>../ext.com.google.fonts</module>
+		<module>../ext.com.meterware.httpunit</module>
+		<module>../ext.io.bpmn.bpmn-js</module>
+		<module>../ext.io.c9.ace</module>
+		<module>../ext.org.chartjs</module>
+		<module>../ext.org.mozilla.pdfjs</module>
+		<module>../ext.org.requirejs</module>
+
+		<!-- Test modules -->
+		<module>../test.com.top_logic.importer</module>
+		<module>../test.com.top_logic.kafka</module>
+		<module>../test.com.top_logic.migrate.tl</module>
+		<module>../test-migrate-apps</module>
+
+		<!-- Demos -->
+		<module>../com.top_logic.demo</module>
+		<module>../com.top_logic.kafka.demo</module>
+		<module>../test.com.top_logic.kafka.demo</module>
+	</modules>
+
+	<build>
+		<plugins>
+			<plugin>
+		        <groupId>com.top-logic</groupId>
+		        <artifactId>tl-maven-plugin</artifactId>
+		        <version>${tl.version}</version>
+		        
+		        <executions>
+					<execution>
+						<id>index-javadoc</id>
+						<goals>
+							<goal>javadoc-index</goal>
+						</goals>
+						
+						<phase>prepare-package</phase>
+						
+						<configuration>
+							<skip>${maven.javadoc.skip}</skip>
+							<javadocDir>../tl-doc/javadoc</javadocDir>
+						</configuration>
+					</execution>
+		        </executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

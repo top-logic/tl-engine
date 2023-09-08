@@ -1,0 +1,20 @@
+<div id="{id}" class="{cssClass}" data-layout-size="\{size:100.0, minSize:0, unit:'%'\}" data-resize="{dataResize}">
+	<div class="{tabbarClass}">
+		<div class="tabBarBaseLine"></div>
+		<div id="{id}-scrollLeftButton" class="containerScrollLeftButton" onmousedown="{scrollLeft}">
+			{scrollLeftArrowIcon}
+		</div>
+		<div id="{id}-additionalRightContent" class="rightContent">
+			<span class="additionalRightContent">{additionalRightContentCommands}</span>
+			<div id="{id}-scrollRightButton" class="containerScrollRightButton" onmousedown="{scrollRight}">
+				{scrollRightArrowIcon}
+			</div>
+		</div>
+		<div id="{id}-scrollContainer" class="scrollContainer" data-complexwidget="true">
+			<div id="{id}-elementContainer" class="tabContainer">
+				{tabs}
+			</div>
+		</div>
+		{tabUpdateScript}
+	</div>
+</div>

@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%ORACLE_HOST%" value="${env:oracle_host:[host]}" />
+        <entry name="%ORACLE_PORT%" value="${env:oracle_port:1521}" />
+        <entry name="%ORACLE_NAME%" value="${env:oracle_name:xe}" />
+        <entry name="%ORACLE_USER%" value="${env:oracle_user:[user]}" />
+        <entry name="%ORACLE_PASSWD%" value="${env:oracle_passwd:unencrypted:[password]}" />
+        
+        <entry name="%NLS_NCHAR_CHARACTERSET%" value="AL32UTF8" />
+	</alias>
+</root>

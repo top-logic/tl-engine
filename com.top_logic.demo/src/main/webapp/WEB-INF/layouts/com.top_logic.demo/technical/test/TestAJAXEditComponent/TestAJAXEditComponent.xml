@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/technical/test/TestAJAXEditComponent/TestAJAXEditComponent_shared.xml"
+	componentName="TestAJAXEditComponent"
+>
+	<dialogs>
+		<include name="com.top_logic.demo/technical/test/TestAJAXEditComponent/TestAJAXEditComponent_shared.xml"
+			componentName="TestAJAXEditComponentInDialog"
+		>
+			<inject>
+				<dialogInfo>
+					<open-handler id="openTestAJAXEditComponent"
+						executability="Always"
+						resourceKey="layouts.layoutdemo.test.TestAJAXEditComponent.openHandler"
+					>
+						<checkScopeProvider class="com.top_logic.layout.basic.check.SelfCheckProvider"/>
+					</open-handler>
+				</dialogInfo>
+			</inject>
+		</include>
+	</dialogs>
+</include>

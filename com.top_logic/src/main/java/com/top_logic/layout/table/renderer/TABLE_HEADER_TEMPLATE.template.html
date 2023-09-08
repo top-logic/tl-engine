@@ -1,0 +1,27 @@
+<!-- 
+	See https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Positioning/Understanding_z_index/Stacking_without_z-index
+	  
+	 When the z-index property is not specified on any element, elements are stacked in the
+	 following order (from bottom to top):
+	  
+	 - The background and borders of the root element. 
+	 - Descendant non-positioned elements, in order of appearance in the HTML. 
+	 - Descendant positioned elements, in order of appearance in the HTML.
+	  
+	 The header (sticky to the top) and the fixed columns (sticky to the left) are positioned elements 
+	 in tables. For fixed columns, in contrast to unfixed columns, the body among the header cells are 
+	 positioned elements as well
+	  
+	 When the user scrolls vertically, the body cells are placed above the header cells, because 
+	 with the respect to the browsers stacking algorithm both cells are positioned elements, but
+	 header cells are appearing before body cells in the HTML.
+	 The HTML specification says that thead has to be defined before the tbody for a table.
+	  
+	 Details: https://html.spec.whatwg.org/multipage/tables.html#the-thead-element
+	  
+	 To avoid this stacking problem for the header cells of fixed columns, the tables header 
+	 has z-index 1 to be stacked upon the tbody (has default z-index 0).
+ -->
+<thead class="tl-table__header">
+	{headerRows}
+</thead>

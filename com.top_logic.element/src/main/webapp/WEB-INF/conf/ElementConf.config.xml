@@ -1,0 +1,1083 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+		           <module key="com.top_logic.element.meta.MetaElementFactory$Module" value="true" />
+			       <module key="com.top_logic.element.meta.MetaAttributeFactory$Module" value="true" />
+			       <module key="com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil$Module" value="true" />
+		           <module key="com.top_logic.element.structured.util.NumberHandlerFactory$Module" value="true"/>
+			       <module key="com.top_logic.util.model.CompatibilityService$Module" value="true" />
+			       <module key="com.top_logic.element.boundsec.attribute.AttributeClassifierManager$Module" value="true" />
+				</modules>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.layout.table.provider.generic.TableConfigModelService">
+			<instance class="com.top_logic.layout.table.provider.generic.TableConfigModelService">
+				<model-info-provider>
+					<model-info-factory class="com.top_logic.element.layout.table.provider.generic.ElementTableConfigModelInfoFactory"/>
+				</model-info-provider>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry">
+			<instance class="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry">
+				<schemes>
+					<scheme type="com.top_logic.element.layout.grid.NewObject" provider="com.top_logic.element.layout.grid.NewObject$Naming" />
+					<scheme type="com.top_logic.element.model.imagegallery.impl.GalleryImageImpl" provider="com.top_logic.layout.image.gallery.scripting.GalleryImageNaming" />
+				</schemes>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+			<instance>
+				<group name="ownerWrite" type="write" />
+				<group name="publish" type="write" />
+			</instance>
+		</config>
+ 
+		<config service-class="com.top_logic.layout.provider.LabelProviderService">
+            <instance>
+                <label-providers>
+		            <provider kind="CODE" type="com.top_logic.element.structured.StructuredElement" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
+		            <provider kind="CODE" type="com.top_logic.knowledge.wrap.Wrapper" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.element.boundsec.manager.rule.RoleRule" implementation="com.top_logic.element.boundsec.manager.rule.RoleRuleResourceProvider" />
+		            <provider kind="CODE" type="com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor$WrapperFavoriteState" implementation="com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor$WrapperFavoriteStateResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.element.layout.grid.GridTreeTableNode" implementation="com.top_logic.element.layout.grid.GridTreeTableNodeResourceProvider">
+						<!-- Is used by the scripting for creating and resolving CompactLabelPaths in the TreeGrid. -->
+					</provider>
+
+					<provider kind="MODEL" type="tl.comments:Comment" implementation="com.top_logic.element.comment.layout.CommentResourceProvider" />
+					<provider kind="MODEL" type="tl.model:TLModelPart" implementation="com.top_logic.model.resources.TLPartResourceProvider" />
+					
+					<!-- Note: The definition for `tl.model:TLModelPart` does not help here, since table mix-in types like `needsRoleAware` may become the primary generalization of a table interface type. Therefore, the canonical super-interface `tl.model:TLModelPart` is not considered.  -->
+					<provider kind="MODEL" type="tl.model:TLStructuredTypePart" implementation="com.top_logic.model.resources.TLPartResourceProvider" />
+					<provider kind="MODEL" type="tl.model:TLModule" implementation="com.top_logic.model.resources.TLPartResourceProvider" />
+
+					<provider kind="MODEL" type="tl.model:TLEnumeration" implementation="com.top_logic.model.resources.TLPartResourceProvider" />
+					
+					<provider kind="CODE" type="com.top_logic.dob.schema.config.MetaObjectName" implementation="com.top_logic.element.util.dbadmin.MetaObjectConfigResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.dob.schema.config.AttributeConfig" implementation="com.top_logic.element.util.dbadmin.AttributeConfigResourceProvider" />
+                </label-providers>
+                <resource-providers>
+					<provider kind="CODE" type="com.top_logic.element.structured.StructuredElement" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor$WrapperFavoriteState" implementation="com.top_logic.element.workItem.favorites.ModifyFavoritesAccessor$WrapperFavoriteStateResourceProvider" />
+					
+                </resource-providers>
+            </instance>
+        </config>
+
+		<config service-class="com.top_logic.common.webfolder.ui.WebFolderUIFactory">
+			<instance
+				zip-folder-name-provider="com.top_logic.element.layout.provider.ZipFolderNameProvider"
+			/>
+		</config>
+		
+		<config service-class="com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory">
+			<instance class="com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory">
+				<locators>
+					<locator key="parent" value="com.top_logic.element.meta.expr.internal.Parent" />
+					<locator key="children" value="com.top_logic.element.meta.expr.internal.Children" />
+					<locator key="root" value="com.top_logic.element.meta.expr.internal.Root" />
+					<locator key="context" value="com.top_logic.element.meta.expr.internal.StructureContext" />
+					<locator key="self" value="com.top_logic.element.meta.expr.internal.Self" />
+					<locator key="asData" value="com.top_logic.element.meta.expr.internal.AsData" />
+					<locator key="asObject" value="com.top_logic.element.meta.expr.internal.AsObject" />
+					<locator key="asCollection" value="com.top_logic.element.meta.expr.internal.AsCollection" />
+					<locator key="singleton" value="com.top_logic.element.meta.expr.internal.Singleton" />
+					<locator key="null" value="com.top_logic.element.meta.expr.internal.Null" />
+					<locator key="empty" value="com.top_logic.element.meta.expr.internal.Empty" />
+					
+					<!-- Deprecated legacy locators -->
+					<!-- ========================== -->
+					<locator key="Path" value="com.top_logic.element.meta.kbbased.filtergen.PathAttributeValueLocator" />
+					<locator key="PathInverted" value="com.top_logic.element.meta.kbbased.filtergen.PathAttributeValueLocatorInvertable" />
+					<locator key="DOPath" value="com.top_logic.element.meta.kbbased.filtergen.DOPathAttributeValueLocator" />
+					<locator key="MetaAttribute" value="com.top_logic.element.meta.kbbased.filtergen.MetaAttributeValueLocator" />
+					<locator key="SingleValueReverseMetaAttribute" value="com.top_logic.element.meta.kbbased.filtergen.SingleValueReverseMetaAttributeLocator" />
+					<locator key="ReverseMetaAttribute" value="com.top_logic.element.meta.kbbased.filtergen.ReverseMetaAttributeLocator" />
+					<locator key="StructuredElement" value="com.top_logic.element.meta.kbbased.filtergen.StructuredElementLocator" />
+				</locators>
+			</instance>
+		</config>	
+	
+		<config service-class="com.top_logic.base.locking.LockService">
+			<instance>
+				<model type="tl.element:StructuredElement">
+					<operation name="editValues">
+						<local aspect="values" kind="exclusive"/>
+						
+						<!-- Disallow editing the structure of the edited object or somewhere above the edited object. -->
+						<ancestors-or-self aspect="structure" kind="shared" />
+					</operation>
+
+					<operation name="editStructure">
+						<local aspect="structure" kind="exclusive"/>
+						
+						<!-- Disallow editing the structure somewhere below the edited object. -->
+						<!-- Editing the structure below would require all shared tokens above the edited object. -->
+						<ancestors aspect="structure" kind="shared" />
+					</operation>
+				</model>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.wrap.WebFolderFactory">
+			<instance class="com.top_logic.knowledge.wrap.WebFolderFactory"
+				folder-types="mndt"
+			/>
+		</config>
+	
+		<config service-class="com.top_logic.element.meta.kbbased.filtergen.FilterFactory">
+			<instance class="com.top_logic.element.meta.kbbased.filtergen.FilterFactory">
+				<filters>
+					<filter name="Mandator" impl="com.top_logic.element.structured.util.MandatorFilter"/>
+					<filter name="CurrentAttributedDocument" impl="com.top_logic.element.meta.kbbased.filtergen.CurrentAttributedDocumentFilter"/>
+				</filters>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<dependencies>
+					<dependency key="com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory" value="true" />
+				</dependencies>
+				<modules>
+					<module name="tl-element" />
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.element.boundsec.attribute.AttributeClassifierManager">
+			<instance class="com.top_logic.element.boundsec.attribute.AttributeClassifierManager" />
+		</config>
+
+		<config service-class="com.top_logic.element.structured.util.NumberHandlerFactory">
+			<instance class="com.top_logic.element.structured.util.NumberHandlerFactory" />
+		</config>
+		
+		<config service-class="com.top_logic.util.model.CompatibilityService">
+			<instance class="com.top_logic.element.util.model.ElementCompatibilityService" />
+		</config>
+		
+		<config service-class="com.top_logic.tool.boundsec.SecurityObjectProviderManager">
+			<instance>
+				<providers>
+					<provider name="rootForCreate" impl="com.top_logic.element.boundsec.RootForCreateSecurityObjectProvider" />
+					<provider name="securityStrRoot" impl="com.top_logic.element.boundsec.SecurityStructureRootSecurityObjectProvider" />
+		            <provider name="searchSecurityObjectProvider">
+		             	<impl class="com.top_logic.tool.boundsec.DispatchingSecurityObjectProvider"
+		             		default="model"
+		             	>
+		             		<providers>
+		             			<provider command-group="publish" impl="securityRoot" />
+		             			<provider command-group="Read" impl="securityRoot" />
+		             			<provider command-group="Create" impl="securityRoot" />
+		             		</providers>
+		             	</impl>
+		            </provider>
+				</providers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="ElementMessages" />
+					<bundle name="model.tl.model.messages" />
+					<bundle name="model.tl.imagegallery.messages" />
+					<bundle name="tl.commentsMessages" />
+					<bundle name="tl.utilMessages" />
+					<bundle name="model.tl.core.messages" />
+					<bundle name="model.Tag.messages" />
+					<bundle name="model.tl.element.messages" />
+					<bundle name="model.SecurityStructure.messages" />
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.BoundHelper">
+			<instance class="com.top_logic.element.boundsec.ElementBoundHelper" />
+		</config>
+		
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance class="com.top_logic.element.boundsec.manager.StorageAccessManager">
+				<storage class="com.top_logic.element.boundsec.ElementSecurityStorage">
+		            <disable-index>true</disable-index>
+				</storage>
+				
+	            <group-mapper class="com.top_logic.tool.boundsec.manager.SimpleGroupMapper"/>
+	            
+	            <reset-on-init>false</reset-on-init>
+	            <skip-rebuild-on-startup>false</skip-rebuild-on-startup>
+	            <rebuild-after-startup>false</rebuild-after-startup>
+	            <rebuild-strategy>block</rebuild-strategy>
+	            
+	            <structures>
+	            	<structure name="SecurityStructure"/>
+	            </structures>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory">
+			<instance class="com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory">
+				<generator-spis>
+					<generator-spi 
+						name="classification" 
+						impl="com.top_logic.element.meta.kbbased.filtergen.ClassificationGeneratorSpi" />
+				</generator-spis>				
+				<generators>
+					<generator 
+						name="empty" 
+						impl="com.top_logic.element.meta.kbbased.filtergen.EmptyGenerator" />
+				</generators>				
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.element.meta.MetaElementFactory">
+			<instance class="com.top_logic.element.meta.kbbased.KBBasedSEMetaElementFactory">
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.element.meta.MetaAttributeFactory">
+			<instance class="com.top_logic.element.meta.kbbased.KBBasedMetaAttributeFactory">
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
+			<instance class="com.top_logic.element.meta.AttributeSettings">
+				<attribute-settings>
+					<attribute-setting config-name="STRING">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.StringFieldProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.StringValueProvider"
+							/>
+						</export-binding>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.StringTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="PASSWORD" legacy-type-code="1">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.PasswordFieldProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.base.security.util.PasswordValueProvider"
+							/>
+						</export-binding>
+						<column-info>
+							<comparator class=""/>
+							<filterProvider class=""/>
+							<editControlProvider class="com.top_logic.element.meta.form.tag.PasswordTagProvider"/>
+						</column-info>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.PasswordTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="DATE">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DateFieldProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.DateValueProvider"
+							/>
+						</export-binding>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.DateTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="DATE_TIME"
+						legacy-type-code="2"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DateTimeFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.DateValueProvider"
+							/>
+						</export-binding>
+
+						<column-info>
+							<filterProvider class="com.top_logic.layout.table.filter.DateTimeTableFilterProvider"
+								separate-option-display-threshold="3"
+							/>
+							<comparator class="com.top_logic.basic.col.NullSafeComparator">
+								<base-comparator class="com.top_logic.basic.col.ComparableComparator"/>
+							</comparator>
+							<descendingComparator class="com.top_logic.basic.col.NullSafeComparator">
+								<base-comparator class="com.top_logic.basic.col.InverseComparator">
+									<base-comparator class="com.top_logic.basic.col.ComparableComparator"/>
+								</base-comparator>
+							</descendingComparator>
+							<configurators>
+								<configurator class="com.top_logic.layout.table.provider.generic.FormatLabelProviderConfigurator"/>
+							</configurators>
+						</column-info>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="DAY"
+						legacy-type-code="2"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DateFieldProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.DateValueProvider"
+							/>
+						</export-binding>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.DateTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="TIME"
+						legacy-type-code="2"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DateFieldProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.DateValueProvider"
+							/>
+						</export-binding>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.DateTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="LONG">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.LongFieldProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.LongWrapperFormat"
+							/>
+						</export-binding>
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.StringTagProvider" 
+								columns="10"
+							/>
+						</tag-provider>
+						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="FLOAT">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.FloatFieldProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.FloatWrapperFormat"
+							/>
+						</export-binding>
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.StringTagProvider" 
+								columns="10"
+							/>
+						</tag-provider>
+						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="BOOLEAN">
+						<fulltext-relevant value="false"/>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.BooleanFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.BooleanTagProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.BooleanWrapperFormat"
+							/>
+						</export-binding>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="TRISTATE"
+						legacy-type-code="16"
+					>
+						<fulltext-relevant value="false"/>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.BooleanFieldProvider"/>
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.BooleanTagProvider"
+								resetable="true"
+							/>
+						</tag-provider>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.BooleanWrapperFormat"
+							/>
+						</export-binding>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="CONFIGURATION"
+						legacy-type-code="1"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.ConfigurationFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<export-binding impl="com.top_logic.model.io.bindings.ConfigurationAttributeValueBinding"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="ENUM"
+						legacy-type-code="1"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.JavaEnumFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.EnumFormat"
+							/>
+						</export-binding>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="COLOR"
+						legacy-type-code="1"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.ColorFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ColorTagProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.layout.form.format.ColorConfigFormat"
+							/>
+						</export-binding>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="ICON"
+						legacy-type-code="1"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.IconFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.IconInputTagProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.layout.basic.ThemeImageConfigFormat"
+							/>
+						</export-binding>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="COUNTRY"
+						legacy-type-code="17"
+					>
+						<field-provider>
+							<impl class="com.top_logic.element.meta.form.fieldprovider.ComplexFieldProvider">
+								<option-provider class="com.top_logic.element.meta.complex.CountryOptionProvider"/>
+							</impl>
+						</field-provider>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.PopupSelectTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="LANGUAGE"
+						legacy-type-code="17"
+					>
+						<field-provider>
+							<impl class="com.top_logic.element.meta.form.fieldprovider.ComplexFieldProvider">
+								<option-provider class="com.top_logic.element.meta.complex.LanguageOptionProvider"/>
+							</impl>
+						</field-provider>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.SelectTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="WRAPPER">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.WrapperFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="REFERENCE"
+						legacy-type-code="32"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.ReferenceFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="CLASSIFICATION">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.ClassificationFieldProvider"/>
+						<export-binding impl="com.top_logic.model.io.bindings.ClassifierAttributeValueBinding"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.EnumerationTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="COLLECTION">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.WrapperFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="ANY"
+						legacy-type-code="17"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.CollectionFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.SelectTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="LIST">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.WrapperFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="COMPOSITION">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.CompositionFieldProvider"/>
+						<column-info>
+							<controlProvider class="com.top_logic.element.meta.form.controlprovider.CompositionControlProvider"/>
+						</column-info>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="GALLERY">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.GalleryFieldProvider"/>
+						<search-relevant value="false"/>
+						<fulltext-relevant value="false"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.GalleryTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="TYPEDSET">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.WrapperFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="SINGLEWRAPPER">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.WrapperFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="SINGLE_REFERENCE">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.WrapperFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="WEBFOLDER"
+						legacy-type-code="17"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.FolderFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<search-relevant value="false"/>
+						<fulltext-relevant value="false"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="SINGLE_STRUCTURE">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.WrapperFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="STRUCTURE">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.WrapperFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="DAP">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DAPFieldProvider"/>
+						<fulltext-relevant value="false"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.DAPTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="DAP_COLLECTION">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DAPCollectionFieldProvider"/>
+						<fulltext-relevant value="false"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.DAPTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="STRING_SET">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.StringSetFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.StringSetTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="DAP_FALLB">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DAPFieldProvider"/>
+						<fulltext-relevant value="false"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.DAPTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="DOCUMENT"
+						legacy-type-code="17"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DocumentFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="COMPLEX">
+						<tag-provider impl="com.top_logic.element.meta.form.tag.SelectTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="BINARY"
+						legacy-type-code="17"
+					>
+						<column-info>
+							<renderer class="com.top_logic.knowledge.wrap.DocumentDownloadRenderer"/>
+						</column-info>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DataFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<fulltext-relevant value="false"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="HISTORIC_WRAPPER">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.HistoricObjectFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.ReferenceTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="URL"
+						legacy-type-code="1"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.URLFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<column-info renderer="com.top_logic.element.meta.form.tag.URLRenderer"/>
+					</attribute-setting>
+					<attribute-setting
+						config-name="JSON"
+						legacy-type-code="1"
+					>
+						<field-provider>
+							<impl class="com.top_logic.element.meta.form.fieldprovider.format.FormattedFieldProvider"
+								format="com.top_logic.element.meta.form.fieldprovider.format.JSONFormatProvider"
+							/>
+						</field-provider>
+						<column-info>
+							<labelProvider class="com.top_logic.layout.provider.label.JSONLabelProvider"
+								pretty="false"
+							/>
+							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
+								<labelProvider class="com.top_logic.layout.form.control.FirstLineLabelProvider"
+									maxChars="50"
+								>
+									<fullTextProvider class="com.top_logic.layout.provider.label.JSONLabelProvider"
+										pretty="false"
+									/>
+								</labelProvider>
+								<tooltipRenderer class="com.top_logic.layout.renderers.PreformattedContentRenderer">
+									<content-renderer class="com.top_logic.layout.renderers.ConfiguredLabelRenderer">
+										<labels class="com.top_logic.layout.provider.label.JSONLabelProvider"
+											pretty="true"
+										/>
+									</content-renderer>
+								</tooltipRenderer>
+							</renderer>
+							<comparator class=""/>
+						</column-info>
+
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.JSONValueProvider"
+							/>
+						</export-binding>
+						<pdf-renderer>
+							<impl class="com.top_logic.layout.renderers.PDFRendererAdapter">
+								<renderer class="com.top_logic.layout.renderers.ConfiguredLabelRenderer">
+									<labels class="com.top_logic.layout.provider.label.JSONLabelProvider"
+										pretty="true"
+									/>
+								</renderer>
+							</impl>
+						</pdf-renderer>
+					</attribute-setting>
+					<attribute-setting
+						config-name="RESOURCE"
+						legacy-type-code="17"
+					>
+						<field-provider>
+							<impl class="com.top_logic.element.meta.form.fieldprovider.ValueDisplayFieldProvider"
+								renderer="com.top_logic.layout.basic.ResourceRenderer"
+							/>
+						</field-provider>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<column-info>
+							<comparator class="com.top_logic.basic.col.MappedComparator"
+								mapping="com.top_logic.layout.Resource$UserObject"
+							/>
+						</column-info>
+					</attribute-setting>
+					<attribute-setting
+						config-name="ICON_RESOURCE"
+						legacy-type-code="17"
+					>
+						<field-provider>
+							<impl class="com.top_logic.element.meta.form.fieldprovider.ValueDisplayFieldProvider"
+								renderer="com.top_logic.layout.Resource$IconResourceRenderer"
+							/>
+						</field-provider>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<column-info cssClass="center">
+							<comparator class="com.top_logic.basic.col.MappedComparator"
+								mapping="com.top_logic.layout.Resource$UserObject"
+							/>
+							<renderer class="com.top_logic.layout.Resource$IconResourceRenderer"/>
+						</column-info>
+					</attribute-setting>
+				</attribute-settings>
+			</instance>
+		</config>
+       
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance class="com.top_logic.element.model.DynamicModelService">
+				<auto-upgrade>true</auto-upgrade>
+				<model>
+					<queries>
+						<query interface="com.top_logic.model.TLModuleSingletons" impl="com.top_logic.element.model.PersistentModuleSingletons" />
+						<query interface="com.top_logic.model.TLInstanceAccess" impl="com.top_logic.element.model.PersistentInstanceAccess" />
+						<query interface="com.top_logic.model.util.TLTypeUsage" impl="com.top_logic.element.model.PersistentTypeUsage" />
+					</queries>
+				</model>
+				<declarations>
+					<declaration file="/WEB-INF/model/tl.model.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.core.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.util.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.element.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.imagegallery.model.xml"/>
+					<declaration file="/WEB-INF/model/SecurityStructure.model.xml"/>
+					<declaration file="/WEB-INF/model/Tag.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.comments.model.xml"/>
+				</declarations>
+				<settings>
+					<module name="tl.element" />
+					<module name="SecurityStructure"/>
+					<module name="Tag" enabled="true">
+						<factory value="com.top_logic.element.version.intf.TagFactory"/>
+					</module>
+ 					<module name="tl.model">
+						<factory value="com.top_logic.element.meta.PersistentModelFactory"/>
+					</module>
+ 					<module name="tl.core">
+						<factory value="com.top_logic.element.model.DefaultModelFactory"/>
+					</module>
+				</settings>
+				<model-filter>
+					<blacklist>
+						<filter class="com.top_logic.element.model.util.HiddenModelPartFilter" />
+						<filter class="com.top_logic.element.model.util.AbstractAssociationFilter" />
+					</blacklist>
+					<whitelist>
+						<name-filter name="tl.element:StructuredElement#parent" />
+						<name-filter name="tl.element:StructuredElementContainer#children" />
+					</whitelist>
+				</model-filter>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.execution.ExecutabilityRuleManager">
+			<instance>
+				<definitions>
+					<definition id="CreateElementRule">
+						<executability>
+							<rule class="com.top_logic.element.layout.structured.StructuredElementNoSubTypeRule"/>
+						</executability>
+					</definition>
+					<definition id="HasCustomizedForm" executability="com.top_logic.element.layout.formeditor.HasCustomizedForm" />
+				</definitions>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<cliques>
+					<clique name="tableSelection" display="menu"/>
+				</cliques>
+			
+				<handlers>
+					<handler id="deleteTLModelPart" class="com.top_logic.element.layout.meta.TLModelPartDeleteHandler" 
+						clique="delete" resourceKey="tl.command.delete" group="Delete" confirm="true" />
+					<handler id="createAttributed" class="com.top_logic.element.meta.gui.DefaultCreateAttributedCommandHandler"
+						clique="create"/>
+		            <handler id="createElement" class="com.top_logic.element.layout.structured.CreateAttributedStructuredElementComponent$CreateAttributedStructuredElementCommandHandler"
+						clique="create"/>
+		            <handler id="createTag" class="com.top_logic.element.layout.version.CreateTagComponent$CreateTagCommandHandler"
+						clique="create"/>
+
+					<!-- DEPRECATED: Use "genericCreateStructure" -->
+		            <handler id="elementCreate" class="com.top_logic.element.layout.structured.StructuredElementCreateHandler"
+						clique="create"/>
+
+		            <handler id="genericCreateStructure" class="com.top_logic.element.layout.create.GenericStructureCreateHandler"/>
+		            <handler id="elementRemove" class="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+						clique="delete"/>
+		            <handler id="elementApply" class="com.top_logic.element.layout.structured.StructuredElementApplyHandler"
+						clique="apply"/>
+		            <handler id="applyTLStructuredTypePart" class="com.top_logic.element.layout.meta.TLStructuredTypePartApplyHandler"
+						clique="additional-apply" resourceKey="tl.command.apply">
+						<executability>
+							<reference rule-id="InEditMode"/>
+						</executability>
+					</handler>
+		            <handler id="applyTLModule" class="com.top_logic.element.layout.meta.TLModuleApplyHandler"
+						clique="additional-apply" resourceKey="tl.command.apply">
+						<executability>
+							<reference rule-id="InEditMode"/>
+						</executability>
+					</handler>
+		            <handler id="applyTLEnumeration" class="com.top_logic.element.layout.meta.TLEnumerationApplyHandler"
+						clique="additional-apply" resourceKey="tl.command.apply">
+						<executability>
+							<reference rule-id="InEditMode"/>
+						</executability>
+					</handler>
+		            <handler id="savePersonOrGroupRoles" class="com.top_logic.element.layout.person.SaveRolesHandler"
+						clique="save"/>
+		            <handler id="applyPersonOrGroupRoles" class="com.top_logic.element.layout.person.ApplyRolesHandler"
+						clique="apply"/>
+		            <handler id="newMandator" class="com.top_logic.element.layout.structured.MandatorAdminComponent$NewMandatorCommandHandler"
+						clique="create"/>
+		            <handler id="touchMetaAttribute" class="com.top_logic.element.meta.form.component.TouchMetaAttributeCommandHandler"/>
+		            <handler id="touchAllMetaAttributes" class="com.top_logic.element.meta.form.component.TouchAllMetaAttributesCommandHandler"/>
+		            <handler id="storeAttributes" class="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler"
+						clique="apply"/>
+		
+		            <handler id="searchAttributed" class="com.top_logic.element.layout.meta.search.SearchCommandHandler"
+						clique="main"
+						image="theme:ICONS_BUTTON_SEARCH"
+						/>
+		            <handler id="resetAttributedQuery" class="com.top_logic.element.layout.meta.search.ResetSearchCommandHandler"
+						clique="main"
+						image="theme:ICONS_BUTTON_CANCEL"
+					/>
+		            <handler id="switchAttributedSearchScope" class="com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler"
+		            	image="theme:ICONS_BUTTON_EXPERT"
+		            />
+		            <handler id="newAttributedQuery" class="com.top_logic.element.layout.meta.search.NewQueryComponent$NewQueryCommandHandler"
+						clique="create"/>
+		            <handler id="saveAttributedQuery" class="com.top_logic.element.layout.meta.search.SaveQueryCommandHandler"
+						clique="save"/>
+		            <handler id="publishableSaveAttributedQuery" class="com.top_logic.element.layout.meta.search.PublishableSaveQueryCommandHandler"
+						clique="save"/>
+		            <handler id="deleteAttributedQuery" class="com.top_logic.element.layout.meta.search.DeleteQueryCommandHandler"
+						clique="delete"/>
+		            <handler id="publishStoredQuery" class="com.top_logic.element.layout.meta.search.PublishableNewQueryComponent$PublishableNewQueryCommandHandler"
+						clique="create"
+						image="theme:ICONS_BUTTON_SAVE"
+					/>
+		
+		            <handler id="ElementSwitchEditCommand" class="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+						clique="edit"/>
+		
+		            <handler id="securityExport" class="com.top_logic.element.layout.security.handler.SecurityExportHandler"
+						clique="exportButtons"
+						image="theme:ICONS_BUTTON_XML_EXPORT" disabledImage="theme:ICONS_BUTTON_XML_EXPORT_DISABLED"/>
+		
+		            <handler id="addSelectedToClipboard" class="com.top_logic.element.layout.grid.GridComponent$AddSelectedToClipboard"
+						clique="clipboard"
+		            	image="theme:ICONS_ADD2_CLIPBOARD" disabledImage="theme:ICONS_ADD2_CLIPBOARD_DISABLED"
+		            />
+		            <handler id="gridApplyRowObject" class="com.top_logic.element.layout.grid.GridComponent$GridApplyCommandHandler"
+						clique="apply"
+						target="selection(self())"
+					/>
+					<handler id="gridDiscard" class="com.top_logic.layout.form.component.EditComponent$DiscardCommand"
+						resourceKey="tl.command.discard"
+						clique="reset"
+						target="selection(self())"
+					/>
+		            <handler id="gridEdit" class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+						group="Write"
+						clique="edit"
+						target="selection(self())"
+					>
+						<executability>
+							<reference rule-id="InViewMode"/>
+						</executability>
+					</handler>
+		            <handler id="gridSave" class="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+						group="Write"
+						clique="save"
+						target="selection(self())"
+					>
+						<executability>
+							<reference rule-id="InEditMode"/>
+						</executability>
+					</handler>
+		            <handler id="gridCancelEdit" class="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+						clique="cancel"
+						target="selection(self())"
+					/>
+		            <handler id="clearSelectedCheckboxes" class="com.top_logic.element.layout.grid.GridComponent$ClearSelectedCheckboxes"
+						clique="tableSelection"
+		            />
+		            <handler id="selectAllCheckboxes" class="com.top_logic.element.layout.grid.GridComponent$SelectAllCheckboxes"
+						clique="tableSelection"
+		            />
+		
+		            <handler id="attributeClassificationApply" class="com.top_logic.element.layout.security.AttributeSecurityEditComponent$AttributeClassificationApplyHandler"
+						clique="apply"/>
+		            <handler id="attributeClassifierRolesApply" class="com.top_logic.element.layout.security.AttributeClassifierRolesComponent$AttributeClassifirRolesApplyHandler"
+						clique="apply"/>
+		            <handler id="deleteMandator" class="com.top_logic.element.layout.structured.MandatorAdminComponent$MandatorDeleteCommandhandler"
+						clique="delete"/>
+		            <handler id="addComment" class="com.top_logic.element.comment.layout.CommentDialogComponent$NewCommentHandler"
+						clique="create"/>
+					<handler id="editComment" class="com.top_logic.element.comment.layout.CommentDialogComponent$EditCommentHandler"
+						clique="edit"/>
+
+					<handler id="treeGridCollapseAll" class="com.top_logic.element.layout.grid.TreeGridCollapseAll"
+						clique="collapse"
+						image="theme:ICONS_COLLAPSE_ALL" disabledImage="theme:ICONS_COLLAPSE_ALL_DISABLED"
+					/>
+					<handler id="treeGridExpandAll" class="com.top_logic.element.layout.grid.TreeGridExpandAll"
+						clique="expand"
+						image="theme:ICONS_EXPAND_ALL" disabledImage="theme:ICONS_EXPAND_ALL_DISABLED"
+					/>
+					<handler 
+						id="historicAttributedViewCommand"
+						class="com.top_logic.element.meta.form.component.AttributedCompareCommandHandler"
+						clique="history"
+						image="theme:ICONS_COMPARE"
+					/>
+					<handler 
+						id="openGridCompareView"
+						class="com.top_logic.element.layout.grid.OpenGridCompareViewCommand"
+					/>
+					<handler id="configureCreateFormDefinitionCommand" class="com.top_logic.element.layout.formeditor.ConfigureCreateFormDefinitionCommand"
+						image="theme:com.top_logic.layout.Icons.CONFIGURE_FORM_DEFINITION_COMMAND"
+						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
+						clique="layout-editor-form"
+						group="System"
+						resourceKey="tl.command.configureFormDefinitionCommand"
+		            >
+						<executability>
+							<reference rule-id="InDesignModeExecutable" />
+						</executability>
+					</handler>
+					<handler id="configureEditFormDefinitionCommand" class="com.top_logic.element.layout.formeditor.ConfigureEditFormDefinitionCommand"
+						image="theme:com.top_logic.layout.Icons.CONFIGURE_FORM_DEFINITION_COMMAND"
+						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
+						clique="layout-editor-form"
+						group="System"
+						resourceKey="tl.command.configureFormDefinitionCommand"
+		            >
+						<executability>
+							<reference rule-id="InDesignModeExecutable" />
+						</executability>
+					</handler>
+					<handler id="deleteCreateFormDefinitionCommand" class="com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand"
+						image="theme:com.top_logic.layout.Icons.DELETE_FORM_DEFINITION_COMMAND"
+						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
+						clique="layout-editor-reset"
+						confirm="true"
+						group="System"
+						resourceKey="tl.command.deleteFormDefinitionCommand"
+		            >
+						<executability>
+							<reference rule-id="InDesignModeExecutable" />
+							<reference rule-id="HasCustomizedForm" />
+						</executability>
+					</handler>
+					<handler id="deleteEditFormDefinitionCommand" class="com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand"
+						image="theme:com.top_logic.layout.Icons.DELETE_FORM_DEFINITION_COMMAND"
+						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
+						clique="layout-editor-reset"
+						confirm="true"
+						group="System"
+						resourceKey="tl.command.deleteFormDefinitionCommand"
+		            >
+						<executability>
+							<rule class="com.top_logic.tool.execution.NullModelDisabled" />
+							<reference rule-id="InDesignModeExecutable" />
+							<reference rule-id="HasCustomizedForm" />
+						</executability>
+					</handler>
+				</handlers>
+			</instance>		
+		</config>
+
+		<config service-class="com.top_logic.knowledge.wrap.person.PersonManager">
+			<instance class="com.top_logic.element.knowledge.wrap.person.ElementPersonManager" />
+		</config>
+		
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+			<instance>
+				<schemes>
+					<scheme class="com.top_logic.element.meta.form.overlay.TLFormObjectNaming"/>
+					<scheme class="com.top_logic.element.layout.grid.GridTreeTableNode$GridTreeTableNodeNaming"/>
+					<scheme class="com.top_logic.element.layout.grid.GridTreeTableNodeLabelNaming"/>
+					<scheme class="com.top_logic.element.layout.grid.OpenDetailDialog$Naming"/>
+					<scheme class="com.top_logic.element.layout.scripting.ChildNamingScheme"/>
+					<scheme class="com.top_logic.element.layout.scripting.StructurePathNamingScheme"/>
+					<scheme class="com.top_logic.element.layout.scripting.MetaAttributeNaming"/>
+					<scheme class="com.top_logic.element.layout.scripting.StructuredElementNaming"/>
+					<scheme class="com.top_logic.element.layout.scripting.CommentNamingScheme"/>
+					<!-- Position the TLObjectByLabelNaming at the beginning
+					     to reduce its priority below that of the IndexedObjectNaming. -->
+					<scheme class="com.top_logic.element.layout.scripting.TLObjectByLabelNaming"
+						priority="fallback"
+						config:position="begin"/>
+
+					<scheme class="com.top_logic.element.layout.grid.GridBusinessObjectNaming" priority="resolve-only"/>
+				</schemes>
+			</instance>
+		</config>
+	</services>
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/StoredInfoMeta.xml" />
+						<declaration resource="webinf://kbase/ElementMeta.xml" />
+						<declaration resource="webinf://kbase/CommentMeta.xml" />
+						<declaration resource="webinf://kbase/TagMeta.xml" />
+						<declaration resource="webinf://kbase/GalleryImageMeta.xml" />
+						<declaration resource="webinf://kbase/ListMeta_inc.xml" />
+					</declarations>
+					<providers>
+						<provider name="securityTypes">
+							<impl class="com.top_logic.element.boundsec.ElementSecurityStorageTypes"/>
+						</provider>
+					</providers>
+				</type-system>
+			</type-systems>
+		</config>
+		
+		<config config:interface="com.top_logic.element.layout.formeditor.DisplayFormEditorBuilder$GlobalConfig">
+			<buttons>
+				<button value="com.top_logic.element.layout.formeditor.definition.GroupDefinition" />
+				<button value="com.top_logic.element.layout.formeditor.definition.TabbarDefinition" />
+				<button value="com.top_logic.element.layout.formeditor.definition.OtherAttributes" />
+				<button value="com.top_logic.model.form.definition.ColumnsDefinition" />
+				<button value="com.top_logic.model.form.definition.FrameDefinition" />
+				<button value="com.top_logic.element.layout.formeditor.definition.TitleDefinition" />
+				<button value="com.top_logic.model.form.definition.SeparatorDefinition" />
+				<button value="com.top_logic.model.form.definition.EmptyCellDefinition" />
+			</buttons>			
+		</config>
+		
+		<config config:interface="com.top_logic.element.meta.kbbased.KBBasedMetaAttribute$GlobalConfig"	>
+			<!-- Activate the attribute classification in security framework. -->
+			<use-classification>true</use-classification>
+		</config>
+		
+		<config config:interface="com.top_logic.element.meta.form.fieldprovider.AbstractWrapperFieldProvider$Config">
+			<show-table-dialog>true</show-table-dialog>
+		</config>
+
+		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">
+			<types>
+				<type name="tl.legacy.tabletypes:TagTable" attributes="name"/>
+				<type name="tl.legacy.tabletypes:StoredQueryTable" attributes="name"/>
+			</types>
+		</config>
+
+		<config config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.FieldAnalyzers">
+			<analyzers>
+				<!-- Use label matcher first. -->
+				<analyzer 
+					config:position="before"
+					config:reference="com.top_logic.layout.scripting.recorder.ref.ui.form.FieldLabelMatcher$Analyzer"
+					class="com.top_logic.element.layout.scripting.AttributeFieldMatcher$Analyzer"
+				/>
+			</analyzers>
+		</config>
+		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
+			<customizations>
+				<type name="com.top_logic.model.form.definition.FormDefinition">
+					<annotations>
+						<property-editor value="com.top_logic.element.layout.formeditor.FormDefinitionEditor"/>
+					</annotations>
+				</type>
+			</customizations>
+		</config>
+	</configs>
+	
+	<defaults>
+		<config interface="com.top_logic.element.layout.grid.GridComponent$Config">
+			<property name="editCommand" value="gridEdit"/>
+			<property name="saveCommand" value="gridSave"/>
+			<property name="applyCommand" value="gridApplyRowObject"/>
+			<property name="discardCommand" value="gridDiscard"/>
+			<property name="cancelCommand" value="gridCancelEdit"/>
+			<property name="deleteCommand" value="dispatchingDelete"/>
+		</config>
+	</defaults>
+
+</application>

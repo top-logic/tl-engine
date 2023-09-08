@@ -1,0 +1,47 @@
+/* Styles for display help for TLScript.*/
+
+div.tlScriptDoc {
+	max-width: 500px;
+	overflow: auto;
+}
+
+div.ace_tooltip {
+	white-space: normal;
+	max-height: 50vh;
+	overflow: auto;
+}
+
+div.ace_tooltip>code {
+	white-space: pre;
+}
+
+div.ace_tooltip>code.inlineCode {
+	white-space: normal;
+}
+
+/*Styles for displaying the preview in a document tile.*/
+.documentPreview .previewBoxInner {
+	height: 100%;
+}
+
+.tablePreview .previewBoxInner,
+.formPreview .previewBoxInner
+{
+	height: 100%;
+	top: 0px;
+	transform: none;
+	overflow: hidden;
+	text-align: left;
+}
+
+.galleryPreview .previewBoxInner {
+	height: 100%;
+}
+
+.galleryPreview .previewBoxInner img {
+	max-width: 100%;
+	max-height: 100%;
+	position: relative;
+	top: 50%;
+	transform: translateY(-50%);
+}

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26660_Remove_dependency_to_tl_remote"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26699_Update_layout_configuration"
+			module="tl"
+		/>
+		<dependency name="Ticket_25881_Remove_model_annotations_from_tables"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_25800_inconsistent_signature_create_handler"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_26398_remove_table_interfaces"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-mail"
+		/>
+		<dependency name="Ticket_26398_remove_table_interfaces"
+			module="tl-demo"
+		/>
+	</dependencies>
+	
+	<processors>
+
+		<processor class="com.top_logic.knowledge.service.migration.DeleteTableProcessor">
+			<tables>
+				<table object_name="Ticket"/>
+				<table object_name="ExternalReference"/>
+			</tables>
+		</processor>
+
+		<!-- Remove implementation class annotations that prevents the object from being loaded, which is required for deleting it. -->
+		<update-annotations name="DemoRemote:Root">
+			<annotations>
+			</annotations>
+		</update-annotations>
+
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-demo/Ticket_26660_Remove_dependency_to_tl_remote.migration.xslt"
+		/>
+	
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

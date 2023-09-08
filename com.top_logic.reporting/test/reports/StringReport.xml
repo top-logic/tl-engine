@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="report.xsd" -->
+<root>
+    <!-- 
+        mandatory 
+        definition of the objectproducer
+        an objectproducer implements the com.top_logic.reporting.report.model.objectproducer.ObjectProducer interface
+    -->
+	<business-object-producer> 
+		<object-type>string</object-type>
+		<class>test.com.top_logic.reporting.report.importer.TestImporter$ValueObjectProducer</class>
+	</business-object-producer>
+	
+	 <!-- 
+	      optional global accessor definition
+	 	  may be overwritten in the function sections
+	 	  accessors implement the com.top_logic.layout.Accessor interface
+	 	  if missed, a default accessor is used ("default" bzw. com.top_logic.reporting.report.model.accessor.ValueByPathAccessor)
+	  -->
+	<value-accessor>test.com.top_logic.reporting.report.importer.TestImporter$ValueObjectAccessor</value-accessor>
+	
+	<report-type>bar chart</report-type>
+	
+	<selected-language>de</selected-language>
+
+	<relevant-business-objects>
+		<meta-attribute-filters>
+		</meta-attribute-filters>
+	</relevant-business-objects>
+
+	<categories>
+			<main-category>
+				<category-function>
+					<type>string</type>
+					<attribute>value</attribute>
+					<ranges>
+						<range>
+							<i18n>
+								<de>Kategorie Eins</de>
+								<en>Category one</en>
+							</i18n>
+							<equals>i1</equals>						
+						</range>
+						<range>
+							<i18n>
+								<de>Kategorie Zwei</de>
+								<en>Category two</en>
+							</i18n>
+							<equals-list>i2,i3,i4,i5,i6</equals-list>						
+						</range>
+						<range>
+							<i18n>
+								<de>Kategorie Drei</de>
+								<en>Category three</en>
+							</i18n>
+							<startsWith>i</startsWith>						
+						</range>
+						<range>
+							<i18n>
+								<de>Kategorie Vier</de>
+								<en>Category four</en>
+							</i18n>
+							<matches>\w*\d{1}</matches>
+						</range>
+					</ranges>
+				</category-function>
+				<aggregation-function>
+					<type>count</type>
+					<attribute>value</attribute>
+				</aggregation-function>
+			</main-category>
+	</categories>
+	<presentation> 
+		<chart>
+			<anti-alias>true</anti-alias>
+			
+			<orientation>vertical</orientation>
+			
+			<show-item-labels>true</show-item-labels>
+			
+			<use-same-category-color>true</use-same-category-color>
+			
+			<use-gradient-paint>true</use-gradient-paint>
+			
+			<use-ints-for-range-axis>true</use-ints-for-range-axis>
+			
+			<!-- *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*  -->
+			<!-- Normal  values: '#rrggbb'       .  				        -->
+			<!-- Special value : 'theme' (use theme background color)       -->
+			<!-- *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*  -->
+			<background-color>theme</background-color>
+			
+			<title>
+				<i18n>
+					<de>Mein Diagrammtitel</de>
+					<en>My diagram title</en>
+				</i18n>
+				<visibility>true</visibility>
+				<align>center</align>
+				<font>
+					<name>Arial</name>
+					<style>italic</style>
+					<size>20</size>
+				</font>
+			</title>
+			
+			<legend>
+				<visibility>true</visibility>
+				<align>bottom</align>
+				<font>
+					<name>Arial</name>
+					<style>bold</style>
+					<size>12</size>
+				</font>
+			</legend>
+
+			<range-axis>
+				<i18n>
+					<de>Wertachse</de>
+					<en>Range axis</en>
+				</i18n>
+				<visibility>true</visibility>
+				<grid-line>true</grid-line>
+				<font>
+					<name>Times New Roman</name>
+					<style>Bold</style>
+					<size>40</size>
+				</font>
+				<values>
+					<font>
+						<name>Times New Roman</name>
+						<style>bold</style>
+						<size>12</size>
+					</font>
+				</values>
+			</range-axis>
+
+			<domain-axis>
+				<i18n>
+					<de>Kategorienachse</de>
+					<en>Domain axis</en>
+				</i18n>
+				<visibility>true</visibility>
+				<grid-line>false</grid-line>
+				<font>
+					<name>Arial</name>
+					<style>plain</style>
+					<size>12</size>
+				</font>
+				<values>
+					<font>
+						<name>Arial</name>
+						<style>italic</style>
+						<size>10</size>
+					</font>
+				</values>
+			</domain-axis>
+		</chart>
+		
+		<table>
+			<title>
+				<i18n>
+					<de>Mein Tabellentitel</de>
+					<en>My table title</en>
+				</i18n>
+				<visibility>false</visibility>
+				<align>left</align>
+			</title>
+			<orientation>vertical</orientation>
+		</table>
+	</presentation>
+
+</root>

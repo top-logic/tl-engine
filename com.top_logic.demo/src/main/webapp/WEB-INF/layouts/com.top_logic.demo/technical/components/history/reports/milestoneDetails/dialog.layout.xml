@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="false"
+		height="500px"
+		helpID="ID_cc7bab8e_cf68_4aa1_8003_a9578fd57e32"
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<open-handler id="ID_acfaaaa4_22fc_480c_ba1b_01f53432e571"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			clique=""
+			confirm="false"
+			disabledImage=""
+			group=""
+			image=""
+			targetComponent=""
+		>
+			<resourceKey key="dynamic.805e14ec-b633-43be-af77-450c3ac91b47">
+				<en>Milestone Details</en>
+				<de>Meilensteindetails</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.805e14ec-b633-43be-af77-450c3ac91b47">
+				<en>Milestone Details</en>
+				<de>Meilensteindetails</de>
+			</title>
+		</title>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/history/reports/milestoneDetails/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

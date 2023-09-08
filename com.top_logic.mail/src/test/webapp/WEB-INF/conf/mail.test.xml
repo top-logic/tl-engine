@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+    Risk configuration file for non-static stuff
+    ========================================================
+    The Installer(s) will only modify this file,
+    so the main top-logic.xml can be fixed in case of Bugs
+
+    Solutions should add this file last in their metaConf.txt
+-->
+<root>
+	<alias>
+	</alias>
+</root>

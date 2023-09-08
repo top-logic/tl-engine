@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Modelltyp/Action-Modelltyp-Erstellen.xml"
+			template-name-comment="Modelltyp Erstellen"
+		>
+			<parameters>
+				<parameter name="Id"
+					value="TestTaskFinishErrorMessageType"
+				/>
+				<parameter name="Deutsch"
+					value="TestTaskFinishErrorMessageType"
+				/>
+				<parameter name="Englisch"
+					value="TestTaskFinishErrorMessageType"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Modelltyp/Action-Modelltyp-AttributAnlegen.xml"
+			template-name-comment="Modelltyp AttributAnlegen"
+		>
+			<parameters>
+				<parameter name="Id"
+					value="canFinish"
+				/>
+				<parameter name="Typ"
+					value="Boolean"
+				/>
+				<parameter name="Deutsch"
+					value="canFinish"
+				/>
+				<parameter name="Englisch"
+					value="canFinish"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Modelltyp/Action-Modelltyp-AttributAnlegen.xml"
+			template-name-comment="Modelltyp AttributAnlegen"
+		>
+			<parameters>
+				<parameter name="Id"
+					value="additionalError"
+				/>
+				<parameter name="Typ"
+					value="String"
+				/>
+				<parameter name="Deutsch"
+					value="additionalError"
+				/>
+				<parameter name="Englisch"
+					value="additionalError"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Workflow/Action-Workflow-Hochladen.xml"
+			template-name-comment="Workflow Hochladen"
+		>
+			<parameters>
+				<parameter name="Name"
+					value="TestTaskFinishErrorMessage.bpml"
+				/>
+				<parameter name="URL"
+					value="file:src/test/java/test/com/top_logic/bpe/app/scripted/TestTaskFinishErrorMessage_24590.bpml"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Prozess Cockpit"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="TestTaskFinishErrorMessage"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Prozess Cockpit > Alle Prozesse > Alle Prozesse"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="TestTaskFinishErrorMessage > Actor 1 > Start"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.mig.html.layout.tiles.scripting.InlinedTileComponentNaming$InlinedTileName"
+				component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent"
+				component-name="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRunObjects.layout.xml#Objects"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.bpe.app.layout.StartProcessExecutionHandler"
+			command-label="Prozess starten"
+			command-name="startProcessExecution"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRun.layout.xml#createProcessExecutionNewAttributed"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+			command-label="Aufgabe abschließen"
+			command-name="finishTask"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			comment="Confirm error dialog."
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+			error="Can not finished."
+			error-pattern=""
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Nächste Aufgabe"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Abbrechen"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="switchToAJAXEdit"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="canFinish"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+				value="true"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="additionalError"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="DynamicError"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+			command-label="Speichern"
+			command-name="defaultSave"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+			command-label="Aufgabe abschließen"
+			command-name="finishTask"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			comment="Confirm error dialog."
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Nächste Aufgabe"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+			error="DynamicError"
+			error-pattern=""
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Nächste Aufgabe"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Abbrechen"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="switchToAJAXEdit"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="additionalError"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="DynamicError2"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+			command-label="Speichern"
+			command-name="defaultSave"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+			command-label="Aufgabe abschließen"
+			command-name="finishTask"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			comment="Confirm error dialog."
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="ERROR"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Nächste Aufgabe"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldErrorAssertionOp"
+			error="DynamicError2"
+			error-pattern=""
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Nächste Aufgabe"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			comment="Confirm error dialog."
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Abbrechen"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="switchToAJAXEdit"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="additionalError"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+			command-label="Speichern"
+			command-name="defaultSave"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+			command-label="Aufgabe abschließen"
+			command-name="finishTask"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+			command-label="Aufgabe abschließen"
+			command-name="finishTask"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ja"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Workflow-Durchführung > Prozess-Instanz > TestTaskFinishErrorMessageType"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Instanzen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+							<list>
+								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="TestTaskFinishErrorMessage - Actor 1"
+								/>
+							</list>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen..."
+					command-name="deleteInstance"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Eigenschaften"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+					command-label="Löschen..."
+					command-name="delete"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Workflow/Action-Workflow-Loeschen.xml"
+					template-name-comment="Workflow Loeschen"
+				>
+					<parameters>
+						<parameter name="name"
+							value="TestTaskFinishErrorMessage"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

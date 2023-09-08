@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model 
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="TestTransformUtil">
+			<types>
+				<interface name="Common">
+					<attributes>
+						<property name="name" type="tl.core:String" />
+					</attributes>
+				</interface>
+				<class name="A">
+					<generalizations>
+						<generalization type="Common"/>
+					</generalizations>
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<property name="a" type="tl.core:String" />
+					</attributes>
+				</class>
+				<class name="B">
+					<generalizations>
+						<generalization type="Common"/>
+					</generalizations>
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<property name="b" type="tl.core:String" />
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

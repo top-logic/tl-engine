@@ -1,0 +1,33 @@
+<archetype-descriptor
+	xmlns="https://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.1.0 https://maven.apache.org/xsd/archetype-descriptor-1.1.0.xsd"
+	name="archetype-app">
+	
+	<requiredProperties>
+		<requiredProperty key="appGroupId">
+			<defaultValue>\${groupId}</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="appArtifactId">
+			<defaultValue>\${artifactId}</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="appVersion">
+			<defaultValue>\${version}</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="parentArtifactId">
+			<defaultValue>tl-parent-app</defaultValue>
+		</requiredProperty>
+	</requiredProperties>
+
+	<fileSets>
+		<fileSet filtered="true">
+			<directory>src</directory>
+		</fileSet>
+		<fileSet filtered="true">
+			<directory/>
+			<includes>
+				<include>.gitignore</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+</archetype-descriptor>

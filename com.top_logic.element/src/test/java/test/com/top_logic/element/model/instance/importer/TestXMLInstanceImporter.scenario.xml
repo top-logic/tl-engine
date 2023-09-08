@@ -1,0 +1,94 @@
+<objects>
+	<object id="context" type="TestXMLInstanceImporter:S">
+		<!-- Singletons not supported in transient test model -->
+		<!-- 
+		<attribute name="parent">
+			<model-ref name="TestXMLInstanceImporter#ROOT"/>
+		</attribute>
+		 -->
+	</object>
+	
+	<object id="a1" type="TestXMLInstanceImporter:A">
+		<attribute name="name" value="A1"/>
+		<attribute name="bool" value="true"/>
+		<attribute name="str" value="foo"/>
+		<attribute name="int" value="13"/>
+		<attribute name="double" value="42"/>
+		<attribute name="other">
+			<ref id="a1"/>
+		</attribute>
+		<attribute name="others">
+			<ref id="a1"/>
+			<ref id="a2"/>
+		</attribute>
+		<attribute name="context">
+			<ref id="context"/>
+		</attribute>
+		<attribute name="item">
+			<value><![CDATA[<config boolean="true" double="1.7976931348623157E308" long="9223372036854775807" string="string"/>]]></value>
+		</attribute>
+	</object>
+	
+	<object id="a2" type="TestXMLInstanceImporter:A">
+		<attribute name="context">
+			<ref id="context"/>
+		</attribute>
+		<attribute name="name" value="A2"/>
+		<attribute name="bool" value="false"/>
+		<attribute name="other">
+			<ref id="a1"/>
+		</attribute>
+		<attribute name="any">
+			<model-ref name="TestXMLInstanceImporter:MyEnum"/>
+			<model-ref name="TestXMLInstanceImporter:MyEnum#A"/>
+			<model-ref name="TestXMLInstanceImporter:A"/>
+			<model-ref name="TestXMLInstanceImporter:A#any"/>
+			<model-ref name="TestXMLInstanceImporter"/>
+
+			<!-- Singletons not supported in transient test model -->
+			<!-- 
+			<model-ref name="TestXMLInstanceImporter#ROOT"/>
+			 -->
+		</attribute>
+	</object>
+		
+	<object id="a3" type="TestXMLInstanceImporter:A">
+		<attribute name="context">
+			<ref id="context"/>
+		</attribute>
+		<attribute name="name" value="A3"/>
+		<attribute name="any">
+			<global-ref kind="account" id="root"/>
+		</attribute>
+	</object>
+	
+	<object id="a4" type="TestXMLInstanceImporter:A">
+		<attribute name="name" value="A4"/>
+		<attribute name="enumSingle">
+			<model-ref name="TestXMLInstanceImporter:MyEnum#A"/>
+		</attribute>
+		<attribute name="enumMultiple">
+			<model-ref name="TestXMLInstanceImporter:MyEnum#A"/>
+			<model-ref name="TestXMLInstanceImporter:MyEnum#B"/>
+		</attribute>
+	</object>
+	
+	<object id="a5" type="TestXMLInstanceImporter:A">
+		<attribute name="name" value="A5"/>
+		<attribute name="enumSingle">
+		</attribute>
+		<attribute name="enumMultiple">
+		</attribute>
+	</object>
+	
+	<object id="a6" type="TestXMLInstanceImporter:A">
+		<attribute name="name" value="A6"/>
+		<attribute name="enumSingle">
+			<model-ref name="TestXMLInstanceImporter:MyEnum#A"/>
+		</attribute>
+		<attribute name="enumMultiple">
+			<model-ref name="TestXMLInstanceImporter:MyEnum#A"/>
+		</attribute>
+	</object>
+	
+</objects>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="templates/contentTab.xml"
+	domain="tl.doc"
+	tabIcon="theme:IMAGE_BUTTONS_DOC"
+>
+	<components>
+		<include name="com.top_logic.doc/tl.doc.view.xml"
+			defaultFor="tl.doc:Page"
+			securityProvider="documentationRoot"
+		>
+			<treeButtons>
+				<button id="importDialog"
+					class="com.top_logic.doc.app.importDoc.OpenImportDocumentationDialogCommand"
+					clique="importButtons"
+					group="Create"
+					image="theme:ICONS_UPLOAD"
+				>
+					<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+						function="model -> if ($model != null, $model, `tl.doc#ROOT`)"
+						input="selection(self())"
+					/>
+				</button>
+				<button id="exportPDF"
+					class="com.top_logic.doc.app.export.ExportChapterCommand"
+					clique="exportButtons"
+					image="theme:ICONS_EXPORT_PDF"
+					resourceKey="%LAYOUT_RESPREFIX%exportPDF"
+					target="selection(self())"
+				/>
+			</treeButtons>
+		</include>
+	</components>
+</include>

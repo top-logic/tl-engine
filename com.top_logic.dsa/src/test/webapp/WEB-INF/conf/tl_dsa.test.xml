@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Configuration File used for testing only                -->
+<!-- ======================================================= -->
+<!--                                                         -->
+<!--  Please provide a 'comment="..."' attribute/value pair  -->
+<!--  for each of your tags, if applicable. The text         -->
+<!--  provided there is displayed within the Administration  -->
+<!--  GUI of the application.                                -->
+<!--                                                         -->
+<root>
+	<alias> 
+    </alias>
+    
+    <properties>
+        
+        <section name="TypeMap" comment="This section contains mappings from MIME file types to short textual descriptions of these types.">
+            <entry name="application/octet-stream" value="Unknown"/>
+            <entry name="application/zip" value="ZIP file"/>
+            <entry name="image/jpeg" value="JPEG file"/>
+            <entry name="image/gif" value="GIF file"/>
+            <entry name="text/html" value="HTML page"/>
+            <entry name="text/plain" value="Text file"/>
+            <entry name="text/jsp" value="Java Server Page"/>
+            <entry name="text/xml" value="XML file"/>
+            <entry name="application/msword" value="MS Word file"/>
+            <entry name="application/vnd.ms-access" value="MS Access Database"/>
+            <entry name="application/vnd.ms-excel" value="MS Excel file"/>
+            <entry name="application/vnd.ms-powerpoint" value="MS Powerpoint file"/>
+        </section>
+        
+		<section name="DOConverterImporter" comment="Configuration of doors importer">
+			<entry name="do.name" value="Datensatz" />
+			<entry name="do.type" value="DataObjectHandler" />
+			<entry name="do.id" value="id" />
+			<entry name="do.doType" value="Doors" />
+
+			<entry name="id.name" value="Anforderungsnummer" />
+			<entry name="id.type" value="ContentHandler" />
+      
+			<entry name="chapter.name" value="Kapitel" />
+			<entry name="chapter.type" value="ContentHandler" />
+      
+			<entry name="description.name" value="Beschreibung" />
+			<entry name="description.type" value="ContentHandler" />
+      
+			<entry name="unit.name" value="Einheit" />
+			<entry name="unit.type" value="ContentHandler" />
+      
+			<entry name="value.name" value="Wert" />
+			<entry name="value.type" value="ContentHandler" />
+			<!--  entry name="value.format" value="Double" / -->
+			<entry name="endDate.name" value="Abschluss_Termin" />
+			<entry name="endDate.type" value="ContentHandler" />
+			<entry name="endDate.format" value="StrictDate:dd.MM.yyyy HH:mm:ss" />
+			<entry name="comment.name" value="Kommentar" />
+			<entry name="comment.type" value="ContentHandler" />
+			<entry name="customer.name" value="Auftraggeber" />
+			<entry name="customer.type" value="ContentHandler" />
+			<entry name="state.name" value="Status" />
+			<entry name="state.type" value="ContentHandler" />
+			<!--  entry name="state.format"     value="Classification:goal.state" / -->
+
+			<entry name="project.name" value="Karosserievariante" />
+			<entry name="project.format" value=", " />
+			<entry name="project.inner" value="item" />
+			<entry name="project.type" value="StringListHandler" />
+			<entry name="variants.name" value="Motorvariante" />
+			<entry name="variants.format" value=", " />
+			<entry name="variants.inner" value="item" />
+			<entry name="variants.type" value="StringListHandler" />
+			<entry name="gear.name" value="Getriebevariante" />
+			<entry name="gear.format" value=", " />
+			<entry name="gear.inner" value="item" />
+			<entry name="gear.type" value="StringListHandler" />
+			<entry name="contractors.name" value="Auftragnehmer" />
+			<entry name="contractors.format" value=", " />
+			<entry name="contractors.inner" value="item" />
+			<entry name="contractors.type" value="StringListHandler" />
+		</section>
+
+    </properties>
+</root>    
+

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="D">
+	<childList>
+		<component class="C"
+			name="c1"
+		/>
+		<component class="C"
+			name="c2"
+		/>
+		<component class="C"
+			name="c3"
+		/>
+		<component class="C"
+			name="c4"
+		/>
+	</childList>
+</component>

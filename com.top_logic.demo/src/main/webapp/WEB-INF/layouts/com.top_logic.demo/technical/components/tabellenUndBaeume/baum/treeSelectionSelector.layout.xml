@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments
+		defaultSelection="false"
+		partnerGroup="TreePartner"
+	>
+		<titleKey key="dynamic.f4a9515c-1d89-467d-b130-9076b1ed3f60">
+			<en>Tree Selection</en>
+			<de>Baumauswahl</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="all(`DemoTypes:DemoTypes.All`)"
+		/>
+	</arguments>
+</config:template-call>

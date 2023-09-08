@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.9a4e7ecb-5854-46aa-964a-641bf159bdb4">
+				<en>Create demoobject</en>
+				<de>Demoobjekt anlegen</de>
+			</title>
+		</title>
+		<open-handler id="ID_9738b8f2_ff08_4527_9fe3_dbdb4eea0350"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="css:fas fa-plus"
+			target="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/demodataTable.layout.xml#Grid)"
+			targetComponent="com.top_logic.demo/technical/components/tabellenUndBaeume/createDemoobject/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.9a4e7ecb-5854-46aa-964a-641bf159bdb4">
+				<en>Create demoobject</en>
+				<de>Demoobjekt anlegen</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="DemoTypes:DemoTypes.All"/>
+		<create-handler id="ID_1812cb4b_c2ff_46e8_85bd_5b01efde135b">
+			<linkOperation><![CDATA[context -> obj -> {
+  parent = $context == null ? `DemoTypes#ROOT` : $context;
+  
+  $parent.add(`tl.element:StructuredElementContainer#children`, $obj);
+}]]></linkOperation>
+		</create-handler>
+	</arguments>
+</config:template-call>

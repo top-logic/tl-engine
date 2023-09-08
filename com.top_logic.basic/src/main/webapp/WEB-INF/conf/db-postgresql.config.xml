@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<pool name="default">
+						<data-source>
+							<driver-class>org.postgresql.ds.PGSimpleDataSource</driver-class>
+							<options>
+								<option name="URL" value="jdbc:postgresql://%POSTGRESQL_HOST%:%POSTGRESQL_PORT%/%POSTGRESQL_DATABASE%" />
+								
+								<option name="currentSchema" value="%POSTGRESQL_SCHEMA%" />
+								
+								<option name="user" value="%POSTGRESQL_USER%" />
+								<encrypted-option name="password" value="%POSTGRESQL_PASSWD%" />
+								
+								<option name="ssl" value="%POSTGRESQL_SSL%" />
+								<option name="sslmode" value="%POSTGRESQL_SSL_MODE%" />
+								
+								<option name="autosave" value="%POSTGRESQL_AUTOSAVE%" />
+							</options>
+						</data-source>
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="visual"
+   viewBox="0 0 22 22"
+   version="1.1"
+   sodipodi:docname="lightbulb.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   width="22"
+   height="22">
+  <metadata
+     id="metadata23">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>dialog-information</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     id="namedview21"
+     showgrid="false"
+     inkscape:zoom="1.9666667"
+     inkscape:cx="-121.42535"
+     inkscape:cy="2.6384685"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="visual"
+     inkscape:pagecheckerboard="true" />
+  <defs
+     id="defs4">
+    <style
+       id="style2">.cls-1{fill:#008fb8;}.cls-2,.cls-3{fill:none;stroke:#fbfbfd;stroke-width:4px;}.cls-2{stroke-miterlimit:10;}.cls-3{stroke-linecap:round;stroke-linejoin:round;}</style>
+  </defs>
+  <title
+     id="title6">dialog-information</title>
+  <path
+     class="cls-2"
+     d="m 8.7497662,15.132232 c 0,-3.143043 -3.7337837,-3.731259 -3.7337837,-8.0532577 a 5.8922594,5.8922594 0 1 1 11.7845185,0 c 0,4.7133017 -3.73126,4.9102147 -3.73126,8.0532577 z"
+     id="path10"
+     style="fill:none;stroke:#008fb8;stroke-width:1.93718827;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+     inkscape:connector-curvature="0" />
+  <rect
+     class="cls-2"
+     x="7.7881389"
+     y="15.474605"
+     width="6.18186"
+     height="1.8259383"
+     rx="3.1900001"
+     id="rect12"
+     style="fill:none;stroke:#008fb8;stroke-width:1.64709091;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+     ry="3.1900001" />
+  <polygon
+     class="cls-2"
+     points="56.59,98 52.21,91 68,91 63.61,98 "
+     id="polygon16"
+     style="fill:none;stroke:#008fb8;stroke-width:5.75508976;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+     transform="matrix(0.26063885,0,0,0.26063885,-4.787932,-4.5540505)" />
+  <polygon
+     class="cls-3"
+     points="54,58 54,78 66,78 66,58 69.64,53.97 65.13,50.62 60.1,53.97 55.08,50.62 50.57,53.97 "
+     id="polygon18"
+     style="fill:none;stroke:#008fb8;stroke-width:6.9061079;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     transform="matrix(0.26063885,0,0,0.26063885,-4.5972541,-5.0307455)" />
+  <rect
+     class="cls-2"
+     x="7.7881393"
+     y="17.300543"
+     width="6.18186"
+     height="1.8259383"
+     rx="3.1900001"
+     id="rect12-1"
+     style="fill:none;stroke:#008fb8;stroke-width:1.64709091;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
+     ry="3.1900001" />
+</svg>

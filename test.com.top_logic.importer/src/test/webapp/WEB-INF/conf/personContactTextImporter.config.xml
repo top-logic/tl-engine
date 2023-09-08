@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.importer.ImporterService">
+			<instance class="com.top_logic.importer.ImporterService">
+				<importers>
+					<importer name="personsText">
+						<parser class="com.top_logic.importer.text.TextFileImportParser"
+							uid="Login"
+							extensions=".txt">
+							<filter class="com.top_logic.basic.col.filter.configurable.ConfigurableAndFilter">
+								<filters>
+									<not>
+										<filter class="com.top_logic.importer.text.TextImportFilter$Equals" column="Login" value="root" />
+									</not>
+									<not>
+										<filter class="com.top_logic.importer.text.TextImportFilter$Empty" column="Login" />
+									</not>
+								</filters>
+							</filter>
+							<mappings>
+								<mapping name="Login"    attribute="_login"       start="1"   end="3"  />
+								<mapping name="Titel"    attribute="title"        start="4"   end="8"  />
+								<mapping name="Nachname" attribute="name"         start="9"   end="18" />
+								<mapping name="Vorname"  attribute="firstname"    start="19"  end="28" />
+								<mapping name="Mobil"    attribute="phone_mobile" start="29"  end="48" />
+								<mapping name="Telefon"  attribute="phone"        start="49"  end="67" />
+								<mapping name="Chef"     attribute="boss"         start="68"  end="70">
+									<parser class="com.top_logic.importer.provider.PersonContactObjectProvider$PersonContactParser" />
+								</mapping>
+								<mapping attribute="_additional"  name="Alter"    start="71"  end="73">
+									<parser class="com.top_logic.importer.text.TextImportParser$Long" format="#0" />
+								</mapping>
+							</mappings>
+						</parser>
+						<performer class="com.top_logic.importer.base.ListDataImportPerformer"
+							create-command-handler="personContactCreate"
+							object-provider="com.top_logic.importer.provider.PersonContactObjectProvider" />
+					</importer>
+				</importers>
+			</instance>
+		</config>
+	</services>
+
+	<configs />
+</application>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="ID_95686206_ae59_4954_8afb_bd0ba2e69143"
+		securityDomain="SecurityStructure"
+		tileName="ID_48f07cda_9c34_4878_a33f_9c9aec4a33de"
+	>
+		<tileLabel key="dynamic.9bfb4154-e4c3-4c71-b10e-f56e63d640af">
+			<en>Open issues</en>
+			<de>Offene Tickets</de>
+		</tileLabel>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
+			model="selection(com.top_logic.demo/technical/components/tiles/releasesTileLayout.layout.xml#Table)"
+		>
+			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[release -> {
+    tickets = $release.referers(`test.tiles:Ticket#planedIn`);
+    active = $tickets.filter(ticket -> ($ticket.get(`test.tiles:Ticket#state`) == `test.tiles:TicketState#ACTIVE`)).size();
+    newTickets = $tickets.filter(ticket -> ($ticket.get(`test.tiles:Ticket#state`) == `test.tiles:TicketState#NEW`)).size();
+    assigned = $tickets.filter(ticket -> ($ticket.get(`test.tiles:Ticket#state`) == `test.tiles:TicketState#ASSIGNED`)).size();
+    #(
+       "{0} Tickets, davon {1} in Arbeit, {2} zugewiesen, {3} neu"@de, 
+       "{0} tickets, {1} active, {2} assigned, {3} new"@en
+    ).fill($tickets.size(), $active, $assigned, $newTickets)
+}]]></text>
+			</description>
+			<content-preview class="com.top_logic.model.search.tiles.TableContentProvider"
+				attributes="name,description"
+				rows="x -> $x.referers(`test.tiles:Ticket#planedIn`).filter(t -> ($t.get(`test.tiles:Ticket#state`) == `test.tiles:TicketState#ACTIVE`))"
+				type="test.tiles:Ticket"
+			>
+				<title><![CDATA[x -> #(
+       "Aktive Tickets in {0}"@de, 
+       "Active tickets in {0}"@en
+    ).fill($x.toString())]]></title>
+			</content-preview>
+		</preview>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tiles/ticketsGrid/ticketsInnerLayout.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

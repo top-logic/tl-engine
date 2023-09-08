@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.mail.proxy.MailReceiverService$Module" value="true"/>
+					<module key="com.top_logic.mail.base.MailServer$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+		
+ 		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-mail" />
+				</modules>
+			</instance>
+		</config>
+
+        <config service-class="com.top_logic.layout.provider.LabelProviderService">
+            <instance>
+                <label-providers>
+					<provider kind="CODE" type="com.top_logic.mail.base.MailFolder" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.mail.base.Mail" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
+                </label-providers>
+            </instance>
+        </config>
+        
+		<config service-class="com.top_logic.base.locking.LockService">
+			<instance>
+				<global>
+					<operation name="checkMail">
+						<global aspect="com.top_logic.mail.proxy.AbstractMailServerDaemon" kind="exclusive"/>
+					</operation>
+				</global>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance>
+				<tasks>
+					<task name="CheckUnusedAccountsTask">
+						<checker class="com.top_logic.mail.util.MailUnusedAccountCheck"
+							send-mails="true"
+							admin-email-addresses=""
+						/>
+					</task>
+				</tasks>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.dsa.DataAccessService">
+			<instance>
+				<adaptors>
+					<adaptor name="mail">
+						<config class="com.top_logic.mail.proxy.MailDataSourceAdaptor" />
+					</adaptor>
+            	</adaptors>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="MailMessages" />
+					<bundle name="tl.mailMessages" />
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/tl.mail.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.mail.proxy.MailReceiverService">
+			<instance class="com.top_logic.mail.proxy.MailReceiverService"
+				server="%IMAP_SERVER%"
+				port="%IMAP_PORT%"
+				user="%IMAP_USER%"
+				password="%IMAP_PASS%"
+				activated="%IMAP_ACTIVE%"
+			>
+				<options>
+					<option name="mail.store.protocol" value="%IMAP_PROTOCOL%"/>
+					<option name="mail.imap.starttls.enable" value="%IMAP_STARTTLS%"/>
+					
+					<option name="mail.imap.timeout" value=""/>
+					<option name="mail.imap.connectiontimeout" value=""/>
+				
+					<!-- Whether mails and attachments are fetched in chunks. If true, set also 'mail.imap.fetchsize' to an appropriate size. -->
+					<option name="mail.imap.partialfetch" value="false"/>
+					
+					<!-- Partial fetch size (in bytes) of mails and attachments. Default is 16 K (16348). Value is not evaluated unless 'mail.imap.partialfetch' is true. -->
+					<!-- 
+			        	Test has shown, that a fetch size value of 1MB (1048576) is faster by a factor of 14 for large attachments 
+			        	see www.ibm.com/developerworks/community/blogs/a9ba1efe-b731-4317-9724-a181d6155e3a/entry/reducing_imap_attachment_prefetch_latency_in_the_email_listener
+					 -->
+					<option name="mail.imap.fetchsize" value="1048576"/>
+				</options>
+				<dependencies>
+					<!-- This service is configured to use IMAPMail, which is a TLObject. -->
+					<!-- Therefore, it depends on the PersistencyLayer, even though the service itself can -->
+					<!-- uses non-TLObjects and therefore does not declare that dependency itself. -->
+					<dependency key="com.top_logic.knowledge.service.PersistencyLayer" value="true" />
+				</dependencies>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.mail.base.MailServer">
+			<instance class="com.top_logic.mail.base.MailServer"
+				activated="%IMAP_ACTIVE%"
+				root-folder="Mails"
+			>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+			            <declaration resource="webinf://kbase/MailMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+	
+</application>

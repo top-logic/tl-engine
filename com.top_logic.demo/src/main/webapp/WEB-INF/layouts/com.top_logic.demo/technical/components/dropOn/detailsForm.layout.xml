@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/dropOn/processorsTree.layout.xml#Tree)">
+		<name key="dynamic.29bc3b83-72c3-4eb8-a4d7-9ad3186fc2dc">
+			<en>Details</en>
+			<de>Eigenschaften</de>
+		</name>
+		<forms>
+			<form type="test.dnd.dropon:Processor">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="test.dnd.dropon:Processor#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="active"
+						fullQualifiedName="test.dnd.dropon:Processor#active"
+						type="tl.core:Boolean"
+					/>
+					<field
+						attribute="canProcess"
+						fullQualifiedName="test.dnd.dropon:Processor#canProcess"
+						type="test.dnd.dropon:WorkType"
+					/>
+					<field
+						attribute="processing"
+						fullQualifiedName="test.dnd.dropon:Processor#processing"
+						type="test.dnd.dropon:WorkItem"
+					>
+						<annotations>
+							<reference-display value="table"/>
+							<main-properties properties="name,type"/>
+						</annotations>
+					</field>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

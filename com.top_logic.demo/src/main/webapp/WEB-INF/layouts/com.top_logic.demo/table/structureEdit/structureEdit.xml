@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/structure/demoTypes/structureEdit/structureEdit_shared.xml"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	namePrefix="Demo"
+>
+	<model config:interface="com.top_logic.layout.channel.linking.Provider">
+		<impl class="com.top_logic.element.layout.structured.WholeStructureModelProvider"
+			structure="DemoTypes"
+		/>
+	</model>
+</include>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="tl.model.i18n">
+			<types>
+				<datatype name="I18NString" db_type="clob" kind="String">
+					<storage-mapping class="com.top_logic.element.model.i18n.I18NAttributeStorageMapping" />
+					<annotations>
+						<config-type value="I18N_STRING"/>
+						<storage-algorithm>
+							<implementation class="com.top_logic.element.model.i18n.I18NAttributeStorage" />
+						</storage-algorithm>
+					</annotations>
+				</datatype>
+				<datatype name="I18NHtml" db_type="clob" kind="String">
+					<storage-mapping class="com.top_logic.model.wysiwyg.i18n.I18NStructuredTextAttributeStorageMapping" />
+					<annotations>
+						<config-type value="I18N_HTML"/>
+						<storage-algorithm>
+							<implementation class="com.top_logic.model.wysiwyg.i18n.I18NStructuredTextAttributeStorage" />
+						</storage-algorithm>
+						<render-whole-line />
+					</annotations>
+				</datatype>
+			</types>
+		</module>
+	</modules>
+</model>

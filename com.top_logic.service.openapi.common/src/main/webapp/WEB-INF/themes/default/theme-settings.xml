@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICON_IMPORT_OPEN_API_CONFIGURATION"
+		value="css:fas fa-upload"
+	/>
+</settings>

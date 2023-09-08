@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="components"/>
+	</params>
+
+	<component class="%MAIN_LAYOUT_CLASS%"
+		horizontal="false"
+		icon="/images/shortcut.ico"
+		name="masterFrame"
+		resizable="false"
+		shortcutIcon="/images/shortcut.ico"
+		titleKey="tl.title"
+	>
+		<component-resolvers>
+			<component-resolver class="com.top_logic.layout.form.component.FormStateRecorder"/>
+		</component-resolvers>
+
+		<components>${components}</components>
+	</component>
+</template>

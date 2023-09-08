@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.demo.mig.html.layout.demo.AJAXDemo"
+	name="AJAXDemo"
+	resPrefix="layouts.layoutdemo.AJAXDemo.AJAXDemo."
+	securityProviderClass="securityRoot"
+>
+	<commands>
+		<command id="illegalAjaxRequest"
+			class="com.top_logic.demo.mig.html.layout.demo.AJAXDemo$IllegalAjaxRequest"
+		/>
+		<command id="illegalAjaxResponse"
+			class="com.top_logic.demo.mig.html.layout.demo.AJAXDemo$IllegalAjaxResponse"
+		/>
+		<command id="noAjaxResponse"
+			class="com.top_logic.demo.mig.html.layout.demo.AJAXDemo$NoAjaxResponse"
+		/>
+		<command id="testCommand"
+			class="com.top_logic.demo.mig.html.layout.demo.AJAXDemo$TestCommand"
+		/>
+	</commands>
+</component>

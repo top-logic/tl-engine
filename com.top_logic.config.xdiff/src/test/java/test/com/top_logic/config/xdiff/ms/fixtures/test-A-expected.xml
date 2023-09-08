@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<!DOCTYPE r [
+<!ELEMENT r (a+) >
+<!ELEMENT a (v+) >
+<!ELEMENT v (#PCDATA) >
+<!ATTLIST v name CDATA #REQUIRED >
+<!ATTLIST v a1 CDATA #IMPLIED >
+<!ATTLIST v a2 CDATA #IMPLIED >
+<!ATTLIST v a3 CDATA #IMPLIED >
+<!ATTLIST v a4 CDATA #IMPLIED >
+<!ATTLIST v a5 CDATA #IMPLIED >
+<!ATTLIST v x ENTITY #IMPLIED >
+<!ENTITY v1 SYSTEM "resources/v1.txt">
+<!ENTITY v2 SYSTEM "resources/v2.txt">
+<!ENTITY v4 SYSTEM "resources/v4.txt">
+<!ENTITY v5 SYSTEM "resources/v5.txt">
+]>
+
+<r>
+	<a>
+		<v name="v1">v1</v>
+		<v name="v2">&v2; &lt;&amp;&gt;&#13;&#10; A&#65;</v>
+		<v name="v3"/>
+		<v name="v4" a4="v4"/>
+		<v name="v5" a5="&lt;&amp;&gt;&#13;&#10; A&#65;"/>
+	</a>
+</r>

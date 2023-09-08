@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!-- Configure services here. -->
+	</services>
+
+	<configs>
+		<config config:interface="test.com.top_logic.layout.scripting.runtime.TestedApplication$Config"
+			context-path="/demo"
+		/>
+	</configs>
+</application>

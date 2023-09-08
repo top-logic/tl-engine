@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_cc779cc1_d4ae_49c9_b659_d73028f25ab4">
+		<tabLabel key="dynamic.405426fd-a584-4a8d-81f0-b3abdc046d4f">
+			<en>Drag &amp; Drop on</en>
+			<de>Drag &amp; Drop auf</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/dropOn/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

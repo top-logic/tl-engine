@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <properties>                
+        <!--  User used in TestMailHelper to be found by UserService -->                  
+		<section name="TestMailHelper">
+			<entry name="username" value="test-user1"/>
+			<entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY"/>
+            <!-- Mail is expected in tests. -->
+			<entry name="mail" value="user1@develop.local"/>
+            <!-- Given name and surname are necessary for ContactFactory to create PersonContact. -->
+			<entry name="givenName" value="test-user1"/>
+			<entry name="sn" value="test-user1"/>
+		</section>
+        <section name="dau">
+            <entry name="username" value="dau"/>            
+            <entry name="initials" value="dau"/>             
+            <entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY"/>             
+            <entry name="userrole" value="user"/>             
+            <entry name="givenName" value="Dieter"/>             
+            <entry name="sn" value="Aumann"/>            
+            <entry name="personalTitle" value="Dipl. Ing."/>
+            <entry name="customerName" value=" "/>
+            <entry name="telephoneNumber" value="+49 1234 111104"/>
+            <entry name="mobile" value="+49 170 12345603"/>
+            <entry name="otherTelephone" value="+49 4321 654303"/>             
+            <entry name="privateNumber" value="+49 1234 111105"/>
+            <entry name="mail" value="info3@top-logic.com"/>
+            <entry name="otherMailbox" value="info3@top-logic.de"/>
+            <entry name="objectClass" value="person"/>
+            <entry name="mailNickname" value="Diddi"/>
+            <entry name="displayName" value="Dipl. Ing. Dieter Aumann"/>
+            <entry name="description" value="Organization Unit"/>
+        </section>                  
+        <section name="dummy">
+            <entry name="initials" value="dummy"/>
+            <entry name="username" value="dummy"/>             
+            <entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY"/>             
+            <entry name="userrole" value="user"/>             
+            <entry name="givenName" value="Morty"/>            
+            <entry name="sn" value="Dugar"/>            
+            <entry name="personalTitle" value=""/>
+            <entry name="customerName" value="Keiner"/>
+            <entry name="telephoneNumber" value="+44 111 2222203"/>
+            <entry name="mobile" value="+44 790 12345601"/>
+            <entry name="otherTelephone" value="+44 111 2222204"/>            
+            <entry name="privateNumber" value="+44 222 1111102"/>
+            <entry name="mail" value="info5@top-logic.co.uk"/>
+            <entry name="otherMailbox" value="info5@top-logic.com"/>
+            <entry name="objectClass" value="person"/>
+            <entry name="mailNickname" value="Morty"/>
+            <entry name="displayName" value="Morty Dugar"/>
+            <entry name="description" value="Office London"/>
+        </section>          
+		<section name="guest_de">
+			<entry name="mailNickname" value=" "/>
+			<entry name="mobile" value=" "/>
+			<entry name="personalTitle" value=" "/>
+			<entry name="userrole" value=" "/>
+			<entry name="displayName" value="Deutscher Gast"/>
+			<entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY"/>
+			<entry name="givenName" value="Deutscher"/>
+			<entry name="telephoneNumber" value=" "/>
+			<entry name="mail" value=" "/>
+			<entry name="username" value="guest_de"/>
+			<entry name="objectClass" value="person"/>
+			<entry name="customerName" value=" "/>
+			<entry name="description" value=" "/>
+			<entry name="locale" value=" "/>
+			<entry name="otherTelephone" value=" "/>
+			<entry name="sn" value="Gast"/>
+			<entry name="privateNumber" value=" "/>
+			<entry name="otherMailbox" value=" "/>
+		</section>
+		<section name="guest_en">
+			<entry name="mailNickname" value=" "/>
+			<entry name="mobile" value=" "/>
+			<entry name="personalTitle" value=" "/>
+			<entry name="userrole" value=" "/>
+			<entry name="displayName" value="English Guest"/>
+			<entry name="userpassword" value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY"/>
+			<entry name="givenName" value="English"/>
+			<entry name="telephoneNumber" value=" "/>
+			<entry name="mail" value=" "/>
+			<entry name="username" value="guest_en"/>
+			<entry name="objectClass" value="person"/>
+			<entry name="customerName" value=" "/>
+			<entry name="description" value=" "/>
+			<entry name="locale" value=" "/>
+			<entry name="otherTelephone" value=" "/>
+			<entry name="sn" value="Guest"/>
+			<entry name="privateNumber" value=" "/>
+			<entry name="otherMailbox" value=" "/>
+		</section>
+	</properties> 
+</root>

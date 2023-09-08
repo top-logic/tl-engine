@@ -1,0 +1,56 @@
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.AttributePart.CalculateLabel
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.AttributePart.NAME
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.AttributePart.NamedPartNames
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.AttributePart.OWNER
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.AttributePart.ParticipantAttributes
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.AttributePart.getLabel
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.GroupPart.OWNER
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.GroupPart.PARTS
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.GroupPart.TITLE
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.GroupPart.getOwner
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.GroupPart.getTitle
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.COLUMNS
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.ColumnDisplay
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.ColumnDisplay.ResolvePart
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.ColumnDisplay.TABLE
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.ColumnDisplay.TYPE_PART
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.ColumnDisplay.TypeAttributes
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.ColumnDisplay.VISIBILITY
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.ColumnDisplay.getTable
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.ROWS
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.ResolveType
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.TITLE
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.TYPE
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.TYPE_SPEC
+com.top_logic.bpe.bpml.display.DisplayDescription.java: Missing documentation: com.top_logic.bpe.bpml.display.DisplayDescription.TablePart.getTitle
+com.top_logic.bpe.execution.engine.BPETimeoutTask.java: Missing documentation: com.top_logic.bpe.execution.engine.BPETimeoutTask
+com.top_logic.bpe.execution.engine.BPMailer.java: Missing documentation: com.top_logic.bpe.execution.engine.BPMailer
+com.top_logic.bpe.execution.engine.BPMailer.java: Missing documentation: com.top_logic.bpe.execution.engine.BPMailer.sendMail
+com.top_logic.bpe.execution.engine.BPTimeGranularity.java: Invalid camel case word 'BPTimeGranularity', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.bpe.execution.engine.BPTimeGranularity.java: Missing documentation: com.top_logic.bpe.execution.engine.BPTimeGranularity
+com.top_logic.bpe.execution.engine.BPTimeGranularity.java: Missing documentation: com.top_logic.bpe.execution.engine.BPTimeGranularity.DAY
+com.top_logic.bpe.execution.engine.BPTimeGranularity.java: Missing documentation: com.top_logic.bpe.execution.engine.BPTimeGranularity.HOUR
+com.top_logic.bpe.execution.engine.BPTimeGranularity.java: Missing documentation: com.top_logic.bpe.execution.engine.BPTimeGranularity.MINUTE
+com.top_logic.bpe.execution.engine.BPTimeGranularity.java: Missing documentation: com.top_logic.bpe.execution.engine.BPTimeGranularity.SECOND
+com.top_logic.bpe.execution.engine.BPTimeGranularity.java: Missing documentation: com.top_logic.bpe.execution.engine.BPTimeGranularity.convertToMillis
+com.top_logic.bpe.execution.engine.ExecutionEngine.java: Invalid camel case word 'ProcessExecution', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.bpe.execution.engine.ExecutionEngine.java: Invalid camel case word 'booleaValue', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.bpe.execution.engine.ExecutionEngine.java: Missing documentation: com.top_logic.bpe.execution.engine.ExecutionEngine
+com.top_logic.bpe.execution.engine.ExecutionEngine.java: Missing documentation: com.top_logic.bpe.execution.engine.ExecutionEngine.getInstance
+com.top_logic.bpe.execution.engine.ExecutionEngine.java: Missing documentation: com.top_logic.bpe.execution.engine.ExecutionEngine.getManualStartEvents
+com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler.java: Missing documentation: com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler
+com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler.java: Missing documentation: com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler.getTypeForStartEvent
+com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler.java: Missing documentation: com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler.newProcessExecution
+com.top_logic.bpe.execution.engine.GuiEngine.java: Missing documentation: com.top_logic.bpe.execution.engine.GuiEngine
+com.top_logic.bpe.execution.engine.GuiEngine.java: Missing documentation: com.top_logic.bpe.execution.engine.GuiEngine.getInstance
+com.top_logic.bpe.execution.engine.GuiEngine.java: Missing documentation: com.top_logic.bpe.execution.engine.GuiEngine.getNextNode
+com.top_logic.bpe.execution.engine.GuiEngine.java: Missing documentation: com.top_logic.bpe.execution.engine.GuiEngine.getSingleOutgoingEdge
+com.top_logic.bpe.execution.engine.GuiEngine.java: Missing documentation: com.top_logic.bpe.execution.engine.GuiEngine.isManual
+com.top_logic.bpe.execution.export.ExportAsPdfHandler.java: Invalid camel case word 'dotsPerPixel', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.bpe.execution.export.ExportAsPdfHandler.java: Invalid camel case word 'dotsPerPoint', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.bpe.execution.export.ExportAsPdfHandler.java: Missing documentation: com.top_logic.bpe.execution.export.ExportAsPdfHandler
+com.top_logic.bpe.layout.execution.ProcessExecutionResourceProvider.java: Missing documentation: com.top_logic.bpe.layout.execution.ProcessExecutionResourceProvider
+com.top_logic.bpe.layout.execution.TokenResourceProvider.java: Missing documentation: com.top_logic.bpe.layout.execution.TokenResourceProvider
+com.top_logic.bpe.layout.scripting.BPMLObjectNaming.java: Missing documentation: com.top_logic.bpe.layout.scripting.BPMLObjectNaming
+com.top_logic.bpe.layout.scripting.BPMLObjectNaming.java: Missing documentation: com.top_logic.bpe.layout.scripting.BPMLObjectNaming.buildPath
+com.top_logic.bpe.layout.scripting.EventDefinitionNaming.java: Missing documentation: com.top_logic.bpe.layout.scripting.EventDefinitionNaming

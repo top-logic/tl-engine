@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="test.com.top_logic.kafka.services.TestTLSyncValueMappings.source">
+			<types>
+				<enum name="EnumType">
+					<classifiers>
+						<classifier name="First"/>
+						<classifier name="Second"/>
+						<classifier name="Third"/>
+					</classifiers>
+				</enum>
+				<class name="SourceType">
+					<annotations>
+						<table name="SourceTable1"/>
+						<exported />
+					</annotations>
+					<attributes>
+						<reference name="testTlType"
+							kind="forwards"
+							type="tl.model:TLStructuredType"
+						>
+							<annotations>
+								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+							</annotations>
+						</reference>
+						<reference name="testTlAttribute"
+							kind="forwards"
+							type="tl.model:TLStructuredTypePart"
+						>
+							<annotations>
+								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+							</annotations>
+						</reference>
+						<reference name="testTlEnum"
+							type="EnumType"
+						>
+							<annotations>
+								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed" />
+					</generalizations>
+				</class>
+			</types>
+		</module>
+		<module name="test.com.top_logic.kafka.services.TestTLSyncValueMappings.target">
+			<types>
+				<class name="TargetType">
+					<annotations>
+						<table name="TargetTable1"/>
+						<imported source="test.com.top_logic.kafka.services.TestTLSyncValueMappings.source:SourceType"/>
+					</annotations>
+					<attributes>
+						<reference name="testTlType"
+							kind="forwards"
+							type="tl.model:TLStructuredType"
+						>
+							<annotations>
+								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+							</annotations>
+						</reference>
+						<reference name="testTlAttribute"
+							kind="forwards"
+							type="tl.model:TLStructuredTypePart"
+						>
+							<annotations>
+								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+							</annotations>
+						</reference>
+						<reference name="testTlEnum"
+							type="test.com.top_logic.kafka.services.TestTLSyncValueMappings.source:EnumType"
+						>
+							<annotations>
+								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed" />
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

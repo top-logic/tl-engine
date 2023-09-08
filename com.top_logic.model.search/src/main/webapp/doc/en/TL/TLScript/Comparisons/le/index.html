@@ -1,0 +1,54 @@
+<h2>Syntax</h2> 
+<pre>	<code>$e1 &lt;= $e2
+
+$e1.le($e2)
+</code>
+</pre> 
+<h2>Description</h2> 
+<p>Boolean expression that evaluates to <code class="hljs inlineCode">true</code> if the result of evaluating <code class="hljs inlineCode">e1</code> is less than or equal to the result of evaluating <code class="hljs inlineCode">e2</code>.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>e1</td> 
+   <td>Number/string/set</td> 
+   <td>Object to be compared with <code class="hljs inlineCode">e2</code>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>e2</td> 
+   <td>Number/string/set</td> 
+   <td>Object to be compared with <code class="hljs inlineCode">e1</code>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p> 
+<p><code class="hljs inlineCode">true</code>, if the result of the evaluation says that <code class="hljs inlineCode">e1</code> is less than or equal to <code class="hljs inlineCode">e2</code>.</p> 
+<h2>Examples</h2> 
+<h3>Numbers</h3> 
+<pre>	<code>1 &lt;= 1
+</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span>true</p> 
+<h3>Unequal sets</h3> 
+<pre>	<code>list(1, 2, 3).le(list(1, 2, 4))</code>
+</pre> 
+<p><strong><span style="color:#3498db">Output:</span> </strong><code class="hljs inlineCode">true</code></p> 
+<p>Since sets are compared element by element, the first set is smaller than the second because the number 3 is smaller than the number 4 (see <a class="tlObject" data-custom="true" href="?page=Comparisons&amp;uuid=a9117c9d-c941-44d9-bdc1-00f4a25e8a7a">comparison operators</a>).</p> 
+<h3>Equal sets</h3> 
+<pre>	<code>list(1, 2, 3).le(list(1, 2, 3))</code>
+</pre> 
+<p><strong><span style="color:#3498db">Output:</span> </strong><code class="hljs inlineCode">true</code></p>

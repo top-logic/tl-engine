@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<root>
+    <properties>
+        <section name="TestConfiguredRuntimeModule">
+            <entry name="class" value="test.com.top_logic.basic.module.TestConfiguredRuntimeModule$SimpleManagedClass" />
+            <entry name="a" value="b" />
+        </section>
+
+        <section name="TestConfiguredRuntimeModule$SimpleManagedClass">
+            <entry name="class" value="test.com.top_logic.basic.module.TestConfiguredRuntimeModule$ExtendedSimpleManagedClass" />
+            <entry name="dependency:com.top_logic.basic.sql.ConnectionPoolRegistry$Module" value="enabled" />
+        </section>
+        
+        <section name="TestConfiguredRuntimeModule$NonExistingDependencyConfigured">
+            <entry name="dependency:module.class.does.not.exists" value="enabled" />
+        </section>
+        
+    </properties>
+</root>    

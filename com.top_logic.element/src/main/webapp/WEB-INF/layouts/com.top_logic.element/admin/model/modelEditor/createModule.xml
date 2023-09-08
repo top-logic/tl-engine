@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="ownerModel"/>
+		<param name="target"/>
+		<param name="postCreateActions">
+			<postCreateActions>
+				<setModel target="${targetChannel}(${target})"/>
+			</postCreateActions>
+		</param>
+		<param name="targetChannel"
+			value="model"
+		/>
+		<param name="dialogName"
+			value="${namePrefix}Layout"
+		/>
+		<param name="formName"
+			value="${namePrefix}Form"
+		/>
+	</params>
+
+	<layout name="${dialogName}"
+		titleKey="element.meta.createModule.Layout.title"
+	>
+		<components>
+			<form name="${formName}"
+				buttonComponent="${namePrefix}Buttons"
+				closeHandlerName="cancelCreate"
+				model="${ownerModel}"
+				resPrefix="element.meta.createModule.Form."
+				resetInvisible="true"
+				securityProviderClass="dialogParent"
+			>
+				<modelBuilder class="com.top_logic.element.layout.meta.TLModuleFormBuilder"
+					contextOptional="true"
+					create="true"
+				/>
+
+				<buttons>
+					<button id="createModule"
+						class="com.top_logic.element.layout.meta.TLModuleCreateHandler"
+						clique="create"
+						group="Create"
+						postCreateActions="${postCreateActions}"
+						resourceKey="tl.command.new"
+					/>
+				</buttons>
+			</form>
+			<buttonbar name="${namePrefix}Buttons"/>
+		</components>
+	</layout>
+</template>

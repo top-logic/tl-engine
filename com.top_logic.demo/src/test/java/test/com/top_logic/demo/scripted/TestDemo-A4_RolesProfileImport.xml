@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Rolle/Action-Rolle-Anlegen.xml"
+		>
+			<parameters>
+				<parameter name="Name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Role_TestRolesProfileImport_01"
+					/>
+				</parameter>
+				<parameter name="Berechtigungsstruktur"
+					value="Zentrale Berechtigungen"
+				/>
+				<parameter name="ergebnis">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Role_TestRolesProfileImport_01"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Berechtigungen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+				tab-path="Administration > Berechtigungen"
+			/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="Berechtigungsstruktur"
+							field-name="structure"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+								label="Zentrale Berechtigungen"
+							/>
+						</list>
+					</value>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Berechtigungen > Rollenprofile"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+			columns="Rechte,Role_TestRolesProfileImport_01"
+			label="true"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					tab-path="Administration > Berechtigungen > Rollenprofile"
+				/>
+				<path>
+					<named-member name="tree"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Importieren..."
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="Datei"
+							field-name="input"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ExternalDataValue"
+						content-type="text/xml"
+						name="TestDemo-A4_RolesProfileImport.importFile.xml"
+						url="file:../com.top_logic.demo/src/test/java/test/com/top_logic/demo/scripted/TestDemo-A4_RolesProfileImport.importFile.xml"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Importieren"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+				raw-value="true"
+			>
+				<field-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+						tab-path="Administration > Berechtigungen > Rollenprofile"
+					/>
+					<path>
+						<object>
+							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Administration > Berechtigungen > Rollenprofile (Lesen)"
+							/>
+						</object>
+						<named-member name="Role_TestRolesProfileImport_01"/>
+					</path>
+				</field-name>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+				string="true"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+				raw-value="true"
+			>
+				<field-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+						tab-path="Administration > Berechtigungen > Rollenprofile"
+					/>
+					<path>
+						<object>
+							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Administration > Berechtigungen > Rollenprofile (Ändern)"
+							/>
+						</object>
+						<named-member name="Role_TestRolesProfileImport_01"/>
+					</path>
+				</field-name>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+				string="true"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+				raw-value="true"
+			>
+				<field-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+						tab-path="Administration > Berechtigungen > Rollenprofile"
+					/>
+					<path>
+						<object>
+							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Administration > Berechtigungen > Rollenprofile (Exportieren)"
+							/>
+						</object>
+						<named-member name="Role_TestRolesProfileImport_01"/>
+					</path>
+				</field-name>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+				string="false"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Rolle/Action-Rolle-Loeschen.xml"
+		>
+			<parameters>
+				<parameter name="Name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Role_TestRolesProfileImport_01"
+					/>
+				</parameter>
+				<parameter name="Berechtigungsstruktur"
+					value="Zentrale Berechtigungen"
+				/>
+				<parameter name="kontext">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Role_TestRolesProfileImport_01"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+	</actions>
+</action>

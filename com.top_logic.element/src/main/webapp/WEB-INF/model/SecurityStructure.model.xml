@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="SecurityStructure">
+			<annotations>
+				<singletons>
+					<singleton type="Root"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="SecurityStructure.Root">
+					<annotations>
+						<instance-presentation icon="theme:TREE_TEST_I"/>
+						<legacy-qualified-name qualified-name="SecurityStructure.Root"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="SecurityRoot"/>
+								</default-value>
+							</annotations>
+						</property>
+						<reference name="Nutzer"
+							kind="forwards"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="Hauptbenutzer"
+							kind="forwards"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<class name="Root">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+					</annotations>
+					<generalizations>
+						<generalization type="SecurityStructure.Root"/>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID=""
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<open-handler id="ID_506a5563_2d90_4133_84b4_ca3f8280ca11"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			clique="create"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			image="css:fas fa-link"
+			target="selection(self())"
+			targetComponent="com.top_logic.demo/technical/components/containmentContext/addUsage/dialog.layout.xml#Editor"
+		>
+			<executability>
+				<rule-by-expression
+					decision="thing -> $thing != null"
+					show-disabled="false"
+				/>
+			</executability>
+			<resourceKey key="dynamic.ec9c87cf-7119-4ce3-9d73-abec37dc364a">
+				<en>Add usage</en>
+				<de>Nutzung hinzufügen</de>
+			</resourceKey>
+		</open-handler>
+		<title class="com.top_logic.layout.component.title.ModelTitle"
+			model="model(com.top_logic.demo/technical/components/containmentContext/addUsage/dialog.layout.xml#Editor)"
+		>
+			<key key="dynamic.8ea2c441-b28b-4984-82c4-9426b0159e9a">
+				<en>Add usage for "{0}"</en>
+				<de>Nutzung für "{0}" hinzufügen</de>
+			</key>
+		</title>
+		<typeOptions
+			include-subtypes="false"
+			type="test.containmentContext:Usage"
+		/>
+		<create-handler id="ID_9078abb8_a1b7_4506_9e9f_9539c3ab3b3f"
+			clique="save"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			ignoreWarnings="default"
+			image=""
+			linkOperation="thing -> usage -> $thing.add(`test.containmentContext:Thing#uses`, $usage)"
+		/>
+	</arguments>
+</config:template-call>

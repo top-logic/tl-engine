@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%MSSQL_HOST%" value="${env:mssql_host:[host]}" />
+        <entry name="%MSSQL_PORT%" value="${env:mssql_port:1433}" />
+        <entry name="%MSSQL_SCHEMA%" value="${env:mssql_schema:[schema]}" />
+        <entry name="%MSSQL_USER%" value="${env:mssql_user:[user]}"/>
+        <entry name="%MSSQL_PASSWD%" value="${env:mssql_passwd:unencrypted:[password]}"/>
+        
+        <!-- SSL/TLS config. See reference: https://docs.microsoft.com/de-de/sql/connect/jdbc/connecting-with-ssl-encryption?view=sql-server-2017 -->
+        <entry name="%MSSQL_INTEGRATED_SECURITY%" value="${env:mssql_integrated_security:false}"/>
+        <entry name="%MSSQL_ENCRYPTION%" value="${env:mssql_encryption:false}"/>
+        <entry name="%MSSQL_TRUST_SERVER_CERTIFICATE%" value="${env:mssql_trust_server_certificate:true}"/>
+        
+        <entry name="%MSSQL_TRUST_STORE_NAME%" value="${env:mssql_trust_store_name:}"/>
+        <entry name="%MSSQL_TRUST_STORE_PASSWD%" value="${env:mssql_trust_store_passwd}"/>
+        <entry name="%MSSQL_HOST_NAME_IN_CERTIFICATE%" value="${env:mssql_host_name_in_certificate:}"/>
+	</alias>
+</root>

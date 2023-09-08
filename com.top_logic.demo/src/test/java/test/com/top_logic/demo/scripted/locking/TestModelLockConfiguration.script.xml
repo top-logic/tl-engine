@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Modell Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+					name="DemoTypes"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+					tab-path="Administration > Development > Modell Editor"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+					name="Demo All"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+					tab-path="Administration > Development > Modell Editor"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+					name="Demo A"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+					tab-path="Administration > Development > Modell Editor"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+				expand="false"
+			>
+				<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+						tab-path="Administration > Development > Modell Editor"
+					/>
+				</context-model>
+				<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="DemoTypes > Demo All > Demo A"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Model/Fill-Type-Name.xml"
+			template-name-comment="Fill type name"
+		>
+			<parameters>
+				<parameter name="name"
+					value="LockTest"
+				/>
+				<parameter name="de"
+					value="LockTest"
+				/>
+				<parameter name="en"
+					value="LockTest"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="switchToAJAXEdit"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+					tab-path="Administration > Development > Modell Editor > Eigenschaften"
+				/>
+				<path>
+					<labeled-member label="Anpassungen"/>
+					<named-member name="add"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+						value="com.top_logic.model.config.annotation.TLLocks"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+					tab-path="Administration > Development > Modell Editor > Eigenschaften"
+				/>
+				<path>
+					<labeled-member label="Anpassungen"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="0"
+						/>
+					</object>
+					<labeled-member label="Sperrkonzept"/>
+					<labeled-member label="Operationen"/>
+					<named-member name="add"/>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Operation"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="editValues"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="add"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+						value="com.top_logic.base.locking.strategy.GlobalLockStrategy"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Aspekt"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="xxxx"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Art"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumNaming$Name"
+						value="com.top_logic.base.locking.token.Token$Kind:SHARED"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="add"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+						value="com.top_logic.base.locking.strategy.LocalLockStrategy"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="1"
+						/>
+					</object>
+					<labeled-member label="Lokal"/>
+					<labeled-member label="Aspekt"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="yyy"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="add"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+						value="com.top_logic.element.structured.locking.AncestorsOrSelfLockStrategy"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="2"
+						/>
+					</object>
+					<labeled-member label="Pfad zu Root"/>
+					<labeled-member label="Aspekt"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="zzz"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="add"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+						value="com.top_logic.element.structured.locking.AncestorsLockStrategy"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="3"
+						/>
+					</object>
+					<labeled-member label="Struktur-Vorgänger"/>
+					<labeled-member label="Aspekt"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="aaa"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="add"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+						value="com.top_logic.model.search.locking.LockStrategyByExpression"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="4"
+						/>
+					</object>
+					<labeled-member label="Sperrstrategie über Ausdruck"/>
+					<labeled-member label="Aspekt"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="bbb"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="4"
+						/>
+					</object>
+					<labeled-member label="Sperrstrategie über Ausdruck"/>
+					<labeled-member label="Art"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumNaming$Name"
+						value="com.top_logic.base.locking.token.Token$Kind:SHARED"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="2"
+						/>
+					</object>
+					<labeled-member label="Pfad zu Root"/>
+					<labeled-member label="Art"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumNaming$Name"
+						value="com.top_logic.base.locking.token.Token$Kind:SHARED"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="3"
+						/>
+					</object>
+					<labeled-member label="Struktur-Vorgänger"/>
+					<labeled-member label="Art"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumNaming$Name"
+						value="com.top_logic.base.locking.token.Token$Kind:SHARED"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<labeled-member label="Strategien"/>
+					<named-member name="content"/>
+					<object>
+						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+							value="1"
+						/>
+					</object>
+					<labeled-member label="Lokal"/>
+					<labeled-member label="Art"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumNaming$Name"
+						value="com.top_logic.base.locking.token.Token$Kind:SHARED"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Objekte"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="x->$x"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+			command-label="Speichern"
+			command-name="defaultSave"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+			command-label="Löschen..."
+			command-name="delete"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+				expand="false"
+			>
+				<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+						tab-path="Administration > Development > Modell Editor"
+					/>
+				</context-model>
+				<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="DemoTypes > Demo All > Demo A"
+				/>
+			</model-name>
+		</action>
+	</actions>
+</action>

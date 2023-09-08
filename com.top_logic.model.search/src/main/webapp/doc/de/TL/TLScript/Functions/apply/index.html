@@ -1,0 +1,66 @@
+<h2>Syntax</h2>
+<pre>	<code>$fun($a0, $a1, ..., $an)
+
+$fun.apply($a0, $a1, ..., $an)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Wertet die Funktion <code class="hljs inlineCode">fun</code> aus und übergibt das Ergebnis der Auswertungen der Ausdrücke <code class="hljs inlineCode">a1, ..., an</code> als Argumente.</p>
+<p>Die Syntax mit dem expliziten <code class="hljs inlineCode">apply(...)</code> darf nur für <a class="tlObject" data-custom="true" href="?page=Functions&amp;uuid=8f4a805f-125a-4905-8df3-65aa54e20947">benutzerdefinierte Funktionen</a>, die im selben Script definiert wurden, benutzt werden. Ausdrücke wie <code class="hljs inlineCode">date.apply(2015, 8, 6)</code> sind nicht möglich.</p>
+<p>Bei der Anwendung einer Funktionen, kann die Funktion auf das erste Argument aufgerufen werden oder das erste Argument wird mit in den Klammern geschrieben:</p>
+<pre><code>3.14.round(1)</code></pre>
+<p>ist äquivalent zu</p>
+<pre><code>round(3.14, 1)</code></pre>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>fun</td>
+   <td>Funktion</td>
+   <td>Eine Funktion, die ausgeführt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>a</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Aufzählung</td>
+   <td>Ein oder mehrere Parameter, die an die Funktion übergeben werden.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Beispiele</h2>
+<h3>Funktion mit einem Parameter</h3>
+<pre>	<code>{
+   myFunc = x -&gt; 5 * $x;
+   $myFunc.apply(8);
+}</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong>40</p>
+<p>Die Funktion erhält als Parameter die Zahl 8 und multipliziert diese mit 5.</p>
+<h3>Funktion mit zwei Parametern</h3>
+<pre>	<code>{
+   myFunc = x -&gt; y -&gt; $x * $y;
+   $myFunc.apply(8, 2);
+}</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong>16</p>
+<p>Multipliziert die beiden mitgegebenen Parameter 8 und 2 miteinander.</p>
+<h3>Direkte Funktionsanwendung ohne Funktionsvariable (apply)</h3>
+<pre>	<code>(x -&gt; y -&gt; $x * $y).apply(8,3)</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong>24</p>
+<p>Funktionen müssen nicht in einer Variablen gespeichert werden, um diese aufzurufen. Apply kann auch direkt aufgerufen werden.</p>
+<h3>Direkte Funktionsanwendung ohne Funktionsvariable</h3>
+<pre>	<code>(x -&gt; y -&gt; $x * $y)(8,3)</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong>24</p>

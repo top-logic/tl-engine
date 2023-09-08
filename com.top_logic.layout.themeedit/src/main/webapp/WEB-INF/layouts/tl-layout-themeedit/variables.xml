@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<params>
+		<param name="namePrefix"
+			value="themEditor"
+		/>
+		<param name="resPrefix"
+			value="layouts.tl-layout-themeedit.themeEditor"
+		/>
+	</params>
+
+	<layout name="${namePrefix}VariablesTab">
+		<tabInfo label="${resPrefix}.variables.tab"/>
+
+		<tableView name="${namePrefix}VariablesTable"
+			model="selection(${namePrefix}ThemeTable)"
+			securityProviderClass="securityRoot"
+			titleKey="${resPrefix}.variables.table.title"
+		>
+			<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.VariableListModelBuilder"/>
+			<table
+				defaultColumns="name, value, type"
+				defaultSortOrder="name"
+				fixedColumns="0"
+				id-column="name"
+				resPrefix="${resPrefix}.variables.table.columns"
+			>
+				<columns>
+					<column name="name">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getName"
+							type="com.top_logic.gui.config.ThemeSetting"
+						/>
+						<renderer class="com.top_logic.layout.themeedit.browser.renderer.ThemeVarNameRenderer"/>
+						<sortKeyProvider class="com.top_logic.layout.themeedit.browser.renderer.ThemeVarNameRenderer$KeyProvider"/>
+					</column>
+					<column name="qname">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getName"
+							type="com.top_logic.gui.config.ThemeSetting"
+						/>
+					</column>
+					<column name="value">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getValue"
+							type="com.top_logic.gui.config.ThemeSetting"
+						/>
+						<renderer class="com.top_logic.layout.themeedit.browser.renderer.ThemeVarValueRenderer"/>
+					</column>
+					<column name="expr">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getExpr"
+							type="com.top_logic.gui.config.ThemeSetting"
+						/>
+						<renderer class="com.top_logic.layout.themeedit.browser.renderer.ThemeVarValueRenderer"/>
+					</column>
+					<column name="raw">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getRawValue"
+							type="com.top_logic.gui.config.ThemeSetting"
+						/>
+						<renderer class="com.top_logic.layout.themeedit.browser.renderer.ThemeVarValueRenderer"/>
+					</column>
+					<column name="type">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getType"
+							type="com.top_logic.gui.config.ThemeSetting"
+						/>
+						<sortKeyProvider class="com.top_logic.layout.LabelMapping"/>
+					</column>
+					<column name="theme">
+						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getThemeId"
+							type="com.top_logic.gui.config.ThemeSetting"
+						/>
+					</column>
+				</columns>
+			</table>
+
+			<dialogs>
+				<layout name="${namePrefix}CreateVariablesEditorDialog"
+					titleKey="${resPrefix}.variables.editor.dialog.title"
+				>
+					<dialogInfo
+						height="400"
+						width="450"
+					>
+						<open-handler id="openVariableEditor"
+							disabledImage="theme:ICONS_BUTTON_EDIT_DISABLED"
+							image="theme:ICONS_BUTTON_EDIT"
+							resourceKey="${resPrefix}.variables.editor.dialog"
+							target="selection(${namePrefix}VariablesTable)"
+							targetComponent="${namePrefix}VariablesEditor"
+						>
+							<executability>
+								<rule class="com.top_logic.tool.execution.CheckOnOtherModelRule"
+									executability="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"
+									target="model(${namePrefix}VariablesTable)"
+								/>
+							</executability>
+						</open-handler>
+					</dialogInfo>
+					<components>
+						<form name="${namePrefix}VariablesEditor"
+							buttonComponent="${namePrefix}VariablesEditButtonBar"
+							resetInvisible="true"
+							securityProviderClass="securityRoot"
+							titleKey="${resPrefix}.variables.editor.title"
+						>
+							<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+								formType="com.top_logic.layout.themeedit.browser.providers.SettingForm"
+								modelType="com.top_logic.gui.config.ThemeSetting"
+							>
+								<modelToFormMapping class="com.top_logic.layout.themeedit.browser.providers.ThemeSettingConfigCopyMapper"/>
+								<customizations>
+									<property name="com.top_logic.gui.config.ThemeSetting$Config#name">
+										<annotations>
+											<annotation config:interface="com.top_logic.basic.config.annotation.ReadOnly"/>
+										</annotations>
+									</property>
+									<property name="com.top_logic.gui.config.ThemeSetting$Config#expr">
+										<annotations>
+											<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.ControlProvider"
+												value="com.top_logic.layout.form.values.MultiLineText"
+											/>
+										</annotations>
+									</property>
+									<property name="com.top_logic.gui.config.ThemeSetting$Config#class">
+										<annotations>
+											<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+										</annotations>
+									</property>
+									<type name="com.top_logic.gui.config.ThemeSetting$Config">
+										<annotations>
+											<annotation config:interface="com.top_logic.basic.config.order.DisplayOrder">
+												<value>
+													<property name="name"/>
+													<property name="value"/>
+													<property name="expr"/>
+												</value>
+											</annotation>
+										</annotations>
+									</type>
+								</customizations>
+							</modelBuilder>
+							<buttons>
+								<button id="updateThemeVariable"
+									class="com.top_logic.layout.themeedit.browser.providers.UpdateThemeVariableHandler"
+									clique="apply"
+									group="Write"
+									resourceKey="${resPrefix}.variables.editor.update"
+								/>
+							</buttons>
+						</form>
+						<buttonbar name="${namePrefix}VariablesEditButtonBar"/>
+					</components>
+				</layout>
+				<layout name="${namePrefix}CreateVariableDialog"
+					titleKey="${resPrefix}.create.variable.dialog.title"
+				>
+					<dialogInfo
+						defaultI18n="${resPrefix}.create.variable.dialog"
+						executability="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"
+						height="400"
+						image="theme:ICON_PLUS"
+						width="450"
+					/>
+					<components>
+						<form name="${namePrefix}CreateVariable"
+							buttonComponent="${namePrefix}CreateVariableButtonBar"
+							model="selection(${namePrefix}VariablesTable)"
+							resetInvisible="true"
+							securityProviderClass="securityRoot"
+							titleKey="${resPrefix}.create.variable.title"
+						>
+							<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.CreateThemeVariableFormBuilder"
+								contextOptional="true"
+								create="true"
+							>
+								<customizations>
+									<property name="com.top_logic.gui.config.ThemeSetting$Config#expr">
+										<annotations>
+											<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.ControlProvider"
+												value="com.top_logic.layout.form.values.MultiLineText"
+											/>
+										</annotations>
+									</property>
+									<property name="com.top_logic.basic.config.PolymorphicConfiguration#class">
+										<annotations>
+											<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+										</annotations>
+									</property>
+									<type name="com.top_logic.gui.config.ThemeSetting$Config">
+										<annotations>
+											<annotation config:interface="com.top_logic.basic.config.order.DisplayOrder">
+												<value>
+													<property name="name"/>
+													<property name="value"/>
+													<property name="expr"/>
+												</value>
+											</annotation>
+										</annotations>
+									</type>
+								</customizations>
+							</modelBuilder>
+							<buttons>
+								<button id="createThemeVariable"
+									class="com.top_logic.layout.themeedit.browser.providers.CreateThemeVariableHandler"
+									clique="create"
+									group="Create"
+									resourceKey="${resPrefix}.create.variable"
+								/>
+							</buttons>
+						</form>
+						<buttonbar name="${namePrefix}CreateVariableButtonBar"/>
+					</components>
+				</layout>
+			</dialogs>
+
+			<buttons>
+				<button id="showInheritedThemeVariables"
+					class="com.top_logic.layout.themeedit.browser.providers.ShowInheritedThemeVariablesHandler"
+					clique="settings"
+				/>
+				<button id="deleteThemeVariable"
+					class="com.top_logic.layout.themeedit.browser.providers.DeleteThemeVariableHandler"
+					clique="delete"
+					confirm="true"
+				>
+					<executability>
+						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"/>
+						<rule class="com.top_logic.layout.themeedit.browser.providers.NotInheritedThemeVariableRule"/>
+					</executability>
+				</button>
+			</buttons>
+		</tableView>
+	</layout>
+</template>

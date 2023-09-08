@@ -1,0 +1,41 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.revision()</code>
+</pre>
+<h2>Description</h2>
+<p>Determines the revision in which a business object exists.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Business object</td>
+   <td>The business object for which the revision is to be determined.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Revision</p>
+<p>The revision of the business object if it is a historical state or <code class="hljs inlineCode">CURRENT</code> for a current object.</p>
+<h2>Examples</h2>
+<h3>Example 1</h3>
+<pre>	<code>$historicObject.revision()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> r42</p>
+<p>If the given business object <code class="hljs inlineCode">historicObject</code> is in revision r42.</p>
+<h3>Example 2</h3>
+<pre>	<code>$currentObject.revision()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">CURRENT</code></p>
+<p>If the given business object <code class="hljs inlineCode">currentObject</code> is not a historical object, but a current object.</p>
+<p></p>

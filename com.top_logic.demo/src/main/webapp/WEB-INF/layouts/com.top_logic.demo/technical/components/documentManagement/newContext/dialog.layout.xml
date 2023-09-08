@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		height="300px"
+		width="600px"
+	>
+		<title>
+			<title key="dynamic.6d5d23fb-1382-48f7-b788-ea54dc89291f">
+				<en>New context</en>
+				<de>Neuer Kontext</de>
+			</title>
+		</title>
+		<open-handler id="ID_29c2a7ec_909b_444e_a46f_b4cbd2a05535"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			targetComponent="com.top_logic.demo/technical/components/documentManagement/newContext/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.6d5d23fb-1382-48f7-b788-ea54dc89291f">
+				<en>New context</en>
+				<de>Neuer Kontext</de>
+			</resourceKey>
+		</open-handler>
+		<forms>
+			<form type="test.webfolder:Context">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="test.webfolder:Context#name"
+						type="tl.core:String"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<typeOptions type="test.webfolder:Context"/>
+		<create-handler id="ID_0d4f96e7_8eac_4b72_bde2_72e9aa15a7b1"/>
+	</arguments>
+</config:template-call>

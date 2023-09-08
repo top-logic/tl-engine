@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>7.6.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-graph-diagramjs-server</artifactId>
+  <description>Server code for the TopLogic model editor.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-layouter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-umljs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-diagramjs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-element</artifactId>
+    </dependency>
+
+    <!-- The GWT client-code. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-diagramjs-client</artifactId>
+	  <version>7.6.0-SNAPSHOT</version>
+      <type>war</type>
+      <classifier>web-fragment</classifier>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+  
+  <build>
+  	<plugins>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-war-plugin</artifactId>
+	
+			<executions>
+				<execution>
+					<id>war-fragment</id>
+					<phase>package</phase>
+					<goals>
+						<goal>war</goal>
+					</goals>
+					<configuration>
+						<overlays>
+							<overlay>
+								<groupId>com.top-logic</groupId>
+								<artifactId>tl-graph-diagramjs-client</artifactId>
+								<type>war</type>
+								<classifier>web-fragment</classifier>
+							</overlay>
+						</overlays>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+  	</plugins>
+  </build>
+</project>

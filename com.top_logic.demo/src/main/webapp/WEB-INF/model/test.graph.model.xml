@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.graph">
+		<annotations>
+			<singletons>
+				<singleton type="StartEdge"/>
+			</singletons>
+		</annotations>
+		<class name="Edge">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="source"
+					kind="forwards"
+					type="Node"
+				/>
+				<reference name="target"
+					kind="forwards"
+					type="Node"
+				/>
+			</attributes>
+		</class>
+		<class name="StartEdge">
+			<generalizations>
+				<generalization type="Edge"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<string value="START EDGE"/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Node">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<property name="color"
+					type="tl.util:Color"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

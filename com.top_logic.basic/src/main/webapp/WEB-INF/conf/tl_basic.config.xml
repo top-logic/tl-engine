@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.basic.util.AllocationService$Module" value="true"/>
+					<module key="com.top_logic.basic.sql.ConnectionPoolRegistry$Module" value="true"/>
+					<module key="com.top_logic.basic.sched.SchedulerService$Module" value="true"/>
+					<module key="com.top_logic.basic.Settings$Module" value="true" />
+					<module key="com.top_logic.basic.TypeKeyRegistry$Module" value="true" />
+					<module key="com.top_logic.basic.reflect.TypeIndex$Module" value="true" />
+					<module key="com.top_logic.basic.i18n.I18NCheck$Module" value="true" />
+					<module key="com.top_logic.basic.SystemProperties$Module" value="true"/>
+					<module key="com.top_logic.basic.format.configured.FormatterService$Module" value="true"/>
+					<module key="com.top_logic.basic.time.TimeZones$Module" value="true" />
+					<module key="com.top_logic.basic.html.SafeHTML$Module" value="true" />
+					<module key="com.top_logic.basic.translation.TranslationService$Module" value="%TRANSLATION_ENABLED%" />
+				</modules>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.basic.io.FileSystemCache">
+			<instance class="com.top_logic.basic.io.NoFileSystemCache"/>
+		</config>
+		
+		<config service-class="com.top_logic.basic.translation.TranslationService">
+			<instance class="com.top_logic.basic.translation.DeepLTranslationService"
+				api-host="https://api.deepl.com/v2"
+				api-key="%TRANSLATION_API_KEY%"
+				max-accumulated-translation-size="2500"
+				split-sentences="INTERPUNCTATION_ONLY"
+				outline-detection="true"
+				splitting-tags="div,p,td,li"
+				tag-handling="true"
+			/>
+		</config>
+		
+		<config service-class="com.top_logic.basic.i18n.I18NCheck">
+			<instance class="com.top_logic.basic.i18n.I18NCheck">
+				<dependencies>
+					<dependency key="com.top_logic.basic.reflect.TypeIndex$Module" value="true" />
+				</dependencies>
+				<checker class="com.top_logic.basic.i18n.I18NConstantsChecker" />
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.html.SafeHTML">
+			<instance class="com.top_logic.basic.html.SafeHTML">
+				<attribute-checkers>
+					<attribute-checker name="href" class="com.top_logic.basic.html.LinkAttributeChecker" />
+				</attribute-checkers>
+				<allowed-attributes>
+					<attribute name="accesskey" />
+					<attribute name="align" />
+					<attribute name="alt" />
+					<attribute name="border" />
+					<attribute name="cellpadding" />
+					<attribute name="cellspacing" />
+					<attribute name="charset" />
+					<attribute name="class" />
+					<attribute name="colspan" />
+					<attribute name="contenteditable" />
+					<attribute name="data-custom" />
+					<attribute name="data-object" />
+					<attribute name="data-section" />
+					<attribute name="data-tooltip" />
+					<attribute name="dir" />
+					<attribute name="download" />
+					<attribute name="href" />
+					<attribute name="id" />
+					<attribute name="lang" />
+					<attribute name="longdesc" />
+					<attribute name="name" />
+					<attribute name="rel" />
+					<attribute name="rowspan" />
+					<attribute name="scope" />
+					<attribute name="src" />
+					<attribute name="start" />
+					<attribute name="style" />
+					<attribute name="summary" />
+					<attribute name="tabindex" />
+					<attribute name="target" />
+					<attribute name="title" />
+					<attribute name="type" />
+				</allowed-attributes>
+				<allowed-tags>
+					<tag name="a" />
+					<tag name="address" />
+					<tag name="b" />
+					<tag name="blockquote" />
+					<tag name="br" />
+					<tag name="caption" />
+					<tag name="code" />
+					<tag name="col" />
+					<tag name="colgroup" />
+					<tag name="dd" />
+					<tag name="div" />
+					<tag name="dl" />
+					<tag name="dt" />
+					<tag name="em" />
+					<tag name="h1" />
+					<tag name="h2" />
+					<tag name="h3" />
+					<tag name="h4" />
+					<tag name="h5" />
+					<tag name="h6" />
+					<tag name="hr" />
+					<tag name="i" />
+					<tag name="img" />
+					<tag name="li" />
+					<tag name="ol" />
+					<tag name="p" />
+					<tag name="pre" />
+					<tag name="s" />
+					<tag name="span" />
+					<tag name="strong" />
+					<tag name="sub" />
+					<tag name="sup" />
+					<tag name="table" />
+					<tag name="tbody" />
+					<tag name="td" />
+					<tag name="tfoot" />
+					<tag name="th" />
+					<tag name="thead" />
+					<tag name="tr" />
+					<tag name="u" />
+					<tag name="ul" />
+				</allowed-tags>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.basic.encryption.EncryptionService">
+			<instance class="com.top_logic.basic.encryption.EncryptionService"
+				signature-digest-algorithm="SHA1"
+			/>
+		</config>
+	
+		<config service-class="com.top_logic.basic.SystemProperties">
+			<instance class="com.top_logic.basic.SystemProperties" />
+		</config>
+	
+        <config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance class="com.top_logic.basic.util.ResourcesModule"
+				disable-system-messages="false"
+			>
+				<supported-locales>
+					<locale name="en"/>
+					<locale name="de"/>
+				</supported-locales>
+				<bundles>
+					<bundle name="basicMessages"/>
+				</bundles>
+			</instance>
+		</config>
+
+        <config service-class="com.top_logic.basic.time.TimeZones">
+	 		<instance class="com.top_logic.basic.time.TimeZones" 
+	 			default-time-zone="Europe/Berlin"
+	 			system-time-zone="Europe/Berlin"
+	 		>
+				<time-zones>
+					<time-zone name="US/Samoa" res-key="com.top_logic.basic.time.TimeZones.samoa" />
+					<time-zone name="US/Aleutian" res-key="com.top_logic.basic.time.TimeZones.aleutian" />
+					<time-zone name="US/Hawaii" res-key="com.top_logic.basic.time.TimeZones.hawaii" />
+					<time-zone name="Pacific/Marquesas" res-key="com.top_logic.basic.time.TimeZones.marquesas" />
+					<time-zone name="US/Alaska" res-key="com.top_logic.basic.time.TimeZones.alaska" />
+					<time-zone name="US/Pacific" res-key="com.top_logic.basic.time.TimeZones.pacific" />
+					<time-zone name="US/Arizona" res-key="com.top_logic.basic.time.TimeZones.arizona" />
+					<time-zone name="America/Chihuahua" res-key="com.top_logic.basic.time.TimeZones.chihuahua" />
+					<time-zone name="US/Mountain" res-key="com.top_logic.basic.time.TimeZones.mountain" />
+					<time-zone name="CST" res-key="com.top_logic.basic.time.TimeZones.cst" />
+					<time-zone name="Pacific/Easter" res-key="com.top_logic.basic.time.TimeZones.easter" />
+					<time-zone name="Canada/Saskatchewan" res-key="com.top_logic.basic.time.TimeZones.saskatchewan" />
+					<time-zone name="EST" res-key="com.top_logic.basic.time.TimeZones.est" />
+					<time-zone name="America/Havana" res-key="com.top_logic.basic.time.TimeZones.havana" />
+					<time-zone name="America/Indianapolis" res-key="com.top_logic.basic.time.TimeZones.indiana" />
+					<time-zone name="America/Asuncion" res-key="com.top_logic.basic.time.TimeZones.asuncion" />
+					<time-zone name="Canada/Atlantic" res-key="com.top_logic.basic.time.TimeZones.atlantic" />
+					<time-zone name="America/Cuiaba" res-key="com.top_logic.basic.time.TimeZones.cuiaba" />
+					<time-zone name="America/Caracas" res-key="com.top_logic.basic.time.TimeZones.caracas" />
+					<time-zone name="America/La_Paz" res-key="com.top_logic.basic.time.TimeZones.la_paz" />
+					<time-zone name="America/Santiago" res-key="com.top_logic.basic.time.TimeZones.santiago" />
+					<time-zone name="CNT" res-key="com.top_logic.basic.time.TimeZones.cnt" />
+					<time-zone name="America/Araguaina" res-key="com.top_logic.basic.time.TimeZones.araguaina" />
+					<time-zone name="BET" res-key="com.top_logic.basic.time.TimeZones.bet" />
+					<time-zone name="AGT" res-key="com.top_logic.basic.time.TimeZones.agt" />
+					<time-zone name="America/Cayenne" res-key="com.top_logic.basic.time.TimeZones.cayenne" />
+					<time-zone name="America/Montevideo" res-key="com.top_logic.basic.time.TimeZones.montevideo" />
+					<time-zone name="America/Miquelon" res-key="com.top_logic.basic.time.TimeZones.miquelon" />
+					<time-zone name="Atlantic/South_Georgia" res-key="com.top_logic.basic.time.TimeZones.south_georgia" />
+					<time-zone name="Atlantic/Azores" res-key="com.top_logic.basic.time.TimeZones.azores" />
+					<time-zone name="Atlantic/Cape_Verde" res-key="com.top_logic.basic.time.TimeZones.cape_verde" />
+					<time-zone name="UTC" res-key="com.top_logic.basic.time.TimeZones.utc" />
+					<time-zone name="Africa/Casablanca" res-key="com.top_logic.basic.time.TimeZones.casablanca" />
+					<time-zone name="Europe/London" res-key="com.top_logic.basic.time.TimeZones.london" />
+					<time-zone name="Atlantic/Reykjavik" res-key="com.top_logic.basic.time.TimeZones.reykjavik" />
+					<time-zone name="Europe/Berlin" res-key="com.top_logic.basic.time.TimeZones.berlin" />
+					<time-zone name="Europe/Belgrade" res-key="com.top_logic.basic.time.TimeZones.belgrade" />
+					<time-zone name="Europe/Brussels" res-key="com.top_logic.basic.time.TimeZones.brussels" />
+					<time-zone name="Europe/Sarajevo" res-key="com.top_logic.basic.time.TimeZones.sarajevo" />
+					<time-zone name="Africa/Windhoek" res-key="com.top_logic.basic.time.TimeZones.windhoek" />
+					<time-zone name="Africa/Tripoli" res-key="com.top_logic.basic.time.TimeZones.tripoli" />
+					<time-zone name="Asia/Amman" res-key="com.top_logic.basic.time.TimeZones.amman" />
+					<time-zone name="Europe/Athens" res-key="com.top_logic.basic.time.TimeZones.athen" />
+					<time-zone name="Asia/Beirut" res-key="com.top_logic.basic.time.TimeZones.beirut" />
+					<time-zone name="Europe/Chisinau" res-key="com.top_logic.basic.time.TimeZones.chisinau" />
+					<time-zone name="Asia/Damascus" res-key="com.top_logic.basic.time.TimeZones.damascus" />
+					<time-zone name="Asia/Gaza" res-key="com.top_logic.basic.time.TimeZones.gaza" />
+					<time-zone name="Africa/Harare" res-key="com.top_logic.basic.time.TimeZones.harare" />
+					<time-zone name="Europe/Helsinki" res-key="com.top_logic.basic.time.TimeZones.helsinki" />
+					<time-zone name="Asia/Jerusalem" res-key="com.top_logic.basic.time.TimeZones.jerusalem" />
+					<time-zone name="Africa/Cairo" res-key="com.top_logic.basic.time.TimeZones.cairo" />
+					<time-zone name="Europe/Kaliningrad" res-key="com.top_logic.basic.time.TimeZones.kaliningrad" />
+					<time-zone name="Africa/Khartoum" res-key="com.top_logic.basic.time.TimeZones.khartoum" />
+					<time-zone name="Europe/Istanbul" res-key="com.top_logic.basic.time.TimeZones.istanbul" />
+					<time-zone name="Europe/Minsk" res-key="com.top_logic.basic.time.TimeZones.minsk" />
+					<time-zone name="Asia/Baghdad" res-key="com.top_logic.basic.time.TimeZones.baghdad" />
+					<time-zone name="Asia/Kuwait" res-key="com.top_logic.basic.time.TimeZones.kuwait" />
+					<time-zone name="Europe/Moscow" res-key="com.top_logic.basic.time.TimeZones.moscow" />
+					<time-zone name="Africa/Nairobi" res-key="com.top_logic.basic.time.TimeZones.nairobi" />
+					<time-zone name="Iran" res-key="com.top_logic.basic.time.TimeZones.iran" />
+					<time-zone name="Europe/Astrakhan" res-key="com.top_logic.basic.time.TimeZones.astrakhan" />
+					<time-zone name="Europe/Samara" res-key="com.top_logic.basic.time.TimeZones.samara" />
+					<time-zone name="Asia/Muscat" res-key="com.top_logic.basic.time.TimeZones.muscat" />
+					<time-zone name="Asia/Baku" res-key="com.top_logic.basic.time.TimeZones.baku" />
+					<time-zone name="Asia/Yerevan" res-key="com.top_logic.basic.time.TimeZones.yerevan" />
+					<time-zone name="Indian/Mauritius" res-key="com.top_logic.basic.time.TimeZones.mauritius" />
+					<time-zone name="Asia/Tbilisi" res-key="com.top_logic.basic.time.TimeZones.tbilisi" />
+					<time-zone name="Asia/Kabul" res-key="com.top_logic.basic.time.TimeZones.kabul" />
+					<time-zone name="Asia/Ashkhabad" res-key="com.top_logic.basic.time.TimeZones.ashkhabad" />
+					<time-zone name="Asia/Karachi" res-key="com.top_logic.basic.time.TimeZones.karachi" />
+					<time-zone name="Asia/Yekaterinburg" res-key="com.top_logic.basic.time.TimeZones.yekaterinburg" />
+					<time-zone name="Asia/Kolkata" res-key="com.top_logic.basic.time.TimeZones.kolkata" />
+					<time-zone name="Asia/Kathmandu" res-key="com.top_logic.basic.time.TimeZones.kathmandu" />
+					<time-zone name="Asia/Dhaka" res-key="com.top_logic.basic.time.TimeZones.dhaka" />
+					<time-zone name="Asia/Omsk" res-key="com.top_logic.basic.time.TimeZones.omsk" />
+					<time-zone name="Asia/Rangoon" res-key="com.top_logic.basic.time.TimeZones.rangoon" />
+					<time-zone name="Asia/Barnaul" res-key="com.top_logic.basic.time.TimeZones.barnaul" />
+					<time-zone name="Asia/Novosibirsk" res-key="com.top_logic.basic.time.TimeZones.novosibirsk" />
+					<time-zone name="Asia/Tomsk" res-key="com.top_logic.basic.time.TimeZones.tomsk" />
+					<time-zone name="Asia/Bangkok" res-key="com.top_logic.basic.time.TimeZones.bangkok" />
+					<time-zone name="Asia/Hovd" res-key="com.top_logic.basic.time.TimeZones.hovd" />
+					<time-zone name="Asia/Krasnoyarsk" res-key="com.top_logic.basic.time.TimeZones.krasnoyarsk" />
+					<time-zone name="Asia/Irkutsk" res-key="com.top_logic.basic.time.TimeZones.irkutsk" />
+					<time-zone name="Asia/Kuala_Lumpur" res-key="com.top_logic.basic.time.TimeZones.kuala_lumpur" />
+					<time-zone name="Asia/Hong_Kong" res-key="com.top_logic.basic.time.TimeZones.hong_kong" />
+					<time-zone name="Australia/Perth" res-key="com.top_logic.basic.time.TimeZones.perth" />
+					<time-zone name="Asia/Taipei" res-key="com.top_logic.basic.time.TimeZones.taipei" />
+					<time-zone name="Asia/Ulan_Bator" res-key="com.top_logic.basic.time.TimeZones.ulan_bator" />
+					<time-zone name="Asia/Pyongyang" res-key="com.top_logic.basic.time.TimeZones.pyongyang" />
+					<time-zone name="Australia/Eucla" res-key="com.top_logic.basic.time.TimeZones.eucla" />
+					<time-zone name="Asia/Chita" res-key="com.top_logic.basic.time.TimeZones.chita" />
+					<time-zone name="Asia/Yakutsk" res-key="com.top_logic.basic.time.TimeZones.yakutsk" />
+					<time-zone name="Asia/Tokyo" res-key="com.top_logic.basic.time.TimeZones.tokyo" />
+					<time-zone name="Asia/Seoul" res-key="com.top_logic.basic.time.TimeZones.seoul" />
+					<time-zone name="Australia/Adelaide" res-key="com.top_logic.basic.time.TimeZones.adelaide" />
+					<time-zone name="Australia/Darwin" res-key="com.top_logic.basic.time.TimeZones.darwin" />
+					<time-zone name="Australia/Brisbane" res-key="com.top_logic.basic.time.TimeZones.brisbane" />
+					<time-zone name="Australia/Sydney" res-key="com.top_logic.basic.time.TimeZones.sydney" />
+					<time-zone name="Pacific/Guam" res-key="com.top_logic.basic.time.TimeZones.guam" />
+					<time-zone name="Australia/Hobart" res-key="com.top_logic.basic.time.TimeZones.hobart" />
+					<time-zone name="Asia/Vladivostok" res-key="com.top_logic.basic.time.TimeZones.vladivostok" />
+					<time-zone name="Australia/LHI" res-key="com.top_logic.basic.time.TimeZones.lhi" />
+					<time-zone name="Pacific/Bougainville" res-key="com.top_logic.basic.time.TimeZones.bougainville" />
+					<time-zone name="Asia/Magadan" res-key="com.top_logic.basic.time.TimeZones.magadan" />
+					<time-zone name="Asia/Sakhalin" res-key="com.top_logic.basic.time.TimeZones.sakhalin" />
+					<time-zone name="Pacific/Norfolk" res-key="com.top_logic.basic.time.TimeZones.norfolk" />
+					<time-zone name="SST" res-key="com.top_logic.basic.time.TimeZones.sst" />
+					<time-zone name="Asia/Anadyr" res-key="com.top_logic.basic.time.TimeZones.anadyr" />
+					<time-zone name="Pacific/Auckland" res-key="com.top_logic.basic.time.TimeZones.auckland" />
+					<time-zone name="Pacific/Fiji" res-key="com.top_logic.basic.time.TimeZones.fiji" />
+					<time-zone name="Pacific/Chatham" res-key="com.top_logic.basic.time.TimeZones.chatham" />
+					<time-zone name="Pacific/Tongatapu" res-key="com.top_logic.basic.time.TimeZones.tongatapu" />
+					<time-zone name="Pacific/Kiritimati" res-key="com.top_logic.basic.time.TimeZones.kiritimati" />
+				</time-zones>
+			</instance>
+		</config>
+		 
+        <config service-class="com.top_logic.basic.format.configured.FormatterService">
+			<instance class="com.top_logic.basic.format.configured.FormatterService">
+				<lenient>true</lenient>
+				<rounding-mode>HALF_UP</rounding-mode>
+				
+				<formats>
+					<number id="number"
+						style="number"
+					/>
+					<number id="long"
+						result-type="long"
+						style="integer"
+					/>
+					<decimal id="double"
+						normalize="true" 
+						pattern="#,##0.00" 
+						result-type="double"
+					/>
+					
+					<normalizing-format id="percent">
+						<format class="com.top_logic.basic.format.NumberFormatDefinition" style="percent" />
+						
+						<parser class="com.top_logic.basic.format.PercentFormatDefinition">
+							<format class="com.top_logic.basic.format.NumberFormatDefinition" style="number" />
+						</parser>
+					</normalizing-format>
+
+					<date id="date"
+						lenient="default"
+						style="medium"
+					/>
+					<!--
+						Must use custom date for Excel date, because POI 
+						needs a SimpleDateFormat which is only build for a custom date 
+					-->
+					<custom-date id="excelDate"
+						pattern="dd.MM.yyyy"
+					/>
+					<time id="time"
+						lenient="default"
+						style="medium"
+					/>
+					<date-time id="date-time"
+						date-style="medium"
+						lenient="default"
+						time-style="medium"
+					/>
+					
+					<date-time id="medium-date-time">
+						<date-style>medium</date-style>
+						<time-style>short</time-style>
+						<lenient>default</lenient>
+					</date-time>
+					
+					<date id="short-date">
+						<style>short</style>
+						<lenient>default</lenient>
+					</date>
+					<time id="short-time">
+						<style>short</style>
+						<lenient>default</lenient>
+					</time>
+					<date-time id="short-date-time">
+						<date-style>short</date-style>
+						<time-style>short</time-style>
+						<lenient>default</lenient>
+					</date-time>
+					
+					<decimal id="decimal"
+						normalize="true" 
+						pattern="###,###,###,###,##0.00"
+					/>
+					<decimal id="integer"
+						result-type="long" 
+						pattern="###,###,###,###,##0"
+					/>
+					<decimal id="percentage"
+						normalize="true" 
+						pattern="###,###,###,###,##0.00 %"
+					/>
+				</formats>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.util.AllocationService">
+			<instance class="com.top_logic.basic.util.AllocationService">
+				<max-request-size>100m</max-request-size>
+				<reserved-space-absolute>10m</reserved-space-absolute>
+				<reserved-space-percent>10</reserved-space-percent>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.basic.keystorages.KeyStorageCheckerRegistry">
+			<instance class="com.top_logic.basic.keystorages.KeyStorageCheckerRegistry">
+				<checkers>
+					<checker class="com.top_logic.basic.keystorages.ClassKeyResolvabilityChecker" />
+					<checker class="com.top_logic.basic.keystorages.KeyStorageRegexChecker"
+						regex="^com\.top_logic\..*"
+						check-key="true"
+						explanation="Classes need to be prefixed with 'class:'. See: com.top_logic.basic.DefaultTypeKeyProvider"
+					/>
+				</checkers>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.basic.TypeKeyRegistry">
+			<instance class="com.top_logic.basic.TypeKeyRegistry" 
+				provider="com.top_logic.basic.DefaultTypeKeyProvider" />
+		</config>
+		<config service-class="com.top_logic.basic.Settings">
+			<instance class="com.top_logic.basic.Settings"/>
+		</config>
+		<config service-class="com.top_logic.basic.sched.SchedulerService">
+			<instance class="com.top_logic.basic.sched.SchedulerService">
+				<core-pool-size>2</core-pool-size>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.basic.thread.ThreadContextManager">
+			<instance class="com.top_logic.basic.thread.BasicThreadContextManager"
+				debug-context-removal="false"
+			/>
+		</config>
+	</services>
+	
+	<configs>
+	
+		<config config:interface="com.top_logic.basic.col.filter.FilterRegistry$Config">
+			<filters>
+				<filter name="true" filter="com.top_logic.basic.col.filter.TrueFilter" />
+				<filter name="false" filter="com.top_logic.basic.col.filter.FalseFilter" />
+			</filters>
+		</config>
+			
+		<config config:interface="com.top_logic.basic.config.template.TemplateExpression$GlobalConfig">
+			<functions>
+				<function name="size" impl="com.top_logic.basic.func.Size" />
+				<function name="sublist" impl="com.top_logic.basic.func.Sublist" />
+				<function name="add" impl="com.top_logic.basic.func.Add" />
+				<function name="sub" impl="com.top_logic.basic.func.Sub" />
+				<function name="mul" impl="com.top_logic.basic.func.Mul" />
+				<function name="div" impl="com.top_logic.basic.func.Div" />
+				<function name="int" impl="com.top_logic.basic.func.Int" />
+				<function name="long" impl="com.top_logic.basic.func.ToLong" />
+				<function name="float" impl="com.top_logic.basic.func.ToFloat" />
+				<function name="double" impl="com.top_logic.basic.func.ToDouble" />
+				<function name="and" impl="com.top_logic.basic.func.And" />
+				<function name="or" impl="com.top_logic.basic.func.Or" />
+				<function name="not" impl="com.top_logic.basic.func.Not" />
+				<function name="equals" impl="com.top_logic.basic.func.Equals" />
+				<function name="gt" impl="com.top_logic.basic.func.Gt" />
+				<function name="ge" impl="com.top_logic.basic.func.Ge" />
+				<function name="lt" impl="com.top_logic.basic.func.Lt" />
+				<function name="le" impl="com.top_logic.basic.func.Le" />
+				<function name="concat" impl="com.top_logic.basic.func.Concat" />
+				<function name="substring" impl="com.top_logic.basic.func.Substring" />
+				<function name="if" impl="com.top_logic.basic.func.IfElse" />
+				<function name="reskey" impl="com.top_logic.basic.config.template.functions.CreateResKey" />
+			</functions>
+		</config>
+
+		<config config:interface="com.top_logic.basic.io.file.FileNameConvention">
+			<!-- The '/' character is not explicitly forbidden, as it is the separator for the
+			filenames, and this expression checks the whole path. The check would therefore always
+			fail, if that character would be forbidden. (The '/' is used as separator on Windows
+			too for these checks to make the checks platform independent.) Additionally, it is not
+			possible to use this character in filenames on Windows and on Linux. There can be no
+			file with it in the name. And therefore, this rule does not need to check that. -->
+			<rule name="Prevent non-cross-platform compatible characters"
+				regex="^[\x20-\x7E&amp;&amp;[^\\:*?&quot;&lt;&gt;|]]*$"
+			>
+				<exceptions>
+					<!-- Do not check temporary files. These files may contain invalid characters,
+					e.g. when a file was uploaded to the repository. -->
+					<exception value="^tmp/.*" />
+				</exceptions>
+			</rule>
+		</config>
+
+	</configs>
+	
+</application>

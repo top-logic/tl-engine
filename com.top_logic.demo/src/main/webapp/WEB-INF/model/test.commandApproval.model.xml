@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.commandApproval">
+		<enum name="OperationState">
+			<classifier name="NEW"/>
+			<classifier name="ACTIVE"/>
+			<classifier name="CLOSED"/>
+		</enum>
+		<class name="StatefulElement">
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="state"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="OperationState"
+				>
+					<annotations>
+						<default-value>
+							<classifier value="NEW"/>
+						</default-value>
+						<create-visibility value="hidden"/>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

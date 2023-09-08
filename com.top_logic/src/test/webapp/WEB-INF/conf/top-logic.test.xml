@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Configuration File used for testing only                -->
+<!-- ======================================================= -->
+<!--                                                         -->
+<!--  Please provide a 'comment="..."' attribute/value pair  -->
+<!--  for each of your tags, if applicable. The text         -->
+<!--  provided there is displayed within the Administration  -->
+<!--  GUI of the application.                                -->
+<!--                                                         -->
+<root>
+	<alias> 
+        <!-- Extra entries explicitly for TestAliasManager.-->
+        <entry name="%PATH1%" value="%TEST_VAR%/PATH1"/>
+        <entry name="%PATH2%" value="%PATH1%/PATH2"/>
+        <entry name="%NON-PATH1%" value="not a path"/>
+        <entry name="%ALSO%" value="%also"/>
+        <entry name="%NON-PATH2%" value="${ALSO} ${NON-PATH1}"/>
+    </alias>
+    
+    <properties>
+
+        <!--  PDFCompressor configuration not in use, because comes with a limit demo license only. -->
+		<!-- 
+        <section name="TLPDFCompress" comment="Setup for CVistaPDFCompressor">
+            <entry name="exe"    value="C:\Programme\CVision\PdfCompressor 3.1\PDFCompress.exe" />
+            <entry name="params" value="-q -c ON -s ON -stream -o1 -ds -txt" />
+    
+            <entry name="de" value="german"  comment="Map ISO Languages to PdfCompressor"/>
+            <entry name="en" value="english" />
+            <entry name="fr" value="french"  />
+         </section>
+		 -->
+
+        <section name="JDBCPersistencyManager" comment="MySQL DataSource for the ewe">
+            <entry name="connectionPool" value="default" />
+        </section>
+        
+        <section name="DBContext" comment="Example how to set the oldAgeLimit in DBContext">
+            <entry name="old_age_limit" value="5399999" comment="The maximum age in milleseconds of a DBContext we will allow" />
+        </section>
+        
+        <section name="SecurityMapping" comment=".">
+            <entry name="defaultPerson" value="/WEB-INF/database/person1to1.properties"/>
+            <entry name="top.person.organizationalPerson.user" value="/WEB-INF/database/person1to1.properties"/>
+            <entry name="person" value="/WEB-INF/database/person.properties"/>
+            
+            <!-- entry name="cn" value="username" -->
+        </section>
+        
+        <section name="JNDIMapping" comment=".">
+            <entry name="defaultPerson" value="/WEB-INF/database/person1to1.properties"/>
+            <entry name="top.person.organizationalPerson.user" value="/WEB-INF/database/person1to1.properties"/>
+            <entry name="person" value="/WEB-INF/database/person.properties"/>
+            
+            <!-- entry name="cn" value="username" -->
+        </section>
+
+        <section name="ClientConnectionManager" comment=".">
+            <entry name="hostServer" value="dewi_wsnt_204"/>
+        </section>
+        
+        <section name="LDAPResultBuilder" comment="The LDAPResultBuilder generates objects from data acquired from an LDAP server. Each entry in this section maps a keyword (usually the value of the 'objectclass' attribute of the data returned) to the class of the object to be built.">
+            <entry name="person" value="com.top_logic.base.security.objects.Person"/>
+            <entry name="role" value="com.top_logic.base.roles.Role"/>
+        </section>
+        
+        <section name="FileResultBuilder" comment="The FileResultBuilder generates objects from data acquired from an XML file. Each entry in this section maps a keyword (usually the value of the 'objectclass' attribute of the data returned) to the class of the object to be built.">
+            <entry name="person" value="com.top_logic.base.security.objects.Person"/>
+        </section>
+        
+        <section name="TypeMap" comment="This section contains mappings from MIME file types to short textual descriptions of these types.">
+            <entry name="application/octet-stream" value="Unknown"/>
+            <entry name="application/zip" value="ZIP file"/>
+            <entry name="image/jpeg" value="JPEG file"/>
+            <entry name="image/gif" value="GIF file"/>
+            <entry name="text/html" value="HTML page"/>
+            <entry name="text/plain" value="Text file"/>
+            <entry name="text/jsp" value="Java Server Page"/>
+            <entry name="text/xml" value="XML file"/>
+            <entry name="application/msword" value="MS Word file"/>
+            <entry name="application/vnd.ms-access" value="MS Access Database"/>
+            <entry name="application/vnd.ms-excel" value="MS Excel file"/>
+            <entry name="application/vnd.ms-powerpoint" value="MS Powerpoint file"/>
+        </section>
+        
+        <section name="ContainerRenderer" comment="Some configurations for rendering Containers">
+            <entry name="welcomefiles" value="index.jsp,index.html,index.htm,default.htm" comment="The list of possible welcome pages for a Container (WebFolder)"/>
+        </section>
+        
+        <section name="SymbolFactoryService" comment=".">
+        </section>
+        
+        <section name="LDAPSymbolFactory" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
+        </section>
+        
+        <section name="SimpleUserFactory" comment=".">
+        </section>
+        
+        <section name="DummyUserFactory" comment=".">
+        </section>
+        
+        <section name="SecurityUserService" comment=".">
+        </section>
+        
+        <section name="UserInfoService" comment=".">
+        </section>
+        
+        <section name="UserService" comment=".">
+	        <entry name="superUserName" value="root" />
+        </section>
+        
+        <section name="LDAPUserInfoFactory" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
+        </section>
+        
+        <section name="LDAPSecurityUserFactory" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
+        </section>
+        
+        <section name="AuthenticationService" comment=".">
+        </section>
+        
+        <section name="LDAPAuthentication" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
+        </section>
+        
+        <section name="ADAuthentication" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
+        </section>
+        
+        <section name="FileAuthentication" comment=".">
+        </section>
+        
+        <section name="AuthorisationService" comment=".">
+        </section>
+        
+        <section name="LDAPAuthorisation" comment=".">
+            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
+        </section>
+        
+        <section name="FileAuthorisation" comment=".">
+        </section>
+        
+        <section name="TreeManager" comment=".">
+            <entry name="tree.dir" value="tree"/>
+            <entry name="user.dir" value="personal"/>
+        </section>
+        
+        <section name="GroupFileWriter" comment=".">
+            <entry name="groupfilepath" value="/usr/local/lib/synchronize/db/groups/"/>
+        </section>
+        
+        <section name="ErrorHandler" comment="Contains error messages thrown from the body of forward() and getProperty() methods.">
+            <!-- Errors thrown in the body of a forward method -->
+            <entry name="f_target" value="An internal error occurred in the servlet the request was forwarded to."/>
+            <entry name="f_io" value="An error occurred in the servlet the request was forwarded to because an I/O operation failed."/>
+            
+            <!-- Errors thrown in the body of a getProperty method -->
+            <entry name="prop_io" value="The DispatchService.properties file was not found or an I/O operation failed."/>
+            <entry name="prop_noFile" value="The ErrorHandler.properties file could not be found."/>
+            
+            <!-- Text for the error page when a target was not found -->
+            <entry name="target" value="Sorry, could not access a service."/>
+            <entry name="source" value="Sorry, could not access the requested portal."/>
+        </section>
+        
+        <section name="BusMonitor" comment="Enabled Recievers to be inited by the Monitor Component">
+            <entry name="DocumentMonitor" value=""/>
+            <entry name="UserMonitor" value=""/>
+        </section>
+        
+        <section name="TokenManager" comment="Infos for the token system for logical locking">
+            <!-- entry name="class" value="com.top_logic.base.token.manage.TransientTokenManager" comment="Token manager for transient tokens. Only to be used in single server environments"/ -->
+            <entry name="class" value="com.top_logic.base.token.manage.PersistentTokenManager" comment="Token manager for persistent token. Used for testing, cleans always the DB"/>
+            
+            <entry name="connectionPool" value="default" />
+        </section>
+
+    </properties>
+</root>    
+

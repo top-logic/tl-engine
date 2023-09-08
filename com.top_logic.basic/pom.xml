@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>7.6.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-basic</artifactId>
+  <description>Collection of utilities.</description>
+
+	<properties>
+		<skipNormalizeLayouts>true</skipNormalizeLayouts>
+	</properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-shared</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-tools-resources</artifactId>
+    </dependency>
+	<dependency>
+	    <groupId>commons-pool</groupId>
+	    <artifactId>commons-pool</artifactId>
+	</dependency>
+	
+	<!-- Needed for JavaDoc: Otherwise JavaDoc generation leads to failure: "com.sun.tools.javac.code.Symbol$CompletionFailure: class file for javax.annotation.ParametersAreNonnullByDefault not found" -->
+	<dependency>
+		<groupId>com.google.code.findbugs</groupId>
+		<artifactId>jsr305</artifactId>
+		<version>3.0.2</version>
+		<scope>compile</scope>
+  	</dependency>
+    
+    <!-- Databases for test. -->
+	<dependency>
+	    <groupId>com.oracle.database.jdbc</groupId>
+	    <artifactId>ojdbc11</artifactId>
+
+		<!-- Note: There are utilities in this module that have a compile-time dependency to these classes. -->
+		<scope>provided</scope>
+	</dependency>
+	<dependency>
+	    <groupId>org.postgresql</groupId>
+	    <artifactId>postgresql</artifactId>
+      
+      <!-- Note: There are utilities in this module that have a compile-time dependency to these classes. -->
+      <scope>provided</scope>
+    </dependency>
+    
+	<dependency>
+	    <groupId>commons-codec</groupId>
+	    <artifactId>commons-codec</artifactId>
+	</dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-logging-log4j</artifactId>
+    </dependency>
+	<dependency>
+	    <groupId>org.apache.commons</groupId>
+	    <artifactId>commons-collections4</artifactId>
+	</dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-logging</artifactId>
+    </dependency>
+	<dependency>
+	    <groupId>com.google.inject</groupId>
+	    <artifactId>guice</artifactId>
+	</dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-xref</artifactId>
+    </dependency>
+	<dependency>
+	    <groupId>javax.activation</groupId>
+	    <artifactId>javax.activation-api</artifactId>
+	</dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark</artifactId>
+    </dependency>
+  </dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>de.haumacher.msgbuf</groupId>
+				<artifactId>msgbuf-generator-maven-plugin</artifactId>
+				<version>${msgbuf.version}</version>
+				
+				<executions>
+					<execution>
+						<id>generate-protocols</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>		
+		</plugins>
+	</build>
+</project>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Upload role profiles"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Berechtigungen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Berechtigungen > Rollenprofile"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.OpenRolesProfileImportDialog"
+					command-label="Importieren..."
+					command-name="importRolesProfiles"
+					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+					component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Datei"
+									field-name="input"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+								base64data="PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiID8-DQoNCjwhLS0NCgkkSWQkDQoJUm9sZXMgcHJvZmlsZSBmaWxlIGZvciBUTC1EZW1vLg0KLS0-DQo8c2VjdXJpdHk-DQoJPHByb2ZpbGVzPg0KCQk8cHJvZmlsZSBuYW1lPSJTZWN1cml0eVN0cnVjdHVyZS5Pd25lclJvbGUiPg0KCQkJPHZpZXcgbmFtZT0ibW9kZWxTZWFyY2giPg0KCQkJCTxjb21tYW5kR3JvdXAgbmFtZT0iUmVhZCIvPg0KCQkJCTxjb21tYW5kR3JvdXAgbmFtZT0ib3duZXJXcml0ZSIvPg0KCQkJPC92aWV3Pg0KCQkJPHZpZXcgbmFtZT0ic2VhcmNoVmlldyI-DQoJCQkJPGNvbW1hbmRHcm91cCBuYW1lPSJSZWFkIi8-DQoJCQk8L3ZpZXc-DQoJCQk8dmlldyBuYW1lPSJzZWFyY2hJbnB1dCI-DQoJCQkJPGNvbW1hbmRHcm91cCBuYW1lPSJSZWFkIi8-DQoJCQkJPGNvbW1hbmRHcm91cCBuYW1lPSJvd25lcldyaXRlIi8-DQoJCQk8L3ZpZXc-DQoJCQk8dmlldyBuYW1lPSJzZWFyY2hDaGFydCI-DQoJCQkJPGNvbW1hbmRHcm91cCBuYW1lPSJSZWFkIi8-DQoJCQkJPGNvbW1hbmRHcm91cCBuYW1lPSJvd25lcldyaXRlIi8-DQoJCQk8L3ZpZXc-DQoJCTwvcHJvZmlsZT4NCgkJPHByb2ZpbGUgbmFtZT0iRGVtb1R5cGVzLkFkbWluaXN0cmF0b3IiPg0KCQkJPHZpZXcgbmFtZT0iZGVtb1R5cGVzVmlldyI-DQoJCQkJPGNvbW1hbmRHcm91cCBuYW1lPSJEZWxldGUiLz4NCgkJCQk8Y29tbWFuZEdyb3VwIG5hbWU9IkNyZWF0ZSIvPg0KCQkJCTxjb21tYW5kR3JvdXAgbmFtZT0iV3JpdGUiLz4NCgkJCQk8Y29tbWFuZEdyb3VwIG5hbWU9IlJlYWQiLz4NCgkJCQk8Y29tbWFuZEdyb3VwIG5hbWU9IlN5c3RlbSIvPg0KCQkJCTxjb21tYW5kR3JvdXAgbmFtZT0iRXhwb3J0Ii8-DQoJCQk8L3ZpZXc-DQoJCQk8dmlldyBuYW1lPSJnbG9iYWxEaWFsb2dEZW1vVHlwZXNUb3AiPg0KCQkJCTxjb21tYW5kR3JvdXAgbmFtZT0iRGVsZXRlIi8-DQoJCQkJPGNvbW1hbmRHcm91cCBuYW1lPSJDcmVhdGUiLz4NCgkJCQk8Y29tbWFuZEdyb3VwIG5hbWU9IldyaXRlIi8-DQoJCQkJPGNvbW1hbmRHcm91cCBuYW1lPSJSZWFkIi8-DQoJCQkJPGNvbW1hbmRHcm91cCBuYW1lPSJTeXN0ZW0iLz4NCgkJCQk8Y29tbWFuZEdyb3VwIG5hbWU9IkV4cG9ydCIvPg0KCQkJPC92aWV3Pg0KCQk8L3Byb2ZpbGU-DQoJCTxwcm9maWxlIG5hbWU9IkRlbW9UeXBlcy5CQWRtaW5pc3RyYXRvciIvPg0KCQk8cHJvZmlsZSBuYW1lPSJEZW1vVHlwZXMuQm9vbGVhbkFkbWluaXN0cmF0b3IiLz4NCgkJPHByb2ZpbGUgbmFtZT0iRGVtb1R5cGVzLkRhdGVBZG1pbmlzdHJhdG9yIi8-DQoJCTxwcm9maWxlIG5hbWU9IkRlbW9UeXBlcy5OYXZpZ2F0aW9uIj4NCgkJCTx2aWV3IG5hbWU9ImRlbW9UeXBlc1ZpZXciPg0KCQkJCTxjb21tYW5kR3JvdXAgbmFtZT0iUmVhZCIvPg0KCQkJPC92aWV3Pg0KCQkJPHZpZXcgbmFtZT0iZ2xvYmFsRGlhbG9nRGVtb1R5cGVzVG9wIj4NCgkJCQk8Y29tbWFuZEdyb3VwIG5hbWU9IlJlYWQiLz4NCgkJCTwvdmlldz4NCgkJPC9wcm9maWxlPg0KCQk8cHJvZmlsZSBuYW1lPSJEZW1vVHlwZXMuUmVzcG9uc2libGUiLz4NCgkJPHByb2ZpbGUgbmFtZT0iRGVtb1R5cGVzLlNlbGVjdGlvbiI-DQoJCQk8dmlldyBuYW1lPSJkZW1vVHlwZXNWaWV3Ij4NCgkJCQk8Y29tbWFuZEdyb3VwIG5hbWU9IlJlYWQiLz4NCgkJCTwvdmlldz4NCgkJCTx2aWV3IG5hbWU9Imdsb2JhbERpYWxvZ0RlbW9UeXBlc1RvcCI-DQoJCQkJPGNvbW1hbmRHcm91cCBuYW1lPSJSZWFkIi8-DQoJCQk8L3ZpZXc-DQoJCTwvcHJvZmlsZT4NCgkJPHByb2ZpbGUgbmFtZT0iRGVtb1R5cGVzLlN0cmluZ0FkbWluaXN0cmF0b3IiLz4NCgkJPHByb2ZpbGUgbmFtZT0iRGVtb1NlY3VyaXR5Lk5hdmlnYXRpb24iLz4NCgkJPHByb2ZpbGUgbmFtZT0iRGVtb1NlY3VyaXR5LlJvbGUxIi8-DQoJCTxwcm9maWxlIG5hbWU9IkRlbW9TZWN1cml0eS5Sb2xlMiIvPg0KCQk8cHJvZmlsZSBuYW1lPSJEZW1vU2VjdXJpdHkuUm9sZTMiLz4NCgkJPHByb2ZpbGUgbmFtZT0iRGVtb1NlY3VyaXR5LlNlY3VyaXR5QWRtaW5pc3RyYXRvciIvPg0KCQk8cHJvZmlsZSBuYW1lPSJEZW1vU2VjdXJpdHkuU2VjdXJpdHlBZG1pbmlzdHJhdG9yQiIvPg0KCQk8cHJvZmlsZSBuYW1lPSJEZW1vU2VjdXJpdHkuU2VsZWN0aW9uIi8-DQoJCTxwcm9maWxlIG5hbWU9IkRlbW9TZWN1cml0eS5Vc2VyIi8-DQoJPC9wcm9maWxlcz4NCjwvc2VjdXJpdHk-"
+								content-type="text/xml"
+								name="rolesProfiles.xml"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Importieren"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Show performance monitor"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Monitor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Monitor > Performancemonitor"
+					/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

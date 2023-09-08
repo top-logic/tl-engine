@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments>
+		<name key="dynamic.6ec83041-762e-4673-9956-129bce19e16c">
+			<en>Form 1</en>
+			<de>Formular 1</de>
+		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+			<script expr="`SecurityStructure#ROOT`"/>
+		</model>
+		<buttons>
+			<button id="ID_94a69552_64aa_474b_a0d7_f061e72c71bd"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				disabledImage="/icons/info.png"
+				image="/icons/info.png"
+			>
+				<resourceKey key="dynamic.2cde5cb7-904d-4d4a-93a1-f45c9b50a3e2">
+					<en>Message button</en>
+					<de>Message-Button</de>
+				</resourceKey>
+				<operation>info("Der Button 'Messagebutton' vom Tabbar wurde gedrückt!")</operation>
+			</button>
+		</buttons>
+		<forms>
+			<form type="SecurityStructure:Root">
+				<formDefinition>
+					<static-html>
+						<content><![CDATA[<p><span style="font-size:16px"><span style="font-family:Times New Roman,Times,serif"><strong>Tab mit eigenem Message-Button</strong></span></span></p>
+
+<p><span style="font-size:16px"><span style="font-family:Times New Roman,Times,serif">Zum Testen, dass durch die Änderungen bestehende Funktionalitäten nicht beschädigt wurden.</span></span></p>
+]]></content>
+					</static-html>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

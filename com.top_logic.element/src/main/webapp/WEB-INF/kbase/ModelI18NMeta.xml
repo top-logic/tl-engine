@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8" xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<metaobjects>
+		<metaobject object_name="I18NAttributeStorage" super_class="Item">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+					<implementation-factory class="com.top_logic.knowledge.service.db2.StaticKnowledgeObjectFactory" />
+				</annotation>
+				<key-attributes attributes="object"/>
+			</annotations>
+			<attributes>
+				<reference att_name="object"
+					mandatory="true"
+					by-value="true"
+					history-type="current"
+					branch-global="false"
+					monomorphic="false"
+					is-container="false"
+					deletion-policy="delete-referer"
+					target-type="Object"
+				/>
+				<reference att_name="metaAttribute"
+					mandatory="true"
+					by-value="true"
+					history-type="current"
+					branch-global="false"
+					monomorphic="true"
+					is-container="false"
+					deletion-policy="delete-referer"
+					target-type="MetaAttribute"
+				/>
+				<mo_attribute att_name="lang" att_type="String" mandatory="true" db_size="10" />
+				<mo_attribute att_name="value" att_type="String" mandatory="false" db_type="clob" db_size="1000000"/>
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

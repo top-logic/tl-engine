@@ -1,0 +1,48 @@
+<h2>Syntax</h2> 
+<pre>	<code>$object.set(`$attribute`, value)
+</code>
+</pre> 
+<h2>Description</h2> 
+<p>Updates the value of the <code class="hljs inlineCode">attribute</code> of the <code class="hljs inlineCode">object</code> to <code class="hljs inlineCode">value</code>.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>object</td> 
+   <td>Business object</td> 
+   <td>An object whose attribute value is to be set.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>attribute</td> 
+   <td>String</td> 
+   <td>An attribute literal defining the attribute to be set.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>value</td> 
+   <td>Number/string/boolean/business object/set</td> 
+   <td>The new value of the attribute.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Examples</h2> 
+<pre>	<code>{
+   a = new(`my.module:MyClass`);
+   $a.set(`my.module:MyClass#name`, "newName");
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> Creates a new object and changes the value of the attribute <code class="hljs inlineCode">name</code> to "newName".</p>

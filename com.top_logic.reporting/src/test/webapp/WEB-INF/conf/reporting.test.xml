@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Configuration File used for reporing testing only       -->
+<!-- ======================================================= -->
+<!--                                                         -->
+<!--  Please provide a 'comment="..."' attribute/value pair  -->
+<!--  for each of your tags, if applicable.                  -->
+<!--                                                         -->
+<root>
+	<!-- 
+		currently no special configuration. Must exist as 
+		`test.com.top_logic.basic.ModuleTestSetup.getTestConfiguration()` 
+		needs it
+	--> 
+</root>
+

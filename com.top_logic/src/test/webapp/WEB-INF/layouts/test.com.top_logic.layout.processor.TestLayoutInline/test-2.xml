@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="test.com.top_logic.layout.processor.TestLayoutInline/a.xml">
+	<inject>
+		<option1 parameter1="value1">
+			<sub-option sub-parameter="sub-value"/>
+		</option1>
+		<option2 parameter2="value2"/>
+	</inject>
+</include>

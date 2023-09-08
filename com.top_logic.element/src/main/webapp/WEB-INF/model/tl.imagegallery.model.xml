@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model 
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="tl.imagegallery">
+			<annotations>
+				<annotation config:interface="com.top_logic.model.config.JavaPackage"
+					interface-package="com.top_logic.element.model.imagegallery"
+					implementation-package="com.top_logic.element.model.imagegallery.impl"
+				/>
+	 			<factory value="com.top_logic.element.model.imagegallery.ImageGalleryFactory"/>
+			</annotations>
+		
+			<types>
+				<class name="GalleryImage">
+					<annotations>
+						<config-type value="GALLERY"/>
+						<table name="GalleryImage" />
+						<implementation-binding
+							class-name="com.top_logic.element.model.imagegallery.impl.GalleryImageImpl"
+						/>
+					</annotations>
+					<attributes>
+						<property name="name" type="tl.core:String" mandatory="true" />
+						<property name="image" type="tl.core:Binary" mandatory="true" />
+						<property name="thumbnail" type="tl.core:Binary" />
+					</attributes>
+				</class>
+				
+			</types>
+		</module>
+
+	</modules>
+</model>

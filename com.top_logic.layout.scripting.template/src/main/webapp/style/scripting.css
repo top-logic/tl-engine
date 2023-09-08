@@ -1,0 +1,51 @@
+table.scriptingRecorderTemplateParams {
+	width: 100%; 
+	padding: 0px; 
+	margin: 0px;
+}
+
+table.scriptingRecorderTemplateParams td {
+	white-space: nowrap;
+}
+
+th.scriptingRecorderLabelColumn {
+	width: 0px;
+}
+
+th.scriptingRecorderContentColumn {
+	width: 100%;
+}
+
+span.scriptRecorderActionXmlError {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+}
+
+span.scriptRecorderActionXmlField.error textarea {
+	border: 2px red solid;
+}
+
+span.scriptRecorderActionXmlField textarea {
+	white-space: pre;
+	word-wrap: normal;
+	overflow: auto;
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+	position: absolute;
+	box-sizing: border-box;
+	font-family: monospace;
+}
+
+div.scrDerived a.selectableNode {
+	color: gray;
+}
+
+div.scrError a.selectableNode {
+	color: red;
+}
+
+td.scriptRecorderContentColumn input.is-input {
+	width: 90%
+}

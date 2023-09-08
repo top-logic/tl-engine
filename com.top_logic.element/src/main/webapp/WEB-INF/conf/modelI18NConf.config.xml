@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- $Id: modelI18NConf.config.xml 317616 2023-02-06 16:14:35Z bhu $ -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
+			<instance class="com.top_logic.element.meta.AttributeSettings">
+				<attribute-settings>
+					<attribute-setting
+						config-name="I18N_STRING"
+						legacy-type-code="1"
+					>
+						<column-info>
+							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer"/>
+							<editControlProvider class="com.top_logic.element.i18n.I18NStringTextPopupControl$CP"/>
+							<sortKeyProvider class="com.top_logic.layout.provider.ResKeyResourceProvider"/>
+						</column-info>
+						<field-provider impl="com.top_logic.element.i18n.I18NStringFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.i18n.I18NStringTagProvider"/>
+					</attribute-setting>
+				</attribute-settings>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/tl.model.i18n.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="model.tl.model.i18n.messages" />
+				</bundles>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/ModelI18NMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+
+		<config config:interface="com.top_logic.mig.html.layout.GlobalModelEventForwarder$Config">
+			<link-relevance>
+				<link type="I18NAttributeStorage">
+					<attributes>
+						<attribute name="object"
+							enabled="true"
+						/>
+					</attributes>
+				</link>
+			</link-relevance>
+		</config>
+
+	</configs>
+
+	<defaults>
+	</defaults>
+</application>

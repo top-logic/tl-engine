@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+	targetNamespace="http://www.top-logic.com/ns/template/1.0"
+	elementFormDefault="qualified">
+	
+	<xsd:element name="template" type="t:template_Type" />
+	
+	<xsd:complexType name="template_Type" >
+		<xsd:sequence>
+			<xsd:element name="head" type="t:head_Type" />
+			<xsd:element name="body" type="t:templateContent_Type" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="head_Type">
+		<xsd:sequence>
+			<xsd:element name="settings" type="t:settings_Type" />
+			<xsd:element name="types" type="t:types_Type" minOccurs="0" />
+			<xsd:element name="parameters" type="t:parameters_Type" minOccurs="0" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="settings_Type">
+		<xsd:attribute name="output-encoding"        type="xsd:string"  default="utf-8"/>
+		<xsd:attribute name="output-byte-order-mark" type="xsd:boolean" default="true" />
+		<xsd:attribute name="output-format"          type="t:outputFormat_Type" use="required" />
+		<xsd:attribute name="output-xml-header"      type="xsd:boolean" default="true" />
+		<xsd:attribute name="ignore-whitespaces"     type="xsd:boolean" default="true" />
+	</xsd:complexType>
+	
+	<xsd:simpleType name="outputFormat_Type">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="text" />
+			<xsd:enumeration value="xml" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+	<xsd:complexType name="types_Type">
+		<xsd:sequence>
+			<xsd:element name="type" type="t:type_Type" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="type_Type">
+		<xsd:sequence>
+			<xsd:element name="attributes" type="t:attributes_Type" minOccurs="0" />
+		</xsd:sequence>
+		<xsd:attribute name="name" type="t:identifier_Type" use="required" />
+	</xsd:complexType>
+	
+	<xsd:complexType name="attributes_Type">
+		<xsd:sequence>
+			<xsd:element name="attribute" type="t:attributeDefinition_Type" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="parameters_Type">
+		<xsd:choice>
+			<xsd:element name="parameter" type="t:attributeDefinition_Type" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:choice>
+	</xsd:complexType>
+	
+	<xsd:complexType name="attributeDefinition_Type">
+		<!-- Only the default attribute or tag may appear, not both. -->
+		<!-- But I think it's not possible to express that. -->
+		<xsd:sequence>
+			<xsd:element name="default" type="t:templateContent_Type" minOccurs="0" />
+		</xsd:sequence>
+		<xsd:attribute name="default" type="xsd:string" />
+		<xsd:attributeGroup ref="t:attributeDefinitionAttributeGroup" />
+	</xsd:complexType>
+	
+	<xsd:attributeGroup name="attributeDefinitionAttributeGroup">
+		<xsd:attribute name="name" type="t:identifier_Type" use="required" />
+		<xsd:attribute name="type" type="t:identifier_Type" use="required" />
+		<xsd:attribute name="multiple" type="xsd:boolean" default="false" />
+		<xsd:attribute name="mandatory" type="xsd:boolean" default="false" />
+	</xsd:attributeGroup>
+	
+	<xsd:simpleType name="identifier_Type">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z][a-zA-Z0-9_]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+	<xsd:complexType name="templateContent_Type" mixed="true">
+		<xsd:sequence>
+			<xsd:any minOccurs="0" maxOccurs="unbounded" namespace="##any" processContents="skip" />
+		</xsd:sequence>
+	</xsd:complexType>
+	
+</xsd:schema>

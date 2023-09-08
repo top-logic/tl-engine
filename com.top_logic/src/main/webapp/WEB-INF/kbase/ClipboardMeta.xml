@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Metaobject uses for Clipbared handling -->
+
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+<metaobjects>
+
+<association super_class="Item" object_name="hasClipObject" versioned="false" db_name="HAS_CLIP_OBJECT">
+	<annotations xmlns:config="http://www.top-logic.com/ns/config/6.0">
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+			<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeAssociationFactory" />
+		</annotation>
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
+			full-load="true" />
+	</annotations>
+<attributes>
+	<source
+		monomorphic="true"
+		target-type="Person"
+	/>
+    <destination
+    	target-type="Object"
+    />
+    <mo_attribute att_name="clipVersion"	att_type="String"	mandatory="false" />
+    <mo_attribute att_name="clipDate"		att_type="Date" mandatory="true"		/>
+    <mo_attribute att_name="clipMode"		att_type="String" mandatory="true"	/>
+</attributes>
+</association>
+</metaobjects>
+
+</objectlist>

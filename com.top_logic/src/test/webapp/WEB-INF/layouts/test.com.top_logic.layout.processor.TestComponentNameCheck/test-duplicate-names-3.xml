@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Failing test with duplicate name caused by templates expanding a component with the same name. -->
+<component class="A"
+	name="a"
+>
+	<childList>
+		<component class="com.top_logic.knowledge.gui.layout.InfoComponent"/>
+
+		<include name="test.com.top_logic.layout.processor.TestComponentNameCheck/c.xml"
+			componentName="duplicate-name-c"
+		/>
+		<include name="test.com.top_logic.layout.processor.TestComponentNameCheck/c.xml"
+			componentName="duplicate-name-c"
+		/>
+		<component class="C"
+			name="c3"
+		/>
+
+		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+	</childList>
+</component>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminScheduler"
+	helpIDLegacy="tl.admin.scheduler.tabber"
+	titleKey="tl.admin.scheduler.tabber"
+>
+	<tabInfo label="tl.admin.scheduler.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/technical/scheduler/scheduler.xml"/>
+	</components>
+</securityLayout>

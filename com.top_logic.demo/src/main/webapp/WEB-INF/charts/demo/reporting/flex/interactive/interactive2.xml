@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<chart-builder>
+	<data-source class="com.top_logic.reporting.flex.chart.config.datasource.FilteredDataSourceBuilder">
+		<data-source class="com.top_logic.reporting.flex.chart.config.datasource.MetaElementObjectProducer" type="DemoTypes.C.All" />
+		<filters>
+			<filter
+				class="com.top_logic.reporting.flex.chart.config.datasource.MultiAttributeFilter"
+				meta-element="DemoTypes.C.All" />
+		</filters>
+	</data-source>
+
+	<model-preparation class="com.top_logic.reporting.flex.chart.config.model.SimpleModelPreparationBuilder"
+		type="DemoTypes.C.All"
+	>
+		<aggregation-options>
+			<count/>
+		</aggregation-options> 
+	</model-preparation>
+	
+	<chart-builder class="com.top_logic.reporting.flex.chart.config.chartbuilder.pie.PieChartBuilder" >
+		<color-provider class="com.top_logic.reporting.flex.chart.config.color.ConfiguredColorProvider" />
+	</chart-builder>
+</chart-builder>

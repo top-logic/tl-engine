@@ -1,0 +1,71 @@
+<p>This section gives a concise introduction to TL-Script. The details with a complete function reference can be found in the following chapters.</p> 
+<p>The TL-Script expressions in this section can be evaluated in the expert mode of the search component in a Top-Logic application ("Model-based search"):</p> 
+<p><img src="ref:image_81025.png" style="opacity:1"></p> 
+<h2>Calculating with numbers</h2> 
+<p>In TL-Script, everything is a formula that calculates a result. Anything that can be entered into a calculator or into a spreadsheet cell as a formula is a TL-Script:</p> 
+<pre><code>1 + 2
+
+3 * (5 + 9 / 3)</code></pre> 
+<p>The above two "scripts" return <code class="hljs inlineCode">3</code> and <code class="hljs inlineCode">24</code> as results. See also <a class="tlObject" data-custom="false" href="?page=ArithmeticOperations&amp;uuid=4cea9b35-54a8-47fe-aed3-b0637cf4c040">Arithmetic operations</a>.</p> 
+<h2>Calculating with text</h2> 
+<p>Texts or strings are an important data type in applications besides numbers. TL-Script offers a variety of possibilities for manipulating strings.</p> 
+<pre><code>toUpperCase("Hello world!")
+
+toString("Hello", " ", "world", "!")</code></pre> 
+<p>The first script returns <code class="hljs inlineCode">HELLO WORLD!</code> and the second returns the string <code class="hljs inlineCode">Hello world!</code>. Strings can be entered directly into TL-Script (see <a class="tlObject" data-custom="false" href="?page=Literals&amp;uuid=5b71b482-326d-4d39-8bb6-866928657e68">Literals</a>) and used as inputs to functions. The predefined function <code class="hljs inlineCode">toUpperCase()</code> converts a string to uppercase. The function <code class="hljs inlineCode">toString()</code> creates a new string from its arguments by concatenating everything, see <a class="tlObject" data-custom="false" href="?page=Strings&amp;uuid=db69a1cd-c317-4b3f-9279-4bb246c5779f">Strings</a>.</p> 
+<h2>Calculating with time</h2> 
+<p>Date and time is also an important data type. Many functions therefore work with such values, see <a class="tlObject" data-custom="true" href="?page=DateAndTime&amp;uuid=5daa3915-9fb3-400f-9f57-2961b8b44f5c">Date and Time.</a></p> 
+<pre><code>dateFormat("yyyy-MM-dd HH:mm:ss XXX").format(now())</code></pre> 
+<p>The above expression returns the current date with time in the specified format, see also <a class="tlObject" data-custom="false" href="?page=dateFormat&amp;uuid=387a7e6c-78f9-46df-812c-e8ef66b29d85">Date format</a>.</p> 
+<p>The following expression returns the current year as a number, see also <a class="tlObject" data-custom="false" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">toSystemCalendar</a> and <a class="tlObject" data-custom="false" href="?page=year&amp;uuid=914035cc-d113-4b70-9b71-44de79ef3d5e">year</a>.</p> 
+<pre><code>today().toSystemCalendar().year()</code></pre> 
+<p>The day of the week on which 8/5/2021 falls (as number Sunday = 1, Monday = 2, etc.), see also <a class="tlObject" data-custom="false" href="?page=dayOfWeek&amp;uuid=994c8b37-d3ce-4979-8e2c-c5c159d4000a">dayOfWeek</a>.</p> 
+<pre><code>date(2021, 7, 5).toSystemCalendar().dayOfWeek()</code></pre> 
+<p>An important difference between date and time values is that a time is absolute and is only represented differently depending on the time zone. A date value, on the other hand, represents a calendar day that begins and ends at a different time depending on the time zone.</p> 
+<h2>Calculating with lists and quantities</h2> 
+<p>Lists and sets are collections of values. A search result is always such a collection. References in the model that allow multiple values contain collections of other objects. Depending on whether the reference is ordered or not, it is a list or a set. A set cannot contain duplicate values, a list can, see also <a class="tlObject" data-custom="true" href="?page=ListAndSet&amp;uuid=1b70e76c-45d3-4501-b8e6-6c1c0254cd48">Lists and sets</a>.</p> 
+<p>Mostly TL-Script is used to formulate evaluations on such model references. But it is also possible to construct lists in TL-Script itself.</p> 
+<pre><code>list("A", "B", "C").size()</code></pre> 
+<p>The expression above gives the result <code class="hljs inlineCode">3</code>. Here the list is constructed with the string entries <code class="hljs inlineCode">"A"</code>, <code class="hljs inlineCode">"B"</code> and <code class="hljs inlineCode">"C"</code> and the length is determined from this list.</p> 
+<p>The most important operations on lists is filtering and mapping. In both cases, a function is applied to each element of the list. In filtering, the filter function decides whether the particular list element is part of the result or not.</p> 
+<pre><code>list(3, 1, 5, 11, 7, 2, 8).filter(x -&gt; $x &gt; 4) </code></pre> 
+<p>Above expression returns the list <code class="hljs inlineCode">[5, 11, 7, 8]</code> as result. The filter function <code class="hljs inlineCode">x -&gt; $x &gt; 4</code> maps each list element <code class="hljs inlineCode">x</code> to the boolean value <code class="hljs inlineCode">$x &gt; 4</code>, i.e. checks whether the list element is greater than 4. Such a function declares a parameter (here <code class="hljs inlineCode">x</code>, the name can be freely chosen) and performs a calculation with this so named value. In the body of the function, the parameter is referred to by placing a $ sign in front of the parameter name.</p> 
+<p>Thus, the above filter expression successively assigns the values <code class="hljs inlineCode">3, 1, 5,...</code> of the input list to the variable <code class="hljs inlineCode">x</code> and calculates the boolean value <code class="hljs inlineCode">$x &gt; 4</code>. Whenever this value is <code class="hljs inlineCode">true</code>, the list element is included in the result. If the value is <code class="hljs inlineCode">false</code>, the list element is discarded and not included in the result.</p> 
+<p>In the mapping, a calculation is performed on each list element and the result of this calculation is included in the result.</p> 
+<pre><code>list(5, 11, 7, 8).map(x -&gt; $x + 2)</code></pre> 
+<p>Here, the result is the list <code class="hljs inlineCode">[</code><code class="hljs inlineCode">7, 13, 9, 10]</code>. The mapping function <code class="hljs inlineCode">x -&gt; $x + 2</code> increases its input by 2 each time. It is applied to each list element and all results calculated in this way are collected in the result.</p> 
+<p>By combining filtering and mapping, complex evaluations on collections can be formulated.</p> 
+<pre><code>list(3, 1, 5, 11, 7, 2, 8)
+  .filter(x -&gt; $x &gt; 4)
+  .map(x -&gt; $x + 2)</code></pre> 
+<p>Above expression combines both calculations from above and directly returns the result list <code class="hljs inlineCode">[</code><code class="hljs inlineCode">7, 13, 9, 10]</code>, which is created by filtering and then mapping the input list. Details on lists and sets are provided in the section <a class="tlObject" data-custom="true" href="?page=ListAndSet&amp;uuid=1b70e76c-45d3-4501-b8e6-6c1c0254cd48">Lists and sets</a>.</p> 
+<h2>Interaction with application data</h2> 
+<p>The most important function of TL script is to access the application model and search and evaluate application data. Suppose the following simple model of an ordering system is given. Here, an order consists of several items, each consisting of a quantity and a selected product.</p> 
+<p><img src="ref:image_89345.png" style="opacity:1"></p> 
+<p>All these types are defined in the module <code class="hljs inlineCode">tl.tutorial.order</code>. All model elements (modules, types and their properties) can be named directly in TL-Script. For this purpose the fully qualified name of the model element is enclosed in "<code class="hljs inlineCode">`</code>" characters. Since model elements are normal objects in Top-Logic, they can also be displayed as search results.</p> 
+<pre><code>`tl.tutorial.order`</code></pre> 
+<p>The above expression returns the module <code class="hljs inlineCode">tl.tutorial.order</code> as a result. In the same way, you can access the type of orders or the number attribute of an order item using the following expressions:</p> 
+<pre><code>`tl.tutorial.order:Order`
+
+`tl.tutorial.order:Item#amount`</code></pre> 
+<p>Access to the application data is obtained via the model elements. For example, the following expression returns the list of all purchase orders available in the system:</p> 
+<pre><code>all(`tl.tutorial.order:Order`)</code></pre> 
+<p>The <code class="hljs inlineCode">all</code> function takes as argument a type, here the type of purchase orders, and returns as result the list of all instances of this type .</p> 
+<p>This can be combined into an evaluation script that calculates the total value of all orders in the system:</p> 
+<pre><code>all(`tl.tutorial.order:Order`)
+  .map(order -&gt; 
+    $order
+      .get(`tl.tutorial.order:Order#items`)
+      .map(item -&gt; {
+        amount = $item.get(`tl.tutorial.order:Item#amount`);
+        product = $item.get(`tl.tutorial.order:Item#product`);
+        price = $product.get(`tl.tutorial.order:Product#price`);
+        $amount * $price;
+      })
+      .sum()
+  )
+  .sum()</code></pre> 
+<p>Here, the list of all purchase orders (<code class="hljs inlineCode">all(`tl.tutorial.order:Order`)</code>) is assumed. Each order is mapped to its order value (<code class="hljs inlineCode">.map(order -&gt; ...)</code>) and then all these order values are summed (<code class="hljs inlineCode">sum()</code>). The mapping function, which calculates the order value of a single order, does this using the order values of its individual order items. For this the reference <code class="hljs inlineCode">`tl.tutorial.order:Order#items`</code> of the order is accessed, in order to receive the list of the order positions of this order. This list of order items is mapped to the value of the individual order item via a nested mapping and then summed to the value of the order.</p> 
+<p>The mapping function that determines the value of an order item (<code class="hljs inlineCode">item -&gt; {...}</code>) accesses the quantity (<code class="hljs inlineCode">`tl.tutorial.order:Item#amount`</code>) and the product ordered (<code class="hljs inlineCode">`tl.tutorial.order:Item#product`</code>) in the order item (<code class="hljs inlineCode">$item</code>). Both are cached in temporary variables <code class="hljs inlineCode">amount</code> and <code class="hljs inlineCode">product</code>. The price (<code class="hljs inlineCode">`tl.tutorial.order:Product#price`</code>) of the ordered product (<code class="hljs inlineCode">$product</code>) is now queried and then multiplied by the value of the order item (<code class="hljs inlineCode">$amount * $price</code>).</p> 
+<p>The last expression in an expression chain <code class="hljs inlineCode">{ ...; ...; ...;}</code> is always the result of the total expression. It is not necessary to specify an explicit "return" statement as known from other languages.</p> 
+<p>Details on this can be found in <a class="tlObject" data-custom="true" href="?page=ModelOperations&amp;uuid=bce8d5df-1e4e-4b95-86c6-42645768d35d">Model Access</a> and <a class="tlObject" data-custom="false" href="?page=Functions&amp;uuid=8f4a805f-125a-4905-8df3-65aa54e20947">Functions</a>.</p>

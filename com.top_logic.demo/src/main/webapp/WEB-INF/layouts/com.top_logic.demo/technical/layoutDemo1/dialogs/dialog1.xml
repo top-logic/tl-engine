@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="dialog1">
+	<components>
+		<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+			buttonComponent="dialog1Buttons"
+			name="infoDialog1"
+			page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
+			resPrefix="layouts.layoutdemo.dialog.dialog1.infoDialog1."
+			securityProviderClass="dialogParent"
+		>
+			<dialogs>
+				<layout name="dialog1a">
+					<dialogInfo openMaximized="true"/>
+
+					<components>
+						<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+							buttonComponent="dialog1aButtons"
+							name="infoDialog1a"
+							page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
+							resPrefix="layouts.layoutdemo.dialog.dialog1.infoDialog1."
+							securityProviderClass="dialogParent"
+						>
+							<buttons>
+								<button id="toggleDialogMaximality"
+									class="com.top_logic.demo.layout.demo.dialog.ToggleDialogMaximality"
+								/>
+							</buttons>
+						</component>
+						<buttonbar name="dialog1aButtons"/>
+					</components>
+				</layout>
+			</dialogs>
+			<buttons>
+				<button id="toggleDialogMaximality"
+					class="com.top_logic.demo.layout.demo.dialog.ToggleDialogMaximality"
+				/>
+			</buttons>
+		</component>
+		<buttonbar name="dialog1Buttons"/>
+	</components>
+</layout>

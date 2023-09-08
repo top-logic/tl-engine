@@ -1,0 +1,44 @@
+<h2>Syntax</h2>
+<pre>	<code>resolveModelPart($partName)
+</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Löst ein Modellelement über den voll qualifizierten Attributenamen<code class="hljs inlineCode">partName</code> auf.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>partName</td>
+   <td>Zeichenkette</td>
+   <td>Der voll qualifizierte Name des Modellelements das aufgelöst werden soll</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Das Modellelement mit dem voll qualifizierten Namen<code class="hljs inlineCode">partName</code>.</p>
+<h2>Beispiele</h2>
+<h3>Einfache Attribut-Auflösung</h3>
+<pre><code>{
+moduleName = "my.module"; className = "MyType"; localAttrName="myAttribute";
+resolveModelPart($moduleName + ":" + $className + "#" + $localAttrName);
+}</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> `my.module:MyType#myAttribute`</p>
+<h3>Einfache Typ-Auflösung</h3>
+<pre><code>{
+moduleName = "my.module"; className = "MyType";
+resolveModelPart($moduleName + ":" + $className);
+}</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> `my.module:MyType`</p>
+<p>​</p>

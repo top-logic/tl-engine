@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.encryption.EncryptionService">
+			<instance class="com.top_logic.knowledge.service.encryption.pbe.PasswordBasedEncryptionService"
+				pbe-algorithm="PBEWithSHAAndTwofish-CBC"
+				salt-length="16"
+				iterations="100000"
+				encryption-algorithm="Blowfish"
+				signature-digest-algorithm="SHA1"
+			/>
+		</config>
+	
+		<config service-class="com.top_logic.knowledge.journal.JournalManager">
+			<instance class="com.top_logic.knowledge.journal.FlexJournalManager" />
+		</config>
+	
+		<config service-class="com.top_logic.base.security.util.SignatureService">
+			<instance class="com.top_logic.knowledge.service.encryption.EncryptionSignatureService" />
+		</config>
+		
+		<config service-class="com.top_logic.knowledge.service.encryption.SecurityService">
+			<instance class="com.top_logic.knowledge.service.encryption.SecurityService">
+				<providers>
+					<provider class="org.bouncycastle.jce.provider.BouncyCastleProvider" />
+				</providers>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.util.DeferredBootService">
+			<instance class="com.top_logic.util.DeferredBootService"
+				deferred-boot-location="/applicationPassword.jsp"
+			>
+				<dependencies>
+					<dependency key="com.top_logic.basic.sql.ConnectionPoolRegistry$Module" value="true"/>
+					<dependency key="com.top_logic.knowledge.service.encryption.SecurityService$Module" value="true"/>
+				</dependencies>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.dsa.DataAccessService">
+			<instance>
+				<dependencies>
+					<dependency key="com.top_logic.basic.encryption.EncryptionService$Module" value="true" />
+				</dependencies>
+				<adaptors>
+					<adaptor name="repository" config:override="true">
+						<config class="com.top_logic.dsa.impl.EncryptedDataSourceAdaptor">
+							<impl class="com.top_logic.dsa.repos.RepositoryDataSourceAdaptor">
+                                <repository class="com.top_logic.dsa.repos.file.FileRepository"
+									attic="%ATTIC_PATH%" 
+									path="%REPOSITORY_PATH%" />
+							</impl>
+						</config>
+					</adaptor>
+            	</adaptors>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.service.FlexDataManagerFactory">
+			<instance class="com.top_logic.knowledge.service.encryption.data.EncryptedFlexDataManagerFactory">
+				<transformer>
+					<types>
+						<type name="MEConfigDescriptor" strategy="exclude"/>
+					</types>
+				</transformer>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<providers>
+						<provider name="journalTypes">
+							<impl class="com.top_logic.knowledge.journal.FlexJournalManager$JournalTypes" />
+						</provider>
+					</providers>
+				</type-system>
+			</type-systems>
+		</config>
+	
+		<config config:interface="com.top_logic.util.StartStopListenerConfig"
+			deferredBoot="false"
+		/>
+	</configs>
+</application>

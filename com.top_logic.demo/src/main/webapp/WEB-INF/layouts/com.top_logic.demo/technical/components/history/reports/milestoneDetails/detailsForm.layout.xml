@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor="test.history:Milestone"
+		saveClosesDialog="true"
+		type=""
+	>
+		<name key="dynamic.0262f0eb-3f1e-49db-b8a3-cc214eadaa4b">
+			<en>Details</en>
+			<de>Details</de>
+		</name>
+	</arguments>
+</config:template-call>

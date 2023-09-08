@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<r>
+	<a>
+		<!-- Some changed comment -->
+		<v name="v1"/>
+	</a>
+	<b>
+		<v name="v2" a2="a2"/>
+		<v name="v3"/>
+	</b>
+</r>

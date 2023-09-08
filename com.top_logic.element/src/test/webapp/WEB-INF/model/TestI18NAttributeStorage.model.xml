@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestI18NAttributeStorage">
+			<types>
+				<class name="I18NContainer">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<attributes>
+						<property name="title"
+							mandatory="false"
+							type="tl.model.i18n:I18NString"
+						/>
+						<property name="content"
+							mandatory="false"
+							type="tl.model.i18n:I18NString"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

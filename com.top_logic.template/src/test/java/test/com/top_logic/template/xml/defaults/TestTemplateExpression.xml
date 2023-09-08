@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<t:parameter name="String_4" type="string">
+				<t:default>
+					<t:value expr='$String_3' />
+				</t:default>
+			</t:parameter>
+			
+			<t:parameter name="String_1" type="string">
+				<t:default>
+					1
+				</t:default>
+			</t:parameter>
+			
+			<t:parameter name="String_2" type="string">
+				<t:default>
+					2
+					<t:value expr='$String_1' />
+					2
+				</t:default>
+			</t:parameter>
+			
+			<t:parameter name="String_3" type="string">
+				<t:default>
+					<t:value expr='$String_2' />
+					3
+					<t:value expr='$String_2' />
+				</t:default>
+			</t:parameter>
+			
+			<t:parameter name="Integer_A" type="integer">
+				<t:default>
+					<t:value expr='$String_1' />
+					<t:value expr='$String_2' />
+					<t:value expr='$String_3' />
+					<t:value expr='$String_4' />
+				</t:default>
+			</t:parameter>
+			
+			<t:parameter name="String_Nested" type="string">
+				<t:default>
+					<tag>
+						<t:value expr='$Integer_A' />
+					</tag>
+				</t:default>
+			</t:parameter>
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:value expr='$String_1' />
+		
+		<t:value expr='$String_2' />
+		
+		<t:value expr='$String_3' />
+		
+		<t:value expr='$String_4' />
+		
+		<t:value expr='$Integer_A' />
+		
+		<t:value expr='$String_Nested' />
+		
+	</t:body>
+</t:template>

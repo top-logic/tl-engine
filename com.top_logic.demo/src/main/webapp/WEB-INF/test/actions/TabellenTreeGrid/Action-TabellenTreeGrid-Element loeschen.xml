@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<!-- Type 'xml' if it contains XML that must not be quoted. -->
+			<!-- Type 'string' if it is no XML and '&quot;' and Co. have to be quoted.. -->
+			<!--
+				But the quoting of values of type 'string' is not yet implemented.
+				:-(
+			-->
+			<t:parameter name="kontext"
+				type="string"
+			/>
+			<t:parameter name="Fehlermeldung"
+				default=""
+				type="string"
+			/>
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			failure-message="${$Fehlermeldung}"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<t:invoke template="script:TabellenTreeGrid/Action-TabellenTreeGrid-Element bearbeiten.xml">
+					<t:parameter name="kontext"
+						value="${$kontext}"
+					/>
+					<t:parameter name="Tester"
+						value="${$Tester}"
+					/>
+				</t:invoke>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					comment=""
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
+					failure-message=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.DelGlobalVariableOp"
+					name="${$kontext}"
+				/>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.demo.layout.form.demo.TestBoxesComponent"
+	name="TestBoxesFilter"
+	page="/jsp/test/boxes/TestBoxesFilter.jsp"
+	resPrefix="layouts.layoutdemo.boxes.demoFilter.TestBoxesFilter."
+	securityProviderClass="securityRoot"
+>
+	<commands>
+		<reference command-id="invalidate"/>
+	</commands>
+
+	<toolbar-groups>
+		<toolbar-group name="refresh">
+			<buttons>
+				<!-- References the command defined above, but defines a new image for displaying in the toolbar. -->
+				<button
+					command-id="invalidate"
+					image="theme:ICONS_BUTTON_REFRESH"
+					not-executable-image="theme:ICONS_BUTTON_REFRESH_DISABLED"
+				>
+					<!-- Some constant arguments to pass to the command invocation. -->
+					<arguments>
+						<argument name="foo"
+							value="bar"
+						/>
+					</arguments>
+				</button>
+			</buttons>
+		</toolbar-group>
+	</toolbar-groups>
+</component>

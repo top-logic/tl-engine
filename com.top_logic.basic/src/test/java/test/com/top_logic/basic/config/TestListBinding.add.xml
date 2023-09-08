@@ -1,0 +1,11 @@
+<config xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<string-list>
+		<str config:operation="add" val="new" />
+		<str config:operation="add" config:position="begin" val="begin" />
+		<str config:operation="add" config:position="end" val="end" />
+		<str config:operation="add" config:position="before"
+			config:reference="b" val="before" />
+		<str config:operation="add" config:position="after"
+			config:reference="b" val="after" />
+	</string-list>
+</config>

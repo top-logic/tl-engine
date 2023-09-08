@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- demo main configuration file                         -->
+
+<root>
+    <alias>
+        <entry name="%EXAMPLE_ALIAS%" value="EXAMPLE_ALIAS_VALUE" />
+	</alias>
+	<properties>
+    	<section name="ReportGenerator" comment="valid report classes which can be handled by the Report Generator">
+    		<entry name="personSlide" value="test.com.top_logic.reporting.office.PersonSlideReport" />
+    		<entry name="personSlide.kind" value="ppt_report" />
+    		<entry name="wordNoop" value="test.com.top_logic.reporting.office.NoopReportHandler" />
+    		<entry name="wordNoop.kind" value="word_report" />
+    		<entry name="excelNoop" value="test.com.top_logic.reporting.office.NoopReportHandler" />
+    		<entry name="excelNoop.kind" value="excel_report" />
+			<!--  invalid report types for testing ! -->
+    		<entry name="invalidKind" value="test.com.top_logic.reporting.office.NoopReportHandler" />
+    		<entry name="invalidKind.kind" value="doc_report" />
+    	</section>
+          
+	</properties>
+
+</root>

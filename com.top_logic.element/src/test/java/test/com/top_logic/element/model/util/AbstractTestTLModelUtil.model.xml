@@ -1,0 +1,192 @@
+<?xml version='1.0' encoding='utf-8'?>
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="test1">
+			<types>
+				<!-- Base classes -->
+				
+				<class name="X">
+				</class>
+				
+				<class name="Y">
+				</class>
+				
+				<class name="Z">
+				</class>
+				
+				<class name="A">
+				</class>
+				
+				<!-- Level 1 -->
+				
+				<class name="B">
+					<generalizations>
+						<generalization type="A"/>
+					</generalizations>
+				</class>
+				
+				<!-- Level 2 -->
+				
+				<class name="C">
+					<generalizations>
+						<generalization type="B"/>
+					</generalizations>
+				</class>
+				
+				<class name="D">
+					<generalizations>
+						<generalization type="B"/>
+					</generalizations>
+				</class>
+				
+				<class name="E">
+					<generalizations>
+						<generalization type="B"/>
+					</generalizations>
+				</class>
+				
+				<!-- Level 3 -->
+				
+				<class name="F">
+					<generalizations>
+						<generalization type="C"/>
+						<generalization type="D"/>
+					</generalizations>
+				</class>
+				
+				<class name="G">
+					<annotations>
+						<!-- TestTLModelUtilPersistent.testPotentialTablesAreUnmodifiable() needs that some subclasses store in a different table. -->
+						<table name="TestObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="D"/>
+						<generalization type="E"/>
+					</generalizations>
+				</class>
+				
+				<!-- Level 4 -->
+				
+				<class name="H">
+					<generalizations>
+						<generalization type="F"/>
+						<generalization type="G"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+		
+		<module name="testGetClassParts">
+			<types>
+				<datatype name="String"
+					kind="Custom"
+					db_type="string"
+					storage-mapping="com.top_logic.model.access.IdentityMapping">
+				</datatype>
+				
+				<class name="A">
+				</class>
+				
+				<class name="B">
+					<generalizations>
+						<generalization type="A"/>
+					</generalizations>
+					<attributes>
+						<property name="bottomProperty" type="String"/>
+					</attributes>
+				</class>
+				
+				<class name="C">
+					<generalizations>
+						<generalization type="B"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+		
+		<module name="ComplexTypeHierarchy">
+			<types>
+				<datatype name="String"
+					kind="Custom"
+					db_type="string"
+					storage-mapping="com.top_logic.model.access.IdentityMapping">
+				</datatype>
+				
+				<class name="A">
+				</class>
+				
+				<class name="B">
+					<generalizations>
+						<generalization type="A"/>
+					</generalizations>
+					<attributes>
+						<property name="overriddenProperty" type="String" />
+						<reference name="overriddenReference" type="B" />
+					</attributes>
+				</class>
+				
+				<class name="C">
+					<generalizations>
+						<generalization type="B"/>
+					</generalizations>
+					<attributes>
+						<property name="overriddenProperty" type="String" override="true" />
+						<reference name="overriddenReference" type="C" override="true" />
+					</attributes>
+				</class>
+				
+				<class name="D">
+					<generalizations>
+						<generalization type="A"/>
+						<generalization type="B"/>
+					</generalizations>
+				</class>
+				
+				<class name="E">
+					<generalizations>
+						<generalization type="B"/>
+						<generalization type="A"/>
+					</generalizations>
+				</class>
+				
+				<class name="F">
+					<generalizations>
+						<generalization type="D"/>
+						<generalization type="E"/>
+					</generalizations>
+					<attributes>
+						<property name="overriddenProperty" type="String" override="true" />
+						<reference name="overriddenReference" type="F" override="true" />
+					</attributes>
+				</class>
+				
+				<class name="G">
+					<generalizations>
+						<generalization type="E"/>
+						<generalization type="D"/>
+					</generalizations>
+					<attributes>
+						<property name="overriddenProperty" type="String" override="true" />
+						<reference name="overriddenReference" type="G" override="true" />
+					</attributes>
+				</class>
+			</types>
+		</module>
+
+		<module name="enums">
+			<types>
+				<enum name="Classification">
+					<classifiers>
+						<classifier name="C1"/>
+						<classifier name="C2"/>
+						<classifier name="C3"/>
+					</classifiers>
+				</enum>
+			</types>		
+		</module>
+	</modules>
+	
+</model>

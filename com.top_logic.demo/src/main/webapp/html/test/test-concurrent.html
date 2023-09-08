@@ -1,0 +1,179 @@
+<html>
+
+<head>
+	<title>Thread library test</title>
+	
+	<!-- Import thread library. --> 
+	<script type="text/javascript" src="../../script/tl/thread.js"></script>
+
+	<script type="text/javascript">
+		var monitor = new Lock();
+	
+		function onloadCallback() {
+			window.setTimeout(function() {longRunningFunction("timer.root.onloadCallback"); }, 1);
+			longRunningFunction("root.onloadCallback");
+		}
+
+		function onunloadCallback() {
+			window.setTimeout(function() {longRunningFunction("timer.root.onunloadCallback"); }, 1);
+			longRunningFunction("root.onunloadCallback");
+		}
+
+		function onclickCallback() {
+			window.setTimeout(function() {longRunningFunction("timer.root.onclickCallback"); }, 1);
+			longRunningFunction("root.onclickCallback");
+		}
+		
+		function onclickSynchronizedCallback(id) {
+			var count = 0;
+			while (! monitor.acquire(id)) {
+				count++;
+				if (count % 1000 == 0) {
+					log(id + " blocked in onclickSynchronizedCallback");
+				}
+				count++;
+				if (count > 10000) {
+					log("Deadlock for " + id + "!");
+					return;
+				}
+			}
+			try {
+				log("enter " + id);
+				window.setTimeout(function() {longRunningFunction("timer.root.onclickSynchronizedCallback"); }, 1);
+				longRunningFunction(id);
+				log("exit " + id);
+			} catch (ex) {
+				throw ex;
+			} finally {
+				monitor.release(id);
+			}
+		}
+		
+		function onreadystatechangeCallback(request) {
+			log("onreadystatechangeCallback with readyState=" + request.readyState);
+			if (request.readyState == 4) {
+				var status = request.status;
+				if (status == 200) {
+					log("Received data: '" + request.responseText + "'");
+				} else {
+					log("Received failure: " + status);
+				}
+			}
+			
+			var id = "timer.root.onreadystatechangeCallback(" + request.readyState + ")";
+			window.setTimeout(function() {longRunningFunction(id); }, 1);
+			longRunningFunction("root.onreadystatechangeCallback(" + request.readyState + ")");
+		}
+
+		function longRunningFunction(id) {
+			var count = 0;
+			while (! monitor.acquire(id)) {
+				// Retry.
+				if (count % 1000 == 0) {
+					log(id + " blocked!");
+				}
+				count++;
+				if (count > 10000) {
+					log("Deadlock for " + id + ".");
+					return;
+				}
+			}
+			try {
+				log(id + " wait started.");
+				var dummy = 0;
+				for (var n = 0; n < 200000; n++) {
+					dummy += n;
+				}
+				log(id + " wait completed (" + dummy + ").");
+			} catch (ex) {
+				throw ex;
+			} finally {
+				monitor.release(id);
+			}
+		}
+		
+		this.newXMLHttpRequest = function() {
+			try {
+				// Native object supported by most browsers (including upcomming MS IE 7.0.
+				return new XMLHttpRequest();
+			} catch (e) {
+				try {
+					return new ActiveXObject("Microsoft.XMLHTTP");
+				} catch (e) {
+					return new ActiveXObject("Msxml2.XMLHTTP");
+				}
+			}
+		};
+
+		// Test events from other windows.
+		var windowRef = null;
+		function testWindow(button) {
+			windowRef = window.open("opener-callback.html", "win", "width=300,height=200,toolbar=no,status=no");
+		}
+		
+		// Tests events from frames.
+		function testFrame(button) {
+			document.getElementById("test-iframe").src = "parent-callback.html";
+		}
+
+		// Test events from AJAX request objects.
+		function testAjax(button) {
+			var selfUrl = "" + document.location;
+			log("Current document: " + selfUrl);
+			var url = selfUrl.substring(0, selfUrl.lastIndexOf('/') + 1) + "xmlhttp-content.jsp";
+			log("Requesting " + url);
+			 		
+			var request = newXMLHttpRequest();
+			request.open("GET", url, /*async*/ true);
+			request.onreadystatechange = function() {onreadystatechangeCallback(request); }; 
+			request.send();
+			
+			window.setTimeout(function() {longRunningFunction("timer.afterSend"); }, 1);
+			longRunningFunction("root.afterSend");
+		}
+
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+	</script>
+</head>
+<body onload="log('Test page ready.');">
+
+	<h2>Test case for JavaScript thread and lock library</h2>
+	
+	<p>
+	Tests events from various concurrent activities in JavaScript.
+	
+	See <a href="window-open.html"> window opening example</a>.
+	</p>
+	
+	<h2>Action triggers</h2>
+	
+	<iframe id="test-iframe" src="static-content.html" width="100%" height="120px"></iframe>	
+	
+	<h2>Action triggers</h2>
+
+	<p>
+		<button style="margin-right: 2ex;" onclick="return testWindow(this);">Test window</button>
+		<button style="margin-right: 2ex;" onclick="return testFrame(this);">Test frame</button>
+		<button style="margin-right: 2ex;" onclick="return testAjax(this);">Test AJAX</button>
+	</p>
+
+	<p>
+		<button onclick="return clearConsole();">Clear console</button>
+	</p>
+	
+	<h2>Console output</h2>
+	
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+</body>
+</html>

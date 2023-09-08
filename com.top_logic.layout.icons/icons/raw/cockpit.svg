@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="22"
+   height="22"
+   id="Layer_1"
+   version="1.1"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="cockpit.svg"
+   inkscape:export-filename="\\nas\projects\Icons\Basis\dashBoard22.png"
+   inkscape:export-xdpi="5.8000002"
+   inkscape:export-ydpi="5.8000002">
+  <metadata
+     id="metadata19">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs17" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     id="namedview15"
+     showgrid="false"
+     inkscape:zoom="32"
+     inkscape:cx="1.0911576"
+     inkscape:cy="10.927674"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Layer_1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-bottom="0"
+     fit-margin-right="0"
+     inkscape:pagecheckerboard="true" />
+  <circle
+     r="7.2494173"
+     style="display:inline;opacity:1;fill:none;stroke:#008fb8;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="path3814-8"
+     inkscape:export-filename="D:\Development\Top-Logic_HEAD\com.top_logic.themes.modern\webapp\themes\sidebar\image_buttons\dashBoard22.png"
+     inkscape:export-xdpi="5.8000002"
+     inkscape:export-ydpi="5.8000002"
+     cx="11.064695"
+     cy="9.9614286" />
+  <path
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="m 8.027562,10.943305 h 1.2272161 l 0.5056063,-3.0585481 1.7950676,3.9194401 0.948671,-2.5762686 0.829594,1.4127636 h 1.222457"
+     id="path2996-8"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="ccccccc"
+     inkscape:export-filename="D:\Development\Top-Logic_HEAD\com.top_logic.themes.modern\webapp\themes\sidebar\image_buttons\dashBoard22.png"
+     inkscape:export-xdpi="5.8000002"
+     inkscape:export-ydpi="5.8000002" />
+  <path
+     sodipodi:nodetypes="cc"
+     inkscape:connector-curvature="0"
+     id="path2995-7-7"
+     d="m 18.065268,10.250928 c 6.891078,4.268682 -0.07284,11.990185 -6.665261,6.599699"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <path
+     sodipodi:nodetypes="cc"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.10900331;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="m 19.537385,17.41825 -1.28417,-1.284172"
+     id="path3765-4-2"
+     inkscape:connector-curvature="0" />
+  <path
+     inkscape:connector-curvature="0"
+     id="path3767-0-3"
+     d="m 21.003787,13.880358 -1.809181,0.158278"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.10900331;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     sodipodi:nodetypes="cc" />
+  <path
+     sodipodi:nodetypes="cc"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.10900331;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 15.863205,19.020943 16.021488,17.21176"
+     id="path3769-9-7"
+     inkscape:connector-curvature="0" />
+  <path
+     sodipodi:nodetypes="cc"
+     inkscape:connector-curvature="0"
+     id="path2995-6"
+     d="m 3.9774103,10.243972 c -6.8324639,4.232372 0.072226,11.888199 6.6085657,6.543564"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <path
+     sodipodi:nodetypes="cc"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.10900331;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 2.4434199,17.41825 3.7275904,16.134078"
+     id="path3765-8"
+     inkscape:connector-curvature="0" />
+  <path
+     inkscape:connector-curvature="0"
+     id="path3767-5"
+     d="m 0.9770188,13.880358 1.80918,0.158278"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.109;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     sodipodi:nodetypes="cc" />
+  <path
+     sodipodi:nodetypes="cc"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.10900331;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 6.1175997,19.020943 5.9593168,17.21176"
+     id="path3769-6"
+     inkscape:connector-curvature="0" />
+  <path
+     inkscape:connector-curvature="0"
+     id="path3820-2"
+     d="M 17.908494,9.8712473 H 16.557817"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.20000005;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="D:\Development\Top-Logic_HEAD\com.top_logic.themes.modern\webapp\themes\sidebar\image_buttons\dashBoard22.png"
+     inkscape:export-xdpi="5.8000002"
+     inkscape:export-ydpi="5.8000002" />
+  <path
+     sodipodi:nodetypes="cc"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.20000005;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 5.5102076,9.8712473 H 4.1595314"
+     id="path3824-5"
+     inkscape:connector-curvature="0"
+     inkscape:export-filename="D:\Development\Top-Logic_HEAD\com.top_logic.themes.modern\webapp\themes\sidebar\image_buttons\dashBoard22.png"
+     inkscape:export-xdpi="5.8000002"
+     inkscape:export-ydpi="5.8000002" />
+  <path
+     sodipodi:nodetypes="cc"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.20000005;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 11.018387,3.2346343 V 4.5853114"
+     id="path3832-7"
+     inkscape:connector-curvature="0"
+     inkscape:export-filename="D:\Development\Top-Logic_HEAD\com.top_logic.themes.modern\webapp\themes\sidebar\image_buttons\dashBoard22.png"
+     inkscape:export-xdpi="5.8000002"
+     inkscape:export-ydpi="5.8000002" />
+  <path
+     inkscape:connector-curvature="0"
+     id="path3834-7"
+     d="m 10.987137,15.25792 v 1.350677"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.20000005;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="D:\Development\Top-Logic_HEAD\com.top_logic.themes.modern\webapp\themes\sidebar\image_buttons\dashBoard22.png"
+     inkscape:export-xdpi="5.8000002"
+     inkscape:export-ydpi="5.8000002" />
+  <path
+     inkscape:connector-curvature="0"
+     id="path3844-6"
+     d="m 6.114446,5.2520509 0.9550725,0.955073"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.20000005;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="D:\Development\Top-Logic_HEAD\com.top_logic.themes.modern\webapp\themes\sidebar\image_buttons\dashBoard22.png"
+     inkscape:export-xdpi="5.8000002"
+     inkscape:export-ydpi="5.8000002" />
+  <path
+     sodipodi:nodetypes="cc"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.20000005;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="m 14.842257,13.792359 0.955072,0.955071"
+     id="path3846-9"
+     inkscape:connector-curvature="0"
+     inkscape:export-filename="D:\Development\Top-Logic_HEAD\com.top_logic.themes.modern\webapp\themes\sidebar\image_buttons\dashBoard22.png"
+     inkscape:export-xdpi="5.8000002"
+     inkscape:export-ydpi="5.8000002" />
+  <path
+     sodipodi:nodetypes="cc"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.20000005;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 6.3331968,14.84118 7.2882693,13.886109"
+     id="path3850-0"
+     inkscape:connector-curvature="0"
+     inkscape:export-filename="D:\Development\Top-Logic_HEAD\com.top_logic.themes.modern\webapp\themes\sidebar\image_buttons\dashBoard22.png"
+     inkscape:export-xdpi="5.8000002"
+     inkscape:export-ydpi="5.8000002" />
+  <path
+     inkscape:connector-curvature="0"
+     id="path3852-1"
+     d="m 14.779757,6.0821239 0.955072,-0.955073"
+     style="display:inline;fill:none;stroke:#008fb8;stroke-width:1.20000005;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="D:\Development\Top-Logic_HEAD\com.top_logic.themes.modern\webapp\themes\sidebar\image_buttons\dashBoard22.png"
+     inkscape:export-xdpi="5.8000002"
+     inkscape:export-ydpi="5.8000002" />
+</svg>

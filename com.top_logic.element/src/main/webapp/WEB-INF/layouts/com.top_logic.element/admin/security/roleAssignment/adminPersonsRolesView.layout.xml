@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminPersonsRolesView"
+	helpIDLegacy="main.admin.persons.roles.tabber"
+	titleKey="main.admin.persons.roles.tabber"
+>
+	<tabInfo label="main.admin.persons.roles.tabber"/>
+	<components>
+		<include name="com.top_logic.element/admin/security/roleAssignment/editPersonRights.xml"/>
+	</components>
+</securityLayout>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<content1 name="con1"/>
+	<content2 name="con2"/>
+	<content3 name="con3"/>
+</template>

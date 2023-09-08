@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.SetGlobalVariableOp"
+			name="Variable_Test_SetNullCheckNull"
+		>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+				name="Variable_Test_SetNullCheckNull"
+			/>
+			<constraints>
+				<constraint class="com.top_logic.layout.scripting.check.NullCheck"
+					null="true"
+				/>
+			</constraints>
+		</action>
+	</actions>
+</action>

@@ -1,0 +1,217 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-app-internal</artifactId>
+		<version>7.6.0-SNAPSHOT</version>
+		<relativePath>../tl-parent-app/internal</relativePath>
+	</parent>
+
+	<artifactId>tl-bpe-app</artifactId>
+	<description>Business process engine application for executing BPMN configurable workflows.</description>
+
+	<properties>
+		<tl.deb.skip>false</tl.deb.skip>
+		<tl.deb.attach>false</tl.deb.attach>
+
+		<tl.deb.maintainer>Bernhard Haumacher &lt;bhu@top-logic.com&gt;</tl.deb.maintainer>
+		<tl.deb.section>misc</tl.deb.section>
+		<tl.deb.priority>optional</tl.deb.priority>
+		<tl.deb.distribution>development</tl.deb.distribution>
+
+		<!-- Test the independence of properties. -->
+		<tl.deb.dbSchema>bpe-app</tl.deb.dbSchema>
+		<tl.deb.dbUser>bpe-user</tl.deb.dbUser>
+		<tl.deb.contextName>bpe</tl.deb.contextName>
+		<tl.deb.installDir>/opt/tl-bpe</tl.deb.installDir>
+
+		<!-- Deployment to APT repository. -->
+		<tl.deb.skipDeploy>false</tl.deb.skipDeploy>
+		<tl.deb.repositoryUrl>https://dev.top-logic.com/nexus/repository/toplogic-deb</tl.deb.repositoryUrl>
+		<tl.deb.repositoryPath>/</tl.deb.repositoryPath>
+		<tl.deb.serverId>tl-deb</tl.deb.serverId>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-scripting-template</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-bpe-modeler</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-graph-diagramjs-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-contact</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-scripting-template</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-monitoring</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-reporting</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chart-chartjs</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-service-openapi-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-service-openapi-server</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-themeedit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-themes-dezent</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-doc</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.vafer</groupId>
+				<artifactId>jdeb</artifactId>
+
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>jdeb</goal>
+						</goals>
+
+						<configuration>
+							<skip>${tl.deb.skip}</skip>
+							<attach>${tl.deb.attach}</attach>
+							<deb>${project.build.directory}/${project.artifactId}_${project.version}_all.deb</deb>
+							<controlDir>${basedir}/src/main/deb/control</controlDir>
+							<dataSet>
+								<data>
+									<src>${project.build.directory}/${project.build.finalName}-app.war</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>${tl.deb.installDir}</prefix>
+										<user>root</user>
+										<group>root</group>
+										<filemode>644</filemode>
+									</mapper>
+								</data>
+
+								<data>
+									<src>${basedir}/src/main/deb/data/tomcat/context.xml</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>${tl.deb.installDir}/tomcat</prefix>
+										<user>root</user>
+										<group>root</group>
+										<filemode>644</filemode>
+									</mapper>
+								</data>
+
+								<data>
+									<src>${basedir}/src/main/deb/data/apache/site.conf</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>${tl.deb.installDir}/apache</prefix>
+										<user>root</user>
+										<group>root</group>
+										<filemode>644</filemode>
+									</mapper>
+								</data>
+
+								<data>
+									<src>${basedir}/src/main/deb/data/bin/setup-db.sh</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>${tl.deb.installDir}/bin</prefix>
+										<user>root</user>
+										<group>root</group>
+										<filemode>755</filemode>
+									</mapper>
+								</data>
+
+								<data>
+									<type>link</type>
+									<linkName>/var/lib/tomcat9/webapps/${tl.deb.contextName}.war</linkName>
+									<linkTarget>${tl.deb.installDir}/${project.build.finalName}-app.war</linkTarget>
+									<symlink>true</symlink>
+								</data>
+
+								<data>
+									<type>link</type>
+									<linkName>/etc/tomcat9/Catalina/localhost/${tl.deb.contextName}.xml</linkName>
+									<linkTarget>${tl.deb.installDir}/tomcat/context.xml</linkTarget>
+									<symlink>true</symlink>
+								</data>
+
+								<data>
+									<type>link</type>
+									<linkName>/etc/apache2/sites-available/${tl.deb.contextName}.conf</linkName>
+									<linkTarget>${tl.deb.installDir}/apache/site.conf</linkTarget>
+									<symlink>true</symlink>
+								</data>
+
+								<data>
+									<type>link</type>
+									<linkName>/var/lib/tomcat9/lib/mariadb-java-client.jar</linkName>
+									<linkTarget>/usr/share/java/mariadb-java-client.jar</linkTarget>
+									<symlink>true</symlink>
+								</data>
+							</dataSet>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>net.lopht.maven-plugins</groupId>
+				<artifactId>upload-maven-plugin</artifactId>
+
+				<executions>
+					<execution>
+						<goals>
+							<goal>upload-file</goal>
+						</goals>
+
+						<configuration>
+							<skip>${tl.deb.skipDeploy}</skip>
+							<file>${project.build.directory}/${project.artifactId}_${project.version}_all.deb</file>
+							<repositoryUrl>${tl.deb.repositoryUrl}</repositoryUrl>
+							<repositoryPath>${tl.deb.repositoryPath}</repositoryPath>
+							<serverId>${tl.deb.serverId}</serverId>
+							<usePOST>true</usePOST>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

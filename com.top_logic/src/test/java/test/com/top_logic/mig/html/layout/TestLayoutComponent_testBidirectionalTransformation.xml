@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="layout">
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		name="component1"
+	/>
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		name="component2"
+	>
+		<model class="test.com.top_logic.mig.html.layout.TestLayoutComponent$TestBidirectionalModelTransform" input="model(component1)"/>
+	</component>
+</layout>

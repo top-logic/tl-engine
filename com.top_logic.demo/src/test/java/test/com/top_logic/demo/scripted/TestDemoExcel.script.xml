@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	comment="TestDemoExcel"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Haupttests"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="name"
+							value="ExcelTestElement1"
+						/>
+						<parameter name="type"
+							value="Demo A"
+						/>
+						<parameter name="ergebnis"
+							value="Element1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="name"
+							value="ExcelTestElement2"
+						/>
+						<parameter name="type"
+							value="Demo B"
+						/>
+						<parameter name="ergebnis"
+							value="Element2"
+						/>
+						<parameter name="kontext"
+							value="Element1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="name"
+							value="ExcelTestElement3"
+						/>
+						<parameter name="type"
+							value="Demo C"
+						/>
+						<parameter name="ergebnis"
+							value="Element3"
+						/>
+						<parameter name="kontext"
+							value="Element2"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.demo.layout.scripting.action.excel.RenameElementOp"
+					Ergebnis="Hauptelement"
+					Kontext="Element1"
+					business-action="Umbenennen"
+					business-model="Element"
+					file-name="TestDemoExcel.xlsx"
+					row-number="5"
+					sheet-name="Haupttests"
+				>
+					<Parameter neuerName="ExcelTestElementRoot"/>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element2"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Abschluss des ersten Arbeitsblattes"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="level"
+									value="INFO"
+								/>
+								<parameter name="text"
+									value="Abschluss des ersten Arbeitsblattes"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Zusätzliche Tests"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Abschluss der zusätzlichen Tests"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="level"
+									value="INFO"
+								/>
+								<parameter name="text"
+									value="Abschluss der zusätzlichen Tests"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Weitere Tests"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Abschluss der letzten Tests"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="level"
+									value="INFO"
+								/>
+								<parameter name="text"
+									value="Abschluss der letzten Tests"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

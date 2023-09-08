@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="types"/>
+		<param name="modelBuilder"/>
+		<param name="createType"
+			value="${types}"
+		/>
+
+		<param name="chartConfig"
+			value=""
+		/>
+		<param name="openInEdit"
+			value="false"
+		/>
+		<param name="saveClosesDialog"
+			optional="true"
+		/>
+		<param name="showMarkerFields"
+			optional="true"
+		/>
+		<param name="securityProviderClass"
+			optional="true"
+		/>
+		<param name="rowSecurityProviderClass"
+			optional="true"
+		/>
+		<param name="gridComponent"
+			value="com.top_logic.element.layout.grid.GridComponent"
+		/>
+		<param name="chartDataSource">
+			<chart-data-source class="com.top_logic.reporting.flex.chart.config.datasource.ModelProducer"/>
+		</param>
+		<param name="formContextModifier"
+			value="com.top_logic.element.layout.meta.DefaultFormContextModificator"
+		/>
+		<param name="model"
+			value=""
+		/>
+		<param name="resPrefix"
+			value="layout.element.grid.Grid."
+		/>
+		<param name="exportName"
+			value="Export.xlsx"
+		/>
+		<param name="exportNameKey"
+			value="/s${exportName}"
+		/>
+		<param name="createButtonImage"
+			value="theme:GRID_CREATE_IMAGE"
+		/>
+		<param name="createButtonImageDisabled"
+			value="theme:GRID_CREATE_IMAGE_DISABLED"
+		/>
+		<param name="isSecurityMaster"
+			value="true"
+		/>
+		<param name="columns"
+			value="name"
+		/>
+		<param name="dialogs"
+			value=""
+		/>
+		<param name="createHandler"
+			value="com.top_logic.element.meta.gui.DefaultCreateAttributedCommandHandler"
+		/>
+		<param name="buttons"
+			value=""
+		/>
+		<param name="createButton">
+			<button id="createAttributedGrid"
+				class="com.top_logic.element.layout.grid.GridCreateHandler"
+				disabledImage="${createButtonImageDisabled}"
+				image="${createButtonImage}"
+				type="${createType}"
+			>
+				<create-handler id="createAttributedGrid"
+					class="${createHandler}"
+				/>
+			</button>
+		</param>
+		<param name="gridTable">
+			<table
+				defaultColumns="${columns}"
+				fixedColumns="2"
+			>
+				<column-default columnWidth="200px"/>
+				<columns>
+					<column name="technical"
+						columnWidth="100px"
+					/>
+				</columns>
+			</table>
+		</param>
+	</params>
+
+	<layout name="${namePrefix}GridSidebarLayout"
+		horizontal="true"
+	>
+		<componentControlProvider class="com.top_logic.layout.structure.MaximizableLayout"/>
+
+		<components>
+			<layoutControl name="${namePrefix}GridSidebar"
+				componentName="${namePrefix}ChartGrid"
+			>
+				<layoutInfo size="20%"/>
+				<componentControlProvider class="com.top_logic.layout.structure.TableFilterLayoutControlProvider"
+					showMaximize="true"
+				/>
+			</layoutControl>
+			<securityLayout name="${namePrefix}CockpitGrid"
+				horizontal="false"
+				titleKey="layouts.cockpit.chartCockpit.tabber"
+			>
+				<components>
+					<component class="${gridComponent}"
+						elementTypes="${types}"
+						isSecurityMaster="${isSecurityMaster}"
+						model="${model}"
+						modelBuilder="${modelBuilder}"
+						modifier="${formContextModifier}"
+						name="${namePrefix}ChartGrid"
+						openInEdit="${openInEdit}"
+						page=""
+						resPrefix="${resPrefix}"
+						rowSecurityProviderClass="${rowSecurityProviderClass}"
+						saveClosesDialog="${saveClosesDialog}"
+						securityProviderClass="${securityProviderClass}"
+						showMarkerFields="${showMarkerFields}"
+					>
+						<layoutInfo size="40%"/>
+						<dialogs>${dialogs}</dialogs>
+						<buttons>
+							<button id="exportExcelGrid"
+								class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+								exportNameKey="${exportNameKey}"
+							/>
+							${createButton}
+							${buttons}
+						</buttons>
+						<tables>${gridTable}</tables>
+					</component>
+
+					<include name="reporting/flex/chart/cockpitChart_shared.xml"
+						chartConfig="${chartConfig}"
+						maximizeRoot="${namePrefix}ChartChart"
+						model="rows(${namePrefix}ChartGrid)"
+						namePrefix="${namePrefix}Chart"
+						resPrefix="layouts.reporting.flex.chart.cockpit."
+						securityProvider="path:component(${namePrefix}ChartGrid).currentobject"
+						types="${types}"
+					>
+						<chartDataSource>${chartDataSource}</chartDataSource>
+						<options>
+							<buttons>
+								<reference command-id="selectChartType"/>
+								<reference command-id="update"/>
+							</buttons>
+						</options>
+					</include>
+				</components>
+			</securityLayout>
+		</components>
+	</layout>
+</template>

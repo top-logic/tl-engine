@@ -1,0 +1,54 @@
+<h2>Syntax</h2>
+<pre><code>zipEntry(
+    contents: binary("folder/hello.txt", "Hello world!"),
+    comment: "Index file.",
+    time: now(),
+    compress: true)
+</code></pre>
+<h2>Description</h2>
+<p>Constructs an entry for a ZIP archive, see <code class="hljs inlineCode"><a class="tlObject" data-custom="true" href="?page=zipArchive&amp;uuid=383b2c74-4e4a-4a8c-8dc9-0b7bdca4a550">zipArchive()</a></code>.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>contents</td>
+   <td>Binary value</td>
+   <td>File to be packed into the archive. The file name also determines the folder inside the archive. The paths in the archive must be separated by <code class="hljs inlineCode">"/"</code>.</td>
+   <td>yes</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>comment</td>
+   <td>String</td>
+   <td>Comment about the content. Will be stored in the archive, but has no further meaning.</td>
+   <td>no</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>compress</td>
+   <td>Boolean value</td>
+   <td>Whether the content should be compressed.</td>
+   <td>no</td>
+   <td><code class="hljs inlineCode">true</code></td>
+  </tr>
+  <tr>
+   <td>time</td>
+   <td>Date or number</td>
+   <td>Timestamp of the file in the archive. A number is interpreted as the number of milliseconds since 1/1/1970 at 00:00 UTC.</td>
+   <td>no</td>
+   <td><code class="hljs inlineCode">now()</code></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><strong>Type:</strong> ZIP entry (can be used only in the context of creating a ZIP archive).</p>
+<p>An entry of a ZIP file.</p>

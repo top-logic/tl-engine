@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="commons"
+>
+	<properties extends="com.top_logic.layout.form.component.SelectorComponent$UIOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
+		<annotations>
+			<display-order>
+				<value>
+					<property name="titleKey"/>
+
+					<property name="model"/>
+					<property name="optionBuilder"/>
+					<property name="optionLabelProvider"/>
+
+					<property name="partnerGroup"/>
+					<property name="presentation"/>
+					<property name="types"/>
+
+					<property name="multiple"/>
+					<property name="alphabeticalOrder"/>
+					<property name="defaultSelection"/>
+					<property name="defaultSelectionProvider"/>
+
+					<property name="isSecurityMaster"/>
+					<property name="securityObject"/>
+
+					<property name="buttons"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="titleKey">
+			<mandatory/>
+		</property>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			type="List"
+		>
+			<acceptable-classifiers value="selector"/>
+		</property>
+		<property name="securityObject"
+			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
+			type="com.top_logic.basic.config.PolymorphicConfiguration"
+		/>
+		<!-- Note: Only for compatibility with legacy uses of this template. -->
+		<property name="securityProviderClass"
+			default="securityRoot"
+			type="String"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
+			<hidden/>
+		</property>
+	</properties>
+
+	<selector name="Selector"
+		alphabeticalOrder="${alphabeticalOrder}"
+		defaultSelection="${defaultSelection}"
+		defaultSelectionProvider="${defaultSelectionProvider}"
+		dialogs="${dialogs}"
+		isSecurityMaster="${isSecurityMaster}"
+		model="${model}"
+		multiple="${multiple}"
+		optionBuilder="${optionBuilder}"
+		optionLabelProvider="${optionLabelProvider}"
+		partnerGroup="${partnerGroup}"
+		presentation="${presentation}"
+		securityObject="${securityObject}"
+		securityProviderClass="${securityProviderClass}"
+		selection="${selection}"
+		titleKey="${titleKey}"
+		types="${types}"
+	>
+		<buttons>
+			${buttons}
+			<include name="templates/editComponentCommands.xml"/>
+		</buttons>
+	</selector>
+</config:template>

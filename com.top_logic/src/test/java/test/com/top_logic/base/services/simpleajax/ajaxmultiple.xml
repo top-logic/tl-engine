@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+	<env:Header>
+		<source xmlns="http://top-logic.com/base/services/cs">masterFrame</source>
+	</env:Header>
+	<env:Body>
+		<execute xmlns="http://top-logic.com/base/services/ajax">
+			<component xmlns="http://top-logic.com/base/services/cs"
+				env:role="http://top-logic.com/component" source="comp1" />
+			<submit xmlns="http://top-logic.com/base/services/cs" value="156"/>
+			<command>lazy</command>
+			<arguments></arguments>
+		</execute>
+		<execute xmlns="http://top-logic.com/base/services/ajax">
+			<component xmlns="http://top-logic.com/base/services/cs"
+				env:role="http://top-logic.com/component" source="masterFrame"
+				target="masterFrame" />
+			<command>notifyUnload</command>
+			<arguments>
+				<argument>
+					<name>key</name>
+					<value>
+						<array>
+							<int>15</int>
+							<string>ddd</string>
+							<boolean>true</boolean>
+						</array>
+					</value>
+				</argument>
+			</arguments>
+		</execute>
+	</env:Body>
+</env:Envelope>

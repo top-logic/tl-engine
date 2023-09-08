@@ -1,0 +1,108 @@
+package com.top_logic.xref.model;
+
+option NoReflection;
+option NoBinary;
+
+/** 
+ * Top-level type stored in a <code>TypeIndex.json</code> file.
+ *
+ * @see TypeInfo 
+ */
+message IndexFile {
+	/** Information of all public types in a JAR. The key is the qualified class or interface name.  */
+	map<string, TypeInfo> types;
+}
+
+/** 
+ * Information about a Java class or interface.
+ * 
+ * <p>
+ * By reading all <code>TypeIndex.json</code> files in the class path, an application can construct global knowledge 
+ * about all public classes and their relationship without actually loading the classes. 
+ * </p>
+ * 
+ * @see #generalizations
+ */
+message TypeInfo {
+	/** Whether the type represented by this info is public. */
+	@Name("P")
+	boolean public;
+
+	/** Whether the type represented by this info is an interface. */
+	@Name("I")
+	boolean interface;
+
+	/** Whether the type represented by this info is abstract. A class is abstract, if it has the abstract modifier. An interface is abstract, if it has the @Abstract annotation. */
+	@Name("A")
+	boolean `abstract`;
+
+	/** The names of types this type extends (classes and interfaces). */
+	@Name("x")
+	repeated string generalizations; 
+
+	/** The name of the configuration interface this implementation class is configured with, or <code>null</code> if this is not a configured class. */
+	@Name("c")
+	string configuration;
+
+	/** The name of the implementation type this polymorphic configuration interface is instantiated to. */
+	@Name("i")
+	string implementation;
+
+	/** The annotations of this type. The key is the annotation interface name. */
+	@Name("a")
+	map<string, AnnotationInfo> annotations;
+}
+
+/** Information about the values of an annotation. */
+message AnnotationInfo {
+	/** The values of an annotation. The key is the annotation property name. */
+	@Name("p")
+	map<string, Value> properties;
+}
+
+/** The value of an annotation property. */
+abstract message Value {}
+
+/** The value of string, class, or enum annotation property. */
+@Name("S")
+message StringValue extends Value {
+	/** The annotation value. */
+	@Name("v")
+	string value;
+}
+
+/** The value of a float or double annotation property. */
+@Name("F")
+message FloatValue extends Value {
+	/** The annotation value. */
+	@Name("v")
+	double value;
+}
+
+/** The value of a int or long annotation property. */
+@Name("I")
+message IntValue extends Value {
+	/** The annotation value. */
+	@Name("v")
+	long value;
+}
+
+/** The value of an array annotation property. */
+@Name("L")
+message ListValue extends Value {
+	/** The annotation values. */
+	@Name("v")
+	repeated Value values;
+}
+
+/** The value of an annotation valued annotation property. */
+@Name("A")
+message AnnotationValue extends Value {
+	/** The name of the annotation interface. */
+	@Name("t")
+	string type;
+
+	/** The properties of the annotation. */
+	@Name("p")
+	map<string, Value> properties;
+}

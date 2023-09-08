@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- meta objects needed by the contact management -->
+	 
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+<metaobjects>
+ 	<metaobject object_type="MOKnowledgeObject" object_name="OrgUnit" super_class="StructuredElement" db_name="ORG_UNIT">
+<attributes>
+</attributes>
+	</metaobject>
+</metaobjects>
+</objectlist>

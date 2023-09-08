@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" width="46" height="46">
+  <polyline stroke="black" stroke-width="1" points="10,10 35,10 35,35 10,35 10,10" />
+  <text y="18" letter-spacing="2" x="22.5" text-anchor="middle" font-family="sans-serif" font-weight="normal" font-size="8" fill="black">&lt; E &gt;</text>
+  <line stroke="black" stroke-width="1" x1="10" y1="20" x2="35" y2="20" />
+</svg>

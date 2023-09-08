@@ -1,0 +1,24 @@
+<FindBugsFilter>
+	<Match>
+		<Or>
+			<Package name="~test\..*" />
+			<Class name="~com\.top_logic\.basic\.text\.AbstractMessageFormat" />
+		</Or>
+	</Match>
+	<Match>
+		<Or>
+			<Rank value="16" />
+			<Rank value="17" />
+			<Rank value="18" />
+			<Rank value="19" />
+			<Rank value="20" />
+		</Or>
+	</Match>
+	<Match>
+		<Or>
+			<Bug pattern="NP_BOOLEAN_RETURN_NULL"/>
+			<Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS"/>
+			<Bug pattern="PZ_DONT_REUSE_ENTRY_OBJECTS_IN_ITERATORS "/>
+		</Or>
+	</Match>
+</FindBugsFilter>

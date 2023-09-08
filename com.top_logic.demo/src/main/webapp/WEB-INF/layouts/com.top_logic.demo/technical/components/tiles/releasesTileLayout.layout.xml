@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tileTable.template.xml"
+>
+	<arguments
+		defaultColumns="name,date"
+		fixedColumns="0"
+		helpID="ID_6f0f4817_2a51_4c18_a4ea_5524cad065a5"
+		model="selection(com.top_logic.demo/technical/components/tiles/productsTileLayout.layout.xml#List)"
+		securityDomain="SecurityStructure"
+		securityObject="securityRoot"
+		type="test.tiles:Release"
+	>
+		<name key="dynamic.ac6b1517-3ab5-4a2a-9191-309617848f22">
+			<en>Releases of {0}</en>
+			<de>Releases von {0}</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->$model.get(`test.tiles:Product#releases`)"
+			modelForElement="model->$model.referers(`test.tiles:Product#releases`).singleElement()"
+			supportsElement="element->$element.instanceOf(`test.tiles:Release`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="ID_7c3a3c21_e7dd_4c2c_ba05_fc8a3b2a3c53"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				confirm="true"
+				disabledImage=""
+				group="Delete"
+				image=""
+				securityObject=""
+			>
+				<resourceKey key="dynamic.05f66b15-01e0-4ed5-af0e-91ddb63caeb0">
+					<en>Delete product</en>
+					<de>Produkt löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/tiles/newRelease/dialog.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/technical/components/tiles/productProperties/dialog.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</dialogs>
+		<component class="com.top_logic.mig.html.layout.LayoutReference$LayoutReferenceComponent"
+			resource="com.top_logic.demo/technical/components/tiles/groupTileGroupTile.layout.xml"
+		>
+			<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+				<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+					<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+				</contextMenuFactory>
+			</content-layouting>
+		</component>
+	</arguments>
+</config:template-call>

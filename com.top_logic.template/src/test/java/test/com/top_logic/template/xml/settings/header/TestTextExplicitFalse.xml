@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" output-xml-header="false" />
+	</t:head>
+	<t:body />
+</t:template>

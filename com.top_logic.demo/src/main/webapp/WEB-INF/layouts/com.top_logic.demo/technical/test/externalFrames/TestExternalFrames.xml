@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.mig.html.layout.PageComponent"
+	name="testExternalFrameAccess"
+	page="/jsp/test/layout/TestExternalFrames.jsp"
+	resPrefix="layouts.layoutdemo.test.TestExternalFrames.testExternalFrameAccess"
+	securityProviderClass="securityRoot"
+/>

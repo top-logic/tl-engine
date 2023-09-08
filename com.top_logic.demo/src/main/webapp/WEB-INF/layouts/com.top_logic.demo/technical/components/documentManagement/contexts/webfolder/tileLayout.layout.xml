@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="8bd85758-91a3-4af9-97f6-74981aeecbc8"
+		tileName="ID_0df8c8e1_00b4_44db_9383_18888becd5b6"
+	>
+		<tileLabel key="dynamic.f8bc76fe-2bc6-47f4-9dd4-9aade3ff870f">
+			<en>Webfolder</en>
+			<de>Webfolder</de>
+		</tileLabel>
+		<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+			icon="css:far fa-folder-open"
+		/>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/documentManagement/contexts/webfolder/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

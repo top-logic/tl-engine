@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="masterComponent"/>
+		<param name="securityProvider"
+			optional="true"
+		/>
+		<param name="extension"
+			optional="true"
+		/>
+		<param name="controller"
+			optional="true"
+		/>
+		<param name="uploadComponent"
+			optional="true"
+		/>
+		<param name="importerNames"
+			optional="true"
+		/>
+		<param name="resPrefix"
+			optional="true"
+		/>
+		<param name="inputJSP"
+			optional="true"
+		/>
+		<param name="processJSP"
+			optional="true"
+		/>
+		<param name="errorJSP"
+			optional="true"
+		/>
+		<param name="processWidth"
+			optional="true"
+		/>
+		<param name="processHeight"
+			optional="true"
+		/>
+		<param name="componentName"
+			optional="true"
+		/>
+		<param name="showStepsToolbar"
+			optional="true"
+		/>
+		<param name="image"
+			optional="true"
+		/>
+		<param name="disabledImage"
+			optional="true"
+		/>
+		<param name="titleKey"
+			value="tl.eva.import.title"
+		/>
+		<param name="openerKey"
+			value="tl.eva.import.opener"
+		/>
+	</params>
+	<include name="commons/dispatchingImportEVA.xml"
+		componentName="${componentName}"
+		controller="${controller}"
+		errorJSP="${errorJSP}"
+		extension="${extension}"
+		importerNames="${importerNames}"
+		inputJSP="${inputJSP}"
+		masterComponent="${masterComponent}"
+		namePrefix="${namePrefix}"
+		processHeight="${processHeight}"
+		processJSP="${processJSP}"
+		processWidth="${processWidth}"
+		resPrefix="${resPrefix}"
+		securityProvider="${securityProvider}"
+		showStepsToolbar="${showStepsToolbar}"
+		titleKey="${titleKey}"
+		uploadComponent="${uploadComponent}"
+	>
+		<inject>
+			<dialogInfo
+				defaultI18n="${openerKey}"
+				disabledImage="${disabledImage}"
+				executability="InViewMode"
+				height="${processHeight}"
+				image="${image}"
+				openerCommandGroup="Write"
+				width="${processWidth}"
+			/>
+		</inject>
+	</include>
+</template>

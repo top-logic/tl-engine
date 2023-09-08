@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Configuration file for MySQL server with version less or equal to 5.5.
+	
+-->
+<root>
+	<alias>
+		<entry name="%DB_ADJUST_FROM_CONNECTION%"
+			value="false"
+		/>
+	</alias>
+</root>

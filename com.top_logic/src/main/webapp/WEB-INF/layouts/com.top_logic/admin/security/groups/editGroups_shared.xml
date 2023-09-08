@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- This component manages groups. -->
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="permitEditSystemFlag"
+			value="false"
+		/>
+		<param name="editComponent"
+			value="com.top_logic.layout.admin.component.EditGroupComponent"
+		/>
+		<param name="editJSP"
+			value="/jsp/layout/admin/group/EditDGroup.jsp"
+		/>
+		<param name="newComponent"
+			value="com.top_logic.layout.admin.component.EditGroupComponent$NewGroupComponent"
+		/>
+		<param name="newJSP"
+			value="/jsp/layout/admin/group/NewDGroup.jsp"
+		/>
+		<param name="securityProviderClass"
+			value="securityRoot"
+		/>
+		<param name="isSecurityMaster"
+			value="true"
+		/>
+	</params>
+
+	<layout horizontal="true">
+		<components>
+			<include name="com.top_logic/admin/security/groups/groupTable.xml"
+				isSecurityMaster="${isSecurityMaster}"
+				namePrefix="${namePrefix}EditGroup"
+				securityProviderClass="${securityProviderClass}"
+			>
+				<inject>
+					<layoutInfo size="413px"/>
+				</inject>
+			</include>
+			<layout>
+				<components>
+					<component class="${editComponent}"
+						buttonComponent="${namePrefix}EditGroupButtons"
+						defaultFor="tl.accounts:Group"
+						model="selection(${namePrefix}EditGroup_Table)"
+						name="${namePrefix}EditGroup"
+						page="${editJSP}"
+						permitEditSystemFlag="${permitEditSystemFlag}"
+						resPrefix="admin.group.edit."
+						securityProviderClass="${securityProviderClass}"
+					>
+						<tables>
+							<table name="members"
+								resPrefix="admin.person.edit.table."
+								titleKey="admin.group.edit.person.table.title"
+							>
+								<column-default
+									accessor="com.top_logic.knowledge.wrap.person.PersonAccessor"
+									filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+								/>
+								<columns>
+									<column name="name"
+										accessor="com.top_logic.layout.IdentityAccessor"
+										comparator="com.top_logic.knowledge.wrap.util.PersonComparator"
+									/>
+									<column name="sn"/>
+									<column name="givenName"/>
+									<column name="username"/>
+									<column name="initials"/>
+									<column name="mail"/>
+									<column name="otherMailbox"/>
+									<column name="personalTitle"/>
+									<column name="telephoneNumber"/>
+									<column name="otherTelephone"/>
+									<column name="mobile"/>
+									<column name="lastLogin"
+										accessor="com.top_logic.knowledge.gui.layout.person.PersonTableComponent$LastLoginAccessor"
+										filterProvider="com.top_logic.layout.table.filter.SimpleDateFilterProvider"
+									/>
+									<column name="dataDeviceID"/>
+									<column name="authDeviceID"/>
+									<column name="restrictedUser"
+										filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
+									/>
+								</columns>
+							</table>
+						</tables>
+						<dialogs>
+							<layout name="${namePrefix}NewGroupDialog">
+								<dialogInfo
+									executability="InViewMode"
+									height="330"
+									openerClique="create"
+									openerCommandGroup="Create"
+									width="400"
+								/>
+
+								<components>
+									<component class="${newComponent}"
+										buttonComponent="${namePrefix}NewGroupButtons"
+										name="${namePrefix}NewGroup"
+										page="${newJSP}"
+										resPrefix="admin.group.edit.new."
+										securityProviderClass="${securityProviderClass}"
+									/>
+									<buttonbar name="${namePrefix}NewGroupButtons"/>
+								</components>
+							</layout>
+						</dialogs>
+					</component>
+					<buttonbar name="${namePrefix}EditGroupButtons"/>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

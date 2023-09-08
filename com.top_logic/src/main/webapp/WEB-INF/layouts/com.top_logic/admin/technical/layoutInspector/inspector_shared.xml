@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- An inspector for objects. -->
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="treeBuilder"
+			value="com.top_logic.layout.inspector.model.InspectorTreeBuilder"
+		/>
+	</params>
+
+	<layout
+		resizable="false"
+		showMaximize="false"
+		showMinimize="false"
+		titleKey="tl.admin.sys.inspector.title"
+		toolbar="true"
+	>
+		<components>
+			<component class="com.top_logic.layout.inspector.InspectorComponent"
+				isSecurityMaster="true"
+				name="${namePrefix}InspectorControl"
+				page="/jsp/layout/admin/technical/Inspector.jsp"
+				resPrefix="tl.admin.sys.inspector."
+				securityProviderClass="securityRoot"
+				toolbar="false"
+			>
+				<layoutInfo
+					scrolleable="false"
+					size="25"
+				/>
+
+				<filters>
+					<filter
+						enable="true"
+						impl="com.top_logic.layout.inspector.filters.NotStaticFilter"
+					/>
+					<filter
+						enable="false"
+						impl="com.top_logic.layout.inspector.filters.NotPrivateFilter"
+					/>
+					<filter
+						enable="false"
+						impl="com.top_logic.layout.inspector.filters.NotNullFilter"
+					/>
+					<filter
+						enable="false"
+						impl="com.top_logic.layout.inspector.filters.NoDefaultValue"
+					/>
+				</filters>
+
+				<buttons>
+					<button id="back"
+						class="com.top_logic.layout.inspector.history.History$Back"
+						clique="historyBack"
+						group="Read"
+					/>
+					<button id="forward"
+						class="com.top_logic.layout.inspector.history.History$Forward"
+						clique="historyForward"
+						group="Read"
+					/>
+				</buttons>
+			</component>
+
+			<component class="com.top_logic.layout.inspector.InspectorTreeComponent"
+				expandSelected="false"
+				model="selection(${namePrefix}InspectorControl)"
+				name="${namePrefix}InspectorTree"
+				resPrefix="tl.admin.sys.inspector."
+				securityProviderClass="securityRoot"
+				toolbar="false"
+				treeBuilder="${treeBuilder}"
+			>
+				<buttons>
+					<button id="gotoSelection"
+						class="com.top_logic.layout.inspector.history.GotoSelection"
+						clique="filterButtons"
+						disabledImage="theme:ICONS_OPEN_SELECTOR_DISABLED"
+						group="Read"
+						image="theme:ICONS_OPEN_SELECTOR"
+						target-component="${namePrefix}InspectorControl"
+					/>
+				</buttons>
+
+				<table
+					defaultColumns="name,_value,_class"
+					fixedColumns="1"
+				>
+					<column-default
+						columnWidth="250px"
+						resourceProvider="com.top_logic.layout.provider.MetaResourceProvider"
+					/>
+					<columns>
+						<column name="name"
+							columnWidth="300px"
+							mandatory="true"
+						>
+							<sortKeyProvider class="com.top_logic.layout.LabelMapping"
+								labels="com.top_logic.layout.inspector.resources.InspectorNodeResourceProvider"
+							/>
+							<accessor class="com.top_logic.layout.IdentityAccessor"/>
+							<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
+							<resourceProvider class="com.top_logic.layout.inspector.resources.InspectorNodeResourceProvider"/>
+						</column>
+						<column name="_value">
+							<sortKeyProvider class="com.top_logic.layout.LabelMapping"
+								labels="com.top_logic.layout.inspector.resources.InspectorValueResourceProvider"
+							/>
+							<accessor class="com.top_logic.layout.IdentityAccessor"/>
+							<resourceProvider class="com.top_logic.layout.inspector.resources.InspectorValueResourceProvider"/>
+						</column>
+						<column name="_class">
+							<sortKeyProvider class="com.top_logic.layout.LabelMapping"
+								labels="com.top_logic.layout.provider.MetaResourceProvider"
+							/>
+							<accessor class="com.top_logic.layout.inspector.InspectorNodeAccessor$StaticType"/>
+						</column>
+						<column name="_visibility"
+							columnWidth="50px"
+						>
+							<accessor class="com.top_logic.layout.inspector.InspectorNodeAccessor$Visibility"/>
+						</column>
+						<column name="_static"
+							columnWidth="50px"
+						>
+							<accessor class="com.top_logic.layout.inspector.InspectorNodeAccessor$IsStatic"/>
+						</column>
+					</columns>
+				</table>
+			</component>
+		</components>
+	</layout>
+</template>

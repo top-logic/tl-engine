@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tree.template.xml"
+>
+	<arguments
+		adjustSelectionWhenCollapsing="false"
+		defaultSelection="false"
+		expandSelected="false"
+		isSecurityMaster="false"
+		rootVisible="true"
+		showOnlySelectableNodes="false"
+	>
+		<name key="dynamic.27b66614-972e-4a94-aadd-2a96127b30f2">
+			<de>Tree</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="null"
+			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
+			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
+			rootNode="`DemoTypes#ROOT`"
+		/>
+		<dragSource class="com.top_logic.model.search.providers.TreeDragSourceByExpression"
+			canDrag="source -> if($source!= `DemoTypes#ROOT`,$source.get(`DemoTypes:DemoTypes.All#name`).stringContains('1'), true)"
+		/>
+		<treeDrop class="com.top_logic.model.search.providers.OntoTreeDropByExpression"
+			canDrop="draggedObjects->referenceRow->{canDrop=source -> target -> $source.get(`DemoTypes:DemoTypes.All#parent`) != $target.get(`DemoTypes:DemoTypes.All#parent`);$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}"
+		>
+			<handleDrop><![CDATA[draggedObjects->referenceRow->{handleDrop=source -> target -> {
+  info($source + " -> " + $target);
+  oldParent = $source.get(`DemoTypes:DemoTypes.All#parent`);
+  oldSiblings = $oldParent.get(`tl.element:StructuredElementContainer#children`).filter(element -> $element != $source);
+  $oldParent.set(`tl.element:StructuredElementContainer#children`, $oldSiblings);
+  newSiblings = concat($target.get(`tl.element:StructuredElementContainer#children`), $source);
+  $target.set(`tl.element:StructuredElementContainer#children`, $newSiblings);
+};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}
+]]></handleDrop>
+		</treeDrop>
+	</arguments>
+</config:template-call>

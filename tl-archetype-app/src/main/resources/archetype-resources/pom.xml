@@ -1,0 +1,332 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>\${parentArtifactId}</artifactId>
+		<version>${tlVersion}</version>	
+	</parent>
+	
+	<groupId>\${groupId}</groupId>
+	<artifactId>\${artifactId}</artifactId>
+	<version>\${version}</version>
+	
+#if ($ProfessionalEdition == "false")
+	<licenses>
+        <license>
+            <name>AGPL-3.0-only</name>
+            <url>https://www.gnu.org/licenses/agpl-3.0.txt</url>
+        </license>
+	</licenses>
+#else
+	<licenses>
+		<license>
+            <name>BOS-TopLogic-1.0</name>
+            <url>https://github.com/top-logic/tl-engine/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+        </license>
+	</licenses>
+#end
+	
+	<properties>
+		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+		
+		<tl.deb.skip>false</tl.deb.skip>
+		<tl.deb.attach>false</tl.deb.attach>
+		<tl.deb.maintainer>info@\${project.groupId}</tl.deb.maintainer>
+		<tl.deb.section>misc</tl.deb.section>
+		<tl.deb.priority>optional</tl.deb.priority>
+		<tl.deb.distribution>development</tl.deb.distribution>
+		<tl.deb.dbSchema>\${project.artifactId}</tl.deb.dbSchema>
+		<tl.deb.dbUser>\${project.artifactId}</tl.deb.dbUser>
+		<tl.deb.contextName>\${project.artifactId}</tl.deb.contextName>
+		<tl.deb.installDir>/opt/\${project.artifactId}</tl.deb.installDir>
+
+		<!-- Deployment to APT repository. -->
+		<tl.deb.skipDeploy>true</tl.deb.skipDeploy>
+		<tl.deb.repositoryUrl>Enter URL here.</tl.deb.repositoryUrl>
+		<tl.deb.repositoryPath>/</tl.deb.repositoryPath>
+		<tl.deb.serverId>tl-deb</tl.deb.serverId>
+	</properties>
+
+	<dependencies>
+#if ($ProfessionalEdition == "true")
+		<!-- Using TopLogic Professional Edition. -->
+		<dependency>
+		    <groupId>com.top-logic</groupId>
+		    <artifactId>tl-license-professional</artifactId>
+		    <version>\${tl.version}</version>
+		</dependency>
+#else
+		<!-- Using TopLogic OpenSource Edition. AGPL license conditions apply. -->
+		<!-- To switch to TopLogic Professional Edition, uncomment the following dependency: -->
+		<!--
+		<dependency>
+		    <groupId>com.top-logic</groupId>
+		    <artifactId>tl-license-professional</artifactId>
+		    <version>\${tl.version}</version>
+		</dependency>
+		-->
+#end
+
+		<!-- TopLogic -->
+#if ($useBPE == "true")
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-bpe-app</artifactId>
+		</dependency>
+#end
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-scripting-template</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-formeditor</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-themeedit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-graph-diagramjs-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-monitoring</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-themes-dezent</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-doc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-model-search</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-contact</artifactId>
+		</dependency>
+#if ($useChartJS == "true")
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chart-chartjs</artifactId>
+		</dependency>
+#end
+
+		<!-- Tests -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.vafer</groupId>
+				<artifactId>jdeb</artifactId>
+
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>jdeb</goal>
+						</goals>
+
+						<configuration>
+							<skip>\${tl.deb.skip}</skip>
+							<attach>\${tl.deb.attach}</attach>
+							<deb>\${project.build.directory}/\${project.artifactId}_\${project.version}_all.deb</deb>
+							<controlDir>\${basedir}/src/main/deb/control</controlDir>
+							<dataSet>
+								<data>
+									<src>\${project.build.directory}/\${project.build.finalName}-app.war</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>\${tl.deb.installDir}</prefix>
+										<user>root</user>
+										<group>root</group>
+										<filemode>644</filemode>
+									</mapper>
+								</data>
+
+								<data>
+									<src>\${basedir}/src/main/deb/data/tomcat/context.xml</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>\${tl.deb.installDir}/tomcat</prefix>
+										<user>root</user>
+										<group>root</group>
+										<filemode>644</filemode>
+									</mapper>
+								</data>
+
+								<data>
+									<src>\${basedir}/src/main/deb/data/apache/site.conf</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>\${tl.deb.installDir}/apache</prefix>
+										<user>root</user>
+										<group>root</group>
+										<filemode>644</filemode>
+									</mapper>
+								</data>
+
+								<data>
+									<src>\${basedir}/src/main/deb/data/bin/setup-db.sh</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>\${tl.deb.installDir}/bin</prefix>
+										<user>root</user>
+										<group>root</group>
+										<filemode>755</filemode>
+									</mapper>
+								</data>
+
+								<data>
+									<type>link</type>
+									<linkName>/var/lib/tomcat9/webapps/\${tl.deb.contextName}.war</linkName>
+									<linkTarget>\${tl.deb.installDir}/\${project.build.finalName}-app.war</linkTarget>
+									<symlink>true</symlink>
+								</data>
+
+								<data>
+									<type>link</type>
+									<linkName>/etc/tomcat9/Catalina/localhost/\${tl.deb.contextName}.xml</linkName>
+									<linkTarget>\${tl.deb.installDir}/tomcat/context.xml</linkTarget>
+									<symlink>true</symlink>
+								</data>
+
+								<data>
+									<type>link</type>
+									<linkName>/etc/apache2/sites-available/\${tl.deb.contextName}.conf</linkName>
+									<linkTarget>\${tl.deb.installDir}/apache/site.conf</linkTarget>
+									<symlink>true</symlink>
+								</data>
+
+								<data>
+									<type>link</type>
+									<linkName>/var/lib/tomcat9/lib/mariadb-java-client.jar</linkName>
+									<linkTarget>/usr/share/java/mariadb-java-client.jar</linkTarget>
+									<symlink>true</symlink>
+								</data>
+							</dataSet>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>net.lopht.maven-plugins</groupId>
+				<artifactId>upload-maven-plugin</artifactId>
+
+				<executions>
+					<execution>
+						<goals>
+							<goal>upload-file</goal>
+						</goals>
+
+						<configuration>
+							<skip>\${tl.deb.skipDeploy}</skip>
+							<file>\${project.build.directory}/\${project.artifactId}_\${project.version}_all.deb</file>
+							<repositoryUrl>\${tl.deb.repositoryUrl}</repositoryUrl>
+							<repositoryPath>\${tl.deb.repositoryPath}</repositoryPath>
+							<serverId>\${tl.deb.serverId}</serverId>
+							<usePOST>true</usePOST>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<distributionManagement>
+		<repository>
+			<id>my-releases</id>
+			<url>fill-out-here</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+
+		<snapshotRepository>
+			<id>my-snapshots</id>
+			<url>fill-out-here</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<repositories>
+		<repository>
+			<id>tl-releases</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+
+		<repository>
+			<id>tl-snapshots</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic-snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+	
+	<pluginRepositories>
+		<pluginRepository>
+			<id>tl-releases</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+		
+		<pluginRepository>
+			<id>tl-snapshots</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic-snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+</project>

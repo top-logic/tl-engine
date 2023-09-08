@@ -1,0 +1,6 @@
+<objects>
+	<object id="d" type="TestSearchExpression:D">
+		<attribute name="name" value="D1"/>
+		<attribute name="in" value="42"/>
+	</object>
+</objects>

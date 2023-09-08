@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="componentName"
+			value="DemoTableComponent"
+		/>
+		<param name="titleKey"
+			value="layouts.layoutdemo.table.DemoTableComponent_shared.main.componentTitle"
+		/>
+		<param name="builderClass"
+			value="com.top_logic.demo.layout.demo.table.DemoTableModellBuilder"
+		/>
+		<param name="partnerGroup"
+			value="DemoTableComponentGroup"
+		/>
+		<param name="columns"
+			value="title,givenName,tooltip_surname,responsability,gender,birthdate,marital,contact,editBoolean"
+		/>
+		<param name="pageSizeOptions"
+			value="10,5,25,all"
+		/>
+		<param name="tableOptions">
+			<!-- No special settings by default. -->
+		</param>
+		<param name="fixedColumns"
+			value="-1"
+		/>
+		<param name="renderer"
+			optional="true"
+		/>
+	</params>
+
+	<layout>
+		<components>
+			<tableView name="${componentName}"
+				modelBuilder="${builderClass}"
+				partnerGroup="${partnerGroup}"
+				resPrefix="layouts.layoutdemo.table.DemoTableComponent_shared.main."
+				resetInvisible="true"
+				titleKey="${titleKey}"
+			>
+				<table
+					defaultColumns="${columns}"
+					defaultSortOrder="givenName"
+					fixedColumns="${fixedColumns}"
+					pageSizeOptions="${pageSizeOptions}"
+					tableRenderer="${renderer}"
+					titleKey="layouts.layoutdemo.table.DemoTableComponent_shared.main.componentTitle"
+				>
+					${tableOptions}
+					<column-default
+						accessor="com.top_logic.demo.layout.demo.table.DemoTableAccessor"
+						filterProvider="com.top_logic.demo.layout.demo.table.DemoTableFilterProvider"
+					/>
+
+					<columns>
+						<column name="title"
+							columnWidth="30px"
+						/>
+						<column name="givenName"
+							comparator="com.top_logic.util.TLCollator"
+						/>
+						<column name="tooltip_surname"
+							comparator="com.top_logic.layout.table.CellObjectCollator"
+						/>
+						<column name="editBoolean"
+							controlProvider="com.top_logic.layout.form.template.DefaultFormFieldControlProvider"
+							fieldProvider="com.top_logic.layout.table.component.FalseMarkerFieldProvider"
+						/>
+						<column name="classificationDemo">
+							<filterProvider class="com.top_logic.layout.table.filter.DefaultClassificationTableFilterProvider"
+								classifications="demo.classification.multi,demo.classification.single"
+							/>
+						</column>
+						<column name="cellDimensionTest"
+							accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+							columnLabel="cellDimensionTest"
+							resourceProvider="com.top_logic.demo.layout.provider.TestLargeImageProvider"
+						/>
+					</columns>
+				</table>
+				<buttons>
+					<button id="deleteDemoPerson"
+						class="com.top_logic.demo.layout.demo.table.DemoRemoveRowCommand"
+						resourceKey="layouts.layoutdemo.table.DemoTableComponent_shared.deleteDemoPerson"
+					/>
+				</buttons>
+			</tableView>
+
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

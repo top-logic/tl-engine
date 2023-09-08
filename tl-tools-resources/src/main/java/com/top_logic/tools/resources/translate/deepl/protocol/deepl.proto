@@ -1,0 +1,44 @@
+package com.top_logic.tools.resources.translate.deepl.protocol;
+
+option NoVisit;
+option NoReflection;
+option NoBinary;
+option NoListener;
+option NoXml;
+
+/**
+ * Result of the <code>translate</code> API call.
+ */
+message TranslationResult {
+	/** Translations of the requested source text. */
+	repeated Translation translations;	
+}
+
+/** A single translation result of a <code>TranslationResult</code> message. */
+message Translation {
+	/** The source language of the translation source text. */
+	string detected_source_language;
+	
+	/** The translated text. */
+	string text;
+}
+
+/** A single language result of a <code>languages</code> API call. */
+message LanguageResult {
+	/** The language code. */
+	string language;
+}
+
+message Glossaries {
+	repeated Glossary glossaries;
+}
+
+message Glossary {
+      string glossary_id;
+      string name;
+      boolean ready;
+      string source_lang;
+      string target_lang;
+      string creation_time;
+      int entry_count;
+}

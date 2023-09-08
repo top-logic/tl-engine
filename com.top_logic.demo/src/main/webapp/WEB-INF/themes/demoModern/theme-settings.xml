@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<boolean name="com.top_logic.layout.Icons.POPUP_TEXT_SELECT_VIEW"
+		value="true"
+	/>
+	<string name="THEME_NAME"
+		value="Demo Modern"
+	/>
+	<color name="ACTIVE_ELEMENT_BORDER_COLOR"
+		value="#FF00FF"
+	/>
+	<string name="ACTIVE_ELEMENT_BORDER_STYLE"
+		value="solid"
+	/>
+	<dim name="ACTIVE_ELEMENT_BORDER_WIDTH"
+		value="3px"
+	/>
+</settings>

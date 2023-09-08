@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="visual"
+   viewBox="0 0 22 22"
+   version="1.1"
+   sodipodi:docname="Group_path.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata19">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Group</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     id="namedview17"
+     showgrid="false"
+     inkscape:zoom="7.5853273"
+     inkscape:cx="-45.689928"
+     inkscape:cy="-6.4811135"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="visual" />
+  <defs
+     id="defs4">
+    <style
+       id="style2">.cls-1{fill:#454952;}</style>
+  </defs>
+  <title
+     id="title6">Group</title>
+  <path
+     id="path14"
+     style="fill:#008fb8;stroke-width:1.09671605;fill-opacity:1"
+     d="m 9.7065604,12.316745 a 5.308106,5.308106 0 0 1 1.6012056,-3.8056052 5.7358252,5.7358252 0 0 0 -0.614161,-0.4386864 5.3190731,5.3190731 0 0 1 -7.4357353,0 6.8873772,6.8873772 0 0 0 -3.21337819,5.8235626 H 9.9697722 A 5.3519746,5.3519746 0 0 1 9.7065604,12.316745 Z m 9.0588746,3.827539 a 5.2971388,5.2971388 0 0 1 -7.435734,0 6.9312457,6.9312457 0 0 0 -3.2024118,5.83453 H 21.978814 a 6.9202787,6.9202787 0 0 0 -3.213379,-5.83453 z m 0.471589,-3.827539 A 4.1894555,4.1894555 0 0 1 15.047568,16.5062 4.1894555,4.1894555 0 0 1 10.858113,12.316745 4.1894555,4.1894555 0 0 1 15.047568,8.1272893 4.1894555,4.1894555 0 0 1 19.237024,12.316745 Z M 11.165193,4.2339473 A 4.1894555,4.1894555 0 0 1 6.9757376,8.4234028 4.1894555,4.1894555 0 0 1 2.7862821,4.2339473 4.1894555,4.1894555 0 0 1 6.9757376,0.04449177 4.1894555,4.1894555 0 0 1 11.165193,4.2339473 Z" />
+</svg>

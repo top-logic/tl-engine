@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Box model test</title>
+
+	<style type="text/css">
+		div.container {
+			position: relative;
+			left: 0px;
+			right: 0px;
+			height: 300px;
+			margin: 20px;
+			padding: 0px;;
+			background-color: #EEE;
+		}
+		div.box {
+			position: absolute;
+			top: 0px;
+			bottom: 0px;
+			left: 0px;
+			right: 0px;
+			
+			margin: 20px;
+			border-width: 10px;
+			padding: 30px;
+			
+			background-color: yellow;
+			border-color: red;
+			border-style: solid;
+		}
+		div.inner, div.innerX, div.innerY {
+			position: absolute;
+			
+			top: 0px;
+			left: 0px;
+			width: 100%;
+			height: 100%;
+			
+			margin: 5px;
+			border-width: 3px;
+			padding: 10px;
+			
+			border-style: solid;
+			border-color: orange;
+			
+			color: white;
+		}
+		div.innerX {
+			top: 100px;
+			/* inner border (3px) + inner margin (5px) + outer border (10px) */
+			left: -18px;
+			height: 50px;
+			
+			background-color: #AAA;
+		}
+		div.innerY {
+			top: -18px;
+			left: 100px;
+			
+			width: 50px;
+			
+			background-color: #999;
+		}
+		div.inner {
+			border-style: dashed;
+			border-width: 1px;
+			border-color: blue;
+			color: blue;
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+
+<h1>CSS Box Model</h1>
+
+<p>
+This test checks the browser conformance regarding the CSS box model.
+</p>
+
+<ul>
+	<li>A width/height of 100% means the width/height of the offset parent (including its border and padding, excluding its margin).</li>
+	<li>The width/height specification defines the dimension of the element contents (excluding its border and margin). In other words, the border is drawn around the content area of the specified size.</li>
+	<li>The position (top: 0px; left: 0px) is at the top left corner of the offset parent within (excluding) it's border. At that position starts the margin of the positioned element.</li>
+</ul>
+
+<div class="container">
+	Container
+	<div class="box">
+		Box
+		<div class="innerX">
+			InnerX
+		</div>
+		<div class="innerY">
+			InnerY
+		</div>
+		<div class="inner">
+			Inner
+		</div>
+	</div>
+</div>
+
+</body>
+</html>  	

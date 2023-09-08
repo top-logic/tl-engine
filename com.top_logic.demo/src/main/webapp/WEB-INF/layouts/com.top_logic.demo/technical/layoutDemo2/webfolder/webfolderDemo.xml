@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<component class="com.top_logic.common.webfolder.ui.WebFolderComponent"
+			columns="name,_download,_size,_type,_date,_lock,_version,_clipboard,_mail,_delete"
+			name="demoWebfolderNew"
+			resPrefix="class.com.top_logic.common.webfolder.ui.I18NConstants.TABLE."
+		>
+			<modelBuilder class="com.top_logic.common.webfolder.model.DemoWebFolderModelBuilder"
+				folderID="demoWebfolder"
+			/>
+		</component>
+		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+	</components>
+</layout>

@@ -1,0 +1,32 @@
+<html>
+
+<head>
+	<title>Content</title>
+	
+	<script type="text/javascript">
+		function handleClick(element) {
+			var otherIndex = (window.parent.frames[0] == window) ? 1 : 0;
+			var other = window.parent.frames[otherIndex];
+			other.document.open();
+			
+			other.document.writeln(
+				'<html>' + 
+					'<head><title>Generated</title></head>' + 
+					'<body>' +
+						'<h1>Generated</h1>' + 
+					'</body>' + 
+				'</html>');
+			
+			other.document.close();
+			return false;
+		}
+	</script>
+</head>
+
+<body>
+	<h1>Content</h1>
+	
+	<button onclick="return handleClick(this);">Click me!</button>
+</body>
+
+</html>

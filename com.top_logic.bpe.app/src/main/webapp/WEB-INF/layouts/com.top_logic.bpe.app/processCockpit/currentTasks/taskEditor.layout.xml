@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout titleKey="%LAYOUT_RESPREFIX%title">
+	<include name="tl-bpe-app/tiles/activeTaskEdit.xml"
+		tokenTable="com.top_logic.bpe.app/processCockpit/currentTasks/tasksTable.layout.xml#Table"
+	/>
+</layout>

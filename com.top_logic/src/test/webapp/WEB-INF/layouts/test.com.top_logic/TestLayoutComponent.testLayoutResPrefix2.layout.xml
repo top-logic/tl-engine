@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="test.com.top_logic/namedSimpleComponent.template.xml"
+>
+	<arguments content="%LAYOUT_RESPREFIX%"/>
+</config:template-call>

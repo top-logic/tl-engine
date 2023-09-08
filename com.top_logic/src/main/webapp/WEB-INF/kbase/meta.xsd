@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://www.top-logic.com/ns/meta/5.8" xmlns:meta="http://www.top-logic.com/ns/meta/5.8">
+  <xs:element name="objectlist">
+    <xs:annotation>
+      <xs:documentation>List of types to be known by the KnowledgeBase.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="meta:metaobjects"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="metaobjects">
+    <xs:annotation>
+      <xs:documentation>Definition of all types in the knowledge base.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element ref="meta:defObjectDefinition"/>
+        <xs:element ref="meta:alternative"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="alternative">
+    <xs:annotation>
+      <xs:documentation>Definition of an alternative type in the knowledge base.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="meta:specialisations"/>
+      </xs:sequence>
+      <xs:attribute name="object_name" use="required" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name of the type.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="specialisations">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="meta:specialisation"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="specialisation">
+    <xs:complexType>
+      <xs:attribute name="name" use="required" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name of the specialised type.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="defObjectDefinition" abstract="true">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="meta:implementation-factory"/>
+        <xs:element minOccurs="0" ref="meta:attributes"/>
+        <xs:element minOccurs="0" ref="meta:index"/>
+      </xs:sequence>
+      <xs:attribute name="object_name" use="required" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name of the type.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="object_type" type="meta:defKind">
+        <xs:annotation>
+          <xs:documentation>Kind of the type.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="versioned" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Is the type versioned?</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="full-load" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Use full-load by default for search results?</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="super_class" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name of the supertype. All attributes are inherited from that type</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="abstract" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>If true this type can not be instantiated. No database table is created.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="db_name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Specifies the name of the table in the database. If none is given the table name is computed from the type name.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="db_PKeyStorage" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>If set and possible the data will be stored along the primary key.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="db_compress" type="xs:int">
+        <xs:annotation>
+          <xs:documentation>If set and supported by the database compress the first part of the primary key.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="metaobject" substitutionGroup="meta:defObjectDefinition"/>
+  <xs:element name="association" substitutionGroup="meta:defObjectDefinition"/>
+  <xs:simpleType name="defKind">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="MOKnowledgeObject"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="implementation-factory">
+    <xs:complexType>
+      <xs:attribute name="class" use="required" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="attributes">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="meta:reference"/>
+        <xs:element ref="meta:defReferenceAssoc"/>
+        <xs:element ref="meta:mo_attribute"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="reference">
+    <xs:annotation>
+      <xs:documentation>Definition of a to-one reference to another object</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="att_name" use="required" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name of the attribute.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attributeGroup ref="meta:defReferenceAttr"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="defReferenceAssoc" abstract="true">
+    <xs:complexType>
+      <xs:attributeGroup ref="meta:defReferenceAttr"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="source" substitutionGroup="meta:defReferenceAssoc"/>
+  <xs:element name="destination" substitutionGroup="meta:defReferenceAssoc"/>
+  <xs:attributeGroup name="defReferenceAttr">
+    <xs:attribute name="target-type" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Name of the type the other end of the reference had, e.g. if target-type is FOO, the value of this reference is an object of type FOO. </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="by-value" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>Decides whether the whole object must be hold in attribute cache or just the ID of it.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="mandatory" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>Whether it is necessary to set a non null value to be able to store this attribute.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="immutable" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>Whether the value of this attribute can not be changed.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="initial" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>Whether the value of this attribute must be set during creation.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="use-default-index" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>Whether the reference must install its default index.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="branch-global" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>If true the attribute can reference to objects that live in a different branch.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="is-container" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>If true the object is a container for the referenced object, i.e. if this object is deleted, the reference will alos be deleted.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="monomorphic" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>If true the value of this attribute must exactly have the type given in target-type. If false, also sub types are allowed.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="history-type" type="meta:historyType">
+      <xs:annotation>
+        <xs:documentation>Defines in which time slot the referenced object can live.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="deletion-policy" type="meta:deletionPolicy">
+      <xs:annotation>
+        <xs:documentation>Defines what happened with the object if the referenced value is deleted.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="override" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>Overrides the reference with same name of the super association.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+  <xs:element name="mo_attribute">
+    <xs:complexType>
+      <xs:attribute name="att_name" use="required" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name of the attribute.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="att_type" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Type of the value of the attribute.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="mandatory" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Whether it is necessary to set a non null value to be able to store this attribute.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="immutable" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Whether the value of this attribute can not be changed.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="initial" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Whether the value of this attribute must be set during creation.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="override" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Overrides the reference with same name of the super association.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attributeGroup ref="meta:defDBAttribute"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:attributeGroup name="defDBAttribute">
+    <xs:attribute name="db_name" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>The database name of the attribute column.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="db_prec" type="xs:int"/>
+    <xs:attribute name="db_type" type="meta:defDBType">
+      <xs:annotation>
+        <xs:documentation>The database type of the of the attribute column.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="db_size" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>The database size of the of the attribute column.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="db_compress" type="xs:int"/>
+    <xs:attribute name="binary" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>Whether the column should be binary.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:attributeGroup>
+  <xs:element name="index">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="meta:mo_index"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="mo_index">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="meta:index-parts"/>
+      </xs:sequence>
+      <xs:attribute name="name" use="required" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name of the index.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="inMemory" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Whether the index should not be used in the database.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="unique" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Whether the index is unique.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="custom" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Whether technical columns should not automatically be added to the index.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attributeGroup ref="meta:defDBAttribute"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="index-parts">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="meta:index_part"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="index_part">
+    <xs:annotation>
+      <xs:documentation>Definition of the parts of the index.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="name" use="required" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name of the attribute.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="part" type="meta:defReferenceType">
+        <xs:annotation>
+          <xs:documentation>If the attribute is a reference, this attribute defines which part of the reference should be included in the index. </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="defReferenceType">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="name"/>
+      <xs:enumeration value="revision"/>
+      <xs:enumeration value="branch"/>
+      <xs:enumeration value="type"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="defDBType">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="bigint"/>
+      <xs:enumeration value="boolean"/>
+      <xs:enumeration value="char"/>
+      <xs:enumeration value="clob"/>
+      <xs:enumeration value="date"/>
+      <xs:enumeration value="decimal"/>
+      <xs:enumeration value="double"/>
+      <xs:enumeration value="float"/>
+      <xs:enumeration value="integer"/>
+      <xs:enumeration value="longvarchar"/>
+      <xs:enumeration value="numeric"/>
+      <xs:enumeration value="real"/>
+      <xs:enumeration value="smallint"/>
+      <xs:enumeration value="time"/>
+      <xs:enumeration value="timestamp"/>
+      <xs:enumeration value="tinyint"/>
+      <xs:enumeration value="varchar"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="deletionPolicy">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="clear-reference">
+        <xs:annotation>
+          <xs:documentation>The value of the attribute is set to null.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="delete-referer">
+        <xs:annotation>
+          <xs:documentation>The referer will also be deleted. </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="veto">
+        <xs:annotation>
+          <xs:documentation>It is not possible to delete the referenced object.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="stabilise-reference">
+        <xs:annotation>
+          <xs:documentation>If the value not historic, the value is replaced a historic version of the referenced object directly before the deletion.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="historyType">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="current">
+        <xs:annotation>
+          <xs:documentation>Object must be a current object.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="historic">
+        <xs:annotation>
+          <xs:documentation>Object must be an object in a stable history context.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="mixed">
+        <xs:annotation>
+          <xs:documentation>Object can either be a current or an historic object.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

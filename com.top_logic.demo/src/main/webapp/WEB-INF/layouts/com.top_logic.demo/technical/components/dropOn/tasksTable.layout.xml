@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,type"
+		type="test.dnd.dropon:WorkItem"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/dropOn/newTask/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.1209497c-c895-48c2-84d6-de2d0d95494f">
+			<en>Tasks</en>
+			<de>Aufgaben</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.dnd.dropon:WorkItem`).filter(w -> $w.get(`test.dnd.dropon:WorkItem#processedBy`).isEmpty())"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.dnd.dropon:WorkItem`) &amp;&amp; $element.get(`test.dnd.dropon:WorkItem#processedBy`).isEmpty()"
+			supportsModel="true"
+		/>
+		<dragSource class="com.top_logic.model.search.providers.TableDragSourceByExpression"
+			canDrag="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_c737c9a7_8773_44e9_965e_b59e0b8f4d03"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+				clique="refresh"
+			>
+				<resourceKey key="dynamic.9e77a49f-e4a2-4625-a19e-69f43cd938ca">
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

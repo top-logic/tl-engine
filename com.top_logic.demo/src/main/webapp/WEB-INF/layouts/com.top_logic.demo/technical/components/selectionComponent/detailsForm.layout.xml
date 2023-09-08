@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/selectionComponent/childrenSelector.layout.xml#Selector)">
+		<name key="dynamic.76e00ac6-38e5-43de-9375-340fabd0f3ed">
+			<en>Details</en>
+			<de>Details</de>
+		</name>
+		<buttons>
+			<default-pdf-export id="ID_9d41cb62_dad1_4c95_a666_68a29e99c68c">
+				<header><![CDATA[<h3 style="text-align:center">Export von {$model} vom {now()}</h3>]]></header>
+			</default-pdf-export>
+		</buttons>
+	</arguments>
+</config:template-call>

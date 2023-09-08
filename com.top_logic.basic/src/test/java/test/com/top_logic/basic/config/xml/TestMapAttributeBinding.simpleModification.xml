@@ -1,0 +1,8 @@
+<r xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<map>
+		<e k="d" v="2"></e>
+		<e k="a" v="4"></e>
+		<e k="e" v="10"></e>
+		<e k="b" v="8"></e>
+	</map>
+</r>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminMemoryReport"
+	helpIDLegacy="admin.sys.memoryObserverReport.tabber"
+	titleKey="admin.sys.memoryObserverReport.tabber"
+>
+	<tabInfo label="admin.sys.memoryObserverReport.tabber"/>
+	<components>
+		<include name="com.top_logic.monitoring/admin/monitor/memory/memoryObserverReport.xml"/>
+	</components>
+</securityLayout>

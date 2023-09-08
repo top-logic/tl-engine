@@ -1,0 +1,49 @@
+<h2>Syntax</h2> 
+<pre>	<code>$set1.containsAll($set2)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Prüft, ob die Menge <code class="hljs inlineCode">set1</code> alle Elemente der Menge <code class="hljs inlineCode">set2</code> enthält.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set1</td> 
+   <td>Menge</td> 
+   <td>Eine Menge, für die überprüft werden soll, ob alle Elemente aus <code class="hljs inlineCode">set2</code> enthalten sind.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>set2</td> 
+   <td>Menge</td> 
+   <td>Eine Menge, für die überprüft werden soll, ob alle Elemente in <code class="hljs inlineCode">set1</code> enthalten sind.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p> 
+<p><code class="hljs inlineCode">true</code>, wenn alle Elemente aus <code class="hljs inlineCode">set2</code> in <code class="hljs inlineCode">set1</code> enthalten sind.</p> 
+<h2>Beispiele</h2> 
+<h3>Menge enthält alle Elemente</h3> 
+<pre>	<code>list(1, 2, 3, 4).containsAll(list(1, 2))</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong><code class="hljs inlineCode">true</code></p> 
+<h3>Menge enthält einzelne Elemente</h3> 
+<pre>	<code>list(1, 2, 3, 4).containsAll(list(1, 2, 5, 6))</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong> <code class="hljs inlineCode">false</code></p> 
+<h3>Menge enthält keins der Elemente</h3> 
+<pre>	<code>list(1, 2, 3, 4).containsAll(list(5, 6, 7))</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong> <code class="hljs inlineCode">false</code></p>

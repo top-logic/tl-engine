@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="SearchExpressionStructure">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.model.search.persistency.expressions.impl"
+					interface-package="com.top_logic.model.search.persistency.expressions"
+				/>
+			</annotations>
+			<types>
+				<interface name="SearchExpression">
+					<annotations>
+						<legacy-qualified-name qualified-name="SearchExpression"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						/>
+						<property name="version"
+							mandatory="true"
+							type="tl.core:String"
+						/>
+						<property name="expression"
+							mandatory="true"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</interface>
+				<class name="SearchExpressionNode">
+					<annotations>
+						<table name="SearchExpressionTable"/>
+						<implementation-binding class-name="com.top_logic.model.search.persistency.expressions.SearchExpressionImpl"/>
+					</annotations>
+					<generalizations>
+						<generalization type="SearchExpression"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

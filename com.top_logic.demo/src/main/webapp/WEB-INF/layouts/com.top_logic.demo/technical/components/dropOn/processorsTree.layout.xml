@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tree.template.xml"
+>
+	<arguments
+		adjustSelectionWhenCollapsing="true"
+		defaultSelection="false"
+		expandSelected="false"
+		rootVisible="false"
+	>
+		<name key="dynamic.e072c2b6-4e65-4c7c-911d-be81e595497c">
+			<en>Processors</en>
+			<de>Bearbeiter</de>
+		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+			<script expr="`test.dnd.dropon#ROOT`"/>
+		</model>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="null"
+			nodePredicate="node->$node.instanceOf(`test.dnd.dropon:Processor`)"
+			nodesToUpdate="null"
+			parents="node->$node.referers(`test.dnd.dropon:Processor#subprocessors`)"
+			rootNode="x -> $x"
+		>
+			<children><![CDATA[node-> switch($node.type()) {
+    `test.dnd.dropon:Root`: $node.get(`test.dnd.dropon:Root#processors`);
+    default: $node.get(`test.dnd.dropon:Processor#subprocessors`);
+}]]></children>
+		</modelBuilder>
+		<treeDrop class="com.top_logic.model.search.providers.OntoTreeDropByExpression"
+			handleDrop="draggedObjects->referenceRow->{handleDrop=work -> processor -> $processor.add(`test.dnd.dropon:Processor#processing`, $work);$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}"
+		>
+			<canDrop><![CDATA[draggedObjects->referenceRow->{canDrop=work -> processor -> switch {
+    !$processor.get(`test.dnd.dropon:Processor#active`): false;
+    !$processor.get(`test.dnd.dropon:Processor#canProcess`).containsElement($work.get(`test.dnd.dropon:WorkItem#type`)): false;
+    default: true;
+};$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}]]></canDrop>
+		</treeDrop>
+	</arguments>
+</config:template-call>

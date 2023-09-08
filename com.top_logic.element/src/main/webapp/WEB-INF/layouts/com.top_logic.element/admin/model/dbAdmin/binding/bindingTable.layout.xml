@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<tableView name="Table"
+	isSecurityMaster="true"
+	model="selection(com.top_logic.element/admin/model/dbAdmin/tables/tablesTable.layout.xml#Table)"
+	objectType="tl.model:TLModelPart"
+>
+	<modelBuilder class="com.top_logic.element.util.dbadmin.StorageUsageListModelBuilder"/>
+	<titleKey>
+		<de>Speicherabbildung</de>
+		<en>Storage mapping</en>
+	</titleKey>
+	<table
+		defaultColumns="name,owner"
+		defaultSortOrder="name"
+		fixedColumns="0"
+	>
+		<columns>
+			<column name="name"
+				accessor="com.top_logic.layout.IdentityAccessor"
+				columnWidth="500px"
+				comparator="com.top_logic.util.TLCollator"
+				sortKeyProvider="com.top_logic.layout.LabelMapping"
+			>
+				<columnLabelKey>
+					<de>Modellelement</de>
+					<en>Model element</en>
+				</columnLabelKey>
+			</column>
+			<column name="owner"
+				columnWidth="300px"
+				sortKeyProvider="com.top_logic.knowledge.objects.KnowledgeItemWrapperMapping"
+			/>
+		</columns>
+	</table>
+	<buttons>
+		<reference command-id="editLayoutCommand"/>
+		<reference command-id="deleteComponentCommand"/>
+	</buttons>
+</tableView>

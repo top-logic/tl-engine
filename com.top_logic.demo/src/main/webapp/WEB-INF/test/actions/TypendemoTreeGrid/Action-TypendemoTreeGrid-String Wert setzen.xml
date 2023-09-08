@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="Pfad"
+				type="string"
+			/>
+			<t:parameter name="Feld"
+				type="string"
+			/>
+			<t:parameter name="Wert"
+				type="string"
+			/>
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<t:invoke template="script:Feld/Action-Feld-Wert setzen.xml">
+			<t:parameter name="Tester"
+				value="${$Tester}"
+			/>
+			<t:parameter name="Pfad"
+				value="${$Pfad}"
+			/>
+			<t:parameter name="Komponente"
+				value="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+			/>
+			<t:parameter name="Feld"
+				value="${$Feld}"
+			/>
+			<t:parameter name="Wert">
+				<t:value>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="${$Wert}"
+					/>
+				</t:value>
+			</t:parameter>
+		</t:invoke>
+	</t:body>
+</t:template>

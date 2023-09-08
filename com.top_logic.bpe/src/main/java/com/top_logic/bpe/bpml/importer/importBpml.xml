@@ -1,0 +1,591 @@
+<handler id="all">
+	<tag name="definitions">
+		<object model-type="tl.bpe.bpml:Collaboration">
+			<dispatch>
+				<tag name="collaboration">
+					<!-- Lately assign the ID to the collaboration created in the root tag. 
+						This is necessary, to ensure that a collaboration is created no matter if 
+						an explicit collaboration is given or not. -->
+					<alternative-id id-attribute="id"/>
+					
+					<!-- Set the ID of the collaboration, if it exists. If no explicit collaboration 
+						exists, an anonymous collaboration is created in the root tag. -->
+					<property name="extId" xml-attribute="id"/>
+				
+					<dispatch>
+						<tag name="participant">
+							<object model-type="tl.bpe.bpml:Participant" id-attribute="id">
+								<linking>
+									<list-linking name="tl.bpe.bpml:Collaboration#participants"/>
+								</linking>
+								
+								<property name="name" xml-attribute="name"/>
+								<property name="extId" xml-attribute="id"/>
+								<reference name="process" id-attribute="processRef"/>
+								
+								<dispatch>
+									<tag name="extensionElements">
+										<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+									</tag>
+								</dispatch>
+							</object>
+						</tag>		
+						<tag name="messageFlow">
+							<object model-type="tl.bpe.bpml:MessageFlow" id-attribute="id">
+								<linking>
+									<list-linking name="tl.bpe.bpml:Collaboration#messageFlows"/>
+								</linking>
+
+								<property name="name" xml-attribute="name"/>
+								<property name="extId" xml-attribute="id"/>
+								<reference name="source" id-attribute="sourceRef"/>
+								<reference name="target" id-attribute="targetRef"/>
+								
+								<dispatch>
+									<tag name="extensionElements">
+										<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+									</tag>
+								</dispatch>
+							</object>
+						</tag>		
+						<tag name="textAnnotation">
+							<object model-type="tl.bpe.bpml:TextAnnotation" id-attribute="id">
+								<linking>
+									<list-linking name="tl.bpe.bpml:AnnotationContainer#annotationDefinitions"/>
+								</linking>
+
+								<property name="extId" xml-attribute="id"/>
+								
+								<dispatch>
+									<tag name="text">
+										<text-content name="text"/>
+									</tag>
+									<tag name="extensionElements">
+										<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+									</tag>
+								</dispatch>
+							</object>
+						</tag>
+						<tag name="association">
+							<object model-type="tl.bpe.bpml:AnnotationAssociation" id-attribute="id" id="create-association" var="association-link">
+								<property name="extId" xml-attribute="id"/>
+							
+								<object-ref id-attribute="sourceRef">
+									<switch-block>
+										<case predicate="src -> $src.instanceOf(`tl.bpe.bpml:Annotated`)">
+											<object-ref id-attribute="sourceRef">
+												<linking target-var="association-link">
+													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#source"/>
+												</linking>
+											</object-ref>
+										
+											<object-ref id-attribute="targetRef">
+												<linking target-var="association-link">
+													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#target"/>
+												</linking>
+											</object-ref>
+										</case>
+									
+										<case predicate="src -> $src.instanceOf(`tl.bpe.bpml:TextAnnotation`)">
+											<object-ref id-attribute="targetRef">
+												<linking target-var="association-link">
+													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#source"/>
+												</linking>
+											</object-ref>
+											
+											<object-ref id-attribute="sourceRef">
+												<linking target-var="association-link">
+													<ref-linking name="tl.bpe.bpml:AnnotationAssociation#target"/>
+												</linking>
+											</object-ref>
+										</case>
+									</switch-block>
+								</object-ref>
+							</object>
+							
+							<dispatch>
+								<tag name="extensionElements">
+									<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+								</tag>
+							</dispatch>
+						</tag>
+						<tag name="extensionElements">
+							<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+						</tag>
+					</dispatch>
+				</tag>
+				<tag name="process">
+					<object model-type="tl.bpe.bpml:Process" id-attribute="id">
+						<linking>
+							<list-linking name="tl.bpe.bpml:Collaboration#processes"/>
+						</linking>
+						
+						<property name="extId" xml-attribute="id"/>
+						<property name="isExecutable" xml-attribute="isExecutable" format="com.top_logic.basic.config.format.PrimitiveBooleanFormat"/>
+						
+						<dispatch id="process-type">
+							<tag name="laneSet">
+								<dispatch id="lane-set-type">
+									<tag name="lane">
+										<object model-type="tl.bpe.bpml:Lane" id-attribute="id">
+											<linking>
+												<list-linking name="tl.bpe.bpml:LaneSet#lanes"/>
+											</linking>
+
+											<property name="name" xml-attribute="name"/>
+											<property name="extId" xml-attribute="id"/>
+											
+											<dispatch id="lane-type">
+												<tag name="childLaneSet">
+													<ref handler-id="lane-set-type"/>
+												</tag>		
+												<tag name="flowNodeRef">
+													<object-ref id-attribute="text()">
+														<linking>
+															<ref-linking reverse="true" name="tl.bpe.bpml:Node#lane"/>
+														</linking>
+													</object-ref>
+												</tag>
+												<tag name="extensionElements">
+													<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+												</tag>
+											</dispatch>
+										</object>
+									</tag>		
+								</dispatch>
+							</tag>
+	
+							<tag name="textAnnotation">
+								<object model-type="tl.bpe.bpml:TextAnnotation" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:AnnotationContainer#annotationDefinitions"/>
+									</linking>
+	
+									<property name="extId" xml-attribute="id"/>
+									
+									<dispatch>
+										<tag name="text">
+											<text-content name="text"/>
+										</tag>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							<tag name="association">
+								<ref handler-id="create-association"/>
+
+								<dispatch>
+									<tag name="extensionElements">
+										<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+									</tag>
+								</dispatch>
+							</tag>
+
+							<tag name="task">
+								<object model-type="tl.bpe.bpml:Task" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							
+							<tag name="businessRuleTask">
+								<object model-type="tl.bpe.bpml:BusinessRuleTask" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							
+							<tag name="serviceTask">
+								<object model-type="tl.bpe.bpml:ServiceTask" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							
+							<tag name="sendTask">
+								<object model-type="tl.bpe.bpml:SendTask" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							
+							<tag name="receiveTask">
+								<object model-type="tl.bpe.bpml:ReceiveTask" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							
+							<tag name="manualTask">
+								<object model-type="tl.bpe.bpml:ManualTask" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							
+							<tag name="userTask">
+								<object model-type="tl.bpe.bpml:UserTask" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							
+							<tag name="scriptTask">
+								<object model-type="tl.bpe.bpml:ScriptTask" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							
+							<tag name="callActivity">
+								<object model-type="tl.bpe.bpml:CallActivity" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							
+							<tag name="subProcess">
+								<object model-type="tl.bpe.bpml:SubProcess" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<ref handler-id="process-type"/>
+								</object>
+							</tag>
+							
+							<tag name="exclusiveGateway">
+								<object model-type="tl.bpe.bpml:ExclusiveGateway" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+									<reference name="defaultFlow" id-attribute="default"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>		
+							<tag name="parallelGateway">
+								<object model-type="tl.bpe.bpml:ParallelGateway" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>		
+							<tag name="inclusiveGateway">
+								<object model-type="tl.bpe.bpml:InclusiveGateway" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+									<reference name="defaultFlow" id-attribute="default"/>
+									
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>		
+							<tag name="complexGateway">
+								<object model-type="tl.bpe.bpml:ComplexGateway" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+									<reference name="defaultFlow" id-attribute="default"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>		
+							<tag name="eventBasedGateway">
+								<object model-type="tl.bpe.bpml:EventBasedGateway" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>		
+							<tag name="startEvent">
+								<object model-type="tl.bpe.bpml:StartEvent" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<dispatch id="event-definition-type">
+										<tag name="conditionalEventDefinition">
+											<object model-type="tl.bpe.bpml:ConditionalEventDefinition">
+												<linking>
+													<ref-linking name="tl.bpe.bpml:Event#definition"/>
+												</linking>
+												
+												<dispatch/>
+											</object>
+										</tag>
+										<tag name="errorEventDefinition">
+											<object model-type="tl.bpe.bpml:ErrorEventDefinition">
+												<linking>
+													<ref-linking name="tl.bpe.bpml:Event#definition"/>
+												</linking>
+												
+												<dispatch/>
+											</object>
+										</tag>
+										<tag name="cancelEventDefinition">
+											<object model-type="tl.bpe.bpml:CancelEventDefinition">
+												<linking>
+													<ref-linking name="tl.bpe.bpml:Event#definition"/>
+												</linking>
+												
+												<dispatch/>
+											</object>
+										</tag>
+										<tag name="signalEventDefinition">
+											<object model-type="tl.bpe.bpml:SignalEventDefinition">
+												<linking>
+													<ref-linking name="tl.bpe.bpml:Event#definition"/>
+												</linking>
+												
+												<dispatch/>
+											</object>
+										</tag>
+										<tag name="compensateEventDefinition">
+											<object model-type="tl.bpe.bpml:CompensateEventDefinition">
+												<linking>
+													<ref-linking name="tl.bpe.bpml:Event#definition"/>
+												</linking>
+												
+												<dispatch/>
+											</object>
+										</tag>
+										<tag name="messageEventDefinition">
+											<object model-type="tl.bpe.bpml:MessageEventDefinition">
+												<linking>
+													<ref-linking name="tl.bpe.bpml:Event#definition"/>
+												</linking>
+												
+												<dispatch/>
+											</object>
+										</tag>
+										<tag name="timerEventDefinition">
+											<object model-type="tl.bpe.bpml:TimerEventDefinition">
+												<linking>
+													<ref-linking name="tl.bpe.bpml:Event#definition"/>
+												</linking>
+												
+												<dispatch/>
+											</object>
+										</tag>
+										<tag name="escalationEventDefinition">
+											<object model-type="tl.bpe.bpml:EscalationEventDefinition">
+												<linking>
+													<ref-linking name="tl.bpe.bpml:Event#definition"/>
+												</linking>
+												
+												<dispatch/>
+											</object>
+										</tag>
+										<tag name="terminateEventDefinition">
+											<object model-type="tl.bpe.bpml:TerminateEventDefinition">
+												<linking>
+													<ref-linking name="tl.bpe.bpml:Event#definition"/>
+												</linking>
+												
+												<dispatch/>
+											</object>
+										</tag>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>
+							<tag name="endEvent">
+								<object model-type="tl.bpe.bpml:EndEvent" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<ref handler-id="event-definition-type"/>
+								</object>
+							</tag>		
+							<tag name="intermediateCatchEvent">
+								<object model-type="tl.bpe.bpml:IntermediateCatchEvent" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<ref handler-id="event-definition-type"/>
+								</object>
+							</tag>		
+							<tag name="intermediateThrowEvent">
+								<object model-type="tl.bpe.bpml:IntermediateThrowEvent" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+
+									<ref handler-id="event-definition-type"/>
+								</object>
+							</tag>		
+							<tag name="boundaryEvent">
+								<object model-type="tl.bpe.bpml:BoundaryEvent" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#nodes"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+									<property name="cancelActivity" xml-attribute="cancelActivity" format="com.top_logic.basic.config.format.PrimitiveBooleanFormat"/>
+									<reference name="attachedTo" id-attribute="attachedToRef"/>
+
+									<ref handler-id="event-definition-type"/>
+								</object>
+							</tag>		
+							<tag name="sequenceFlow">
+								<object model-type="tl.bpe.bpml:SequenceFlow" id-attribute="id">
+									<linking>
+										<list-linking name="tl.bpe.bpml:Process#edges"/>
+									</linking>
+									<property name="name" xml-attribute="name"/>
+									<property name="extId" xml-attribute="id"/>
+									<reference name="source" id-attribute="sourceRef"/>
+									<reference name="target" id-attribute="targetRef"/>
+									
+									<dispatch>
+										<tag name="extensionElements">
+											<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+										</tag>
+									</dispatch>
+								</object>
+							</tag>		
+							<tag name="extensionElements">
+								<entry class="com.top_logic.bpe.bpml.importer.HandleTLExtensions"/>
+							</tag>
+						</dispatch>
+					</object>
+				</tag>		
+				<tag name="BPMNDiagram">
+					<xml-content-property name="diagram" />
+				</tag>
+			</dispatch>
+		</object>
+	</tag>	
+</handler>

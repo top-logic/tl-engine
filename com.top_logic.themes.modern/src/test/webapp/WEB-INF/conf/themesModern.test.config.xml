@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<configs>
+		<config config:interface="test.com.top_logic.basic.jsp.TestJSPContent$Config">
+			<ignore>
+				<entry value="login.jsp" />
+			</ignore>
+		</config>
+	</configs>
+</application>

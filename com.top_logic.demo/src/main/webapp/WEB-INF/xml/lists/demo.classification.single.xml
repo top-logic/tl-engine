@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<list name="demo.classification.single" type="Classification" multiselect="false" useNameAsId="true">
+	<elements>
+		<element name="demo.classification.single.a" default="true" />
+		<element name="demo.classification.single.b" />
+		<element name="demo.classification.single.c" />
+		<element name="demo.classification.single.d" />
+	</elements>
+</list>

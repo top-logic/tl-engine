@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICON_EXPORT_OPEN_API_SERVER"
+		value="css:fas fa-download"
+	/>
+</settings>

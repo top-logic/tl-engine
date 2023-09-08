@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration>
+	<version name="Ticket_25210_Model_references_in_form_definitions"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_25210_Model_references_in_form_definitions"
+			module="tl"
+		/>
+		<dependency name="22747-Add_GenericObject_table"
+			module="tl-element"
+		/>
+	</dependencies>
+	<migration>
+		<type-mapping/>
+		<steps>
+			<step name="Migrate form definitions">
+				<rewriter class="com.top_logic.knowledge.service.db2.migration.rewriters.AttributeRewriter"
+					types="MetaElement"
+				>
+					<algorithm class="com.top_logic.knowledge.service.db2.migration.rewriters.XsltValueTransform"
+						attribute="annotations"
+						transform="/WEB-INF/kbase/migration/tl/Ticket_25210_Model_references_in_form_definitions.migration.xsl"
+					>
+					</algorithm>
+				</rewriter>
+			</step>
+		</steps>
+	</migration>
+</migration>

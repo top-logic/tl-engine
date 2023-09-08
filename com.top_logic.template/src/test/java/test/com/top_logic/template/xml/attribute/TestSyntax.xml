@@ -1,0 +1,121 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<t:parameter name="Example_Parameter_A" type="string" />
+			<t:parameter name="Example_Parameter_B" type="string" />
+			<t:parameter name="Example_Parameter_C" type="string" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<fubar>
+			<foo bar="${$Example_Parameter_A}"/>
+		</fubar>
+		
+		<foo bar=""/>
+		
+		<foo bar="$"/>
+		
+		<foo bar="$$"/>
+		
+		<foo bar="$$$"/>
+		
+		<foo bar="$$$$"/>
+		
+		<foo bar="$$$$$"/>
+		
+		<foo bar="$$$$$$"/>
+		
+		<foo bar=" $ "/>
+		
+		<foo bar=" $$ "/>
+		
+		<foo bar=" $$$ "/>
+		
+		<foo bar=" $$$$ "/>
+		
+		<foo bar=" $$$$$ "/>
+		
+		<foo bar=" $$$$$$ "/>
+		
+		<foo bar="$ $"/>
+		
+		<foo bar="$ $ $"/>
+		
+		<foo bar=" $ $ "/>
+		
+		<foo bar=" $ $ $ "/>
+		
+		<foo bar="$$ $$"/>
+		
+		<foo bar="$$ $$ $$"/>
+		
+		<foo bar=" $$ $$ "/>
+		
+		<foo bar=" $$ $$ $$ "/>
+		
+		<foo bar="  $  "/>
+		
+		<foo bar="  $$  "/>
+		
+		<foo bar="   $   "/>
+		
+		<foo bar="   $$   "/>
+		
+		<foo bar="  $$  $$  $$  "/>
+		
+		<foo bar="   $$   $$   $$   "/>
+		
+		<foo bar="${$Example_Parameter_A}"/>
+		
+		<foo bar="${$Example_Parameter_A}${$Example_Parameter_B}"/>
+		
+		<foo bar="${$Example_Parameter_A}${$Example_Parameter_B}${$Example_Parameter_C}"/>
+		
+		<foo bar=" ${$Example_Parameter_A} "/>
+		
+		<foo bar=" ${$Example_Parameter_A}${$Example_Parameter_B} "/>
+		
+		<foo bar=" ${$Example_Parameter_A}${$Example_Parameter_B}${$Example_Parameter_C} "/>
+		
+		<foo bar="${$Example_Parameter_A} ${$Example_Parameter_B}"/>
+		
+		<foo bar="${$Example_Parameter_A} ${$Example_Parameter_B} ${$Example_Parameter_C}"/>
+		
+		<foo bar=" ${$Example_Parameter_A} ${$Example_Parameter_B} "/>
+		
+		<foo bar=" ${$Example_Parameter_A} ${$Example_Parameter_B} ${$Example_Parameter_C} "/>
+		
+		<foo bar="  ${$Example_Parameter_A}  "/>
+		
+		<foo bar="   ${$Example_Parameter_A}   "/>
+		
+		<foo bar="  ${$Example_Parameter_A}  ${$Example_Parameter_B}  ${$Example_Parameter_C}  "/>
+		
+		<foo bar="   ${$Example_Parameter_A}   ${$Example_Parameter_B}   ${$Example_Parameter_C}   "/>
+		
+		<foo bar="$${$Example_Parameter_A}"/>
+		
+		<foo bar=" $${$Example_Parameter_A} "/>
+		
+		<foo bar="$$$${$Example_Parameter_A}"/>
+		
+		<foo bar=" $$$${$Example_Parameter_A} "/>
+		
+		<foo bar="$$${$Example_Parameter_A}"/>
+		
+		<foo bar="$$$$${$Example_Parameter_A}"/>
+		
+		<foo bar="${$Example_Parameter_A}$"/>
+		
+		<foo bar="${$Example_Parameter_A}$$"/>
+		
+		<foo bar="$$${$Example_Parameter_A}$$${$Example_Parameter_B}$$${$Example_Parameter_C}"/>
+		
+	</t:body>
+</t:template>

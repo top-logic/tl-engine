@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>HttpUnit Tutorial - create pool editor</title>
+<LINK REL="stylesheet" HREF="tutorial.css" TYPE="text/css">
+</head>
+
+<body>
+<p class="location"><a href="index.html">Tutorial</a>
+<img src="arrow_yellow.gif" width=13 height=9 align=bottom ALT="-&gt;">Task 1</p>
+<h1>Creating the Pool Editor</h1>
+<p>Our initial task will be the creation of the simple pool editor, following use case 1.1. To restrict access to the
+administrator, we will take advantage of declarative security defined by the Servlet standard. As part of this task, we will
+use the Basic Authentication approach, which causes the browser to pop up a challenge dialog. The more common form-based
+authentication is handled the same way that all forms should be.</p>
+<p>
+To begin the tutorial, create a working directory and expand <a href="task1.zip">this archive</a> into it.  To run the
+tutorial, you will need httpunit.jar, junit.jar, servlet.jar, nekohtml.jar, xercesImpl.jar, and xmlParserAPIs.jar
+(all included in the HttpUnit download) on your classpath. If you use
+<code>ant</code>, you can either copy
+them into the <code>jars</code> directory just created, or invoke ant with <code>-Dclasspath="..."</code>, specifying the locations
+of those jars between the quotation marks. If you do not use <code>ant</code>, note that the main class is named
+<code>tutorial.PoolEditorTest</code><p>
+
+<p>You will write your code in the src/tutorial sub-directory.</p>
+
+<p>Once you are ready, proceed to <a href="task1editor-initial.html">step one</a> to begin the tutorial.</p>
+
+</body>
+</html>

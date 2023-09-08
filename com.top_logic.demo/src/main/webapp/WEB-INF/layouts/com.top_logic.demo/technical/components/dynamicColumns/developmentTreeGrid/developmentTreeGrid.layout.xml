@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/treegrid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		defaultSelection="true"
+		detailComponent=""
+		expandRoot="true"
+		expandSelected="true"
+		isSecurityMaster="false"
+		model=""
+		multiSelection="false"
+		partnerGroup=""
+		rootVisible="true"
+		securityProviderClass="securityRoot"
+		showDetailOpener="false"
+		type="test.dynamictable:Development"
+	>
+		<name key="dynamic.04d6d912-3c4f-4bfb-a01c-1bc445a24385">
+			<en>Development projects</en>
+			<de>Entwicklungsprojekte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="null"
+			nodePredicate="node->$node.instanceOf(`test.dynamictable:AllDevelopments`) or $node.instanceOf(`test.dynamictable:Development`)"
+			rootNode="`test.dynamictable#ROOT`"
+		>
+			<children><![CDATA[node-> switch ($node.type()) {
+ `test.dynamictable:AllDevelopments`: $node.get(`test.dynamictable:AllDevelopments#developments`);
+ `test.dynamictable:Development`: $node.get(`test.dynamictable:Development#parts`);
+}
+]]></children>
+			<parents><![CDATA[node-> switch ($node.type()) {
+ `test.dynamictable:AllDevelopments`: null;
+ `test.dynamictable:Development`: union($node.referers(`test.dynamictable:Development#parts`),$node.referers(`test.dynamictable:AllDevelopments#developments`));
+}
+]]></parents>
+		</modelBuilder>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.DynamicColumnProviderByExpression"
+				columnLabel="c -> $c.get(`test.dynamictable:Objective#name`)"
+				columnType="`tl.core:Integer`"
+				columnVisibility="visible"
+				idPrefix="ID_dca8260d_3558_4a03_8d78_cdd660a8ea1b"
+			>
+				<columns><![CDATA[all(`test.dynamictable:Objective`)
+  .sort(comparator(
+    x -> $x.get(`test.dynamictable:Objective#name`)))]]></columns>
+				<accessor><![CDATA[row -> column -> 
+  $row.get(`test.dynamictable:Development#ratings`)
+    .filter(link -> $link.get(`test.dynamictable:Rating#objective`) == $column)
+    .singleElement()
+    .get(`test.dynamictable:Rating#value`)]]></accessor>
+				<updater><![CDATA[row -> column -> value -> {
+  link = $row.get(`test.dynamictable:Development#ratings`)
+    .filter(link -> $link.get(`test.dynamictable:Rating#objective`) == $column)
+    .singleElement();
+  if ($value == null, $link.delete(), {
+    storage = ($link != null) ? $link : {
+      newLink = new(`test.dynamictable:Rating`);
+      $newLink.set(`test.dynamictable:Rating#objective`, $column);
+      $row.add(`test.dynamictable:Development#ratings`, $newLink);
+      $newLink
+    };
+    $storage.set(`test.dynamictable:Rating#value`, $value);
+  })
+}]]></updater>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="ID_fcdb1018_c067_48e5_8895_4670bbec0150"
+				columnType="tl.core:Integer"
+				columnVisibility="visible"
+				updater=""
+			>
+				<columnLabel key="dynamic.60ca4cf3-fcf2-4e74-a1c3-4a4fb05fed67">
+					<en>Best rating</en>
+					<de>Beste Bewertung</de>
+				</columnLabel>
+				<accessor><![CDATA[row -> 
+  $row.get(`test.dynamictable:Development#ratings`)
+  .map(link -> $link.get(`test.dynamictable:Rating#value`))
+  .max()]]></accessor>
+			</configurationProvider>
+		</configurationProviders>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_be7f960b_3056_49e0_8a47_51f88ddee397"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+				clique=""
+				concurrent="false"
+				confirm="false"
+				disabledImage=""
+				group="System"
+				image="css:fas fa-sync"
+				read-only="false"
+			>
+				<resourceKey key="dynamic.58564f3e-6c9d-4ec6-b5f3-20dae057d3ff">
+					<en>Update</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

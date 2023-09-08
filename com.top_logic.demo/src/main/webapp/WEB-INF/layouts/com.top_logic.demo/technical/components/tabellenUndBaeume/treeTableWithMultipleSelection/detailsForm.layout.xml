@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments>
+		<name key="dynamic.d06afdb9-d4f0-4373-9f79-c090d0bde9b9">
+			<en>Details</en>
+			<de>Details</de>
+		</name>
+		<model class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+			input="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithMultipleSelection/childrenTreeTable.layout.xml#TreeTable)"
+		>
+			<function><![CDATA[selection -> if ($selection.size() < 2, $selection.singleElement(), null)]]></function>
+		</model>
+	</arguments>
+</config:template-call>

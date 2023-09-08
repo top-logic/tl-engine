@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<editor name="Form"
+	cancelCommand=""
+	discardCommand=""
+	keepInvisibleEditMode="true"
+	lockHandler="com.top_logic.base.locking.handler.NoTokenHandling"
+	model="selection(com.top_logic.element/admin/model/dbAdmin/tables/tablesTable.layout.xml#Table)"
+>
+	<titleKey>
+		<de>Details</de>
+		<en>Details</en>
+	</titleKey>
+
+	<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+		context="model(com.top_logic.element/admin/model/dbAdmin/tables/tablesTable.layout.xml#Table)"
+		formType="com.top_logic.dob.schema.config.MetaObjectName"
+		modelToFormMapping="com.top_logic.basic.func.Identity"
+		modelType="com.top_logic.dob.schema.config.MetaObjectName"
+		showNoModel="true"
+	>
+		<customizations>
+			<type name="com.top_logic.dob.schema.config.MetaObjectConfig">
+				<annotations>
+					<display-order>
+						<value>
+							<property name="super_class"/>
+							<property name="object_name"/>
+							<property name="db_name"/>
+							<property name="abstract"/>
+							<property name="versioned"/>
+							<property name="db_PKeyStorage"/>
+							<property name="db_compress"/>
+							<property name="primary-key"/>
+							<property name="index"/>
+							<property name="annotations"/>
+						</value>
+					</display-order>
+					<display-inherited value="IGNORE"/>
+				</annotations>
+			</type>
+
+			<property name="com.top_logic.dob.schema.config.MetaObjectConfig#db_name">
+				<annotations>
+					<dynamic-mode fun="com.top_logic.element.layout.meta.DisabledIf">
+						<args>
+							<ref value="abstract"/>
+						</args>
+					</dynamic-mode>
+				</annotations>
+			</property>
+
+			<property name="com.top_logic.dob.schema.config.AlternativeConfig$TypeChoice#name">
+				<annotations>
+					<options fun="com.top_logic.element.util.dbadmin.AllReferenceTypeNames"/>
+				</annotations>
+			</property>
+
+			<property name="com.top_logic.dob.schema.config.MetaObjectConfig#super_class">
+				<annotations>
+					<options fun="com.top_logic.element.util.dbadmin.AllTableNames"/>
+				</annotations>
+			</property>
+
+			<property name="com.top_logic.dob.schema.config.MetaObjectConfig#attributes">
+				<annotations>
+					<hidden/>
+				</annotations>
+			</property>
+
+			<property name="com.top_logic.dob.schema.config.IndexPartConfig#name">
+				<annotations>
+					<options fun="com.top_logic.element.util.dbadmin.ColumnNamesOfContextTable"/>
+				</annotations>
+			</property>
+
+			<property name="com.top_logic.basic.db.schema.setup.config.KeyAttributes#attributes">
+				<annotations>
+					<options fun="com.top_logic.element.util.dbadmin.ColumnNamesOfContextTable"/>
+				</annotations>
+			</property>
+		</customizations>
+	</modelBuilder>
+</editor>

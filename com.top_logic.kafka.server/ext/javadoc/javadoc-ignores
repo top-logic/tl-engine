@@ -1,0 +1,4 @@
+com.top_logic.kafka.server.main.KafkaStarterMain.java: Missing documentation: com.top_logic.kafka.server.main.KafkaStarterMain.main
+com.top_logic.kafka.server.main.ZooKeeperStarterMain.java: Missing documentation: com.top_logic.kafka.server.main.ZooKeeperStarterMain.main
+com.top_logic.kafka.server.starter.KafkaStarter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.kafka.server.starter.KafkaStarter
+com.top_logic.kafka.server.starter.ZooKeeperStarter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.kafka.server.starter.ZooKeeperStarter

@@ -1,0 +1,57 @@
+<h2>Syntax</h2> 
+<pre>	<code>$set.subList($startIndex)
+
+$set.subList($startIndex, $stopIndex)
+</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Gibt einen Teil der gegebenen Liste zurück, der durch die Indizes festgelegt wird.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set</td> 
+   <td>Aufzählung</td> 
+   <td>Eine Liste, von der eine Teilliste entnommen werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>startIndex</td> 
+   <td>Zahl</td> 
+   <td>Der Index von <code class="hljs inlineCode">set</code>, an dem die Teilliste beginnen soll (einschließlich). Das erste Element von <code class="hljs inlineCode">set</code> ist 0. Das Element mit dem angegebenen <code class="hljs inlineCode">startIndex</code> ist in der Teilliste mit inbegriffen.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>stopIndex</td> 
+   <td>Zahl</td> 
+   <td>Der Index von <code class="hljs inlineCode">set</code>, an dem die Teilliste enden soll (ausschließlich). Das erste Element von <code class="hljs inlineCode">set</code> ist 0. Das Element mit dem angegebenen <code class="hljs inlineCode">stopIndex</code> ist in der Teilliste nicht mit inbegriffen.</td> 
+   <td>nein</td> 
+   <td>Die Teilliste enthält alle Elemente von <code class="hljs inlineCode">startIndex</code> bis zum Ende von <code class="hljs inlineCode">list</code>. Äquivalent zu <code class="hljs inlineCode">$set.subList($startIndex, $set.size()).</code></td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Mengte</p> 
+<p>Eine Teilliste der angegebenen Menge <code class="hljs inlineCode">set</code>.</p> 
+<h2>Beispiele</h2> 
+<h3>Teilliste ohne stopIndex</h3> 
+<pre>	<code>list(1, 2, 3, 4, 5).subList(2)</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong> Eine Menge mit den Elementen [3, 4, 5].</p> 
+<p>An Index 2 steht die Zahl 3. Von dort aus werden alle Elemente mit in die Teilliste aufgenommen.</p> 
+<h3>Teilliste mit stopIndex</h3> 
+<pre>	<code>list(1, 2, 3, 4, 5).subList(2, 4)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> Eine Menge mit den Elementen [3, 4].</p> 
+<p>An Index 2 steht die Zahl 3 und Index 4 die Zahl 5. Der <code class="hljs inlineCode">stopIndex</code> wird nicht in die Teilliste mit einbezogen.</p>

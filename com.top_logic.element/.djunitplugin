@@ -1,0 +1,13 @@
+#djUnit Plugin Settings
+#Thu May 19 15:57:10 CEST 2005
+CoverageIncludedPatterns=com.top_logic.element.*;
+JUnitExcludedUseDefault=true
+UseTrace=false
+PrintMethodTrace=false
+CoverageExcludedPatterns=
+UseVirtualMock=false
+UseCoverage=true
+PrintCatchTrace=false
+TraceIncludePatterns=
+PrintIndent=false
+CoverageWorkingDirectory=

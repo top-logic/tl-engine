@@ -1,0 +1,28 @@
+<p>Mehrsprachige Texte werden über sog. Resource-Keys angesprochen. Ein Resource-Key ist ein technischer Bezeichner, für den in den Anwendungs-Resourcen für jede Sprache der Anwenung ein Text in der entsprechenden Sprache hinterlegt ist oder hinterlegt werden kann.</p> 
+<h2>Ressourcen-Referenz</h2> 
+<pre><code>#"my.res.key"
+
+#'my.res.key'
+</code></pre> 
+<p>Benennt die Anwendungs-Resource mit dem technischen Bezeichner <code class="hljs inlineCode">my.res.key</code>. Liefert ein Ausdruck einen solchen Resource-Key, muss für diesen technischen Bezeichner entweder schon ein internationalisierter Text in den Anwendungs-Resourcen hinterlegt sein, oder es muss separat in der Resourcen-Administration entsprechende Texte in den Sprachen der Anwendung hinterlegt werden.</p> 
+<h2>Literale Texte</h2> 
+<p>Der Aufwand der separaten Definition eines mehrsprachigen Textes über einen Resource-Key kann reduziert werden, indem in einem Script-Ausdruck der mehrsprachige Text direkt im Ausdruck selbst in allen Sprachen der Anwendung angegeben wird.</p> 
+<pre><code>#("Ein Text"@de, "Some text"@en, "Un texto"@es)
+
+#('Ein Text'@de, 'Some text'@en, 'Un texto'@es)
+</code></pre> 
+<p>Der mehrsprachige Text "Ein Text" in den Sprachen der Anwendung (hier Deutsch, Englisch und Spanisch identifiziert über die ISO-639-1 Sprach-Codes).</p> 
+<pre><code>"some string"@de
+
+'some other string'@en
+</code></pre> 
+<p>Wird die Anwendung nur einsprachig eingesetzt, kann der "mehrsprachige" Text in einer einzigen Sprache in einer Kurzschreibweise eingegeben werden.</p> 
+<h2>Literale Texte mit Tooltip</h2> 
+<p>Wenn für einen literalen Text ein Tooltip angezeigt werden soll, kann dieser innerhalb des Resource-Key angegeben werden.</p> 
+<pre><code>#("Ein Text"@de, "Some text"@en, "Un texto"@es, tooltip: {"Ein Tooltip"@de, "Some tooltip"@en, "Una información sobre herramientas"@es})
+
+#('Ein Text'@de, 'Some text'@en, 'Un texto'@es, tooltip: {'Ein Tooltip'@de, 'Some tooltip'@en, 'Una información sobre herramientas'@es})
+</code></pre> 
+<p> </p> 
+<p>​</p> 
+<p></p>

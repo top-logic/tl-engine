@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_913a76e6_050d_4e76_a084_0b9bb367a0b4"
+		securityDomain="SecurityStructure"
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.d98696e8-f6e9-46d0-8e6f-5f7e05558bf1">
+			<en>Reports</en>
+			<de>Berichte</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/reports/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

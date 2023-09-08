@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- com.top-logic.dob Main Configuration File              -->
+<!-- ======================================================== -->
+
+<root>
+	<alias>
+		<!-- No alias definitions. -->
+    </alias>
+
+	<properties>
+	</properties>
+</root>

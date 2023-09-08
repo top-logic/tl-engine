@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<ConcurrencySchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation='http://www.top-logic.com/schemata/ConcurrencySchema.xsd'>
+	<TokenSchemaDeklarationen>
+	    <TokenSchemaDeklaration Typ="edit"                      Wirkungsbereich="global"/>
+	    <TokenSchemaDeklaration Typ="exists"                    Wirkungsbereich="global"/>
+	    <TokenSchemaDeklaration Typ="editPersonToken"           Wirkungsbereich="definedInContextScheme"/>
+	</TokenSchemaDeklarationen>
+	<KontextSchemata>
+	    <KontextSchema Instanziierungsbereich="any" ID="editPersonContact">
+	        <TokenSchema Nummer="1" Typ="editPersonToken" Sperrtyp="exclusiv" Wirkungsbereich="local" />
+	    </KontextSchema>
+	</KontextSchemata>
+</ConcurrencySchema>

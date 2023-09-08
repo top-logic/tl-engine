@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		content="origContent"
+		model="model(test.com.top_logic/TestLayoutReference.testReplaceComp2_a.layout.xml#referenced)"
+		name="referer"
+	/>

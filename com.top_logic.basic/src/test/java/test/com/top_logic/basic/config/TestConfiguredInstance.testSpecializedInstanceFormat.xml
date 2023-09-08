@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<config 
+	xmlns:config="http://www.top-logic.com/ns/config/6.0" 
+	config:interface="test.com.top_logic.basic.config.TestConfiguredInstance$SubConfig"
+>
+	<other-b class="test.com.top_logic.basic.config.TestConfiguredInstance$B3" z="42">
+	</other-b>
+</config>

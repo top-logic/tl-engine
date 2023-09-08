@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8" xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<metaobjects>
+		<metaobject object_name="HTMLAttributeStorage" super_class="Item">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+					<implementation-factory class="com.top_logic.knowledge.service.db2.StaticKnowledgeObjectFactory" />
+				</annotation>
+			</annotations>
+			<attributes>
+				<reference att_name="object"
+					mandatory="true"
+					by-value="true"
+					history-type="current"
+					branch-global="false"
+					monomorphic="false"
+					is-container="false"
+					deletion-policy="delete-referer"
+					target-type="Object"
+				/>
+				<reference att_name="metaAttribute"
+					mandatory="true"
+					by-value="true"
+					history-type="current"
+					branch-global="false"
+					monomorphic="true"
+					is-container="false"
+					deletion-policy="delete-referer"
+					target-type="MetaAttribute"
+				/>
+				<mo_attribute att_name="filename" att_type="String" mandatory="true" />
+				<mo_attribute att_name="content-type" att_type="String" mandatory="true" />
+				<mo_attribute att_name="data" att_type="java.sql.Blob" mandatory="true" />
+				<mo_attribute att_name="hash" att_type="String" mandatory="true" />
+			</attributes>
+			<index>
+				<mo_index name="file" unique="true">
+					<index-parts>
+						<index_part name="object" part="name" />
+						<index_part name="metaAttribute" part="name" />
+						<index_part name="filename"/>
+					</index-parts>
+				</mo_index>
+			</index>
+		</metaobject>
+	</metaobjects>
+</objectlist>

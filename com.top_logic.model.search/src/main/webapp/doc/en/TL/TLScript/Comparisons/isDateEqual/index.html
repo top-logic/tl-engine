@@ -1,0 +1,48 @@
+<h2>Syntax</h2> 
+<pre>	<code>$e1.isDateEqual($e2)</code>
+</pre> 
+<h2>Description</h2> 
+<p>Checks if the date <code class="hljs inlineCode">e1</code> is equal to the date <code class="hljs inlineCode">e2</code>. Only whole days are compared and no clock times are taken into account.</p> 
+<p>Is equivalent to</p> 
+<pre><code>$e1.day() == $e2.day()</code></pre> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>e1</td> 
+   <td>Business object</td> 
+   <td>Date to be compared with <code class="hljs inlineCode">e2</code>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>e2</td> 
+   <td>Business object</td> 
+   <td>Date to be compared with <code class="hljs inlineCode">e1</code>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p> 
+<p><code class="hljs inlineCode">true</code>, if the result of the evaluation says that the two dates are identical to the day.</p> 
+<h2>Examples</h2> 
+<h3>Simple date</h3> 
+<pre>	<code>date(2021, 10, 5).isDateEqual(date(2021, 10, 5))</code>
+</pre> 
+<p><strong><span style="color:#3498db">Output:</span> </strong> <code class="hljs inlineCode">true</code></p> 
+<h3>Date with time</h3> 
+<pre>	<code>dateTime(2021, 10, 5, 12, 24, 55).isDateEqual(dateTime(2021, 10, 5, 15, 24, 23))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span> <code class="hljs inlineCode">true</code></p> 
+<p>Since only the day is compared and the time of day is ignored, <code class="hljs inlineCode">true</code> is returned here as well.</p>

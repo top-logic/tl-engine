@@ -1,0 +1,22 @@
+<p>The schema editor is used to create and edit the definitions of the database tables. The view of the schema editor is divided into two parts.</p> 
+<p>On the left side, the definitions of the various database tables are listed in a table:</p> 
+<p><img src="ref:grafik_8.png" style="opacity:1"></p> 
+<p>The column <code class="hljs inlineCode">DB-Name</code> contains the technical name of the database table as a value. In edit mode, new table definitions can be created or existing ones modified. The icon in front of the database table definition name indicates the type. The following types exist:</p> 
+<ul> 
+ <li>If a table definition is abstract, it is indicated by&nbsp; <img src="ref:grafik_4.png" style="opacity:1">. This means that no corresponding table exists for it in the database. It is only used for modularity.</li> 
+ <li>"Normal" table definitions are flagged with <img src="ref:grafik_5.png" style="opacity:1">. Corresponding tables exist for these definitions in the database.</li> 
+ <li>Associations are indicated by <img src="ref:grafik_6.png" style="opacity:1">. An association is a special definition of a database table. It contains two additional columns for the source and the target.</li> 
+ <li>Definitions that restrict their possible extensions to a finite number of database table definitionsare indicated by&nbsp; <img src="ref:grafik_3.png" style="opacity:1">.<br> <br> <img src="ref:grafik.png" style="opacity:1"><br> <br> The definition <code class="hljs inlineCode">needsRoleAware</code> can only be extended by the definitions <code class="hljs inlineCode">FastListElt</code>, <code class="hljs inlineCode">MetaAttribute</code>, or <code class="hljs inlineCode">PersBoundComp</code>.<br> &nbsp;</li> 
+</ul> 
+<p>The rest of the view is divided into 4 sections:</p> 
+<p><img src="ref:grafik_9.png" style="opacity:1"></p> 
+<h3>Properties</h3> 
+<p>The Properties tab serves as a detailed view for the definition of a database table. In edit mode, the various attributes can be edited here.</p> 
+<h3>Columns</h3> 
+<p>The columns view is divided into two parts. On the left-hand side, the various columns of the selected database table definition are listed. Next to this is the detail view for the selected column. In edit mode, you can also edit the various attributes, create new columns, or delete columns that you no longer need.</p> 
+<h3>Usages</h3> 
+<p>The Usages tab lists all objects that use this type.</p> 
+<p><img src="ref:grafik_1.png" style="opacity:1"></p> 
+<p>For example, <code class="hljs inlineCode">Person </code>is the target type of the reference <code class="hljs inlineCode">user</code> of the database table <code class="hljs inlineCode">LogEntry</code>.</p> 
+<h3>Mapping</h3> 
+<p>The Mapping tab lists which model elements are stored in the database table.</p>

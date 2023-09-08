@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="kafka.demo">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.kafka.demo.model.types.impl"
+					interface-package="com.top_logic.kafka.demo.model.types"
+				/>
+			</annotations>
+			<types>
+				<interface name="CommonNode">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<property name="notExternalized"
+							type="tl.core:String"
+						/>
+						<reference name="classificationMulti"
+							kind="forwards"
+							multiple="true"
+							type="tl5.enum:tl.beacon.three"
+						>
+							<annotations>
+								<exported value="false"/>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed"/>
+					</generalizations>
+				</interface>
+				<class name="Node">
+					<annotations>
+						<table name="KafkaDemo"/>
+						<exported />
+						<main-properties properties="name, notExternalized, otherNode" />
+					</annotations>
+					<attributes>
+						<reference name="otherNode"
+							kind="forwards"
+							navigate="true"
+							type="kafka.demo:Node"
+						/>
+						<!-- Check with "navigate=true" and navigate=false" to ensure neither causes unnecessary database queries during sending. -->
+						<reference name="untransferredNode1"
+							kind="forwards"
+							navigate="true"
+							type="kafka.demo:UntransferredNode"
+						/>
+						<reference name="untransferredNode2"
+							kind="forwards"
+							navigate="false"
+							type="kafka.demo:UntransferredNode"
+						/>
+						<property name="notExternalized"
+							type="tl.core:String"
+							override="true"
+						>
+							<annotations>
+								<exported value="false"/>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="CommonNode"/>
+					</generalizations>
+				</class>
+				<class name="RemoteNode">
+					<annotations>
+						<table name="KafkaDemoRemote"/>
+						<imported source="kafka.demo:Node" />
+						<main-properties properties="name, notExternalized, externalId" />
+					</annotations>
+					<attributes>
+						<reference name="otherRemoteNode"
+							kind="forwards"
+							navigate="true"
+							type="kafka.demo:RemoteNode"
+						>
+							<annotations>
+								<imported source="otherNode" />
+							</annotations>
+						</reference>
+						<!-- 
+						<property name="externalRef"
+							type="tl.util:ExtId"
+						/>
+						 -->
+						<property name="externalId"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+												<get-value attribute="_externalId"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="CommonNode"/>
+					</generalizations>
+				</class>
+				<class name="UntransferredNode">
+					<annotations>
+						<table name="KafkaDemoUntransferred"/>
+						<main-properties properties="name" />
+					</annotations>
+					<generalizations>
+						<generalization type="CommonNode"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

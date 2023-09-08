@@ -1,0 +1,41 @@
+<h2>Syntax</h2> 
+<pre>	<code>concat($s1, $s2, ..., $sN)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Fügte die angegebenen Mengen oder Einzelwerte zu einer Menge zusammen. Das kann dazu verwendet werden, einer Menge neue Elemente hinzuzufügen, da Mengen sonst nicht editierbar sind.</p> 
+<p>Wenn alle Teile Einzelwerte sind, ist der Ausdruck äquivalent zu <code class="hljs inlineCode">list($s1, $s2, ..., $sN)</code> (siehe <a class="tlObject" data-custom="true" href="?page=list&amp;uuid=35597918-0fc4-4a46-98e1-26e01bcd05c3">Liste aus Einzelwerten</a>).</p> 
+<p>Sonst ist der Ausdruck auch äquivalent zu <code class="hljs inlineCode">list($s1, $s2, ..., $sN).flatten()</code> (siehe <a class="tlObject" data-custom="true" href="?page=flatten&amp;uuid=d19612c5-6070-403f-b332-7cd7a50f7e6f">Glätten</a>).</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>s</td> 
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td> 
+   <td>Mengen oder Einzelwerte, die zu einer Menge zusammengefügt werden sollen.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p> 
+<p>Eine Menge, die alle angegebenen Parameter enthält.</p> 
+<h2>Beispiele</h2> 
+<h3>Verettung zweier Listen</h3> 
+<pre>	<code>concat(list(1, 2, 3), list(4, 5, 6))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> Eine Menge mit den Elementen [1, 2, 3, 4, 5, 6].</p> 
+<h3>Verettung von Listen und Einzelwerten</h3> 
+<pre>	<code>concat(list(1, 2, 3), 4, 5, "and so on")</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong> Eine Menge mit den Elementen [1, 2, 3, 4, 5, "and so on"].</p> 
+<p> </p>

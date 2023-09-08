@@ -1,0 +1,5 @@
+<r xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<map>
+		<e k="x" v="2" config:operation="update"></e>
+	</map>
+</r>

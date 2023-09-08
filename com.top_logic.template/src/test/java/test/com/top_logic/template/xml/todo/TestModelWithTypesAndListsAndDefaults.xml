@@ -1,0 +1,110 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<t:type name="Example_Type_List_With_Defaults">
+				<t:attributes>
+					<t:attribute name="Example_Attribute_Alpha" type="string" default="Foo"/>
+					<t:attribute name="Example_Attribute_Beta_List" multiple="true" type="string">
+						<t:default>
+							<t:entry value="alpha"/>
+							<t:entry value="beta"/>
+							<t:entry value="gamma"/>
+						</t:default>
+					</t:attribute>
+				</t:attributes>
+			</t:type>
+			
+			<t:type name="Example_Type_With_Defaults">
+				<t:attributes>
+					<!-- The default values defined here are used if the structure is given but some attributes are omitted. -->
+					<t:attribute name="Example_Attribute_A" type="string" default="Some default value"/>
+					<t:attribute name="Example_Attribute_B" type="string" default="Another default value"/>
+					<t:attribute name="Example_Attribute_C" type="string"/>
+				</t:attributes>
+			</t:type>
+			
+			<t:type name="Example_Type_List_Of_Structures">
+				<t:attributes>
+					<t:attribute name="Example_Attribute_Alpha" type="string" default="Foo" />
+					<t:attribute name="Example_Attribute_List_Beta" multiple="true" type="Example_Type_With_Defaults" >
+						<t:default>
+							<t:entry>
+								<!-- Don't use the default value. -->
+								<t:attribute name="Example_Attribute_A" value="My different funny default value" />
+								
+								<!-- Example_Attribute_B can be omitted.
+								Its already defined default value will be used. -->
+								
+								<!-- Example_Attribute_C cannot be omitted, as there is no default value. -->
+								<t:attribute name="Example_Attribute_C" value="Fubar" />
+							</t:entry>
+							<t:entry>
+								<t:attribute name="Example_Attribute_C" value="Snafu" />
+							</t:entry>
+							<t:entry>
+								<t:attribute name="Example_Attribute_A" value="Bli" />
+								<t:attribute name="Example_Attribute_B" value="Bla" />
+								<t:attribute name="Example_Attribute_C" value="Blub" />
+							</t:entry>
+						</t:default>
+					</t:attribute>
+				</t:attributes>
+			</t:type>
+			
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Example_Structure_With_List_And_Defaults" type="Example_Type_List_With_Defaults">
+				<t:default>
+					<t:attribute name="Example_Attribute_Alpha" value="Deutsch"/>
+					<t:attribute name="Example_Attribute_Beta_List">
+						<t:entry value="Yes"/>
+						<t:entry value="No"/>
+						<t:entry value="Depends"/>
+						<t:entry value="Unknown"/>
+						<t:entry value="Irrelevant"/>
+					</t:attribute>
+				</t:default>
+			</t:parameter>
+			
+			<t:parameter name="Example_Structure_With_List_Of_Structures" type="Example_Type_List_Of_Structures">
+				<t:default>
+					<t:attribute name="Example_Attribute_Alpha" value="One" />
+					<t:attribute name="Example_Attribute_List_Beta">
+						<t:entry>
+							<t:attribute name="Example_Attribute_A" value="Two" />
+							<t:attribute name="Example_Attribute_B" value="Three" />
+							<t:attribute name="Example_Attribute_C" value="Four" />
+						</t:entry>
+						<t:entry>
+							<!-- Don't use the default value. -->
+							<t:attribute name="Example_Attribute_A" value="Five" />
+							
+							<!-- Example_Attribute_B can be omitted.
+							Its already defined default value will be used. -->
+							
+							<!-- Example_Attribute_C cannot be omitted, as there is no default value. -->
+							<t:attribute name="Example_Attribute_C" value="Six" />
+						</t:entry>
+						<t:entry>
+							<t:attribute name="Example_Attribute_C" value="Seven" />
+						</t:entry>
+						<t:entry>
+							<t:attribute name="Example_Attribute_A" value="Eight" />
+							<t:attribute name="Example_Attribute_B" value="Nine" />
+							<t:attribute name="Example_Attribute_C" value="Ten" />
+						</t:entry>
+					</t:attribute>
+				</t:default>
+			</t:parameter>
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<!-- TODO -->
+	</t:body>
+</t:template>

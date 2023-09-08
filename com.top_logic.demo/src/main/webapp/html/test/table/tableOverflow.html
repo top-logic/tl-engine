@@ -1,0 +1,76 @@
+<html>
+	<style>
+
+		.tbl {
+			width: 100%;
+			border-collapse: collapse;
+			table-layout:fixed;
+			overflow:hidden;
+			background: #FFFFFF;
+			border-color:#555555;
+		}
+		.tbl td {
+			text-overflow:ellipsis;
+			overflow:hidden;
+		} 
+
+		.vc {
+			border-left:    1px solid red;
+			border-top:     1px solid red;
+			border-bottom:  1px solid red;
+			border-right:   1px solid red;
+			background:     #F0F0FF;
+		}
+		
+		.tbl th {
+			border-left:    1px solid red;
+			border-top:     1px solid red;
+			border-bottom:  1px solid red;
+			border-right:   1px solid red;
+			background:     #C0C0C0;
+		} 
+
+		.hiddenRow {
+			height:0px;
+			/*
+			display:none;
+			*/
+		} 
+
+		.hiddenCell {
+			height:0px;
+			border:    0px solid blue;
+		} 
+		
+	</style>
+
+	<body>
+		<table border="0" class="tbl">
+		  <tr class="hiddenRow">
+		  	<td width="30px" class="hiddenCell"></td> 
+		  	<td width="150px" class="hiddenCell"></td> 
+		  	<td class="hiddenCell"></td> 
+		  	<td width="100" class="hiddenCell"></td> 
+		  	<td width="50" class="hiddenCell"></td> 
+		  </tr>
+		  <tr>
+		  	<th class="vc" colspan="5">Title</th> 
+		  </tr>
+		  <tr>
+		  	<td class="vc" align="center">1</td> 
+		  	<td colspan="2" class="vc"><nobr>The quick brown fox jumped over the lazy dog. The quick brown fox jumped over the lazy dog.</nobr></td>
+		  	<td colspan="2"class="vc">The quick brown fox jumped over the lazy dog. The quick brown fox jumped over the lazy dog.</td>
+		  </tr>
+		  <tr>
+		  	<td class="vc">The quick brown fox jumped over the lazy dog. The quick brown fox jumped over the lazy dog.</td>
+		  	<td class="vc" colspan="2">The quick brown fox jumped over the lazy dog. The quick brown fox jumped over the lazy dog.</td>
+		  	<td class="vc" colspan="2"><nobr>The quick brown fox jumped over the lazy dog. The quick brown fox jumped over the lazy dog.</nobr></td>
+		  </tr>
+		  <tr>
+		  	<td class="vc"><nobr>The quick brown fox jumped over the lazy dog. The quick brown fox jumped over the lazy dog.</nobr></td> 
+		  	<td colspan="2" class="vc"  align="center"><nobr>The quick brown fox jumped over the lazy dog. The quick brown fox jumped over the lazy dog.</nobr></td>
+		  	<td colspan="2"class="vc"><nobr>The quick brown fox jumped over the lazy dog. The quick brown fox jumped over the lazy dog.</nobr></td>
+		  </tr>
+		</table>
+	</body>
+</html>

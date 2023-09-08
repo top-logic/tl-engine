@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- element main configuration file                         -->
+
+<root>
+    <alias>
+        <entry name="%QUICK_SEARCH_SEARCH_COMPONENT%" value="" comment="Use default search component by default."/>
+    </alias>
+
+    <properties>
+        <section name="CollectionFilterFactory" comment="Configuration of the CollectionFilterFactory">
+            <entry name="factory"   value="com.top_logic.element.meta.query.kbbased.KBBasedFilterFactory" />
+        </section>
+
+        <section name="FlexWrapperListPartitionHelper" comment="Expected partition-size">
+            <entry name="size"           value="25" />
+        </section>
+
+        <section name="SimpleStructuredElementFactory" comment="Configuration of hierarchy of simpleStrucuredElements">
+            <entry name="rootElement" value="project" />
+            <entry name="project" value="subproject, workpackage, order" />
+            <entry name="subproject" value="subproject, workpackage, order" />
+            <entry name="workpackage" value="subproject, workpackage, order" />
+            <entry name="order" value="subproject, workpackage, order" />
+        </section>
+
+        <section name="DisplayDescriptionHelper" comment="configuration for DisplayDescriptionHelper">
+            <entry name="class" value="com.top_logic.element.layout.uiconfig.DisplayDescriptionHelper"/>
+        </section>
+		
+    </properties>
+</root>

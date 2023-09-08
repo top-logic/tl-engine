@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/demo/create-A.xml"
+			template-name-comment="Element Anlegen"
+		>
+			<parameters>
+				<parameter name="ergebnis">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestGalleryInDialog"
+					/>
+				</parameter>
+				<parameter name="Name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestGalleryInDialog"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Sicht/Action-Sicht-Anzeigen.xml"
+			template-name-comment="Sicht Anzeigen"
+		>
+			<parameters>
+				<parameter name="Pfad">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Tabellen > Grid"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.element.layout.grid.OpenDetailDialog$Naming$Name">
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+						tab-path="Tabellen > Grid"
+					/>
+				</component>
+				<row config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+							tab-path="Tabellen > Grid"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+									name="TestGalleryInDialog"
+								/>
+							</node>
+						</path>
+					</model-name>
+				</row>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Knopf/Action-Knopf-Druecken.xml"
+			template-name-comment="Knopf Druecken"
+		>
+			<parameters>
+				<parameter name="Name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Bearbeiten"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.basic.CommandModelNaming$CommandModelName">
+				<owner config:interface="com.top_logic.layout.basic.GenericCommandModelNaming$GenericCommandModelName">
+					<algorithm class="com.top_logic.layout.image.gallery.scripting.GalleryEditButtonProvider"/>
+					<reference config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+						<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="gallery"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
+								tab-path=""
+							/>
+						</model-name>
+					</reference>
+				</owner>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.image.gallery.scripting.GalleryNamingScheme$Name">
+				<gallery-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="gallery"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
+						tab-path=""
+					/>
+				</gallery-name>
+			</model-name>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-name="uploadField"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+						base64data="_9j_4AAQSkZJRgABAQAAAQABAAD_2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL_2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL_wAARCAAUABQDASIAAhEBAxEB_8QAGQABAAMBAQAAAAAAAAAAAAAAAAEFBgQH_8QAJhAAAgIBAwMEAwEAAAAAAAAAAQIDBBEABRIGMUETITKRI1Figf_EABQBAQAAAAAAAAAAAAAAAAAAAAD_xAAUEQEAAAAAAAAAAAAAAAAAAAAA_9oADAMBAAIRAxEAPwD17qq_NXjpUoJpIDblb1JovmkUaGR-P9ELxH65Z8ay1PcY6cUG50Yt5pyJXqW7UN6xJKksU8hUqwdmw64JyMHt4yNafdCJet9jgUgtFWtWGGew_Gg--Z-jqOssDpDcmb4LFycnwoIJP-AE6DSaahWDKGUgqRkEdjpoKLc-lKu67jLcmu3o_XiSGaGKRVSSNSSEJ48gCSc8SM51zHoTacyqJr6QNn0a8dpkjr5OW4Bcdz4OR4GB7aaaC_oUodt26tRrhhBWiWGMMxYhVAAyT7n2HfTTTQf_2Q"
+						content-type="image/jpeg"
+						name="ghost.jpeg"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Knopf/Action-Knopf-Druecken.xml"
+			template-name-comment="Knopf Druecken"
+		>
+			<parameters>
+				<parameter name="Name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Abbrechen"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Knopf/Action-Knopf-Druecken.xml"
+			template-name-comment="Knopf Druecken"
+		>
+			<parameters>
+				<parameter name="Name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Abbrechen"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Knopf/Action-Knopf-Druecken.xml"
+			template-name-comment="Knopf Druecken"
+		>
+			<parameters>
+				<parameter name="Name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Schließen"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Element/Action-Element-Loeschen.xml"
+			template-name-comment="Element Loeschen"
+		>
+			<parameters>
+				<parameter name="kontext">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestGalleryInDialog"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+	</actions>
+</action>

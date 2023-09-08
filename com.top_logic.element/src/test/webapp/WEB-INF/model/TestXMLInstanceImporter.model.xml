@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model 
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="TestXMLInstanceImporter">
+			<annotations>
+				<singletons>
+					<singleton type="R" />
+				</singletons>
+			</annotations>
+			<types>
+				<class name="S">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<reference name="parent" type="S" aggregate="true"/>
+					</attributes>
+				</class>
+				
+				<class name="R">
+					<generalizations>
+						<generalization type="S"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="ROOT"/>
+								</default-value>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+				
+				<class name="A">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<reference name="context" type="S" aggregate="true"/>
+						<property name="name" type="tl.core:String" />
+						<property name="bool" type="tl.core:Boolean" />
+						<property name="str" type="tl.core:String" />
+						<property name="int" type="tl.core:Integer" />
+						<property name="double" type="tl.core:Double" />
+						<property name="item" type="ConfigValue" />
+						<reference name="other" type="A" multiple="false"/>
+						<reference name="others" type="A" multiple="true" ordered="true"/>
+						<reference name="any" type="tl.model:TLObject" multiple="true" ordered="true"/>
+						<reference name="enumSingle" type="MyEnum" multiple="false"/>
+						<reference name="enumMultiple" type="MyEnum" multiple="true" ordered="true"/>
+					</attributes>
+				</class>
+				
+				<enum name="MyEnum">
+					<classifiers>
+						<classifier name="A"/>
+						<classifier name="B"/>
+					</classifiers>
+				</enum>
+				
+				<datatype name="ConfigValue" kind="Custom" db_type="string">
+					<annotations>
+						<config-type value="CONFIGURATION"/>
+					</annotations>
+					<configuration-storage config-interface="test.com.top_logic.element.model.instance.importer.ConfigValue" />
+				</datatype>
+			</types>
+		</module>
+	</modules>
+</model>

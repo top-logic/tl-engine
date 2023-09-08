@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="TestClipboard"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+					tab-path="Strukturen > Typendemo"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo > 2 Dokumente"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Zwischenablage öffnen"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+					tab-path="Strukturen > Typendemo > 2 Dokumente"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="false"
+			reason-key="class.com.top_logic.common.webfolder.ui.clipboard.I18NConstants.NO_ROW_SELECTED"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Löschen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="false"
+			reason-key="class.com.top_logic.common.webfolder.ui.clipboard.I18NConstants.NO_ROW_SELECTED"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Anhängen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="false"
+			reason-key="class.com.top_logic.common.webfolder.ui.clipboard.I18NConstants.DISABLED_EMPTY_CLIPBOARD"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Leeren"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Schließen"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+				<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+					tab-path="Strukturen > Typendemo > 2 Dokumente"
+				/>
+				<path>
+					<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+						field-name="rows"
+					/>
+					<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+						column-name="_clipboard"
+					>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+							provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+						>
+							<name>
+								<part key="element">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="testClipboard1.txt"
+									/>
+								</part>
+							</name>
+						</row-object>
+					</node>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Zwischenablage öffnen"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+					tab-path="Strukturen > Typendemo > 2 Dokumente"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="false"
+			reason-key="class.com.top_logic.common.webfolder.ui.clipboard.I18NConstants.NO_ROW_SELECTED"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Löschen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="true"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Leeren"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="false"
+			reason-key="class.com.top_logic.common.webfolder.ui.clipboard.I18NConstants.NO_ROW_SELECTED"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Anhängen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Leeren"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="false"
+			reason-key="class.com.top_logic.common.webfolder.ui.clipboard.I18NConstants.DISABLED_EMPTY_CLIPBOARD"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Leeren"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Schließen"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+				<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+					tab-path="Strukturen > Typendemo > 2 Dokumente"
+				/>
+				<path>
+					<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+						field-name="rows"
+					/>
+					<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+						column-name="_clipboard"
+					>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+							provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+						>
+							<name>
+								<part key="element">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="testClipboard1.txt"
+									/>
+								</part>
+							</name>
+						</row-object>
+					</node>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+				<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+					tab-path="Strukturen > Typendemo > 2 Dokumente"
+				/>
+				<path>
+					<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+						field-name="rows"
+					/>
+					<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+						column-name="_clipboard"
+					>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+							provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+						>
+							<name>
+								<part key="element">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="testClipboard2.txt"
+									/>
+								</part>
+							</name>
+						</row-object>
+					</node>
+				</path>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+			failure-expected="false"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Zwischenablage öffnen"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+					tab-path="Strukturen > Typendemo > 2 Dokumente"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-name="rows"
+						/>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+							column-name="_check"
+						>
+							<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+								provider-name="com.top_logic.knowledge.wrap.WrapperNaming"
+							>
+								<name>
+									<part key="name">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+											string="testClipboard2.txt"
+										/>
+									</part>
+								</name>
+							</row-object>
+						</field>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+						boolean="true"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="true"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Löschen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="true"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Anhängen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Löschen"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="false"
+			reason-key="class.com.top_logic.common.webfolder.ui.clipboard.I18NConstants.NO_ROW_SELECTED"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Löschen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckLabeledExecutabilityOp"
+			executable="false"
+			reason-key="class.com.top_logic.common.webfolder.ui.clipboard.I18NConstants.NO_ROW_SELECTED"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming$LabeledButtonName"
+				label="Anhängen"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Schließen"
+			user-id="root"
+		/>
+	</actions>
+</action>

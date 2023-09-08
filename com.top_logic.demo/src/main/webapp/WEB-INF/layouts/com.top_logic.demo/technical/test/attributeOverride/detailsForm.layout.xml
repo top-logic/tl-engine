@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor=""
+		model="selection(com.top_logic.demo/technical/test/attributeOverride/instancesTable.layout.xml#Table)"
+		saveClosesDialog="true"
+		type=""
+	>
+		<name key="dynamic.3d304785-7404-4991-8b2d-4c610100c4d1">
+			<en>Generic form</en>
+			<de>Generisches Fomular</de>
+		</name>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="commons"
+>
+	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters">
+		<annotations>
+			<display-inherited value="APPEND"/>
+		</annotations>
+
+		<property name="components"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<available-templates value="layoutPlaceholder"/>
+			<options
+				fun="com.top_logic.layout.editor.DynamicComponentOptions"
+				mapping="com.top_logic.layout.editor.DynamicComponentOptionMapping"
+			/>
+			<option-labels value="com.top_logic.layout.editor.DynamicComponentDefinition$Labels"/>
+			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplatesDefault"/>
+			<layout-templates value="com.top_logic/layoutPlaceholder.template.xml,com.top_logic/layoutPlaceholder.template.xml"/>
+		</property>
+	</properties>
+
+	<layout name="InnerLayout"
+		components="${components}"
+		horizontal="${horizontal}"
+		resizable="${resizable}"
+		resizeMode="instant"
+	/>
+</config:template>

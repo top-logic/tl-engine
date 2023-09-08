@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+	<alias>
+        <entry name="%PAC_AZURE_TENANT%" value="${env:tl_pac_azure_tenant}" />
+	</alias>
+</root>

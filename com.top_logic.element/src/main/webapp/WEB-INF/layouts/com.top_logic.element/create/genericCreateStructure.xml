@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="createHandler"
+			value="genericCreateStructure"
+		/>
+		<param name="typeOptions"
+			value="com.top_logic.element.layout.create.StructureChildTypeOptions"
+		/>
+
+		<!-- Inherited from "com.top_logic.element/create/genericCreate.xml" -->
+		<param name="namePrefix"
+			optional="true"
+		/>
+		<param name="dialogName"
+			optional="true"
+		/>
+		<param name="detailComponentName"
+			optional="true"
+		/>
+		<param name="forms"
+			optional="true"
+		/>
+		<param name="model"
+			optional="true"
+		/>
+		<param name="createCommandGroups"
+			optional="true"
+		/>
+		<param name="securityProvider"
+			value="default"
+		/>
+		<param name="resPrefix"
+			optional="true"
+		/>
+		<param name="titleKey"
+			optional="true"
+		/>
+
+		<param name="newModelAction"
+			value="set-parent-model"
+		/>
+		<param name="setParentToEdit"
+			value="true"
+		/>
+	</params>
+
+	<include name="com.top_logic.element/create/genericCreate.xml"
+		createCommandGroups="${createCommandGroups}"
+		createHandler="${createHandler}"
+		detailComponentName="${detailComponentName}"
+		dialogName="${dialogName}"
+		forms="${forms}"
+		model="${model}"
+		namePrefix="${namePrefix}"
+		resPrefix="${resPrefix}"
+		securityProvider="${securityProvider}"
+		titleKey="${titleKey}"
+		typeOptions="${typeOptions}"
+		z_legacy_newModelAction="${newModelAction}"
+		z_legacy_setParentToEdit="${setParentToEdit}"
+	/>
+</template>

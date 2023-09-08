@@ -1,0 +1,47 @@
+<h2>Syntax</h2> 
+<pre>	<code>dateFormat($pattern)</code>
+</pre> 
+<h2>Description</h2> 
+<p>Constructs a date format with the given pattern for either <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> or <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> calls.</p> 
+<p>See <a href="https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html">SimpleDateFormat</a>.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>pattern</td> 
+   <td>String</td> 
+   <td> <p>The pattern in which to format. The following characters are possible:</p> 
+    <ul> 
+     <li>y - year</li> 
+     <li>M - month in year</li> 
+     <li>d - day in month</li> 
+     <li>for other symbols see <a href="https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html">SimpleDateFormat</a>.</li> 
+    </ul> </td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<p> </p> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business Object</p> 
+<p>A date format which can now be used for <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> or <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> calls.</p> 
+<h2>Examples</h2> 
+<h3>Format</h3> 
+<pre>	<code>dateFormat("dd-MM-yy").format(date(2012, 11, 5))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 05-12-2012</p> 
+<h3>Parse</h3> 
+<pre>	<code>dateFormat("dd-MM-yy").parse("04-12-12")</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 04.12.2012</p> 
+<p> </p>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<a xmlns:c="http://www.top-logic.com/ns/config/6.0">
+	<b id="c1"
+		a="a"
+		foo1="bar1"
+		foo2="bar2"
+		z="z"
+	>
+		<c foo1="bar1"/>
+		<c
+			a="a"
+			foo1="bar1"
+			foo2="bar2"
+			z="z"
+		/>
+		<c key="Foobar"
+			c:interface="Foobar"
+			another="Foobar"
+			class="Foobar"
+			id="Foobar"
+			name="Foobar"
+			service-class="Foobar"
+		/>
+		<c id="Foobar"
+			c:interface="Foobar"
+			another="Foobar"
+			class="Foobar"
+			name="Foobar"
+			service-class="Foobar"
+		/>
+		<c c:interface="Foobar"
+			another="Foobar"
+			class="Foobar"
+			name="Foobar"
+			service-class="Foobar"
+		/>
+		<c class="Foobar"
+			another="Foobar"
+			name="Foobar"
+			service-class="Foobar"
+		/>
+		<c service-class="Foobar"
+			another="Foobar"
+			name="Foobar"
+		/>
+		<c name="Foobar"
+			another="Foobar"
+		/>
+	</b>
+</a>

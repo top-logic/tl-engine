@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.81a7def0-1894-4a2a-80d5-6049ff14771f">
+				<en>Create node</en>
+				<de>Knoten anlegen</de>
+			</title>
+		</title>
+		<open-handler id="ID_070160b5_8f3b_4083_b7cb_16ed16bb24a9"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			targetComponent="com.top_logic.demo/technical/components/graph/createNode/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.81a7def0-1894-4a2a-80d5-6049ff14771f">
+				<en>Create node</en>
+				<de>Knoten anlegen</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="test.graph:Node"/>
+		<create-handler id="ID_b998386a_600c_498d_83ec_c98dc2f53bb3"/>
+	</arguments>
+</config:template-call>

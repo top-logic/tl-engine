@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration schema-update="true">
+	<version name="Ticket-23398-LockService"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="migration_23387"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+	</processors>
+</migration>

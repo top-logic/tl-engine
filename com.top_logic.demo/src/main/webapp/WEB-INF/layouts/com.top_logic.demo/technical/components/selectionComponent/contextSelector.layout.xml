@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments
+		multiple="true"
+		presentation="pop-up-list"
+	>
+		<titleKey key="dynamic.66062e0f-64a2-4e4d-9908-9ea2c0020773">
+			<en>Context</en>
+			<de>Kontext</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="all(`DemoTypes:A`)"
+			modelForElement="null"
+			supportsElement="candidate -> $candidate.instanceOf(`tl.element:StructuredElement`)"
+			supportsModel="true"
+		/>
+		<optionLabelProvider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+			<label>x -&gt; toString($x, " (", $x.get(`DemoTypes:DemoTypes.All#parent`), ")")</label>
+		</optionLabelProvider>
+		<buttons>
+			<button id="ID_d7c2768d_c265_4a73_ab8b_45ca8fc9ca5e"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+				disabledImage=""
+				image=""
+			>
+				<resourceKey key="dynamic.c500727f-7c4a-40b2-b112-8ea5173fe752">
+					<en>Update</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

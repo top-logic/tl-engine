@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="customconfig.xsd">
+    <components>
+        <ConfigCustomizations>
+            <Settings>
+                <NodeValue Component="test-A" Value="v1" XPath="/r[1]/a[1]/v[1]"/>
+                <NodeValue Component="test-A" Value="v2-content &lt;&amp;&gt;&#13;&#10; AA" XPath="/r[1]/a[1]/v[2]"/>
+                <AttributeSet Component="test-A" Name="a4" Value="v4" XPath="/r[1]/a[1]/v[4]"/>
+                <AttributeSet Component="test-A" Name="a5" Value="&lt;&amp;&gt;&#13;&#10; AA" XPath="/r[1]/a[1]/v[5]"/>
+            </Settings>
+        </ConfigCustomizations>
+    </components>
+</configuration>

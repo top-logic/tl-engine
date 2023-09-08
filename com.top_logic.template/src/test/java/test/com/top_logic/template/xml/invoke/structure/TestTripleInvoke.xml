@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+	</t:head>
+	<t:body>
+		pre
+		<t:invoke template="TestTriple.xml">
+			
+			<t:parameter name="Example_Structure_Triple">
+				<t:attribute name="Attribute_A" value="red" />
+				<t:attribute name="Attribute_B" value="green" />
+				<t:attribute name="Attribute_C" value="blue" />
+			</t:parameter>
+			
+		</t:invoke>
+		post
+	</t:body>
+</t:template>

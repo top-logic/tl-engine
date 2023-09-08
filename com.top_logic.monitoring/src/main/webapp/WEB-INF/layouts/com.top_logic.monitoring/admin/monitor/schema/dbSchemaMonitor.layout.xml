@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminMonitorSchema"
+	helpIDLegacy="util.monitor.schema.layout.tabber"
+	titleKey="util.monitor.schema.layout.tabber"
+>
+	<tabInfo label="util.monitor.schema.layout.tabber"/>
+	<components>
+		<include name="com.top_logic.monitoring/admin/monitor/schema/schemaMonitor.xml"/>
+	</components>
+</securityLayout>

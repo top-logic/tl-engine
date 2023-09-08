@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test - at first activate regular expressions"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Tabellen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+					column-label="Name"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+							tab-path="Tabellen > Grid"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Regulärer Ausdruck"
+					>
+						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</table-name>
+						</component>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</table-name>
+						</form>
+						<path>
+							<named-member name="filterDialogContent"/>
+							<named-member name="filterDialogContent0"/>
+							<named-member name="filterField"/>
+							<named-member name="text"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="*f*"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+								context-name=""
+							>
+								<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+										tab-path="Tabellen > Grid"
+									/>
+									<path>
+										<named-member name="fieldTable"/>
+									</path>
+								</table-name>
+							</form>
+							<path>
+								<named-member name="filterDialogContent"/>
+								<named-member name="filterDialogContent0"/>
+								<named-member name="filterField"/>
+								<named-member name="text"/>
+							</path>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="*f*"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</table-name>
+						</form>
+						<path>
+							<named-member name="filterDialogContent"/>
+							<named-member name="filterDialogContent0"/>
+							<named-member name="filterField"/>
+							<named-member name="text"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Alle anzeigen"
+					>
+						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</table-name>
+						</component>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test - make existing pattern to regular expression"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+					column-label="Name"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+							tab-path="Tabellen > Grid"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</table-name>
+						</form>
+						<path>
+							<named-member name="filterDialogContent"/>
+							<named-member name="filterDialogContent0"/>
+							<named-member name="filterField"/>
+							<named-member name="text"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="*f*"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Anwenden"
+					>
+						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</table-name>
+						</component>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.OpenTableFilterOp"
+					column-label="Name"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+							tab-path="Tabellen > Grid"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Regulärer Ausdruck"
+					>
+						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</table-name>
+						</component>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Anwenden"
+					>
+						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</table-name>
+						</component>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+								context-name=""
+							>
+								<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+										tab-path="Tabellen > Grid"
+									/>
+									<path>
+										<named-member name="fieldTable"/>
+									</path>
+								</table-name>
+							</form>
+							<path>
+								<named-member name="filterDialogContent"/>
+								<named-member name="filterDialogContent0"/>
+								<named-member name="filterField"/>
+								<named-member name="text"/>
+							</path>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="*f*"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</table-name>
+						</form>
+						<path>
+							<named-member name="filterDialogContent"/>
+							<named-member name="filterDialogContent0"/>
+							<named-member name="filterField"/>
+							<named-member name="text"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Alle anzeigen"
+					>
+						<component config:interface="com.top_logic.layout.table.control.FilterFormOwner$Naming$Name"
+							context-name=""
+						>
+							<table-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/table/grid/demoGrid.layout.xml#tableGrid"
+									tab-path="Tabellen > Grid"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</table-name>
+						</component>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

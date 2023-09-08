@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="resPrefix"/>
+		<param name="tileProvider">
+			<!-- empty -->
+		</param>
+	</params>
+	<include name="tiles/tileTemplate_shared.xml"
+		resPrefix="${resPrefix}demoTypeOverviewAsTile."
+		securityDomain="DemoTypes"
+		tileName="${namePrefix}demoTypeOverviewAsTile"
+	>
+		<component>
+			<component class="com.top_logic.mig.html.layout.tiles.component.TileListComponent"
+				name="${namePrefix}overview"
+			>
+				<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"
+					meta-elements="DemoTypes:DemoTypes.Root, DemoTypes:DemoTypes.All"
+				/>
+			</component>
+		</component>
+		<tileConfig>
+			${tileProvider}
+			<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+				description="${resPrefix}demoTypeOverviewAsTile.description"
+				icon="theme:ICON_CODE_BRANCH"
+			/>
+			<tiles>
+				<include name="tiles/tileTemplate_shared.xml"
+					resPrefix="${resPrefix}demoTypeMail."
+					securityDomain="DemoTypes"
+					tileName="${namePrefix}demoTypeMail"
+				>
+					<component>
+						<include name="mail/mailFolder/mailFolder_aliased.xml"
+							defaultFor=""
+							masterComponent="${namePrefix}overview"
+							namePrefix="${namePrefix}MailFolder"
+						/>
+					</component>
+					<tileConfig>
+						<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+							description="${resPrefix}demoTypeMail.description"
+							icon="theme:ICON_ENVELOPE"
+						/>
+					</tileConfig>
+				</include>
+				<include name="tiles/tileTemplate_shared.xml"
+					resPrefix="${resPrefix}demoTypeDocuments."
+					securityDomain="DemoTypes"
+					tileName="${namePrefix}demoTypeDocuments"
+				>
+					<component>
+						<include name="commons/webfolder/documents.xml"
+							model="selection(${namePrefix}overview)"
+							namePrefix="${namePrefix}DemoTypesDocuments"
+						/>
+					</component>
+					<tileConfig>
+						<preview class="com.top_logic.demo.layout.demo.tile.NumberDocumentsPreview"
+							icon="theme:ICON_CLOUD_UPLOAD_ALT"
+						/>
+					</tileConfig>
+				</include>
+			</tiles>
+			<builders>
+				<include name="tiles/document/documentTileBuilder.xml"
+					model="selection(${namePrefix}overview)"
+					securityId="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+				>
+					<formBuilder>
+						<formBuilder class="com.top_logic.mig.html.layout.tiles.document.DocumentTileFormBuilder"
+							resPrefix="layouts.tiles.documents.documentTileBuilder.displayDocumentTile."
+							selectComponent="${namePrefix}overview"
+							uploadComponent="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsFolder"
+						/>
+					</formBuilder>
+				</include>
+			</builders>
+		</tileConfig>
+	</include>
+</template>

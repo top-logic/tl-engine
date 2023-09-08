@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor=""
+		model="selection(com.top_logic.demo/technical/components/containmentContext/thingsGrid.layout.xml#Grid)"
+		saveClosesDialog="true"
+		type=""
+	>
+		<name key="dynamic.f62ced32-911c-4bba-a8be-20f4033f634d">
+			<de>Details</de>
+		</name>
+	</arguments>
+</config:template-call>

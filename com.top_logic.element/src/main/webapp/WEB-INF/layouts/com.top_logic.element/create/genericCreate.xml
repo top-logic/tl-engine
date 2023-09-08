@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="modelBuilder">
+			<modelBuilder class="com.top_logic.element.layout.create.CreateFormBuilder"
+				typeOptions="${typeOptions}"
+			>
+				<forms>${forms}</forms>
+			</modelBuilder>
+		</param>
+
+		<param name="typeOptions"
+			value="com.top_logic.element.layout.create.StructureChildTypeOptions"
+		/>
+
+		<param name="createHandler"
+			value=""
+		/>
+		<param name="forms"
+			optional="true"
+		/>
+		<param name="buttons"
+			optional="true"
+		/>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="dialogName"
+			value="${namePrefix}Dialog"
+		/>
+		<param name="detailComponentName"
+			value="${namePrefix}Editor"
+		/>
+
+		<!-- Note: The create component has a problematic default: model(dialogParent()). This must be overridden to allow setting a model from the open handler. -->
+		<param name="model"
+			value=""
+		/>
+
+		<param name="createCommandGroups"
+			optional="true"
+		/>
+		<param name="securityProvider"
+			value="default"
+		/>
+		<param name="securityObject"
+			value="model"
+		/>
+		<param name="resPrefix"
+			value="layouts.element.create.genericCreate."
+		/>
+		<param name="titleKey"
+			value="${resPrefix}title"
+		/>
+		<param name="commands"
+			optional="true"
+		/>
+
+		<!-- DEPRECATED: This should be configured as post-create action in the create command handler. -->
+		<param name="z_legacy_newModelAction"
+			value="no-action"
+		/>
+
+		<!-- DEPRECATED: This should be configured as post-create action in the create command handler. -->
+		<param name="z_legacy_setParentToEdit"
+			value="false"
+		/>
+	</params>
+
+	<layout name="${dialogName}">
+		<component class="com.top_logic.layout.form.component.AbstractCreateComponent"
+			buttonComponent="${namePrefix}Buttons"
+			commandGroups="${createCommandGroups}"
+			commands="${commands}"
+			create-handler="${createHandler}"
+			model="${model}"
+			modelBuilder="${modelBuilder}"
+			name="${detailComponentName}"
+			newModelAction="${z_legacy_newModelAction}"
+			page="/jsp/element/create/GenericCreate.jsp"
+			resPrefix="${resPrefix}"
+			securityObject="${securityObject}"
+			securityProviderClass="${securityProvider}"
+			setParentToEdit="${z_legacy_setParentToEdit}"
+			titleKey="${titleKey}"
+		>
+			<buttons>${buttons}</buttons>
+		</component>
+		<buttonbar name="${namePrefix}Buttons"/>
+	</layout>
+</template>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="demo.table.tabber"
+		z_legacy_componentName="tablesDemo"
+		z_legacy_tabBarName="tablesDemo_tabBar"
+		z_legacy_tabLabel="demo.table.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/tables/table1/demoTableComponentContainer.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/tables/custom/demoTableComponentCustom.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/tables/multipleTables/demoMultipleTablesView.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/tables/partialWidthTable/demoPartialTable.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/tables/frozen/demoTableComponentFrozenContainer.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/tables/frozenLarge/demoLargeTableComponent.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/tables/formula/demoFormTable.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/tables/viewpane/demoTableVisiblePane.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/tables/xlsxExport/demoXlsxExport.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/tables/sortFilterIconState/DemoSortFilterTable.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

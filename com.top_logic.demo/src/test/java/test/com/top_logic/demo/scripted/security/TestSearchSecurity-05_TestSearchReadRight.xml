@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="TestSearchSecurity"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Suche"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="TestSearchSecurity"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Fachobjekt"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+					tab-path="Suche"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+						table="MetaElement"
+					>
+						<attributes>
+							<attribute name="scope">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="TLModule"
+								>
+									<attributes>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="DemoTypes"
+											/>
+										</attribute>
+									</attributes>
+								</value>
+							</attribute>
+							<attribute name="name">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="DemoTypes.A"
+								/>
+							</attribute>
+						</attributes>
+					</value>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.meta.search.SearchCommandHandler"
+			command-label="Suchen"
+			command-name="searchAttributed"
+			component-implementation-comment="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+			component-name="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput"
+			user-id="TestSearchSecurity"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="true"
+			user-id="TestSearchSecurity"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.reporting/search/searchResult.layout.xml#SearchAttributedSearchResultTable"
+						tab-path="Suchergebnis"
+					/>
+				</table>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+				int="0"
+			/>
+		</action>
+	</actions>
+</action>

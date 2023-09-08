@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.app.rewrite">
+		<class name="MyOtherType">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+		<class name="MyType">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="MyInstances"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.app.rewrite:MyType#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="uuid"
+							fullQualifiedName="test.app.rewrite:MyType#uuid"
+							type="tl.core:String"
+							visibility="read-only"
+						/>
+						<field
+							attribute="single"
+							fullQualifiedName="test.app.rewrite:MyType#single"
+							type="test.app.rewrite:MyOtherType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage storage-attribute="single" storage-type="MyInstances"/>
+								</storage-algorithm>
+							</annotations>
+						</field>
+						<field
+							attribute="multiple"
+							fullQualifiedName="test.app.rewrite:MyType#multiple"
+							type="test.app.rewrite:MyOtherType"
+						/>
+						<field
+							attribute="text"
+							fullQualifiedName="test.app.rewrite:MyType#text"
+							type="tl.core:Text"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<reference name="single"
+					kind="forwards"
+					navigate="true"
+					type="MyOtherType"
+				/>
+				<reference name="multiple"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="MyOtherType"
+				/>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="text"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<size-constraint/>
+					</annotations>
+				</property>
+				<property name="uuid"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+	</t:head>
+	<t:body>
+		<t:invoke template="TestXmlList.xml">
+			
+			<t:parameter name="XML_List_Parameter">
+				<t:entry><t:value>1<!-- 2 --><foo>3</foo><bar bla="blub"/><fubar><!-- 4 --></fubar></t:value></t:entry>
+				<t:entry><t:value /></t:entry>
+				<t:entry value="" />
+				<t:entry><t:value><foo><bar><fubar /></bar></foo></t:value></t:entry>
+				<t:entry><t:value>123</t:value></t:entry>
+				<t:entry><t:value><!-- Some Comment --></t:value></t:entry>
+			</t:parameter>
+			
+		</t:invoke>
+	</t:body>
+</t:template>

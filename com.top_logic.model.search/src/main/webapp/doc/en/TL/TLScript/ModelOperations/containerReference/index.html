@@ -1,0 +1,41 @@
+<h2>Syntax</h2> 
+<pre>	<code>$object.containerReference()</code>
+</pre> 
+<h2>Description</h2> 
+<p>Returns the reference attribute where <code class="hljs inlineCode">object</code> is stored in its container. If <code class="hljs inlineCode">$object.container() != null</code>, then: <code class="hljs inlineCode">$object.container().get($object.containerReference()).containsElement($object)</code>.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>object</td> 
+   <td>Business object</td> 
+   <td>The object for which it is to be determined in which reference attribute it is stored in the container.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p> 
+<p>The reference attribute in the container of <code class="hljs inlineCode">object</code>, where <code class="hljs inlineCode">object</code> is stored.</p> 
+<h2>Examples</h2> 
+<pre>	<code>{
+   a = new(`my.module:MyClass`);
+   b = new(`my.module:MyClass`);
+   $a.add(`my.module:MyClass#children`, $b);
+   $b.containerReference();
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> The attribute <code class="hljs inlineCode">`my.module:MyClass#children`</code>.</p> 
+<p><code class="hljs inlineCode">b</code> is entered here into the reference attribute <code class="hljs inlineCode">children</code> of <code class="hljs inlineCode">a</code> . <code class="hljs inlineCode">a</code> is the container of <code class="hljs inlineCode">b</code> and <code class="hljs inlineCode">`my.module:MyClass#children`</code> is the reference attribute in the container <code class="hljs inlineCode">a</code>, where <code class="hljs inlineCode">b</code> is stored.</p> 
+<h3> </h3> 
+<p> </p>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="customconfig.xsd">
+    <components>
+        <ConfigCustomizations>
+            <Settings>
+                <NodeAdd BeforeXPath="/r[1]/a[1]/v[2]" Component="test-G" XPath="/r[1]/a[1]">
+                    <z name="x4"/>
+                </NodeAdd>
+                <NodeAdd BeforeXPath="/r[1]/a[1]/z[1]" Component="test-G" XPath="/r[1]/a[1]">
+                    <z name="x3"/>
+                </NodeAdd>
+                <NodeAdd BeforeXPath="/r[1]/a[1]/z[1]" Component="test-G" XPath="/r[1]/a[1]">
+                    <y name="x2"/>
+                </NodeAdd>
+                <NodeAdd BeforeXPath="/r[1]/a[1]/y[1]" Component="test-G" XPath="/r[1]/a[1]">
+                    <x name="x1"/>
+                </NodeAdd>
+            </Settings>
+        </ConfigCustomizations>
+    </components>
+</configuration>

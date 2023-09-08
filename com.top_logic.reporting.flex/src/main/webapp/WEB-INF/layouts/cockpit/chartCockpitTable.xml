@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="type"/>
+		<param name="modelBuilder"/>
+
+		<param name="chartConfig"
+			value=""
+		/>
+		<param name="chartDataSource">
+			<chart-data-source class="com.top_logic.reporting.flex.chart.config.datasource.ModelProducer"/>
+		</param>
+		<param name="exportName"
+			value="Export.xlsx"
+		/>
+		<param name="exportNameKey"
+			value="/s${exportName}"
+		/>
+		<param name="exportTemplate"
+			optional="true"
+		/>
+		<param name="table">
+			<table
+				defaultColumns="${columns}"
+				fixedColumns="1"
+			>
+				<column-default columnWidth="200px"/>
+				<columns>
+					<column name="name"/>
+				</columns>
+			</table>
+		</param>
+		<param name="model"
+			value=""
+		/>
+		<param name="resPrefix"
+			value="layout.element.grid.Grid."
+		/>
+		<param name="isSecurityMaster"
+			value="true"
+		/>
+		<param name="columns"
+			value="name"
+		/>
+	</params>
+
+	<layout name="${namePrefix}TableSidebarLayout"
+		horizontal="true"
+	>
+		<componentControlProvider class="com.top_logic.layout.structure.MaximizableLayout"/>
+
+		<components>
+			<layoutControl name="${namePrefix}TableSidebar"
+				componentName="${namePrefix}ChartTable"
+			>
+				<layoutInfo size="20%"/>
+				<componentControlProvider class="com.top_logic.layout.structure.TableFilterLayoutControlProvider"
+					showMaximize="true"
+				/>
+			</layoutControl>
+			<securityLayout name="${namePrefix}CockpitTable"
+				horizontal="false"
+				titleKey="layouts.cockpit.chartCockpitTable.tabber"
+			>
+				<components>
+					<tableView name="${namePrefix}ChartTable"
+						isSecurityMaster="${isSecurityMaster}"
+						model="${model}"
+						modelBuilder="${modelBuilder}"
+						objectType="${type}"
+						resPrefix="${resPrefix}"
+					>
+						<layoutInfo size="40%"/>
+						${table}
+						<buttons>
+							<button id="exportExcel"
+								class="com.top_logic.layout.table.export.ExcelExportHandler"
+								downloadNameKey="${exportNameKey}"
+								templateName="${exportTemplate}"
+							/>
+						</buttons>
+					</tableView>
+
+					<include name="reporting/flex/chart/cockpitChart_shared.xml"
+						chartConfig="${chartConfig}"
+						maximizeRoot="${namePrefix}ChartTableChart"
+						model="rows(${namePrefix}ChartTable)"
+						namePrefix="${namePrefix}ChartTable"
+						resPrefix="layouts.reporting.flex.chart.cockpit."
+						securityProvider="path:component(${namePrefix}ChartTable).currentobject"
+						types="${type}"
+					>
+						<chartDataSource>${chartDataSource}</chartDataSource>
+						<options>
+							<buttons>
+								<reference command-id="selectChartType"/>
+							</buttons>
+						</options>
+					</include>
+				</components>
+			</securityLayout>
+		</components>
+	</layout>
+</template>

@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<test xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<item-with-shortcut-format>foo</item-with-shortcut-format>
+	<item-with-type-format><![CDATA[foo]]></item-with-type-format>
+</test>

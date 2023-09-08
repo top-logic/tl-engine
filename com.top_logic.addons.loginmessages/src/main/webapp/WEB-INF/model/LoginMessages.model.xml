@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="LoginMessages">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.addons.loginmessages.model"
+					interface-package="com.top_logic.addons.loginmessages.model.intf"
+				/>
+				<factory value="com.top_logic.addons.loginmessages.model.LoginMessagesWrapperFactory"/>
+			</annotations>
+			<types>
+				<class name="LoginMessage">
+					<annotations>
+						<table name="LoginMessage"/>
+						<implementation-binding class-name="com.top_logic.addons.loginmessages.model.LoginMessageImpl"/>
+						<instance-presentation
+							icon="theme:ICONS_LOGIN_MESSAGE"
+							large-icon="theme:ICONS_LARGE_LOGIN_MESSAGE60"
+						/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<size-constraint upper-bound="40"/>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="message"
+							type="tl.model.i18n:I18NHtml"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="active"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="startDate"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="endDate"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<delete-protected/>
+							</annotations>
+						</property>
+						<property name="confirmDuration"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<delete-protected/>
+								<value-range
+									min="0"
+								/>
+							</annotations>
+						</property>
+						<property name="confirmExpirationDate"
+							type="tl.core:Date"
+						>
+							<annotations>
+								<delete-protected/>
+								<visibility value="hidden"/>
+							</annotations>
+						</property>
+						<property name="windowWidth"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<delete-protected/>
+								<value-range
+									max="1200"
+									min="100"
+								/>
+							</annotations>
+						</property>
+						<property name="windowHeight"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<delete-protected/>
+								<value-range
+									max="1000"
+									min="100"
+								/>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+<chart config:interface="com.top_logic.reporting.flex.search.chart.SearchResultChartConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	columns="name,boolean"
+	type="DemoTypes.A"
+>
+	<data-source class="com.top_logic.reporting.flex.chart.config.datasource.MetaElementObjectProducer" type="DemoTypes.A" />
+	<model-preparation
+		class="com.top_logic.reporting.flex.chart.config.model.DefaultModelPreparation">
+		<aggregations></aggregations>
+		<partitions>
+			<partition
+				class="com.top_logic.reporting.flex.chart.config.partition.BooleanValuePartition"
+				meta-attribute="DemoTypes.A#booleanMandatory"></partition>
+			<partition
+				class="com.top_logic.reporting.flex.chart.config.partition.NumberIntervalPartition"
+				interval-end="1.0" interval-size="0.34" interval-start="0.0"
+				meta-attribute="DemoTypes.A#float"></partition>
+		</partitions>
+	</model-preparation>
+	<chart-builder
+		class="com.top_logic.reporting.flex.chart.config.chartbuilder.bar.BarChartBuilder"
+		orientation="vertical" show-legend="true"
+		show-peaks="true" show-tooltips="true" show-urls="true" title-key=""
+		x-axis-label-key="" y-axis-label-key="">
+		<color-provider class="com.top_logic.reporting.flex.chart.config.color.OrderedColorProvider">
+			<colors>
+				<color value="#ff0000"/>
+				<color value="#00ff00"/>
+				<color value="#0000ff"/>
+			</colors>
+		</color-provider>
+		<dataset-builder
+			class="com.top_logic.reporting.flex.chart.config.dataset.CategoryDatasetBuilder">
+		</dataset-builder>
+		<label-providers></label-providers>
+	</chart-builder>
+</chart>

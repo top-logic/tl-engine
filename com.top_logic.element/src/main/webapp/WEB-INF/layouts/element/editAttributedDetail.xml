@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="metaElementName"/>
+		<param name="namePrefix"
+			value=""
+		/>
+		<param name="resPrefix"
+			value="layout.attributed.edit"
+		/>
+		<param name="title"
+			optional="true"
+		/>
+		<param name="deleteCommand"
+			value="DeleteSimpleWrapper"
+		/>
+		<param name="applyCommand"
+			value="storeAttributes"
+		/>
+		<param name="master"
+			value=""
+		/>
+		<param name="defaultFor"
+			value=""
+		/>
+		<param name="toolbar"
+			optional="true"
+		/>
+		<param name="page"
+			value="/jsp/element/EditAttributed.jsp"
+		/>
+		<param name="editCommandGroups"
+			optional="true"
+		/>
+		<param name="editDialogs">
+			<!-- Empty by default. -->
+		</param>
+		<param name="securityProvider"
+			value="default"
+		/>
+		<param name="modifier"
+			optional="true"
+		/>
+		<param name="model"
+			value="selection(${master})"
+		/>
+		<param name="subConfiguration">
+			<!-- Empty by default. -->
+		</param>
+		<param name="exportDialogs">
+			<!-- Empty by default. -->
+		</param>
+		<param name="componentClass"
+			value="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+		/>
+	</params>
+
+	<layout>
+		<components>
+			<!-- component to edit structured elements -->
+			<component class="${componentClass}"
+				applyCommand="${applyCommand}"
+				commandGroups="${editCommandGroups}"
+				defaultFor="${defaultFor}"
+				deleteCommand="${deleteCommand}"
+				metaElementName="${metaElementName}"
+				model="${model}"
+				modifier="${modifier}"
+				name="${namePrefix}Edit"
+				page="${page}"
+				resPrefix="${resPrefix}"
+				securityProviderClass="${securityProvider}"
+				title="${title}"
+				toolbar="${toolbar}"
+			>
+				<dialogs>${editDialogs}${exportDialogs}</dialogs>
+				${subConfiguration}
+			</component>
+			<!-- buttons -->
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

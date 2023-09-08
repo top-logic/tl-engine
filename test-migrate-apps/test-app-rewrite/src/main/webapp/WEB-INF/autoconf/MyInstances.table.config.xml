@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system config:interface="com.top_logic.knowledge.service.TypeSystemConfiguration">
+					<meta-objects>
+						<metaobject
+							object_name="MyInstances"
+							super_class="TLObject"
+						>
+							<mo_attribute
+								att_name="name"
+								att_type="String"
+								db_size="255"
+								mandatory="true"
+							/>
+							<mo_attribute
+								att_name="uuid"
+								att_type="String"
+								db_size="255"
+								mandatory="true"
+							/>
+							<mo_attribute
+								att_name="text"
+								att_type="Clob"
+								db_size="4000000"
+							/>
+							<reference
+								att_name="single"
+								monomorphic="false"
+								target-type="TLObject"
+							/>
+						</metaobject>
+					</meta-objects>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

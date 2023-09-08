@@ -1,0 +1,66 @@
+<h2>Syntax</h2> 
+<pre>	<code>$string.subString($from)
+
+$string.subString($from, $to)</code>
+</pre> 
+<h2>Description</h2> 
+<p>Cuts a range from the string <code class="hljs inlineCode">string</code>.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>string</td> 
+   <td>String</td> 
+   <td>The string from which a range is to be cut.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>from</td> 
+   <td>Number</td> 
+   <td>The index of the first letter to be cut (inclusive). The first letter has the index <code class="hljs inlineCode">0</code>. A negative number is calculated from the end of the string.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>to</td> 
+   <td>Number</td> 
+   <td>The index of the letter that directly follows the last letter to be cut (exclusive). A negative number is calculated from the end of the string.</td> 
+   <td>no</td> 
+   <td>It will be cut from the index <code class="hljs inlineCode">from</code> to the end of the string.</td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> String</p> 
+<p>The range of the string <code class="hljs inlineCode">string</code>, bounded by <code class="hljs inlineCode">from</code> and <code class="hljs inlineCode">to</code>.</p> 
+<h2>Examples</h2> 
+<h3>Cut without to</h3> 
+<pre>	<code>subString("Hello world!", 6)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> world!</p> 
+<p>The index of the letter "w" is 6. It is cut from there to the end.</p> 
+<h3>Cut with to</h3> 
+<pre>	<code>subString("Hello world!", 6, 11)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> world</p> 
+<p>The index of the letter "w" is 6, that of the exclamation mark is 11.</p> 
+<h3>Cut from the back without to</h3> 
+<pre>	<code>subString("123456789", -3)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 789</p> 
+<p>The third index is selected from behind, i.e. 7.</p> 
+<h3>Cut from behind with to</h3> 
+<pre>	<code>subString("123456789", -4, -1)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 678</p> 
+<p>The fourth index 6 is selected from behind and cut to the last index 8.</p>

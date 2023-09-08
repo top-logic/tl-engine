@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID=""
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<open-handler id="ID_b4ea677f_8b9a_4427_8a97_952eb60b6c2f"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			clique="create"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			image="css:fas fa-plus"
+			targetComponent="com.top_logic.demo/technical/test/attributeOverride/newElementWithGenericForm/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.7eddf244-e3a1-4fdf-b6ab-7adea300427e">
+				<en>New element (generic)</en>
+				<de>Neues Element (generisch)</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.7eddf244-e3a1-4fdf-b6ab-7adea300427e">
+				<en>New element with generic form</en>
+				<de>Neues Element mit generischem Formular</de>
+			</title>
+		</title>
+		<typeOptions
+			include-subtypes="true"
+			type="test.override:I"
+		/>
+		<create-handler id="ID_123dfe96_3918_4818_a60c_d2d6575c4a56"
+			clique="save"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			ignoreWarnings="default"
+			image=""
+			linkOperation=""
+		/>
+	</arguments>
+</config:template-call>

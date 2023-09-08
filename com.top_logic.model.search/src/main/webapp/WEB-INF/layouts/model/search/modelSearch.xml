@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="modelSearchContainer">
+	<components>
+		<layout name="modelSearchPane"
+			horizontal="true"
+		>
+			<layout name="modelSearchInputPane">
+				<include name="model/search/modelSearchInputPane.xml"/>
+				<include name="model/search/modelSearchResultTable.xml"/>
+			</layout>
+			<layout name="modelSearchChartPane">
+				<include name="reporting/flex/search/searchReportWithoutSave.xml"
+					maximizeRoot="modelSearchChartPane"
+					model="result(SearchComponent)"
+					namePrefix="layouts_model_search_modelSearch_reports_"
+					showMaximize="true"
+				>
+					<applyExecutabilityRules>
+						<executability>
+							<rule class="com.top_logic.element.layout.meta.search.HasSearchResultsExecutabilityRule"/>
+						</executability>
+					</applyExecutabilityRules>
+					<configOptions>
+						<query-selector/>
+					</configOptions>
+				</include>
+			</layout>
+		</layout>
+	</components>
+</layout>

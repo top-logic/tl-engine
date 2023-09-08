@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_db247e14_829c_4539_80d5_027d9546e3c1c"
+		securityDomain="SecurityStructure"
+		tabIcon="theme:IMAGE_BUTTONS_STRUCTURE22"
+		tabLabel="%LAYOUT_RESPREFIX%tab"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.bpe.app/processCockpit/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

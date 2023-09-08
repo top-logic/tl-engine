@@ -1,0 +1,100 @@
+/*
+  CSS for the WYSIWYG editor.
+  
+  The classes prefixed with "cke" are those of the CKEditor itself.
+*/
+
+.cke_editable {
+	height: min-content;
+}
+
+.structuredTextFullHeight,
+.structuredTextFullHeight .cke_inner,
+.structuredTextFullHeight .cke,
+.cStructuredText {
+	height: 100%;
+}
+
+.cke_editable {
+	padding: 0 12px;
+	overflow: auto;
+}
+
+.immutableSourceCodeFrame > p:first-child {
+	/* HTML as value of a field in a form does must not have enormous space between label and text. */
+	margin-top: 0px;
+}
+
+.structuredTextFullHeight {
+	padding: 12px;
+}
+
+.structuredTextFullHeight,
+.cke_editable {
+	position: absolute;
+	width: 100%;
+	box-sizing: border-box;
+	font-size: 14px;
+}
+
+.structuredTextFullHeight .cke_inner {
+	display: flex;
+	flex-flow: column;
+}
+
+.structuredTextFullHeight .cke_top,
+.structuredTextFullHeight .cke_bottom {
+	flex: 0 0 auto;
+}
+
+.structuredTextFullHeight .cke_contents {
+	flex: 1 1 auto;
+}
+
+.structuredTextFullHeight .cke_reset {
+	box-sizing: border-box;
+}
+
+.structuredTextFullHeight a:link, 
+.structuredTextFullHeight a:visited,
+.cke_editable a:link,
+.cke_editable a:visited {
+  text-decoration: none;
+  color: rgb(0, 143, 184);
+}
+
+.structuredTextFullHeight a:hover,
+.cke_editable a:hover {
+  text-decoration: underline;
+}
+
+.tlObjectWrapper {
+	white-space: nowrap;
+}
+
+.cke_notification_message {
+	overflow-wrap: break-word;	
+}
+
+.tlDocTable td,
+.tlDocTable th {
+	padding: 5px;
+	font-size: 14px;
+}
+
+.tlDocTable th {
+	background: var(--LAYOUT_MAIN_COLOR);
+	color: #FBFBFD;
+}
+
+.tlDocTable tr:nth-child(even) {
+	background: #e7e8e8;
+}
+
+.tlDocTable tr:nth-child(odd) {
+	background: #FFF;
+}
+
+.cke_combo__format .cke_combopanel {
+	width: auto !important;
+}

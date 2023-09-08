@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+<metaobjects>
+
+<!-- Defines the Metaobjects for NumerFormat, Units and Currencies -->
+
+<metaobject object_type="MOKnowledgeObject" object_name="AbstractUnit" super_class="KnowledgeObject" abstract="true">
+<attributes>
+	<mo_attribute att_name="name"		att_type="String"  mandatory="true"  />
+    <mo_attribute att_name="format" att_type="String"  mandatory="true"/>
+	<mo_attribute att_name="sortOrder"	att_type="Integer" mandatory="true" />
+<!-- Unfortunately, defining an abstract reference in the base class is not possible. -->
+<!-- 
+    <reference att_name="baseUnit" 
+    	mandatory="false"
+    	history-type="current" 
+    	branch-global="false" 
+    	monomorphic="true" 
+    	is-container="false" 
+    	deletion-policy="veto" 
+    	target-type="AbstractUnit"
+	/>
+	<mo_attribute att_name="factor"		att_type="double"  mandatory="false" db_size="10" db_prec="4" />
+ -->
+</attributes>
+	<index>
+		<mo_index name="name" unique="true">
+			<index-parts>
+				<index_part name="name"/>
+			</index-parts>
+		</mo_index>
+	</index>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="Unit" super_class="AbstractUnit">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.unit.UnitWrapper"/>
+	</annotation>
+</annotations>
+<attributes>
+    <reference att_name="baseUnit" 
+    	mandatory="false"
+    	history-type="current" 
+    	branch-global="false" 
+    	monomorphic="true" 
+    	is-container="false" 
+    	deletion-policy="veto" 
+    	target-type="Unit" />
+	<mo_attribute att_name="factor"		att_type="double"  mandatory="false" db_size="10" db_prec="4" />
+</attributes>
+</metaobject>
+
+<!-- Currency -->
+<metaobject object_type="MOKnowledgeObject" object_name="Currency"  super_class="AbstractUnit" >
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.currency.Currency"/>
+	</annotation>
+</annotations>
+<attributes>
+    <reference att_name="baseUnit" 
+    	mandatory="false"
+    	history-type="current" 
+    	branch-global="false" 
+    	monomorphic="true" 
+    	is-container="false" 
+    	deletion-policy="veto" 
+    	target-type="Currency"
+	/>
+	<mo_attribute att_name="factor"		att_type="double"  mandatory="false" db_size="10" db_prec="4" />
+</attributes>
+</metaobject>
+
+<!-- Relation between two currency, Destination should be SystemCurrency -->
+<association super_class="Association" object_name="hasExchange" >
+<attributes>
+    <source 
+    	override="true" 
+    	target-type="Currency"
+    	/>
+    <destination
+    	override="true" 
+    	target-type="Currency"
+    	/>
+	<mo_attribute att_name="exchangeRate" 			att_type="Double" mandatory="true" />
+	<mo_attribute att_name="date" 					att_type="Date" db_name="EX_DATE" mandatory="true"/>
+</attributes>
+</association>
+
+</metaobjects>
+
+</objectlist>

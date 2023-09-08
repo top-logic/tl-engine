@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic/admin/security/accounts/personEditRaw.xml"
+	changePasswordCommandGroup="System"
+	changePasswordComponent="com.top_logic.contact.layout.person.related.CurrentPersonChangePasswordComponent"
+	defaultFor=""
+	editClass="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
+	jspPage="/jsp/contact/person/related/EditCurrentPerson.jsp"
+	namePrefix="CurrentPerson"
+/>

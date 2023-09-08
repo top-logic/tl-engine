@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor=""
+		model="selection(com.top_logic.demo/technical/components/polymorphicForms/objectsTable.layout.xml#Table)"
+		saveClosesDialog="true"
+		showNoModel="true"
+		type=""
+	>
+		<name key="dynamic.83a8ca06-99a0-4df2-b119-fb6a10c233ba">
+			<en>Features</en>
+			<de>Eigenschaften</de>
+		</name>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,644 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+				   <module key="com.top_logic.model.search.ModelBasedSearch$Module" value="true"/>
+				   <module key="com.top_logic.model.search.expr.config.SearchBuilder$Module" value="true"/>
+				   <module key="com.top_logic.model.search.ui.help.HelpPageIndex$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory">
+			<instance>
+				<dependencies>
+					<!-- OptionsByExpression can contain references to TLModelParts. -->
+					<!-- The correct dependency would be the ModelService. But it already depends on the GeneratorFactory, -->
+					<!-- which would be a cyclic dependency. As a workaround, the PersistencyLayer is used instead. -->
+					<!-- This should be good enough: It rarely happens that the ModelService is restarted, -->
+					<!-- but the PersistencyLayer is not. And when that happens, it is in tests. -->
+					<!-- And the only bad thing that happens is that an unnecessary KnowledgeBase is kept -->
+					<!-- in memory until the PersistencyLayer is shut down the next time. -->
+					<dependency key="com.top_logic.knowledge.service.PersistencyLayer" value="true" />
+				</dependencies>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-model-search" />
+				</modules>
+			</instance>
+		</config>
+		
+        <config service-class="com.top_logic.layout.provider.LabelProviderService">
+            <instance>
+                <label-providers>
+					<provider kind="CODE" type="com.top_logic.model.search.ui.model.combinator.AbstractSearchExpressionCombinator" implementation="com.top_logic.layout.provider.label.SingletonLabelProvider" />
+                </label-providers>
+                <resource-providers>
+					<provider kind="CODE" type="com.top_logic.model.impl.TLAssociationEndImpl" implementation="com.top_logic.model.search.ui.model.ui.TLAssociationEndResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.model.impl.TLAssociationImpl" implementation="com.top_logic.model.search.ui.model.ui.TLNamedPartResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.model.impl.TLClassifierImpl" implementation="com.top_logic.model.search.ui.model.ui.TLNamedPartResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.model.impl.TLClassImpl" implementation="com.top_logic.model.search.ui.model.ui.TLNamedPartResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.model.impl.TLEnumerationImpl" implementation="com.top_logic.model.search.ui.model.ui.TLNamedPartResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.model.impl.TLModuleImpl" implementation="com.top_logic.model.search.ui.model.ui.TLNamedPartResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.model.impl.TLPrimitiveImpl" implementation="com.top_logic.model.search.ui.model.ui.TLNamedPartResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.model.impl.TLPropertyImpl" implementation="com.top_logic.model.search.ui.model.ui.TLStructuredTypePartResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.model.impl.TLReferenceImpl" implementation="com.top_logic.model.search.ui.model.ui.TLReferenceResourceProvider" />
+                </resource-providers>
+            </instance>
+        </config>
+        
+		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
+			<instance>
+				<attribute-settings>
+					<attribute-setting
+						config-name="CODE"
+						legacy-type-code="1"
+					>
+						<field-provider>
+							<impl class="com.top_logic.model.search.code.CodeEditorFieldProvider"/>
+						</field-provider>
+
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
+								controlProvider="com.top_logic.model.search.code.CodeEditorControlProvider"
+							/>
+						</tag-provider>
+
+						<column-info>
+							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
+								<tooltipRenderer class="com.top_logic.model.search.code.CodeEditorTooltipRenderer"/>
+							</renderer>
+
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<tooltipRenderer class="com.top_logic.model.search.code.CodeEditorTooltipRenderer"/>
+								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
+							</editControlProvider>
+
+							<comparator class=""/>
+						</column-info>
+					</attribute-setting>
+									
+					<attribute-setting
+						config-name="JSON"
+						legacy-type-code="1"
+					>
+						<code-editor-language value="ace/mode/json"/>
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
+								controlProvider="com.top_logic.model.search.code.CodeEditorControlProvider"
+							/>
+						</tag-provider>
+
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<labelProvider class="com.top_logic.layout.form.control.FirstLineLabelProvider"
+									maxChars="50"
+								>
+									<fullTextProvider class="com.top_logic.layout.provider.label.JSONLabelProvider"
+										pretty="false"
+									/>
+								</labelProvider>
+								<tooltipRenderer class="com.top_logic.layout.renderers.PreformattedContentRenderer">
+									<content-renderer class="com.top_logic.layout.renderers.ConfiguredLabelRenderer">
+										<labels class="com.top_logic.layout.provider.label.JSONLabelProvider"
+											pretty="true"
+										/>
+									</content-renderer>
+								</tooltipRenderer>
+								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
+							</editControlProvider>
+						</column-info>
+					</attribute-setting>
+									
+					<attribute-setting
+						config-name="EXPR"
+						legacy-type-code="1"
+					>
+						<field-provider>
+							<impl class="com.top_logic.model.search.fieldprovider.SearchExpressionFieldProvider">
+								<configuration-format impl="com.top_logic.model.search.persistency.attribute.expr.ExprStorageMapping"/>
+								<!-- Note: Do not set a control provider here, otherwise, it cannot be changed in table cell context. Use a tag provider instead. -->
+							</impl>
+						</field-provider>
+
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
+								controlProvider="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"
+							/>
+						</tag-provider>
+
+						<column-info>
+							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
+								<tooltipRenderer class="com.top_logic.model.search.ui.TLScriptRenderer"/>
+							</renderer>
+
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<tooltipRenderer class="com.top_logic.model.search.ui.TLScriptRenderer"/>
+								<editControlProvider class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+							</editControlProvider>
+
+							<sortKeyProvider class="com.top_logic.basic.col.mapping.ToStringMapping"/>
+							<comparator class=""/>
+						</column-info>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="TEMPLATE"
+						legacy-type-code="1"
+					>
+						<field-provider>
+							<impl class="com.top_logic.element.meta.form.fieldprovider.format.FormattedFieldProvider">
+								<configuration-format impl="com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping"/>
+							</impl>
+						</field-provider>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.StringTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="REPORT"
+						legacy-type-code="1"
+					>
+						<field-provider>
+							<impl class="com.top_logic.element.meta.form.fieldprovider.format.FormattedFieldProvider">
+								<configuration-format impl="com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping"/>
+							</impl>
+						</field-provider>
+						<tag-provider impl="com.top_logic.model.search.persistency.attribute.report.ui.ReportTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting
+						config-name="MACRO"
+						legacy-type-code="1"
+					>
+						<field-provider impl="com.top_logic.model.search.persistency.attribute.macro.ui.HiddenFieldProvider"/>
+						<tag-provider impl="com.top_logic.model.search.persistency.attribute.macro.ui.MacroTagProvider"/>
+						<pdf-renderer impl="com.top_logic.model.search.persistency.attribute.macro.ui.MacroPDFRenderer"/>
+					</attribute-setting>
+				</attribute-settings>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="modelSearchMessages" />
+					<bundle name="model.SearchExpressionStructure.messages" />
+					<bundle name="model.tl.model.search.messages" />
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.SecurityObjectProviderManager">
+			<instance>
+				<dependencies>
+					<!-- SecurityObjectByExpression can contain references to TLModelParts. -->
+					<dependency key="com.top_logic.util.model.ModelService" value="true" />
+				</dependencies>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.execution.ExecutabilityRuleManager">
+			<instance>
+				<dependencies>
+					<!-- ExecutabilityByExpression can contain references to TLModelParts. -->
+					<dependency key="com.top_logic.util.model.ModelService" value="true" />
+				</dependencies>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.element.meta.MetaElementFactory">
+			<instance>
+				<dependencies>
+					<!-- com.top_logic.model.search.expr.config.MacroFormat uses SafeHTML. The 
+						format is used in the MacroPart which may be used in a display description 
+						for a type. The MetaElementFactory loads all MetaElements on startup, therefore 
+						this dependency is needed. -->
+					<dependency key="com.top_logic.basic.html.SafeHTML$Module" value="true"/>
+				</dependencies>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<dependencies>
+					<!-- Since search expressions can be used as part of model elements (e.g. 
+						DeleteConstraintByExpression), the search builder must be started before 
+						booting the model service. -->
+					<dependency key="com.top_logic.model.search.expr.config.SearchBuilder$Module" value="true"/>
+				</dependencies>
+				<declarations>
+					<declaration file="/WEB-INF/model/SearchExpressionStructure.model.xml"/>
+					<declaration file="/WEB-INF/model/extension.tl.core.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.model.search.model.xml"/>
+				</declarations>
+				<settings>
+					<module name="SearchExpressionStructure">
+						<factory value="com.top_logic.model.search.persistency.expressions.SearchExpressionStructureFactory"/>
+					</module>
+				</settings>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.model.search.ModelBasedSearch" enabled="true">
+			<instance class="com.top_logic.model.search.ModelBasedSearch">
+				<searches>
+					<!-- In the "developer" search all features are enabled. -->
+					<search name="developer">
+						<combinators>
+							<combinator class="com.top_logic.model.search.ui.model.combinator.AllSearchExpressionCombinator" />
+							<combinator class="com.top_logic.model.search.ui.model.combinator.NoneSearchExpressionCombinator" />
+							<combinator class="com.top_logic.model.search.ui.model.combinator.NotAllSearchExpressionCombinator" />
+							<combinator class="com.top_logic.model.search.ui.model.combinator.NotNoneSearchExpressionCombinator" />
+						</combinators>
+					</search>
+				</searches>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance class="com.top_logic.model.search.expr.config.SearchBuilder">
+				<methods>
+					<method name="filter" class="com.top_logic.model.search.expr.config.operations.FilterBuilder"/>
+					<method name="intersection" class="com.top_logic.model.search.expr.config.operations.IntersectionBuilder"/>
+					<method name="union" class="com.top_logic.model.search.expr.config.operations.UnionBuilder"/>
+					<method name="map" class="com.top_logic.model.search.expr.config.operations.ForeachBuilder"/>
+					<method name="foreach" class="com.top_logic.model.search.expr.config.operations.ForeachBuilder"/>
+					<method name="containsAll" class="com.top_logic.model.search.expr.config.operations.ContainsAllBuilder"/>
+					<method name="containsElement" class="com.top_logic.model.search.expr.config.operations.ContainsElementBuilder"/>
+					<method name="containsSome" class="com.top_logic.model.search.expr.config.operations.ContainsSomeBuilder"/>
+					<method name="flatten" class="com.top_logic.model.search.expr.config.operations.FlattenBuilder"/>
+					<method name="round" class="com.top_logic.model.search.expr.config.operations.RoundBuilder"/>
+					<method name="floor" class="com.top_logic.model.search.expr.config.operations.arithmetic.Floor$Builder"/>
+					<method name="ceil" class="com.top_logic.model.search.expr.config.operations.arithmetic.Ceil$Builder"/>
+					<method name="roundDay" class="com.top_logic.model.search.expr.config.operations.DayBuilder"/>
+					<method name="equals" class="com.top_logic.model.search.expr.config.operations.IsEqualBuilder"/>
+					<method name="isEqual" class="com.top_logic.model.search.expr.config.operations.IsEqualBuilder"/>
+					<method name="isDateEqual" class="com.top_logic.model.search.expr.config.operations.IsDateEqualBuilder"/>
+					<method name="isDateGreater" class="com.top_logic.model.search.expr.config.operations.IsDateGreaterBuilder"/>
+					<method name="isFloatEqual" class="com.top_logic.model.search.expr.config.operations.IsFloatEqualBuilder"/>
+					<method name="isFloatGreater" class="com.top_logic.model.search.expr.config.operations.IsFloatGreaterBuilder"/>
+					<method name="isStringEqual" class="com.top_logic.model.search.expr.config.operations.IsStringEqualBuilder"/>
+					<method name="isStringGreater" class="com.top_logic.model.search.expr.config.operations.IsStringGreaterBuilder"/>
+					<method name="stringStartsWith" class="com.top_logic.model.search.expr.config.operations.StringStartsWithBuilder"/>
+					<method name="stringContains" class="com.top_logic.model.search.expr.config.operations.StringContainsBuilder"/>
+					<method name="stringEndsWith" class="com.top_logic.model.search.expr.config.operations.StringEndsWithBuilder"/>
+					
+					<method name="subString" class="com.top_logic.model.search.expr.config.operations.string.SubString$Builder"/>
+					<method name="toLowerCase" class="com.top_logic.model.search.expr.config.operations.string.ToLowerCase$Builder"/>
+					<method name="toUpperCase" class="com.top_logic.model.search.expr.config.operations.string.ToUpperCase$Builder"/>
+
+					<method name="toString" class="com.top_logic.model.search.expr.ToString$Builder"/>
+					<method name="contextPath" class="com.top_logic.model.search.expr.config.operations.web.ContextPath$Builder"/>
+					<method name="numberFormat" class="com.top_logic.model.search.expr.NumerFormatExpr$Builder"/>
+					<method name="dateFormat" class="com.top_logic.model.search.expr.DateFormatExpr$Builder"/>
+					<method name="messageFormat" class="com.top_logic.model.search.expr.MessageFormatExpr$Builder"/>
+					<method name="format" class="com.top_logic.model.search.expr.FormatExpr$Builder"/>
+					<method name="parse" class="com.top_logic.model.search.expr.ParseExpr$Builder"/>
+					
+					<method name="translate" class="com.top_logic.model.search.expr.config.operations.string.Translate$Builder"/>
+					<method name="internationalize" class="com.top_logic.model.search.expr.config.operations.string.Internationalize$Builder"/>
+
+					<method name="binary" class="com.top_logic.model.search.expr.config.operations.binary.Binary$Builder"/>
+					<method name="zipArchive" class="com.top_logic.model.search.expr.config.operations.binary.ZipArchive$Builder"/>
+					<method name="zipEntry" class="com.top_logic.model.search.expr.config.operations.binary.ZipEntry$Builder"/>
+					
+					<method name="regex" class="com.top_logic.model.search.expr.config.operations.regex.Regex$Builder"/>
+					<method name="regexSearch" class="com.top_logic.model.search.expr.config.operations.regex.RegexSearch$Builder"/>
+					<method name="regexReplace" class="com.top_logic.model.search.expr.config.operations.regex.RegexReplace$Builder"/>
+					<method name="regexGroup" class="com.top_logic.model.search.expr.config.operations.regex.RegexGroup$Builder"/>
+					<method name="regexStart" class="com.top_logic.model.search.expr.config.operations.regex.RegexStart$Builder"/>
+					<method name="regexEnd" class="com.top_logic.model.search.expr.config.operations.regex.RegexEnd$Builder"/>
+					
+					<method name="indexBy" class="com.top_logic.model.search.expr.config.operations.cache.IndexBy$Builder"/>
+					<method name="indexReduce" class="com.top_logic.model.search.expr.config.operations.cache.IndexReduce$Builder"/>
+					<method name="groupBy" class="com.top_logic.model.search.expr.config.operations.cache.GroupBy$Builder"/>
+					<method name="structType" class="com.top_logic.model.search.expr.config.operations.struct.StructTypeDef$Builder"/>
+					<method name="newStruct" class="com.top_logic.model.search.expr.config.operations.struct.NewStruct$Builder"/>
+					<method name="keySet" class="com.top_logic.model.search.expr.config.operations.struct.KeySet$Builder"/>
+					<method name="values" class="com.top_logic.model.search.expr.config.operations.struct.Values$Builder"/>
+					<method name="getKey" class="com.top_logic.model.search.expr.config.operations.struct.GetKey$Builder"/>
+					<method name="getValue" class="com.top_logic.model.search.expr.config.operations.struct.GetValue$Builder"/>
+
+					<method name="ifElse" class="com.top_logic.model.search.expr.config.operations.IfElseBuilder"/>
+					<method name="if" class="com.top_logic.model.search.expr.config.operations.IfElseBuilder"/>
+					<method name="isEmpty" class="com.top_logic.model.search.expr.config.operations.IsEmptyBuilder"/>
+					<method name="new" class="com.top_logic.model.search.expr.CreateObject$Builder"/>
+					<method name="delete" class="com.top_logic.model.search.expr.DeleteObject$Builder"/>
+					<method name="copy" class="com.top_logic.model.search.expr.config.operations.Copy$Builder"/>
+					<method name="get" class="com.top_logic.model.search.expr.config.operations.GetBuilder"/>
+					<method name="set" class="com.top_logic.model.search.expr.config.operations.SetBuilder"/>
+					<method name="add" class="com.top_logic.model.search.expr.Add$Builder"/>
+					<method name="type" class="com.top_logic.model.search.expr.config.operations.Type$Builder"/>
+					<method name="container" class="com.top_logic.model.search.expr.config.operations.Container$Builder"/>
+					<method name="containerReference" class="com.top_logic.model.search.expr.config.operations.ContainerReference$Builder"/>
+					<method name="attribute" class="com.top_logic.model.search.expr.config.operations.Attribute$Builder"/>
+					<method name="apply" class="com.top_logic.model.search.expr.config.operations.ApplyBuilder"/>
+					<method name="reduce" class="com.top_logic.model.search.expr.ReduceOperation$Builder"/>
+					<method name="referers" class="com.top_logic.model.search.expr.config.operations.ReferersBuilder"/>
+					<method name="instanceOf" class="com.top_logic.model.search.expr.config.operations.InstanceOfBuilder"/>
+					<method name="singleElement" class="com.top_logic.model.search.expr.config.operations.SingleElementBuilder"/>
+					<method name="singleton" class="com.top_logic.model.search.expr.config.operations.SingletonBuilder"/>
+					<method name="fill" class="com.top_logic.model.search.expr.config.operations.ResKeyArgumentsBuilder"/>
+					<method name="associationNavigation" class="com.top_logic.model.search.expr.config.operations.AssociationNavigationBuilder"/>
+					<method name="all" class="com.top_logic.model.search.expr.config.operations.AllBuilder"/>
+					<method name="none" class="com.top_logic.model.search.expr.config.operations.EmptySetBuilder"/>
+					<method name="recursion" class="com.top_logic.model.search.expr.config.operations.RecursionBuilder"/>
+					<method name="sort" class="com.top_logic.model.search.expr.config.operations.SortBuilder"/>
+					<method name="comparator" class="com.top_logic.model.search.expr.config.operations.ComparatorBuilder"/>
+					<method name="desc" class="com.top_logic.model.search.expr.config.operations.DescBuilder"/>
+					<method name="list" class="com.top_logic.model.search.expr.config.operations.ListBuilder"/>
+					<method name="size" class="com.top_logic.model.search.expr.config.operations.SizeBuilder"/>
+					<method name="length" class="com.top_logic.model.search.expr.config.operations.LengthBuilder"/>
+					<method name="count" class="com.top_logic.model.search.expr.config.operations.Count$Builder"/>
+					<method name="nextId" class="com.top_logic.model.search.expr.config.operations.arithmetic.NextId$Builder"/>
+					<method name="firstElement" class="com.top_logic.model.search.expr.FirstElement$Builder"/>
+					<method name="lastElement" class="com.top_logic.model.search.expr.LastElement$Builder"/>
+					<method name="elementAt" class="com.top_logic.model.search.expr.ElementAt$Builder"/>
+					<method name="elementIndex" class="com.top_logic.model.search.expr.ElementIndex$Builder"/>
+					<method name="reverse" class="com.top_logic.model.search.expr.Reverse$Builder"/>
+					<method name="subList" class="com.top_logic.model.search.expr.SubList$Builder"/>
+					<method name="concat" class="com.top_logic.model.search.expr.Concat$Builder"/>
+					<method name="toBoolean" class="com.top_logic.model.search.expr.config.operations.ToBoolean$Builder"/>
+					<method name="toList" class="com.top_logic.model.search.expr.config.operations.ToList$Builder"/>
+					<method name="toSet" class="com.top_logic.model.search.expr.config.operations.ToSet$Builder"/>
+					<method name="throw" class="com.top_logic.model.search.expr.Throw$Builder"/>
+					<method name="info" class="com.top_logic.model.search.expr.Info$Builder"/>
+					<method name="log" class="com.top_logic.model.search.expr.Log$Builder"/>
+					<method name="sleep" class="com.top_logic.model.search.expr.Sleep$Builder"/>
+					<method name="compare" class="com.top_logic.model.search.expr.config.operations.CompareBuilder"/>
+					<method name="isGreater" class="com.top_logic.model.search.expr.config.operations.CompareOpBuilder"
+						operator="GT"
+					/>
+					<method name="gt" class="com.top_logic.model.search.expr.config.operations.CompareOpBuilder"
+						operator="GT"
+					/>
+					<method name="lt" class="com.top_logic.model.search.expr.config.operations.CompareOpBuilder"
+						operator="LT"
+					/>
+					<method name="ge" class="com.top_logic.model.search.expr.config.operations.CompareOpBuilder"
+						operator="GE"
+					/>
+					<method name="le" class="com.top_logic.model.search.expr.config.operations.CompareOpBuilder"
+						operator="LE"
+					/>
+					
+					<method name="min" class="com.top_logic.model.search.expr.reductions.Min$Builder"/>
+					<method name="max" class="com.top_logic.model.search.expr.reductions.Max$Builder"/>
+					<method name="average" class="com.top_logic.model.search.expr.reductions.Average$Builder"/>
+					<method name="sum" class="com.top_logic.model.search.expr.reductions.Sum$Builder"/>
+					
+					<method name="date" class="com.top_logic.model.search.expr.DateExpr$Builder"/>
+					<method name="dateTime" class="com.top_logic.model.search.expr.DateTimeExpr$Builder"/>
+					<method name="now" class="com.top_logic.model.search.expr.supplier.SearchExpressionNow"/>
+					<method name="today" class="com.top_logic.model.search.expr.supplier.SearchExpressionToday"/>
+
+					<method name="toDate" class="com.top_logic.model.search.expr.ToDate$Builder"/>
+					<method name="toMillis" class="com.top_logic.model.search.expr.ToMillis$Builder"/>
+					<method name="toUserCalendar" class="com.top_logic.model.search.expr.ToUserCalendar$Builder"/>
+					<method name="toSystemCalendar" class="com.top_logic.model.search.expr.ToSystemCalendar$Builder"/>
+
+					<method name="era" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="ERA"
+					/>
+					<method name="year" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="YEAR"
+					/>
+					<method name="month" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="MONTH"
+					/>
+					<method name="week" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="WEEK"
+					/>
+					<method name="weekOfMonth" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="WEEK_OF_MONTH"
+					/>
+					<method name="day" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="DAY"
+					/>
+					<method name="dayOfYear" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="DAY_OF_YEAR"
+					/>
+					<method name="dayOfWeek" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="DAY_OF_WEEK"
+					/>
+					<method name="dayOfWeekInMonth" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="DAY_OF_WEEK_IN_MONTH"
+					/>
+					<method name="hour" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="HOUR"
+					/>
+					<method name="amPm" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="AM_PM"
+					/>
+					<method name="hour12" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="HOUR_12"
+					/>
+					<method name="minute" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="MINUTE"
+					/>
+					<method name="second" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="SECOND"
+					/>
+					<method name="millisecond" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="MILLISECOND"
+					/>
+					<method name="zoneOffset" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="ZONE_OFFSET"
+					/>
+					<method name="dstOffset" class="com.top_logic.model.search.expr.CalendarField$Builder"
+						field="DST_OFFSET"
+					/>
+					
+					<method name="withEra" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="ERA"
+					/>
+					<method name="withYear" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="YEAR"
+					/>
+					<method name="withMonth" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="MONTH"
+					/>
+					<method name="withWeek" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="WEEK"
+					/>
+					<method name="withWeekOfMonth" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="WEEK_OF_MONTH"
+					/>
+					<method name="withDay" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="DAY"
+					/>
+					<method name="withDayOfYear" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="DAY_OF_YEAR"
+					/>
+					<method name="withDayOfWeek" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="DAY_OF_WEEK"
+					/>
+					<method name="withDayOfWeekInMonth" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="DAY_OF_WEEK_IN_MONTH"
+					/>
+					<method name="withHour" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="HOUR"
+					/>
+					<method name="withAmPm" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="AM_PM"
+					/>
+					<method name="withHour12" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="HOUR_12"
+					/>
+					<method name="withMinute" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="MINUTE"
+					/>
+					<method name="withSecond" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="SECOND"
+					/>
+					<method name="withMillisecond" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="MILLISECOND"
+					/>
+					<method name="withZoneOffset" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="ZONE_OFFSET"
+					/>
+					<method name="withDstOffset" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="SET" field="DST_OFFSET"
+					/>
+					
+					<method name="withEraAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="ERA"
+					/>
+					<method name="withYearAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="YEAR"
+					/>
+					<method name="withMonthAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="MONTH"
+					/>
+					<method name="withWeekAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="WEEK"
+					/>
+					<method name="withWeekOfMonthAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="WEEK_OF_MONTH"
+					/>
+					<method name="withDayAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="DAY"
+					/>
+					<method name="withDayOfYearAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="DAY_OF_YEAR"
+					/>
+					<method name="withDayOfWeekAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="DAY_OF_WEEK"
+					/>
+					<method name="withDayOfWeekInMonthAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="DAY_OF_WEEK_IN_MONTH"
+					/>
+					<method name="withHourAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="HOUR"
+					/>
+					<method name="withAmPmAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="AM_PM"
+					/>
+					<method name="withHour12Added" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="HOUR_12"
+					/>
+					<method name="withMinuteAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="MINUTE"
+					/>
+					<method name="withSecondAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="SECOND"
+					/>
+					<method name="withMillisecondAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="MILLISECOND"
+					/>
+					<method name="withZoneOffsetAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="ZONE_OFFSET"
+					/>
+					<method name="withDstOffsetAdded" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
+						op="ADD" field="DST_OFFSET"
+					/>
+					<method name="currentUser" class="com.top_logic.model.search.expr.supplier.SearchExpressionCurrentPerson"/>
+
+					<method name="resolveAlias" class="com.top_logic.model.search.expr.config.operations.AliasResolver$Builder"/>
+					<method name="icon" class="com.top_logic.model.search.expr.config.operations.IconBuilder$Builder"/>
+					<method name="resource" class="com.top_logic.model.search.expr.config.operations.ResourceBuilder$Builder"/>
+					<method name="resolveModelPart" class="com.top_logic.model.search.expr.ResolveModelPart$Builder"/>
+					<method name="revisionAt" class="com.top_logic.model.search.expr.config.operations.revision.RevisionAt$Builder"/>
+					<method name="revisionForCommit" class="com.top_logic.model.search.expr.config.operations.revision.RevisionForCommit$Builder"/>
+					<method name="revision" class="com.top_logic.model.search.expr.config.operations.revision.GetRevision$Builder"/>
+					<method name="inRevision" class="com.top_logic.model.search.expr.config.operations.revision.InRevision$Builder"/>
+					<method name="inCurrent" class="com.top_logic.model.search.expr.config.operations.revision.InCurrent$Builder"/>
+					<method name="createRevision" class="com.top_logic.model.search.expr.config.operations.revision.CreateRevision$Builder"/>
+					<method name="modifiedRevision" class="com.top_logic.model.search.expr.config.operations.revision.ModifiedRevision$Builder"/>
+					<method name="currentRevision" class="com.top_logic.model.search.expr.config.operations.revision.CurrentRevision$Builder"/>
+					<method name="equalsUnversioned" class="com.top_logic.model.search.expr.config.operations.EqualsUnversioned$Builder"/>
+				</methods>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<dependencies>
+					<!-- CommandHandlerByExpression can contain references to TLModelParts. -->
+					<dependency key="com.top_logic.util.model.ModelService" value="true" />
+				</dependencies>
+				<handlers>
+					<handler id="deleteModelSearch" class="com.top_logic.model.search.ui.selector.DeleteSearchCommand"
+						clique="delete">
+						<executability>
+							<rule class="com.top_logic.tool.execution.NullSelectionDisabled"/>
+						</executability>
+					</handler>
+					<handler id="resetModelSearch" class="com.top_logic.model.search.ui.selector.ResetSearchCommand"
+						clique="reset"/>
+					<handler id="saveModelSearch" class="com.top_logic.model.search.ui.selector.SaveSearchCommand"
+						clique="save">
+						<executability>
+							<rule class="com.top_logic.tool.execution.NullSelectionDisabled"/>
+						</executability>
+					</handler>
+					<handler id="saveModelSearchAs" class="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsCommand"
+						clique="save"/>
+				</handlers>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+			<instance>
+				<schemes>
+					<scheme class="com.top_logic.model.search.providers.ScriptValueNaming" priority="resolve-only"/>
+				</schemes>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.gui.JSFileCompiler">
+			<instance>
+				<files>
+					<file resource="tlscripteditor.js" />
+				</files>
+			</instance>
+		</config>
+		
+	</services>
+	
+	<configs>
+		
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/SearchExpressionMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+		
+	</configs>
+	
+	<defaults>
+	</defaults>
+	
+</application>

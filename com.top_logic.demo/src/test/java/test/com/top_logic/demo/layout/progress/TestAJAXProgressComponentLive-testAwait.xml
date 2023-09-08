@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-name="demo.technical.tabber"
+			component-name="mainTabbar.layout.xml#mainTabber"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-name="demo.test.tabber"
+			component-name="com.top_logic.demo/technical/index.layout.xml#technicalDemo_tabBar"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-name="demo.test.DemoAJAXProgress.tabber"
+			component-name="com.top_logic.demo/technical/test/layoutTest.layout.xml#layoutTest_tabBar"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.AwaitProgressActionOp"
+			component-name="com.top_logic.demo/technical/test/DemoAJAXProgress/progressDemo.layout.xml#ajax_progress"
+			max-sleep="20000"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-name="resetProgressBar"
+			component-name="com.top_logic.demo/technical/test/DemoAJAXProgress/progressDemo.layout.xml#ajax_progress"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.AwaitProgressActionOp"
+			component-name="com.top_logic.demo/technical/test/DemoAJAXProgress/progressDemo.layout.xml#ajax_progress"
+			max-sleep="20000"
+		/>
+	</actions>
+</action>

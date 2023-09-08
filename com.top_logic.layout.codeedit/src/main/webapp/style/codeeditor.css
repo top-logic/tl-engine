@@ -1,0 +1,18 @@
+.ace_editor {
+	border: 1px solid lightgray;
+	height: 200px;
+	
+	z-index: 0;
+	isolation: isolate;
+}
+
+.fullSize .ace_editor {
+	position: absolute;
+	margin: 0;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	border: none;
+	height: auto;
+}

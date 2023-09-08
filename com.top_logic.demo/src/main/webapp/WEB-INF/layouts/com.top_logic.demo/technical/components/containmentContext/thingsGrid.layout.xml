@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		detailComponent=""
+		isSecurityMaster="false"
+		model="selection(com.top_logic.demo/technical/components/containmentContext/worldsTable.layout.xml#Table)"
+		multiSelection="false"
+		showDetailOpener="false"
+		type="test.containmentContext:Thing"
+	>
+		<name key="dynamic.781831f3-ed65-4b8e-bfa4-5f53fae63fd0">
+			<en>Things</en>
+			<de>Dinge</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="world -> $world.get(`test.containmentContext:World#things`)"
+			modelForElement="thing -> $thing.container()"
+			supportsElement="x -> $x.instanceOf(`test.containmentContext:Thing`)"
+			supportsModel="x->$x.instanceOf(`test.containmentContext:World`)"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_248b2b03_dd6d_4de8_bc25_3b7e8ef061b2"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+				clique=""
+				confirm="false"
+				createType="test.containmentContext:Thing"
+				disabledImage=""
+				group=""
+				image="css:fas fa-plus"
+				initOperation="world -> thing -> $world.add(`test.containmentContext:World#things`, $thing)"
+				typeChooser="false"
+			>
+				<executability>
+					<rule-by-expression
+						decision="world -> $world != null"
+						show-disabled="false"
+					/>
+				</executability>
+				<checkScopeProvider/>
+				<resourceKey key="dynamic.6cb67841-1246-4011-95c6-efed3c4663ed">
+					<en>New row</en>
+					<de>Neue Zeile</de>
+				</resourceKey>
+			</button>
+			<button id="ID_8ee64c6a_7d45_4027_941a_1f77af0b2d67"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				confirm="true"
+				disabledImage=""
+				group="Delete"
+				image=""
+				target="selection(self())"
+			>
+				<executability>
+					<rule-by-expression
+						decision="x -> $x != null"
+						show-disabled="false"
+					/>
+				</executability>
+				<confirmMessage key="dynamic.3f91978e-be29-4fb9-ae76-99a007af42db">
+					<en>Should the thing "{0}" including all its uses be removed from its world?</en>
+					<de>Soll das Ding "{0}" inklusive all seiner Nutzungen von seiner Welt entfernt werden?</de>
+				</confirmMessage>
+				<resourceKey key="dynamic.10ac1082-edbc-41df-b8b9-9efee5261bd4">
+					<en>Delete thing</en>
+					<de>Ding löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/containmentContext/addUsage/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/containmentContext/newThing/dialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

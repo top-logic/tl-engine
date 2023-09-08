@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Chart-Beispiele"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check download file name is given in configuration."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Chart-Beispiele > Fixe Charts"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartSelector"
+						tab-path="Chart-Beispiele > Fixe Charts"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="charts"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="barchart.xml"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.export.PowerpointExportHandler"
+					command-label="Export..."
+					command-name="exportPowerpoint"
+					component-implementation-comment="com.top_logic.reporting.flex.search.SearchResultChartComponent"
+					component-name="com.top_logic.demo/reporting/static/demoStaticCharts.layout.xml#DemoStaticChartChart"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.AwaitProgressActionOp"
+					component-name="export/exportDialog.layout.xml#ProgressExportView"
+					max-sleep="300000"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.export.progress.ExportDownloadComponent$Download"
+					command-label="Herunterladen"
+					command-name="downloadExportData"
+					component-implementation-comment="com.top_logic.tool.export.progress.ExportDownloadComponent"
+					component-name="export/gridExportDialog.layout.xml#GridExportDownload"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Check and clear download."
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment="Ticket #20558: Name of file is given in configuration of export manager."
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
+								file-name="FixedChart.pptx"
+							/>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.NoContentEqualityCheck">
+									<expected-value name="FixedChart.pptx"
+										content-type="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+									/>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check download file name is derived from export title."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Chart-Beispiele > Chart-Mehrfachauswahl"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/reporting/multi/demoChartCockpit.layout.xml#DemoMultiChartSelector"
+						tab-path="Chart-Beispiele > Chart-Mehrfachauswahl"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="charts"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="barchart.xml"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.export.PowerpointExportHandler"
+					command-label="Export..."
+					command-name="exportPowerpoint"
+					component-implementation-comment="com.top_logic.reporting.flex.chart.component.MultipleChartComponent"
+					component-name="com.top_logic.demo/reporting/multi/demoChartCockpit.layout.xml#DemoMultiChartChart"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.AwaitProgressActionOp"
+					component-name="export/exportDialog.layout.xml#ProgressExportView"
+					max-sleep="300000"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.export.progress.ExportDownloadComponent$Download"
+					command-label="Herunterladen"
+					command-name="downloadExportData"
+					component-implementation-comment="com.top_logic.tool.export.progress.ExportDownloadComponent"
+					component-name="export/gridExportDialog.layout.xml#GridExportDownload"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Check and clear download."
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment="Ticket #20558: Name of file is derived from export title."
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
+								file-name="Mehrere Charts.pptx"
+							/>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.NoContentEqualityCheck">
+									<expected-value name="Mehrere Charts.pptx"
+										content-type="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+									/>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check download file name is default download file name."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Chart-Beispiele > Interaktive Charts"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/reporting/interactive/demoInteractiveCharts.layout.xml#DemoInteractiveChartSelector"
+						tab-path="Chart-Beispiele > Interaktive Charts"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-name="charts"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="interactive1.xml"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.reporting.flex.chart.component.ChartConfigComponent$ApplySettings"
+					command-label="Aktualisieren"
+					command-name="apply"
+					component-implementation-comment="com.top_logic.reporting.flex.chart.component.ChartConfigComponent"
+					component-name="com.top_logic.demo/reporting/interactive/demoInteractiveCharts.layout.xml#DemoInteractiveChartSettings"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.export.PowerpointExportHandler"
+					command-label="Export..."
+					command-name="exportPowerpoint"
+					component-implementation-comment="com.top_logic.reporting.flex.chart.component.ConfiguredChartComponent"
+					component-name="com.top_logic.demo/reporting/interactive/demoInteractiveCharts.layout.xml#DemoInteractiveChartChartChart"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.AwaitProgressActionOp"
+					component-name="export/exportDialog.layout.xml#ProgressExportView"
+					max-sleep="300000"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.export.progress.ExportDownloadComponent$Download"
+					command-label="Herunterladen"
+					command-name="downloadExportData"
+					component-implementation-comment="com.top_logic.tool.export.progress.ExportDownloadComponent"
+					component-name="export/gridExportDialog.layout.xml#GridExportDownload"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Check and clear download."
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+							comment="Ticket #20558: Name of file is default download file name."
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.DownloadValue"
+								file-name="Export.pptx"
+							/>
+							<constraints>
+								<constraint class="com.top_logic.layout.scripting.check.NoContentEqualityCheck">
+									<expected-value name="Export.pptx"
+										content-type="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+									/>
+								</constraint>
+							</constraints>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ClearDownloadsOp"/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<tableView name="Table"
+	isSecurityMaster="true"
+	model="provider(com.top_logic.element.util.dbadmin.DBTablesModelProvider)"
+	securityProviderClass="securityRoot"
+>
+	<modelBuilder class="com.top_logic.element.util.dbadmin.DBTablesListModelBuilder"/>
+	<titleKey>
+		<en>Tables</en>
+		<de>Tabellen</de>
+	</titleKey>
+	<table
+		defaultColumns="object_name,db-name-effective"
+		defaultSortOrder="object_name"
+		fixedColumns="0"
+	>
+		<column-default accessor="com.top_logic.layout.configEdit.ConfigurationPropertyAccessor"/>
+
+		<columns>
+			<column name="object_name"
+				columnWidth="250px"
+			>
+				<columnLabelKey>
+					<de>Name</de>
+					<en>Name</en>
+				</columnLabelKey>
+				<cellRenderer class="com.top_logic.layout.tree.renderer.RowTypeCellRenderer"/>
+			</column>
+			<column name="db-name-effective"
+				columnWidth="250px"
+			>
+				<columnLabelKey>
+					<de>DB-Name</de>
+					<en>DB Name</en>
+				</columnLabelKey>
+			</column>
+		</columns>
+	</table>
+	<buttons>
+		<button id="removeTable"
+			class="com.top_logic.element.util.dbadmin.DeleteTable"
+			clique="delete"
+			group="Delete"
+			item="model(self())"
+			property="meta-objects.metaobjects"
+			target="selection(self())"
+		>
+			<resourceKey>
+				<de>Tabelle löschen</de>
+				<en>Delete table</en>
+			</resourceKey>
+
+			<executability>
+				<rule class="com.top_logic.tool.execution.ExecutableIfChannelActive"
+					channel="editMode(com.top_logic.element/admin/model/dbAdmin/tables/tableDetailsForm.layout.xml#Form)"
+				/>
+			</executability>
+		</button>
+
+		<button id="edit"
+			channel="editMode(com.top_logic.element/admin/model/dbAdmin/tables/tableDetailsForm.layout.xml#Form)"
+			class="com.top_logic.layout.form.component.edit.SetModeCommandHandler"
+			clique="edit"
+			group="Write"
+			mode="true"
+			resourceKey="tl.command.switchToEdit"
+		/>
+
+		<button id="save"
+			channel="editMode(com.top_logic.element/admin/model/dbAdmin/tables/tableDetailsForm.layout.xml#Form)"
+			class="com.top_logic.layout.form.component.edit.SetModeCommandHandler"
+			clique="save"
+			delegate="apply"
+			group="Write"
+			mode="false"
+			resourceKey="tl.command.save"
+		/>
+
+		<button id="cancel"
+			channel="editMode(com.top_logic.element/admin/model/dbAdmin/tables/tableDetailsForm.layout.xml#Form)"
+			class="com.top_logic.layout.form.component.edit.SetModeCommandHandler"
+			clique="cancel"
+			delegate="reset"
+			group="System"
+			mode="false"
+			resourceKey="tl.command.cancel"
+		/>
+
+		<button id="apply"
+			class="com.top_logic.element.util.dbadmin.IDESchemaExtractCommand"
+			clique="apply"
+			group="Write"
+			target="model(self())"
+		>
+			<resourceKey>
+				<de>Schema zurückschreiben</de>
+				<en>Write back scheam</en>
+			</resourceKey>
+
+			<executability>
+				<rule class="com.top_logic.tool.execution.ExecutableIfChannelActive"
+					channel="editMode(com.top_logic.element/admin/model/dbAdmin/tables/tableDetailsForm.layout.xml#Form)"
+				/>
+			</executability>
+		</button>
+
+		<button id="reset"
+			class="com.top_logic.layout.form.component.ResetModelCommandHandler"
+			clique="refresh"
+			group="System"
+		>
+			<resourceKey>
+				<de>Auf bestehendes Schema zurücksetzen</de>
+				<en>Reset to current schema</en>
+			</resourceKey>
+		</button>
+
+		<reference command-id="editLayoutCommand"/>
+		<reference command-id="deleteComponentCommand"/>
+	</buttons>
+
+	<dialogs>
+		<layout-reference resource="com.top_logic.element/admin/model/dbAdmin/tables/createTableDialog.layout.xml"/>
+		<layout-reference resource="com.top_logic.element/admin/model/dbAdmin/tables/createAlternativeDialog.layout.xml"/>
+	</dialogs>
+</tableView>

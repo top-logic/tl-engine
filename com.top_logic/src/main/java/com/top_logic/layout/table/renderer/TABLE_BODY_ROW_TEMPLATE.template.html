@@ -1,0 +1,11 @@
+<!-- 
+	It is necessary to set an id for a row (tr element) to identify a row when the table needs
+	an incremental update for example if a row is selected. Then the row have to be rendered again. 
+ -->
+<tr id="{id}"
+	class="{isSelected ? selectedClass} {defaultClasses}"
+	draggable="{isDraggable ? true}"
+	data-drag-image="{isDraggable ? dragImage}"
+>
+	{body_row_cells}
+</tr>

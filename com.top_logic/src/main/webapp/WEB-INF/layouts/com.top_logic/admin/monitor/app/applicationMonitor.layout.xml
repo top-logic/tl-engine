@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminMonitor"
+	helpIDLegacy="tl.admin.technical.monitor.tabber"
+	titleKey="tl.admin.technical.monitor.tabber"
+>
+	<tabInfo label="tl.admin.technical.monitor.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/monitor/app/monitor.xml"/>
+	</components>
+</securityLayout>

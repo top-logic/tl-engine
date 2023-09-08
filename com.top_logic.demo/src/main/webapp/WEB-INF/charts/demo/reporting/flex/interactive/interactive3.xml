@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<chart-builder>
+	<data-source class="com.top_logic.reporting.flex.chart.config.datasource.TransformedDataSourceBuilder">
+		<transformer class="com.top_logic.reporting.flex.chart.config.datasource.InteractiveRevisonTransformer" />
+		<data-source class="com.top_logic.reporting.flex.chart.config.datasource.MetaElementObjectProducer" type="DemoTypes.B" />
+	</data-source>
+
+	<model-preparation class="com.top_logic.reporting.flex.chart.config.model.SimpleModelPreparationBuilder"
+		type="DemoTypes.B"
+	>
+		<aggregation-options>
+			<count/>
+		</aggregation-options> 
+	</model-preparation>
+	
+	<chart-builder class="com.top_logic.reporting.flex.chart.config.chartbuilder.bar.BarChartBuilder" >
+		<color-provider class="com.top_logic.reporting.flex.chart.config.color.OrderedColorProvider">
+			<colors>
+				<color value="#ff5555"/>
+				<color value="#55ff55"/>
+				<color value="#5555ff"/>
+				<color value="#ffff55"/>
+				<color value="#ff55ff"/>
+			</colors>
+		</color-provider>
+	</chart-builder>
+</chart-builder>

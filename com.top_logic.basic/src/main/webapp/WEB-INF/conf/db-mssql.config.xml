@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<pool name="default">
+						<sql-dialect class="com.top_logic.basic.sql.MSSQLHelper"
+							adjust-from-connection="%DB_ADJUST_FROM_CONNECTION%"
+						/>
+						<data-source>
+							<jndi-name></jndi-name>
+							<driver-class>com.top_logic.basic.sql.MSSQLDataSourceProxy</driver-class>
+							<options>
+								<option name="URL" value="jdbc:sqlserver://%MSSQL_HOST%:%MSSQL_PORT%;databaseName=%MSSQL_SCHEMA%;integratedSecurity=%MSSQL_INTEGRATED_SECURITY%;encrypt=%MSSQL_ENCRYPTION%;trustServerCertificate=%MSSQL_TRUST_SERVER_CERTIFICATE%;hostNameInCertificate=%MSSQL_HOST_NAME_IN_CERTIFICATE%" />
+								<option name="user" value="%MSSQL_USER%" />
+								<encrypted-option name="password" value="%MSSQL_PASSWD%" />
+								
+								<option name="trustStore" value="%MSSQL_TRUST_STORE_NAME%" />
+								<encrypted-option name="trustStorePassword" value="%MSSQL_TRUST_STORE_PASSWD%" />
+							</options>
+						</data-source>
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Main configuration file -->
+<root>
+	<alias>
+		<entry name="%KAFKA_PORT%" value="${env:kafka_port:9092}" />
+		<entry name="%ZOO_KEEPER_PORT%" value="${env:zoo_keeper_port:2181}" />
+	</alias>
+
+	<properties>
+	</properties>
+</root>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments
+		defaultSelection="false"
+		model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/tableWithMultipleSelection/kinderTable.layout.xml#Table)"
+	>
+		<titleKey key="dynamic.268bb99c-8240-457e-97ff-184b8e34172b">
+			<en>Table selection</en>
+			<de>Tabellenauswahl</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model -> $model"
+			modelForElement="listElement -> model -> $model"
+			supportsElement="listElement -> model -> $model.containsElement($listElement)"
+		/>
+	</arguments>
+</config:template-call>

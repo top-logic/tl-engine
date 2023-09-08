@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-M1-template.xml">
+	<values>
+		<value name="a0"/>
+		<value name="a1"/>
+		<value name="a2"/>
+	</values>
+	<default-overridden-with-empty-value>
+	</default-overridden-with-empty-value>
+</include>

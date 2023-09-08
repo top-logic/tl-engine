@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <alias>
+    	<!-- Definition of the variable application data directory in the IDE. -->
+		<!--
+			Note: The following setting is for the development environment only. 
+			It must be overridden in a deployment configuration. 
+			For development, use a directory in the module's temporary folder. 
+		-->
+        <entry name="%STORAGE_PATH%" value="${env:tl_storage_path:./tmp/app-data}" />
+	</alias>
+</root>

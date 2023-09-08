@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="lockAdmin"
+		/>
+		<param name="resPrefix"
+			value="layouts.admin.technical.deleteLocks"
+		/>
+	</params>
+
+	<tree-table name="${namePrefix}Tree"
+		resPrefix="${resPrefix}.table"
+		securityProviderClass="securityRoot"
+		titleKey="${resPrefix}.title"
+		treeBuilder="com.top_logic.base.locking.ui.LocksTreeBuilder"
+	>
+		<table
+			defaultColumns="owner,timeout,object,name,kind"
+			defaultSortOrder="timeout"
+			fixedColumns="1"
+		>
+			<columns>
+				<column name="owner">
+					<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+						method="getOwner"
+						type="com.top_logic.base.locking.token.LockInfo"
+					/>
+					<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
+				</column>
+				<column name="timeout">
+					<labelProvider class="com.top_logic.layout.provider.DateTimeLabelProvider"/>
+					<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+						method="getTimeout"
+						type="com.top_logic.base.locking.token.LockInfo"
+					/>
+				</column>
+				<column name="kind">
+					<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+						method="getKind"
+						type="com.top_logic.base.locking.token.Token"
+					/>
+				</column>
+				<column name="object">
+					<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+						method="getObject"
+						type="com.top_logic.base.locking.token.Token"
+					>
+						<defaultAccessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getObjects"
+							type="com.top_logic.base.locking.token.LockInfo"
+						/>
+					</accessor>
+				</column>
+				<column name="name">
+					<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+						method="getName"
+						type="com.top_logic.base.locking.token.Token"
+					>
+						<defaultAccessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+							method="getAspects"
+							type="com.top_logic.base.locking.token.LockInfo"
+						/>
+					</accessor>
+				</column>
+				<column name="nodeId">
+					<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+						method="getClusterNodeId"
+						type="com.top_logic.base.locking.token.LockInfo"
+					/>
+				</column>
+				<column name="operation">
+					<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+						method="getOperation"
+						type="com.top_logic.base.locking.token.LockInfo"
+					/>
+				</column>
+			</columns>
+		</table>
+		<buttons>
+			<reference command-id="invalidate"/>
+			<button id="delete"
+				class="com.top_logic.base.locking.ui.ReleaseLockCommand"
+				clique="delete"
+				confirm="true"
+				resourceKey="${resPrefix}.releaseLock"
+				target="selection(self())"
+			/>
+		</buttons>
+	</tree-table>
+</template>

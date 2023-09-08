@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ignored comment. -->
+<a xmlns:i="http://ignored.name.space/">
+	<!-- Ignored comment. -->
+	<b></b>
+	<c xmlns="http://ignored.name.space/" a1="v1">
+		<d>
+			Text content.
+		</d>
+	</c>
+	<b i:a2="v2"></b>
+</a>

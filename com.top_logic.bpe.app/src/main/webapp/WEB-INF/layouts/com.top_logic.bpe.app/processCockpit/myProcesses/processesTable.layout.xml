@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tileTable.template.xml"
+>
+	<arguments name="%LAYOUT_RESPREFIX%tableName"
+		defaultColumns="executionNumber"
+		fixedColumns="-1"
+		model="selection(com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List)"
+		securityObject="securityRoot"
+		type="tl.bpe.execution:ProcessExecution"
+	>
+		<modelBuilder class="com.top_logic.bpe.app.layout.ProcessExecutionListModelBuilder"/>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.bpe.app.layout.tiles.ContextTableConfiguration"
+				name-of-export-file="bpe.app.ProcessExecution.Table.export.ProcessExecution"
+			/>
+			<sort-columns order="executionNumber:ascending"/>
+		</configurationProviders>
+		<component class="com.top_logic.mig.html.layout.LayoutReference$LayoutReferenceComponent"
+			resource="com.top_logic.bpe.app/processCockpit/myProcesses/processEditor.layout.xml"
+		/>
+	</arguments>
+</config:template-call>

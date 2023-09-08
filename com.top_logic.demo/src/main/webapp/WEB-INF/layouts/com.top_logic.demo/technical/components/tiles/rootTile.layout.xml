@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tiles.template.xml"
+>
+	<arguments>
+		<component class="com.top_logic.mig.html.layout.LayoutReference$LayoutReferenceComponent"
+			resource="com.top_logic.demo/technical/components/tiles/productsTileLayout.layout.xml"
+		>
+			<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+				<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+					<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+				</contextMenuFactory>
+			</content-layouting>
+		</component>
+	</arguments>
+</config:template-call>

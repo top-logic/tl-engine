@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+		name="Variable_Test_DifferentTest"
+	/>
+	<constraints>
+		<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+				string="Value for Test DifferentTest"
+			/>
+		</constraint>
+	</constraints>
+</action>

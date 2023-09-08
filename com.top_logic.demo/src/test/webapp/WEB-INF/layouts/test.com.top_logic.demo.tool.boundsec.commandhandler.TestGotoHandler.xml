@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.knowledge.gui.layout.TLMainLayout"
+	horizontal="true"
+	name="masterFrame"
+	titleKey="/saTitle"
+>
+	<components>
+		<tabbar name="mainTab">
+			<components>
+					<layout>
+				<tabInfo  label="tab1"/>
+						<components>
+							<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
+								name="tab1"
+								page="/empty.jsp"
+								securityProviderClass="securityRoot"
+							>
+								<dialogs>
+									<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
+										name="dialog1"
+										page="/empty.jsp"
+										securityProviderClass="securityRoot"
+									>
+										<!-- quirks openHandlerName #2128 -->
+										<dialogInfo openHandlerName="displayDialog_dialog1"/>
+										<dialogs>
+											<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
+												name="dialog1.1"
+												page="/empty.jsp"
+												securityProviderClass="securityRoot"
+											>
+												<!-- quirks openHandlerName #2128 -->
+												<dialogInfo openHandlerName="displayDialog_dialog1_1"/>
+												<views>
+													<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
+														name="gotoFromDialog1.1"
+													>
+														<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+															command="gotoCmd"
+														/>
+													</view>
+												</views>
+											</component>
+											<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
+												name="dialog1.2"
+												page="/empty.jsp"
+												securityProviderClass="securityRoot"
+											>
+												<!-- quirks openHandlerName #2128 -->
+												<dialogInfo openHandlerName="displayDialog_dialog1_2"/>
+												<views>
+													<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
+														name="gotoFromDialog1.2"
+													>
+														<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+															command="gotoCmd"
+														/>
+													</view>
+												</views>
+											</component>
+										</dialogs>
+										<views>
+											<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
+												name="gotoFromDialog1"
+											>
+												<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+													command="gotoCmd"
+												/>
+											</view>
+										</views>
+									</component>
+								</dialogs>
+								<views>
+									<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
+										name="gotoFromTab1"
+									>
+										<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+											command="gotoCmd"
+										/>
+									</view>
+								</views>
+							</component>
+							<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
+								name="tab1.1"
+								page="/empty.jsp"
+								securityProviderClass="securityRoot"
+							/>
+						</components>
+					</layout>
+					<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
+						name="tab2"
+						page="/empty.jsp"
+						securityProviderClass="securityRoot"
+					>
+				<tabInfo  label="tab2" />
+						<dialogs>
+							<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
+								name="dialog2"
+								page="/empty.jsp"
+								securityProviderClass="securityRoot"
+							>
+								<!-- quirks openHandlerName #2128 -->
+								<dialogInfo openHandlerName="displayDialog_dialog2"/>
+								<dialogs>
+									<component class="test.com.top_logic.demo.tool.boundsec.commandhandler.TestGotoHandler$Component"
+										name="dialog2.1"
+										page="/empty.jsp"
+										securityProviderClass="securityRoot"
+									>
+										<!-- quirks openHandlerName #2128 -->
+										<dialogInfo openHandlerName="displayDialog_dialog2_1"/>
+										<views>
+											<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
+												name="gotoFromDialog2.1"
+											>
+												<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+													command="gotoCmd"
+												/>
+											</view>
+										</views>
+									</component>
+								</dialogs>
+								<views>
+									<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
+										name="gotoFromDialog2"
+									>
+										<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+											command="gotoCmd"
+										/>
+									</view>
+								</views>
+							</component>
+						</dialogs>
+						<views>
+							<view class="com.top_logic.layout.component.configuration.CommandModelViewConfiguration"
+								name="gotoFromTab2"
+							>
+								<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
+									command="gotoCmd"
+								/>
+							</view>
+						</views>
+					</component>
+			</components>
+		</tabbar>
+	</components>
+</component>

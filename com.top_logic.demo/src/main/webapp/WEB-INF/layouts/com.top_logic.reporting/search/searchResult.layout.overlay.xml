@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<components>
+	<component name="SearchAttributedSearchResultTable"
+		metaElement="DemoTypes.A,DemoTypes.B,DemoTypes.C.All,DemoTypes.X,Mandator.all"
+	>
+		<table>
+			<columns>
+				<column name="name"
+					renderer="com.top_logic.layout.basic.BookmarkRenderer"
+				/>
+			</columns>
+		</table>
+	</component>
+</components>

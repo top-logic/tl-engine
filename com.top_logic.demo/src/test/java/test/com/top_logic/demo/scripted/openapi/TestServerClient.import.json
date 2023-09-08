@@ -1,0 +1,195 @@
+{
+	"openapi": "3.0.3",
+	"info": {
+		"title": "TL-Demo OpenAPI Server",
+		"version": "1.0"
+	},
+	"servers": [
+		{
+			"url": "http://localhost:8080/demo/api"
+		}
+	],
+	"paths": {
+		"/structure/demo/get/{target}": {
+			"get": {
+				"summary": "Returns attribute values of elements",
+				"operationId": "getAttributeValues",
+				"parameters": [
+					{
+						"name": "attr",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Ok"
+					}
+				},
+				"security": [
+					{
+						"GetData": []
+					}
+				]
+			},
+			"parameters": [
+				{
+					"$ref": "#/components/parameters/targetParam"
+				}
+			]
+		},
+		"/structure/demo/create/{parent}": {
+			"put": {
+				"summary": "Creates a new element",
+				"operationId": "createNewElement",
+				"parameters": [
+					{
+						"name": "elementType",
+						"in": "cookie",
+						"description": "Type name of the new element",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "Properties for the new element",
+					"required": false,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Ok"
+					}
+				},
+				"security": [
+					{
+						"PutData": [],
+						"GetData": []
+					}
+				]
+			},
+			"parameters": [
+				{
+					"name": "parent",
+					"in": "path",
+					"description": "Path to parent object",
+					"required": true,
+					"schema": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			]
+		},
+		"/structure/demo/delete/{target}": {
+			"delete": {
+				"summary": "Deletes the target element",
+				"operationId": "deleteElement",
+				"responses": {
+					"200": {
+						"description": "Ok"
+					}
+				},
+				"security": [
+					{
+						"DeleteData": [],
+						"DeleteData2": []
+					}
+				]
+			},
+			"parameters": [
+				{
+					"$ref": "#/components/parameters/targetParam"
+				}
+			]
+		},
+		"/structure/demo/getAs": {
+			"get": {
+				"tags": [],
+				"parameters": [
+					{
+						"name": "from",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "date-time"
+						}
+					},
+					{
+						"name": "to",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"format": "date-time"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Ok"
+					}
+				},
+				"security": [
+					{
+						"GetData": []
+					}
+				]
+			},
+			"parameters": []
+		}
+	},
+	"components": {
+		"securitySchemes": {
+			"GetData": {
+				"type": "apiKey",
+				"name": "authParameter",
+				"in": "cookie"
+			},
+			"PutData": {
+				"type": "http",
+				"scheme": "Basic"
+			},
+			"DeleteData": {
+				"type": "openIdConnect",
+				"openIdConnectUrl": "http://liveapps:8098/auth/realms/tl-demo"
+			},
+			"DeleteData2": {
+				"type": "apiKey",
+				"name": "X-Delete-Auth",
+				"in": "query"
+			}
+		},
+		"parameters": {
+			"targetParam": {
+				"name": "target",
+				"in": "path",
+				"description": "Path to processed object.",
+				"required": true,
+				"schema": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- The outer component only provides scrollbars for its child. -->
+<layout>
+	<components>
+		<component class="com.top_logic.demo.layout.form.demo.TestCustomConfirmComponent"
+			buttonComponent="TestCustomConfirmComponentButtons"
+			name="TestCustomConfirmComponent"
+			page="/jsp/test/layout/TestCustomConfirmComponent.jsp"
+			resPrefix="layouts.layoutdemo.test.TestCustomConfirmComponent.TestCustomConfirmComponent."
+			securityProviderClass="securityRoot"
+		/>
+		<buttonbar name="TestCustomConfirmComponentButtons"/>
+	</components>
+</layout>

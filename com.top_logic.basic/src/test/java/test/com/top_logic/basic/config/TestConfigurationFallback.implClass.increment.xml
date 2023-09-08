@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
+<fallback-test-d xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	string="newString"
+/>

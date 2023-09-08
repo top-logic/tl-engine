@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<semantic:definitions xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:semantic="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" id="Definitions_ID-dfcd7651-eoid-icme-pfik-120984928478" name="Kontoanlage_Applikation_TopLogic" targetNamespace="http://www.softwareag.com/aris/bpmn2">
+    <semantic:process name="Workflow exported from Aris" id="Process_ID-dfcd7651-eoid-icme-pfik-120984928478">
+        <semantic:laneSet id="LaneSet_ID-dfcd7651-eoid-icme-pfik-120984928478">
+            <semantic:lane name="Request" id="ID-ecf40240-eoid-icme-pfik-120984928478">
+                <semantic:childLaneSet id="LaneSet_ID-ecf40240-eoid-icme-pfik-120984928478">
+                    <semantic:lane name="Service&#13;&#10;Customer" id="ID-ecf40242-eoid-icme-pfik-120984928478">
+                        <semantic:flowNodeRef>ID-6c274363-ujdk-udle-cmta-000c2931c01f</semantic:flowNodeRef>
+                        <semantic:flowNodeRef>ID-ecf4024e-eoid-icme-pfik-120984928478</semantic:flowNodeRef>
+                        <semantic:flowNodeRef>ID-ecf40252-eoid-icme-pfik-120984928478</semantic:flowNodeRef>
+                        <semantic:flowNodeRef>ID-6c274375-ujdk-udle-cmta-000c2931c01f</semantic:flowNodeRef>
+                        <semantic:flowNodeRef>ID-295565bb-dkjf-fjkl-kkdl-120984928478</semantic:flowNodeRef>
+                    </semantic:lane>
+                    <semantic:lane name="Specialist 1" id="ID-ecf40245-eoid-icme-pfik-120984928478">
+                        <semantic:flowNodeRef>ID-ecf4025b-eoid-icme-pfik-120984928478</semantic:flowNodeRef>
+                        <semantic:flowNodeRef>ID-ecf4025f-eoid-icme-pfik-120984928478</semantic:flowNodeRef>
+                        <semantic:flowNodeRef>ID-ecf4026e-eoid-icme-pfik-120984928478</semantic:flowNodeRef>
+                    </semantic:lane>
+                    <semantic:lane name="Specialist 2" id="ID-ecf40248-eoid-icme-pfik-120984928478">
+                        <semantic:flowNodeRef>ID-ecf4026b-eoid-icme-pfik-120984928478</semantic:flowNodeRef>
+                        <semantic:flowNodeRef>ID-295565b0-dkjf-fjkl-kkdl-120984928478</semantic:flowNodeRef>
+                        <semantic:flowNodeRef>ID-295565b5-dkjf-fjkl-kkdl-120984928478</semantic:flowNodeRef>
+                        <semantic:flowNodeRef>ID-295565bf-dkjf-fjkl-kkdl-120984928478</semantic:flowNodeRef>
+                    </semantic:lane>
+                </semantic:childLaneSet>
+            </semantic:lane>
+        </semantic:laneSet>
+        <semantic:startEvent name="New issue" id="ID-6c274363-ujdk-udle-cmta-000c2931c01f">
+            <semantic:outgoing>ID-ecf40255-eoid-icme-pfik-120984928478</semantic:outgoing>
+        </semantic:startEvent>
+        <semantic:manualTask name="Create issue object" id="ID-ecf4024e-eoid-icme-pfik-120984928478">
+            <semantic:incoming>ID-ecf40256-eoid-icme-pfik-120984928478</semantic:incoming>
+            <semantic:outgoing>ID-ecf4025e-eoid-icme-pfik-120984928478</semantic:outgoing>
+        </semantic:manualTask>
+        <semantic:manualTask name="Create request" id="ID-ecf40252-eoid-icme-pfik-120984928478">
+            <semantic:incoming>ID-ecf40255-eoid-icme-pfik-120984928478</semantic:incoming>
+            <semantic:outgoing>ID-ecf40256-eoid-icme-pfik-120984928478</semantic:outgoing>
+        </semantic:manualTask>
+        <semantic:manualTask name="Check request data" id="ID-ecf4025b-eoid-icme-pfik-120984928478">
+            <semantic:incoming>ID-ecf4025e-eoid-icme-pfik-120984928478</semantic:incoming>
+            <semantic:outgoing>ID-ecf40268-eoid-icme-pfik-120984928478</semantic:outgoing>
+        </semantic:manualTask>
+        <semantic:exclusiveGateway name="Gateway" id="ID-ecf4025f-eoid-icme-pfik-120984928478">
+            <semantic:incoming>ID-ecf40268-eoid-icme-pfik-120984928478</semantic:incoming>
+            <semantic:outgoing>ID-ecf40267-eoid-icme-pfik-120984928478</semantic:outgoing>
+            <semantic:outgoing>ID-ecf40271-eoid-icme-pfik-120984928478</semantic:outgoing>
+        </semantic:exclusiveGateway>
+        <semantic:endEvent name="Request rejected" id="ID-6c274375-ujdk-udle-cmta-000c2931c01f">
+            <semantic:incoming>ID-ecf40267-eoid-icme-pfik-120984928478</semantic:incoming>
+            <semantic:terminateEventDefinition id="Definition_ID-6c274375-ujdk-udle-cmta-000c2931c01f"/>
+        </semantic:endEvent>
+        <semantic:manualTask name="Check attribute for acceptance or rejection" id="ID-ecf4026b-eoid-icme-pfik-120984928478">
+            <semantic:incoming>ID-295565b4-dkjf-fjkl-kkdl-120984928478</semantic:incoming>
+            <semantic:outgoing>ID-295565b8-dkjf-fjkl-kkdl-120984928478</semantic:outgoing>
+        </semantic:manualTask>
+        <semantic:intermediateCatchEvent name="Request checked" id="ID-ecf4026e-eoid-icme-pfik-120984928478">
+            <semantic:incoming>ID-ecf40271-eoid-icme-pfik-120984928478</semantic:incoming>
+            <semantic:outgoing>ID-295565b3-dkjf-fjkl-kkdl-120984928478</semantic:outgoing>
+        </semantic:intermediateCatchEvent>
+        <semantic:manualTask name="Check request context" id="ID-295565b0-dkjf-fjkl-kkdl-120984928478">
+            <semantic:incoming>ID-295565b3-dkjf-fjkl-kkdl-120984928478</semantic:incoming>
+            <semantic:outgoing>ID-295565b4-dkjf-fjkl-kkdl-120984928478</semantic:outgoing>
+        </semantic:manualTask>
+        <semantic:exclusiveGateway name="Gateway" id="ID-295565b5-dkjf-fjkl-kkdl-120984928478">
+            <semantic:incoming>ID-295565b8-dkjf-fjkl-kkdl-120984928478</semantic:incoming>
+            <semantic:outgoing>ID-295565be-dkjf-fjkl-kkdl-120984928478</semantic:outgoing>
+            <semantic:outgoing>ID-295565c2-dkjf-fjkl-kkdl-120984928478</semantic:outgoing>
+        </semantic:exclusiveGateway>
+        <semantic:endEvent name="Request rejected" id="ID-295565bb-dkjf-fjkl-kkdl-120984928478">
+            <semantic:incoming>ID-295565be-dkjf-fjkl-kkdl-120984928478</semantic:incoming>
+            <semantic:terminateEventDefinition id="Definition_ID-295565bb-dkjf-fjkl-kkdl-120984928478"/>
+        </semantic:endEvent>
+        <semantic:endEvent name="Issue solved" id="ID-295565bf-dkjf-fjkl-kkdl-120984928478">
+            <semantic:incoming>ID-295565c2-dkjf-fjkl-kkdl-120984928478</semantic:incoming>
+            <semantic:terminateEventDefinition id="Definition_ID-295565bf-dkjf-fjkl-kkdl-120984928478"/>
+        </semantic:endEvent>
+        <semantic:sequenceFlow sourceRef="ID-6c274363-ujdk-udle-cmta-000c2931c01f" targetRef="ID-ecf40252-eoid-icme-pfik-120984928478" id="ID-ecf40255-eoid-icme-pfik-120984928478"/>
+        <semantic:sequenceFlow sourceRef="ID-ecf40252-eoid-icme-pfik-120984928478" targetRef="ID-ecf4024e-eoid-icme-pfik-120984928478" id="ID-ecf40256-eoid-icme-pfik-120984928478"/>
+        <semantic:sequenceFlow sourceRef="ID-ecf4024e-eoid-icme-pfik-120984928478" targetRef="ID-ecf4025b-eoid-icme-pfik-120984928478" id="ID-ecf4025e-eoid-icme-pfik-120984928478"/>
+        <semantic:sequenceFlow sourceRef="ID-ecf4025f-eoid-icme-pfik-120984928478" targetRef="ID-6c274375-ujdk-udle-cmta-000c2931c01f" id="ID-ecf40267-eoid-icme-pfik-120984928478"/>
+        <semantic:sequenceFlow sourceRef="ID-ecf4025b-eoid-icme-pfik-120984928478" targetRef="ID-ecf4025f-eoid-icme-pfik-120984928478" id="ID-ecf40268-eoid-icme-pfik-120984928478"/>
+        <semantic:sequenceFlow sourceRef="ID-ecf4025f-eoid-icme-pfik-120984928478" targetRef="ID-ecf4026e-eoid-icme-pfik-120984928478" id="ID-ecf40271-eoid-icme-pfik-120984928478"/>
+        <semantic:sequenceFlow sourceRef="ID-ecf4026e-eoid-icme-pfik-120984928478" targetRef="ID-295565b0-dkjf-fjkl-kkdl-120984928478" id="ID-295565b3-dkjf-fjkl-kkdl-120984928478"/>
+        <semantic:sequenceFlow sourceRef="ID-295565b0-dkjf-fjkl-kkdl-120984928478" targetRef="ID-ecf4026b-eoid-icme-pfik-120984928478" id="ID-295565b4-dkjf-fjkl-kkdl-120984928478"/>
+        <semantic:sequenceFlow sourceRef="ID-ecf4026b-eoid-icme-pfik-120984928478" targetRef="ID-295565b5-dkjf-fjkl-kkdl-120984928478" id="ID-295565b8-dkjf-fjkl-kkdl-120984928478"/>
+        <semantic:sequenceFlow sourceRef="ID-295565b5-dkjf-fjkl-kkdl-120984928478" targetRef="ID-295565bb-dkjf-fjkl-kkdl-120984928478" id="ID-295565be-dkjf-fjkl-kkdl-120984928478"/>
+        <semantic:sequenceFlow sourceRef="ID-295565b5-dkjf-fjkl-kkdl-120984928478" targetRef="ID-295565bf-dkjf-fjkl-kkdl-120984928478" id="ID-295565c2-dkjf-fjkl-kkdl-120984928478"/>
+        <semantic:textAnnotation id="TextAnnotation1_ID-ecf40268-eoid-icme-pfik-120984928478">
+            <semantic:text>Enter the attributes in the issue,&#13;
+bei abgelehntdont forget to mention reasons for rejection</semantic:text>
+        </semantic:textAnnotation>
+        <semantic:association sourceRef="TextAnnotation1_ID-ecf40268-eoid-icme-pfik-120984928478" targetRef="ID-ecf40268-eoid-icme-pfik-120984928478" id="Association1_ID-ecf40268-eoid-icme-pfik-120984928478"/>
+    </semantic:process>
+    <bpmndi:BPMNDiagram name="Workflow exported from Aris" resolution="254.0" id="ID-dfcd7651-eoid-icme-pfik-120984928478">
+        <bpmndi:BPMNPlane bpmnElement="Process_ID-dfcd7651-eoid-icme-pfik-120984928478" id="Plane_ID-dfcd7651-eoid-icme-pfik-120984928478">
+            <bpmndi:BPMNShape bpmnElement="ID-ecf40240-eoid-icme-pfik-120984928478" isHorizontal="true" id="Shape_ID-ecf40240-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="0.0" y="0.0" width="5450.0" height="1564.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="0.0" y="0.0" width="150.0" height="1564.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="ID-ecf40242-eoid-icme-pfik-120984928478" isHorizontal="true" id="Shape_ID-ecf40242-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="150.0" y="0.0" width="5300.0" height="500.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="150.0" y="0.0" width="150.0" height="500.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="ID-ecf40245-eoid-icme-pfik-120984928478" isHorizontal="true" id="Shape_ID-ecf40245-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="150.0" y="500.0" width="5300.0" height="564.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="150.0" y="500.0" width="150.0" height="564.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="ID-ecf40248-eoid-icme-pfik-120984928478" isHorizontal="true" id="Shape_ID-ecf40248-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="150.0" y="1064.0" width="5300.0" height="500.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="150.0" y="1064.0" width="150.0" height="500.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="ID-6c274363-ujdk-udle-cmta-000c2931c01f" id="Shape_ID-6c274363-ujdk-udle-cmta-000c2931c01f">
+                <dc:Bounds x="389.0" y="189.0" width="122.0" height="122.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="270.0" y="321.0" width="360.0" height="40.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="ID-ecf4024e-eoid-icme-pfik-120984928478" id="Shape_ID-ecf4024e-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="1466.0" y="140.0" width="368.0" height="220.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="1504.0" y="230.0" width="293.0" height="40.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="ID-ecf40252-eoid-icme-pfik-120984928478" id="Shape_ID-ecf40252-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="766.0" y="140.0" width="368.0" height="220.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="797.0" y="258.0" width="307.0" height="40.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="ID-ecf40255-eoid-icme-pfik-120984928478" id="Edge_ID-ecf40255-eoid-icme-pfik-120984928478">
+                <di:waypoint x="511.0" y="250.0"/>
+                <di:waypoint x="766.0" y="250.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="ID-ecf40256-eoid-icme-pfik-120984928478" id="Edge_ID-ecf40256-eoid-icme-pfik-120984928478">
+                <di:waypoint x="1134.0" y="250.0"/>
+                <di:waypoint x="1466.0" y="250.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="ID-ecf4025b-eoid-icme-pfik-120984928478" id="Shape_ID-ecf4025b-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="2216.0" y="690.0" width="368.0" height="220.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="2134.0" y="808.0" width="533.0" height="40.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="ID-ecf4025e-eoid-icme-pfik-120984928478" id="Edge_ID-ecf4025e-eoid-icme-pfik-120984928478">
+                <di:waypoint x="1834.0" y="250.0"/>
+                <di:waypoint x="2050.0" y="250.0"/>
+                <di:waypoint x="2050.0" y="800.0"/>
+                <di:waypoint x="2216.0" y="800.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="ID-ecf4025f-eoid-icme-pfik-120984928478" isMarkerVisible="true" id="Shape_ID-ecf4025f-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="2765.0" y="715.0" width="170.0" height="170.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="ID-6c274375-ujdk-udle-cmta-000c2931c01f" id="Shape_ID-6c274375-ujdk-udle-cmta-000c2931c01f">
+                <dc:Bounds x="3142.0" y="142.0" width="116.0" height="116.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="3071.0" y="268.0" width="258.0" height="40.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="ID-ecf40267-eoid-icme-pfik-120984928478" id="Edge_ID-ecf40267-eoid-icme-pfik-120984928478">
+                <di:waypoint x="2850.0" y="715.0"/>
+                <di:waypoint x="2850.0" y="200.0"/>
+                <di:waypoint x="3142.0" y="200.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="ID-ecf40268-eoid-icme-pfik-120984928478" id="Edge_ID-ecf40268-eoid-icme-pfik-120984928478">
+                <di:waypoint x="2584.0" y="800.0"/>
+                <di:waypoint x="2765.0" y="800.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="TextAnnotation1_ID-ecf40268-eoid-icme-pfik-120984928478" id="Shape_TextAnnotation1_ID-ecf40268-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="1095.0" y="1080.0" width="800.0" height="80.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="Association1_ID-ecf40268-eoid-icme-pfik-120984928478" id="Edge_Association1_ID-ecf40268-eoid-icme-pfik-120984928478">
+                <di:waypoint x="1495.0" y="1080.0"/>
+                <di:waypoint x="2674.0" y="800.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="ID-ecf4026b-eoid-icme-pfik-120984928478" id="Shape_ID-ecf4026b-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="3916.0" y="1240.0" width="368.0" height="220.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="3801.0" y="1358.0" width="599.0" height="40.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="ID-ecf4026e-eoid-icme-pfik-120984928478" id="Shape_ID-ecf4026e-eoid-icme-pfik-120984928478">
+                <dc:Bounds x="3139.0" y="739.0" width="122.0" height="122.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="3091.0" y="871.0" width="218.0" height="40.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="ID-ecf40271-eoid-icme-pfik-120984928478" id="Edge_ID-ecf40271-eoid-icme-pfik-120984928478">
+                <di:waypoint x="2935.0" y="800.0"/>
+                <di:waypoint x="3139.0" y="800.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="ID-295565b0-dkjf-fjkl-kkdl-120984928478" id="Shape_ID-295565b0-dkjf-fjkl-kkdl-120984928478">
+                <dc:Bounds x="3366.0" y="1240.0" width="368.0" height="220.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="3381.0" y="1358.0" width="339.0" height="40.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="ID-295565b3-dkjf-fjkl-kkdl-120984928478" id="Edge_ID-295565b3-dkjf-fjkl-kkdl-120984928478">
+                <di:waypoint x="3261.0" y="800.0"/>
+                <di:waypoint x="3300.0" y="800.0"/>
+                <di:waypoint x="3300.0" y="1350.0"/>
+                <di:waypoint x="3366.0" y="1350.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="ID-295565b4-dkjf-fjkl-kkdl-120984928478" id="Edge_ID-295565b4-dkjf-fjkl-kkdl-120984928478">
+                <di:waypoint x="3734.0" y="1350.0"/>
+                <di:waypoint x="3916.0" y="1350.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="ID-295565b5-dkjf-fjkl-kkdl-120984928478" isMarkerVisible="true" id="Shape_ID-295565b5-dkjf-fjkl-kkdl-120984928478">
+                <dc:Bounds x="4515.0" y="1265.0" width="170.0" height="170.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="ID-295565b8-dkjf-fjkl-kkdl-120984928478" id="Edge_ID-295565b8-dkjf-fjkl-kkdl-120984928478">
+                <di:waypoint x="4284.0" y="1350.0"/>
+                <di:waypoint x="4515.0" y="1350.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="ID-295565bb-dkjf-fjkl-kkdl-120984928478" id="Shape_ID-295565bb-dkjf-fjkl-kkdl-120984928478">
+                <dc:Bounds x="4942.0" y="192.0" width="116.0" height="116.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="4871.0" y="318.0" width="258.0" height="40.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="ID-295565be-dkjf-fjkl-kkdl-120984928478" id="Edge_ID-295565be-dkjf-fjkl-kkdl-120984928478">
+                <di:waypoint x="4600.0" y="1265.0"/>
+                <di:waypoint x="4600.0" y="250.0"/>
+                <di:waypoint x="4942.0" y="250.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape bpmnElement="ID-295565bf-dkjf-fjkl-kkdl-120984928478" id="Shape_ID-295565bf-dkjf-fjkl-kkdl-120984928478">
+                <dc:Bounds x="4942.0" y="1292.0" width="116.0" height="116.0"/>
+                <bpmndi:BPMNLabel labelStyle="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+                    <dc:Bounds x="4893.0" y="1418.0" width="215.0" height="40.0"/>
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="ID-295565c2-dkjf-fjkl-kkdl-120984928478" id="Edge_ID-295565c2-dkjf-fjkl-kkdl-120984928478">
+                <di:waypoint x="4685.0" y="1350.0"/>
+                <di:waypoint x="4942.0" y="1350.0"/>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+        <bpmndi:BPMNLabelStyle id="ArisFontStyleSheet_0_d7b815f4-04df-4971-8f01-03fe21c67159">
+            <dc:Font name="Arial" size="8.0" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+        </bpmndi:BPMNLabelStyle>
+    </bpmndi:BPMNDiagram>
+</semantic:definitions>

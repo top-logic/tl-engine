@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="test.com.top_logic.layout.processor.TestLayoutInline/b.xml"
+	componentName="b1"
+>
+	<moreChildren>
+		<include name="test.com.top_logic.layout.processor.TestLayoutInline/c.xml"
+			componentName="c4"
+		/>
+	</moreChildren>
+</include>

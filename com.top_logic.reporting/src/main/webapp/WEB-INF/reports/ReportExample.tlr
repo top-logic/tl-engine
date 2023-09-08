@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="report.xsd" -->
+<root>
+    <report-type>bar chart</report-type>
+    <selected-language>de</selected-language>
+    <business-object-producer>
+        <class>com.top_logic.extensions.ewe.reporting.ActivityProducer</class>
+        <object-type>UserSession</object-type>
+    </business-object-producer>
+    <accessor>
+        <class>com.top_logic.knowledge.wrap.WrapperAccessor</class>
+    </accessor>
+    <relevant-business-objects>
+        <meta-attribute-filters/>
+    </relevant-business-objects>
+    <categories>
+        <main-category>
+            <category-function>
+                <type>classification</type>
+                <ignore-null-values>true</ignore-null-values>
+                <ignore-empty-categories>false</ignore-empty-categories>
+                <ranges>
+                    <list-attribute/>
+                </ranges>
+                <attribute>name</attribute>
+            </category-function>
+            <aggregation-function>
+                <type>count</type>
+                <ignore-null-values>true</ignore-null-values>
+                <attribute>name</attribute>
+            </aggregation-function>
+        </main-category>
+    </categories>
+    <presentation>
+        <chart>
+            <anti-alias>true</anti-alias>
+            <show-item-labels>true</show-item-labels>
+            <use-same-category-color>false</use-same-category-color>
+            <use-gradient-paint>true</use-gradient-paint>
+            <use-ints-for-range-axis>true</use-ints-for-range-axis>
+            <orientation>vertical</orientation>
+            <background-color>theme</background-color>
+            <title>
+                <i18n>
+                    <de>Nutzer Logins</de>
+                    <en>User Logins</en>
+                </i18n>
+                <align>left</align>
+                <visibility>true</visibility>
+                <font>
+                    <name>Arial</name>
+                    <style>italic</style>
+                    <size>20</size>
+                </font>
+            </title>
+            <legend>
+                <align>bottom</align>
+                <visibility>false</visibility>
+                <font>
+                    <name>Arial</name>
+                    <style>bold</style>
+                    <size>12</size>
+                </font>
+            </legend>
+            <range-axis>
+                <i18n>
+                    <de>Wert</de>
+                    <en/>
+                </i18n>
+                <visibility>true</visibility>
+                <grid-line>true</grid-line>
+                <font>
+                    <name>Times New Roman</name>
+                    <style>bold</style>
+                    <size>12</size>
+                </font>
+                <values>
+                    <font>
+                        <name>Times New Roman</name>
+                        <style>plain</style>
+                        <size>10</size>
+                    </font>
+                </values>
+            </range-axis>
+            <domain-axis>
+                <i18n>
+                    <de>Kategorie</de>
+                    <en/>
+                </i18n>
+                <visibility>true</visibility>
+                <grid-line>false</grid-line>
+                <font>
+                    <name>Times New Roman</name>
+                    <style>bold</style>
+                    <size>12</size>
+                </font>
+                <values>
+                    <font>
+                        <name>Times New Roman</name>
+                        <style>plain</style>
+                        <size>10</size>
+                    </font>
+                </values>
+            </domain-axis>
+        </chart>
+        <table>
+            <title>
+                <i18n>
+                    <de>Nutzer Logins</de>
+                    <en>User Logins</en>
+                </i18n>
+                <align>left</align>
+                <visibility>true</visibility>
+            </title>
+            <orientation>vertical</orientation>
+        </table>
+    </presentation>
+</root>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%MYSQL_HOST%" value="${env:mysql_host:localhost}" />
+        <entry name="%MYSQL_PORT%" value="${env:mysql_port:3306}" />
+        <entry name="%MYSQL_SCHEMA%" value="${env:mysql_schema:test}" />
+        <entry name="%MYSQL_USER%" value="${env:mysql_user:user}"/>
+        <entry name="%MYSQL_PASSWD%" value="${env:mysql_passwd:unencrypted:passwd}"/>
+	</alias>
+</root>

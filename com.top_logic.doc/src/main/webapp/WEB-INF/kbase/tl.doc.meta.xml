@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<metaobject
+			object_name="tl.doc.Page"
+			super_class="AttributedObject"
+		>
+			<attributes>
+				<mo_attribute
+					att_name="name"
+					att_type="String"
+					mandatory="true"
+				/>
+				<mo_attribute
+					att_name="uuid"
+					att_type="String"
+					mandatory="true"
+				/>
+				<mo_attribute
+					att_name="position"
+					att_type="Integer"
+					mandatory="false"
+				/>
+				<mo_attribute
+					att_name="importSource"
+					att_type="String"
+					mandatory="false"
+				/>
+			</attributes>
+			<index>
+				<mo_index name="uuidIdx"
+					unique="true"
+				>
+					<index-parts>
+						<index_part name="uuid"/>
+					</index-parts>
+				</mo_index>
+				<mo_index name="nameIdx"
+					unique="false"
+				>
+					<index-parts>
+						<index_part name="name"/>
+					</index-parts>
+				</mo_index>
+			</index>
+		</metaobject>
+	</metaobjects>
+</objectlist>

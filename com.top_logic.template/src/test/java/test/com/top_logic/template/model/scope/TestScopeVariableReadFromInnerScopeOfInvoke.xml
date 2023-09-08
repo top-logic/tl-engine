@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!-- This template calls itself once. The parameter 'InnerInvocationFlag' is used to detect if its the outer or the inner call.-->
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			<t:parameter name="Inner_Invocation_Flag" type="boolean" default="false" />
+			<t:parameter name="Example_Parameter" type="string" default="" />
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:if condition="!$Inner_Invocation_Flag">
+			<t:then>
+				<t:define var="Example_Variable" expr='"Example Value"' />
+				Out1(<t:value expr="Example_Variable" />)Out1
+				
+				<t:invoke template="TestScopeVariableReadFromInnerScopeOfInvoke.xml">
+					<t:parameter name="Inner_Invocation_Flag" value="true" />
+					<t:parameter name="Example_Parameter">
+						<t:value>
+							ParameterValue(<t:value expr="Example_Variable" />)ParameterValue
+						</t:value>
+					</t:parameter>
+				</t:invoke>
+				
+				Out2(<t:value expr="Example_Variable" />)Out2
+			</t:then>
+			<t:else>
+				In(<t:value expr="$Example_Parameter" />)In
+			</t:else>
+		</t:if>
+		
+	</t:body>
+</t:template>

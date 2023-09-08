@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-gwt</relativePath>
+    <groupId>com.top-logic</groupId>
+	<artifactId>tl-parent-gwt</artifactId>
+    <version>7.6.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-graph-diagramjs-client</artifactId>
+  <description>GWT-based client library for displaying the TopLogic model as UML.</description>
+  
+  <properties>
+	<gwt.module>com.top_logic.graph.diagramjs.client.TLGraphClientDiagramJS</gwt.module>  	
+  </properties>
+  
+  <dependencies>
+    <dependency>
+      <groupId>org.gwtproject</groupId>
+      <artifactId>gwt-user</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.gwtproject</groupId>
+      <artifactId>gwt-dev</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ajax-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ajax-client</artifactId>
+	  <version>7.6.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-client-diagramjs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-client-diagramjs</artifactId>
+	  <version>7.6.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-diagramjs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-diagramjs</artifactId>
+	  <version>7.6.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    
+    <!-- Note: Must repeat non-inherited dependencies (provided dependencies are not inherited). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-common</artifactId>
+	  <version>7.6.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-common-remote</artifactId>
+	  <version>7.6.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-common-json</artifactId>
+	  <version>7.6.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-shared</artifactId>
+	  <version>7.6.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+       <groupId>de.haumacher.msgbuf</groupId>
+       <artifactId>msgbuf-api</artifactId>
+       <classifier>sources</classifier>
+       <scope>provided</scope>
+    </dependency>
+  </dependencies>
+  
+  <build>
+  	<plugins>
+  	  <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-war-plugin</artifactId>
+	  </plugin>
+ 	  <plugin>
+		<groupId>net.ltgt.gwt.maven</groupId>
+		<artifactId>gwt-maven-plugin</artifactId>
+ 	  </plugin>
+  	</plugins>
+  </build>
+</project>

@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core</artifactId>
+    <version>7.6.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-graph-common</artifactId>
+  <description>Code shared between server and GWT-based client libraries for displaying graphs such as the UML model.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-common-remote</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-common-remote</artifactId>
+	  <version>7.6.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    
+    <!-- 
+    	Note: Even if this is a client-side module, no sources are required for the following dependency.
+    	Classes from tl-basic are only required for Java compilation, not GWT compilation, because only 
+    	Annotations are referenced that are not required in GWT context.  
+    -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+    </dependency>
+  </dependencies>
+</project>

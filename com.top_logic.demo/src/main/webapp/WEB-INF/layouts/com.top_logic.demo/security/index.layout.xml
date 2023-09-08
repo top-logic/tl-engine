@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		domain="DemoSecurity"
+		tabIcon="theme:ICON_USER_SECRET"
+		z_legacy_componentName="securityDemo"
+		z_legacy_tabBarName="securityDemo_tabBar"
+		z_legacy_tabLabel="demo.security.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.demo/security/demoSecurity/demoSecurityTypesView.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/security/search/index.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

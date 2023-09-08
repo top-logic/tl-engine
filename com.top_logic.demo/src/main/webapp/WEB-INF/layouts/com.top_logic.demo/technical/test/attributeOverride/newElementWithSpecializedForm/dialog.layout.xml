@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID=""
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<open-handler id="ID_a285c148_5fb0_4f3b_b891_7def60e2a5a3"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			clique="create"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			image="css:fas fa-plus-circle"
+			targetComponent="com.top_logic.demo/technical/test/attributeOverride/newElementWithSpecializedForm/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.3f1e53fa-cbd6-430d-93e7-28d1b2936505">
+				<en>New element (specialized)</en>
+				<de>Neues Element (specialized)</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.3f1e53fa-cbd6-430d-93e7-28d1b2936505">
+				<en>New element with specialized form</en>
+				<de>Neues Element mit spezialisiertem Formular</de>
+			</title>
+		</title>
+		<forms>
+			<form type="test.override:A">
+				<formDefinition>
+					<field attribute="name"/>
+					<field attribute="goLeft"/>
+					<field attribute="left"/>
+					<field attribute="right"/>
+					<field attribute="root"/>
+				</formDefinition>
+			</form>
+			<form type="test.override:R">
+				<formDefinition>
+					<field attribute="name"/>
+					<field attribute="parent"/>
+					<field attribute="root"/>
+				</formDefinition>
+			</form>
+			<form type="test.override:S">
+				<formDefinition>
+					<field attribute="name"/>
+					<field attribute="root"/>
+				</formDefinition>
+			</form>
+		</forms>
+		<typeOptions
+			include-subtypes="true"
+			type="test.override:I"
+		/>
+		<create-handler id="ID_be7f5106_5cc3_4cb7_879a_cab5b4167a31"
+			clique="save"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			ignoreWarnings="default"
+			image=""
+			linkOperation=""
+		/>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.LogMessageActionOp"
+			level="ERROR"
+			message="This is a test error message used to check if the test framework fails properly on logged errors. This script logs two errors and both of them should be mentioned in the test-failed-messages. This is message ONE."
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.LogMessageActionOp"
+			level="ERROR"
+			message="This is a test error message used to check if the test framework fails properly on logged errors. This script logs two errors and both of them should be mentioned in the test-failed-messages. This is message TWO."
+		/>
+	</actions>
+</action>

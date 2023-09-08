@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		isSecurityMaster="false"
+		type="test.dynamictable:Objective"
+	>
+		<name key="dynamic.4c749528-2e3c-401c-9944-33fc63fcd562">
+			<en>Goals</en>
+			<de>Ziele</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.dynamictable:Objective`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.dynamictable:Objective`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_8a712d24_5414_4985_a3f7_7d8847ae8718"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				confirm="true"
+				disabledImage=""
+				group="Delete"
+				image=""
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.ceea0812-b7d5-4d1b-9f15-49ef38df4fdd">
+					<de>Löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/newObjective/dialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

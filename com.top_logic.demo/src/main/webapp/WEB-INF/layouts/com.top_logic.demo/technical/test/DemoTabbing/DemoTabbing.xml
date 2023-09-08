@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.demo.layout.demo.DemoTabbingComponent"
+	displayWithoutModel="true"
+	name="demoTabbing"
+	page="/jsp/test/layout/DemoTabbingComponent.jsp"
+	resPrefix="layouts.layoutdemo.test.DemoTabbing.demoTabbing."
+	securityProviderClass="securityRoot"
+/>

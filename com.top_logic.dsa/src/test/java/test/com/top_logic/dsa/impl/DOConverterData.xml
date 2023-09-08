@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Ergebniss db="AM-E89">
+	<Datensatz>
+		<Anforderungsnummer><![CDATA[NFA_OT_1025]]></Anforderungsnummer>
+		<Kapitel><![CDATA[3.9.1. KONZEPTQUALITÄT]]></Kapitel>
+		<Beschreibung><![CDATA[Beschreibungtext]]></Beschreibung>
+		<Einheit><![CDATA[Einheit]]></Einheit>
+		<Wert><![CDATA[Wert]]></Wert>
+		<Abschluss_Termin><![CDATA[01.02.2009]]></Abschluss_Termin>
+		<Kommentar><![CDATA[Kommentar]]></Kommentar>
+		<Auftraggeber><![CDATA[Auftraggeber]]></Auftraggeber>
+		<Karosserievariante>
+			<item><![CDATA[E89]]></item>
+		</Karosserievariante>
+		<Motorvariante>
+			<item><![CDATA[N52B25o1]]></item>
+			<item><![CDATA[N52B30M1]]></item>
+			<item><![CDATA[N52B30o1]]></item>
+			<item><![CDATA[N54B30o0]]></item>
+		</Motorvariante>
+		<Getriebevariante>
+			<item><![CDATA[HS]]></item>
+			<item><![CDATA[SSG]]></item>
+		</Getriebevariante>
+		<Status><![CDATA[in Abstimmung]]></Status>
+		<Auftragnehmer>
+			<item><![CDATA[11_KAROSSERIE]]></item>
+			<item><![CDATA[12_INTERIEUR]]></item>
+			<item><![CDATA[14_FAHRDYNAMIK]]></item>
+			<item><![CDATA[15_ANTRIEB]]></item>
+		</Auftragnehmer>
+	</Datensatz>
+	<Datensatz>
+		<Anforderungsnummer><![CDATA[NFA_OT_1026]]></Anforderungsnummer>
+		<Kapitel><![CDATA[3.9.1. KONZEPTQUALITÄT]]></Kapitel>
+		<Beschreibung><![CDATA[Beschreibungtext]]></Beschreibung>
+		<Einheit><![CDATA[Einheit]]></Einheit>
+		<Wert><![CDATA[Wert]]></Wert>
+		<Abschluss_Termin><![CDATA[01.02.2009]]></Abschluss_Termin>
+		<Kommentar><![CDATA[Kommentar]]></Kommentar>
+		<Auftraggeber><![CDATA[Auftraggeber]]></Auftraggeber>
+		<Karosserievariante>
+			<item><![CDATA[E89]]></item>
+		</Karosserievariante>
+		<Motorvariante>
+			<item><![CDATA[N52B25o1]]></item>
+			<item><![CDATA[N52B30M1]]></item>
+			<item><![CDATA[N52B30o1]]></item>
+			<item><![CDATA[N54B30o0]]></item>
+		</Motorvariante>
+		<Getriebevariante>
+			<item><![CDATA[HS]]></item>
+			<item><![CDATA[SSG]]></item>
+		</Getriebevariante>
+		<Status><![CDATA[in Abstimmung]]></Status>
+		<Auftragnehmer>
+			<item><![CDATA[11_KAROSSERIE]]></item>
+			<item><![CDATA[12_INTERIEUR]]></item>
+			<item><![CDATA[14_FAHRDYNAMIK]]></item>
+			<item><![CDATA[15_ANTRIEB]]></item>
+		</Auftragnehmer>
+	</Datensatz>
+</Ergebniss>

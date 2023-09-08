@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tileList.template.xml"
+>
+	<arguments helpID="ID_26253828_0ca5_452c_97af_d572c42a616d">
+		<name key="dynamic.cda3a696-3f02-4304-ad76-1e60059bb988">
+			<en>Contexts</en>
+			<de>Kontexte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.webfolder:Context`)"
+			supportsElement="element->$element.instanceOf(`test.webfolder:Context`)"
+		/>
+		<noCardKey key="dynamic.7487af92-889b-4108-bac9-41b6bced0590">
+			<en>There are no context objects yet. Create a new context object with the plus button in the title bar.</en>
+			<de>Es gibt noch keine Kontext-Objekte. Lege ein neues Kontext-Objekt mit dem Plus-Knopf in der Titelzeile an.</de>
+		</noCardKey>
+		<contextMenuButtons>
+			<contextMenuButton id="ID_112e1065_ad3d_4781_9d5e_97bb8e599229"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+			/>
+		</contextMenuButtons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/documentManagement/newContext/dialog.layout.xml"/>
+		</dialogs>
+		<component class="com.top_logic.mig.html.layout.LayoutReference$LayoutReferenceComponent"
+			resource="com.top_logic.demo/technical/components/documentManagement/contexts/_0_GroupTile.layout.xml"
+		/>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<params>
+		<param name="model-name"/>
+	</params>
+	<layout>
+		<components>
+			<component class="com.top_logic.element.layout.structured.AdminElementComponent"
+				modifier="com.top_logic.demo.edit.DemoFormContextModificator"
+				name="Edit"
+				page="/jsp/demo/EditStructuredElement.jsp"
+				resPrefix="element.structure.edit."
+				securityId="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+				securityProviderClass="default"
+				structure="DemoTypes"
+			>
+				<model config:interface="com.top_logic.layout.channel.linking.Provider">
+					<impl class="com.top_logic.layout.component.model.ModelByNameProvider"
+						model-name="${model-name}"
+					/>
+				</model>
+			</component>
+
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

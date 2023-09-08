@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<tree-table name="metaElementTree"
+	maximizeRoot="metaElementTree"
+	model="provider(com.top_logic.util.model.ModelService#getApplicationModel())"
+	objectType="tl.model:TLModule, tl.model:TLStructuredType"
+	partnerGroup="AttributeTreeGroup"
+	resPrefix="layouts.element.meta.metaElementTree."
+	rootVisible="false"
+	securityProviderClass="securityRoot"
+	showMaximize="true"
+>
+	<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
+		treeModelBuilder="com.top_logic.element.layout.meta.MetaElementTreeModelBuilder"
+	/>
+	<table
+		defaultColumns="name, id"
+		defaultSortOrder="name"
+		dragSource="com.top_logic.layout.table.dnd.DefaultTableDrag"
+		fixedColumns="0"
+		id-column=""
+	>
+		<rowObjectResourceProvider class="com.top_logic.layout.tree.model.TLTreeNodeResourceProvider">
+			<impl class="com.top_logic.model.resources.TLPartScopedResourceProvider"/>
+		</rowObjectResourceProvider>
+		<exporter
+			downloadNameKey="layouts.element.meta.metaElementTree.exportName"
+			templateName="defaultTemplate.xlsx"
+		/>
+		<columns>
+			<column name="name"
+				accessor="com.top_logic.layout.IdentityAccessor"
+				columnWidth="200px"
+				visibility="mandatory"
+			>
+				<comparator class="com.top_logic.basic.col.MappedComparator"
+					valueOrder="com.top_logic.util.TLCollator"
+				>
+					<mapping class="com.top_logic.layout.LabelMapping">
+						<labels class="com.top_logic.model.resources.TLPartScopedResourceProvider"/>
+					</mapping>
+				</comparator>
+				<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
+				<resourceProvider class="com.top_logic.mig.html.NoLinkResourceProvider"
+					inner="com.top_logic.model.resources.TLPartScopedResourceProvider"
+				/>
+			</column>
+			<column name="id"
+				columnWidth="200px"
+				comparator="com.top_logic.util.TLCollator"
+			>
+				<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+					method="getName"
+					type="com.top_logic.model.TLNamedPart"
+				/>
+			</column>
+			<column name="abstract"
+				columnWidth="30px"
+				comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
+				filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
+			>
+				<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+					method="isAbstract"
+					type="com.top_logic.model.TLClass"
+				/>
+			</column>
+			<column name="final"
+				columnWidth="30px"
+				comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
+				filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
+			>
+				<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+					method="isFinal"
+					type="com.top_logic.model.TLClass"
+				/>
+			</column>
+			<column name="scope"
+				columnWidth="100px"
+			>
+				<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+					method="getScope"
+					type="com.top_logic.model.TLClass"
+				/>
+			</column>
+			<column name="module"
+				columnWidth="100px"
+			>
+				<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
+					method="getModule"
+					type="com.top_logic.model.TLClass"
+				/>
+			</column>
+		</columns>
+	</table>
+
+	<dialogs>
+		<include name="com.top_logic.element/admin/model/modelEditor/createEnumeration.xml"
+			namePrefix="CreateEnumeration"
+			ownerModel="selection(metaElementTree)"
+			target="metaElementTree"
+			targetChannel="selection"
+		>
+			<inject>
+				<dialogInfo
+					defaultI18n="element.meta.metaElementTree.newEnumeration"
+					height="430"
+					openerClique="createMenu"
+					openerCommandGroup="Create"
+					width="550"
+				/>
+			</inject>
+		</include>
+		<include name="com.top_logic.element/admin/model/modelEditor/createStructuredType.xml"
+			namePrefix="Create"
+			ownerModel="selection(metaElementTree)"
+			target="metaElementTree"
+			targetChannel="selection"
+		>
+			<inject>
+				<dialogInfo
+					defaultI18n="element.meta.metaElementTree.newType"
+					height="430"
+					openerClique="createMenu"
+					openerCommandGroup="Create"
+					width="550"
+				/>
+			</inject>
+		</include>
+		<include name="com.top_logic.element/admin/model/modelEditor/createModule.xml"
+			namePrefix="CreateModule"
+			ownerModel="selection(metaElementTree)"
+			target="metaElementTree"
+			targetChannel="selection"
+		>
+			<inject>
+				<dialogInfo
+					defaultI18n="element.meta.metaElementTree.newModule"
+					height="430"
+					openerClique="createMenu"
+					openerCommandGroup="Create"
+					width="550"
+				/>
+			</inject>
+		</include>
+	</dialogs>
+
+	<buttons>
+		<button id="configExtract"
+			class="com.top_logic.element.model.export.ui.IDEModelExtractCommand"
+			clique="exportButtons"
+			executability="IDEOnly"
+			image="theme:ICONS_BUTTON_IDE_EXTRACT"
+			target="selection(self())"
+		/>
+		<button id="configExport"
+			class="com.top_logic.element.model.export.ui.ModelExportCommand"
+			clique="exportButtons"
+			image="theme:ICONS_BUTTON_XML_EXPORT"
+		/>
+		<button id="importModel"
+			class="com.top_logic.element.model.importer.XMIModelImportHandler"
+			clique="exportButtons"
+			group="Create"
+			image="theme:ICONS_BUTTON_MODEL_IMPORT"
+		/>
+	</buttons>
+</tree-table>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="DemoMultiChart"
+		/>
+		<param name="resPrefix"
+			value="layouts.demo.reporting.flex.demoChartCockpit."
+		/>
+	</params>
+
+	<layout name="DemoMultiChartLayout"
+		horizontal="true"
+	>
+		<components>
+			<component class="com.top_logic.demo.chart.flex.ChartSelector"
+				isSecurityMaster="true"
+				multi="true"
+				name="${namePrefix}Selector"
+				page="/jsp/demo/reporting/flex/demoMultiChartSelector.jsp"
+				resPrefix="${resPrefix}Selector."
+				securityProviderClass="securityRoot"
+				showMaximize="false"
+			>
+				<layoutInfo
+					scrolleable="false"
+					size="340px"
+				/>
+				<charts>
+					<chart name="demo/reporting/flex/static/barchart.xml"/>
+					<chart name="demo/reporting/flex/static/barchart2.xml"/>
+					<chart name="demo/reporting/flex/static/barchart3.xml"/>
+					<chart name="demo/reporting/flex/static/piechart.xml"/>
+					<chart name="demo/reporting/flex/static/time.xml"/>
+					<chart name="demo/reporting/flex/static/stacked-bar.xml"/>
+					<chart name="demo/reporting/flex/static/grouped-stacked-bar.xml"/>
+					<chart name="demo/reporting/flex/static/matrix.xml"/>
+					<chart name="demo/reporting/flex/static/bubblechart.xml"/>
+					<chart name="demo/reporting/flex/static/spiderChart.xml"/>
+				</charts>
+			</component>
+			<component class="com.top_logic.reporting.flex.chart.component.MultipleChartComponent"
+				maximizeRoot="DemoMultiChartLayout"
+				model="selection(${namePrefix}Selector)"
+				name="${namePrefix}Chart"
+				page="/jsp/reporting/flex/chart/multipleCharts.jsp"
+				resPrefix="${resPrefix}Chart."
+				securityProviderClass="securityRoot"
+			/>
+		</components>
+	</layout>
+</template>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+	<properties>
+		<section name="fcl">
+			<entry name="username" value="fcl" />
+			<entry name="userpassword"
+				value="argon2#$argon2id$m=4096,t=3,p=1$eJI+UPzf51/Uf0yDf+5rfQ$kYCC5IQww1WYmg/LYbgQIAT3sUrL+nfM9JSRD70DMLY" />
+			<entry name="givenName" value="Fred" />
+			<entry name="sn" value="Clever" />
+		</section>
+	</properties>
+</root>

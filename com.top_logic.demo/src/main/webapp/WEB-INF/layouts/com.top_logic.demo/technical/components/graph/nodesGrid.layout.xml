@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name,color"
+		type="test.graph:Node"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/graph/createNode/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.5f6cec50-47de-4efb-a376-69989931f67c">
+			<en>Nodes</en>
+			<de>Knoten</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.graph:Node`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.graph:Node`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_224e21df_660b_4f2f_b5b7_a5c22ddc82d8"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				image="css:fas fa-trash-alt"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.218812f1-e53f-4527-b78d-d7d1656e34e8">
+					<en>Delete node</en>
+					<de>Knoten löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

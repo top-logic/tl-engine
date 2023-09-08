@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-comment="Technical Demo"
+			card-name="demo.technical.tabber"
+			component-name="mainTabbar.layout.xml#mainTabber"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-comment="Tests"
+			card-name="demo.test.tabber"
+			component-name="com.top_logic.demo/technical/index.layout.xml#technicalDemo_tabBar"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+			card-comment="ProgressComponent Demo"
+			card-name="demo.test.DemoProgress.tabber"
+			component-name="com.top_logic.demo/technical/test/layoutTest.layout.xml#layoutTest_tabBar"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.demo.layout.demo.DemoProgressComponent$DemoProgressCommandHandler"
+			command-label="Start ProgressComponent Demo"
+			command-name="demoProgressCommand"
+			component-implementation-comment="com.top_logic.demo.layout.demo.DemoOpenProgressComponent"
+			component-name="com.top_logic.demo/technical/test/DemoProgress/progressDemo2.layout.xml#demoOpenProgressComponent"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.AwaitProgressActionOp"
+			component-name="com.top_logic.demo/technical/test/DemoProgress/progressDemo2.layout.xml#demoProgress"
+			max-sleep="300000"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.demo.layout.demo.DemoProgressComponent$DemoProgressCommandHandler"
+			command-label="Start ProgressComponent Demo"
+			command-name="demoProgressCommand"
+			component-implementation-comment="com.top_logic.demo.layout.demo.DemoOpenProgressComponent"
+			component-name="com.top_logic.demo/technical/test/DemoProgress/progressDemo2.layout.xml#demoOpenProgressComponent"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.AwaitProgressActionOp"
+			component-name="com.top_logic.demo/technical/test/DemoProgress/progressDemo2.layout.xml#demoProgress"
+			max-sleep="300000"
+		/>
+	</actions>
+</action>

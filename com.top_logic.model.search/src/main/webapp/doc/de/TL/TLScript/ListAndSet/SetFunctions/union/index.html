@@ -1,0 +1,40 @@
+<h2>Syntax</h2> 
+<pre>	<code>union($set1,$set2, ..., $setN)
+</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Berechnet die Vereinigung der Mengen <code class="hljs inlineCode">set1,... setN</code>. </p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set</td> 
+   <td>Menge</td> 
+   <td>Mengen, die zu einer einzigen Menge vereinigt werden sollen.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p> 
+<p>Eine Menge, die alle Elemente der Mengen <code class="hljs inlineCode">set1,... setN</code> enthält. Es werden keine Duplikate hinzugefügt, auch wenn mehrere Mengen dieselben Elemente enthalten.</p> 
+<h2>Beispiele</h2> 
+<h3>Einfach Vereinigung</h3> 
+<pre>	<code>union(list(1, 2, 3), list(4, 5, 6), list(7, 8, 9))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Menge mit den Elementen [1, 2, 3, 4, 5, 6, 7, 8, 9].</p> 
+<h3>Vereinigung bei Duplikaten</h3> 
+<pre>	<code>union(list(1, 2, 3), list(1, 2, 3, 4, 5))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Menge mit den Elementen [1, 2, 3, 4, 5].</p> 
+<p>Die Zahlen 1 und 2 werden nur ein Mal hinzugefügt, da eine Menge keine Duplikate enthlaten darf.</p>

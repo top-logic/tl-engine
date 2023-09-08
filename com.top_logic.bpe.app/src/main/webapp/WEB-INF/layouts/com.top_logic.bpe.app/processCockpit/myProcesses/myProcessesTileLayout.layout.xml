@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="ID_5ba15175_1f9c_466b_9a10_a982b72d6c39"
+		securityDomain=""
+		tileLabel="%LAYOUT_RESPREFIX%tileName"
+		tileName="ID_b5e421a4_1850_410e_a0e7_58103967eafe"
+	>
+		<preview class="com.top_logic.bpe.app.layout.tiles.OwnProcessesTilePreview"
+			css-class="circle-blue"
+			description="ProcessExecutionTableTile.description"
+			icon="theme:ICON_TH_LIST"
+			model="selection(com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List)"
+		/>
+		<components>
+			<layout-reference resource="com.top_logic.bpe.app/processCockpit/myProcesses/myProcessesInnerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

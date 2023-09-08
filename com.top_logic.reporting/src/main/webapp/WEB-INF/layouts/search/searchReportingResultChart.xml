@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="dialogPath"
+			value="/search/detailsDialog.xml"
+		/>
+		<param name="exportHandlerId"
+			value="exportPowerpoint"
+		/>
+		<param name="templateFile"
+			value="SearchResultChart.pptx"
+		/>
+		<param name="downloadNameKey"
+			value="reporting.chart.download.name.default"
+		/>
+		<param name="resourcePrefix"
+			value="reporting.chart."
+		/>
+		<param name="securityProvider"
+			value="searchSecurityObjectProvider"
+		/>
+		<param name="chartConfigurationComponentClass"
+			value="com.top_logic.reporting.layout.flexreporting.component.ChartConfigurationComponent"
+		/>
+	</params>
+
+	<layout name="${namePrefix}SearchResultChart">
+		<components>
+			<component class="com.top_logic.reporting.layout.flexreporting.component.ReportQuerySelectorComponent"
+				buttonComponent="${namePrefix}ReportingChartComponentButtons"
+				model="selection(${namePrefix}ChartConfigurationComponent)"
+				name="${namePrefix}ReportQuerySelector"
+				page="/jsp/reporting/reportQuerySelector.jsp"
+				resPrefix="${resourcePrefix}"
+				securityProviderClass="${securityProvider}"
+				toolbar="false"
+			>
+				<layoutInfo size="40px"/>
+			</component>
+			<component class="com.top_logic.tool.boundsec.CockpitLayout"
+				horizontal="true"
+				name="${namePrefix}Chart_layout"
+			>
+				<components>
+					<layout resPrefix="${resourcePrefix}">
+						<layoutInfo
+							scrolleable="false"
+							size="340px"
+						/>
+
+						<components>
+							<component class="${chartConfigurationComponentClass}"
+								buttonComponent="${namePrefix}ReportingChartComponentButtons"
+								model="selection(${namePrefix}AttributedSearchInput)"
+								name="${namePrefix}ChartConfigurationComponent"
+								page="/jsp/reporting/reportChart.jsp"
+								resPrefix="${resourcePrefix}"
+								securityProviderClass="${securityProvider}"
+							>
+								<dialogs>
+									<layout name="${namePrefix}NewStoredReportDialog">
+										<dialogInfo
+											defaultI18n="reporting.chart.displayDialog_NewStoredReportDialog"
+											executability="NullModelDisabled"
+											height="320"
+											openButtonSecComp="${namePrefix}ChartConfigurationComponent"
+											openHandlerClass="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+											openerClique="create"
+											openerCommandGroup="Create"
+											width="420"
+										/>
+
+										<components>
+											<component class="com.top_logic.reporting.layout.flexreporting.component.PublishableNewStoredReportComponent"
+												buttonComponent="${namePrefix}NewStoredReportButtons"
+												name="${namePrefix}NewStoredReport"
+												page="/jsp/flexibleReporting/PublishableNewStoredReport.jsp"
+												resPrefix="reporting.chart.create."
+												securityProviderClass="${securityProvider}"
+											/>
+											<buttonbar name="${namePrefix}NewStoredReportButtons"/>
+										</components>
+									</layout>
+								</dialogs>
+							</component>
+						</components>
+					</layout>
+					<layout resPrefix="${resourcePrefix}">
+						<components>
+							<component class="com.top_logic.reporting.layout.meta.search.ReportingChartComponent"
+								buttonComponent="${namePrefix}ReportingChartComponentButtons"
+								chartProducer="com.top_logic.reporting.layout.flexreporting.producer.FlexibleReportingProducer"
+								downloadNameKey="${downloadNameKey}"
+								exportHandlerId="${exportHandlerId}"
+								model="selection(${namePrefix}ChartConfigurationComponent)"
+								name="${namePrefix}ChartComponent"
+								page="/jsp/layout/image/chart.jsp"
+								resPrefix="layouts.search.searchReportingResultChart.ChartComponent."
+								securityProviderClass="${securityProvider}"
+								templateFile="${templateFile}"
+							>
+								<dialogs>
+									<include name="${dialogPath}"/>
+								</dialogs>
+							</component>
+						</components>
+					</layout>
+				</components>
+			</component>
+			<buttonbar name="${namePrefix}ReportingChartComponentButtons"/>
+		</components>
+	</layout>
+</template>

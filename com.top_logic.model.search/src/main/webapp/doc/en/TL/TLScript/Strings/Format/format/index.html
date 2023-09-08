@@ -1,0 +1,53 @@
+<h2>Syntax</h2> 
+<pre>	<code>$format.format($value1,...)</code>
+</pre> 
+<h2>Description</h2> 
+<p>Formats the given objects in the specified format. If more than one value is given, the format is called with an array of these values as argument (useful for <a class="tlObject" data-custom="true" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">messageFormat()</a>).</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>format</td> 
+   <td>Business object</td> 
+   <td>The format to be used (e.g. <a class="tlObject" data-custom="false" href="?page=numberFormat&amp;uuid=2599fdcc-824c-4b7c-9006-d873d50f753e">Number format</a>, <a class="tlObject" data-custom="false" href="?page=dateFormat&amp;uuid=387a7e6c-78f9-46df-812c-e8ef66b29d85">Date format</a> or <a class="tlObject" data-custom="false" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">Message format</a>)</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>value</td> 
+   <td>Business object</td> 
+   <td>The object to be formatted.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> String</p> 
+<p>A string representing the object in the given format.</p> 
+<h2>Examples</h2> 
+<h3>Number format</h3> 
+<pre>	<code>numberFormat("###,###.###").format(123456.59874)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 123.456,599</p> 
+<p>See <a class="tlObject" data-custom="false" href="?page=numberFormat&amp;uuid=2599fdcc-824c-4b7c-9006-d873d50f753e">Number format</a></p> 
+<h3>Date format</h3> 
+<pre>	<code>dateFormat("dd-MM-yy").format(date(2012, 11, 5))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 05-12-2012</p> 
+<p>See <a class="tlObject" data-custom="false" href="?page=dateFormat&amp;uuid=387a7e6c-78f9-46df-812c-e8ef66b29d85">Date format</a></p> 
+<h3>Message Format</h3> 
+<pre>	<code>messageFormat("Good {0}, {1}! Today we have {2} degrees.").format("Morning", "Sir", 19)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> Good Morning Sir! Today we have 19 degrees.</p> 
+<p>Multiple values for <a class="tlObject" data-custom="true" href="?page=Format&amp;uuid=9a36ef1f-15ce-4b88-8ea9-73c7ae4f8ab6">format()</a> are supplied here so that they can all be inserted into the placeholders in MessageFormat. See <a class="tlObject" data-custom="false" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">Message format</a>.</p> 
+<p> </p>

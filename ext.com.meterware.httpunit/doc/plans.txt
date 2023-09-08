@@ -1,0 +1,7 @@
+<META tags>
+------------
+<META HTTP_EQUIV="refresh" content="5; URL=http://www.cnn.com/">
+   fairly strightforward to find this, but action not clear:
+     2. define 'refreshRequest' property which is normally null, refreshInterval property
+     
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">     

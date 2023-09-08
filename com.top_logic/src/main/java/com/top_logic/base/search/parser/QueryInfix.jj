@@ -1,0 +1,412 @@
+/*
+ * Copyright (c) 2001,2002 BOS GmbH. All Rights Reserved.
+ */
+ 
+options {
+  LOOKAHEAD              = 2;   // Infix needs more lokahead. You'll get 
+                                // nasty "code not reached" errors with 1
+  // FORCE_LA_CHECK      = false;
+  STATIC                 = false;
+  OPTIMIZE_TOKEN_MANAGER = true;
+  CACHE_TOKENS           = true;    // We never operate interactivly
+  JAVA_UNICODE_ESCAPE    = true;    // Allow Java Unicode escapes \u1234
+}
+
+PARSER_BEGIN(QueryInfix)
+
+package com.top_logic.base.search.parser;
+
+import java.util.HashMap;
+import java.util.ArrayList;
+
+import com.top_logic.base.search.*;
+import com.top_logic.base.search.nodes.*;
+
+/** Parser for Knowledge Queries in infix notation.
+ *
+ * @history 2001-08-27 KHA recreated from enhanced Documentation.
+ *
+ * @author  <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
+ */
+
+public final class QueryInfix {
+
+    /** This is called by the CTor of Query to do the actual parsing.
+     *
+     * @param aQuery     The Query used as root for the Syntax tree
+     * @param expression The Query language Expression to be parsed.
+     *
+     * @return aQuery after parsing the expression.
+     *
+     * @throws QueryException on Syntactically and semantically Errors.
+     */
+    public static Query parse(String expression) throws QueryException {
+        QueryInfix qi = new QueryInfix(new java.io.StringReader(expression));
+	    return qi.query();
+    }
+}
+
+PARSER_END(QueryInfix)
+
+// ***   The Token Section MUST be identical to QueryPrefix Section    ***
+// *** Some classes will use constants from the QueryPefixTokenManager ***
+
+/* We use the following lexical States
+
+    DEFAULT     - only resserved words are allowed
+    INORDERBY   - In the ORDER BY part 
+*/
+
+<*> SKIP : 
+{
+    "\t"
+  | "\r" 
+  | "\n" 
+  | "\f" 
+  | " "
+}
+    
+<DEFAULT> TOKEN: { 
+    < OPEN : "(" > 
+}
+
+<*> TOKEN : 
+{
+  < COMMA : "," >
+}
+
+/* The closing Bracket switches state back to DEFAULT */
+<DEFAULT> TOKEN: { 
+    < CLOSE : ")" > 
+}
+
+<DEFAULT> TOKEN : /* Order By */
+{
+     < ORDERBY : ( "ORDER BY" )  > : INORDERBY
+}
+
+<DEFAULT> TOKEN : /* Unary-operators */
+{
+    < NOT : "!" | "NOT" >
+}
+
+<DEFAULT> TOKEN : /* Unary Filter */
+{
+        < ID    :  ( "@"  | "ID"   ) >
+    |   < TYPE  :  ( "#"  | "TYPE" ) >
+    |   < TEXT  :  ( "$"  | "TEXT" ) > 
+}
+
+<DEFAULT> TOKEN : /* Binary-operators */
+{
+        < AND       : ( "&"  | "AND"      ) >
+    |   < OR        : ( "|"  | "OR"       ) >
+    |   < MATCHES   : ( "M"  | "MATCHES"  ) >
+    |   < ISSOURCE  : ( "<-" | "ISSOURCE" ) > 
+    |   < ISDEST    : ( "->" | "ISDEST"   ) > 
+}
+
+<DEFAULT> TOKEN : /* binary-filters */
+{
+        < EQUALS : ( "="     | "EQUALS"   )         > 
+    |   < LT     : ( "<"     | "LESS"     )         > 
+    |   < GT     : ( ">"     | "GREATER"  )         > 
+    |   < LE     : ( "<="    | "LESSOREQUAL"     )  > 
+    |   < GE     : ( ">="    | "GREATEROREQUAL"  )  > 
+    |   < ISIN  :  ( "c="    | "ISIN"  )            > 
+    |   < LIKE  :  ( "L"     | "LIKE"  )            > 
+}
+
+<DEFAULT> TOKEN : /* Example */
+{
+    < EXAMPLE : ( "E"     | "EXAMPLE"   ) >
+}
+
+
+<DEFAULT> TOKEN : /* All or None */
+{
+    < ALLORNONE : ( "A" | "N" | "ALL" | "NONE" ) >
+}
+ 
+TOKEN : /* LITERALS (as found in Java Grammer supplied with JavaCC) */
+{
+  < INTEGER_LITERAL:
+    (["+","-"])? <INTEGER_LITERAL_2>
+  >
+|
+  < INTEGER_LITERAL_2:
+        <DECIMAL_LITERAL> (["l","L"])?
+      | <HEX_LITERAL> (["l","L"])?
+      | <OCTAL_LITERAL> (["l","L"])?
+  >
+|
+  < DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])* >
+|
+  < HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ >
+|
+  < OCTAL_LITERAL: "0" (["0"-"7"])* >
+|
+  < FLOATING_POINT_LITERAL:
+    (["+","-"])? <FLOATING_POINT_LITERAL_2>
+  >
+|
+  < FLOATING_POINT_LITERAL_2:
+        (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)? (["f","F","d","D"])?
+      | "." (["0"-"9"])+ (<EXPONENT>)? (["f","F","d","D"])?
+      | (["0"-"9"])+ <EXPONENT> (["f","F","d","D"])?
+      | (["0"-"9"])+ (<EXPONENT>)? ["f","F","d","D"]
+  >
+|
+  < #EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
+|
+  < STRING_LITERAL:
+      ("\"" 
+          (   (~["\"","\\","\n","\r"])
+            | ("\\"
+                ( ["n","t","b","r","f","\\","'","\""]
+                | ["0"-"7"] ( ["0"-"7"] )?
+                | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+                )
+              )
+          )*
+          "\"" 
+      ) 
+      | 
+      ("'" 
+          (   (~["'","\\","\n","\r"])
+            | ("\\"
+                ( ["n","t","b","r","f","\\","'","\""]
+                | ["0"-"7"] ( ["0"-"7"] )?
+                | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+                )
+              )
+          )*
+          "'" 
+      )
+  >
+}
+
+TOKEN : /* Special Literals */
+{
+    < BOOLEAN_LITERAL : ( "T" | "F" | "TRUE" | "FALSE" ) >
+  |
+    // This is not actually used since the lookahead would be to large ...
+    // But the CONSTANT is needed though.
+    < DATE_TIME_LITERAL : "§§§NOTUSED§§§" >
+  |
+    < DATE_LITERAL : ["0"-"9"] (["0"-"9"])? (["0"-"9"])? (["0"-"9"])? "-" 
+                     ["0"-"9"] (["0"-"9"])? "-" 
+                     ["0"-"9"] (["0"-"9"])? >
+  |
+    < TIME_LITERAL :     ["0"-"9"] (["0"-"9"])?
+                     ":" ["0"-"9"] (["0"-"9"])? 
+                     ":" ["0"-"9"] (["0"-"9"])? >
+}
+
+<DEFAULT, INORDERBY> TOKEN : /* IDENTIFIERS  (as found in Java Grammer supplied with JavaCC)  */
+{
+  < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+|
+  < #LETTER:
+      [
+       "\u0024",
+       "\u0041"-"\u005a",
+       "\u005f",
+       "\u0061"-"\u007a",
+       "\u00c0"-"\u00d6",
+       "\u00d8"-"\u00f6",
+       "\u00f8"-"\u00ff",
+       "\u0100"-"\u1fff",
+       "\u3040"-"\u318f",
+       "\u3300"-"\u337f",
+       "\u3400"-"\u3d2d",
+       "\u4e00"-"\u9fff",
+       "\uf900"-"\ufaff"
+      ]
+  >
+|
+  < #DIGIT:
+      [
+       "\u0030"-"\u0039",
+       "\u0660"-"\u0669",
+       "\u06f0"-"\u06f9",
+       "\u0966"-"\u096f",
+       "\u09e6"-"\u09ef",
+       "\u0a66"-"\u0a6f",
+       "\u0ae6"-"\u0aef",
+       "\u0b66"-"\u0b6f",
+       "\u0be7"-"\u0bef",
+       "\u0c66"-"\u0c6f",
+       "\u0ce6"-"\u0cef",
+       "\u0d66"-"\u0d6f",
+       "\u0e50"-"\u0e59",
+       "\u0ed0"-"\u0ed9",
+       "\u1040"-"\u1049"
+      ]
+  >
+}
+
+                                                   
+Query query() throws QueryException :
+{
+    QueryNode   root  = null;
+    String[]    order = null;
+
+}
+{
+    root = expression() [ order=orderBy() ] <EOF> 
+    { return new Query(root,order); }
+}
+
+QueryNode expression() throws QueryException :  
+{  
+    Token           t;
+    QueryNode       n1,n2;
+    LiteralNode     lt1,lt2;
+}
+{ 
+    n1 = allOrNone()
+    { 
+        return n1; 
+    }
+  | t = <NOT> <OPEN> n1 = expression() <CLOSE>
+    { 
+        return new UnaryOper(t.kind, n1);
+    }
+  | (t = <EXAMPLE> <OPEN> )
+    { 
+        return example();
+    }
+   | (t = <ID> | t = <TYPE> | t = <TEXT>) <OPEN> lt1 = literal() <CLOSE>
+    { 
+        return new UnaryFilter(t.kind, lt1);
+    }
+  | ( <OPEN> lt1 = identifier()
+          ( t=<EQUALS> | t=<LT> | t =<GT> | t=<LE> | t=<GE> | t=<ISIN> | t=<LIKE> ) 
+          lt2 = attribute() <CLOSE> )
+    { 
+        return new BinaryFilter(t.kind, lt1, lt2);
+    }
+  | ( <OPEN> n1 = expression() 
+          (t = <AND> | t = <OR> | t = <MATCHES> | t= <ISSOURCE> | t = <ISDEST> ) 
+          n2 = expression() <CLOSE>)
+    { 
+        return new BinaryOper(t.kind, n1, n2);
+    }
+}
+
+AllNode allOrNone() throws QueryException :  
+{  
+    Token       t;
+} 
+{
+    t = <ALLORNONE>
+    { 
+        if (t.image.startsWith("A"))      // "A", "ALL"
+            return AllNode.ALL; 
+        else                              // "N", "NONE" 
+            return AllNode.NONE; 
+    }
+}
+
+/** Parse an ExampleNode as list of Attribute/VAlue pairs */
+ExampleNode example() throws QueryException :  
+{  
+    HashMap map = new HashMap();
+}
+{
+    ( examplePair(map) <CLOSE> )
+    {
+        return new ExampleNode(map);
+    }
+}
+
+/** Recursivly build up a Map with key / value pairs */
+void examplePair(HashMap map) throws QueryException :  
+{  
+    Token       ident;
+    LiteralNode literal;
+}
+{
+    ( ident = <IDENTIFIER> <COMMA> literal = literal() [<COMMA> examplePair(map) ])
+    {
+        map.put (ident.image, literal.getValue());
+    }
+}
+/** Attributes are either Literals or Identifiers. */
+LiteralNode attribute() throws QueryException :  
+{  
+    LiteralNode lt;
+}
+{
+    ( lt = literal() | lt = identifier() )
+    {
+        return lt;
+    }
+}
+
+/** Identifiers are treated like literals (for parsing).. */
+LiteralNode identifier() throws QueryException :  
+{  
+    Token       t;
+}
+{
+    t = <IDENTIFIER>
+    {
+        // 
+        return new LiteralNode(t.kind, t.image); 
+    }
+}
+
+LiteralNode literal() throws QueryException :  
+{  
+    Token       t,t2 = null;
+    LiteralNode ln;
+}
+{
+    ( t = <INTEGER_LITERAL> | t = <FLOATING_POINT_LITERAL> |
+      t = <STRING_LITERAL>  | t = <TIME_LITERAL> )
+    {
+        return new LiteralNode(t.kind, t.image); 
+    }
+|   t = <BOOLEAN_LITERAL>
+    { 
+        if (t.image.startsWith("T"))       // "T", "TRUE"
+            return LiteralNode.LITERAL_TRUE; 
+        else                                // "F", "FALSE" 
+            return LiteralNode.LITERAL_FALSE; 
+    }
+|
+    ( t = <DATE_LITERAL> [t2 = <TIME_LITERAL>] )
+    {
+        if (t2 == null)
+            return new LiteralNode(t.kind, t.image); 
+        else    // both != null
+            return new LiteralNode(DATE_TIME_LITERAL, t.image + ' ' + t2.image); 
+    }
+}
+
+String[] orderBy() throws QueryException : 
+{
+      ArrayList list = new ArrayList();
+}
+{
+	( <ORDERBY> orderByList(list) )
+    { 
+        String result[] = new String[list.size()];
+        list.toArray(result);
+        return result; 
+    }
+}
+
+/** Recursivly build up a list of identifiers */
+void orderByList(ArrayList list) throws QueryException :  
+{  
+    Token t;
+}
+{
+    t = <IDENTIFIER> [ <COMMA> orderByList(list) ]
+    {
+        list.add (0, t.image);
+    }
+}

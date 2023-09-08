@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		tabIcon="theme:IMAGE_BUTTONS_STRUCTURE22"
+		z_legacy_componentName="structureTab"
+		z_legacy_tabBarName="structureTab_tabBar"
+		z_legacy_tabLabel="demo.structure.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/structure/mandator/mandatorView.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

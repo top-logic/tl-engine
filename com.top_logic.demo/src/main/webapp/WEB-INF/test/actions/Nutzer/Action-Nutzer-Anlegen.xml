@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="ergebnis"
+				default=""
+				type="string"
+			/>
+
+			<t:parameter name="Loginname"
+				type="string"
+			/>
+
+			<t:parameter name="Vorname"
+				type="string"
+			>
+				<t:default>
+					<t:value expr="$Loginname"/>
+				</t:default>
+			</t:parameter>
+
+			<t:parameter name="Nachname"
+				type="string"
+			>
+				<t:default>
+					<t:value expr="$Loginname"/>
+				</t:default>
+			</t:parameter>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Nutzer anlegen (Login: '${$Loginname}'; Vorname: '${$Vorname}'; Nachname '${$Nachname}')"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Administration > Zugänge > Benutzerkonten"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Neu..."
+					command-name="displayDialog_newPersonDialog"
+					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
+					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="${$Loginname}"
+							/>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Benutzername"
+									field-name="username"
+								/>
+							</field-path>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="${$Vorname}"
+							/>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Vorname"
+									field-name="givenName"
+								/>
+							</field-path>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="${$Nachname}"
+							/>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Nachname"
+									field-name="sn"
+								/>
+							</field-path>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler"
+					command-label="Erstellen"
+					command-name="newPerson"
+					component-implementation-comment="com.top_logic.contact.layout.person.related.NewRelatedPersonComponent"
+					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#NewPerson"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.RestrictedDefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
+					component-name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+				>
+					<arguments/>
+				</action>
+				<t:invoke template="script:Variable/Action-Variable-Zuweisen.xml">
+					<t:parameter name="Tester"
+						value="${$Tester}"
+					/>
+					<t:parameter name="Name"
+						value="${$ergebnis}"
+					/>
+					<t:parameter name="Wert">
+						<t:value>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+								<model-name config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+										<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#AdminEditPerson"
+											tab-path="Administration > Zugänge > Benutzerkonten"
+										/>
+									</component>
+								</model-name>
+							</value>
+						</t:value>
+					</t:parameter>
+				</t:invoke>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

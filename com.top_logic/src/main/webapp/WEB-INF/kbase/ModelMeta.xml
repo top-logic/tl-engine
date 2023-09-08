@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Definition of some Lists supported by TopLogic -->
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+<metaobjects>
+
+	<metaobject object_type="MOKnowledgeObject" object_name="TLModelPart" super_class="KnowledgeObject" abstract="true">
+	<annotations xmlns:config="http://www.top-logic.com/ns/config/6.0">
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
+			full-load="true" />
+	</annotations>
+	<attributes>
+		<mo_attribute
+			att_name="annotations"
+			att_type="String"
+			db_size="1000000"
+			db_type="clob"
+			hidden="true"
+			mandatory="false"
+		>
+			<storage class="com.top_logic.dob.attr.storage.ConfigurationAttributeStorage" 
+				config-interface="com.top_logic.model.internal.PersistentModelPart$AnnotationConfigs" 
+			/>
+		</mo_attribute>
+	</attributes>
+	</metaobject>
+	
+	<metaobject object_type="MOKnowledgeObject" object_name="TLType" super_class="TLModelPart" abstract="true">
+		<mo_attribute att_name="name" att_type="String"  mandatory="true" binary="true" />
+		<!-- "module" reference has actually TLModule-target type, is monomorphic, but TLModule is defined in elementMeta.xml. -->
+		<reference att_name="module"
+			branch-global="false"
+			deletion-policy="delete-referer"
+			history-type="current"
+			is-container="false"
+			mandatory="false"
+			monomorphic="false"
+			target-type="KnowledgeObject"
+		/>
+		<!-- "scope" reference has actually TLScope-target type, but TLScope is defined in elementMeta.xml. -->
+		<reference att_name="scope"
+			branch-global="false"
+			by-value="false"
+			deletion-policy="delete-referer"
+			history-type="current"
+			initial="false"
+			is-container="false"
+			mandatory="false"
+			monomorphic="false"
+			target-type="KnowledgeObject"
+		/>
+		<index>
+		   	<mo_index name="nameIdx" unique="true">
+		   		<index-parts>
+			        <index_part name="scope" part="name"/>
+			        <index_part name="name"/>
+		   		</index-parts>
+		    </mo_index>
+	    </index>
+	</metaobject>
+
+</metaobjects>
+</objectlist>

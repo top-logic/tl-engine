@@ -1,0 +1,64 @@
+{
+  "graph": {
+    "nodes": [
+      {
+        "id": 0,
+        "x": 200,
+        "y": 20,
+        "businessObject": {
+          "name": "Class A",
+          "modifiers": [
+            "abstract"
+          ],
+          "properties": [
+            "property1",
+            "property2"
+          ]
+        }
+      },
+      {
+        "id": 1,
+        "x": 350,
+        "y": 200,
+        "width": 100,
+        "height": 100,
+        "businessObject": {
+          "name": "Class B SDJKL SDSD SD",
+          "modifiers": [
+            "final"
+          ],
+          "properties": [
+            "property3"
+          ]
+        }
+      },
+      {
+        "id": 2,
+        "x": 700,
+        "y": 350,
+        "businessObject": {
+          "name": "DocumentTable (Tabelle)"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": 0,
+        "target": 1,
+        "type": "association",
+        "sourceCardinality": "*",
+        "sourceName": "sourceName",
+        "targetName": "targetName"
+      },
+      {
+        "source": 1,
+        "target": 2,
+        "type": "aggregation",
+        "sourceCardinality": "0..1",
+        "targetCardinality": "1",
+        "sourceName": "sourceName",
+        "targetName": "targetName"
+      }
+    ]
+  }
+}

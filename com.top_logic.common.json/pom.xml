@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-build</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-build</artifactId>
+    <version>7.6.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-common-json</artifactId>
+  <description>Port of the gstream JSON library to GWT.</description>
+
+	<properties>
+		<!-- For framework modules, combine all JavaDoc to its deploy location. -->
+		<javadocOutput>${basedir}/../tl-doc/javadoc</javadocOutput>
+	</properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-shared</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-shared</artifactId>
+	  <version>7.6.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+</project>

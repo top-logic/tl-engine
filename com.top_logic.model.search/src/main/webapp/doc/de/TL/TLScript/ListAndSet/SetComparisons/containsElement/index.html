@@ -1,0 +1,45 @@
+<h2>Syntax</h2> 
+<pre>	<code>$set.containsElement($element)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Prüft, ob die Menge <code class="hljs inlineCode">set</code> das Element <code class="hljs inlineCode">element</code> enthält.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set</td> 
+   <td>Menge</td> 
+   <td>Eine Menge, für die geptüft werden soll, ob <code class="hljs inlineCode">element</code> enthalten ist.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>element</td> 
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td> 
+   <td>Ein Element, für das geprüft werden soll, ob es in <code class="hljs inlineCode">set</code> enthalten ist.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p> 
+<p><code class="hljs inlineCode">true</code>, wenn das Element in der Menge enthalten ist.</p> 
+<h2>Beispiele</h2> 
+<h3>Menge enthält das Element</h3> 
+<pre>	<code>list(1, 2, 3).containsElement(2)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> <code class="hljs inlineCode">true</code></p> 
+<h3>Menge enthält das Element nicht</h3> 
+<pre>	<code>list(1, 2, 3).containsElement(4)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> <code class="hljs inlineCode">false</code></p>

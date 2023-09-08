@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="templates/masterFrame.xml">
+	<components>
+		<layout-reference resource="masterContent.layout.xml"/>
+	</components>
+</include>

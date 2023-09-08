@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/demo/create-elements.xml"
+			template-name-comment="Create elements"
+		>
+			<parameters>
+				<parameter name="rootName">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestNoDefaultSelection"
+					/>
+				</parameter>
+				<parameter name="numberChildren">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="2"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="TestNoDefaultSelection"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+					tab-path="Strukturen > Typendemo"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test no default selection"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test no default selection in table"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > Default-Auswahl > Tabelle ohne Default-Auswahl"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="true"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/test/noDefaultSelection/table/tableNoDefaultSelection.layout.xml#noDefaultSelectionTable"
+										tab-path="Technisches Demo > Tests > Default-Auswahl > Tabelle ohne Default-Auswahl"
+									/>
+								</table>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path="TestNoDefaultSelection > A0"
+								structure="DemoTypes"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="true"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/test/noDefaultSelection/table/tableNoDefaultSelection.layout.xml#noDefaultSelectionTable"
+										tab-path="Technisches Demo > Tests > Default-Auswahl > Tabelle ohne Default-Auswahl"
+									/>
+								</table>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path="TestNoDefaultSelection > A1"
+								structure="DemoTypes"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test no default selection in grid"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > Default-Auswahl > Grid ohne Default-Auswahl"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="true"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/test/noDefaultSelection/grid/gridNoDefaultSelection.layout.xml#noDefaultSelectionGrid"
+										tab-path="Technisches Demo > Tests > Default-Auswahl > Grid ohne Default-Auswahl"
+									/>
+									<path>
+										<named-member name="fieldTable"/>
+									</path>
+								</table>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/test/noDefaultSelection/grid/gridNoDefaultSelection.layout.xml#noDefaultSelectionGrid"
+									tab-path="Technisches Demo > Tests > Default-Auswahl > Grid ohne Default-Auswahl"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+											path="TestNoDefaultSelection > A0"
+											structure="DemoTypes"
+										/>
+									</object>
+								</path>
+							</expected-value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="true"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/test/noDefaultSelection/grid/gridNoDefaultSelection.layout.xml#noDefaultSelectionGrid"
+										tab-path="Technisches Demo > Tests > Default-Auswahl > Grid ohne Default-Auswahl"
+									/>
+									<path>
+										<named-member name="fieldTable"/>
+									</path>
+								</table>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/technical/test/noDefaultSelection/grid/gridNoDefaultSelection.layout.xml#noDefaultSelectionGrid"
+									tab-path="Technisches Demo > Tests > Default-Auswahl > Grid ohne Default-Auswahl"
+								/>
+								<path>
+									<object>
+										<business-object config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+											path="TestNoDefaultSelection > A1"
+											structure="DemoTypes"
+										/>
+									</object>
+								</path>
+							</expected-value>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test no default selection in tree"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Tests > Default-Auswahl > Baum ohne Default-Auswahl"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
+								<context config:interface="com.top_logic.layout.tree.TreeDataName">
+									<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/test/noDefaultSelection/tree/treeNoDefaultSelection.layout.xml#noDefaultSelectionTree"
+										tab-path="Technisches Demo > Tests > Default-Auswahl > Baum ohne Default-Auswahl"
+									/>
+								</context>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path=""
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
+								<context config:interface="com.top_logic.layout.tree.TreeDataName">
+									<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/test/noDefaultSelection/tree/treeNoDefaultSelection.layout.xml#noDefaultSelectionTree"
+										tab-path="Technisches Demo > Tests > Default-Auswahl > Baum ohne Default-Auswahl"
+									/>
+								</context>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="A0"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
+								<context config:interface="com.top_logic.layout.tree.TreeDataName">
+									<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/technical/test/noDefaultSelection/tree/treeNoDefaultSelection.layout.xml#noDefaultSelectionTree"
+										tab-path="Technisches Demo > Tests > Default-Auswahl > Baum ohne Default-Auswahl"
+									/>
+								</context>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="A1"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+								boolean="false"
+							/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/demo/delete-demo-type.xml"
+			template-name-comment="Delete demo type"
+		>
+			<parameters>
+				<parameter name="Element">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestNoDefaultSelection"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+	</actions>
+</action>

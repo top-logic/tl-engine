@@ -1,0 +1,43 @@
+<h2>Syntax</h2> 
+<pre>	<code>$entry.getValue()</code>
+</pre> 
+<h2>Description</h2> 
+<p>Returns the value of a single dictionary entry. The entries of a dictionary can be accessed with the <a class="tlObject" data-custom="true" href="?page=map&amp;uuid=c382824b-adb0-468c-8508-c4297b61bb3d">map()</a> and <a class="tlObject" data-custom="true" href="?page=filter&amp;uuid=9db99671-644d-4dfd-bd1b-694c57ed9588">filter()</a> functions.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>entry</td> 
+   <td>Business object</td> 
+   <td>Dictionary entry</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>type:</strong></span> Number/string/business object</p> 
+<p>The value of the given dictionary entry.</p> 
+<h2>Examples</h2> 
+<pre>	<code>{
+  dict = {
+    "all": "alle",
+    "some": "manche",
+    "none": "keine"
+  };
+
+ $dict.map(entry -&gt; getKey($entry) + " = " + $entry.getValue())
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> A list of entries ["some = some", "none = none", "all = all"].</p> 
+<p> </p> 
+<p> </p>

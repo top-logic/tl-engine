@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="content"/>
+		<param name="model"/>
+		<param name="componentControlProvider"/>
+	</params>
+
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		content="${content}"
+		model="${model}"
+		componentControlProvider="${componentControlProvider}"
+	/>
+</template>

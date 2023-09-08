@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application>
+	<services>
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<!-- SEARCH -->
+
+						<rule
+							meta-object="StoredQuery"
+							role="SecurityStructure.OwnerRole"
+						>
+							<path>
+								<step
+									association="hasOwner"
+									inverse="false"
+								/>
+							</path>
+						</rule>
+
+						<rule
+							meta-object="SearchExpressionTable"
+							role="SecurityStructure.OwnerRole"
+						>
+							<path>
+								<step
+									association="hasOwner"
+									inverse="false"
+								/>
+							</path>
+						</rule>
+
+						<rule
+							meta-object="FlexReport"
+							role="SecurityStructure.OwnerRole"
+						>
+							<path>
+								<step
+									association="hasOwner"
+									inverse="false"
+								/>
+							</path>
+						</rule>
+
+						<rule
+							inherit="true"
+							meta-element="DemoSecurity:DemoSecurity.A"
+							role="DemoSecurity.Role1"
+						>
+							<path>
+								<step
+									attribute="singlePersonContact"
+									inverse="false"
+								/>
+							</path>
+						</rule>
+
+						<rule
+							inherit="true"
+							meta-element="DemoSecurity:DemoSecurity.A"
+							role="DemoSecurity.Role2"
+						>
+							<path>
+								<step
+									attribute="personContactList"
+									inverse="false"
+								/>
+							</path>
+						</rule>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoSecurity:DemoSecurity.A"
+							role="DemoSecurity.SecurityAdministrator"
+						>
+							<path>
+								<step
+									association="hasStructureChild"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+
+						<inheritance-rule
+							base="structureRoot@DemoSecurity"
+							inherit="true"
+							meta-element="DemoSecurity:DemoSecurity.B"
+							role="DemoSecurity.SecurityAdministratorB"
+							source-role="DemoSecurity.SecurityAdministrator"
+						/>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoSecurity:DemoSecurity.All"
+							role="DemoSecurity.selection"
+							source-role="DemoSecurity.Role1,DemoSecurity.Role2,DemoSecurity.Role3,DemoSecurity.SecurityAdministrator,DemoSecurity.SecurityAdministratorB,DemoSecurity.User"
+						/>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoSecurity:DemoSecurity.All"
+							role="DemoSecurity.navigation"
+							source-role="DemoSecurity.selection"
+						/>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoSecurity:DemoSecurity.All"
+							role="DemoSecurity.navigation"
+						>
+							<path>
+								<step
+									association="hasStructureChild"
+									inverse="false"
+								/>
+							</path>
+						</inheritance-rule>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoSecurity:DemoSecurity.Root"
+							role="DemoSecurity.navigation"
+						>
+							<path>
+								<step
+									association="hasStructureChild"
+									inverse="false"
+								/>
+							</path>
+						</inheritance-rule>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.All"
+							role="DemoTypes.Navigation"
+							source-role="DemoTypes.Selection"
+						/>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.Root"
+							role="DemoTypes.Navigation"
+							source-role="DemoTypes.Selection"
+						/>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.All"
+							role="DemoTypes.Navigation"
+						>
+							<path>
+								<step
+									association="hasStructureChild"
+									inverse="false"
+								/>
+							</path>
+						</inheritance-rule>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.Root"
+							role="DemoTypes.Navigation"
+						>
+							<path>
+								<step
+									association="hasStructureChild"
+									inverse="false"
+								/>
+							</path>
+						</inheritance-rule>
+
+						<inheritance-rule
+							base="structureRoot@DemoTypes"
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.All"
+							role="DemoTypes.Administrator"
+						/>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.All"
+							role="DemoTypes.Administrator"
+						>
+							<path>
+								<step
+									association="hasStructureChild"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.All"
+							role="DemoTypes.StringAdministrator"
+						>
+							<path>
+								<step
+									association="hasStructureChild"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.All"
+							role="DemoTypes.BooleanAdministrator"
+						>
+							<path>
+								<step
+									association="hasStructureChild"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.All"
+							role="DemoTypes.DateAdministrator"
+						>
+							<path>
+								<step
+									association="hasStructureChild"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.All"
+							role="DemoTypes.Selection"
+							source-role="DemoTypes.Administrator,DemoTypes.Responsible,DemoTypes.BAdministrator,DemoTypes.BooleanAdministrator,DemoTypes.DateAdministrator,DemoTypes.StringAdministrator"
+						/>
+
+						<rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.A"
+							role="DemoTypes.Responsible"
+						>
+							<path>
+								<step
+									attribute="responsible"
+									meta-element="DemoTypes:DemoTypes.A"
+								/>
+							</path>
+						</rule>
+						<inheritance-rule
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.All"
+							role="DemoTypes.Responsible"
+						>
+							<path>
+								<step
+									association="hasStructureChild"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+
+						<inheritance-rule
+							base="structureRoot@DemoTypes"
+							inherit="true"
+							meta-element="DemoTypes:DemoTypes.B"
+							role="DemoTypes.BAdministrator"
+						/>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+	</services>
+</application>

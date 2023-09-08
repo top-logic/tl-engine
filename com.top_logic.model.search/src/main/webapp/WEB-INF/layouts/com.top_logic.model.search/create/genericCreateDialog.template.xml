@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$WithInitialization, com.top_logic.element.layout.create.CreateFormBuilder$UIOptions">
+		<annotations>
+			<display-order>
+				<value>
+					<property name="title"/>
+					<property name="header"/>
+					<property name="width"/>
+					<property name="height"/>
+
+					<property name="helpID"/>
+					<property name="resizable"/>
+					<property name="openMaximized"/>
+					<property name="closableUsingX"/>
+					<property name="createOpenerButtons"/>
+
+					<property name="open-handler"/>
+					<property name="typeOptions"/>
+					<property name="initialization"/>
+					<property name="create-handler"/>
+
+					<property name="securityObject"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="title"
+			type="PolymorphicConfiguration"
+		>
+			<item-default/>
+			<non-nullable/>
+		</property>
+
+		<property name="header"
+			type="com.top_logic.basic.util.ResKey1"
+		>
+			<formatted-default value="class.com.top_logic.element.layout.create.I18NConstants.TITLE_CREATE_OBJECT__TYPE"/>
+		</property>
+
+		<property name="typeOptions"
+			instance-type="com.top_logic.element.layout.create.CreateTypeOptions"
+			type="PolymorphicConfiguration"
+		>
+			<item-default/>
+			<non-nullable/>
+			<implementation-class-default value="com.top_logic.element.layout.create.ConstantCreateTypeOptions"/>
+		</property>
+
+		<property name="open-handler"
+			type="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+		>
+			<item-default/>
+			<non-nullable/>
+		</property>
+
+		<property name="create-handler"
+			instance-type="com.top_logic.element.layout.create.GenericCreateHandler"
+			type="PolymorphicConfiguration"
+		>
+			<item-default/>
+			<implementation-class-default value="com.top_logic.model.search.providers.GenericCreateHandlerByExpression"/>
+			<non-nullable/>
+		</property>
+		<property name="helpID"
+			type="String"
+		>
+			<nullable/>
+			<property-editor value="com.top_logic.layout.help.UseHelpEditor"/>
+		</property>
+		<property name="securityObject"
+			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
+			type="com.top_logic.basic.config.PolymorphicConfiguration"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
+		</property>
+		<property name="securityProviderClass"
+			default="securityRoot"
+			type="String"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
+			<hidden/>
+		</property>
+	</properties>
+
+	<layout name="Dialog">
+		<dialogInfo
+			closableUsingX="${closableUsingX}"
+			createOpenerButtons="${createOpenerButtons}"
+			height="${height}"
+			helpID="${helpID}"
+			open-handler="${open-handler}"
+			openMaximized="${openMaximized}"
+			resizable="${resizable}"
+			title="${title}"
+			width="${width}"
+		/>
+
+		<include name="com.top_logic.element/create/genericCreate.xml"
+			dialogName="Layout"
+			securityObject="${securityObject}"
+			securityProvider="${securityProviderClass}"
+		>
+			<modelBuilder class="com.top_logic.model.search.providers.PolymorphicCreateFormBuilderByExpression"
+				header="${header}"
+				initialization="${initialization}"
+				typeOptions="${typeOptions}"
+			>
+				<forms>${forms}</forms>
+			</modelBuilder>
+
+			<buttons>
+				<button>${create-handler}</button>
+				<reference command-id="configureCreateFormDefinitionCommand"/>
+				<reference command-id="deleteCreateFormDefinitionCommand"/>
+			</buttons>
+		</include>
+		<buttons>
+			<reference command-id="editDialogCommand"/>
+			<reference command-id="deleteDialogCommand"/>
+		</buttons>
+	</layout>
+</config:template>

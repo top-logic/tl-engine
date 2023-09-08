@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<!-- Mandatory cannot be specified for a type in its declaration.
+			 Only when the type is used as a parameter or attribute,
+			 that parameter or attribute can be defined as mandatory or not. -->
+			<t:type name="Example_Type_Not_Mandatory">
+				<t:attributes>
+					<!-- Not Mandatory if the structure is given, as explicit declared like that. -->
+					<t:attribute name="Example_Attribute_A" type="string" mandatory="false" />
+					
+					<!-- Mandatory if the structure is given, as explicit declared like that. -->
+					<t:attribute name="Example_Attribute_B" type="string" mandatory="true" />
+					
+					<!-- Mandatory if the structure is given, as not specified otherwise. -->
+					<t:attribute name="Example_Attribute_C" type="string"/>
+				</t:attributes>
+			</t:type>
+			
+		</t:types>
+		<t:parameters>
+			
+			<!-- The default value for mandatory is true.
+			If used on a structure, mandatory="false" means: The structure itself can be set to the empty value.
+			But if the structure is given, its attributes are by default mandatory,
+			again unless specified otherwise in the structure definition. -->
+			<t:parameter name="Example_Structure_Not_Mandatory" mandatory="false" type="Example_Type_Not_Mandatory" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<!-- TODO -->
+	</t:body>
+</t:template>

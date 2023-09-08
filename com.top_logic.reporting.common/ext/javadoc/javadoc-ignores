@@ -1,0 +1,39 @@
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getHalfYearFormat
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getHalfYearFormatBusinessYear
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getHalfYearFormatBusinessYearTooltip
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getHalfYearFormatTooltip
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getQuarterFormat
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getQuarterFormatBusinessYear
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getQuarterFormatBusinessYearTooltip
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getQuarterFormatTooltip
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getYearFormat
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getYearFormatBusinessYear
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getYearFormatBusinessYearTooltip
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.getYearFormatTooltip
+com.top_logic.reporting.common.format.ReportingDateFormat.java: Missing documentation: com.top_logic.reporting.common.format.ReportingDateFormat.useBusinessYear
+com.top_logic.reporting.common.period.BYHalfYear.java: Missing documentation: com.top_logic.reporting.common.period.BYHalfYear
+com.top_logic.reporting.common.period.BYQuarter.java: Missing documentation: com.top_logic.reporting.common.period.BYQuarter
+com.top_logic.reporting.common.period.BYYear.java: Missing documentation: com.top_logic.reporting.common.period.BYYear
+com.top_logic.reporting.common.period.BusinessYearPeriodBase.java: Missing documentation: com.top_logic.reporting.common.period.BusinessYearPeriodBase
+com.top_logic.reporting.common.period.BusinessYearPeriodBase.java: Missing documentation: com.top_logic.reporting.common.period.BusinessYearPeriodBase.createCalendar
+com.top_logic.reporting.common.period.BusinessYearPeriodBase.java: Missing documentation: com.top_logic.reporting.common.period.BusinessYearPeriodBase.createPeriod
+com.top_logic.reporting.common.period.BusinessYearPeriodBase.java: Missing documentation: com.top_logic.reporting.common.period.BusinessYearPeriodBase.locale
+com.top_logic.reporting.common.period.BusinessYearPeriodBase.java: Missing documentation: com.top_logic.reporting.common.period.BusinessYearPeriodBase.period
+com.top_logic.reporting.common.period.BusinessYearPeriodBase.java: Missing documentation: com.top_logic.reporting.common.period.BusinessYearPeriodBase.timezone
+com.top_logic.reporting.common.period.HalfYear.java: Missing documentation: com.top_logic.reporting.common.period.HalfYear.HALF_YEAR_1
+com.top_logic.reporting.common.period.HalfYear.java: Missing documentation: com.top_logic.reporting.common.period.HalfYear.HALF_YEAR_2
+com.top_logic.reporting.common.period.HalfYear.java: Missing documentation: com.top_logic.reporting.common.period.HalfYear.getHalfYear
+com.top_logic.reporting.common.period.HalfYear.java: Missing documentation: com.top_logic.reporting.common.period.HalfYear.getYear
+com.top_logic.reporting.common.tree.TreeAxis.java: Invalid camel case word 'iconLabelDistance', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.common.tree.TreeAxis.java: Invalid camel case word 'treeDepth', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.common.tree.TreeAxis.java: Invalid camel case word 'treeIconsDistance', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.common.tree.TreeAxis.java: Missing documentation: com.top_logic.reporting.common.tree.TreeAxis.drawImage
+com.top_logic.reporting.common.tree.TreeInfo.java: Invalid camel case word 'TreeInfo', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.common.tree.TreeInfo.java: Invalid camel case word 'iconIndex', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.common.tree.TreeInfo.java: Invalid camel case word 'iconTooltip', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.common.tree.TreeInfo.java: Invalid camel case word 'iconUrl', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.common.tree.TreeInfo.java: Invalid camel case word 'labelTooltip', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.common.tree.TreeInfo.java: Invalid camel case word 'labelUrl', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.common.tree.TreeInfoNode.java: Invalid camel case word 'TreeInfo', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.reporting.common.tree.TreeInfoNode.java: Invalid camel case word 'TreeInfoNode', this may only be used within JavaDoc links or HTML code tags.

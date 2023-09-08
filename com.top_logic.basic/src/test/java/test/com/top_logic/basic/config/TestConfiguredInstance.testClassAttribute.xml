@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<config
+	a-config="test.com.top_logic.basic.config.TestConfiguredInstance$A2"
+	a="test.com.top_logic.basic.config.TestConfiguredInstance$A2"
+	b-config="test.com.top_logic.basic.config.TestConfiguredInstance$B2"
+	b="test.com.top_logic.basic.config.TestConfiguredInstance$B2"
+>
+</config>

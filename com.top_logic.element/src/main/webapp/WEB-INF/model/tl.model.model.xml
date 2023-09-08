@@ -1,0 +1,774 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="tl.model">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.model.impl.generated"
+					interface-package="com.top_logic.model.impl.generated"
+				/>
+			</annotations>
+			<types>
+				<datatype name="HistoryType"
+					db_type="string"
+					kind="Custom"
+				>
+					<annotations>
+						<config-type value="ENUM"/>
+					</annotations>
+					<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+						application-type="com.top_logic.dob.meta.MOReference$HistoryType"
+					/>
+				</datatype>
+				<datatype name="TLAnnotation"
+					db_type="clob"
+					kind="Custom"
+				>
+					<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+						application-type="com.top_logic.model.annotate.TLAnnotation"
+					/>
+				</datatype>
+
+				<interface name="TLObject">
+					<annotations>
+						<implementation-binding
+							class-name="com.top_logic.element.meta.kbbased.AttributedWrapper"
+							interface-name="com.top_logic.model.TLObject"
+						/>
+						<config-type value="REFERENCE"/>
+					</annotations>
+					<attributes>
+						<reference name="tType"
+							kind="forwards"
+							type="TLType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<implementation class="com.top_logic.element.meta.kbbased.storage.ReadOnlyForeignKeyStorage"
+										storage-attribute="tType"
+										storage-type="TLObject"
+									/>
+								</storage-algorithm>
+								<visibility value="hidden"/>
+							</annotations>
+						</reference>
+					</attributes>
+				</interface>
+
+				<interface name="TLModelPart">
+					<annotations>
+						<implementation-binding interface-name="com.top_logic.model.TLModelPart"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="annotations"
+							bag="false"
+							multiple="true"
+							type="TLAnnotation"
+						>
+							<annotations>
+								<storage-algorithm>
+									<implementation 
+										class="com.top_logic.element.meta.kbbased.storage.AnnotationConfigsStorage" 
+										db-attribute="annotations"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<reference name="model"
+							type="TLModel"
+						/>
+					</attributes>
+				</interface>
+
+				<interface name="TLNamedPart">
+					<annotations>
+						<implementation-binding interface-name="com.top_logic.model.TLNamedPart"/>
+						<main-properties properties="name"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLModelPart"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</interface>
+
+				<class name="TLModel">
+					<annotations>
+						<table name="TLModel"/>
+						<implementation-binding interface-name="com.top_logic.model.TLModel"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLModelPart"/>
+					</generalizations>
+					<attributes>
+						<reference name="model"
+							override="true"
+							type="TLModel"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<!-- The model of a TLModel is the element itself. -->
+											<!-- Empty chain results in return of the object itself. -->
+											<chain/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="modules"
+							inverse-reference="model"
+							kind="backwards"
+							multiple="true"
+							type="TLModule"
+						/>
+					</attributes>
+				</class>
+
+				<interface name="TLScope">
+					<annotations>
+						<implementation-binding interface-name="com.top_logic.model.TLScope"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLObject"/>
+					</generalizations>
+					<attributes>
+						<reference name="types"
+							inverse-reference="scope"
+							kind="backwards"
+							multiple="true"
+							type="TLType"
+						/>
+					</attributes>
+				</interface>
+
+				<class name="TLModule">
+					<annotations>
+						<table name="TLModule"/>
+						<implementation-binding interface-name="com.top_logic.model.TLModule"/>
+						<instance-presentation icon="theme:mime.TLModule"/>
+						<main-properties properties="name,types"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLScope"/>
+						<generalization type="TLNamedPart"/>
+					</generalizations>
+					<attributes>
+						<reference name="singletons"
+							inverse-reference="module"
+							kind="backwards"
+							multiple="true"
+							type="TLModuleSingletons"
+						/>
+						<reference name="model"
+							override="true"
+							type="TLModel"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="model"
+										storage-type="TLModule"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+
+				<!-- Types -->
+
+				<interface name="TLType">
+					<annotations>
+						<implementation-binding interface-name="com.top_logic.model.TLType"/>
+						<main-properties properties="name,module"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLNamedPart"/>
+					</generalizations>
+					<attributes>
+						<reference name="module"
+							type="TLModule"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="module"
+										storage-type="TLType"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+
+						<reference name="scope"
+							type="TLScope"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="scope"
+										storage-type="TLType"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="model"
+							override="true"
+							type="TLModel"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="module"/>
+												<get-value attribute="model"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</interface>
+
+				<interface name="TLStructuredType">
+					<annotations>
+						<implementation-binding interface-name="com.top_logic.model.TLStructuredType"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLType"/>
+					</generalizations>
+					<attributes>
+						<reference name="localParts"
+							inverse-reference="owner"
+							kind="backwards"
+							multiple="true"
+							ordered="true"
+							type="TLStructuredTypePart"
+						/>
+					</attributes>
+				</interface>
+
+				<class name="TLEnumeration">
+					<annotations>
+						<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+						<implementation-binding interface-name="com.top_logic.model.TLEnumeration"/>
+						<instance-presentation icon="theme:mime.TLEnumeration"/>
+						<table name="FastList"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLStructuredType"/>
+					</generalizations>
+					<attributes>
+						<reference name="classifiers"
+							inverse-reference="owner"
+							kind="backwards"
+							multiple="true"
+							type="TLClassifier"
+						/>
+						<reference name="scope"
+							override="true"
+							type="TLModule"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="module"
+										storage-type="TLType"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+
+				<class name="TLPrimitive">
+					<annotations>
+						<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+						<implementation-binding interface-name="com.top_logic.model.TLPrimitive"/>
+						<instance-presentation icon="theme:mime.TLPrimitive"/>
+						<table name="TLDatatype"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLType"/>
+					</generalizations>
+					<attributes/>
+				</class>
+
+				<class name="TLAssociation">
+					<annotations>
+						<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+						<implementation-binding interface-name="com.top_logic.model.TLAssociation"/>
+						<instance-presentation icon="theme:mime.TLAssociation"/>
+						<main-properties properties="name, module"/>
+						<table name="MetaElement"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLStructuredType"/>
+					</generalizations>
+					<attributes>
+						<reference name="union"
+							multiple="true"
+							type="TLAssociation"
+						/>
+						<reference name="subsets"
+							inverse-reference="union"
+							kind="backwards"
+							multiple="true"
+							type="TLAssociation"
+						/>
+					</attributes>
+				</class>
+
+				<class name="TLClass">
+					<annotations>
+						<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+						<implementation-binding interface-name="com.top_logic.model.TLClass"/>
+						<instance-presentation icon="theme:mime.TLClass"/>
+						<main-properties properties="name, module"/>
+						<table name="MetaElement"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLStructuredType"/>
+					</generalizations>
+					<attributes>
+						<property name="abstract"
+							type="tl.core:Boolean"
+						/>
+						<property name="final"
+							type="tl.core:Boolean"
+						/>
+						<reference name="generalizations"
+							multiple="true"
+							ordered="true"
+							type="TLClass"
+						>
+							<annotations>
+								<storage-algorithm>
+									<list-storage
+										monomorphic-table="true"
+										order-attribute="order"
+										table="MetaElement_generalizations"
+									/>
+								</storage-algorithm>
+								<delete-protected/>
+							</annotations>
+						</reference>
+						<reference name="specializations"
+							inverse-reference="generalizations"
+							kind="backwards"
+							multiple="true"
+							type="TLClass"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Parts -->
+
+				<interface name="TLTypePart">
+					<annotations>
+						<implementation-binding interface-name="com.top_logic.model.TLTypePart"/>
+						<main-properties properties="name,owner,type"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLNamedPart"/>
+					</generalizations>
+					<attributes>
+						<reference name="type"
+							mandatory="true"
+							type="TLType"
+						/>
+						<reference name="model"
+							override="true"
+							type="TLModel"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="owner"/>
+												<get-value attribute="model"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="owner"
+							type="TLType"
+						/>
+					</attributes>
+				</interface>
+
+				<interface name="DerivedTLTypePart">
+					<annotations>
+						<implementation-binding interface-name="com.top_logic.model.DerivedTLTypePart"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLTypePart"/>
+					</generalizations>
+					<attributes>
+						<property name="derived"
+							type="tl.core:Boolean"
+						/>
+					</attributes>
+				</interface>
+
+				<interface name="TLStructuredTypePart">
+					<annotations>
+						<implementation-binding interface-name="com.top_logic.model.TLStructuredTypePart"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLTypePart"/>
+					</generalizations>
+					<attributes>
+						<reference name="owner"
+							override="true"
+							type="TLStructuredType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="owner"
+										storage-type="MetaAttribute"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="type"
+							override="true"
+							type="TLType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="type"
+										storage-type="MetaAttribute"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+
+						<property name="mandatory"
+							type="tl.core:Boolean"
+						/>
+						<property name="multiple"
+							type="tl.core:Boolean"
+						/>
+						<property name="bag"
+							type="tl.core:Boolean"
+						/>
+						<property name="ordered"
+							type="tl.core:Boolean"
+						/>
+						<reference name="classifiedBy"
+							multiple="true"
+							type="tl.model:TLClassifier"
+						>
+							<annotations>
+								<storage-algorithm>
+									<set-storage
+										monomorphic-table="true"
+										table="classifiedBy"
+									/>
+								</storage-algorithm>
+								<delete-protected/>
+							</annotations>
+						</reference>
+					</attributes>
+				</interface>
+
+				<class name="TLAssociationEnd">
+					<annotations>
+						<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+						<implementation-binding interface-name="com.top_logic.model.TLAssociationEnd"/>
+						<instance-presentation icon="theme:mime.TLAssociationEnd"/>
+						<main-properties properties="name, owner, type"/>
+						<table name="MetaAttribute"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLStructuredTypePart"/>
+					</generalizations>
+					<attributes>
+						<reference name="reference"
+							inverse-reference="end"
+							kind="backwards"
+							type="TLReference"
+						/>
+						<property name="composite"
+							type="tl.core:Boolean"
+						/>
+						<property name="aggregate"
+							type="tl.core:Boolean"
+						/>
+						<property name="navigate"
+							type="tl.core:Boolean"
+						/>
+						<property name="historyType"
+							type="tl.model:HistoryType"
+						/>
+					</attributes>
+				</class>
+
+				<class name="TLReference">
+					<annotations>
+						<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+						<implementation-binding interface-name="com.top_logic.model.TLReference"/>
+						<instance-presentation icon="theme:mime.TLReference"/>
+						<main-properties properties="name, owner, type"/>
+						<table name="MetaAttribute"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLStructuredTypePart"/>
+						<generalization type="DerivedTLTypePart"/>
+					</generalizations>
+					<attributes>
+						<reference name="end"
+							mandatory="true"
+							type="TLAssociationEnd"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="end"
+										storage-type="MetaAttribute"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="type"
+							override="true"
+							type="TLType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="type"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<property name="mandatory"
+							override="true"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="mandatory"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="multiple"
+							override="true"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="multiple"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="bag"
+							override="true"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="bag"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="historyType"
+							override="true"
+							type="tl.model:HistoryType"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="historyType"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="ordered"
+							override="true"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="ordered"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+
+				<class name="TLProperty">
+					<annotations>
+						<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+						<implementation-binding interface-name="com.top_logic.model.TLProperty"/>
+						<instance-presentation icon="theme:mime.TLProperty"/>
+						<main-properties properties="name, owner, type"/>
+						<table name="MetaAttribute"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLStructuredTypePart"/>
+						<generalization type="DerivedTLTypePart"/>
+					</generalizations>
+				</class>
+
+				<class name="TLClassifier">
+					<annotations>
+						<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+						<implementation-binding interface-name="com.top_logic.model.TLClassifier"/>
+						<instance-presentation icon="theme:mime.TLClassifier"/>
+						<main-properties properties="name, owner"/>
+						<table name="FastListElt"/>
+					</annotations>
+					<generalizations>
+						<generalization type="TLTypePart"/>
+					</generalizations>
+					<attributes>
+						<property name="default"
+							type="tl.core:Boolean"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<!-- FastListElement implements the method by fetching default from FastList and check for equality. This can not be described in the model. -->
+											<method-call method="com.top_logic.knowledge.wrap.list.FastListElement#isDefault()"/>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<reference name="owner"
+							override="true"
+							type="TLEnumeration"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="owner"
+										storage-type="FastListElt"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<property name="index"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<primitive-storage storage-attribute="order"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<reference name="type"
+							override="true"
+							type="TLEnumeration"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="owner"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+
+				<class name="TLModuleSingletons">
+					<annotations>
+						<table name="TLModule_singletons"/>
+						<implementation-binding interface-name="com.top_logic.model.TLModuleSingleton"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="module"
+							type="TLModule"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="module"
+										storage-type="TLModule_singletons"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="singleton"
+							navigate="true"
+							type="TLObject"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="singleton"
+										storage-type="TLModule_singletons"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

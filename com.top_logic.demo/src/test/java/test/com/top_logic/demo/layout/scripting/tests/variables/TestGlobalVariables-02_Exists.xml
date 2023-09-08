@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.assertion.GlobalVariableExistenceAssertionOp"
+	existing="false"
+	name="Variable_Test_Exists"
+/>

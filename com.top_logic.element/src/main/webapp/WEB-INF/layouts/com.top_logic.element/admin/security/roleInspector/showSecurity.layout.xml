@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="showSecurity"
+	helpIDLegacy="main.admin.showSecurity.tabber"
+	titleKey="main.admin.showSecurity.tabber"
+>
+	<tabInfo label="main.admin.showSecurity.tabber"/>
+	<components>
+		<include name="com.top_logic.element/admin/security/roleInspector/showSecurity.xml"/>
+	</components>
+</securityLayout>

@@ -1,0 +1,45 @@
+<h2>Syntax</h2> 
+<pre>	<code>$set.reduce($identity, $fun)</code>
+</pre> 
+<h2>Description</h2> 
+<p>Reduces the <code class="hljs inlineCode">set</code> to a single value by applying an associative combinator function <code class="hljs inlineCode">fun</code>.</p> 
+<p>The expression <code class="hljs inlineCode">list(v1, v2, ...., vn).reduce(i, fun)</code> corresponds to the evaluation of <code class="hljs inlineCode">fun(.... fun(fun(i, v1), v2)....), vn)</code>. <code class="hljs inlineCode">fun</code> is first applied to the elements <code class="hljs inlineCode">i</code> and <code class="hljs inlineCode">v1</code>. Then <code class="hljs inlineCode">fun</code> is applied to the result of these and to <code class="hljs inlineCode">v2</code> and so on until all elements of the set have been combined.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set</td> 
+   <td>Set</td> 
+   <td>A set of elements to be reduced to a single one.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>identity</td> 
+   <td>Number/string/boolean/business object</td> 
+   <td>The neutral element with respect to the combinator function <code class="hljs inlineCode">fun</code>, which means that <code class="hljs inlineCode">fun(identity, x)</code> is equal to <code class="hljs inlineCode">x</code> for each <code class="hljs inlineCode">x</code>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Number/string/boolean/business object</p> 
+<p>The reduced element of <code class="hljs inlineCode">set</code>.</p> 
+<h2>Examples</h2> 
+<pre>	<code>{
+   list = list(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+   $list.reduce(0, subresult -&gt; element -&gt; $subresult + $element)
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 55</p> 
+<p>Adds all the numbers in the set together.</p>

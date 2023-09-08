@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include id="outer1"
+	name="test.com.top_logic.layout.processor.TestLayoutInline/test-C1-template.xml"
+	prefix="custom.#{suffix}"
+	master="#{outer1:suffix}"
+>
+	<dialogs>
+		<include id="outer2"
+			name="test.com.top_logic.layout.processor.TestLayoutInline/test-C2-template.xml"
+			prefix="#{outer1:prefix}.#{suffix}"
+			master="#{outer1:suffix}"
+		>
+			<dialogs>
+				<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-C3-template.xml"
+					prefix="#{outer2:prefix}.#{suffix}"
+					master="#{outer1:suffix}"
+				/>
+			</dialogs>
+		</include>
+	</dialogs>
+</include>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<!-- Type 'xml' if it contains XML that must not be quoted. -->
+			<!-- Type 'string' if it is no XML and '&quot;' and Co. have to be quoted.. -->
+			<!--
+				But the quoting of values of type 'string' is not yet implemented.
+				:-(
+			-->
+
+			<t:parameter name="ergebnis"
+				default=""
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ClearGlobalVariablesOp"/>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

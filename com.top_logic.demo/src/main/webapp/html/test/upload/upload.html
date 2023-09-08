@@ -1,0 +1,93 @@
+<html>
+	<head>
+		<title>File upload test</title>
+		
+		<script type="text/javascript">
+		function fireEvent(element, event){
+		    if (document.createEventObject){
+		        // dispatch for IE
+		        var evt = document.createEventObject();
+		        return element.fireEvent('on' + event, evt)
+		    }
+		    else{
+		        // dispatch for firefox + others
+				var evt = this.ownerDocument.createEvent('MouseEvents');
+				evt.initMouseEvent('click', true, true, this.ownerDocument.defaultView, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
+				this.dispatchEvent(evt);
+
+		        // var evt = document.createEvent("HTMLEvents");
+		        // evt.initEvent(event, true, true ); // event type, bubbling, cancelable
+		        // return !element.dispatchEvent(evt);
+		    }
+		}
+
+		function openChooser() {
+			var chooserButton = document.getElementById("fileInput");
+
+			// Does not work in FF et al.
+			//
+			// fireEvent(chooserButton, "click");
+			// chooserButton.select();
+			
+			// IE:
+			chooserButton.click();
+		}
+		
+		function triggerSubmit() {
+			var submitButton = document.getElementById("submitInput");
+			fireEvent(submitButton, "click");
+		}
+		
+		function setValue() {
+			var chooserButton = document.getElementById("fileInput");
+			chooserButton.value = "some-file.txt";
+		}
+		
+		function inspectChooser() {
+			var chooserButton = document.getElementById("fileInput");
+			var out = document.getElementById("out");
+
+			var line = document.createElement("p");
+			line.appendChild(document.createTextNode(chooserButton.value));
+			out.appendChild(line);
+			
+		}
+		</script>
+	</head>
+
+	<body>
+		<h1>File upload test</h1>
+		
+		<p>
+			The intention of this page is to test, whether a file upload field can be remotely controlled by JavaScript. 
+		</p>
+		
+		<ul>
+			<li>Reading the value (the selected file) works in all browsers.</li> 
+			<li>Opening the file chooser only works in IE.</li>
+			<li>Modifying the field's content is disallowed in all browsers.</li>
+		</ul>
+
+		<p>
+			Buttons controlling the file upload field below:
+		</p>
+			
+		<button onclick="openChooser(); return false;">select</button>
+		<button onclick="setValue(); return false;">set</button>
+		<button onclick="inspectChooser(); return false;">inspect</button>
+		<button onclick="triggerSubmit(); return false;">submit</button>
+
+		<p>
+			The browser native upload field:
+		</p>
+
+		<form action="upload.html" method="post" enctype="multipart/form-data">
+			<input id="fileInput" type="file" />
+			<input id="submitInput" type="submit" />		
+		</form>
+		
+		<div id="out">
+		
+		</div>
+	</body>
+</html>

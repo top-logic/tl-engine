@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_27442_Update_lucene_version_to_8_11_2"
+		module="tl-search-lucene"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27205_KeyAttributes_for_Association"
+			module="tl"
+		/>
+		<dependency name="Ticket_27236_Create_Revision_Model"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors/>
+	<migration/>
+	<post-processors>
+		<post-processor class="com.top_logic.knowledge.searching.lucene.migration.RebuildIndexProcessor"/>
+	</post-processors>
+</migration>

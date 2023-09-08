@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="p11"
+			value="p1Value"
+		/>
+		<param name="p21"
+			optional="true"
+		/>
+		<param name="p31"
+			optional="true"
+		/>
+		<param name="p41"
+			value="p4Value"
+		/>
+		<param name="p51"
+			optional="true"
+		/>
+		<param name="p61"
+			optional="true"
+		/>
+	</params>
+
+	<component class="A"
+		p1="${p11}"
+		p2="${p21}"
+		p3="${p31}"
+	>
+		<p4>${p41}</p4>
+		<p5>${p51}</p5>
+		<p6>${p61}</p6>
+	</component>
+</template>

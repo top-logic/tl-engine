@@ -1,0 +1,48 @@
+<h2>Syntax</h2> 
+<pre>	<code>structType($key1, $key2, ..., $keyN)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Ein Wörterbuch-Typ erzeugt Wörterbücher mit vordefinierten Schlüsseln. Über einen Wörterbuch-Typ können mehrere Wörterbücher mit denselben Schlüsseln aber unterschiedlichen Werten erzeugt werden (siehe <a class="tlObject" data-custom="true" href="?page=newStruct&amp;uuid=50d6882e-2264-4047-bdf8-1a428e3acc1f">Wörterbuch-Erzeugung</a>). </p> 
+<p>Die folgenden Ausdrücke sind äquivalent:</p> 
+<pre><code>structType("one", "two", "three")
+ .newStruct(1, 2, 3)</code></pre> 
+<pre><code>{
+  "one": 1,
+  "two": 2,
+  "three": 3
+}</code></pre> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>key</td> 
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td> 
+   <td>Ein Schlüssel des Wörterbuchs.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p> 
+<p>Einen Wörterbuch-Typ, der zur <a class="tlObject" data-custom="true" href="?page=newStruct&amp;uuid=50d6882e-2264-4047-bdf8-1a428e3acc1f">Wörterbuch-Erzeugung</a> weiterverwendet werden kann.</p> 
+<h2>Beispiele</h2> 
+<h3>Mehrsprachiges Wörterbuch</h3> 
+<pre>	<code>{
+  eng = structType("Hello", "Goodbye");
+  fr = $eng.newStruct("Bonjour", "Au revoir"); 
+  ger = $eng.newStruct("Hallo", "Tschüss");
+  $ger["Hello"];
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Hallo</p> 
+<p>Erzeugt Wörterbücher für die verschiedenen Übersetzunungen.</p>

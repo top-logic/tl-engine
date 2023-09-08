@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout titleKey="%LAYOUT_RESPREFIX%title">
+	<include name="tl-bpe-app/tiles/processExecutionEdit.xml"
+		model="selection(com.top_logic.bpe.app/processCockpit/myProcesses/processesTable.layout.xml#Table)"
+	/>
+</layout>

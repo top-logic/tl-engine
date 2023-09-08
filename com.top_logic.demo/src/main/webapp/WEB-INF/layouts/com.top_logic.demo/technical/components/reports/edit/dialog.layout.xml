@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments helpID="ID_d809c99d_b3b6_4441_bf0f_03affc66abab">
+		<title>
+			<title key="dynamic.15d486c7-1477-4f46-93a6-7e44be1b84d1">
+				<en>Edit</en>
+				<de>Bearbeiten</de>
+			</title>
+		</title>
+		<open-handler id="ID_662a768a_cd5f_4dad_b875_dce88cdc7d2b"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:fas fa-pencil-alt"
+			target="selection(com.top_logic.demo/technical/components/reports/organizationTable.layout.xml#Table)"
+			targetComponent="com.top_logic.demo/technical/components/reports/edit/editOrganizationForm.layout.xml#Form"
+		>
+			<resourceKey key="dynamic.15d486c7-1477-4f46-93a6-7e44be1b84d1">
+				<en>Edit</en>
+				<de>Bearbeiten</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/reports/edit/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

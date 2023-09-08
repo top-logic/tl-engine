@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<treeView name="noDefaultSelectionTree"
+	defaultSelection="false"
+	model="selection(com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesVersionSelector)"
+	resPrefix="layouts.demo.editStructureWithExport.Tree."
+>
+	<modelBuilder class="com.top_logic.demo.model.types.util.DemoTreeBuilder"/>
+	<buttons>
+		<reference command-id="clearSelection"/>
+	</buttons>
+</treeView>

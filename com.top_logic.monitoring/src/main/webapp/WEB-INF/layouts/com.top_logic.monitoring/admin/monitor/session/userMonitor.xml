@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<include name="com.top_logic.monitoring/admin/monitor/session/sessionFilter.xml">
+			<inject>
+				<layoutInfo size="60px"/>
+			</inject>
+		</include>
+
+		<tabbar name="userMonitorTabBar">
+			<components>
+				<include name="com.top_logic.monitoring/admin/monitor/session/sessionTable.xml"/>
+				<include name="com.top_logic.monitoring/admin/monitor/session/sessionChart.xml"/>
+			</components>
+		</tabbar>
+	</components>
+</layout>

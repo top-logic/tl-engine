@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="mime.SearchExpressionTable"
+		value="/mimetypes/tl/StoredQuery.png"
+	/>
+</settings>

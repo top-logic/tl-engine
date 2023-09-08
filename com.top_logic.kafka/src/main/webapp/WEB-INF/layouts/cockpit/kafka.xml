@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="KafkaCockpitLayout"
+	resPrefix="layouts.cockpit.kafka."
+	resizable="false"
+>
+	<components>
+		<securityLayout name="kafkaLayout"
+			titleKey="layouts.cockpit.kafka.tabber"
+		>
+			<components>
+				<component class="com.top_logic.kafka.layout.kafka.ProgressTreeTableComponent"
+					isSecurityMaster="true"
+					model="provider(com.top_logic.element.layout.table.WrapperStructureModelBuilder$WrapperStructureModelProvider)"
+					name="kafkaTable"
+					resPrefix="layouts.cockpit.kafka."
+					updater="com.top_logic.kafka.layout.kafka.KafkaTableUpdater"
+				>
+					<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
+						treeModelBuilder="com.top_logic.kafka.layout.kafka.KafkaTopicListModelBuilder"
+					/>
+					<table
+						defaultColumns="_select,name,date,details,key,message"
+						defaultSortOrder="name:ascending"
+						fixedColumns="2"
+					>
+						<column-default accessor="com.top_logic.kafka.layout.kafka.KafkaTopicAccessor"/>
+						<columns>
+							<column name="name"
+								columnWidth="150px"
+							>
+								<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
+							</column>
+							<column name="details"
+								cellStyle="text-align:center;"
+								columnWidth="30px"
+								filterProvider=""
+								renderer="com.top_logic.kafka.layout.kafka.KafkaMessageDetailColumnRenderer"
+								showHeader="false"
+								sortable="false"
+							/>
+							<column name="date"
+								cellStyle="text-align:center;"
+								columnWidth="145px;"
+								labelProvider="com.top_logic.layout.provider.DateTimeLabelProvider"
+							>
+								<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+									type="com.top_logic.kafka.layout.kafka.KafkaMessage"
+								/>
+								<accessor class="com.top_logic.layout.accessors.TypeSafeAccessorProxy"
+									type="com.top_logic.kafka.layout.kafka.KafkaMessage"
+								>
+									<impl class="com.top_logic.layout.accessors.NullSafeAccessor">
+										<impl class="com.top_logic.kafka.layout.kafka.KafkaTopicAccessor$DateAccessor"/>
+									</impl>
+								</accessor>
+							</column>
+							<!-- Currently equal to name -->
+							<column name="id"
+								visibility="excluded"
+							/>
+						</columns>
+					</table>
+				</component>
+			</components>
+		</securityLayout>
+	</components>
+</layout>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<layout-reference resource="export/exportDialog.layout.xml"/>
+	<layout-reference resource="export/gridExportDialog.layout.xml"/>
+</template>

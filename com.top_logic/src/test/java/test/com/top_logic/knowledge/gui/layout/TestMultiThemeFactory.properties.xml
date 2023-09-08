@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Configuration File used for testing only                -->
+<!-- ======================================================= -->
+<!--                                                         -->
+<!--  Please provide a 'comment="..."' attribute/value pair  -->
+<!--  for each of your tags, if applicable. The text         -->
+<!--  provided there is displayed within the Administration  -->
+<!--  GUI of the application.                                -->
+<!--                                                         -->
+<root>
+	<alias> 
+    </alias>
+
+    <properties>
+    </properties>
+</root>    
+

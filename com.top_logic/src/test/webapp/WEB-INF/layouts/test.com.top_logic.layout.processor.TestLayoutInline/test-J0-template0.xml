@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="p10"
+			optional="true"
+		/>
+		<param name="p20"
+			value="p2Value"
+		/>
+	</params>
+<root>
+	<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-J0-template1.xml"
+		p11="#{p21}"
+		p21="${p20}"
+	>
+	</include>
+	
+	<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-J0-template1.xml"
+		p11="#{p21}"
+		p21="${p10}"
+	>
+	</include>
+</root>
+</template>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		createOpenerButtons="false"
+		helpID="ID_db647430_465c_4c05_9310_45d603d340a4"
+	>
+		<title>
+			<title key="dynamic.cfc15f00-88c6-4bc8-865e-8db650949dcf">
+				<en>Display dialog</en>
+				<de>Anzeigedialog</de>
+			</title>
+		</title>
+		<open-handler id="ID_86ec8b5f_88da_4377_af35_110c2f195afc"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:fas fa-eye"
+			target="selection(com.top_logic.demo/technical/components/selectionOptions/gridGrid.layout.xml#Grid)"
+			targetComponent="com.top_logic.demo/technical/components/selectionOptions/displayDialog/dialog.layout.xml#Dialog"
+		>
+			<resourceKey key="dynamic.cfc15f00-88c6-4bc8-865e-8db650949dcf">
+				<en>Dialog display</en>
+				<de>Dialoganzeige</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/selectionOptions/displayDialog/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

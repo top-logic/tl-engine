@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminPersonGroupsView"
+	helpIDLegacy="main.admin.persons.groups.tabber"
+	titleKey="main.admin.persons.groups.tabber"
+>
+	<tabInfo label="main.admin.persons.groups.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/security/groupAssignment/editPersonGroups.xml"/>
+	</components>
+</securityLayout>

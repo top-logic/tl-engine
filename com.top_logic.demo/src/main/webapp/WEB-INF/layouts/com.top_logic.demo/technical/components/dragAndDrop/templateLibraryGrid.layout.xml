@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/treegrid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		multiSelection="true"
+		type="test.dnd:Library,test.dnd:NamedPlanElement"
+	>
+		<name key="dynamic.3aca3423-5a31-478b-ac28-a910bb0019d4">
+			<en>Template library</en>
+			<de>Template-Bibliothek</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			finite="true"
+			leafPredicate="false"
+			modelPredicate="true"
+			modelQuery="null"
+			nodePredicate="node->$node.instanceOf(`test.dnd:NamedPlanElement`)"
+			nodesToUpdate="null"
+			rootNode="`test.dnd#LIBRARY`"
+		>
+			<children><![CDATA[node -> switch ($node.type()) {
+  `test.dnd:Library`: $node.get(`test.dnd:Library#elements`);
+  `test.dnd:Factory`: $node.get(`test.dnd:Factory#floors`);
+  `test.dnd:Floor`: $node.get(`test.dnd:Floor#locations`);
+  `test.dnd:Location`: {
+    machines = $node.referers(`test.dnd:Machine#location`);
+    entry = $node.get(`test.dnd:Location#entry`);
+    if($entry == null, $machines, union($machines, list($entry)));
+  };
+}]]></children>
+			<parents><![CDATA[node -> {
+  planParent = switch ($node.type()) {
+    `test.dnd:Floor`: $node.referers(`test.dnd:Factory#floors`);
+    `test.dnd:Location`: $node.referers(`test.dnd:Floor#locations`);
+    `test.dnd:Entry`: $node.referers(`test.dnd:Location#entry`);
+    `test.dnd:Machine`: $node.get(`test.dnd:Machine#location`);
+  };
+  $planParent == null ? `test.dnd#LIBRARY` : $planParent
+}]]></parents>
+		</modelBuilder>
+		<dragSource class="com.top_logic.model.search.providers.GridDragSourceByExpression"
+			canDrag="x -> $x.instanceOf(`test.dnd:NamedPlanElement`)"
+		/>
+		<tableDrop class="com.top_logic.model.search.providers.GridDropTargetByExpression"
+			dropType="ROW"
+		>
+			<canDrop><![CDATA[draggedObjects->referenceRow->{canDrop=source -> target -> {
+  containerParent = if($source.type() == `test.dnd:Machine`, $source.get(`test.dnd:Machine#location`), $source);
+  root = $containerParent.recursion(x -> $x.container()).lastElement();
+  if($root.type() == `test.dnd:Library`, {
+    switch($source.type()) {
+      `test.dnd:Floor`: $target.instanceOf(`test.dnd:Factory`);
+      `test.dnd:Location`: $target.instanceOf(`test.dnd:Floor`);
+      `test.dnd:Entry`: $target.instanceOf(`test.dnd:Location`);
+      `test.dnd:Machine`: $target.instanceOf(`test.dnd:Location`);
+    }
+  }, false);
+};$draggedObjects.filter(draggedObject -> !$canDrop($draggedObject,$referenceRow)).isEmpty();}]]></canDrop>
+			<handleDrop><![CDATA[draggedObjects->referenceRow->{handleDrop=source -> target -> {
+    if($source.type() == `test.dnd:Machine`, $source.set(`test.dnd:Machine#location`, $target), {
+     ref = switch($target.type()) {
+       `test.dnd:Factory`: `test.dnd:Factory#floors`;
+       `test.dnd:Floor`: `test.dnd:Floor#locations`;
+       `test.dnd:Location`: `test.dnd:Location#entry`;
+      };
+      oldParent = $source.referers($ref);
+      oldChildren = $oldParent.get($ref);
+      $oldParent.set($ref, $oldChildren.filter(x -> $x != $source));
+      $target.add($ref, $source);
+    });
+};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}]]></handleDrop>
+		</tableDrop>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_4806a4bb_4c2e_4d69_800c_f7bc3c94e0aa"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.63079cbc-9fae-4384-b637-7c95ebda61ee">
+					<en>Delete element</en>
+					<de>Element löschen</de>
+				</resourceKey>
+			</button>
+			<button id="ID_89fd44eb_ec4d_42bb_9d0d_b00bfecd594e"
+				class="com.top_logic.xio.command.XMLImportCommand"
+				clique="importButtons"
+				group="Create"
+				image="css:fas fa-upload"
+				logging="true"
+			>
+				<resourceKey key="dynamic.99a84143-07c9-49a7-ba24-c2aaa6adb50f">
+					<en>Import library</en>
+					<de>Bibliothek importieren</de>
+				</resourceKey>
+				<import-definition>
+					<dispatch>
+						<tag name="items">
+							<in-scope
+								argument-var=""
+								expr="`test.dnd#LIBRARY`"
+							>
+								<dispatch id="all-types">
+									<tag name="factory">
+										<object model-type="test.dnd:Factory">
+											<property name="name"
+												xml-attribute="name"
+											>
+												<format class="com.top_logic.basic.config.StringValueProvider"/>
+											</property>
+											<linking>
+												<list-linking name="test.dnd:Library#elements"/>
+											</linking>
+											<ref handler-id="all-types"/>
+										</object>
+									</tag>
+									<tag name="floor">
+										<object model-type="test.dnd:Floor">
+											<property name="name"
+												xml-attribute="name"
+											>
+												<format class="com.top_logic.basic.config.StringValueProvider"/>
+											</property>
+											<linking>
+												<list-linking name="test.dnd:Library#elements"/>
+												<list-linking name="test.dnd:Factory#floors"/>
+											</linking>
+											<ref handler-id="all-types"/>
+										</object>
+									</tag>
+									<tag name="location">
+										<object model-type="test.dnd:Location">
+											<property name="name"
+												xml-attribute="name"
+											>
+												<format class="com.top_logic.basic.config.StringValueProvider"/>
+											</property>
+											<linking>
+												<list-linking name="test.dnd:Library#elements"/>
+												<list-linking name="test.dnd:Floor#locations"/>
+											</linking>
+											<ref handler-id="all-types"/>
+										</object>
+									</tag>
+									<tag name="entry">
+										<object model-type="test.dnd:Entry">
+											<property name="name"
+												xml-attribute="name"
+											>
+												<format class="com.top_logic.basic.config.StringValueProvider"/>
+											</property>
+											<linking>
+												<ref-linking name="test.dnd:Location#entry"/>
+											</linking>
+											<dispatch/>
+										</object>
+									</tag>
+								</dispatch>
+							</in-scope>
+						</tag>
+					</dispatch>
+				</import-definition>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/dragAndDrop/newLibraryElement/newLibraryElementDialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

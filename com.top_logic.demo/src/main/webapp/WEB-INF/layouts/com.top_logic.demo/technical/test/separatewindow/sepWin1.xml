@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="selection"/>
+	</params>
+
+	<tabbar name="${namePrefix}layoutDemoTabFrameSepWin">
+		<components>
+			<layout resizable="false">
+				<tabInfo label="layouts.layoutdemo.separateWindow.sepWin1.demoWindow.tab"/>
+				<components>
+					<layout
+						horizontal="true"
+						resizable="false"
+					>
+						<components>
+							<component class="com.top_logic.mig.html.layout.SimpleComponent"
+								buttonComponent="${namePrefix}ewDemo1Buttons_1"
+								content="The tree on the right side is the master tree for one inputfield on this page and one inputfield in the opening window"
+								name="${namePrefix}SWTreeBdescr"
+								resPrefix="layouts.layoutdemo.separateWindow.sepWin1.SWTreeBdescr."
+							>
+								<windows>
+									<window template="com.top_logic.demo/technical/test/separatewindow/sepWin1.xml">
+										<windowInfo
+											closeIfParentBecomesInvisible="true"
+											openerClique="default"
+										/>
+										<substitutions>
+											<substitution key="namePrefix"
+												value="${namePrefix}Inner"
+											/>
+											<substitution key="selection"
+												value="model(com.top_logic.demo/technical/test/separatewindow/sepWin1.xml#${namePrefix}SWDemoFormInputA2)"
+											/>
+										</substitutions>
+									</window>
+								</windows>
+							</component>
+							<treeView name="${namePrefix}SWTreeB"
+								adjustSelectionWhenCollapsing="true"
+								expandSelected="true"
+								modelBuilder="com.top_logic.demo.layout.demo.LRMDemoTreeModelBuilder"
+								resPrefix="layouts.layoutdemo.separateWindow.sepWin1.SWTreeB."
+								resource-provider="com.top_logic.demo.layout.demo.DemoTreeNodeModel$LP"
+								selection="${selection}"
+							/>
+						</components>
+					</layout>
+					<layout resizable="false">
+						<components>
+							<component class="com.top_logic.mig.html.layout.SimpleComponent"
+								content="The master of this inputfield is the upper tree. The inputfield displays the tree's selected node"
+								name="${namePrefix}SWDemoFormInputA1descr"
+								resPrefix="layouts.layoutdemo.separateWindow.sepWin1.SWDemoFormInputA1descr."
+							/>
+							<component class="com.top_logic.demo.layout.demo.LRMDemoFormComponent"
+								model="selection(${namePrefix}SWTreeB)"
+								name="${namePrefix}SWDemoFormInputB1"
+								page="/jsp/test/layout/LRMDemoMasterTest.jsp"
+								resPrefix="layouts.layoutdemo.separateWindow.sepWin1.SWDemoFormInputB1."
+							/>
+							<component class="com.top_logic.mig.html.layout.SimpleComponent"
+								content="The master of this inputfield is the tree displayed in the opening window. The inputfield displays the tree's selected node"
+								name="${namePrefix}SWDemoFormInputB2descr"
+								resPrefix="layouts.layoutdemo.separateWindow.sepWin1.SWDemoFormInputB2descr."
+							/>
+							<component class="com.top_logic.demo.layout.demo.LRMDemoFormComponent"
+								model="selection(com.top_logic.demo/technical/test/separatewindow/separateWindowDemo.layout.xml#SWTreeA)"
+								name="${namePrefix}SWDemoFormInputA2"
+								page="/jsp/test/layout/LRMDemoMasterTest.jsp"
+								resPrefix="layouts.layoutdemo.separateWindow.sepWin1.SWDemoFormInputA2."
+							/>
+						</components>
+					</layout>
+					<buttonbar name="${namePrefix}ewDemo1Buttons_1"/>
+				</components>
+			</layout>
+			<include name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsForm_shared.xml"
+				componentName="${namePrefix}TestControlsFormSepWindow"
+			>
+				<inject>
+					<tabInfo label="layouts.layoutdemo.separateWindow.sepWin1.testForm.tab"/>
+				</inject>
+			</include>
+		</components>
+	</tabbar>
+</template>

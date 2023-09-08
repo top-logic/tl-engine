@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings output-format="xml"/>
+		<t:parameters>
+			<t:parameter name="Name"
+				type="string"
+			/>
+
+			<!-- Login name of the user that should run the tests. -->
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.LabeledFieldRef"
+								label="webFolder"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="rows"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TableFieldRef"
+								column-name="_delete"
+								field-label-comment=""
+							>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+									provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+								>
+									<name>
+										<part key="element">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+												string="${$Name}"
+											/>
+										</part>
+									</name>
+								</row-object>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment="Löschen"
+								field-name="_delete"
+							/>
+						</path>
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</model-name>
+				</action>
+				<t:invoke template="script:Knopf/Action-Knopf-Druecken.xml">
+					<t:parameter name="Tester"
+						value="${$Tester}"
+					/>
+					<t:parameter name="Name"
+						value="Ja"
+					/>
+				</t:invoke>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

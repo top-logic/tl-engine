@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<instance class="com.top_logic.knowledge.journal.JournalManager" 
+	connection-pool="default"
+>
+	<journaled-knowledge-objects>
+		<journaled-knowledge-object value="TestJournal" />
+	</journaled-knowledge-objects>
+</instance>

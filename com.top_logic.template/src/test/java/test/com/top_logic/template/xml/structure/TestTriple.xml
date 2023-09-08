@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<t:type name="Example_Type_Triple">
+				<t:attributes>
+					<t:attribute name="Attribute_A" type="string"/>
+					<t:attribute name="Attribute_B" type="string"/>
+					<t:attribute name="Attribute_C" type="string"/>
+				</t:attributes>
+			</t:type>
+			
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Example_Structure_Triple" type="Example_Type_Triple" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:value expr="$Example_Structure_Triple.Attribute_A" />
+		<t:value expr="$Example_Structure_Triple.Attribute_B" />
+		<t:value expr="$Example_Structure_Triple.Attribute_C" />
+		
+	</t:body>
+</t:template>

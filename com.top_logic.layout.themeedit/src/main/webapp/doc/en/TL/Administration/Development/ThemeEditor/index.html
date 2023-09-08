@@ -1,0 +1,31 @@
+<p>The Theme Editor is used to create your own themes in the application itself.</p> 
+<p>The view of the Theme Editor is divided into two parts. On the left side there is a table that lists all existing themes of the application:</p> 
+<p><img src="ref:grafik.png" style="opacity:1"></p> 
+<p>In the toolbar is the possibility to create a new theme by <img src="ref:grafik_1.png" style="opacity:1"> :</p> 
+<p><img src="ref:grafik_12.png" style="opacity:1"></p> 
+<p>The <code class="hljs inlineCode">ID</code> is the key of the new theme. In <code class="hljs inlineCode">Extends</code> you can specify a set of themes that the new theme should extend. In <code class="hljs inlineCode">State</code> it can be specified whether the user can choose the theme or it should exist purely as an abstraction for possibly other themes in the application.</p> 
+<p>The rest of the theme editor view is divided into 4 sections:</p> 
+<p><img src="ref:grafik_13.png" style="opacity:1"></p> 
+<h3>Properties</h3> 
+<p>The Properties tab is used as a detailed view for the selected theme.</p> 
+<h3>Variables</h3> 
+<p>The Variables tab displays the theme variables that have been newly defined in the selected theme.</p> 
+<p><img src="ref:grafik_2.png" style="opacity:1"></p> 
+<p>The identifier (column <code class="hljs inlineCode">Variable</code>) and the type of the theme variable are fixed; the value can be edited in the application itself at runtime:</p> 
+<p><img src="ref:grafik_3.png" style="opacity:1"></p> 
+<p>By setting <code class="hljs inlineCode">Value</code> one can explicitly define the value. You can also use an expression to specify a calculation rule for the value. This makes it possible for a variable to have the same value as another variable. In the menu</p> 
+<p><img src="ref:grafik_14.png" style="opacity:1"></p> 
+<p>it is possible to delete your own defined variable in the theme or to display variables from themes that the currently selected theme extends. Inherited variables cannot be deleted.</p> 
+<h3>Styles</h3> 
+<p>The view in the Styles tab is divided into two parts. On the left, a table is displayed that lists all stylesheets that are included in the selected theme.</p> 
+<p><img src="ref:grafik_15.png" style="opacity:1"></p> 
+<p>In the toolbar you can create new stylesheets for this theme.</p> 
+<p>The other view contains an editor for the selected stylesheet:</p> 
+<p><img src="ref:grafik_16.png" style="opacity:1"></p> 
+<p>The editor supports syntax highlighting and simple, in this case CSS, code completion.</p> 
+<h3>Resources</h3> 
+<p>The view of the last tab <code class="hljs inlineCode">Resources</code> is also divided into two parts. The left view shows the directory structure where all resources of the application for this theme are located:</p> 
+<p><img src="ref:grafik_4.png" style="opacity:1"></p> 
+<p>In the toolbar there is the possibility to create new folders for more resources in the selected theme, to manage it as clear and modular as possible. Next to it is a table that lists all resources within the selected directory:</p> 
+<p><img src="ref:grafik_5.png" style="opacity:1"></p> 
+<p>In the menu of this table it is possible to delete single resources. In addition, the toolbar offers the possibility to download resources by <img src="ref:grafik_11.png" style="opacity:1">.</p>

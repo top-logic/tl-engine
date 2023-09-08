@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!-- 
+  Demo data for TestFileSystemDataSourceAdpator / DOImporter
+ -->
+<dataobject type="DEMO-DATA" id="1">
+  <attribute name="DEMO-DATA(TBL)" type="LIST">
+    <dataobject type="DEMO-DATA" id="5">
+      <attribute name="LIFNR" type="java.lang.String" value="9999999999" />
+      <attribute name="ANRED" type="java.lang.String" value="Firma" />
+      <attribute name="LAND1" type="java.lang.String" value="US" />
+      <attribute name="NAME1" type="java.lang.String" value="Oceanic Scientific Co" />
+      <attribute name="NAME2" type="java.lang.String" value="Psycho Cinetics Div." />
+      <attribute name="ORT01" type="java.lang.String" value="CARPENTER - SANTA AGUGUSTE" />
+      <attribute name="PFACH" type="java.lang.String" value="" />
+      <attribute name="PSTLZ" type="java.lang.String" value="99999" />
+      <attribute name="REGIO" type="java.lang.String" value="CX" />
+      <attribute name="STRAS" type="java.lang.String" value="6382 ROTZ STREET" />
+      <attribute name="BRSCH" type="java.lang.String" value="AZF" />
+      <attribute name="TELF1" type="java.lang.String" value="001-875-577-5070" />
+      <attribute name="TELFX" type="java.lang.String" value="805-577-5722" />
+      <attribute name="ZZSPC_SPL" type="java.lang.String" value="1B1H6" />
+    </dataobject>
+    <dataobject type="DEMO-DATA" id="2">
+      <attribute name="LIFNR" type="java.lang.String" value="8888888888" />
+      <attribute name="ANRED" type="java.lang.String" value="Firma" />
+      <attribute name="LAND1" type="java.lang.String" value="DE" />
+      <attribute name="NAME1" type="java.lang.String" value="Industrial Design Müller" />
+      <attribute name="NAME2" type="java.lang.String" value="I.DEE.M. Heiko R. Müller" />
+      <attribute name="ORT01" type="java.lang.String" value="Berchtesburgen" />
+      <attribute name="PFACH" type="java.lang.String" value="95 05 16" />
+      <attribute name="PSTLZ" type="java.lang.String" value="89905" />
+      <attribute name="REGIO" type="java.lang.String" value="02" />
+      <attribute name="STRAS" type="java.lang.String" value="Flinkenwerder Norddeich Mole" />
+      <attribute name="BRSCH" type="java.lang.String" value="DL" />
+      <attribute name="TELF1" type="java.lang.String" value="040-743-46-62" />
+      <attribute name="TELFX" type="java.lang.String" value="040-743-46-62" />
+      <attribute name="ZZSPC_SPL" type="java.lang.String" value="" />
+    </dataobject>
+    <dataobject type="DEMO-DATA" id="3">
+      <attribute name="LIFNR" type="java.lang.String" value="7777777777" />
+      <attribute name="ANRED" type="java.lang.String" value="" />
+      <attribute name="LAND1" type="java.lang.String" value="US" />
+      <attribute name="NAME1" type="java.lang.String" value="TRIUMPH AIR REPAIR" />
+      <attribute name="NAME2" type="java.lang.String" value="(TRIUMPH GROUP OPERATIONS, INC.)" />
+      <attribute name="ORT01" type="java.lang.String" value="PHOENIX" />
+      <attribute name="PFACH" type="java.lang.String" value="" />
+      <attribute name="PSTLZ" type="java.lang.String" value="85040" />
+      <attribute name="REGIO" type="java.lang.String" value="AZ" />
+      <attribute name="STRAS" type="java.lang.String" value="4010 SOUTH 43RD PLACE" />
+      <attribute name="BRSCH" type="java.lang.String" value="ACR" />
+      <attribute name="TELF1" type="java.lang.String" value="001-602-437 1144" />
+      <attribute name="TELFX" type="java.lang.String" value="602-437 1889" />
+      <attribute name="ZZSPC_SPL" type="java.lang.String" value="LT008" />
+    </dataobject>
+    <dataobject type="DEMO-DATA" id="4">
+      <attribute name="LIFNR" type="java.lang.String" value="6666666666" />
+      <attribute name="ANRED" type="java.lang.String" value="Firma" />
+      <attribute name="LAND1" type="java.lang.String" value="DE" />
+      <attribute name="NAME1" type="java.lang.String" value="Setolite Lichttechnik GmbH" />
+      <attribute name="NAME2" type="java.lang.String" value="" />
+      <attribute name="ORT01" type="java.lang.String" value="Würmelshausen" />
+      <attribute name="PFACH" type="java.lang.String" value="" />
+      <attribute name="PSTLZ" type="java.lang.String" value="47922" />
+      <attribute name="REGIO" type="java.lang.String" value="05" />
+      <attribute name="STRAS" type="java.lang.String" value="Albert-Bleifrei-Strasse 24" />
+      <attribute name="BRSCH" type="java.lang.String" value="BTZZ" />
+      <attribute name="TELF1" type="java.lang.String" value="02396-4-19-97" />
+      <attribute name="TELFX" type="java.lang.String" value="02396-4-39-94" />
+      <attribute name="ZZSPC_SPL" type="java.lang.String" value="" />
+    </dataobject>
+  </attribute>
+</dataobject>

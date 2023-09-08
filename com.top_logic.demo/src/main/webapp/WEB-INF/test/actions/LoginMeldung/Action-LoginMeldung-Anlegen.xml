@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="kontext"
+				type="string"
+			/>
+			<t:parameter name="Aktiv"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="Von"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="Bis"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="Intervall"
+				default=""
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Tech. Administration > Login-Meldungen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.GridCreateHandler"
+					command-label="Neue Login-Meldung"
+					command-name="createAttributedGrid"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.addons.loginmessages/admin/adminLoginMessages.layout.xml#adminLoginMessagesTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Bezeichnung"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.addons.loginmessages/admin/adminLoginMessages.layout.xml#adminLoginMessagesTable"
+							tab-path="Administration > Tech. Administration > Login-Meldungen"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="${$kontext}"
+					/>
+				</action>
+				<t:if condition=" ! #equals($Aktiv, &quot;&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Aktiv"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.addons.loginmessages/admin/adminLoginMessages.layout.xml#adminLoginMessagesTable"
+									tab-path="Administration > Tech. Administration > Login-Meldungen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="${$Aktiv}"
+							/>
+						</action>
+					</t:then>
+				</t:if>
+				<t:if condition=" ! #equals($Von, &quot;&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.template.fuzzy.FormFuzzyInput$Op"
+							user-id="root"
+							value="${$Von}"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Gültig von"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.addons.loginmessages/admin/adminLoginMessages.layout.xml#adminLoginMessagesTable"
+									tab-path="Administration > Tech. Administration > Login-Meldungen"
+								/>
+							</field>
+						</action>
+					</t:then>
+				</t:if>
+				<t:if condition=" ! #equals($Bis, &quot;&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.template.fuzzy.FormFuzzyInput$Op"
+							user-id="root"
+							value="${$Bis}"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Gültig bis"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.addons.loginmessages/admin/adminLoginMessages.layout.xml#adminLoginMessagesTable"
+									tab-path="Administration > Tech. Administration > Login-Meldungen"
+								/>
+							</field>
+						</action>
+					</t:then>
+				</t:if>
+				<t:if condition=" ! #equals($Intervall, &quot;&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Bestätigungsintervall (in Tagen)"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.addons.loginmessages/admin/adminLoginMessages.layout.xml#adminLoginMessagesTable"
+									tab-path="Administration > Tech. Administration > Login-Meldungen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="${$Intervall}"
+							/>
+						</action>
+					</t:then>
+				</t:if>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.addons.loginmessages/admin/adminLoginMessages.layout.xml#adminLoginMessagesTable"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<t:if condition=" #equals($Aktiv, &quot;true&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ja"
+							user-id="root"
+						/>
+					</t:then>
+				</t:if>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

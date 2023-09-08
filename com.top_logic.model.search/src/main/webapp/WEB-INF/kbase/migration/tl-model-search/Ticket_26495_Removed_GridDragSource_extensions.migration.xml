@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26495_Removed_GridDragSource_extensions"
+		module="tl-model-search"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27205_KeyAttributes_for_Association"
+			module="tl"
+		/>
+		<dependency name="Ticket_27236_Create_Revision_Model"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_26959_drop_api_generalization"
+			module="tl-model-search"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			column="arguments"
+			table="TemplateLayouts"
+			transform="/WEB-INF/kbase/migration/tl-model-search/Ticket_26495_Removed_GridDragSource_extensions.migration.xslt"
+		/>
+	</processors>
+	<migration>
+	</migration>
+	<post-processors/>
+</migration>

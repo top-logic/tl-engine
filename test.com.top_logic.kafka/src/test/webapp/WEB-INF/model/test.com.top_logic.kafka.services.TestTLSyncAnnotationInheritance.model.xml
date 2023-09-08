@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.common">
+			<types>
+				<enum name="TestTLSyncAnnotationInheritanceEnum">
+					<classifiers>
+						<classifier name="First"/>
+						<classifier name="Second"/>
+						<classifier name="Third"/>
+					</classifiers>
+				</enum>
+				<interface name="CommonType">
+					<attributes>
+						<reference name="defaultReferenceEnum"
+							multiple="true"
+							type="TestTLSyncAnnotationInheritanceEnum"
+						>
+							<annotations>
+								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+							</annotations>
+						</reference>
+						<reference name="inlineReferenceEnum"
+							multiple="false"
+							type="TestTLSyncAnnotationInheritanceEnum"
+						>
+							<annotations>
+								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="inlineReferenceEnum"
+										storage-type="CommonType"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="associationReferenceEnum"
+							multiple="true"
+							type="TestTLSyncAnnotationInheritanceEnum"
+						>
+							<annotations>
+								<exported value-mapping="com.top_logic.kafka.knowledge.service.exporter.mappings.TLExportedModelPartToName" />
+								<imported value-mapping="com.top_logic.kafka.knowledge.service.importer.mappings.TLImportedModelPartFromName" />
+								<storage-algorithm>
+									<set-storage table="hasKafkaTestEnumAttValue"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed" />
+					</generalizations>
+				</interface>
+			</types>
+		</module>
+		<module name="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.source">
+			<types>
+				<class name="SourceType">
+					<annotations>
+						<table name="SourceTable1"/>
+						<exported />
+					</annotations>
+					<attributes>
+						<reference name="defaultReferenceEnum"
+							override="true"
+							type="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.common:TestTLSyncAnnotationInheritanceEnum"
+						/>
+						<reference name="inlineReferenceEnum"
+							override="true"
+							type="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.common:TestTLSyncAnnotationInheritanceEnum"
+						/>
+						<reference name="associationReferenceEnum"
+							override="true"
+							type="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.common:TestTLSyncAnnotationInheritanceEnum"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.common:CommonType" />
+					</generalizations>
+				</class>
+			</types>
+		</module>
+		<module name="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.target">
+			<types>
+				<class name="TargetType">
+					<annotations>
+						<table name="TargetTable1"/>
+						<imported source="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.source:SourceType"/>
+					</annotations>
+					<attributes>
+						<reference name="defaultReferenceEnum"
+							override="true"
+							type="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.common:TestTLSyncAnnotationInheritanceEnum"
+						/>
+						<reference name="inlineReferenceEnum"
+							override="true"
+							type="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.common:TestTLSyncAnnotationInheritanceEnum"
+						/>
+						<reference name="associationReferenceEnum"
+							override="true"
+							type="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.common:TestTLSyncAnnotationInheritanceEnum"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="test.com.top_logic.kafka.services.TestTLSyncAnnotationInheritance.common:CommonType" />
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	SPDX-FileCopyrightText: 2007 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<layout horizontal="true">
+	<components>
+		<tableView name="attRoleClassMetaElementTable"
+			isSecurityMaster="true"
+			modelBuilder="com.top_logic.element.layout.security.AttRoleClassMetaElementModelBuilder"
+			objectType="tl.model:TLClass"
+			partnerGroup="AttributeCategoryGroup"
+			resPrefix="attRoleClass.meta.element.table."
+			securityProviderClass="securityRoot"
+		>
+			<layoutInfo size="413"/>
+			<table
+				defaultColumns="name"
+				defaultSortOrder="name"
+				fixedColumns="0"
+				rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
+				showTitle="true"
+			>
+				<column-default
+					columnWidth="372px"
+					filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+				/>
+
+				<columns>
+					<column name="name"
+						accessor="com.top_logic.layout.IdentityAccessor"
+						labelProvider="com.top_logic.element.layout.security.AttSecMetaElementLabelProvider"
+					>
+						<sortKeyProvider class="com.top_logic.layout.LabelMapping"
+							labels="com.top_logic.element.layout.security.AttSecMetaElementLabelProvider"
+						/>
+					</column>
+				</columns>
+			</table>
+		</tableView>
+		<layout>
+			<components>
+				<component class="com.top_logic.element.layout.security.AttributeClassifierRolesComponent"
+					buttonComponent="editAttRoleClassButtons"
+					model="selection(attRoleClassMetaElementTable)"
+					name="editAttRoleClass"
+					page="/jsp/layout/admin/security/rolesClassification.jsp"
+					resPrefix="admin.security.attRoleClass."
+					securityProviderClass="securityRoot"
+				/>
+				<buttonbar name="editAttRoleClassButtons"/>
+			</components>
+		</layout>
+	</components>
+</layout>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="editClass"
+			value="com.top_logic.knowledge.gui.layout.person.SelfEditPersonComponent"
+		/>
+		<param name="defaultFor"
+			value="tl.accounts:Person"
+		/>
+		<param name="jspPage"
+			value="/jsp/layout/persons/EditPerson.jsp"
+		/>
+		<param name="model"
+			value="selection(AdminPersonTable)"
+		/>
+		<param name="newClass"
+			value="com.top_logic.knowledge.gui.layout.person.NewPersonComponent"
+		/>
+		<param name="newJSP"
+			value="/jsp/layout/persons/NewPerson.jsp"
+		/>
+		<param name="newDialogWidth"
+			value="360"
+		/>
+		<param name="newDialogHeight"
+			value="280"
+		/>
+	</params>
+
+	<include name="com.top_logic/admin/security/accounts/personEditRaw.xml"
+		changePasswordCommandGroup="Write"
+		changePasswordComponent="com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent"
+		defaultFor="${defaultFor}"
+		editClass="${editClass}"
+		jspPage="${jspPage}"
+		model="${model}"
+		namePrefix="${namePrefix}"
+	>
+		<newDialog>
+			<layout name="newPersonDialog">
+				<dialogInfo
+					executability="InViewMode,com.top_logic.knowledge.gui.layout.person.EditPersonComponent$WriteableSecurityDeviceRule"
+					height="${newDialogHeight}"
+					openButtonSecComp="NewPerson"
+					openerClique="create"
+					openerCommandGroup="Create"
+					width="${newDialogWidth}"
+				/>
+
+				<components>
+					<component class="${newClass}"
+						isSecurityMaster="true"
+						name="NewPerson"
+						page="${newJSP}"
+						resPrefix="layouts.admin.persons.personEditDetails.NewPerson."
+						securityProviderClass="securityRoot"
+					/>
+					<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+				</components>
+			</layout>
+		</newDialog>
+	</include>
+</template>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	MetaObjects used for Testing only
+-->
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+
+	<metaobjects>
+
+		<metaobject object_type="MOKnowledgeObject" object_name="TestMailFolderAware" super_class="KnowledgeObject">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="test.com.top_logic.mail.base.TestMailFolderAwareWrapper"/>
+				</annotation>
+			</annotations>
+			<attributes>
+				<mo_attribute att_name="folderName" att_type="String" mandatory="true" />
+			</attributes>
+		</metaobject>
+
+	</metaobjects>
+</objectlist>

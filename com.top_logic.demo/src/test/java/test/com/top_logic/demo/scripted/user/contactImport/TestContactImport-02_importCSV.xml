@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Navigate"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Fach. Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Fach. Administration > Personen"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Import"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Importieren..."
+					command-name="displayDialog_DemoPersonImportImportEVA"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportInputStep"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Art des Importes"
+									field-name="_importer"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="personCSV"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportInputStep"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Datei auswählen"
+									field-name="uploadField"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+								base64data="VGl0ZWw7TmFjaG5hbWU7Vm9ybmFtZTtNb2JpbDtUZWxlZm9uO0NoZWYNCkRyLjtTbWFydDtKZWZmOys0OSAoMTcwKSAxMDAwMDE7KzQ5ICg2MTAyKSA3OTkzLTEwMTsNCjtN_HR0O0VybmE7KzQ5ICgxNzApIDEwMDAwMjsrNDkgKDYxMDIpIDc5OTMtMTAyO1NtYXJ0LCBKZWZmDQpEaXBsLiBJbmcuO038dHQ7S2FybDsrNDkgKDE3MCkgMTAwMDAzOys0OSAoNjEwMikgNzk5My0xMDM7U21hcnQsIEplZmYNCkRyLiBJbmcuO1NjaG1pZHQ7S2xhdXM7KzQ5ICgxNzApIDEwMDAwNDsrNDkgKDYxMDIpIDc5OTMtMTA0O1NtYXJ0LCBKZWZmDQo7TWVpZXI7UGV0ZXI7KzQ5ICgxNzApIDEwMDAwNTsrNDkgKDYxMDIpIDc5OTMtMTA1O038dHQsIEVybmENCjtXb2xmO0luZ2U7KzQ5ICgxNzApIDEwMDAwNjsrNDkgKDYxMDIpIDc5OTMtMTA2O038dHQsIEVybmENCjtEaWV0ZXI7QnVzZW1hbm47KzQ5ICgxNzApIDEwMDAwNzsrNDkgKDYxMDIpIDc5OTMtMTA3O038dHQsIEVybmENCjtXb2xmO0VybmE7KzQ5ICgxNzApIDEwMDAwODsrNDkgKDYxMDIpIDc5OTMtMTA4O038dHQsIEVybmENCjtNZXllcjtLYXJsOys0OSAoMTcwKSAxMDAwMDk7KzQ5ICg2MTAyKSA3OTkzLTEwOTtN_HR0LCBLYXJsDQo7Wm9sbGVyO01pY2hhZWw7KzQ5ICgxNzApIDEwMDAxMDsrNDkgKDYxMDIpIDc5OTMtMTEwO038dHQsIEthcmwNCg"
+								content-type="application/vnd.ms-excel"
+								name="PersonContacts.csv"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.assistent.CommandChain"
+					command-label="Weiter"
+					command-name="commandChain_upload_switchAssistentForward"
+					component-implementation-comment="com.top_logic.importer.dispatching.DispatchingAssistentFileUploadComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportInputStep"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.assistent.CommandChain"
+					command-label="Weiter"
+					command-name="commandChain_processImportFile_switchAssistentForward"
+					component-implementation-comment="com.top_logic.tool.boundsec.assistent.eva.ProcessingComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportProcessStep"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.AwaitProgressActionOp"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportOutputStep"
+					max-sleep="300000"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.assistent.CommandChain"
+					command-label="Fertigstellen"
+					command-name="commandChain_assistentFinish_switchAssistentShow"
+					component-implementation-comment="com.top_logic.tool.boundsec.assistent.eva.OutputComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportOutputStep"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Cleanup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Smart"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Jeff"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Mütt"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Erna"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Mütt"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Karl"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Schmidt"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Klaus"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Meier"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Peter"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Wolf"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Inge"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Dieter"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Busemann"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Wolf"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Erna"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Meyer"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Karl"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Zoller"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Michael"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

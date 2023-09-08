@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Transforms the system to a single branch system. -->
+<objectlist
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<!-- MetaObjects -->
+
+	<metaobjects>
+		<metaobject object_name="Item">
+			<attributes>
+				<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+					att_name="_branch"
+				>
+					<storage class="com.top_logic.knowledge.service.db2.TrunkStorage"/>
+				</mo_attribute>
+			</attributes>
+			<primary-key>
+				<index-parts>
+					<index_part name="_branch"
+						config:operation="remove"
+					/>
+				</index-parts>
+			</primary-key>
+		</metaobject>
+	</metaobjects>
+</objectlist>

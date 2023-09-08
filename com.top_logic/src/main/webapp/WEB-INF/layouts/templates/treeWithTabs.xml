@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="components"/>
+
+		<param name="domain"
+			value=""
+		/>
+		<param name="navigationRole"
+			value="${domain}.navigation"
+		/>
+		<param name="tabIcon"
+			optional="true"
+		/>
+		<param name="tabVisible"
+			optional="true"
+		/>
+
+		<!-- START: Legacy parameters that never should get filled explicitly -->
+		<param name="z_legacy_tabId"
+			optional="true"
+		/>
+		<param name="z_legacy_tabLabel"
+			value="${z_legacy_resPrefix}tab"
+		/>
+		<param name="z_legacy_treeTitle"
+			value="${z_legacy_resPrefix}tree.title"
+		/>
+		<param name="z_legacy_componentName"
+			value="view"
+		/>
+		<param name="z_legacy_navigationTreeName"
+			value="tree"
+		/>
+		<param name="z_legacy_tabBarName"
+			value="tab"
+		/>
+		<param name="z_legacy_resPrefix"
+			value="%LAYOUT_RESPREFIX%"
+		/>
+		<!-- STOP: Legacy parameters that never should get filled explicitly -->
+	</params>
+
+	<component class="com.top_logic.tool.boundsec.compound.CompoundSecurityProjectLayout"
+		horizontal="true"
+		name="${z_legacy_componentName}"
+		primaryChecker="${z_legacy_navigationTreeName}"
+		secondaryChecker="${z_legacy_tabBarName}"
+		securityDomain="${domain}"
+		titleKey="${z_legacy_tabLabel}"
+	>
+		<tabInfo id="${z_legacy_tabId}"
+			image="${tabIcon}"
+			label="${z_legacy_tabLabel}"
+			rendered="${tabVisible}"
+		/>
+
+		<components>
+			<treeView name="${z_legacy_navigationTreeName}"
+				titleKey="${z_legacy_treeTitle}"
+			>
+				<layoutInfo size="200"/>
+
+				<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
+					structureName="${domain}"
+				>
+					<has-some-role roles="${navigationRole}"/>
+				</modelBuilder>
+			</treeView>
+
+			<tabbar name="${z_legacy_tabBarName}"
+				components="${components}"
+			/>
+		</components>
+	</component>
+</template>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Main configuration file -->
+<root>
+	<alias>
+        <entry name="%BLOB_USER%"       value="${env:blob_user:[User]}" />
+        <entry name="%BLOB_PASS%"       value="${env:blob_passwd:[Password]}" />
+        <entry name="%BLOB_CONNECT%"    value="${env:blob_connect:DefaultEndpointsProtocol=http;AccountName=%BLOB_USER%;AccountKey=%BLOB_PASS%}" />
+
+        <entry name="%BLOB_CONTAINER%"  value="${env:blob_container:[Container]}" />
+        <entry name="%BLOB_ROOT%"       value="${env:blob_root:[Directory]}" />
+        <entry name="%BLOB_REPOSITORY%" value="${env:blob_repository:repository}" />
+        <entry name="%BLOB_ATTIC%"      value="${env:blob_attic:attic}" />
+    </alias>
+
+	<properties>
+	</properties>
+</root>

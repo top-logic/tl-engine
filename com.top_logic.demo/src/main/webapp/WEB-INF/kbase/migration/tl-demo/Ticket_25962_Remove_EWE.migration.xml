@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_25962_Remove_EWE"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_25421_multiple_forms_inapp"
+			module="tl"
+		/>
+		<dependency name="Ticket_25424_Move_custom_composition_links_to_structure_child_table"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_25800_inconsistent_signature_create_handler"
+			module="tl-model-search"
+		/>
+		<dependency name="22747-PlainTypes_in_GenericObject_table"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.DeleteTableProcessor">
+			<tables>
+				<table object_name="Workflow"/>
+				<table object_name="WorkflowInstance"/>
+				<table object_name="EWETimeoutTask"/>
+				<table object_name="EWEActivityTask"/>
+				<table object_name="refersTo"/>
+				<table object_name="StoredViewInfo"/>
+				<table object_name="hasInfo"/>
+			</tables>
+			<providers>
+				<provider name="eweTypes"/>
+			</providers>
+		</processor>
+		<processor class="com.top_logic.element.model.migration.RemoveModuleContentsFromModelBaseline">
+			<modules>
+				<module name="Workflow"/>
+				<module name="WorkflowInstance"/>
+			</modules>
+		</processor>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

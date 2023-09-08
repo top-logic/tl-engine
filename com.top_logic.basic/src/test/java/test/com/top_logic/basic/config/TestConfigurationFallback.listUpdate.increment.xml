@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<fallback-test xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<a-list-configs config:override="false">
+		<aConfig config:operation="add"
+			config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$B"
+			intValue="15" stringValue="four" />
+		<aConfig config:operation="update" stringValue="one" intValue="-2"
+			config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A" />
+		<aConfig config:operation="remove" stringValue="two" />
+		<aConfig config:position="begin" stringValue="two" intValue="-2"
+			config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A" />
+		<aConfig config:position="after" config:reference="two" stringValue="five"
+			intValue="-2"
+			config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A" />
+		<aConfig config:position="before" config:reference="one" stringValue="six"
+			intValue="-2"
+			config:interface="test.com.top_logic.basic.config.TestConfigurationFallback$A" />
+	</a-list-configs>
+</fallback-test>

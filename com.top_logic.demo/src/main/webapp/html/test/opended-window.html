@@ -1,0 +1,50 @@
+<html>
+ 	<head>
+ 		<script type="text/javascript">
+ 			function handleUnload() {
+ 				var concurrentFunction = function() {
+	 				opener.log("Window onunload fired.");
+	 				opener.onunloadCallback(window);
+	 				
+					if (! opener.lock('unload')) {
+						// Wait by scheduling a timer with the function itself.
+						opener.log("Waiting for lock in onunload.");
+						window.setTimeout(concurrentFunction, 1);
+						return;
+					}
+					try {
+		 				
+		 				// Simulate a long running onunload handler.
+		 				var dummy;
+		 				for (var n = 0; n < 100000; n++) {
+		 					dummy += n;
+		 				}
+		 				
+		 				opener.log("Window onunload completed.");
+					} finally {
+						opener.unlock('unload');
+					}
+	 			}
+	 			
+	 			// Invoke synchronously.
+	 			concurrentFunction();
+	 			
+	 			return false;
+ 			}
+ 			
+ 			function handleLoad() {
+ 				opener.log("Window onload fired.");
+ 				opener.onloadCallback();
+ 				return false;
+ 			}
+ 		</script>
+ 	</head>
+
+	<!-- 
+		The window contents is loaded in a frameset to simulate slowly 
+		loading contents in a Top-Logic framework context. 
+	-->
+	<frameset onload="handleLoad();" onunload="handleUnload();">
+		<frame src="opened-window-contents.jsp"/>
+	</frameset> 
+</html>

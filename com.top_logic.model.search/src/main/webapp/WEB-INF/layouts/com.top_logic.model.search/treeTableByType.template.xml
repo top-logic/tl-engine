@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="com.top_logic/treetable.template.xml"
+	groups="commons"
+>
+	<properties extends="com.top_logic.layout.editor.config.TypeWithReferenceTemplateParameters">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="model"/>
+					<property name="rootNode"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="rootNode"
+			type="com.top_logic.model.search.expr.config.dom.Expr"
+		>
+			<mandatory/>
+		</property>
+		<property name="defaultColumns"
+			element-type="String"
+			type="List"
+		>
+			<hidden/>
+			<derived fun="com.top_logic.layout.editor.DefaultColumnsProvider">
+				<args>
+					<ref value="type"/>
+				</args>
+			</derived>
+			<format value="com.top_logic.basic.config.CommaSeparatedStrings"/>
+		</property>
+	</properties>
+
+	<config name="${name}"
+		defaultColumns="${defaultColumns}"
+		model="${model}"
+		type="${type}"
+	>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`${reference}`)"
+			nodePredicate="node->$node.instanceOf(`${type}`)"
+			parents="node->$node.referers(`${reference}`)"
+			rootNode="${rootNode}"
+		/>
+	</config>
+</config:template>

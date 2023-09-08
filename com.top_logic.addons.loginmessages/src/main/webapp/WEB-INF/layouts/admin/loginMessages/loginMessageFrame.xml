@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="defaultFor"
+			value="LoginMessages:LoginMessage"
+		/>
+		<param name="detailClass"
+			value="com.top_logic.element.meta.form.component.DefaultEditAttributedComponent"
+		/>
+		<param name="jSPpage"
+			value="/jsp/loginMessages/LoginMessage.jsp"
+		/>
+		<param name="modifierClass"
+			value="com.top_logic.addons.loginmessages.layout.LoginMessageFormContextModifier"
+		/>
+	</params>
+
+	<layout>
+		<components>
+			<component class="${detailClass}"
+				defaultFor="${defaultFor}"
+				metaElementName="LoginMessages:LoginMessage"
+				modifier="${modifierClass}"
+				name="${namePrefix}LoginMessage_content"
+				page="${jSPpage}"
+				resPrefix="LoginMessage.frame."
+				securityProviderClass="securityRoot"
+			/>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

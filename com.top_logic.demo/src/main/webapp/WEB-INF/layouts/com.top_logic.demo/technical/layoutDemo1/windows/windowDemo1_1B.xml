@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="demoWindow2"
+	resPrefix="layouts.layoutdemo.window.windowDemo1_1B.schiller."
+>
+	<components>
+		<component class="com.top_logic.mig.html.layout.IncludeComponent"
+			encodings="UTF-16"
+			files="/html/contents/layoutdemo/glocke-UTF-16"
+			name="glocke"
+			resPrefix="layouts.layoutdemo.window.windowDemo1_1B.glocke."
+		/>
+	</components>
+</layout>

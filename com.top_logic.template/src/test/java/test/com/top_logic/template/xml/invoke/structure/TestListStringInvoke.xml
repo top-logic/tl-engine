@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+	</t:head>
+	<t:body>
+		<t:invoke template="TestListString.xml">
+			
+			<t:parameter name="Example_Parameter">
+				<t:entry>
+					<t:attribute name="Left_Attribute" value="one" />
+					<t:attribute name="Right_Attribute" value="alpha" />
+				</t:entry>
+				<t:entry>
+					<t:attribute name="Left_Attribute" value="two" />
+					<t:attribute name="Right_Attribute" value="beta" />
+				</t:entry>
+				<t:entry>
+					<t:attribute name="Left_Attribute" value="three" />
+					<t:attribute name="Right_Attribute" value="gamma" />
+				</t:entry>
+			</t:parameter>
+			
+		</t:invoke>
+	</t:body>
+</t:template>

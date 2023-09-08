@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<web-app>
+  <servlet>
+     <servlet-name>Editor</servlet-name>
+     <servlet-class>tutorial.PoolEditorServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+     <servlet-name>Editor</servlet-name>
+     <url-pattern>/PoolEditor</url-pattern>
+   </servlet-mapping>
+   <security-constraint>
+       <web-resource-collection>
+           <web-resource-name>Administration</web-resource-name>
+           <url-pattern>/PoolEditor</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>pool-admin</role-name>
+        </auth-constraint>
+   </security-constraint>
+   <login-config>
+       <auth-method>BASIC</auth-method>
+       <realm-name>Betting Pool</realm-name>
+   </login-config>
+</web-app>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Configuration file for StateManager                                      -->
+<root xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	config:interface="com.top_logic.tool.state.StateManager$Config">
+	<StateManagerConfiguration>
+		<statedescription key="dummy.start" stateclass="com.top_logic.tool.state.dummy.StartState" owner="responsible" step="0" >
+			<successors>
+				<successor key="dummy.intermediate" />
+				<successor key="dummy.end" />
+			</successors>
+		</statedescription>
+		<statedescription key="dummy.intermediate" stateclass="com.top_logic.tool.state.dummy.IntermediateState" owner="PMO,responsible" step="1">
+			<successors>
+				<successor key="dummy.end" />
+			</successors>
+		</statedescription>
+		<statedescription key="dummy.end" stateclass="com.top_logic.tool.state.dummy.EndState" owner="PMO" step="2">
+			<successors>
+				<successor key="dummy.intermediate" />			
+				<successor key="dummy.final" />
+			</successors>
+		</statedescription>
+		<statedescription key="dummy.final" stateclass="com.top_logic.tool.state.dummy.FinalState" owner="PMO" step="3">
+		</statedescription>		
+	</StateManagerConfiguration>
+	<StateManagerInitial>	
+		<fixedState name="initial" key="dummy.start" />
+		<fixedState name="finish" key="dummy.final" />	
+	</StateManagerInitial>	
+	
+</root>

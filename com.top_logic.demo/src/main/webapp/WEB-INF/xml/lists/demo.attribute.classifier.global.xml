@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<list name="demo.attribute.classifier.global" type="Classification" system="true" de="Globale Attribut-Klassifizierung" en="Global attribute classification">
+	<elements>
+		<element name="demo.attribute.classifier.global.booleanAttributes"/>
+		<element name="demo.attribute.classifier.global.stringAttributes"/>
+	</elements>
+</list>

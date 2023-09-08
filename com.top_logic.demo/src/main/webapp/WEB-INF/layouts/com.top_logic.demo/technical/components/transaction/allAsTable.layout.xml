@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,text,singleStructure,structure,boolean,booleanMandatory,booleanNullable,booleanRadio,booleanRadioMandatory,booleanRadioNullable,booleanSelect,booleanSelectMandatory,booleanSelectNullable,booleanWithAttributeSecurity,checklist,checklistMulti,checklistSingle,classificationLocal,classificationMulti,classificationMultiDropdown,classificationSingle,classificationSingleLegacy,classificationSinglePopup,classificationUnorderedMulti,classificationUnorderedMultiDropdown,classificationUnorderedSingle,classificationUnorderedSinglePopup,collection,color,comments,complexCountry,complexLanguage,complexUnit,containment,createdBy,createdDate,date,date2,dateTime,dependency1,dependency2,derivedPath,document,encryptedLong,float,floatConstraint,floatDefault,floatPercent,gallery,historicWrapper,html,i18NHTMLNormal,i18NStringMultiLine,i18NStringNormal,i18NStringShortLength,icon,inlineReference,inlineReferenceReverse,list,long,longConstraint,modifiedBy,modifiedDate,binary,offset,person,priorityTable,report,responsible,string,stringLengthConstraint,stringSet,stringWithAttributeSecurity,template,text1333,text2000,text4000,timeUnit,typedSetOrdered,typedSetUnordered,typedWrapper,typedWrapperC,typedWrapperFiltered,typedWrapperGenerated,untypedWrapper,urlString,webFolder"
+		isSecurityMaster="false"
+		type="DemoTypes:A"
+	>
+		<name key="dynamic.c04aedda-22e0-42d9-823c-51260f33163f">
+			<en>All As</en>
+			<de>Alle As</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`DemoTypes:A`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`DemoTypes:A`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_0d203940_1fc0_4d57_bd9e_7f2e94f73697"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				confirm="true"
+				disabledImage=""
+				group="Delete"
+				image=""
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.69b378a6-8ee3-41b7-b5ee-c8cdd01e837b">
+					<en>Delete selected row</en>
+					<de>Selektierte Zeile Löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/transaction/inputDialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

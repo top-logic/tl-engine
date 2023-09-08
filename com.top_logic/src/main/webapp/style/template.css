@@ -1,0 +1,7965 @@
+/*
+ * Top-Logic Default Look and Feel
+ *
+ */
+ 
+html,
+body {
+    height: 100%;
+}
+
+body, div.body {
+	background-color:var(--BODY_BACK);
+	font-size:var(--FONT_SIZE);
+	font-family:var(--TEXT_FAMILY);
+	color:var(--NORMAL_TEXT);
+}
+body {
+	margin:4px;
+}
+
+body.mainlayout {
+	overflow: hidden;
+	padding: 0px;
+	margin: 0px;
+}
+
+.pdlgWindow, .dlgWindow ,.dlgBackground, #pdlgPopupDialogPane, #waitPane, #pdlgPopupDialogs {
+	/*
+	 * Popup dialogs has to be stacked upon the current view. Because the table header has z-index 1, 
+	 * the popup dialogs should have at least z-index 2 to be stacked upon table headers.
+	 *
+	 * z-index kann only be set on positioned elements.
+	 *
+	 * This cause not a problem for nesting (popup)-dialogs, because setting a z-index
+	 * sets the stack level of this element in the current stacking context. It also
+	 * establishes a local stacking context. This means that the z-indexes of descendants are not compared 
+	 * to the z-indexes of elements outside this element.
+	 *
+	 * Details: https://developer.mozilla.org/en-US/docs/Web/CSS/z-index
+	 */
+	z-index: 2;
+}
+
+#pdlgPopupDialogs {
+	position: relative;
+}
+
+input, img, iframe, .input-image {
+    vertical-align: middle;
+}
+
+input {
+	box-sizing: border-box;
+	font-family:inherit;
+}
+
+img {
+	border-style: none;	
+}
+
+a:link {
+	text-decoration: var(--ANCHOR_TEXT_DECORATION_LINK);
+	color:           var(--COLOR_TEXT);
+}
+
+a:visited, a.gotoLink:visited {
+	text-decoration: var(--ANCHOR_TEXT_DECORATION_VISITED);
+	color:           var(--COLOR_TEXT);
+}
+
+a:hover {
+	text-decoration: var(--ANCHOR_TEXT_DECORATION_HOOVER);
+	color:           var(--COLOR_TEXT);
+}
+
+a:active {
+	text-decoration: var(--ANCHOR_TEXT_DECORATION_ACTIVE);
+	color:           var(--COLOR_TEXT);
+}
+
+a.gotoLink, a.cmdLink, a.cmdLink:visited{
+    text-decoration: var(--ANCHOR_TEXT_DECORATION_GOTO_LINK);
+    color:           var(--COLOR_TEXT);
+	cursor:          pointer;
+}
+
+.cmdLinkDisabled {
+    text-decoration: none;
+    cursor: default;
+    color: #AAAAAA;
+}
+
+/* ========================================== */
+/* ====== Header styles (prefix is 'h') ===== */
+/* ========================================== */
+
+
+body.header {
+	margin: 0px;
+	padding:0px;
+}
+
+body.title {
+	/* TODO: '//' is not allowed as comment marker in CSS2 stylesheets. Refer to section "4.1.9 Comments" of the CSS2 specification. */
+	/* // Use when body is used a title for a table or such. */
+	margin: 0px;
+	background-color: var(--FRAME_BACK);
+	font-family:      var(--TEXT_FAMILY);
+	color:            var(--INVERT_TEXT);
+	font-size:        13px;
+}
+
+table.header {
+    border-collapse: collapse;
+}
+
+td.hSpacer {
+    background-image:    var(--HEADER_LINE);
+    background-position: bottom;
+    background-repeat:   repeat-x;
+}
+
+.adjustableColumn {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+	color: var(--ADJUSTABLE_COLUMN_TEXT_HEADER);
+}
+
+.unselectableContent {
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+  	-moz-user-select: none;     /* Firefox all */
+  	-ms-user-select: none;      /* IE 10+ */
+
+  	user-select: none;     
+}
+
+td.hBottom {
+    background-image:    var(--HEADER_TITLE);
+    background-position: top;
+    background-repeat:   repeat-x;
+    color:               var(--TAB_TEXT);
+    font-family:         var(--TEXT_FAMILY);
+    font-size:           11px;
+    font-weight:         normal;
+    text-align:          left;
+	white-space:         nowrap;
+	height:              17px;
+    vertical-align:      baseline;
+	position:            relative;
+}
+
+td.hLeftImage {
+	padding-top: 3px;
+}
+
+td.hRightImage {
+
+	padding-top: 3px;
+}
+
+td.hTitle {
+    color:          var(--COLOR_TEXT);
+    font-family:    var(--TEXT_FAMILY);
+    font-size:      18px;
+    font-weight:    bold;
+    text-align:     right;
+	white-space:    nowrap;
+    vertical-align: middle;
+}
+
+td.hTabImage {
+	width:var(--TABBER_IMAGE_WIDTH);
+}
+
+a.hTabIconLink {
+    cursor:          pointer;
+}
+a.hTabIconLinkSel {
+    cursor:          default;
+}
+/* ========================================== */
+/* ====== Tabber styles (prefix is 't') ===== */
+/* ========================================== */
+
+span.tBottomLeft {
+	text-align: 	left;
+	white-space: 	nowrap;
+	padding:		0 4px;
+}
+
+span.tBottomCenter {
+	position:		absolute;
+	text-align: 	center;
+	white-space: 	nowrap;
+}
+
+span.tBottomRight {
+	position:		absolute;
+	right:			0px;
+	text-align: 	right;
+	white-space: 	nowrap;
+	padding:    	0 4px;
+}
+
+/* =============================================== */
+/* ====== AccordionControl (prefix is 'acc') ===== */
+/* =============================================== */
+
+div.accRoot {
+	background-color: var(--ACCORDION_BACKGROUND_COLOR);
+	background: var(--ACCORDION_BACKGROUND);
+}
+
+div.accChildren {
+	margin-left: var(--ACCORDION_INDENT);
+}
+
+a.accEntry,
+a.accEntry:link,
+a.accEntry:visited,
+a.accEntry:active
+{
+	display: block;
+	line-height: 22px;
+	padding: var(--ACCORDION_ENTRY_PADDING);
+
+	color: var(--ACCORDION_TEXT_COLOR);
+	white-space: nowrap;
+}
+
+a.accEntry span.accEntryContent {
+	display: table-row;
+	padding: 0px;
+}
+
+a.accEntry span.accLabel {
+	display: table-cell;
+	width: 100%;
+	vertical-align: middle;
+}
+
+a.accEntry img.accMarker {
+	display: table-cell;
+	width: 22px;
+	padding-right: 7px;
+	vertical-align: middle;
+}
+
+div.accChildren > div.accNode > a.accEntry {
+	border-top-left-radius: var(--ACCORDION_BORDER_RADIUS);
+	border-bottom-left-radius: var(--ACCORDION_BORDER_RADIUS);
+}
+
+div.accChildren > div.accNode:first-child > a.accEntry {
+	border-top-left-radius: 0px;
+}
+
+a.accEntry:hover {
+	background-color: var(--ACCORDION_HOVER_BACKGROUND_COLOR);
+	background: var(--ACCORDION_HOVER_BACKGROUND);
+	color: var(--ACCORDION_HOVER_TEXT_COLOR);
+}
+
+a.accEntry.accSelected, 
+div.accSelected a.accEntry,
+div.accNode.tlPopupOpen a.accEntry
+{
+	background-color: var(--ACCORDION_SELECTED_BACKGROUND_COLOR);
+	background: var(--ACCORDION_SELECTED_BACKGROUND);
+	color: var(--ACCORDION_SELECTED_TEXT_COLOR);
+}
+
+a.accEntry.accContainer.accSelected {
+	background-color: var(--ACCORDION_GROUP_BACKGROUND_COLOR);
+	background: var(--ACCORDION_GROUP_BACKGROUND);
+	color: var(--ACCORDION_GROUP_TEXT_COLOR);
+}
+
+span.accIcon.input-image,
+span.accIcon.input-image i {
+	color: var(--ACCORDION_ICON_COLOR);
+	line-height: 22px;	
+	font-size: 20px;
+	vertical-align: middle;
+}
+
+div.accNode.tlPopupOpen span.accIcon.input-image i {
+	color: var(--ACCORDION_SELECTED_TEXT_COLOR);
+}
+
+span.accIcon.input-image,
+span.accIcon.input-image i,
+img.accIcon {
+	padding-right: var(--ACCORDION_ICON_SEPARATOR);	
+}
+
+/* ============================================ */
+/* ====== Table styles (prefix is 'tbl') ===== */
+/* ============================================ */
+
+.tl-table__title-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+table.tblTableNoBorder {
+	border-color:    var(--SECONDARY_BACKGROUND_COLOR);
+	width:           100%;
+	border-style: 	 solid;
+	border-collapse: collapse;
+	border-spacing:  0px;
+	padding: 0px;
+	margin: 0px;
+}
+
+td.tblRight {
+	text-align: right;
+}
+
+table td div.tblRight span.cError {
+	left: 2px;
+	right: auto;
+}
+
+a.tl-table__title {
+	color: var(--INVERT_TEXT);
+}
+
+a.tl-table__title:visited {
+	color: var(--INVERT_TEXT);
+}
+
+.tl-table__title {
+	/* For legacy browsers.*/
+	background: var(--TABLE_TITLE_BACKGROUND);
+	color:           var(--TABLE_TBL_TITLE_COLOR);
+	font-family:      var(--TEXT_FAMILY);
+	font-size:        13px;
+	font-weight:      normal;
+	height: var(--TABLE_TITLE_HEIGHT);
+	padding: 0px 2px;
+	border-color:     #555555;
+	border-width: 1px;
+	border-top-style: none;
+	border-right-style: none;
+	border-left-style: none;
+	display: flex;
+	justify-content: space-between;
+	flex-direction: row;
+	align-items: center;
+}
+
+th.tblTitleRight {
+	/* For legacy browsers. */
+	background-color: var(--FRAME_BACK);
+
+	background: var(--TABLE_TITLE_BACKGROUND);
+	font-family:      var(--TEXT_FAMILY);
+	color:            var(--INVERT_TEXT);
+	font-size:        13px;
+	font-weight:      normal;
+	padding:          2px;
+	border-color:     #555555;
+	text-align:       right;
+	border-left:      none;
+}
+
+.tl-table__title-toolbar {
+	border-spacing: 0px;
+	margin-right: 2px; 
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+}
+
+input.tblRowSelector {
+	margin-top: 4px;	
+}
+
+input.tblRowSelector {
+	/* empty: due to transparent image. */
+}
+
+input.tblRowSelected {
+	background-image: var(--TABLE_ROW_SELECTED);
+}
+
+tr.tl-table__row:hover input.tblRowSelector, input.tblRowSelector:focus {
+	background-image: var(--TABLE_ROW_FOCUSED);
+}
+
+a.tblRowSelector {
+	display: none;
+}
+
+a.tblRowSelector i {
+	font-size: 9px;
+}
+
+tr.tl-table__row:hover a.tblRowSelector, a.tblRowSelector:focus, a.tblRowSelected {
+	display: inline-block;
+}
+
+span.tblButton input {
+	margin-left: 2px; 
+}
+
+.tl-table__footer-counter {
+	font-family:var(--TEXT_FAMILY);
+	font-size:12px;
+	font-weight:normal;
+	padding:2px;
+	border-top-color:gray;
+	border-top-style:solid;
+	border-top-width:1px;
+	color:black;
+	background-color:var(--TABLE_COUNTER);
+	text-align:right;
+	white-space:nowrap;
+}
+
+th.tblCounterNoBorder {
+	font-family:var(--TEXT_FAMILY);
+	font-size:12px;
+	font-weight:normal;
+	padding:2px;
+	border-top-color:gray;
+	border-top-style:solid;
+	border-width:0px;
+	color:black;
+	text-align: right;
+	background-color:var(--TABLE_HEADER);
+}
+
+.tl-table__footer-pager {
+	font-family:var(--TEXT_FAMILY);
+	font-size:12px;
+	font-weight:normal;
+	padding-top: 0px;
+	padding-left:2px;
+	padding-right:2px;
+	padding-bottom: 0px;
+	border-top-color:gray;
+	border-top-style:solid;
+	border-top-width:1px;
+	color:black;
+	text-align: left;
+    white-space:nowrap;
+	background-color:var(--TABLE_HEADER);
+}
+
+th.tl-table__cell, th.cal_th {
+    color:               #333333;
+    background: var(--TABLE_HEADER_BACKGROUND);
+	font-family:         var(--TEXT_FAMILY);
+    white-space:         nowrap;
+	padding:             0px;
+	border-bottom-color: gray;
+	border-bottom-style: solid;
+	border-bottom-width: var(--TABLE_HEADER_BORDER_BOTTOM_WIDTH);
+	border-top-style:    none;
+	border-right-style:  none;
+  
+    /* mri */
+   /*  border-color: white; */
+	border-color: #f0f0f0;
+	
+    font-size:           12px;
+    font-weight:         bold;
+}
+
+.tl-table__header-cell-content {
+	width: 100%
+}
+
+th.tl-table__group-cell {
+	text-align: center;
+	border-bottom-width: 0px;
+	
+	/* Safari support */
+	-webkit-user-select: none;
+  	user-select: none;     
+}
+
+th.tblTHNoBorder {
+	font-family:         var(--TEXT_FAMILY);
+	font-size:           13px;
+	font-weight:         normal;
+    white-space:         nowrap;
+	padding:             2px;
+	border-bottom-color: gray;
+	border-bottom-style: solid;
+	border-width:        0px;
+	color:               black;
+	background-color:    var(--TABLE_HEADER);
+}
+
+th.tblTHRight {
+	text-align:		  	 right;
+	font-family:         var(--TEXT_FAMILY);
+	font-size:           13px;
+	font-weight:         normal;
+    white-space:         nowrap;
+	padding:             2px;
+	border-bottom-color: gray;
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+	border-right-width:  0px;
+	border-left-width:   0px;
+	border-top-width:    0px;
+	color:               black;
+	background-color:    var(--TABLE_HEADER);
+}
+
+tr.tl-table__row {
+	background-color:var(--TABLE_ROW_BACKGROUND_COLOR);
+}
+
+/* Note: Order matters: Must appear below `tl-table__row` to override styles. */
+tr.tblEven {
+	background-color:var(--TABLE_ROW_EVEN_BACKGROUND_COLOR);
+}
+
+/* Note: Order matters: Must appear below `tblEven` to override styles. */
+tr.tblSelected {
+    background: var(--TABLE_SELECT_BACKGROUND_COLOR);
+}
+
+td.tl-table__cell {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      var(--FONT_SIZE);
+    white-space:    nowrap;
+	padding:        0px;
+	color:          black;
+	border-color:   var(--TABLE_BORDER_COLOR);
+	overflow:		hidden; 
+}
+
+td.tl-table__cell--selectable {
+	cursor: pointer;
+}
+
+td.tl-table__cell {
+	border-bottom-style: solid;
+	border-bottom-width:   var(--TABLE_COLUMN_BORDER_WIDTH);
+}
+
+td.tl-table__cell,
+td.tl-table__cell i,
+.BreadCrumbOuter .Right
+{
+    line-height: var(--FORM_LINE_HEIGHT);
+}
+
+div.frmBody > div.dropPane {
+	display: none;
+}
+
+div.frmBody.dndInsertInto > div.dropPane {
+	display: block;
+
+	/* Note: The client-side script for drag and drop depends on the `dropPane` overlaying the drop area. */	
+	position: absolute;
+	top: 0px;
+	left: 0px;
+ 	bottom: 0px;
+	right: 0px;
+	opacity: 0.5;
+	background-color: var(--DROP_MARKER_COLOR);
+}
+
+tr.tl-table__row.dndInsertInto > td {
+	background-color: var(--DROP_MARKER_COLOR);
+}
+
+tr.tl-table__row.dndInsertBelow {
+	border-bottom-width: 2px;
+	border-bottom-style: solid;
+	border-bottom-color: var(--INSERT_MARKER_COLOR);
+}
+
+tr.tl-table__row.dndInsertAbove {
+	border-top-width: 2px;
+	border-top-style: solid;
+	border-top-color: var(--INSERT_MARKER_COLOR);
+}
+
+
+td.tblTDNoPadding {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      var(--FONT_SIZE);
+    white-space:    nowrap;
+	padding:        0px;
+	border-color:   var(--SECONDARY_BACKGROUND_COLOR);
+	color:          black;
+	border-width:   0px;
+}
+
+td.tblTDNoBorder {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      var(--FONT_SIZE);
+    white-space:    nowrap;
+	border-color:   var(--SECONDARY_BACKGROUND_COLOR);
+	border-width:   0px;
+	color:          black;
+	border-width:   0px;
+	border-style:	solid;
+}
+
+td.tblTDNoBorderRight {
+	text-align:     right;
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      var(--FONT_SIZE);
+    white-space:    nowrap;
+	padding:        2px;
+	border-color:   var(--SECONDARY_BACKGROUND_COLOR);
+	color:          black;
+	border-width:   0px;
+	border-style:	solid;
+}
+
+td.tblTDStrong {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      var(--FONT_SIZE);
+	font-weight:	bold;
+    white-space:    nowrap;
+	padding:        2px;
+	border-color:   var(--SECONDARY_BACKGROUND_COLOR);
+	color:          black;
+}
+
+td.tblTDwrap {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      var(--FONT_SIZE);
+	padding:        2px;
+	border-color:   var(--SECONDARY_BACKGROUND_COLOR);
+	color:          black;
+}
+
+td.tblTDCenter {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      var(--FONT_SIZE);
+	text-align:     center;
+    white-space:    nowrap;
+	padding:        2px;
+	border-color:   var(--SECONDARY_BACKGROUND_COLOR);
+	color:          black;
+	border-width:   0px;
+}
+
+td.tblTDRight {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      var(--FONT_SIZE);
+	text-align:     right;
+    white-space:    nowrap;
+	padding:        2px;
+	border-color:   var(--SECONDARY_BACKGROUND_COLOR);
+	color:          black;
+	border-width:   0px;
+}
+
+td.tblTD100 {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      var(--FONT_SIZE);
+    white-space:    nowrap;
+	padding:        2px;
+	border-color:   var(--PRIMARY_BACKGROUND_COLOR);
+	color:          black;
+	width:          100%;
+	border-width:   0px;
+}
+
+td.tl-table__cell--selected {
+	font-family:      var(--TEXT_FAMILY);
+	font-size:        var(--FONT_SIZE);
+    white-space:      nowrap;
+	padding:          0px;
+	color:            var(--TD_TBLSELECT_COLOR);
+	background-color: var(--TABLE_SELECT_BACKGROUND_COLOR);
+	border-color:     var(--PRIMARY_BACKGROUND_COLOR);
+}
+
+td.tl-table__cell--selected a {
+	color: var(--INVERT_TEXT);
+}
+
+tr.treeSelected td.tl-table__cell--selected {
+	padding:          2px;
+}
+
+td.tblTDselectWrap {
+	font-family:      var(--TEXT_FAMILY);
+	font-size:        var(--FONT_SIZE);
+	padding:          2px;
+	border-color:     var(--PRIMARY_BACKGROUND_COLOR);
+	color:            var(--INVERT_TEXT);
+	background-color: var(--PRIMARY_BACKGROUND_COLOR);
+	border-width:     0px;
+}
+
+td.tblTDselectStrong {
+	font-family:      var(--TEXT_FAMILY);
+	font-size:        11px;
+	font-weight:	  bold;
+    white-space:      nowrap;
+	padding:          2px;
+	border-color:     var(--PRIMARY_BACKGROUND_COLOR);
+	color:            var(--INVERT_TEXT);
+	background-color: var(--PRIMARY_BACKGROUND_COLOR);
+	border-width:     0px;
+}
+
+td.tblTDselect100 {
+	font-family:      var(--TEXT_FAMILY);
+	font-size:        var(--FONT_SIZE);
+	font-weight:	  bold;
+    white-space:      nowrap;
+	padding:          2px;
+	border-color:     var(--PRIMARY_BACKGROUND_COLOR);
+	color:            var(--INVERT_TEXT);
+	background-color: var(--PRIMARY_BACKGROUND_COLOR);
+	width:            100%;
+	border-width:     0px;
+}
+
+/** A Numeric table entry */
+td.num {
+	font-family:    var(--MONOSPACE_FAMILY);
+	text-align:     right;
+    white-space:    nowrap;
+	padding:        2px;
+	border-color:   var(--SECONDARY_BACKGROUND_COLOR);
+	color:          var(--COLOR_TEXT);
+}
+
+
+a.tl-table__cell {
+	font-family:var(--TEXT_FAMILY);
+	font-size:13px;
+	color:black;
+	text-decoration:var(--ANCHOR_TEXT_DECORATION_TABLE_HEADER_LINK);
+}
+
+a.tl-table__cell:visited {
+	font-family:var(--TEXT_FAMILY);
+	font-size:13px;
+	color:black;
+}
+
+/** Images inlined in the table */
+img.tbl {
+	vertical-align:	middle;
+	border: 		none;
+	padding-left:	2px;
+	padding-right:	2px;
+}
+
+/* == styles for register tables == */
+
+table.regTable {
+	border-collapse: separate;
+	border-width: 	 0px;
+	border-style:    solid;
+	border:    		 none;
+	width:		     100%;
+}
+
+th.regTitle {
+	background-color: var(--FRAME_BACK);
+	font-family:      var(--TEXT_FAMILY);
+	color:            var(--INVERT_TEXT);
+	font-size:        13px;
+	font-weight:      normal;
+	padding:          2px;
+	border-color:     #555555;
+	border-style:     solid;
+}
+
+tr.regTH {
+}
+
+th.regTH {
+	font-family:      var(--TEXT_FAMILY);
+	font-size:        13px;
+	font-weight:      normal;
+    white-space:      nowrap;
+	padding:          2px;
+	border-color:     #555555;
+	color:            black;
+	background-color: var(--TABLE_HEADER);
+}
+
+tr.regTR {
+	background-color:#F7F7E7;
+}
+
+tr.regTR_even {
+	background-color:#F7F7E7;
+}
+
+td.regTD {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      10px;
+    white-space:    nowrap;
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555;
+	border-style:   outset;
+	color:          black;
+}
+
+td.regTDStrong {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      10px;
+	font-weight:	bold;
+    white-space:    nowrap;
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555;
+	color:          black;
+}
+
+td.regTDwrap {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      10px;
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555;
+	color:          black;
+}
+
+td.regTDCenter {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      10px;
+	text-align:     center;
+    white-space:    nowrap;
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555;
+	color:          black;
+}
+
+td.regTDRight {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      10px;
+	text-align:     right;
+    white-space:    nowrap;
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555;
+	color:          black;
+}
+
+td.regTD100 {
+	font-family:    var(--TEXT_FAMILY);
+	font-size:      10px;
+    white-space:    nowrap;
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555;
+	color:          black;
+	width:          100%;
+}
+
+tr.regTRselect {
+	/* background-color: #ADAEAD; */
+	background-color:#F7F7E7;
+}
+
+td.regTDselected {
+	font-family:      var(--TEXT_FAMILY);
+	font-size:        11px;
+	font-weight:	  bold;
+    white-space:      nowrap;
+	padding:          0px;
+	vertical-align:   top;
+	border-color:     #555555;
+	border-style:     outset;
+}
+
+td.regTDselectedStrong {
+	font-family:      var(--TEXT_FAMILY);
+	font-size:        10px;
+	font-weight:	  bold;
+    white-space:      nowrap;
+	padding:          0px;
+	vertical-align:   top;
+	border-color:     #555555;
+	color:            black;
+	background-color: #ADAEAD;
+}
+
+td.regTDselected100 {
+	font-family:      var(--TEXT_FAMILY);
+	font-size:        10px;
+	font-weight:	  bold;
+    white-space:      nowrap;
+	padding:          0px;
+	vertical-align:   top;
+	border-color:     #555555;
+	color:            black;
+	background-color: #ADAEAD;
+	width:          100%;
+}
+
+select.tbl {	/* Tables can be written as selects, using this style */
+ 	width: 80%;
+}
+
+div.movingheader{
+	text-align: 		 left;
+	position:			 absolute;
+	font-family:         var(--TEXT_FAMILY);
+	font-size:           13px;
+	font-weight:         normal;
+    white-space:         nowrap;
+	padding:             0px;
+	border-bottom-color: gray;
+	border-bottom-style: solid;
+	border-bottom-width: 0px;
+	border-right-width:  0px;
+	border-left-width:   0px;
+	border-top-width:    0px;
+	color:               black;
+	background-color:    var(--TABLE_HEADER);
+}
+
+th.insertRight{
+	border-right-color:  var(--REPLACECOLOR) !important;
+	border-right-width: 2px !important;
+	border-right-style: solid !important;
+	z-index: 1000 !important;
+}
+
+th.insertLeft{
+	border-left-color:   var(--REPLACECOLOR) !important;
+	border-left-width: 2px !important;
+	border-left-style: solid !important;
+	z-index: 1000 !important;
+}
+
+td.fltButton {
+	width:17px;
+	text-align: center;
+	position: relative;
+}
+
+.tl-table__header-cell-content span.activeFilter {
+	color: #c70808;
+}
+
+th span.tl-table__filter-sort-icons {
+	align-self: end;
+	font-size: 0.8em;
+}
+
+tr.sortState{
+	background: var(--FILTER_SORT_DIALOG_SORT_STATE);
+}
+
+div.tl-table__filter-sort-container {
+	width: 100%;
+	height: 100%;
+	cursor: pointer;
+	min-width: 1.5em;
+	display:flex;
+	align-items: center;
+}
+
+img.fltButton {
+	position: absolute;
+	right: 0px;
+	top: 0px;
+}
+
+div.fltGlobalContainer {
+	width: 100%;
+	height: 100%;
+}
+
+div.fltSettings {
+	position: relative;
+	overflow: auto;
+	max-height: calc(100% - var(--TABLE_FILTER_BUTTON_BAR_HEIGHT));
+	max-width: 100%;
+}
+
+div.fltMenu {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+}
+
+div.fltHeader {
+	margin: 3px;
+	font-weight: bold;
+}
+
+ul.fltList {
+	list-style-type : none;
+	margin: 3px;
+	padding: 0px;
+}
+
+div.fltList {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+}
+
+div.fltSubContent {
+	margin: 0px;
+	padding-bottom: 5px;
+	background-color: var(--TABLE_FILTER_BACKGROUND_COLOR);
+	overflow: auto;
+}
+
+div.fltCommandContent {
+	box-sizing: border-box;
+	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
+	text-align: right;
+	margin: 0px;
+	padding-top: 8px;
+	background-color: var(--TABLE_FILTER_BACKGROUND_COLOR);
+}
+
+div.fltButtons {
+	margin: 0px;
+}
+
+div.fltButtons button {
+	margin: 3px;
+}
+
+.filterBox {
+	margin: 2px 2px;
+}
+
+.operatorBox, .patternBox, .patternBoxExpanded {
+	position: relative;
+	overflow: hidden;	
+}
+
+.patternBox, .patternBoxExpanded {
+	min-width: 70px;
+}
+
+.patternBox {
+	height: 25px;
+}
+
+.patternBoxExpanded {
+	height: 50px;
+}
+
+.operatorBox {
+	vertical-align: top;
+	margin-right: 5px;
+	float: left;
+}
+
+.firstPattern, .secondPattern, .pushDownForeground, .pushDownBackground, .pullUpForeground, .pullUpBackground {
+	position: absolute;
+	overflow: hidden;
+}
+
+.firstPattern, .pullUpForeground, .pullUpBackground {
+	top: 0;
+	left: 0;
+}
+
+.secondPattern, .pushDownForeground, .pushDownBackground {
+	top: 25px;
+	left: 0;
+}
+
+.pushDownForeground, .pushDownBackground, .pullUpForeground, .pullUpBackground {
+	animation-duration: 0.3s;
+	animation-direction: reverse;
+}
+
+.pushDownForeground {
+	animation-name: reversePushDownForeground;
+}
+
+.pushDownBackground {
+	animation-name: reversePushDownBackground;
+}
+
+.pullUpForeground {
+	animation-name: reversePullUpForeground;
+}
+
+.pullUpBackground {
+	animation-name: reversePullUpBackground;
+}
+
+@keyframes reversePushDownForeground {
+    0%   {z-index: 1;}
+    50%  {z-index: 3; transform: scale(1.1)}
+    100% {z-index: 1; top: 0; left: 0}
+}
+
+@keyframes reversePushDownBackground {
+    50%  {transform: scale(0.9)}
+    100% {top: 0; left: 0}
+}
+
+@keyframes reversePullUpForeground {
+    0%   {z-index: 1;}
+    50%  {z-index: 3; transform: scale(1.1)}
+    100% {z-index: 1; top: 25px; left: 0}
+}
+
+@keyframes reversePullUpBackground {
+    50%  {transform: scale(0.9)}
+    100% {top: 25px; left: 0}
+}
+
+.filterGroupTitle {
+	margin: 2px 2px 5px;
+	font-weight: bold;
+}
+
+.defaultFilterContainer {
+	margin-top: 5px;
+}
+
+.defaultFilterContainer .cPopupSelect,
+.defaultFilterContainer .cTextSelect,
+.defaultFilterContainer .cExpandableTextInput,
+.defaultFilterContainer .cTextInput,
+.defaultFilterContainer .cDatetime,
+.defaultFilterContainer .cDateInput,
+.defaultFilterContainer .cIntegerInput,
+.defaultFilterContainer .cTimeInput {
+	display: table;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.defaultFilterContainer .lFlexible {
+	display: table-cell;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 2px;
+}
+
+.defaultFilterContainer .lFixedRight {
+	display: table-cell;
+	padding: 2px 2px 2px 0;
+}
+
+.defaultFilterContainer .lFlexible > input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.defaultFilterContainer span.cError img {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
+.checkboxMultiSelectContainer {
+	/* No special settings */
+}
+
+.sidebarFilterContainer .checkboxMultiSelectContainer {
+	max-height: none;
+}
+
+.checkboxMultiSelectEntry {
+	margin: 0;
+	padding: 0;
+}
+
+.checkboxMultiSelectNoEntries {
+	font-style: italic;
+	text-align: center;
+	white-space: nowrap;
+}
+
+.sidebarFilterContainer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.sidebarFilterContainer .can-edit {
+	white-space: normal;
+}
+
+.sidebarFilterEntry {
+	position: relative;
+	box-sizing: border-box;
+	height: 23px;
+	width: 100%;
+	margin-top: 2px;
+	padding-top: 4px;
+	white-space: nowrap;
+}
+
+.collapsibleFilterEntry {
+	cursor: pointer;
+}
+
+.resetSidebarFilterButton {
+	position: absolute;
+	top: 0;
+	right: 0;
+	cursor: auto;
+}
+
+table.tblFrozen {
+    table-layout: fixed;
+    margin: 0px;
+    padding: 0px;
+    
+    border-spacing: 0px;
+    border-left: 0px;
+    border-top: 0px;
+    border-right-style: solid;
+    border-right-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+    border-bottom: 0px;
+    border-color: var(--TABLE_BORDER_COLOR);
+    border-collapse: collapse;
+}
+
+.tblFrozenControlTag {
+	overflow: hidden;
+}
+
+div.tblFrozen {
+	position: relative;
+	height: 100%;
+	width: 100%;
+}
+
+div.tblFrozenTitle {
+	position:relative;
+	overflow: hidden;
+	height: var(--FROZEN_TABLE_TITLE_HEIGHT);
+}
+
+div.tblTreeFrozenTitle {
+	position:relative;
+	overflow: hidden;
+	height: var(--FROZEN_TREE_TABLE_TITLE_HEIGHT);
+}
+
+div.tblFrozenTitle > table.tblFrozen,
+div.tblTreeFrozenTitle > table.tblFrozen {
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+}
+
+tr.tblFrozen {
+}
+
+tr.tblFilterDirectMatch {
+}
+
+tr.tblFilterDirectMatch td,
+tr.tblFilterDirectMatch td input {
+}
+
+tr.tblFilterIndirectMatch {
+}
+
+tr.tblFilterIndirectMatch td {
+	color: #888;
+}
+
+tr.tblFilterIndirectMatch td,
+tr.tblFilterIndirectMatch td input, 
+tr.tblFilterIndirectMatch td select,
+tr.tblFilterIndirectMatch td label {
+	font-style: italic;
+}
+
+tr.tblFilterIndirectMatch td img,
+tr.tblFilterIndirectMatch td select,
+tr.tblFilterIndirectMatch td input {
+	opacity: 0.6;
+	
+	/* IE8 */
+	filter: alpha(opacity=60);
+}
+
+tr.tblFilterNotValidated {
+}
+
+tr.tblFilterNotValidated td,
+tr.tblFilterNotValidated td input,
+tr.tblFilterNotValidated td select,
+tr.tblFilterNotValidated td label {
+	font-style: italic;
+}
+
+tr.tblFrozen.title {
+	height: var(--FROZEN_TABLE_TITLE_HEIGHT);
+}
+
+/* the header row in the grid may have another height */
+tr.tblFrozen.header {
+	height: var(--FROZEN_TABLE_HEADER_ROW_HEIGHT);
+}
+
+div.tblColumnBorderLine {
+	position: absolute;
+	width: 4px;
+	background-color: #808080; /*grey*/
+	cursor: e-resize;
+}
+
+div.tblColumnAdjustmentPane {
+	position: absolute;
+	cursor: e-resize;
+	width: 100%;
+	height: 100%;
+	background-color: white;
+	
+	/*IE6 und IE7 */
+	filter: alpha(opacity=0);
+
+	/*other (css)*/
+	opacity: 0;
+}
+
+div.tblColumnAdjustmentGrabber {
+	position: absolute;
+	cursor: e-resize;
+	width: 4px;
+	height: 100%;
+	top: 0px;
+	right: 0px;
+	background-color: white;
+	border-width: 0px;
+	margin: 0px;
+	padding: 0px;
+	
+	/*IE6 und IE7 */
+	filter: alpha(opacity=0);
+
+	/*other (css)*/
+	opacity: 0;
+}
+
+div.tblCellAdjustment {
+	top: 0px;
+	left: 0px;
+	width:100%;
+	padding: 0px;
+	margin: 0px;
+	border-width:0px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+div.tblCellInnerSpacer {
+	margin: 2px;
+	overflow: visible;
+	position: relative;
+}
+
+.tblFrozen div.tblCellInnerSpacer {
+	white-space: nowrap;
+}
+
+div.tblCellAdjustment {
+	position: relative;
+}
+
+/*********************************************************************/
+
+div.tblFrozen th.treeTableTh, div.tblFrozen td.treeTableTd, div.tblFrozen td.treeTableTdFirst {
+	padding: 0px;
+	border-style: solid;
+	border-top-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+	border-left-width: var(--TABLE_COLUMN_BORDER_WIDTH);
+	border-right-width: 0;
+	border-bottom-width: 0;
+}
+
+div.tblSeperator, div.tblSeperatorLine {
+	background-color: var(--TABLE_BORDER_COLOR);
+	cursor: e-resize;
+}
+
+div.tblSeperatorLine {
+	position: absolute;
+	
+	/*IE6 und IE7 */
+	filter: alpha(opacity=60);
+
+	/*other (css)*/
+	opacity: 60;
+}
+
+/* ============================================================== */
+/* ====== Flexible layout of input elements in fixed tables ===== */
+/* ============================================================== */
+
+table td span.cError {
+	position: absolute;
+	top: 0px;
+	right: 2px;	
+}
+
+table td span.cError i {
+	font-size: var(--FONT_SIZE_SMALL);
+	line-height: var(--FONT_SIZE_SMALL); 	
+}
+
+/* Place error images at regular position in title of
+ frozen tables (e.g. needed for gallery edit dialog). */
+.tl-table__title span.cError img,
+.tl-table__title span.cError i {
+	position: static;
+}
+
+table td span.cDecoratedCell,
+table td span.cPopupSelect,
+table td span.cTextSelect,
+table td span.cDropdownSelect,
+table td span.cDateInput,
+table td span.cIntegerInput,
+table td span.cDatetime,
+table td span.cTimeInput,
+table td span.cTextPopup,
+table td span.cExpandableTextInput,
+table td span.cTextInput,
+table td .cDataItem,
+table td span.downloadControl {
+	display: table;
+	width: 100%;
+	height: 100%;
+}
+
+table td span.cTextPopup span.content,
+table td .cDataItem span.lFlexible span.content,
+table td span.downloadControl span.content {
+	display: block;
+	position: absolute;
+	top: 0px;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+table td span.cTextPopup.descriptionSizeConstraint span.content{
+	position: relative;
+}
+
+.cTextPopup.descriptionSizeConstraint .cImageButton{
+	vertical-align: middle;
+}
+
+.descriptionSizeMax {
+	max-width: 300px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.descriptionSizeConstraint {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.cTextPopupEditor .cTextInput.cannot-edit:not(.disabled) {
+	display: inline-block;
+	width: 497px;
+	height: 280px;
+	overflow: auto;
+}
+
+.cTextPopupEditor .cTextInput.cannot-edit:not(.disabled) {
+    padding: 2px 8px 4px 8px;
+    box-sizing: border-box;
+}
+
+.cTextPopupEditor .cTextInput .is-input {
+    width: 100%;
+    box-sizing: border-box;    
+}
+
+span.cTextPopupView span.content p,
+span.cTextPopupView span.content ul,
+span.cTextPopupView span.content li,
+span.cTextPopup span.content p,
+span.cTextPopup span.content ul,
+span.cTextPopup span.content li {
+	margin: 0px;
+	padding: 0px;
+	display: inline;
+}
+
+table td span.cTextPopupView span.content p,
+table td span.cTextPopupView span.content ul,
+table td span.cTextPopupView span.content li,
+table td span.cTextPopup span.content p,
+table td span.cTextPopup span.content ul,
+table td span.cTextPopup span.content li,
+table td a.cDownload {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+table.tl-table td span.lFlexible,
+table.tl-table td span.lFlexibleCustom {
+	display: table-cell;
+	position:relative;
+	width: 100%;
+}
+
+table td span.lFlexible > select {
+	width: 100%;
+}
+
+/* Use default width for select fields in title of
+ frozen tables (e.g. needed for gallery edit dialog). */
+.tl-table__title span.lFlexible select {
+	width: auto;
+}
+
+table td span.lFlexible > input {
+	/* Display editable values adjusted to the right in columns that are right aligned. */
+	text-align: inherit;
+}
+
+table td span.lFlexible > input:not([type="image"]) {
+	width: 100%;
+}
+
+/* Use default width for input fields in title of
+ frozen tables (e.g. needed for gallery edit dialog). */
+.tl-table__title span.lFlexible input {
+	width: auto;
+}
+
+table td span.lFixedLeft,
+table td span.lFixedRight {
+	display: table-cell;
+}
+
+table td span.cDatetime span.timePart {
+	min-width: 5em;
+}
+
+.timePart span.cDatetimeTime:not(:empty):before {
+	content: " - ";
+}
+
+/* Use default display for span in title of
+ frozen tables (e.g. needed for gallery edit dialog). */
+.tl-table__title span.lFixedLeft,
+.tl-table__title span.lFixedRight {
+	display: inherit;
+}
+
+/* =============================================== */
+/* ====== FormPageTag styles (prefix is 'fpt') ===== */
+/* =============================================== */
+
+div.fptPage {
+ 	position: absolute;
+ 	top: 0px;
+	left: 0px; 
+	bottom: 0px; 
+	right: 0px;
+}
+
+div.fptHeader {
+	position: absolute; 
+	top: 0px; 
+	left: 0px; 
+	right: 0px;
+	height: var(--FPT_HEADER_PX);
+}
+
+div.fptHeader input.is-input, 
+div.fptHeader select.is-input {
+	border-width:0px;
+}
+
+div.fptHeader input.is-input {
+	/* Leave some space for the error icon. */
+	position: relative;
+	width: 90%;
+}
+
+div.fptHeader .error input.is-input, 
+div.fptHeader .error select.is-input,
+div.fptHeader .error-annotation input.is-input, 
+div.fptHeader .error-annotation select.is-input {
+	border-width:2px;
+}
+
+div.fptTitle {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	height: var(--FPT_TITLE_PX);
+	background-image: var(--FPT_HEADER_GRADIENT);
+	background-repeat: repeat-x;
+	background-color: var(--FTP_BACKGROUND_COLOR);
+}
+
+div.fptTitleContent,
+div.fptTitle input.is-input, 
+div.fptTitle select.is-input {
+	font-size: var(--FPT_TITLE_FONT_SIZE);
+	font-weight: bold;
+}
+
+div.fptTitleContent {
+	padding-left: var(--FPT_HEADER_PADDING); 
+	padding-top: var(--FPT_TITLE_CONTENT_PADDING);
+	padding-bottom: var(--FPT_TITLE_CONTENT_PADDING);
+}
+
+div.fptTitleContent,
+div.fptSubtitleContent {
+	position: absolute; 
+	overflow: hidden;
+	left: 0px; 
+	right: var(--FPT_ICON_BAR_PX); 
+	top: 0px;
+	bottom: 0px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--FTP_TEXT_COLOR);
+}
+
+div.fptSubtitle {
+	position: absolute; 
+	top: var(--FPT_TITLE_PX); 
+	left: 0px;
+	right: 0px;
+	height: var(--FPT_SUBTITLE_PX);
+	overflow: hidden;
+	background-color: var(--FPT_SUBTITLE_COLOR);
+}
+
+div.fptSubtitleContent {
+	padding-left: var(--FPT_HEADER_PADDING); 
+	padding-top: var(--FPT_SUBTITLE_CONTENT_PADDING);
+	padding-bottom: var(--FPT_SUBTITLE_CONTENT_PADDING);
+	font-size: var(--FPT_SUBTITLE_FONT_SIZE);
+}
+
+div.fptBody {
+ 	position: absolute; 
+	left: 0px; 
+	right: 0px; 
+	top: var(--FPT_HEADER_PX);
+	bottom: 0px; 
+}
+
+div.fptBodyContent {
+ 	position: absolute; 
+	overflow: auto;
+	
+	left: 0px; 
+	right: 0px; 
+	top: 0px;
+	bottom: 0px;
+	 
+	padding-top: var(--FPT_HEADER_PADDING);
+	padding-left: var(--FPT_HEADER_PADDING);
+	padding-right: var(--FPT_HEADER_PADDING);
+	padding-bottom: var(--FPT_HEADER_PADDING);
+}
+
+div.fptIconBar {
+	position: absolute;
+	top: 0px;
+	
+	/* Approximately the scroll bar width */
+	right: 17px;
+
+	bottom: 0px;
+	
+	font-size: var(--FPT_ICON_PX);
+}
+
+.fptIcon,
+.fptIconWithOverlay,
+.fptIconOverlay {
+	position: absolute; 
+	height: var(--FPT_ICON_PX);
+}
+
+.fptIcon {
+	top: 10px;
+	right: 10px; 
+}
+
+.fptIconWithOverlay {
+	top: 15px;
+	right: 30px;
+}
+
+.fptIconOverlay {
+	position: absolute; 
+	top: 5px;
+	right: 5px; 
+	height: var(--FPT_ICON_OVERLAY_PX);
+}
+
+/* =============================================== */
+/* ====== Control styles (prefix is 'c')     ===== */
+/* =============================================== */
+
+/* AbstractButtonControl */
+span.cButton {
+	/* Make the span get the height of the contained image to allow placing popups below the image without overlap. */
+	display: inline-block;
+}
+
+.cButton input.appended {
+	margin-left: 3px;
+}
+
+/* DefaultButtonRenderer */
+.cDefaultButton {
+}
+
+/* ImageButtonRenderer */
+.cImageButton {
+	vertical-align: bottom;
+}
+
+.cImageButton a.input-image {
+	display: inline-block;
+	width: var(--ICON_SIZE_NORMAL);
+	height: var(--ICON_SIZE_NORMAL);
+	font-size: 18px;
+	line-height:18px;
+}
+
+a.input-image:active,
+a.input-image:link,
+a.input-image:visited,
+a.input-image:hover,
+a.input-image {
+	color: inherit;	
+}
+
+.cImageButton a.input-image i {
+	padding: 2px;
+}
+
+/* MenuButtonRenderer */
+.cMenuButton {
+	line-height: 2em;
+	display: table-row;
+}
+
+.cMenuButton i {
+	padding-left: 1px;
+	padding-right: 1px;
+	font-size: 20px;
+}
+
+.cMenuButton i,
+.cMenuButton i span:after {
+	color: graytext;
+}
+
+.cMenuButton.menuEntryHover i,
+.cMenuButton.menuEntryHover i span:after {
+	color: black;
+}
+
+/* BeaconControl */
+.cBeacon {
+}
+
+/* BlockTextInputControl */
+.cBlockTextInput {
+}
+
+/* BooleanChoiceControl */
+.cBooleanChoice {
+}
+
+.cBooleanChoice input[type="radio"] {
+	margin: 0px 3px 0px 5px;
+} 
+
+/* CalendarControl */
+.cCalendar {
+}
+
+.cCalendar .input-image {
+	position: relative;
+	display: inline-block;
+	width: 16px;
+	height: 20px;
+}
+
+.cCalendar .input-image i {
+	color: white;
+	position: absolute;
+	top: 50%;
+	right: 50%;
+	transform: translate(50%, -50%);
+}
+
+/* CheckboxControl */
+.cCheckbox {
+}
+
+/* ChoiceControl */
+.cChoice {
+}
+
+.cChoice input,
+.cChoice label {
+	/* Align input and label. */
+	vertical-align: middle;
+	margin: 0;
+}
+
+.cChoice label {
+	/* Correctly align when wrapping short labels. */
+	/* This is required for horizontal displays and is also useful for vertical displays if the label is very short. In this case, the clickable area is enlarged. */
+	min-width: 10ex;
+	
+	/* Some distance between radio button and label. */
+	padding-right: 5px;
+	padding-left: 5px;
+}
+
+.cChoice-horizontal > .cChoice-option {
+	/* Wrap options for horizontal choices. Use inline-block instead of inline to prevent wrapping between radio and label. */
+	display: inline-block;
+	padding-right: 5px;
+}
+
+div.menuTitle {
+	background: var(--TITLEBAR_BACKGROUND_COLLAPSED);
+	display: flex;
+	color: var(--TITLEBAR_TEXT_COLLAPSED);
+}
+
+div.menuTitleContents {
+	padding: 3px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex-grow: 1;
+	width: 0px;
+}
+
+div.cCollapsibleHeader {
+	color: var(--TITLEBAR_COLOR);
+	vertical-align: middle;
+	padding: var(--COLLAPSIBLE_HEADER_PADDING);
+	
+	/* For legacy browsers. */
+	background: var(--TITLEBAR_BACKGROUND_COLLAPSED);
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+div.cCollapsibleCollapsed div.cCollapsibleHeader {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	bottom: 0px;
+	right: 0px;
+}
+
+div.cCollapsibleHorizontal div.cCollapsibleHeader {
+	background: var(--TITLEBAR_BACKGROUND_COLLAPSED);
+}
+
+.cCollapsibleTitle {
+	white-space: nowrap;
+	padding-left: 4px;
+	line-height: var(--COLLAPSIBLE_IMAGE_HEIGHT);
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+div.cCollapsibleToolbar {
+	white-space: nowrap;
+	padding-left: 3px;
+	background: inherit;
+	float: right;
+}
+
+span.tbGroup,
+span.cCollapsibleButtons {
+	margin-left: 4px;
+	margin-right: 2px;
+}
+
+span.tbGroup span.cButton {
+	margin-left: 2px;
+}
+
+div.cCollapsibleHorizontal .cCollapsibleTitle {
+	/* Note: Non-IE browsers accept transfrom only on block-level elements. */
+	display: block;
+	transform: rotate(90deg);
+	transform-origin: 0 100%;
+	overflow: visible;
+}
+
+span.cCollapsibleButtons span.cButton {
+	margin-left: 2px;
+}
+
+div.cCollapsibleHorizontal span.cCollapsibleButtons span.cButton {
+	margin-left: 0px;
+}
+
+div.cCollapsibleHorizontal div.cCollapsibleToolbar {
+	padding-right: 0px;
+	padding-left: 1px;
+}
+
+div.cCollapsibleHorizontal span.cCollapsibleButtons {
+	margin-left: 0px;
+	margin-right: 0px;
+	padding-right: 0px;
+}
+
+/* ColorChooserControl */
+.cColorChooser {
+}
+
+/* DateInputControl */
+.cDateInput {
+	white-space: nowrap;
+}
+
+/* DateTimeField */
+.cDatetime {
+	white-space: nowrap;
+}
+
+/* TimeInputControl */
+.cTimeInput {
+	white-space: nowrap;
+}
+
+/* In tables the time field must not have size 100%*/
+table td .cDatetime .cDatetimeTime span.lFlexible > input {
+	width: 48px;
+}
+
+/* DisplayImageControl */
+.cImageDisplay {
+}
+
+/* EditableListControl */
+.cEditableList {
+}
+
+/* ErrorControl */
+.cError {
+}
+
+/* ExpandableTextInputControl */
+.cExpandableTextInput {
+}
+
+/* IconSelectControl */
+.cIconSelect {
+}
+
+/* InfoControl */
+.cInfo {
+}
+
+.cInfo i {
+	font-size: 32px;
+}
+
+/* IntegerInputControl */
+.cIntegerInput {
+	white-space: nowrap;
+}
+
+.cIntegerInput input.is-input {
+	text-align: right;
+	width: 5ex;
+}
+
+/* LabelControl */
+.cLabel {
+}
+
+/* LinkButtonRenderer */
+.cLinkButton {
+}
+
+/* SelectControl */
+.cDropdownSelect {
+}
+
+/* SelectionControl */
+.cPopupSelect {
+}
+
+/* SelectTextControl */
+.cTextSelect {
+}
+
+.cTextSelect .option {
+	display: inline-block;
+}
+
+/* SelectOptionControl */
+.cSelectOption {
+}
+
+/* TextInputControl */
+.cTextInput {
+}
+
+/* ProgressControl.java */
+.cProgress {
+}
+
+.progessLog {
+	padding-left: 2em;	
+}
+
+.logMessage:before {
+  content: "\f00c"; /* FontAwesome Unicode */
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  display: inline-block;
+  text-align: center;
+  margin-left: -2em;
+  width: 2em;
+  color: green;
+}
+
+.logMessage.WARN:before {
+  content: "\f12a"; /* FontAwesome Unicode */
+  color: orange;
+}
+
+.logMessage.ERROR:before,
+.logMessage.FATAL:before {
+  content: "\f05e"; /* FontAwesome Unicode */
+  color: red;
+}
+
+progress {
+	width: 100%;
+}
+
+/* TextFileView */
+.cTextFileView {
+}
+
+/* =============================================== */
+/* ====== Formaular styles (prefix is 'frm') ===== */
+/* =============================================== */
+
+div.frmNoModel {
+	position: absolute;	
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+div.frmNoModel table {
+	width: 100%;
+	height: 100%;
+}
+
+div.frmNoModel td {
+	vertical-align: middle;
+    text-align: center;
+    font-style: italic;
+}
+
+table.frm {
+	border-collapse: separate;
+	border-spacing: 0px;
+	width:    100%;
+}
+
+body.IE7 table.frm {
+	/* Required for group boxes not being separated by unexplainable spaces. */
+	border-collapse: collapse;
+}
+
+table.frmBase {
+	border-collapse: collapse;
+	width:    100%;
+	height:   100%
+}
+
+td.frmBase {
+	background-color: #E0E0E0;
+}
+
+div.frmBase {
+	position: absolute;
+	z-index:  999;
+	width:    99.7%;
+	height:   99.7%;
+}
+
+div.frmSplash {
+	position:   absolute;
+	visibility: hidden;
+	z-index:    1000;
+	top:        0px;
+	left:       0px;
+	height:     99.7%;
+	width:      99.7%;
+}
+
+div.uploadSplash {
+    position: absolute;
+	height: 40px;
+	width: 150px;
+	background-color: var(--TOOLTIP_BACKGROUND_COLOR);
+	border: var(--TOOLTIP_BORDER);
+ }
+ 
+/* mandatory fields */
+*.frmMust {
+	background-color: var(--MANDATORY_FIELD_BG);
+	/* border-bottom-color: #FF0000 */
+}
+
+td.frmVr {
+	margin: 0px;
+	padding: 0px;
+	width: var(--VR_BACKGROUND_WIDTH);
+	background-image:var(--VR_GROUP_BACKGROUND);
+	background-repeat:repeat-y;
+}
+
+div.fltContainer td.frmVr {
+	background-image:var(--VR_FILTER_BACKGROUND);
+}
+
+td.frmHr, hr.frmHr {
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
+	
+	height: var(--HR_BACKGROUND_HEIGHT);
+	background-image:var(--HR_GROUP_BACKGROUND);
+	background-repeat:repeat-x;
+}
+
+div.fltContainer td.frmHr, div.fltContainer hr.frmHr {
+	background-image:var(--HR_FILTER_BACKGROUND);
+}
+
+td.frmGroupTitleLeft, td.frmGroupTitleLeftNoBorder {
+	margin-top: 10px;
+	margin-bottom: 5px;
+
+	padding-left: 9px;
+	background-repeat: no-repeat;
+	background-position: top left;
+}
+
+td.frmGroupTitleLeft {
+	background: var(--GROUP_TOP_LEFT_BACKGROUND);
+	border-radius: var(--GROUP_TOP_LEFT_BORDERRADIUS);
+}
+
+td.frmGroupTitleLeftCollapsed {
+	background-image: var(--GROUP_COLLAPSED_LEFT_IMAGE);
+	background: var(--GROUP_COLLAPSED_LEFT_BACKGROUND);
+	border-radius: var(--GROUP_COLLAPSED_LEFT_BORDERRADIUS);
+}
+
+div.fltContainer td.frmGroupTitleLeft {
+	background-image:var(--FILTER_GROUP_TOP_LEFT);
+}
+
+div.fltContainer td.frmGroupTitleLeftCollapsed {
+	background-image:var(--FILTER_GROUP_COLLAPSED_LEFT);
+}
+
+td.frmGroupTitleLeftNoBorder {
+	background-image:var(--HR_TITLE_LEFT);
+}
+
+div.fltContainer td.frmGroupTitleLeftNoBorder {
+	background-image:var(--FILTER_GROUP_TOP_CENTER);
+	background-repeat: repeat-x;
+}
+
+td.frmGroupTitleContent {
+	position: relative;
+	margin-top: 10px;
+	margin-bottom: 5px;
+	
+	vertical-align: top;
+	padding-left: 0px;
+	padding-right: 3px;
+
+	white-space: nowrap;
+
+	background-image:var(--GROUP_TOP_CENTER_IMAGE);
+	background-repeat:repeat-x;
+	background-position: top center;
+	
+	background: var(--GROUP_TOP_CENTER_BACKGROUND);
+}
+
+td.frmGroupTitleContentCollapsed {
+	background: var(--GROUP_COLLAPSED_CENTER_BACKGROUND);
+}
+
+td.frmGroupTitleContent, td.fhrMiddle {
+	padding-top: 6px;
+	padding-bottom: 9px;
+	
+	font-weight: bold;
+	color: var(--GROUP_LABEL_COLOR);
+}
+
+td.frmGroupTitleContent label, td.fhrMiddle label {
+	font-weight: bold;
+	color: var(--GROUP_LABEL_COLOR);
+}
+
+div.fltContainer td.frmGroupTitleContent {
+	background-image:var(--FILTER_GROUP_TOP_CENTER);
+}
+
+div.fltContainer td.frmGroupTitleContentCollapsed {
+	background-image:var(--FILTER_GROUP_COLLAPSED_CENTER);
+}
+
+span.frmGroupExpand {
+	padding-left: 3px;
+}
+
+span.frmGroupTitleText {
+	padding-left: 3px;
+	padding-right: 5px;
+}
+
+div.fltContainer span.frmGroupTitleText, div.fltContainer span.frmGroupExpand {
+	background-color: var(--FILTER_BACKGROUND_COLOR);
+}
+
+td.frmGroupTitleRight, td.frmGroupTitleRightNoBorder {
+	margin-top: 10px;
+	margin-bottom: 5px;
+
+	padding-right: 9px;	
+	background-repeat: no-repeat;
+	background-position: top right;
+}
+
+td.frmGroupTitleRight {
+	background: var(--GROUP_TOP_RIGHT_BACKGROUND);
+	border-radius: var(--GROUP_TOP_RIGHT_BORDERRADIUS);
+	background-repeat: no-repeat;
+	background-position: top right;
+}
+
+td.frmGroupTitleRightCollapsed {
+	background: var(--GROUP_COLLAPSED_RIGHT_BACKGROUND);
+	border-radius: var(--GROUP_COLLAPSED_RIGHT_BORDERRADIUS);
+}
+
+div.fltContainer td.frmGroupTitleRight {
+	background-image:var(--FILTER_GROUP_TOP_RIGHT);
+}
+
+div.fltContainer td.frmGroupTitleRightCollapsed {
+	background-image:var(--FILTER_GROUP_COLLAPSED_RIGHT);
+}
+
+td.frmGroupTitleRightNoBorder {
+	background-image:var(--HR_TITLE_RIGHT);
+}
+	
+div.fltContainer td.frmGroupTitleRightNoBorder {
+	background-image:var(--FILTER_GROUP_TOP_CENTER);
+	background-repeat: repeat-x;
+}
+	
+td.frmGroupContentLeft {
+	padding-left: 3px;	
+	background-image:var(--GROUP_MIDDLE_LEFT);
+	background-repeat: repeat-y;
+	background-position: top left;
+}
+
+div.fltContainer td.frmGroupContentLeft {
+	background-image:var(--FILTER_GROUP_MIDDLE_LEFT);
+}
+
+td.frmGroupContentRight {
+	padding-right: 3px;	
+	background-image:var(--GROUP_MIDDLE_RIGHT);
+	background-repeat: repeat-y;
+	background-position: top right;
+}
+
+div.fltContainer td.frmGroupContentRight {
+	background-image:var(--FILTER_GROUP_MIDDLE_RIGHT);
+}
+
+td.frmGroupBottomLeft, td.frmGroupBottomCenter, td.frmGroupBottomRight {
+	padding-bottom: 10px;
+	height: 10px;	
+}
+
+td.frmGroupBottomLeft {
+	background-image:var(--GROUP_BOTTOM_LEFT);
+	background-repeat: no-repeat;
+	background-position: top left;
+}
+
+div.fltContainer td.frmGroupBottomLeft {
+	background-image:var(--FILTER_GROUP_BOTTOM_LEFT);
+}
+
+td.frmGroupBottomCenter {
+	background-image:var(--GROUP_BOTTOM_CENTER);
+	background-repeat: repeat-x;
+	background-position: top left;
+}
+
+div.fltContainer td.frmGroupBottomCenter {
+	background-image:var(--FILTER_GROUP_BOTTOM_CENTER);
+}
+
+td.frmGroupBottomRight {
+	background-image:var(--GROUP_BOTTOM_RIGHT);
+	background-repeat: no-repeat;
+	background-position: top right;
+}
+
+div.fltContainer td.frmGroupBottomRight {
+	background-image:var(--FILTER_GROUP_BOTTOM_RIGHT);
+}
+
+td.boxHSpace {
+	padding-right: 0px;
+	padding-left: var(--BOX_HSPACE_SIZE);
+}
+
+td.boxVSpace {
+	height: var(--BOX_VSPACE_SIZE);
+}
+
+/* HRTag (fhr) */
+
+div.fhrContainer {
+	margin-top: 10px;
+	margin-bottom: 5px;
+	height: 24px;
+}
+
+table.fhrTable {
+	border-collapse: collapse;
+	margin-left: -5px;
+	margin-right: -5px;
+}
+
+td.fhrLeft {
+	height: 34px;	
+	background: var(--HR_TITLE_LEFT_BACKGROUND);
+	background-repeat: no-repeat;
+}
+
+td.fhrMiddle {
+	vertical-align: top;
+	padding-left: 0px;
+	padding-right: 3px;
+	height: 24px;
+	width: 100%;
+	background: var(--HR_TITLE_CENTER_BACKGROUND);
+	background-repeat:repeat-x;
+}
+
+td.fhrRight {
+	height: 34px;
+	padding-right: 4px;
+	width: 4px;
+	
+	background: var(--HR_TITLE_RIGHT_BACKGROUND);
+	background-position: top right;
+	background-repeat: no-repeat;
+}
+
+div.frmBody {
+	margin: var(--FORM_BODY_MARGIN)
+}
+
+/* ========================== */
+/* ====== Legacy Search ===== */
+/* ========================== */
+
+/* Note: These styles must be placed before the .mandatory styles for form fields to give precedence to the mandatory styles. */
+
+.searchIrrelevant input,
+.searchIrrelevant textarea,
+.searchIrrelevant select {
+	background-color: var(--S_FIELD_UNRELEVANT);
+	color: var(--S_TXT_UNRELEVANT);
+}
+
+.searchPositive input,
+.searchPositive textarea,
+.searchPositive select {
+	background-color: var(--S_FIELD_RELEVANT);
+	color: var(--S_TXT_RELEVANT);
+}
+
+.searchNegative input,
+.searchNegative textarea,
+.searchNegative select {
+	background-color: var(--S_FIELD_NEGATED);
+	color: var(--S_TXT_RELEVANT);
+}
+
+.mandatory input, .mandatory select, .mandatory textarea  {
+    background-color: var(--MANDATORY_FIELD_BG);
+}
+
+.mandatory input[type="radio"]  {
+    outline: var(--MANDATORY_FIELD_BG) solid medium;
+}
+
+.IE .mandatory input[type="radio"]  {
+    outline: none;
+}
+
+.mandatory.can-edit label:after {
+    content: " (*)";
+    font-weight: bold;
+}
+
+label.disabled {
+	color: var(--DISABLED_LABEL_COLOR);
+}
+
+span.is-accesskey {
+	text-decoration: underline;
+}
+
+/* smartInputField */
+div.sifFloater {
+    z-index: 20;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    border: 1px;
+    border-color: var(--FRAME_BACK);
+    border-style: solid;
+    background-color: var(--BODY_BACK);
+}
+
+div.sifSearchElement,
+div.sifSearchElementUnselectable {
+    vertical-align: middle;
+    white-space: pre;
+	color: var(--PRIMARY_TEXT_COLOR);
+	text-decoration:none;
+    z-index: 21;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+div.sifSearchElement {
+    cursor: pointer;
+}
+
+div.sifSearchElementUnselectable {
+    cursor: default;
+}
+
+div.sifSearchElementSelected {
+    vertical-align: middle;
+    white-space: pre;
+    color: var(--SECONDARY_TEXT_COLOR);
+	text-decoration:none;
+    background-color: var(--SECONDARY_BACKGROUND_COLOR);
+    z-index: 21;
+    cursor: pointer;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+/* ============================================ */
+/* ====== Button styles (prefix is 'cmd') ===== */
+/* ============================================ */
+/* Styles for Buttons, especially BoundButtonInfo */
+
+.cmdBody {
+	background:         var(--BUTTONBAR_BACKGROUND);
+}
+
+.cmdButtons {
+    text-align:         right;
+    padding:            var(--BUTTONBAR_PADDING) 12px;
+}
+
+div.cmdProgress {
+	position:         absolute;
+	left:             0px;
+	top:              0px;
+	width:            100%;
+	height:           100%;
+	background:       var(--BUTTONBAR_BACKGROUND);
+	display:          none;
+}
+
+div.cmdProgress img {
+	border: 0;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+div.fullProgressVisible {
+	position:         absolute;
+	text-align:       center;
+	vertical-align:   middle;
+	left:             3px;
+	top:              3px;
+	right:            3px;
+	bottom:           3px;
+	background-color: var(--SECONDARY_BACKGROUND_COLOR);
+	visibility:       visible;
+	display:          block;
+}
+
+div.sizeContainer, div.imageContainer {
+	position:         absolute;
+	text-align:       center;
+	left:             2px;
+	top:              2px;
+	right:            2px;
+	bottom:           2px;
+}
+
+div.sizeContainer {
+	visibility: hidden;
+}
+
+.waitingSliderStructure {
+	width: 100%;
+	height: 100%;
+}
+
+img.fullProgress {
+	vertical-align:middle;
+	text-align:center;
+}
+
+div.progress {
+}
+
+div.progressBox {
+	height:			15px;
+	margin-left:	10px;
+	margin-right:	10px;
+	border:			1px solid #770000;
+	padding:		3px;
+	vertical-align:	middle;
+}
+
+div.progressLeft {
+	position:			absolute;
+	left:				17px;
+	background-color:	#2222EE;
+}
+
+div.progressRight {
+	position:			absolute;
+	right:				21px;
+	background-color:	#EEEEEE;
+}
+
+table.cmdTable {
+}
+
+tr.cmdTR {
+	height: var(--BUTTON_HEIGHT);
+}
+
+td.cmdButtonCell {
+	height: var(--BUTTON_HEIGHT);
+
+	padding-left:   4px;
+	padding-right:	4px;
+}
+
+td.cmdButton,
+a.cmdButton, 
+a.cmdButton:link, 
+a.cmdButton:visited, 
+a.cmdButton:active, 
+a.cmdButtonHover,
+a.cmdButtonHover:link,
+a.cmdButtonHover:visited,
+a.cmdButtonHover:active,
+a.cmdButtonDisabled, 
+a.cmdButtonDisabled:link, 
+a.cmdButtonDisabled:visited, 
+a.cmdButtonDisabled:active,
+.cFormEditorToolbox [data-tool=true] > .attribute,
+.cDataItem .cmdButton,
+.cDataItem .cmdButtonDisabled
+{
+    font-family:      var(--TEXT_FAMILY);
+    font-size:        var(--BUTTON_FONTSIZE);
+    font-weight:      var(--BUTTON_FONTWEIGHT);
+    text-decoration:  var(--BUTTON_TEXT_DECORATION);
+    border:           var(--BUTTON_BORDER);
+	background:		  var(--BUTTON_BACKGROUND);	
+	color:            var(--BUTTON_COLOR);
+    text-align:       var(--BUTTON_TEXTALIGN);
+    padding:          var(--BUTTON_PADDING);
+    margin-left:      2px;
+    margin-right:	  3px;
+    white-space:      nowrap;
+    min-width:        var(--BUTTON_WIDTH);
+}
+
+.cmdLink,
+.cmdLinkDisabled {	
+    margin-left:      2px;
+    margin-right:	  3px;
+    white-space:      nowrap;
+	padding: 0px;
+}
+
+td.cmdButton,
+a.cmdButton,
+a.cmdButtonHover
+{
+	cursor:           pointer;
+}
+
+a.cmdButtonHover,
+a.cmdButtonHover:link,
+a.cmdButtonHover:visited,
+a.cmdButtonHover:active,
+a.cmdButtonHover:hover,
+.cDataItem .cmdButton:hover,
+div.cFormEditorToolbox [data-tool=true] > .attribute:hover
+{
+    border:           var(--BUTTON_BORDER);
+	background: 	  var(--BUTTON_BACKGROUND_HOVER);
+}
+
+a.cmdButtonDisabled,
+a.cmdButtonDisabled:hover,
+.cDataItem label.cmdButtonDisabled,
+.cDataItem label.cmdButtonDisabled:hover {
+	cursor:           default;
+	border:           var(--BUTTON_DISABLED_BORDER);
+    background:       var(--BUTTON_DISABLED_BACKGROUND);
+	color:            var(--BUTTON_DISABLED_COLOR);
+}
+
+span.containerButton a.cmdButtonHover span.cmdLabel, 
+div.fltButtons       a.cmdButtonHover span.cmdLabel,
+.cDataItem .cmdButton:hover span.cmdLabel,
+.cFormEditorToolbox [data-tool=true] > .attribute:hover
+{
+	color: var(--BUTTON_COLOR_HOVER);
+	background: var(--BUTTON_LABEL_BACKGROUND_HOVER);
+}
+
+img.cmdImg, img.type-image {
+	border-style: none;
+}
+
+.cmdImg {
+	margin-left: 2px;
+}
+
+a.cmdButton span.cmdImg,
+a.cmdButtonHover span.cmdImg,
+a.cmdButtonDisabled span.cmdImg,
+.cmdButton span.cmdImg,
+.cmdButtonDisabled span.cmdImg,
+.cmdButton:hover span.cmdImg,
+.cmdButton.disabled span.cmdImg {
+	vertical-align: middle;
+	font-size: var(--BUTTON_IMGSIZE);
+}
+
+a.cmdButton img.cmdImg,
+a.cmdButtonHover img.cmdImg,
+a.cmdButtonDisabled img.cmdImg {
+	width: var(--BUTTON_IMGSIZE);
+}
+
+.cmdLabel {
+	vertical-align: middle;
+	margin-left: 4px;
+}
+
+/* Fieldsets (fsd) */
+
+legend {
+	font-weight:   bold;
+	color:         var(--COLOR_LEGEND);
+}
+
+fieldset {
+	font-size:     9pt;
+	padding-top:   2em;
+	padding:       1em;
+	border-color:  var(--FIELDSET_BORDER_COLOR);
+	border-style:  solid;
+	border-width:  1px;
+}
+
+table.fsdLayout {
+	width:100%;
+}
+
+/* Styles for HelpComponent */
+
+th.help_title     { font-family:var(--TEXT_FAMILY);
+                   font-size:13px;
+                   font-weight:normal;
+                   color:white;
+                   background-color:#35679A;
+		 		   padding:2px;
+                   border-color:#555555;
+			 	 }
+td.help_header    { font-size:11px;
+                   color: black;
+				   vertical-align:top;
+                 }
+
+tr.help_header    { background-color:#35679A;
+					color:white;
+                 }
+tr.help_height0	  { height:0px; }
+td.help_width100  { width:100%; }
+td.help_height2   { height:2px; }
+tr.help_height100 { height:100%; }
+td.help_empty1    {
+				  height:1px;
+				  background-color:gray;
+				  }
+
+/* ============================================== */
+/* ====== Calendar styles (prefix is 'cal') ===== */
+/* ============================================== */
+img.calTriangle 			{
+								position:relative;
+								right:11px;
+								bottom:7px;
+								cursor:pointer; /* Note: the value 'hand' is unspecified. */
+							}
+
+img.calTriangleM 			{
+								position:relative;
+								right:10px;
+								bottom:5px;
+								cursor:pointer; /* Note: the value 'hand' is unspecified. */
+							}
+
+img.calCalendar 			{
+								vertical-align: text-bottom;
+								margin-bottom:  1px;
+								cursor:         pointer; /* Note: the value 'hand' is unspecified. */
+							}
+
+/* ============================================== */
+/* ====== Calendar window styles  (cal_)    ===== */
+/* ============================================== */
+
+div.cal_content {
+	position: absolute;
+	top: 21px;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+}
+
+table.cal_table {
+	border-collapse:  collapse;
+	border-style:	  solid;
+	border-width: 	  0px;
+	border-color:	  #555555;
+	width:            100%;
+	background-color: #FFF;
+}
+
+table.cal_table tr {
+	height: 20px;
+}
+
+table.cal_fixed {
+	height: 100%;
+}
+
+div.cal_root {
+	/* Viewport for animations. */
+	overflow: hidden;	
+}
+
+div.cal_root, div.cal_view {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	bottom: 0px;
+	right:  0px;
+}
+
+div.cal_view {
+	background-color: #FFF;
+}
+
+div.cal_titlebar {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	height: 20px;
+	width: 100%;
+	margin: 0px;	
+	background-color: var(--FRAME_BACK);
+	font-family:      var(--TEXT_FAMILY);
+	color:            var(--INVERT_TEXT);
+	padding:          0px;
+}
+
+div.cal_header {
+	position: absolute;
+	left: 50%;
+	top: 0;
+	transform: translateX(-50%);
+	/* Safari, Opera */
+	-webkit-transform: translateX(-50%);
+	cursor: pointer;
+	font-size: 14px;
+	text-align: center;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.IE7 div.cal_header {
+	font-size: 12px;
+}
+
+.IE8 div.cal_header {
+	font-size: 12px;
+	position: static;
+	display: inline-block;
+}
+
+.IE9 div.cal_header {
+	-ms-transform: translateX(-50%);
+}
+
+div.cal_header img {
+	vertical-align: top;
+}
+
+div.cal_header a {
+	color: white;
+}
+
+div.cal_leftNav {
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 20px;
+	width: 44px;
+
+	text-align: left;
+	white-space: nowrap;
+}
+
+.IE8 div.cal_leftNav {
+	position: static;
+	display: inline-block;
+	float: left;
+}
+
+p.wikiText {
+    margin-top: 0px;
+    line-height: normal;
+}
+
+.tlscript p.wikiText, .tlscript textarea {
+	font-family: monospace;
+}
+
+.tlscript p.wikiText {
+	white-space: pre;
+}
+
+div.cal_rightNav {
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 20px;
+	width: 44px;
+	
+	text-align: right;
+	white-space: nowrap;
+}
+
+.IE8 div.cal_rightNav {
+	position: static;
+	display: inline-block;
+	float: right;
+}
+
+img.cal_prev, img.cal_next {
+	cursor: pointer;
+}
+
+tr.cal_tr {
+	background-color:#F7F7E7;
+}
+th.cal_title {
+	background-color: var(--FRAME_BACK);
+	font-family:      var(--TEXT_FAMILY);
+	color:            var(--INVERT_TEXT);
+	padding:          2px;
+	text-align:		  center;
+}
+
+td.cal_cell:HOVER {
+	background-color: var(--CALENDAR_HOVER_BACKGROUND_COLOR);
+}
+
+td.cal_cell {
+	background-color: var(--CALENDAR_BACKGROUND_COLOR);
+	color: var(--CALENDAR_TEXT_COLOR);
+	font-size: 12px;
+	font-weight: bold;
+	vertical-align: middle;
+	text-align: center;
+	cursor: pointer;
+	margin: 0;
+	padding: 0;
+}
+
+td.cal_cell a {
+	/* Without display block, tab navigation through `cal_range` tables does not work. */
+	display: block;
+	color: inherit;
+}
+
+th.cal_th {
+	white-space: nowrap;
+	width: 13%;
+}
+
+th.cal_wn {
+	white-space: nowrap;
+	width: 10%;
+}
+
+/* Modifier for cal_cell */
+td.cal_wn, td.cal_wn:HOVER {
+	background-color: var(--CALENDAR_WEEKNO_COLOR);
+	color: var(--CALENDAR_BACKGROUND_COLOR);
+	cursor: auto;
+}
+
+/* Modifier for cal_cell */
+td.cal_wd {
+	font-weight: bold;
+}
+
+/* Modifier for cal_cell */
+td.cal_we {
+	font-weight: normal;
+}
+
+/* Modifier for cal_cell */
+td.cal_om {
+	font-weight: normal;
+	color: var(--CALENDAR_OTHER_MONTH_COLOR);
+}
+
+/* Modifier for cal_cell */
+td.cal_now {
+	border-color: var(--SELECTION_COLOR);
+	border-style: solid;
+	border-width: 1px;
+	color: var(--PRIMARY_TEXT_COLOR);
+}
+
+/* Modifier for cal_cell */
+td.cal_sel {
+	background-color: var(--CALENDAR_SELECTED_BACKGROUND_COLOR);
+	color: var(--CALENDAR_SELECTED_TEXT_COLOR);
+}
+
+span.cal_range {
+	display: table;
+	margin: auto;
+}
+
+span.cal_rangePart {
+	display: table-row;
+	text-align: left;
+}
+
+div.cal_animation {
+	display: none;
+}
+
+div.cal_nextAnimation, div.cal_previousAnimation {
+    -webkit-animation: cal_slideAnimationFrames 0.3s; /* Chrome, Safari, Opera */
+    animation: cal_slideAnimationFrames 0.3s;
+    
+    -webkit-animation-fill-mode: forwards; /* Chrome, Safari, Opera */
+    animation-fill-mode: forwards;
+}
+
+@keyframes cal_slideAnimationFrames {
+	0% {
+	}
+    100% {
+    	left: 0px;
+    }
+}
+
+@-webkit-keyframes cal_slideAnimationFrames {
+	0% {
+	}
+    100% {
+    	left: 0px;
+    }
+}
+
+div.cal_zoom_outAnimation {
+    -webkit-animation: cal_zoom_outAnimationFrames 0.3s; /* Chrome, Safari, Opera */
+    animation: cal_zoom_outAnimationFrames 0.3s;
+    
+    -webkit-animation-fill-mode: forwards; /* Chrome, Safari, Opera */
+    animation-fill-mode: forwards;
+}
+
+@keyframes cal_zoom_outAnimationFrames {
+	0% {
+	}
+    100% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+    }
+}
+
+@-webkit-keyframes cal_zoom_outAnimationFrames {
+	0% {
+	}
+    100% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+    }
+}
+
+div.cal_zoom_inAnimation {
+    -webkit-animation: cal_zoom_inAnimationFrames 0.3s; /* Chrome, Safari, Opera */
+    animation: cal_zoom_inAnimationFrames 0.3s;
+    
+    -webkit-animation-fill-mode: forwards; /* Chrome, Safari, Opera */
+    animation-fill-mode: forwards;
+}
+
+@keyframes cal_zoom_inAnimationFrames {
+	0% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+	}
+    100% {
+    	transform: scale(1, 1);
+    	opacity: 1.0;
+    }
+}
+
+@-webkit-keyframes cal_zoom_inAnimationFrames {
+	0% {
+    	transform: scale(0.4, 0.25);
+    	opacity: 0.2;
+	}
+    100% {
+    	transform: scale(1, 1);
+    	opacity: 1.0;
+    }
+}
+
+/* 	Workaround for IE11, to prevent fatal crash on calendar animations.
+	Trac: #16101 */
+@media print {
+}
+
+/* ============================================= */
+/* ====== Styles for AJAX command handling ===== */
+/* ============================================= */
+
+#waitPane {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+
+	background-color: #AAAAAA;
+
+	filter: alpha(opacity=0);
+	-moz-opacity: 0;
+    /*
+     * since Firefox 3.5 and IE7
+     */
+    opacity: 0;
+}
+
+#waitPane {
+	visibility: hidden;
+}
+
+#waitPane.waiting {
+	visibility: visible;
+}
+
+
+/* ==================================== */
+/* ====== Styles for AJAX dialogs ===== */
+/* ==================================== */
+
+#dlgDialogs {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 0;
+	height: 0;
+}
+
+#dlgDialogs.dialogOpened {
+	width: 100%;
+	height: 100%;
+}
+
+#dlgDialogs.noDialogOpened {
+	width: 0;
+	height: 0;
+}
+
+.dlgDialog {
+	visibility: hidden;
+}
+
+div.dlgWindow {
+	position: absolute;
+	left: 10px;
+	top: 10px;
+	width: 600px;
+	height: 400px;
+}
+
+div.dlgMaximized {
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+div.dlgMaximized .dlgBorder,
+div.dlgMaximized .dlgResizeNW,
+div.dlgMaximized .dlgResizeNE,
+div.dlgMaximized .input-image.dlgMaximize {
+	display: none;
+}
+
+div.dlgMaximized span.dlgTitle, div.dlgMaximized span.dlgToolbar {
+	padding-left: 5px;
+	padding-right: 3px;
+}
+
+.dlgToolbar .input-image.dlgRestore {
+	display: none;
+}
+
+div.dlgMaximized .input-image.dlgRestore {
+	display: inline-block;
+}
+
+div.dlgBorder {
+	color: var(--INVERT_TEXT);
+	font-size: var(--FONT_SIZE);
+	background-color: var(--DIALOG_BORDER_BACKGROUND_COLOR);
+}
+
+div.dlgTitleBar {
+	/* For legacy browsers. */
+	color: var(--DIALOG_TITLEBAR_COLOR);
+	font-size: var(--FONT_SIZE);
+	background: var(--DIALOG_TITLE_BACKGROUND); 
+}
+
+
+span.dlgToolbar {
+	display: block;
+	float: right;
+}
+
+span.dlgToolbarGroup {
+	padding-left: 4px;
+}
+
+span.dlgToolbarGroup span.cButton {
+	padding-right: 2px;
+}
+
+span.dlgToolbar img, span.dlgToolbar input {
+	cursor: pointer;
+	margin-left: 2px;
+}
+
+span.dlgToolbar img.disabled, span.dlgToolbar input.disabled {
+	cursor: default;
+}
+
+div.dlgTitleBar {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: var(--DIALOG_TITLE_HEIGHT);
+	text-align: left;
+	text-indent: 0px;
+	padding: 0;
+}
+
+div.dlgLeftBorder, div.dlgRightBorder {
+	width: var(--DIALOG_VERTICAL_BORDER_WIDTH);
+	height: 100%;
+	font-size: 1px
+}
+
+div.dlgLeftBorder {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+div.dlgRightBorder {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+}
+
+div.dlgBottomBorder {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	width: 100%;
+	height: var(--DIALOG_BOTTOM_BORDER_HEIGHT);
+	font-size: 1px
+}
+
+div.dlgContent {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	background-color: var(--BODY_BACK);
+}
+
+div.dlgMinimized {
+	display: none;
+}
+
+iframe.dlgContent {
+	width: 100%;
+	height: 100%;
+}
+
+/*
+ * Element covering the whole viewport. This is neccessary to capture all
+ * mouse events even from frame and iframe regions.
+ */
+div.dlgCapture {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+
+	/* Workaround: A div element only captures mouse events over iframe elements
+	 * in IE, if it has "some" background.
+	 */
+	background-color: #EEEEEE;
+	filter: alpha(opacity=0);
+	-moz-opacity: 0;
+	/*
+	 * since Firefox 3.5
+	 */
+	opacity: 0;
+
+	/* For debugging: */
+	/*
+	filter: alpha(opacity=30);
+	-moz-opacity: 0.3;
+	*/
+}
+
+div.dlgBackground {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height:     100%;
+	width:      100%;
+
+	cursor: wait;
+
+/*
+	background-color: #EEEEEE;
+	filter: alpha(opacity=40);
+	-moz-opacity: 0.4;
+*/
+	background-image:url(../images/semi64x64lg.png);
+}
+
+.dlgBorderNW, .dlgBorderSW, .dlgBorderNE, .dlgBorderSE {
+	width: 5px;
+	height: 5px;
+
+	/* For debugging: */
+	/*
+	background-color: red;
+	*/
+}
+
+.dlgBorderNW, .dlgBorderSW {
+	float: left;
+}
+
+.dlgBorderNE, .dlgBorderSE {
+	float: right;
+}
+
+div.dlgTitleBar {
+	cursor: move;
+}
+.dlgResizeNW {
+	cursor: nw-resize;
+}
+.dlgResizeNE {
+	cursor: ne-resize;
+}
+.dlgResizeSW {
+	cursor: sw-resize;
+}
+.dlgResizeSE {
+	cursor: se-resize;
+}
+.dlgResizeW {
+	cursor: w-resize;
+}
+.dlgResizeE {
+	cursor: e-resize;
+}
+div.dlgResizeS {
+	cursor: s-resize;
+}
+
+/* ====================================== */
+/* ====== Styles for popup dialogs ====== */
+/* ====================================== */
+
+div.pdlgPopupDialogPane_invisible {
+	display: none;
+}
+
+div.pdlgPopupDialogPane_visible {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background-color: #FFF;
+	opacity: 0;
+	cursor: wait;
+}
+
+.IE8 div.pdlgPopupDialogPane_visible {
+	filter: alpha(opacity=0);
+}
+
+div.pdlgWindow {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	background-color: var(--BODY_BACK);
+	border-color: var(--FRAME_BACK);
+	border-style: solid;
+	border-width: 1px;
+	border-top-style: none;
+	overflow: hidden;
+	box-shadow: 0px 1px 10px #888;
+}
+
+div.pdlgTitleBar {
+	position: relative;
+	width: 100%;
+	height: var(--POPUP_TITLE_HEIGHT);
+	line-height: var(--POPUP_TITLE_HEIGHT);
+	text-align: left;
+	text-indent: 0px;
+	font-size: var(--FONT_SIZE);
+	color: var(--PDLG_TITLEBAR_COLOR);
+	padding: 0px;
+	padding-left: 2px;
+	box-sizing: border-box;
+	margin:0px;
+	background-color: var(--FRAME_BACK);
+}
+
+span.pdlgToolbar {
+	display: block;
+	float: right;
+	cursor: pointer;
+}
+
+.pdlgTitle {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	padding: 0 3px;
+}
+
+div.pdlgContent {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+}
+
+/* ====================================== */
+/* ====== Styles for legacy dialogs ===== */
+/* ====================================== */
+div.splashScreen {
+	position:		absolute;
+	top:			0px;
+	left:			0px;
+	visibility:		hidden;
+	background-image:url(../images/semi64x64lg.png);
+}
+
+.dialog {
+	padding:0px;
+	border:0px;
+	margin:0px;
+	border:none;
+	text-align:left;
+}
+div.dialog {
+	position:			absolute;
+	max-width:			640px;
+	max-height:			480px;
+	visibility:			hidden;
+	background-color: 	var(--BODY_BACK);
+	border-style:		solid;
+	border-width:		4px;
+	border-color:		var(--FRAME_BACK);
+}
+.dialogTitleBar {
+	background-color:	var(--FRAME_BACK);
+}
+td.dialogTitleBar {
+	color:				var(--INVERT_TEXT);
+	font-size:			var(--FONT_SIZE);
+	font-weight:		bold;
+	width:				80px;
+	text-align:			left;
+	padding-left:		5px;
+	vertical-align:		middle;
+}
+
+
+
+/* ============================================== */
+/* ============================================== */
+/* ============================================== */
+/* ====== here are some not so clean styles ===== */
+/* ====== (extracted from old template.css) ===== */
+/* ============================================== */
+/* ============================================== */
+/* ============================================== */
+
+
+/* =========================================================== */
+/* ====== Spacers framing the content of the main tabber ===== */
+/* =========================================================== */
+.topSpacer			{ 	background-color:var(--SPACER_BACKGROUND_COLOR);
+						padding:0;
+						border:0;
+						margin:0;
+						vertical-align:bottom;
+					}
+
+table.topSpacer		{ 	border-style:solid;
+						border-collapse:collapse;
+						height:23px;
+						width:100%;
+					}
+
+td.topSpacerLeft   	{ 	background-image:var(--SPACER_TOP_LEFT);
+						background-repeat:no-repeat;
+						width:10px;
+					}
+
+td.topSpacer   		{ 	background-image:var(--SPACER_TOP);
+						background-repeat:repeat-x;
+					}
+
+td.topSpacerRight   { 	background-image:var(--SPACER_TOP_RIGHT);
+						background-repeat:no-repeat;
+						width:10px;
+					}
+
+body.leftSpacer, div.leftSpacer  	{	background-image:var(--SPACER_LEFT);
+						background-color:var(--SPACER_BACKGROUND_COLOR);
+						background-repeat:repeat-y;
+						font-size:6px;
+					  	padding:0;
+					  	border:0;
+					  	margin:0;
+					}
+
+body.rightSpacer, div.rightSpacer 	{ 	background-image:var(--SPACER_RIGHT_BACKGROUND);
+						background-color:var(--SPACER_BACKGROUND_COLOR);
+						background-repeat:repeat-y;
+						font-size:6px;
+						padding:0;
+						border:0;
+						margin:0;
+					}
+
+.bottomSpacer		{ 	background-color:var(--SPACER_BACKGROUND_COLOR);
+						padding:0;
+						border:0;
+						margin:0;
+						height:12px;
+					}
+
+table.bottomSpacer	{ 	border-collapse:collapse;
+					}
+
+td.bottomSpacerLeft	{ 	background-image:var(--SPACER_BOTTOM_LEFT);
+						background-repeat:no-repeat;
+						width:10px;
+					}
+
+td.bottomSpacer		{ 	background-image:var(--SPACER_BOTTOM);
+						background-repeat:repeat-x;
+					}
+
+td.bottomSpacerRight{ 	background-image:var(--SPACER_BOTTOM_RIGHT);
+						background-repeat:no-repeat;
+						width:10px;
+					}
+
+body.tabber_body   	{	background-color:var(--TAB_BODY);
+						margin:8px;
+					}
+
+body.tabber_spacer, div.tabber_spacer 	{	background-color:var(--TAB_SPACER); font-size:0px;
+					}
+
+/* ================================================== */
+/* ====== ImagetextSpacer styles for top-Spacer ===== */
+/* ================================================== */
+td.topSpacerLeftText {	background-image:var(--SPACER_TOP);
+						background-repeat:repeat-x;
+						color:var(--INVERT_TEXT);
+						font-size:10pt;
+						text-align:left;
+						vertical-align:bottom;
+					}
+
+td.topSpacerLeftImg { 	background-image:var(--SPACER_TOP);
+						background-repeat:repeat-x;
+						width:20px;
+						text-align:left;
+						vertical-align:bottom;
+					}
+
+td.topSpacerCenterText{ background-image:var(--SPACER_TOP);
+						background-repeat:repeat-x;
+						color:var(--INVERT_TEXT);
+						font-size:10pt;
+						text-align:center;
+						vertical-align:bottom;
+					}
+
+td.topSpacerCenterImg{ 	background-image:var(--SPACER_TOP);
+						background-repeat:repeat-x;
+						width:18px;
+						text-align:center;
+						vertical-align:bottom;
+					}
+
+td.topSpacerRightText{	background-image:var(--SPACER_TOP);
+						background-repeat:repeat-x;
+						color:var(--INVERT_TEXT);
+						font-size:10pt;
+						text-align:right;
+						vertical-align:bottom;
+					}
+
+td.topSpacerRightImg { background-image:var(--SPACER_TOP);
+						background-repeat:repeat-x;
+						width:18px;
+						text-align:center;
+						vertical-align:bottom;
+						padding:0px;
+					}
+
+a.topSpacerRightText {	color:var(--INVERT_TEXT);
+						font-size:10pt;
+						text-decoration:var(--ANCHOR_TEXT_DECORATION_LINK);
+					}
+.topSpacerLeftText span {
+	                    white-space:nowrap;
+	                }
+/* ================== */
+/* ====== Trees ===== */
+/* ================== */
+
+/* Type image in an editable tree grid. */
+.treeType {
+	margin-right: 0.5ex;
+}
+
+/* global tree styles */
+.treeBody {
+    white-space:nowrap;
+    display: table;
+    width: 100%;
+}
+
+.treeBody .treeNode {
+	line-height: var(--TREE_NODE_LINE_HEIGHT);
+}
+
+.treeBody .treeNode.tblFrozen {
+	line-height: normal;
+}
+
+table.treeBody{
+    border-spacing: 0px;
+}
+
+div.treeBody {
+    /* Reserve some space to catch a dop operation at the end of the tree. */
+    padding-bottom: 10px;
+}
+
+.treeNode img, .breadcrumb img {
+	border-style: none;
+	vertical-align: middle;
+}
+
+div.treeNode {
+	padding-left: 5px;
+}
+
+div.treeNode.dndInsertAbove::before {
+	display: block;
+	margin-left: 12px;
+	border-top-width: 2px;
+	border-top-style: solid;
+	border-top-color: var(--INSERT_MARKER_COLOR);
+	content: "";
+}
+
+div.treeNode.dndInsertWithin::after {
+	display: block;
+	margin-left: 24px;
+	border-bottom-width: 2px;
+	border-bottom-style: solid;
+	border-bottom-color: var(--INSERT_MARKER_COLOR);
+	content: "";
+}
+
+div.treeNode.dndInsertBelow::after {
+	display: block;
+	margin-left: 12px;
+	border-bottom-width: 2px;
+	border-bottom-style: solid;
+	border-bottom-color: var(--INSERT_MARKER_COLOR);
+	content: "";
+}
+
+div.treeNode.dndInsertInto,
+div.treeNode.treeSelected.dndInsertInto {
+	background-color: var(--DROP_MARKER_COLOR);
+}
+
+div.treeNode:hover {
+	background-color: var(--TREE_SELECTION_BG_HOVER);
+	color: var(--TREE_SELECTION_COLOR_HOVER);
+}
+
+div.treeNode.treeSelected {
+	background-color: var(--TREE_SELECTION_BG);
+	color: var(--TREE_SELECTION_COLOR);
+}
+
+div.treeSelected a.selectableNode,
+div.treeSelected span.selectableNode,
+div.treeSelected span.unselectableNode {
+	color: var(--TREE_SELECTION_COLOR);
+}
+
+.selectableNode {
+	cursor: pointer;
+	vertical-align: middle;
+}
+
+div.treeChildren {
+	margin-left: 1em;
+}
+
+img.m {
+	margin-top:0px;
+	margin-bottom:0px;
+	padding:0;
+	border:0;
+					}
+
+img.m, a.s0, a.s1 {
+	vertical-align: middle;
+}
+
+body.tree 			{	background-color:var(--TREE_BACK);
+						font-size:9pt;
+						font-family:var(--TEXT_FAMILY);
+						color:var(--NORMAL_TEXT);
+						padding-bottom:2px;
+						padding-top:2px;
+						padding-left:2px;
+						padding-right:0px;
+						border:0px;
+						white-space:nowrap;
+					}
+
+/**
+ * Class treeTbl:
+ *     Tree within a table. The tree itself is displayed in the first column of
+ *     a table. Each tree node is displayed in a separate table row. The table may
+ *     have additional columns that display information associated with tree nodes.
+ */
+table.treeTbl {
+	border-collapse: collapse;
+	border-spacing: 0;
+	border-width: 0;
+	border-style: none;
+}
+
+table.treeTbl td {
+	padding: 0;
+	margin: 0;
+}
+
+/* Selected element in tree. */
+a.sNone       {text-decoration:none;}
+a.sNone:hover {text-decoration:none;}
+
+a.s1       			{
+						background:var(--SECONDARY_BACKGROUND_COLOR);
+						color:var(--SECONDARY_TEXT_COLOR);
+					}
+
+a.s3       			{
+						background-color:var(--SECONDARY_BACKGROUND_COLOR);
+						color:var(--SECONDARY_TEXT_COLOR);
+					}
+span.s1       			{
+						background-color:var(--SECONDARY_BACKGROUND_COLOR);
+						color:var(--SECONDARY_TEXT_COLOR);
+					}
+
+span.s3       			{
+						background-color:var(--SECONDARY_BACKGROUND_COLOR);
+						color:var(--SECONDARY_TEXT_COLOR);
+					}
+
+/* ==================== */
+/* ====== Headers ===== */
+/* ==================== */
+h1,h2,h3,h4,h5 {	font-family:var(--TEXT_FAMILY);
+					font-weight:bold;
+					color:var(--COLOR_TEXT);
+				}
+
+h1 {font-size:20pt;}
+h2 {font-size:16pt;}
+h3 {font-size:12pt;}
+h4 {font-size:11pt;}
+h5 {font-size:10pt;}
+
+/* ================================ */
+/* ====== Paragraphs and Such ===== */
+/* ================================ */
+nobr {}
+em   {font-style:italic;}
+
+big {font-size:var(--FONT_SIZE_BIG);}
+small,.small {font-size:var(--FONT_SIZE_SMALL);}
+strong,.strong {font-weight:bold;}
+
+tt.normal,code.normal,pre.normal {font-size:var(--FONT_SIZE);font-family:var(--MONOSPACE_FAMILY);}
+code.inlineCode {display: inline; padding: 0;}
+
+address {font-style:italic;}
+blockquote {margin-left:5em;margin-right:5em;}
+
+/* ================== */
+/* ====== Forms ===== */
+/* ================== */
+input.text {	font-size:var(--FONT_SIZE);
+				color:var(--COLOR_TEXT);
+}
+
+input.tbl {	/* Input when used in tables */
+	padding:        0;
+	margin:         0;
+	border-width:	0;
+	border-style:   none;
+	overflow:		hidden;
+
+	font-size:      10pt;
+	/* text-align:		right; */
+	color:var(--COLOR_TEXT);
+}
+
+input.tblMust {	/* mandatory Input when used in tables */
+	padding:        0;
+	margin:         0;
+	border-width:	0;
+	border-style:   none;
+	overflow:		hidden;
+
+	font-size:      10pt;
+	/* text-align:		right; */
+	color:			var(--COLOR_TEXT);
+	background-color: var(--MANDATORY_FIELD_BG);
+}
+
+/** A Numeric input field */
+input.num, span.num input {
+	font-family:    var(--MONOSPACE_FAMILY);
+	text-align:     right;
+	padding:        1px;
+	color:          var(--COLOR_TEXT);
+}
+
+textarea 	{
+    font-size:var(--FONT_SIZE);
+    font-family:var(--TEXT_FAMILY);
+
+	/* For legacy browsers */
+    width: 100%;
+
+	width: calc(100% - 10px);
+}
+
+button 		{	font-size:9pt;
+			}
+
+/** Offsets for buttons to cycle up and down integer controls */
+span.cIntegerInput .input-image.button_plus,
+span.cIntegerInput .input-image.button_minus {
+	position: absolute;
+	width: var(--ICON_SIZE_SMALL);
+	height: var(--ICON_SIZE_SMALL);
+}
+
+span.cIntegerInput .button_minus i, 
+span.cIntegerInput .button_plus i {
+	font-size: 8px;
+}
+
+span.cIntegerInput .button_plus {
+	top: -1px; 
+	left: 0px; 
+}
+
+span.cIntegerInput .button_minus { 
+	top: 10px; 
+	left: 0px;
+}
+
+/** Browser specific adjustments */
+body.IE7 .button_plus { top: 3px; }
+body.IE7 .button_minus { top: 14px; }
+
+body.IE6 .button_plus { top: 3px; }
+body.IE6 .button_minus { top: 14px; }
+
+select 		{	font-size:10pt;
+			}
+
+dt {font-weight:bold;}
+dd {}
+
+/* =========================== */
+/* ====== Table Elements ===== */
+/* =========================== */
+th,td 		{	font-size:var(--FONT_SIZE);
+				color:var(--COLOR_TEXT);
+			}
+
+th.center 	{	font-size:var(--FONT_SIZE);
+				color:var(--COLOR_TEXT);
+				text-align:center;
+			}
+
+th.right 	{	font-size:var(--FONT_SIZE);
+				color:var(--COLOR_TEXT);
+				text-align:right;
+			}
+
+th.small 	{	font-size:var(--FONT_SIZE_SMALL);
+			}
+
+th.small_center
+			{	font-size:var(--FONT_SIZE_SMALL);
+				text-align:center;
+			}
+
+td.small 	{	font-size:var(--FONT_SIZE_SMALL);
+			}
+
+th 			{	text-align:left;
+				font-weight:bold;
+			}
+
+td.label    {	text-align:right;
+				color:var(--COLOR_TEXT);
+				vertical-align:top;
+				padding-right:8px;
+				white-space:nowrap;
+				line-height: var(--FORM_LINE_HEIGHT);
+			}
+
+td.label_left {	text-align:left;
+				color:var(--COLOR_TEXT);
+				vertical-align:top;
+				padding-right:8px;
+				white-space:nowrap;
+				line-height: var(--FORM_LINE_HEIGHT);
+			}
+
+td.label_center {	text-align:center;
+				color:var(--COLOR_TEXT);
+				vertical-align:top;
+				padding-right:8px;
+				white-space:nowrap;
+				line-height: var(--FORM_LINE_HEIGHT);
+			}
+
+td.label_small
+			{	text-align:right;
+				color:var(--COLOR_TEXT);
+				vertical-align:top;
+				padding-right:8px;
+				white-space:nowrap;
+				font-size:10pt;
+			}
+
+td.label_left_small
+			{	text-align:left;
+				color:var(--COLOR_TEXT);
+				vertical-align:top;
+				padding-right:8px;
+				white-space:nowrap;
+				font-size:10pt;
+			}
+
+td.content 	{	text-align:left;
+				color:var(--NORMAL_TEXT);
+				vertical-align:top;
+				line-height: var(--FORM_LINE_HEIGHT);
+			}
+
+td.content_right
+			{	text-align:right;
+				color:var(--NORMAL_TEXT);
+				vertical-align:top;
+				line-height: var(--FORM_LINE_HEIGHT);
+			}
+
+td.content_small
+			{	text-align:left;
+				color:var(--NORMAL_TEXT);
+				vertical-align:top;
+				font-size:10pt;
+			}
+
+td.content_small_right
+			{	text-align:right;
+				color:var(--NORMAL_TEXT);
+				vertical-align:top;
+				font-size:10pt;
+			}
+
+td.content_small_middle
+			{	text-align:center;
+				color:var(--NORMAL_TEXT);
+				vertical-align:top;
+				font-size:10pt;
+			}
+
+td.content_middle
+			{	text-align:center;
+				color:var(--NORMAL_TEXT);
+				vertical-align:middle;
+				line-height: var(--FORM_LINE_HEIGHT);
+			}
+
+td.content_center
+			{	text-align:center;
+			    color:var(--NORMAL_TEXT);
+				vertical-align:top;
+				line-height: var(--FORM_LINE_HEIGHT);
+			}
+
+td.checkbox {	color:var(--NORMAL_TEXT);
+				vertical-align:top;
+			}
+
+table.tiny 	{	border-collapse:collapse;
+				border:0px;
+			}
+
+th.tiny 	{	font-size:11px;
+				padding-left:1px;
+				padding-right:1px;
+				padding-top:1px;
+				padding-bottom:1px;
+			}
+
+td.tiny 	{
+				font-size:11px;
+				padding-left:1px;
+				padding-right:1px;
+				padding-top:1px;
+				padding-bottom:1px;
+			}
+
+/* ==================================== */
+/* ====== tables with even/odd tr ===== */
+/* ==================================== */
+table.evenodd
+			{ 	border-spacing:10px;
+				border-collapse:collapse;
+				border:1px var(--TABLE_BORDER_COLOR) solid;
+			}
+
+tr.even 	{ 	white-space:nowrap;
+				background-color:var(--TR_EVEN_BACKGROUND);
+			}
+
+tr.odd  	{ 	white-space:nowrap;
+				background-color:var(--SECONDARY_BACKGROUND_COLOR);
+			}
+
+tr.selected { 	white-space:nowrap;
+				background-color:#88BBFF;
+			}
+
+/* header for upward or downward sorted columns */
+th.sortUp   {	text-align:center;
+				white-space:nowrap;
+				background-color:#DDDDEE;
+			}
+
+th.sortDown {	text-align:center;
+				white-space:nowrap;
+				background-color:#DDDDEE;
+			}
+
+/* used for displaying date/time at the bottom right of the main window. */
+td.footer 	{	font-size:9pt;
+				color:var(--NORMAL_TEXT);
+			}
+
+div.tableError	{	text-align:  center;
+					margin-top:  5px;
+					border:      2px var(--TABLE_BORDER_COLOR) solid;
+					font-weight: bold;
+					color:       #FF0000;
+				}
+
+/* ==================================== */
+/* ======      Spreadsheets       ===== */
+/* ==================================== */
+
+table.spreadOuter {
+    table-layout:       auto;
+    padding:            0;
+    border:             0;
+    margin:             0;
+    border-collapse:    collapse;
+}
+
+
+div.spreadOuterTop {
+    overflow:           hidden;
+}
+
+table.spreadTop {
+    padding:            0;
+    border:             1px solid black;
+    empty-cells:        show;
+    margin:             0;
+    border-collapse:    collapse;
+}
+
+table.spreadTop div { /* compare to tblTH */
+    text-align:          center;
+    font-family:         var(--TEXT_FAMILY);
+    font-size:           13px;
+    font-weight:         normal;
+    white-space:         nowrap;
+    color:               black;
+    background-color:    var(--TABLE_HEADER);
+}
+table.spreadTop th {
+    border:             1px solid black;
+}
+
+div.spreadOuterLeft {
+    overflow:           hidden;
+}
+
+div.spreadOuterCenter {
+    overflow:           scroll;
+}
+
+div.spreadOuterRight {
+    overflow:           hidden;
+}
+
+table.spreadsheetLeft {  /* compare to tblTH */
+    font-family:         var(--TEXT_FAMILY);
+    font-size:           13px;
+    white-space:         nowrap;
+    color:               black;
+    background-color:    var(--TABLE_HEADER);
+    padding:             0;
+    border:              1px solid black;
+    empty-cells:         show;
+    margin:              0;
+    border-collapse:     collapse;
+}
+
+table.spreadsheetLeft th {
+    font-weight:         normal;
+	border:             1px solid black;
+}
+
+table.spreadsheet {
+    padding:            0;
+    border:             1px solid black;
+    empty-cells:        show;
+    margin:             0;
+    border-collapse:    collapse;
+}
+
+table.spreadsheet td {
+    border:            1px solid black;
+}
+
+table.spreadsheet div {
+	overflow:          hidden;
+    border:            0;
+    padding:           0;
+    margin:            0;
+}
+
+table.spreadsheetRight{
+    padding:            0;
+    border:             1px solid black;
+    empty-cells:        show;
+    margin:             0;
+    border-collapse:    collapse;
+}
+
+table.spreadsheetRight th {
+    border:             1px solid black;
+}
+
+div.spreadOuterBottom {
+    overflow:           hidden;
+}
+
+table.spreadBottom div {
+    text-align:     center;
+}
+
+table.spreadBottom {
+    padding:            0;
+    border:             1px solid black;
+    empty-cells:        show;
+    margin:             0;
+    border-collapse:    collapse;
+}
+
+table.spreadBottom th {
+    border:             1px solid black;
+}
+
+/* ==================================== */
+/* ======    The Progress Bar     ===== */
+/* ==================================== */
+
+.progressBarTable {
+	table-layout	: fixed;
+	border			: thin solid black;
+	width           : 300px;
+	height          : 20px;
+	margin          : 2pt;
+}
+
+.progressText {
+	margin          : 2pt;
+	width           : 300px;
+	height          : 25px;
+}
+
+.progressCellFilled {
+	border 			: 1px;
+	background-color: #000080;
+	color           : #FFFFFF;
+}
+
+.progressCellEmpty {
+	border 			: 1px;
+	background-color: lightgrey;
+}
+
+.progressBorder {
+}
+
+.right {
+    text-align: right;
+}
+
+.center {
+    text-align: center;
+}
+
+.text-top {
+	vertical-align: text-top;
+}
+
+.messages {
+	margin: 2pt;
+	border : thin solid black;
+	width: 300px;
+	height: 100px;
+	overflow-y: scroll;
+	vertical-align: bottom;
+}
+
+/* ==================================== */
+/* ======    Color Chooser css    ===== */
+/* ==================================== */
+
+span.cColorDisplay {
+	border-style: solid;
+	border-color: black;
+	border-width: 1px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-right: 40px;
+}
+
+span.cColorDisplay.noColor {
+	background-image: var(--COLORCHOOSER_NO_COLOR);	
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+span.cColorDisplay.canDrag {
+	cursor: pointer;
+}
+
+div.DNDmouseMarker span.cColorDisplay {
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-right: 20px;
+}
+
+div.cColorPalette div.row {
+	clear: both;	
+}
+
+div.cColorPalette span.cColorDisplay {
+	display: block;
+	float: left;
+	width: 30px;
+	height: 30px;
+	padding: 0px;
+	margin: 2px;
+}
+
+/* ColorChooserSelectionControl */
+
+div.cColorComposer td {
+	vertical-align: top;
+}
+
+div.cColorComposer tr.spacer {
+	height: 3px;
+}
+
+.colorDialog {
+	padding: 3px;
+}
+
+.colorCell {
+    cursor:pointer;
+    height:30px;
+    width:30px;
+}
+
+.mandatory > .ColorChooser {
+	border:thick solid var(--MANDATORY_FIELD_BG);
+}
+
+/* ==================================== */
+/* ======     TristateControl     ===== */
+/* ==================================== */
+
+input.tristate {
+	vertical-align:top;
+	
+	/* Like the default style of an input[@type="checkbox"]. */
+	margin-top: 3px;
+	margin-bottom: 3px;
+	margin-left: 4px;
+	margin-right: 3px;
+}
+/* ==================================== */
+/* ======    BreadcrumbControl    ===== */
+/* ==================================== */
+
+/* class of the outermost div containing all nodes */
+.breadcrumb {
+	margin-left: var(--BREADCRUMB_MARGIN);
+	padding-left: var(--BREADCRUMB_PADDING);
+	color: var(--BREADCRUMB_COLOR);
+	background: var(--BREADCRUMB_BACKGROUND_INNER);
+}
+
+.breadcrumbNodeSeparator {
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+}
+
+.breadcrumb .hover .menu {
+    background-color: var(--BREADCRUMB_HOVER_MENU_BACKGROUND);
+    cursor: pointer;
+}
+
+.breadcrumb .selectableNode {
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+	background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.5) 70%);
+	border: 1px solid rgba(0, 0, 0, 0.5);
+	border-radius: 0.5em;
+}
+
+.breadcrumb .hover .selectableNode {
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.5) 70%);
+    color: var(--BREADCRUMB_HOVER_SELECTABLENODE_COLOR);
+}
+
+.breadcrumb a:link {
+	color: var(--BREADCRUMB_ALINK_COLOR);	
+}
+
+/* class of the menu which contains the subnodes to select */
+.breadcrumbMenu {
+	display: none;
+}
+
+/* class of the menu when it is visible*/
+.breadcrumbMenuVisible {
+	background: var(--BUTTONMENU_BACKGROUND);
+	border: var(--BUTTON_BORDER);
+	padding: var(--BUTTON_PADDING);
+	z-index: 2;
+}
+
+/* class of the lines which contains the nodes in the menu */
+.breadcrumbMenuNode, .breadcrumbMenuNode_hover {
+	cursor: pointer;
+}
+
+.breadcrumbMenuNode_hover {
+	background-color: var(--TERTIARY_BACKGROUND_COLOR);
+}
+
+/* This statement means: If a breadcrumb node has an icon,
+ * make a bit space between the icon and the following text. */
+.breadcrumbNodeIcon > * {
+	padding-right: 0.5em;
+}
+
+.breadcrumbNodeSeparator i {
+	color: white;
+	font-size: 140%;
+	vertical-align: middle;
+}
+
+/* ============================ */
+/* ======    PopupMenu    ===== */
+/* ============================ */
+
+.popupMenu {
+	border-collapse: collapse;
+	width: 100%;
+	display: table
+}
+
+.popupMenu ~ .popupMenu {
+	border-top: 1px solid #AAAAAA;
+}
+
+.popupMenu a {
+	/* color: inherit; */
+}
+
+.popupMenu a.tlInApp {
+	background: var(--INAPP_COMMAND_BACKGROUND);
+}
+
+.popupMenu a.menuEntryHover {
+	background: var(--POPUPMENU_ENTRYHOVER_BACKGROUND);
+	color: #fff;
+}
+
+
+.menuEntryCell {
+	padding: 0.2em;
+	white-space: nowrap;
+	display: table-cell
+}
+
+.menuEntryCell:first-child,
+.menuEntryCell img.menuEntryImage {
+	width: 27px;
+}
+
+.menuEntryEnabled, .menuEntryDisabled {
+	padding-top: 1px;
+	padding-bottom: 1px;
+}
+
+a.menuEntryDisabled span.menuEntryCell,
+.cButton.cmdLinkDisabled > a[disabled="disabled"] {
+	color: var(--MENUENTRYDISABLED_MENUENTRYCELL_COLOR);
+}
+
+.menuEntryImage {
+	vertical-align: middle;
+}
+
+.menuEntryHover {
+	color:            var(--BUTTON_COLOR);
+	background-color: var(--BUTTON_BACKCOLOR);
+	cursor: pointer;
+}
+
+.menuEntryDisabled {
+	color: var(--PRIMARY_BACKGROUND_COLOR);
+	cursor: default;
+}
+
+/* ==================================== */
+/* ======     DataItemControl     ===== */
+/* ==================================== */
+
+.cDataItem input {
+	margin-left: 2px;
+}
+
+.cDataItem input.first {
+	margin-left: 0px;
+}
+
+.cDataItem input {
+    background-color: var(--BODY_BACK);
+}
+
+.cDataItem input[type="file"] {
+	display: none;
+}
+
+.cDataItem label {
+	display: inline-block;
+}
+
+/* Display inline when shown in a table cell. */
+td.tl-table__cell .cDataItem ul,
+td.tl-table__cell .cDataItem li {
+	display: inline;
+}
+
+/* Display as table when multiple files are uploaded. */
+.cDataItem ul {
+	margin-top: 0px;
+	margin-bottom: 0px;
+	margin-left: 2px;
+	padding: 0;
+	
+	display: table;
+	border-spacing: 0px;
+}
+
+.cDataItem li {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	
+	display: table-row-group;
+}
+
+.cDataItem li .cDownload {
+	display: table-row;
+}
+
+.cDataItem li .cDownload .lFlexible,
+.cDataItem li .cDownload .lFixedRight  {
+	display: table-cell;
+	padding-bottom: 8px;
+	padding-right: 8px;
+}
+
+/* ==================================== */
+/* ======     DownloadControl     ===== */
+/* ==================================== */
+
+.downloadControl input {
+	margin-left: 2px;
+}
+
+.downloadControl input.first {
+	margin-left: 0px;
+}
+
+.downloadControl input {
+    background-color: var(--BODY_BACK);
+}
+
+/* ==================================== */
+/* ======      Miscellaneous      ===== */
+/* ==================================== */
+
+.system_message {
+    position:relative;
+    margin-left: var(--SYSTEM_MESSAGE_MARGIN_LEFT);
+    margin-top: var(--SYSTEM_MESSAGE_MARGIN_TOP);
+    margin-right: var(--SYSTEM_MESSAGE_MARGIN_RIGHT);
+    margin-bottom: var(--SYSTEM_MESSAGE_MARGIN_BOTTOM);
+    color: var(--SYSTEM_MESSAGE_COLOR);
+    font-weight: bold;
+}
+
+/* ==================================== */
+/* ======        Tooltips         ===== */
+/* ==================================== */
+
+.tooltipCaption {
+	color: var(--TOOLTIP_CAPTION_FONT_COLOR);
+	background-color: var(--TOOLTIP_CAPTION_BACKGROUND_COLOR);
+	padding: calc(var(--ttPadding) / 2) 12px;
+	line-height: 1.5 !important;
+	border-radius: 1em 1em 0 0;
+}
+
+.tooltip {
+	max-width: 500px;
+	max-height: calc(100vh - (var(--ttPadding) * 2));
+	background-color: #464646;
+	border-radius: 1em;
+	position: fixed;
+	box-shadow: 0 1px 8px rgba(0,0,0,0.5);
+	z-index: 9999999999999999;
+	--ttPadding: 8px;
+	font-weight: normal;
+	cursor: default;
+	display: flex;
+	flex-direction: column;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+/* Tooltip Arrow */
+.tooltip::after {
+	content: '';
+	position: absolute;
+	width: var(--ttArrow-dim);
+	height: var(--ttArrow-dim);
+	top: var(--ttArrow-top);
+	transform: var(--ttArrow-trans);
+	background-color: #464646;
+	--ttArrow-dim: 18px;
+}
+
+.ttVerticalArrowBottom::after {
+	bottom: 2px;
+	--ttArrow-trans: translate(0%, 50%);
+	clip-path: polygon(0% 50%, 100% 50%, 50% 100%);
+}
+
+.ttVerticalArrowTop::after {
+	top: 2px;
+	--ttArrow-trans: translate(0%, -50%);
+	clip-path: polygon(0% 50%, 100% 50%, 50% 0%);
+}
+
+.ttVerticalArrowLeft::after {
+	left: calc(var(--ttArrow-dim) / 2);
+}
+
+.ttVerticalArrowRight::after {
+	right: calc(var(--ttArrow-dim) / 2);
+}
+
+.ttHorizontalArrowLeft::after {
+	left: 2px;
+	--ttArrow-trans: translate(-50%, -50%);
+	clip-path: polygon(50% 0%, 0% 50%, 50% 100%);
+}
+
+.ttHorizontalArrowRight::after {
+	right: 2px;
+	--ttArrow-trans: translate(50%, -50%);
+	clip-path: polygon(50% 0%, 100% 50%, 50% 100%);
+}
+
+/* Tooltip Content */
+.tooltipContent {
+	overflow-y: auto;
+	white-space: normal;
+	overflow-wrap: break-word;
+	padding: var(--ttPadding) 12px;
+	line-height: 1.5 !important;
+	color: white;
+	text-align: left;
+	font-size: 12px;
+	cursor: text;
+}
+
+.tooltipContent * {
+	margin: 0;
+	color: white;
+	line-height: 1.5 !important;
+	padding: 0 !important;
+}
+
+.tooltipContent :is(h1, h2, h3, h4, h5, h6) {
+	text-align: center;
+	clear: both;
+	margin-bottom: 8px;
+}
+
+/* ==================================== */
+/* ======  Styles for DIVLayout   ===== */
+/* ==================================== */
+
+.absolute {
+	position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.maximal {
+    height: 100%;
+    width: 100%;
+}
+
+.loading {
+    background: transparent url(../images/icons/loading.gif) no-repeat center center;
+}
+
+/*
+ * =======================================
+ * ======= Styles for selector ===========
+ * =======================================
+ */
+.updating {
+    background: #AAAAAA;
+    filter: alpha(opacity =   30);
+    -moz-opacity: 0.3;
+    /*
+     * since Firefox 3.5
+     */
+    opacity: 0.3;
+}
+
+div.selectbox {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+    background-color: white;
+    border-style: solid;
+    border-width: 2px;
+    border-style: ridge;
+    border-color: threeddarkshadow threedlightshadow threedlightshadow
+        threeddarkshadow;
+}
+
+div.selectbox ul {
+	display: table;
+	width: 100%;
+    margin: 0;
+    padding-left: 0;
+    /*
+        The height is a strange hack for IE8. Incremental updates will update the
+        DOM element of IE8, but the GUI will not be updated, i.e. if there are two
+        elements and one is inserted then there are still just two elements visible.
+    */
+    height: 0px;
+}
+
+div.cListControl li,
+div.selectbox li,
+div.selectbox .treeNode {
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+div.selectbox li {
+	display: table-row;
+}
+
+div.selectbox li > span,
+div.selectbox li > a
+ {
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+div.selectbox li.focus {
+    border-style: dotted;
+    border-width: 1px;
+    border-color: white;
+}
+
+div.cListControl li.selected,
+div.cListControl .fixed,
+div.selectbox li.selected,
+div.selectbox .fixed,
+div.selectbox .treeNode.treeSelected,
+div.selectbox .treeNode.treeNodeReferencedSelected {
+    cursor: default;
+}
+
+div.cListControl li.selected span,
+div.cListControl li.selected a,
+div.selectbox li.selected, 
+div.selectbox li.selected span,
+div.selectbox li.selected a,
+div.selectbox .treeNode.treeSelected, 
+div.selectbox .treeNode.treeSelected a,
+div.selectbox .treeNode.treeSelected span {
+    color: white;
+    background-color: highlight;
+}
+
+div.cListControl li.selected.fixedSelectable span,
+div.cListControl li.selected.fixedSelectable a,
+div.selectbox li.selected.fixedSelectable, 
+div.selectbox li.selected.fixedSelectable span,
+div.selectbox li.selected.fixedSelectable a {
+    background-color: var(--HIGHLIGHT_SECONDARY);
+}
+
+div.selectbox .treeNode.treeNodeReferencedSelected {
+    background-color: var(--TREE_SELECTION_BG_HOVER);
+}
+
+div.selectbox li.tableSeparator {
+	font-size: 5px;
+	background-color: #ccc;
+}
+
+div.selectbox li.tableSeparator.selected, 
+div.selectbox li.tableSeparator.selected a{
+	background-color: #666;
+}
+
+.selectbox .treeBody {
+	height: 100%;
+}
+
+button {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+td.leftList {
+    vertical-align: top;
+    padding-right: 7px;
+}
+
+td.rightList {
+    vertical-align: top;
+    padding-left: 7px;
+}
+
+.fixed,
+.fixedSelectable a:link {
+    color: graytext;
+}
+
+button.moveOption {
+	width: 100%;
+}
+
+span.moveOption {
+	/* Since button control spans are displayed inline-block, they must be explicitly expanded. */
+	width: 100%;
+}
+
+/*
+ * =======================================
+ * ==== Styles for Buttons / Container ===
+ * =======================================
+ */
+ 
+.buttonScrollContainer {
+	padding-left: 0;
+	padding-right: 0;
+	overflow:hidden;
+}
+ 
+.cmdButtonsDialogOpener {
+	position: absolute;
+	top: 0;
+	right: 0;
+	top: 50%;
+	transform: translate(0, -50%);
+/*	Hide by default. Made visible by adding class "visible". See below. */
+	display: none;
+}
+
+.cmdButtonsDialogOpener.visible {
+	display:block;
+}
+  
+ .buttonSpaceHolder {
+    width:10000px;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+ 
+ .IE7 .buttonSpaceHolder {
+   padding-top: 3px;
+   padding-bottom: 3px;
+}
+ 
+/*
+ * =======================================
+ * ======= Styles for Drag n Drop ========
+ * =======================================
+ */
+.DNDinsertMarker {
+	line-height: 5px;
+	background-color: var(--INSERT_MARKER_COLOR);
+}
+
+div.DNDmouseMarker {
+	position: absolute;
+}
+
+div.DNDmouseMarker div.dndSelection {
+    position: static;
+    background-color: #DDDDDD;
+    border: solid 1px;
+    padding: 2px;
+}
+
+/*
+ * =======================================
+ * === End: Styles for Drag n Drop =======
+ * =======================================
+ */
+
+.pre {
+    white-space: pre;
+}
+
+/*
+ * ==========================================
+ * ======= Styles for the MessageBox ========
+ * ==========================================
+ */
+
+div.mboxImage img,
+div.mboxImage i {
+	margin-right: 5px; 
+	margin-bottom: 5px;
+}
+
+div.mboxImage i {
+	font-size: 32px; 
+}
+
+div.mboxImage {
+	float: left; 
+}
+
+div.mboxContent {
+	margin: 5px;
+}
+
+div.mboxHeader {
+    font-weight: bold; 
+    font-size: larger;
+}
+
+div.mboxMessage {
+	margin-top: 5px;
+}
+
+div.mboxInput {
+	margin-top: 5px;
+	padding-left: 10px;
+}
+
+/*
+ * ===============================================
+ * ======= End: Styles for the MessageBox ========
+ * ===============================================
+ */
+
+div.label {
+	color:var(--COLOR_TEXT);
+}
+ 
+div.content {
+	color:var(--NORMAL_TEXT);
+	padding-left: 10px;
+	margin-bottom: 5px;
+}
+
+/*
+ * ===============================================
+ * ========= Styles for the BoxDecorator =========
+ * ===============================================
+ */
+
+div.boxFormGroup {
+	border:				solid 1px black; 
+	margin:				5px;
+}
+div.boxFormGroupHeader {
+	padding-left:		5px;
+	font-weight:		bold;
+}
+div.boxFormGroupContent {
+	padding:5px;
+	overflow: auto;
+}
+
+/* == BooleanChoiceControl == */
+
+span.bcc-option {
+	margin-right: 1ex;
+}
+
+/*
+ * =====================================
+ * == FlexibleFlowlayoutControl.cCollapsible (ffl) ==
+ * =====================================
+ */
+
+div.layoutVerticalAdjustmentGrabber {
+	background: var(--LAYOUT_VERTICAL_ADJUSTMENT_GRABBER_BACKGROUND);
+	cursor: n-resize;
+}
+
+div.layoutHorizontalAdjustmentGrabber {
+	background: var(--LAYOUT_HORIZONTAL_ADJUSTMENT_GRABBER_BACKGROUND);
+	cursor: e-resize;
+}
+
+div.fflCollapsed {
+	cursor: default;
+}
+
+div.layoutAdjustmentPane {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background-color: white;
+	
+	/*IE6 und IE7 */
+	filter: alpha(opacity=0);
+
+	/*other (css)*/
+	opacity: 0;
+}
+
+.changePasswordForm {
+	padding: 4px;
+}
+
+div.password-strength-frame {
+	margin-top: 3px;
+	height: 4px;
+	border-style: solid;
+	border-color:#AAAAAA
+}
+
+span.activatable {
+	cursor: pointer;
+	font-weight: bold;
+}
+
+form.fltForm {
+}
+
+div.fltScrollBox {
+	position: absolute;
+	overflow: auto;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	left: 0px;
+	background-color: var(--FILTER_BACKGROUND_COLOR);
+}
+
+div.fltArea {
+	display: table;
+	width: calc(100% - 10px); /* to avoid scrollbars */
+}
+
+div.fltContainer {
+	display: table-cell;
+	background-color: var(--FILTER_BACKGROUND_COLOR);
+/*
+box-shadow: inset 0px 0px 6px #666;
+	border-bottom: 1px solid #636465;
+	*/
+}
+
+div.fltContainer div.fhrContainer {
+	height: auto;
+}
+
+div.fltContainer table.fhrTable {
+	margin-bottom: 10px;
+}
+
+div.fltContainer td.fhrLeft {
+	height: auto;
+
+	background-image:var(--HR_FILTER_BACKGROUND);
+	background-repeat:repeat-x;
+	background-position-y: -2px;
+}
+
+div.fltContainer td.fhrMiddle {
+	padding: 0px 5px 0px 5px;
+	height: auto;
+	width: auto;
+	white-space: nowrap;
+
+	font-size: var(--FONT_SIZE);
+	font-weight: bold;
+	color: var(--GROUP_LABEL_COLOR);
+
+	background-image: none;
+}
+
+div.fltContainer td.fhrRight {
+	height: auto;
+	width: 100%;
+
+	background-image:var(--HR_FILTER_BACKGROUND);
+	background-repeat:repeat-x;
+	background-position-y: -2px;
+}
+
+div.fltTitle {
+	padding-top: 12px;
+	padding-left: 10px;
+	font-weight: bold;
+	color: var(--GROUP_LABEL_COLOR);
+	text-shadow: 0 -1px 1px #FFFFFF, 0 1px 1px #666666;
+}
+
+.fltSubTitle {
+	margin-bottom: 10px;
+	font-weight: bold;
+	color: #4F6CA8;
+}
+
+img.fltIcon {
+	top: -2px;
+}
+
+div.fltRefresh {
+	position: absolute;
+	right: 10px;
+	top: 4px;
+}
+
+div.fltNoModel, div.fltContent {
+	padding-top:4px;
+	padding-left:4px;
+}
+
+.noSelection {
+	position: relative; 
+	top: 40%; 
+	text-align: center
+}
+
+/* == refreshProgress.jsp == */
+
+.progressDialog .message,
+.progressDialog .progress
+{
+	text-align: left;
+	color:var(--NORMAL_TEXT);
+	vertical-align: top;
+	margin-left: 8px;
+	margin-right: 8px;
+}
+
+.progressDialog .head {
+	margin-left: 8px;
+	margin-right: 8px;
+	margin-top: 15px;
+}
+
+.progressDialog .progressBorder {
+}
+
+/* Classes used for configured tooltips: see ConfiguredAttributedTooltipProvider */
+span.configuredTooltipValue {
+}
+
+span.configuredTooltipLabel {
+	font-weight: bold;
+}
+
+/* ================================================================= */
+/* ====== Declarative form definitions (df), see EditorFactory ===== */
+/* ================================================================= */
+
+/* Lines should keep a bit distance from one-another. */
+.dfModeCompact span {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+/* Text should keep a bit distance to fields.
+   This cannot be achieved by spaces in the text,
+   as spaces are not allowed at the start or end of i18n. */
+.dfContent span.cDropdownSelect::before,
+.dfContent span.cDropdownSelect::after,
+.dfContent span.cExpandableTextInput::before,
+.dfContent span.cExpandableTextInput::after,
+.dfContent span.cTextInput::before,
+.dfContent span.cTextInput::after,
+.dfContent span.cButton::before,
+.dfContent span.cButton::after {
+	content: " ";
+}
+
+div.dfToolbar {
+	float: right;
+}
+
+span.dfToolbar {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	right: 0px;
+	text-align: right;
+	width: 22px;	
+}
+
+/* In the compact mode, all but the outermost dfList should have indent. */
+/* In the full mode, the outermost dfList should have indent, too. */
+div.dfList div.dfList, .dfModeFull div.dfList {
+	margin-left: 25px;
+}
+
+div.dfListContent {
+}
+
+div.dfListEntry {
+	position: relative;
+	line-height: 16px;
+	margin-bottom: 5px;
+}
+
+.dfModeFull div.dfListEntry {
+	margin-bottom: 5px;
+}
+
+div.dfEntryTitle.colored,
+div.dfEntryTitle.colored label {
+	font-weight: bold;
+	color: var(--GROUP_LABEL_COLOR);
+}
+
+div.dfEntryTitle.colored {
+	margin-bottom: 3px;
+}
+
+div.dfEntryTitle label {
+	margin-bottom: 0px;
+}
+
+.dfModeFull span.dfListIcon {
+	position: absolute;
+	left: -25px;
+}
+
+.dfModeCompact span.dfListRemove {
+	margin-right: 0.5em;
+}
+
+.dfModeFull span.dfListCommands {
+	position: absolute;
+	right: 0px;
+}
+
+div.dfListAdd {
+	margin-top: 3px;
+	line-height: 16px;
+	white-space: nowrap;
+}
+
+.dfModeFull div.dfListAdd {
+	margin-left: -25px;
+}
+
+div.dfEntryHeader {
+	font-weight: bold;
+}
+
+.dfModeFull .dfEntryTitle .rf_columnsLayout:not(.keep),
+.dfModeFull .dfEntryTitle .rf_columnsLayout:not(.keep) .rf_inputCellOneLine {
+	margin-bottom: 0px;
+}
+	
+.dfModeFull .dfEntryTitle {
+	display: flex;
+	gap: 3px;
+	align-items: center;
+}
+	
+.dfModeFull .dfEntryTitle > .lFlexible {
+	flex-grow: 1;
+	position: relative;
+}
+	
+.dfModeFull .dfEntryTitle > .lFlexible .is-error {
+	position: absolute;
+	right: 5px;
+	display: flex;
+	align-items: center;
+	height: 100%;
+	top: 0;
+}
+
+/* ================================================================= */
+/* ====== Model Based Search, see ModelBasedSearch and Search  ===== */
+/* ================================================================= */
+
+.modelBasedSearch {
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+/* ============================================================== */
+/* ====== Sync scrolling images (ssi), see ImageControl     ===== */
+/* ============================================================== */
+
+div.ssiHeader,
+div.ssiEdge,
+div.ssiTop,
+div.ssiBody,
+div.ssiLeft,
+div.ssiContent
+{
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+}
+
+div.ssiHeader,
+div.ssiEdge,
+div.ssiTop,
+div.ssiBody,
+div.ssiLeft
+{
+	overflow: hidden;
+}
+
+div.ssiEdge,
+div.ssiTop,
+div.ssiLeft,
+div.ssiContent {
+	vertical-align: top;
+	text-align: left;
+}
+
+div.ssiContent
+{
+	overflow: auto;
+}
+
+img.ssiImage
+{
+	position: relative;
+}
+
+div.ssiContentArea
+{
+	overflow: hidden;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+/* ===== com.top_logic.layout.form.decorator.ChangeInfo ===== */
+
+.changeInfoNoChange {}
+
+.changeInfoCreated {
+	color: green;
+}
+
+.changeInfoRemoved {
+	color: red
+}
+
+.changeInfoChanged {
+	color: blue
+}
+
+.changeInfoDeepChanged {
+	color: darkblue
+}
+
+.changeInfoCreated img,
+.changeInfoRemoved img,
+.changeInfoChanged img, 
+.changeInfoDeepChanged img {
+	vertical-align: text-bottom;
+}
+
+.changeInfoCreated.form img,
+.changeInfoRemoved.form img,
+.changeInfoChanged.form img, 
+.changeInfoDeepChanged.form img {
+	padding-right: 5px;
+}
+
+.changeInfoCreated.table img,
+.changeInfoRemoved.table img,
+.changeInfoChanged.table img, 
+.changeInfoDeepChanged.table img {
+	padding-right: 0px;
+}
+
+.clickGuardContainer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	overflow: hidden;
+	background-color: white;
+	opacity: 0;
+	filter: alpha(opacity=0);
+}
+
+.activeGalleryManagementButton, .inactiveGalleryManagementButton {
+	text-align: center;
+	border: 0 solid;
+    border-radius: 0 0 10px 10px;
+}
+
+.activeGalleryManagementButton {
+	cursor: pointer;
+	color: var(--BUTTON_COLOR);
+	background-color: var(--BUTTON_BACKGROUND);
+}
+
+.activeGalleryManagementButton:hover,
+[data-tool=true] > .attribute:hover
+{
+	color: var(--BUTTON_COLOR_HOVER);
+	background-color: var(--BUTTON_BACKGROUND_HOVER);
+}
+
+.inactiveGalleryManagementButton {
+	cursor: default;
+	color: var(--BUTTON_DISABLED_COLOR);
+	background-color: var(--BUTTON_DISABLED_BACKGROUND);
+}
+
+.galleryImageLabel {
+	margin-left: 5px;
+}
+
+
+/* Icon Chooser */
+
+.cIconChooser {  
+}
+
+.cIconChooser div.header .searchTextField input.is-input {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+	width: calc(96% - 67px);
+	padding-left: 23px;
+	height: 22px;
+}
+
+.cIconChooser div.header .expertTextField input.is-input {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+	width: calc(96% - 67px);
+	height: 22px;
+}
+
+.cIconChooser div.header a {
+	border: 0px;
+}
+
+.cIconChooser div.header .inputfield {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+}
+
+.cIconChooser div.header .resetButton,
+.cIconChooser div.header .okButton {
+	position: absolute;
+	bottom: 5px;
+	right: 35px;
+}
+
+.cIconChooser div.header .toggleExpertButton {
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
+}
+
+.cIconChooser .searchTextField .search {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	color: #DCDCDC;
+}
+
+.cIconChooser .fptBodyContent .displayedIcons {
+	position: relative;
+	display: inline-block;
+    margin-bottom: 5px;
+    margin-right: 5px;
+	width: 30px;
+	height: 30px;
+	border: 1px solid #7A7A7A;
+}
+
+.cIconChooser a,
+.cIconChooser .input-image {
+	display: table-cell;
+	text-align: center;	
+	vertical-align: middle;
+}
+
+.cIconChooser div.header .toggleExpertButton a,
+.cIconChooser div.header .resetButton a,
+.cIconChooser div.header .okButton a,
+.cIconChooser .fptBodyContent .displayedIcons a {
+	width: 30px;
+	height: 30px;
+}
+
+.cIconChooser .fptBodyContent input {
+    position: absolute;
+    top: 50%;
+    right: 50%;
+    transform: translate(50%,-50%);
+	max-width: 30px;
+	max-height: 30px;
+}
+
+.cIconChooser .fptBodyContent .displayedIcons {
+	background-color: var(--ICONCHOOSER_BACKGROUND);
+}
+
+.cIconChooser .fptBodyContent .displayedIcons.selected {
+	background-color: var(--ICONCHOOSER_BACKGROUND_SELECTED);
+}
+
+.cIconChooser .fptBodyContent .displayedIcons:hover {
+	background-color: var(--ICONCHOOSER_BACKGROUND_HOVER);
+}
+
+.cIconChooser i.fab, 
+.cIconChooser i.far,
+.cIconChooser i.fas,
+.cIconChooser i.tl-icon {
+    font-size: 1.5em;
+}
+
+.cIconChooser div.header {
+	position: absolute;
+	left: 0px; 
+	top: 0px; 
+	height: 42px;
+	width: 100%;
+}
+
+.cIconChooser div.fptBody {
+ 	position: absolute; 
+	left: 0px; 
+	right: 0px; 
+	bottom: 0px; 
+	top: 42px;
+	bottom: 0px; 
+}
+
+.cIconChooser div.fptBodyContent {
+	padding-top: 0px;
+}
+
+.cIconChooser .cannot-edit .is-input, 
+.cIconChooser .disabled .is-input {
+	display: inline-block;
+}
+
+.cIconChooser .input-image {
+	height: 20px;
+	width: 20px;
+	border: 1px solid #7A7A7A;
+	background-color: var(--ICONCHOOSER_BACKGROUND);
+}
+
+.cIconChooser .input-image:hover {
+	background-color: var(--ICONCHOOSER_BACKGROUND_HOVER);
+}
+
+.cIconChooser .input-image.disabled,
+.cIconChooser .input-image.disabled:hover {
+	background-color: var(--ICONCHOOSER_BACKGROUND_DISABLED);
+}
+
+.cIconChooser .gray {
+	color: #AAAAAA;
+}
+
+.cIconChooser .preview i.fab, 
+.cIconChooser .preview i.far,
+.cIconChooser .preview i.fas {
+    font-size: 1.2em;
+}
+
+.cIconChooser, 
+.cIconChooser img {
+	display: inline-block;
+	min-height: 20px;
+	min-width: 20px;
+}
+
+.cIconChooser input.is-action {
+	margin: 0px;
+}
+
+/* ============================================ */
+/* ==== simpleajax network error box (sx) ===== */
+/* ============================================ */
+
+div.sxError {
+	font-size: large;
+	color: white;
+	position: absolute;
+	background: #EE3333;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	padding: 10px;
+	border: 3px solid #CC2222;
+	cursor: default;
+}
+
+div.sxMessage,
+div.sxFailure
+{
+	margin: 10px;
+}
+
+div.sxButtons {
+	font-size: small;
+	text-align: right;
+	margin-top: 20px;
+}
+
+div.sxFailure,
+div.sxButtons
+{
+	display: none;	
+}
+
+div.sxRetry div.sxMessage {
+	display: none;
+}
+
+div.sxRetry div.sxFailure,
+div.sxRetry div.sxButtons 
+{
+	display: block;
+}
+
+span.sxButton {
+	margin-left: 5px;
+	display: inline-block;
+	padding: 5px;
+	border: 1px solid #ffffff;
+	cursor: pointer;
+}
+
+span.sxButton:HOVER {
+	color: #EE3333;
+	background: white;
+}
+
+/* ==================================== */
+/* ==== layoutControl.cCollapsible styles (lc) ===== */
+/* ==================================== */
+
+div.lcViewport {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	bottom: 0px;
+	right: 0px;
+}
+
+div.lcAuto {
+	overflow: auto;
+}
+
+div.lcScroll {
+	overflow: scroll;
+}
+
+div.lcHidden {
+	overflow: hidden;
+}
+
+div.mcToggle {
+	position: absolute;
+	cursor: pointer;
+	width: var(--MC_TOGGLE_WIDTH);
+	height: var(--MC_TOGGLE_HEIGHT);
+	right: 0px;
+	
+	/* Duplicate defintion for legacy compatibility. */
+	top: 50%;
+	top: calc(50% - var(--MC_TOGGLE_HEIGHT) / 2);
+	
+	background: var(--MC_MINIMIZE_ICON);
+	visibility: hidden;
+}
+
+div.mcMinimized > div.mcToggle {
+	background: var(--MC_NORMALIZE_ICON);
+}
+
+div.cMinimizable:HOVER > div.mcToggle {
+	visibility: visible;
+}
+
+div.mcMinimized.frmBody, div.mcMinimized div.frmBody {
+	overflow: hidden;
+}
+
+div.mcMinimized .accText {
+	display: none;
+}
+
+.errorFragmentContainer {
+	cursor: default;
+	margin: 5px;
+	padding: 2px 5px;
+	color: red;
+	font-weight: bold;
+	border-style: solid;
+	border-color: red;
+	border-width: 1px;
+	background-color: var(--BODY_BACK);
+	display: flex;
+	align-items: baseline;
+}
+
+.errorFragmentImage {
+	margin-right: 3px;
+	height: 1em;
+}
+
+.tl-info-service {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	width: 400px;
+	max-height: 100%;
+	max-width: 100%;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.tl-info-service .fab, 
+.tl-info-service .far,
+.tl-info-service .fas,
+.tl-info-service .tl-icon {
+	color: #676767;
+}
+
+.tl-info-service_pinned {
+	/* Marker class */
+}
+
+.tl-info-service-item__hide-info-service_animation {
+	animation-name: tl-info-service-item__hide-info-service_animation;
+	animation-duration: 1s;
+}
+
+.tl-info-service-item {
+	position: relative;
+	margin: 8px 3px 0px;
+	padding: 0px 16px 8px 16px;
+    border-radius: 10px;
+    box-shadow: 0px 1px 5px #888;
+    overflow-y: hidden;
+    overflow-x: auto;
+}
+
+.tl-info-service-item.tl-info-service-item__error {
+	background-color: #FFDAD4;
+}
+
+.tl-info-service-item.tl-info-service-item__warning {
+	background-color: #FFF1CC;
+}
+
+.tl-info-service-item.tl-info-service-item__info {
+	background-color: #D6E3F7;
+}
+
+.tl-info-service-item__error .tl-info-service-item__header-message span i:not(.tl-info-service-item__close-button i) {
+	color: #D3181B;
+}
+
+.tl-info-service-item__warning .tl-info-service-item__header-message span i:not(.tl-info-service-item__close-button i) {
+	color: #D3A118;
+}
+
+.tl-info-service-item__info .tl-info-service-item__header-message span i:not(.tl-info-service-item__close-button i) {
+	color: #2968C8;
+}
+
+.tl-info-service-item__header {
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+	justify-content: flex-end;
+	margin-top: 5px;
+}
+
+.tl-info-service-item__header-message:not(.tl-info-service-item .tl-info-service-item__header .tl-info-service-item__header-message) {
+	display: flex;
+  	flex-grow: 2;
+  	margin-top: 5px;
+}
+
+.tl-info-service-item__header-message {
+  	display: flex;
+  	flex-grow: 2;
+	justify-content: space-between;
+}
+
+.tl-info-service-item__header-message span i {
+  	display: flex;
+  	align-items: center;
+}
+
+.tl-info-service-item__header-message-text {
+	display: flex;
+	flex-grow: 2;
+	justify-content: space-between;
+	padding-left: 7px;
+	line-break: anywhere;
+}
+
+.tl-info-service-item__header-type-message {
+	margin-left: 5px;
+	font-weight: bold;
+}
+
+.tl-info-service-item__header-message .tl-info-service-item__error-icon {
+	display: block;
+}
+
+.tl-info-service-item__header-message .tl-info-service-item__error-icon span {
+	display: inline-block
+}
+
+.tl-info-service-item__message p {
+	margin: 0;
+}
+
+.tl-info-service-item__message {
+	max-height: 400px;
+	overflow-y: auto;
+	word-break: break-word;
+	margin: 8px 0;
+}
+
+.tl-info-service-item__log-time {
+	padding: 0 20px;
+	white-space: nowrap;
+}
+
+.tl-info-service-item__details summary,
+.tl-info-service-item__close-button {
+	cursor: pointer;
+}
+
+.tl-info-service-item__details {
+	overflow-x: auto;
+	margin-top: 16px;
+}
+
+.tl-info-service-item__details-message {
+	padding-top: 8px;
+}
+
+p.tl-info-service-item__details-message-no-bottom {
+	margin-bottom: 0px;
+}
+
+.tl-info-service-item:last-child {
+	margin-bottom: 3px;
+}
+
+.tl-info-service-item__show-info_animation {
+	animation-name: tl-info-service-item__show-info_animation;
+	animation-duration: 0.2s;
+}
+
+.tl-info-service-item__show-pinned-info_animation {
+	animation-name: tl-info-service-item__show-pinned-info_animation;
+	animation-duration: 0.2s;
+}
+
+.tl-info-service_pinned .tl-info-service-item__hide-info_animation {
+	animation-name: tl-info-service-item__hide-info_animation;
+	animation-duration: 0.2s;
+}
+
+@keyframes tl-info-service-item__show-info_animation {
+    0% {opacity: 0;}
+    100% {opacity: 0.9; margin-top: 3px;}
+}
+
+@keyframes tl-info-service-item__show-pinned-info_animation {
+    0% {opacity: 0;}
+    100% {opacity: 1; margin-top: 3px;}
+}
+
+@keyframes tl-info-service-item__hide-info_animation {
+    0% {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+@keyframes tl-info-service-item__hide-info-service_animation {
+    from {opacity: 1;}
+    to {opacity: 0;}
+}
+
+span.cLogoutTimer {
+	display: none;
+	font-weight: bold;
+	color: red;
+}
+
+span.cLogoutTimer input {
+	vertical-align: sub;
+	display: none;
+}
+
+span.ltcCounting {
+	display: block;
+}
+
+span.ltcCounting input {
+	display: inline;
+}
+
+a.autoLink:link {
+    color: blue;
+    text-decoration: underline;
+}
+
+a.autoLink:visited {
+    color: purple;
+    text-decoration: underline;
+}
+
+a.autoLink:hover {
+    color: #0563C1;
+    text-decoration: underline;
+}
+
+.quotedComments {
+	font-style: italic;	
+}
+
+.cTextSelect .fClear {
+	 -webkit-transform: scale(0.7); /* Saf3.1+, Chrome */
+     -moz-transform: scale(0.7); /* FF3.5+ */
+      -ms-transform: scale(0.7); /* IE9 */
+       -o-transform: scale(0.7); /* Opera 10.5+ */
+          transform: scale(0.7);
+          
+    margin-right: 5px;
+    margin-left: -2px;
+    margin-top: -2px;      
+}
+
+
+/* ================================= */
+/* ==== responsive form layout ===== */
+/* ================================= */
+
+.rf_content {
+	grid-column: 1;
+	grid-row: 2;
+    -ms-grid-column:1; 
+	-ms-grid-row:2; 
+	display: grid;
+	grid-auto-flow: row;
+	grid-gap: 4px var(--RF_HORIZONTAL_GAP_CELLS);
+	padding-top: 15px;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-bottom: 10px;
+	grid-auto-rows: max-content;
+	line-height: 24px;
+	border-radius: 0px 0px 3px 3px;
+}
+
+.rf_content .rf_header {
+	line-height: normal;
+}
+
+.rf_columnsLayout,
+div.rf_buttons {
+	display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+}
+
+.rf_columnsLayout {
+    margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
+}
+
+.rf_columnsLayout.keep {
+	display: table;
+	width: 100%;
+}
+
+div.layoutControl.dflColumns .rf_columnsLayout.keep > .rf_inputCellOneLine,
+div.layoutControl.dflColumns .rf_columnsLayout.keep > .rf_inputCell {
+	display: table-cell;
+	padding-right: 5px;
+	padding-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.rf_columnsLayout.keep > * > * {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.keep, .rf_cell {
+	width: 100%;
+}
+
+.rf_columnsLayout > *:not(body) {
+  	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.rf_columnsLayout > .rf_groupCell {
+  	margin-left: calc(var(--RF_HORIZONTAL_GAP_COLUMNS) - 2px); /* 2px for the border */
+}
+
+.dflColumns0 .rf_cellSmall,
+.dflColumns1 .rf_cellSmall {
+	width: 100% !important;
+}
+
+.rf_columnsLayout .inputCellOneLine,
+.rf_inputCellOneLine,
+.rf_inputCell {
+    line-height: 24px;
+}
+
+/* even empty cells have a height */
+.rf_cell {
+    min-height: 24px;
+}
+
+/* columns layout */
+.rf_columnsLayout .rf_content > * > .rf_line:not(.dfList),
+.rf_columnsLayout .rf_groupCell .rf_groupCell,
+.rf_inputCell .rf_columnsLayout .rf_line:not(.dfList) {
+	min-width: 100%;
+  	width: -moz-fit-content;
+  	width: fit-content;
+  	box-sizing: border-box;
+}
+
+.rf_columnsLayout .rf_line.dfList {
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+	width: calc(100% - 25px);
+  	box-sizing: border-box;
+}
+
+.rf_columnsLayout > .rf_line,
+.rf_columnsLayout > *:not(body),
+.rf_columnsLayout.cols1 > *:not(body),
+.dflColumns.dflColumns0 .rf_columnsLayout > *:not(body),
+.dflColumns.dflColumns1 .rf_columnsLayout > *:not(body),
+.layoutControl.dflColumns.dflColumns1 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns2 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl .layoutControl.dflColumns .rf_inputCell.is-control > .rf_cell .rf_columnsLayout > *:not(body),
+.layoutControl .layoutControl.dflColumns .rf_inputCellOneLine.is-control > .rf_cell .rf_columnsLayout > *:not(body) {
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
+  	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
+  	box-sizing: border-box;
+ }	
+ 
+.dflColumns2 .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.rf_columnsLayout.cols2 > *:not(.rf_line),
+.layoutControl.dflColumns1 .rf_columnsLayout.cols2 > *:not(.rf_line)  { 
+  	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.dflColumns.dflColumns3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
+  	min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.layoutControl.dflColumns.dflColumns3 .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .rf_columnsLayout.cols4 > *:not(.rf_line):not(.rf_line) { 
+  	min-width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.layoutControl.dflColumns.dflColumns3 .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .rf_columnsLayout.cols5 > *:not(.rf_line):not(.rf_line) { 
+  	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+/* content of a group */
+.layoutControl.dflColumns .rf_content.cols1,
+.layoutControl.dflColumns .rf_content .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5),
+.layoutControl.dflColumns .rf_columnsLayout .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5),
+.dflColumns0 .rf_content,
+.dflColumns1 .rf_content,
+.dflColumns2 .maxCols1 .rf_content,
+.dflColumns3 .maxCols1 .rf_content {
+	/* avoid creating more columns than possible, use cols classes manually in those cases */
+	grid-template-columns: repeat(1, 1fr); 
+}
+
+.layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1) .rf_content.cols2,
+.dflColumns2 .rf_content,
+.dflColumns3 .maxCols2 .rf_content {
+	grid-template-columns: repeat(2, 1fr); 
+}
+
+.layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1):not(.dflColumns2) .rf_content.cols3,
+.dflColumns3 .rf_content {
+	grid-template-columns: repeat(3, 1fr); 
+}
+
+.layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1):not(.dflColumns2) .rf_content.cols4,
+.dflColumns3 .maxCols4 .rf_content {
+	grid-template-columns: repeat(4, 1fr);   
+}
+  
+.layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1):not(.dflColumns2) .rf_content.cols5,
+.dflColumns3 .maxCols5 .rf_content {	
+	grid-template-columns: repeat(5, 1fr); 
+} 
+
+
+/* in lists */
+.dfListContent > .rf_columnsLayout {
+	margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+}
+
+.dfListContent > .rf_columnsLayout > *:not(body) {
+	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY);
+}
+
+.layoutControl.dflColumns.dflColumns0 .dfListContent .rf_columnsLayout > .dfListEntry,
+.layoutControl.dflColumns.dflColumns1 .dfListContent .rf_columnsLayout > .dfListEntry,
+.layoutControl.dflColumns.dflColumns3 .dfListContent .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.dfListContent .rf_columnsLayout > .dfListEntry {
+ 	min-width: 100px;
+ 	width: 100%;
+  	box-sizing: border-box;
+}
+
+/* filter */
+.fltContent .rf_groupCell.collapsed {
+	height: 30px;
+}
+
+.fltContent .rf_columnsLayout > .rf_line,
+.fltContent .rf_columnsLayout.cols1 > *:not(body),
+.layoutControl.dflColumns.dflColumns0 .fltContent .rf_columnsLayout > *:not(body),
+.layoutControl.dflColumns.dflColumns1 .fltContent .rf_columnsLayout > *:not(body),
+.dflColumns2 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
+.dflColumns3 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body) {
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_FILTER));
+  	width: calc(100% - var(--RF_HORIZONTAL_GAP_FILTER));
+  	box-sizing: border-box;
+ }	
+ 
+.dflColumns.dflColumns2 .fltContent .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
+.layoutControl .fltContent .rf_columnsLayout.cols2 > *:not(.rf_line),
+.layoutControl.dflColumns1 .fltContent .rf_columnsLayout.cols2 > *:not(.rf_line) { 
+  	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(50% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+ 
+.dflColumns.dflColumns3 .fltContent .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
+  	min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(33.3% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+
+.dflColumns .fltContent .rf_columnsLayout.cols4 > *:not(.rf_line) { 
+  	min-width: calc(25% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(25% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+
+.dflColumns .fltContent .rf_columnsLayout.cols5 > *:not(.rf_line) { 
+  	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+ 	width: calc(20% - var(--RF_HORIZONTAL_GAP_FILTER)); 
+  	box-sizing: border-box;
+}
+
+/* 2 columns in dialogs */
+.dlgDialog .layoutControl.dflColumns.dflColumns0 .rf_content {
+	grid-template-columns: repeat(1, 1fr); 
+}
+.dlgDialog .layoutControl.dflColumns.dflColumns1 .rf_content,
+.dlgDialog .layoutControl.dflColumns.dflColumns2 .rf_content,
+.dlgDialog .layoutControl.dflColumns.dflColumns3 .rf_content {
+	grid-template-columns: repeat(2, 1fr); 
+}
+
+.dlgDialog .dflColumns.dflColumns1 .rf_labelInFrontOfInput .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
+  	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+.dlgDialog .dflColumns:not(.dflColumns0) .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
+  	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
+*:not(.rf_content) > .rf_inputCellOneLine,
+*:not(.rf_content) > .rf_inputCell,
+*:not(.rf_content) > .rf_columnsLayout:not(.keep) {
+	margin-bottom: 4px;
+}
+
+.rf_content .pre {
+	white-space: pre-wrap;
+}
+
+.rf_line,
+.layoutControl.dflColumns .rf_groupCell .rf_content .rf_groupCell {
+	/* groupCells in groupCells are rendered over the whole line per default */
+	display: grid;
+	grid-template-columns: 1fr;
+	grid-column: 1 / -1;
+}
+
+.rf_spanRow1 { grid-row-end: span 1; }
+.rf_spanRow2 { grid-row-end: span 2; }
+.rf_spanRow3 { grid-row-end: span 3; }
+.rf_spanRow4 { grid-row-end: span 4; }
+.rf_spanRow5 { grid-row-end: span 5; }
+.rf_spanRow6 { grid-row-end: span 6; }
+.rf_spanRow7 { grid-row-end: span 7; }
+.rf_spanRow8 { grid-row-end: span 8; }
+.rf_spanRow9 { grid-row-end: span 9; }
+.rf_spanRow10 { grid-row-end: span 10; }
+
+.rf_spanCol1 { grid-col-end: span 1; }
+.rf_spanCol2 { grid-col-end: span 2; }
+.rf_spanCol3 { grid-col-end: span 3; }
+.rf_spanCol4 { grid-col-end: span 4; }
+
+.rf_inputCellOneLine,
+.dlgDialog .rf_labelInFrontOfInput .rf_inputCellOneLine:not(.keepInline):not(.rf_line) {
+	display: grid;
+	display: -ms-grid;
+	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
+	-ms-grid-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
+	grid-gap: 5px 5px;
+}
+
+.rf_inputCellOneLine > div:nth-child(1),
+.rf_inputCell > div:nth-child(1)  {
+	grid-row:1; 
+	grid-column:1; 
+   -ms-grid-row:1; 
+   -ms-grid-column:1; 
+}
+
+.rf_inputCellOneLine > div:nth-child(2),
+.dlgDialog .rf_labelInFrontOfInput .rf_inputCellOneLine:not(.keepInline):not(.rf_line) > div:nth-child(2) {
+	grid-row:1; 
+	grid-column:2; 
+   -ms-grid-row:1; 
+   -ms-grid-column:2; 
+}
+
+.rf_labelAbove .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
+.dlgDialog .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
+.layoutControl.dflColumns.dflColumns0 .rf_inputCellOneLine:not(.keepInline) > div:nth-child(2),
+.rf_inputCellOneLine.rf_line > div:nth-child(2),
+.rf_inputCell > div:nth-child(2) {
+	grid-row:2; 
+	grid-column:1; 
+   -ms-grid-row:2; 
+   -ms-grid-column:1; 	
+}
+
+.rf_inputCell,
+.rf_labelAbove .rf_inputCellOneLine:not(.keepInline),
+.dlgDialog .rf_inputCellOneLine:not(.keepInline),
+.layoutControl.dflColumns.dflColumns0 .rf_inputCellOneLine:not(.keepInline),
+.rf_inputCellOneLine.rf_line {
+	display: grid;
+	display: -ms-grid;
+	grid-template-columns: minmax(0px, 1fr);
+	-ms-grid-columns: minmax(0px, 1fr);
+	grid-template-rows: 24px 1fr;
+	-ms-grid-rows: 24px 1fr;	
+	line-height: 24px;
+} 
+
+/* indent all lines but the first */
+.rf_inputCell > :nth-child(n+2),
+.layoutControl.dflColumns.dflColumns0 .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2),
+.rf_inputCellOneLine.rf_line > :nth-child(n+2),
+.dlgDialog .rf_inputCellOneLine > :nth-child(n+2),
+.rf_labelAbove .rf_inputCellOneLine:not(.keepInline) > :nth-child(n+2)  {
+	padding-left: 5px;
+}
+
+.dlgDialog .rf_labelInFrontOfInput .rf_inputCellOneLine:not(.rf_line) > :nth-child(n+2) {
+	padding-left: 0px;
+}
+
+:is(.rf_inputCell, .rf_inputCellOneLine) .ace_editor div,
+:is(.rf_inputCell, .rf_inputCellOneLine) .ace_editor {
+	line-height: 24px;
+}
+
+.rf_invisible {
+	display: none;	
+}
+
+.rf_cell {
+	word-wrap: break-word;
+}
+
+/* input controls */
+.cPopupSelect.active,
+.cPopupSelect.disabled,
+.cExpandableTextInput.active,
+.cIntegerInput.active,
+.cBlockTextInput.active {
+	display: flex;
+}
+
+.cPopupSelect.active > .lFlexible,
+.cExpandableTextInput.active > .lFlexible,
+.cIntegerInput.active > .lFlexible,
+.cBlockTextInput.active > .lFlexible  {
+	display: contents;
+}
+
+.cPopupSelect .lFlexible,
+.cPopupSelect .is-popup:not([size]),
+.cIntegerInput .lFlexible,
+.cIntegerInput .is-input:not([size]),
+.cExpandableTextInput .lFlexible,
+.cExpandableTextInput .is-input:not([size]),
+.cTextInput:not(.searchIrrelevant) .is-input:not([size]),
+.cBlockTextInput .lFlexible,
+.cBlockTextInput .is-input:not([size]),
+.dfList .dfListEntry .cTextInput:not(.searchIrrelevant) textarea.is-input {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.cPopupSelect .is-popup,
+.cIntegerInput .is-input,
+.cExpandableTextInput .is-input,
+.cTextInput .is-input,
+.cBlockTextInput .is-input {
+	min-width: 20px;
+	max-width: 100%;
+}
+
+.rf_cell {
+	box-sizing: border-box;
+}
+
+.rf_content table.schedulingAlgorithm {
+	width: calc(100% - 60px);
+}
+
+*:not(.sizeSet) > .rf_cell .cIntegerInput > .cTextInput:not(.searchIrrelevant) .is-input {
+	width: auto;
+}
+
+.rf_firstColumn .is-radio,
+.rf_firstColumn .is-checkbox,
+.rf_firstColumn input.tristate {
+	margin-left: 0px;
+	margin-right: 5px;
+}
+
+.rf_label {	
+	text-align:left;
+	color:var(--COLOR_TEXT);
+	vertical-align:top;
+	white-space:nowrap;
+	font-weight:bold;
+}
+
+.fltContent .rf_label {
+	font-weight:normal;
+}
+
+.mulitLines .rf_label span.can-edit {
+	/* labels are rendered over more than one line if needed */
+	white-space: pre-line;
+}
+
+.rf_inputCellOneLine .rightAlign {
+	text-align: right;
+	padding-right: 5px;
+}
+
+.rf_groupCell {
+	display: grid;
+	display: -ms-grid;
+	grid-template-columns: 100%;
+	grid-template-rows: minmax(22px, max-content) 1fr;
+	-ms-grid-columns: 100%;
+	grid-gap: 0px;
+	-ms-grid-gap: 0px;
+	border: 1px solid #DFE6F0;
+	border-radius: var(--GROUP_RADIUS);
+	margin-bottom: 10px;
+    min-width: -moz-min-content;    /* Firefox */
+    min-width: -webkit-min-content; /* Chrome */
+    min-width: min-content;
+}
+
+.rf_groupCell.noLegend {
+	grid-template-rows: 1fr;
+}
+
+.rf_groupCell.noBorder {
+	border: 0px;
+}
+
+.rf_groupCell.collapsed {
+	border-radius: var(--GROUP_COLLAPSED_RADIUS);
+}
+
+.fltContent .rf_groupCell {
+    border-top:1px solid #F6F7F8; 
+    border-right:1px solid #F6F7F8;
+    border-bottom:1px solid #7695C3;
+    border-left:1px solid #7695C3; 
+	border-radius: 0px;
+    position:relative;
+    padding: 0.5em;
+}
+
+.rf_groupCell .rf_header {
+	-ms-grid-row:1; 
+    -ms-grid-column:1; 
+	border-radius: var(--GROUP_TITLE_RADIUS);
+	padding-left: 0px;
+	padding-right: 10px;
+	background: var(--GROUP_TITLE_BACKGROUND); 
+	color: var(--GROUP_LABEL_COLOR);
+    font-weight: bold;
+    white-space: nowrap;
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: var(--ICON_SIZE_NORMAL);
+}
+
+.rf_groupCell.noLegend > .rf_header,
+.fltContent .rf_groupCell .rf_header {
+	background: transparent;
+}
+
+.rf_groupCell .rf_header select,
+.rf_groupCell .rf_header label {
+	color: var(--GROUP_LABEL_COLOR);
+    font-weight: bold;
+    margin-bottom: 0px;
+}
+
+.rf_inputCell label,
+.rf_inputCellOneLine label {
+	padding-right: 4px;
+}
+
+.rf_descriptionCell {
+	display: table;
+	padding-top: 8px;
+	grid-column: 1 / -1;
+}
+
+.rf_label .cCheckbox,
+.rf_label .cIconSelect {
+	display: inline-block;
+	width: 20px;
+	vertical-align: middle;
+} 
+
+.rf_hr {
+	height: 0px;
+	grid-column: 1 / -1;
+    margin-top: 5px;
+}
+
+.rf_hr.visible {
+	border-top: 1px solid #F6F7F8; 
+    border-bottom: 1px solid #E2E5E9; 
+    margin-bottom: 10px;
+}
+
+.rf_descriptionContainer {
+	display: grid;
+	grid-auto-flow: row;
+	grid-gap: 4px 5px;
+	grid-auto-rows: minmax(24px, max-content);
+}
+
+.rf_keepInline {
+	display: inline;
+}
+
+.rf_inputCellOneLine.keepInline, .rf_inputCell {
+	margin-bottom: 10px;	
+}
+
+/* Form editor */
+
+.cFormEditorElement .rf_columnsLayout,
+.cFormEditorElement .rf_columnsLayout.rf_line,
+.cFormEditorElement .rf_content {
+	margin-left: 0px;
+}
+
+.cFormEditorElement .rf_columnsLayout > *:not(body),
+.cFormEditorElement .rf_content > *:not(body) {
+	margin-left: 0px;
+  	padding-right: 0px;
+}
+
+.cFormEditorElement .rf_columnsLayout > .rf_groupCell {
+  	margin-left: -2px; /* 2px for the border */
+}
+
+.cFormEditorDisplay .hidden, 
+.hidden { 
+	display: none; 
+}
+
+.cFormEditorPreview .rf_dropTarget { 
+	height: calc(100% - 20px);
+}
+
+.rf_editor, .cFormEditorPreview.rf_dropTarget { 
+	height: 100%;
+}
+
+.rf_dropTarget { 
+	min-height: 24px;
+}
+
+.rf_dropTarget > .cFormEditorDisplay,
+.rf_dropTarget > .cFormEditorToolbar { 
+	padding: 10px;
+	height: calc(100% - 20px);
+}
+
+.cFormEditorPreview.rf_highlighted [data-type = 'columns'] .rf_groupCell,
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_inputCellOneLine,
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
+	background: rgba(255,255,255,0.6);
+	border-radius: 0px
+}
+
+.rf_frame {
+	min-height: 24px;
+}
+
+.rf_highlighted .rf_frameBorder.hover .rf_frame,
+.rf_highlighted .rf_frame.hover,
+.rf_highlighted .rf_wrapper.hover .rf_container {
+	margin-left: 20px;
+	margin-right: 20px;
+	min-width: calc(100% - 40px);
+}
+
+.rf_highlighted .rf_frameBorder.hover,
+.rf_highlighted .rf_wrapper.hover  {
+	background-image: var(--FORM_EDITOR_BUTTON_INSERT_LEFT), var(--FORM_EDITOR_BUTTON_INSERT_RIGHT);
+	background-repeat: no-repeat;
+	background-position: left center, right center; 
+}
+
+div.cFormEditorToolbox [data-tool=true] > .attribute {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	width: 100px;
+	box-sizing: border-box;
+}
+
+/* overwritten layout selectors */
+.cFormEditorPreview .rf_columnsLayout > .rf_line,
+.cFormEditorPreview .rf_columnsLayout > *:not(body),
+.cFormEditorPreview .rf_columnsLayout.cols1 > *:not(body),
+.dflColumns.dflColumns0 .cFormEditorPreview .rf_columnsLayout > *:not(body),
+.dflColumns.dflColumns1 .cFormEditorPreview .rf_columnsLayout > *:not(body),
+.layoutControl.dflColumns.dflColumns2 .cFormEditorPreview .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout:not([class*="cols"]) > *:not(.dfListEntry),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout:not([class*="cols"]) > *:not(.dfListEntry),
+.layoutControl.dflColumns.dflColumns1 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns2 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl .layoutControl.dflColumns .cFormEditorPreview .rf_inputCell.is-control > .rf_cell .rf_columnsLayout > *:not(body),
+.layoutControl .layoutControl.dflColumns .cFormEditorPreview .rf_inputCellOneLine.is-control > .rf_cell .rf_columnsLayout > *:not(body),
+.layoutControl.dflColumns .cFormEditorPreview .rf_groupCell .rf_content .rf_groupCell .rf_content .rf_columnsLayout {
+	min-width: 100%;
+  	width: 100%;
+  	padding-right: 0px;
+}
+ 
+.dflColumns2 .cFormEditorPreview .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.cFormEditorPreview .rf_columnsLayout.cols2 > *:not(.rf_line),
+.layoutControl.dflColumns1 .cFormEditorPreview .rf_columnsLayout.cols2 > *:not(.rf_line)  { 
+  	min-width: 50%; 
+ 	width: 50%; 
+  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
+  	min-width: 33.3%; 
+ 	width: 33.3%; 
+  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout.cols4 > *:not(.rf_line):not(.rf_line) { 
+  	min-width: 25%; 
+ 	width: 25%; 
+  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
+.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout.cols5 > *:not(.rf_line):not(.rf_line) { 
+  	min-width: 20%; 
+ 	width: 20%; 
+  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+.dlgDialog .dflColumns.dflColumns1 .cFormEditorDisplay .rf_labelInFrontOfInput .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry), 
+.dlgDialog .dflColumns .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry),
+.dlgDialog .dflColumns .cFormEditorPreview .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
+	min-width: 100%; 
+ 	width: 100%; 
+  	padding-right: 0px;
+}
+
+.dlgDialog .dflColumns:not(.dflColumns0):not(.dflColumns1) .cFormEditorPreview .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
+  	min-width: 50%;
+ 	width: 50%; 
+  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
+}
+
+/* form editor icons */
+[data-tool=true] > .attribute .type-image > .tool {
+	background-color: var(--BUTTON_COLOR);
+	width: 10px;
+	height: 10px;
+	display: inline-block;
+}
+
+[data-tool=true] > .attribute:hover .type-image > .tool {
+	background-color: var(--BUTTON_COLOR_HOVER);
+}
+
+.cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover > .rf_frame,
+.cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover > .rf_container {
+	margin-left: 20px;
+	min-width: calc(100% - 20px);
+}
+
+.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover,
+.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover {
+	background-image: var(--FORM_EDITOR_BUTTON_MOVE);
+	background-repeat: no-repeat;
+	background-position: left center; 
+}
+
+.rf_frame.showBorder {
+	border: 1px solid #DFE6F0;
+}
+
+.cFormEditorPreview.rf_highlighted .rf_inputCellOneLine,  
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
+	border: 1px dotted grey;
+}
+
+/* disable default drag and drop for images because icons and labels can be splitted in this case */
+.rf_dropTarget img {
+	user-drag: none; 
+	-webkit-user-drag: none;
+}
+
+.rf_dropTarget img, .cFormEditorDisplay.edit {
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+}
+
+.cFormEditorDisplay .rf_dragElement,
+.cFormEditorDisplay .rf_dragElement label,
+.cFormEditorDisplay .rf_dragElement input,
+.cFormEditorDisplay .rf_dragElement textarea,
+.cFormEditorElement label,
+.cFormEditorElement input,
+.cFormEditorElement textarea,
+*[draggable=true] {
+	cursor: pointer;
+	cursor: grab;
+}
+
+.cFormEditorDisplay .rf_dragElement.rf_dragged {
+	cursor: move;
+	cursor: grabbing;
+}
+
+.cFormEditorDisplay .input-image {
+	cursor: pointer;
+}
+
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_content,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_container {
+	border: 1px dashed #7695C3;
+	background: #FAFCFE;
+}
+
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_dropTarget.rf_parent {
+	border: 1px dashed #7695C3;
+	background: #dceaf8;
+}
+
+/* do not mark locked areas */
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_content,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_container,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_dropTarget.rf_parent,
+.rf_highlighted .rf_dragged .locked .rf_container,
+.rf_dropArea .locked,
+.cFormEditorPreview.rf_highlighted .locked .rf_inputCellOneLine,  
+.cFormEditorPreview.rf_highlighted .locked .rf_dragElement .rf_table {
+	border: inherit;
+	background: var(--BODY_BACK);
+}
+
+.rf_highlighted .rf_dragged .rf_container/*,
+.cFormEditorDisplay.edit .rf_container:hover*/ {
+	border: 1px solid #DFE6F0;
+	border-radius: var(--GROUP_RADIUS);
+}
+
+.rf_editor .cFormEditorPreview.rf_highlighted .cFormEditorElement.rf_dragged .rf_content {
+	border: 0px;
+	background: #FFF;
+}
+
+.rf_dropArea {
+	border: 1px dashed #7695C3;
+	box-sizing: border-box;
+	height: 100%;
+	width: 100%;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	background: rgba(250, 252, 254, .5);
+}
+
+.rf_dropText {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.cFormEditorToolbar .cFormEditorElement.rf_dragElement.rf_line {
+	width: auto;
+}
+
+/* for demo: display number of columns */
+.dflColumns0 .show-columns:after { content: "0"; }
+.dflColumns1 .show-columns:after { content: "1"; }
+.dflColumns2 .show-columns:after { content: "2"; }
+.dflColumns3 .show-columns:after { content: "3"; }
+.show-columns { line-height: 24px; }
+
+.rf_infoBox {
+	border: 1px solid grey;
+	margin-bottom: 10px;
+	padding: 4px;
+}
+
+.cFormEditorToolbox [data-tool=true].rf_dragElement {
+	display: inline-block;
+	line-height: 12px;
+	margin-bottom: 5px;
+}
+
+.cFormEditorToolbox [data-tool=true] > .attribute {
+	padding: 2px 8px 3px 4px;
+}
+
+.cFormEditorToolbox [data-tool=true] > .attribute > .type-image {
+	display: inline-block;
+	width: 20px;
+}
+
+.rf_emptyCell {
+	min-height: 24px;
+}
+
+.rf_table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+	margin-bottom: 5px;
+}
+
+.rf_table th, .rf_table td {
+	border: 1px solid #DFE6F0;
+}
+
+/* Indent label for derived resources, e.g. for the label of the input field for the tooltip. */
+.additional-resource .rf_label {
+	padding-left: 7px;
+	box-sizing: border-box;
+}
+
+/* Indent label for derived resources, e.g. for the label of the input field for the tooltip. */
+.additional-resource.with-spacing div:last-child {
+	margin-bottom: 20px;
+}
+
+/* Reactive forms for Internet Explorer support */
+@media (-ms-high-contrast: active), (-ms-high-contrast: none) {
+
+  .rf_content {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+  
+  .rf_content {
+    margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
+  }
+  
+  .rf_content > *:not(body) {
+    margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
+  }
+  
+  .rf_content > .rf_columnsLayout {
+    margin-left: 0px;
+  }
+    
+  .rf_line,
+  .layoutControl.dflColumns .rf_groupCell .rf_content .rf_groupCell:not(.cols5),
+  .rf_columnsLayout .rf_content > * > .rf_line, 
+  .rf_columnsLayout .rf_line, 
+  .rf_columnsLayout .rf_groupCell .rf_groupCell, 
+  .rf_inputCell .rf_columnsLayout .rf_line,
+  .rf_content > *:not(body),
+   .layoutControl.dflColumns .rf_content.cols1 > *:not(body),
+  .layoutControl.dflColumns .rf_content .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5) > *:not(.rf_line):not(.dfListEntry),
+  .layoutControl.dflColumns .rf_columnsLayout .rf_content:not(.cols2):not(.cols3):not(.cols4):not(.cols5) > *:not(.rf_line):not(.dfListEntry),
+  .dflColumns0 .rf_content > *:not(.rf_line),
+  .dflColumns1 .rf_content > *:not(.rf_line),
+  .dflColumns2 .maxCols1 .rf_content > *:not(.rf_line):not(.rf_groupCell),
+  .dflColumns3 .maxCols1 .rf_content > *:not(.rf_line):not(.rf_groupCell) {
+	/* avoid creating more columns than possible, use cols classes manually in those cases */ 
+    min-width: 100px;
+    width: 100%;
+  }
+  
+  .layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1) .rf_content.cols2 > *:not(.rf_line):not(.rf_groupCell),
+  .dflColumns2 .rf_content > *:not(.rf_line):not(.rf_groupCell),
+  .layoutControl.dflColumns.dflColumns3 .maxCols2 .rf_content > *:not(.rf_line):not(.rf_groupCell) {
+    min-width: calc(50% - var(--RF_HORIZONTAL_GAP_CELLS));
+    width: calc(50% - var(--RF_HORIZONTAL_GAP_CELLS)); 
+  }
+
+  .layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1):not(.dflColumns2) .rf_content.cols3 > *:not(.rf_line):not(.rf_groupCell),
+  .dflColumns3 .rf_content > *:not(.rf_line):not(.rf_groupCell) {
+    min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_CELLS));
+    width: calc(33.3% - var(--RF_HORIZONTAL_GAP_CELLS)); 
+  }
+
+  .layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1):not(.dflColumns2) .rf_content.cols4 > *:not(.rf_line):not(.rf_groupCell),
+  .layoutControl.dflColumns.dflColumns3 .maxCols4 .rf_content > *:not(.rf_line):not(.rf_groupCell) {
+    min-width: calc(25% - var(--RF_HORIZONTAL_GAP_CELLS));
+    width: calc(25% - var(--RF_HORIZONTAL_GAP_CELLS)); 
+  }
+  
+  .layoutControl.dflColumns:not(.dflColumns0):not(.dflColumns1):not(.dflColumns2) .rf_content.cols5 > *:not(.rf_line):not(.rf_groupCell),
+  .dflColumns3 .maxCols5 .rf_content > *:not(.rf_line):not(.rf_groupCell) {	
+    min-width: calc(20% - var(--RF_HORIZONTAL_GAP_CELLS));
+    width: calc(20% - var(--RF_HORIZONTAL_GAP_CELLS)); 
+  }  
+  
+  .dlgDialog .layoutControl.dflColumns.dflColumns0 .rf_content > *:not(body):not(.rf_groupCell):not(.rf_line) {
+    min-width: calc(100% - var(--RF_HORIZONTAL_GAP_CELLS));
+    width: calc(100% - var(--RF_HORIZONTAL_GAP_CELLS)); 
+  }
+  
+  .dlgDialog .layoutControl.dflColumns.dflColumns1 .rf_content > *:not(.rf_line):not(.rf_groupCell),
+  .dlgDialog .layoutControl.dflColumns.dflColumns2 .rf_content > *:not(.rf_line):not(.rf_groupCell),
+  .dlgDialog .layoutControl.dflColumns.dflColumns3 .rf_content > *:not(.rf_line):not(.rf_groupCell) {
+    min-width: calc(50% - var(--RF_HORIZONTAL_GAP_CELLS));
+    width: calc(50% - var(--RF_HORIZONTAL_GAP_CELLS)); 
+  }
+  
+  .layoutControl.dflColumns.dflColumns0 .dfListContent .rf_columnsLayout > .dfListEntry,
+  .layoutControl.dflColumns.dflColumns1 .dfListContent .rf_columnsLayout > .dfListEntry,
+  .layoutControl.dflColumns.dflColumns3 .dfListContent .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
+  .dfListContent .rf_columnsLayout > .dfListEntry {
+ 	min-width: 100px;
+ 	width: 100%;
+  }
+  
+  /* flexboxes are not working correctly inside table/table-cells */
+  .frmBody div.fltArea,
+  .frmBody div.fltContainer {
+	display: block;
+  }
+     
+  .rf_descriptionCell {
+  	border: 1px solid rgba(0,0,0,0.0); /* trick to make a wordwrap  */
+  } 
+  
+  .layoutControl.dflColumns.dflColumns1 .rf_inputCellOneLine > :nth-child(n+2),
+  .rf_inputCellOneLine.rf_line > :nth-child(n+2) {
+	padding-left: 5px;
+  }
+
+  .rf_hr {
+    margin-bottom: 20px;
+  }
+
+  .rf_inputCellOneLine, .rf_line {
+	margin-bottom: 4px;	
+  }
+}
+
+
+h5.card-title {
+    font-size: 1.25rem;
+    margin-top: 0px;
+    font-family: inherit;
+    font-weight: 500;
+    line-height: 1.2;
+    color: inherit;
+    text-indent: -27px;
+    margin-left: 27px;
+}
+
+@media all and (min-width:576px) {
+	.container {
+	    max-width: 540px;
+	}
+}
+
+@media all and (min-width:768px) {
+	.container {
+	    max-width: 720px;
+	}
+}
+
+@media all and (min-width:992px) {
+	.container {
+	    max-width: 960px;
+	}
+}
+
+@media all and (min-width:1200px) {
+	.container {
+	    max-width: 1140px;
+	}
+}
+
+.card-img-top {
+	border-top-left-radius: calc(.25rem - 1px);
+	border-top-right-radius: calc(.25rem - 1px);
+	text-align: center;
+	margin-bottom: 20px;
+}
+
+/* Icon font image.*/
+.card-img-top i.fas,
+.card-img-top i.far,
+.card-img-top i.fab,
+.card-img-top i.tl-icon {
+	font-size: 120px;
+	color: var(--TILES_CARD_IMAGE_COLOR);
+}
+
+/* Ordinary image.*/
+.card-img-top img {
+	height: 120px;
+}
+
+.card-title {
+    margin-bottom: 0.5rem;
+    text-align: left;
+}
+
+.card-title::before {
+	content: 'o';
+	font-weight: bold;
+	font-size: 1.2em;
+	margin: 0 0.5em 0 0;
+	color: #0190b8;
+}
+
+div.card-text {
+	color: #747c7e;
+}
+
+div.card-text p {
+	margin-top: 0px;
+	margin-bottom: 12px;
+}
+
+div.card-text p:last-child {
+	margin-bottom: 0px;
+}
+
+.tileContainer {
+	box-sizing: border-box;
+    width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.tileRow {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+.card {
+    box-shadow: 0px 0px 60px 0px rgba(0,0,0,0.18);
+    position: relative;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    min-width: 0px;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, .125);
+    border-radius: .25rem;
+    height: 21.4rem;
+    width: 21rem;
+    overflow: hidden;
+    margin: 10px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.card .preview-error {
+	width: 100%;
+	height: 100%;
+	outline: var(--ERROR_OUTLINE);
+	border: var(--ERROR_BORDER);
+}
+
+.previewBoxOuter {
+	border: 1px solid #ced1d2;
+	border-radius:0.4em;
+	height: 60%;
+	width: 90%;
+	bottom: 5%;
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	text-align: center;
+	padding: 3px;
+}
+
+.previewBoxInner {
+	position: relative;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.cardNotAllowed {
+   opacity: 0.2;
+}
+
+
+.tileNotAllowed {
+	color: graytext;
+	font-style: italic;
+}
+
+.tileAllowed {
+}
+
+.tileAllowed.personalizedTile::after, 
+.tileNotAllowed.personalizedTile::after {
+	content: ' (*)';
+}
+
+.i18nStringTable {
+	width: 100%;
+}
+
+.i18nStringTD {
+	width: 0px; vertical-align:top;
+}
+
+div.documentTile {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}
+
+div.documentTile iframe {
+	border: none;
+}
+
+.card .cButton {
+	position: absolute;
+	top: 0.75em;
+	right: 2.0em;
+}
+
+.card h5.card-title {
+	max-width: 14em;
+}
+
+.tileContainer .tileNoCards {
+	position: absolute;
+	left: 50%;
+	top: 45%;
+	transform: translate(-50%);
+	text-align: center;
+	font-size: 25px;
+}
+
+/* Disabled icon font buttons in the toolbar */
+.cToolbar .cImageButton a.disabled i {
+	color: var(--TOOLBAR_BUTTON_ICON_COLOR_DISABLED);
+}
+
+.cFormEditorElement {
+	line-height: 24px;
+}
+
+.cFormEditorElement .rf_header {
+	line-height: initial;
+}
+
+.logEntryFilter .leftField .cError .no-error {
+	width: 0;
+	height: 0;
+}
+			
+.logEntryFilter .leftField {
+	margin-right: 0.5em
+}
+			
+.logEntryFilter .rightField {
+	margin-left: 0.5em
+}
+
+/* Remove pointer-events from disabled elements so they don't block mouse events from bubbling up to parent items. 
+ * Without this rule, tool-tips do not work on disabled input elements in Chrome and Edge.
+ */
+input[disabled] {
+  pointer-events: none;
+}
+
+span.colorDisplay {
+	display: inline-block;
+	border-width: 1px;
+	border-color: black;
+	border-style: solid;
+	width: 20px;
+	height: 20px;
+}
+
+img.iconDisplay {
+	max-width: 150px;
+	max-height: 40px;
+}
+
+/* ========================================== */
+/* ==== Calendar styles for marked cells ==== */
+/* ========================================== */
+
+.cal_cell.disabled {
+	color: grey;
+	font-style: italic;
+	cursor: default;
+}
+
+.cal_cell.disabled:hover {
+	background: none;
+}
+
+/* ================================= */
+/* === Drag & drop file upload  ==== */
+/* ================================= */
+
+.dropControl {
+	position: relative;
+	height: 100%;
+	display: inline-block;
+	width: 100%;
+}
+
+.dropControl .dragover {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: dashed;
+	box-sizing: border-box;
+	height: 100%;
+	width: 100%;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	background: rgba(255, 0, 0, .5);
+}
+
+.dropControl .dragover.allowed {
+	background: rgba(0, 128, 128, .5);
+}
+
+.dropFrame {
+	height: 100%;
+	width: 100%;
+	z-index: 10;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+.dropText {
+	margin: auto;
+	text-align: center;
+	width: 100%;
+}
+
+/* ============================================= */
+/* ===== Drag & Drop upload progress bar  ====== */
+/* ============================================= */
+
+.dndProgressDialog {
+	position: fixed;
+	display: none;
+	top: 50%;
+	left: 50%;
+	width: 50em;
+	margin-top: -9em; /*set to a negative number 1/2 of your height*/
+	margin-left: -25em; /*set to a negative number 1/2 of your width*/
+	background: #f5f5f5;
+	border: 1px solid #FFF;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	box-shadow: 1px 2px 4px rgba(0, 0, 0, .4);
+	z-index: 1000;
+}
+
+.dndUploadDialogContent {
+	margin: 5%;
+	width: 90%;
+	height: 10em;
+}
+
+.dndUploadProgressText {
+	font-family: var(--TEXT_FAMILY);
+	color: var(--COLOR_TEXT);
+	font-size: 1.5em;
+	margin: 0%;
+}
+
+.dndProgressBarFrame {
+	display: none;
+	height: 3em;
+	width: 100%;
+	margin-top: 3em;
+	margin-bottom: 1em;
+	border-radius: 5px;
+	box-shadow: 0 1px 5px #000 inset, 0 1px 0 #444;
+}
+
+.dndProgressBar {
+	height: 100%;
+	margin: 5px;
+}
+
+.dndProgress {
+	display: inline-block;
+	height: 75%;
+	width: 100%;
+	border-radius: 3px;
+	box-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset;
+	transition: width .2s linear;
+	position: relative;
+	top: 50%;
+	transform: translateY(-50%);
+	background-image: -webkit-linear-gradient(left, var(--ACCORDION_BACKGROUND_COLOR), 
+	var(--ACCORDION_BEVEL_COLOR));
+}
+
+.dndLoader {
+	display: none;
+	position: absolute;
+	top: calc(50% - 10px);
+	left: calc(50% - 20px);
+}
+
+.dndLoaderBox {
+	width: 50px;
+	height: 50px;
+	background-color: var(--ACCORDION_BACKGROUND_COLOR);
+	animation: animate 0.6s linear infinite, colorChange 2.4s linear
+		infinite;
+}
+
+.dndLoaderShadow {
+	width: 50px;
+	height: 5px;
+	background: #000;
+	opacity: 0.1;
+	position: absolute;
+	top: 59px;
+	left: 0;
+	border-radius: 50%;
+	animation: shadow .5s linear infinite;
+}
+
+@keyframes animate {
+	17% { border-bottom-right-radius: 3px; }
+	25% { transform: translateY(9px) rotate(22.5deg); }
+	50% {
+		transform: translateY(18px) scale(1, .9) rotate(45deg);
+		border-bottom-right-radius: 40px;
+	}
+	75% { transform: translateY(9px) rotate(67.5deg); }
+	100% { transform: translateY(0) rotate(90deg); }
+}
+
+@keyframes colorChange {
+	0% { background-color:  var(--ACCORDION_BEVEL_COLOR); }
+	50% { background-color: var(--ACCORDION_BACKGROUND_COLOR); }
+	100% { background-color: var(--ACCORDION_BEVEL_COLOR); }
+}
+
+@keyframes shadow {
+	50% {
+		transform: scale(1.2, 1);
+	}
+}
+
+.i18nTranslationCommand {
+/* Style for the "translation command" aspect field, same as input.is-action*/
+	margin-left: 2px;
+}
+
+.cPDFDisplay {
+/* Center replacement message. */
+	text-align: center;
+}
+.cPDFDisplay .missingPDFIcon {
+	font-size: 3em;
+}
+
+.popupEditField {
+	display: flex;
+}
+
+.popupEditField div.tlscript {
+	width: 100%;
+}
+
+div.dirtyHandlingDialog {
+	width: 100%;
+	height: 100%; 
+	overflow: auto;
+}
+
+div.dirtyHandlingDialog .message {
+	margin: 15px;
+}
+
+div.dirtyHandlingDialog .changes {
+	margin: 5px;
+}
+
+.verticalResizer:hover {
+	cursor: ns-resize;
+}
+
+.h-100 {
+  height: 100% !important;
+}
+
+.w-100 {
+  width: 100% !important;
+}
+
+.px-1 {
+  padding-right: 0.25rem !important;
+  padding-left: 0.25rem !important;
+}
+
+.tl-vstack {
+	display: flex;
+	flex-direction: column;
+}
+
+.tl-height-100 {
+	height: 100%;
+}
+
+.tl-width-100 {
+	width: 100%;
+}
+
+.tl-stacking-context {
+	position: relative;
+	z-index: 0;
+}
+
+.tl-table {
+	height: fit-content;
+	width: 100%;
+	border-collapse: separate !important;
+	border-spacing: 0px;
+	margin: 0px;
+	background-color: var(--TABLE_BACKGROUND_COLOR);
+}
+
+.tl-table--fixed {
+	table-layout: fixed;
+	width: min-content;
+}
+
+.tl-table__header {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+.tl-table__body {
+	position: relative;
+	z-index: 0;
+}
+
+.tl-table__footer {
+	width: 100%;
+	position: sticky;
+	bottom: 0;
+	left: 0;
+}
+
+.frmBody .tl-table__footer {
+	position: relative;
+}
+
+.tl-table__row--placeholder {
+	cursor: wait;
+}
+
+.tl-table__cell-resizer {
+	width: 4px;
+	opacity: 0;
+	cursor: col-resize;
+	background: var(--TABLE_RESIZE_GRABBER_COLOR);
+	position: absolute;
+	top: 0;
+	right: 0;
+	height: 100%;
+	transition: all 0.75s ease;
+	filter: brightness(100%);
+}
+
+.tl-table__cell-resizer--active {
+	filter: brightness(75%);
+	opacity: 1;
+}
+
+.tl-table__cell {
+	background-clip: padding-box !important;
+	position: relative;
+	box-sizing: border-box;
+	background-color: var(--TABLE_CELL_BACKGROUND_COLOR);
+}
+
+.tl-table__cell--placeholder {
+	padding: 6px !important;
+	height: 100%;
+}
+
+.tl-table__cell:not(:last-child),
+.tl-table-overlay__column:not(.tl-table-overlay__columns-container > :last-child) {
+	border-right-style:   solid;
+	border-right-width:   var(--TABLE_COLUMN_BORDER_WIDTH);
+	border-right-color:   var(--TABLE_BORDER_COLOR);
+}
+
+.tl-table__cell:hover .tl-table__cell-resizer {
+	filter: brightness(100%);
+	opacity: 1;
+}
+
+.tl-table__header-cell-content {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: stretch;
+}
+
+.tblSelected .tl-table__cell {
+	background: inherit;
+}
+
+.tl-table-overlay {
+	position: relative;
+	width: 100%;
+	height:100%;
+}
+
+.tl-table__cell.tl-position--sticky,
+.tl-table-overlay__column.tl-position--sticky {
+	z-index: 2;
+}
+
+.tl-table-overlay__left-scroller {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	width: 100px;
+	background-image: linear-gradient(to right, rgba(225,225,225,1), rgba(255,255,255,0));
+	visibility: hidden;
+}
+
+.tl-table-overlay__right-scroller {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	width: 100px;
+	background-image: linear-gradient(to left, rgba(225,225,225,1), rgba(255,255,255,0));
+	visibility: hidden;
+}
+
+.tl-table-overlay__columns-container {
+	display: flex;
+	flex-direction: row;
+	cursor: move;
+	white-space: nowrap;
+	overflow: auto;
+	height: 100%;
+	width: 100%;
+}
+
+.tl-table-overlay__column-group {
+	height: min-content;
+}
+
+.tl-table-overlay__column-group-header {
+	position: sticky;
+	z-index: 1;
+}
+
+.tl-table-overlay__column-group-body {
+	display: flex;
+	position: relative;
+	z-index: 0;
+}
+
+.tl-table-overlay__column-group > .tl-table-overlay__column {
+	/*
+	 * Grouped column overlays are items in a flex container. 
+	 *
+	 * For flex items the min-width is set to auto (the browsers default for non
+	 * flex item is 0). This causes, if the items are big enough, an overflow
+	 * of the flex container.
+	 */
+	min-width: 0;
+}
+
+.tl-table-overlay__column {
+	box-sizing: border-box;
+}
+
+.tl-table-overlay__column--dragged {
+	z-index: 2;
+	overflow: hidden;
+}
+
+.tl-table-overlay__column-placeholder {
+	display: inline-block;
+	white-space: nowrap;
+	z-index: 1;
+}
+
+.tl-table-overlay__column-placeholder-content {
+	box-sizing: border-box;
+	border: 2px dashed #cbd5e0;
+	background-color: #edf2f7;
+	height: 100%;
+}
+
+.tl-position--sticky {
+	position: sticky;
+}
+
+/*
+ * Firefox is missing the has selector but it should be added in FF116:
+ *
+ * https://connect.mozilla.org/t5/ideas/when-is-has-css-selector-going-to-be-fully-implemented-in/idi-p/23794
+ *
+ * Then there is no need for additional classes to mark the last sticky colum and
+ * a lot of code could be removed.
+ *
+ * The following selector could instead be used: .tl-position--sticky:has(+ :not(.tl-position--sticky))
+ */
+.tl-table__fix-flex-separator {
+	z-index: 2;
+	border-right-color: var(--TABLE_BORDER_COLOR) !important;
+	border-right-width: var(--TABLE_SEPARATOR_WIDTH) !important;
+	border-right-style: solid !important;
+	width: 0px;
+}
+
+.tl-table-overlay .tl-table__fix-flex-separator {
+	align-self: stretch;
+}
+
+.tl-table-overlay__scroller-icon {
+	font-size: 25px;
+	color: #bbbaba;
+}
+
+.tl-flex--fill {
+	flex: 1 1 auto;
+}
+
+.tl-overflow--auto {
+	overflow-x: auto;
+}
+
+.tl-placeholder {
+	width: 100%;
+	height: 100%;
+	cursor: wait;
+	background-color: lightgray;
+}
+
+.tl-placeholder--glow {
+  opacity: 0;
+  animation: tl-glow 2s ease-in-out infinite;
+}
+
+@keyframes tl-glow {
+  50% {
+    opacity: 1;
+  }
+}
+
+.tl-hide {
+	display: none !important;
+}
+
+.tl-line_height--normal {
+	line-height: normal !important;
+}
+
+
+
+/* ============================================= */
+/* ========== DropDown with Tooltip  =========== */
+/* ============================================= */
+
+/* 	The CSS-Class prefix "ddwtt" uniquely identifies elements from DropDownControl.
+	The prefix stands for "DropDown With ToolTip". */
+.ddwttContainer {
+	position: relative;
+	text-align: center;
+	cursor: default;
+	margin: 0 !important;
+}
+
+.dfContent .ddwttContainer::before, .dfContent .ddwttContainer::after {
+	content: " ";
+}
+
+.mandatory .ddwttDropBtn {
+	background-color: var(--MANDATORY_FIELD_BG);
+	border: 1px solid var(--LAYOUT_MAIN_COLOR);
+}
+
+.rf_header .ddwttDropBtn {
+	background-color: unset;
+	border: 1px solid var(--border-subtle);
+	color: var(--GROUP_LABEL_COLOR);
+	height: 20px;
+}
+
+.rf_header .ddwttChevron::after {
+	color: var(--GROUP_LABEL_COLOR);
+}
+
+.ddwttDropBtn {
+	width: fit-content;
+	max-width: 100%;
+	height: 22px;
+	border: 1px solid var(--border-subtle);
+	border-radius: 4px;
+	display: inline-flex;
+	align-items: center;
+}
+
+.ddwttDropBtn.up {
+	border-radius: 0 0 4px 4px;
+}
+
+.ddwttDropBtn.down {
+	border-radius: 4px 4px 0 0;
+}
+
+.ddwttDropBtn > span {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.ddwttChevron::after {
+	border-style: solid;
+	border-width: 0.2em 0.2em 0 0;
+	content: '';
+	position: relative;
+	display: inline-block;
+	height: 0.5em;
+	width: 0.5em;
+	transform: rotate(45deg);
+	margin-left: 0.5em;
+	color: var(--ICON_COLOR_BASIC);
+	flex-shrink: 0;
+}
+
+.ddwttChevron.up:after {
+	top: 0.125em;
+	transform: rotate(-45deg);
+}
+
+.ddwttChevron.down:after {
+	top: -0.125em;
+	transform: rotate(135deg);
+}
+
+/* DropDown */
+.ddwttDDBox {
+	display: none;
+	position: fixed;
+	width: fit-content;
+	z-index: 10;
+	background-color: white;
+	border: 1px solid var(--border-subtle);
+	color: black;
+	font-weight: normal;
+	box-sizing: border-box;
+}
+
+.ddwttDDBox span {
+	margin: 0;
+	line-height: 24px;
+	/* line-height: 2em !important; */ /* estimated setting for new design-theme */
+}
+
+.ddwttDropBtnActive .ddwttDDBox {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.ddwttDDList {
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+}
+
+.ddwttSearch {
+	border: none;
+	border-radius: initial;
+}
+
+.ddwttHide {
+	position: absolute;
+	clip-path: circle(0);
+	top: 0;
+	left: 0;
+}
+
+.ddwttSelectedItem {
+	display: none;
+}
+
+.ddwttItem {
+	position: relative;
+	text-align: left;
+}
+
+.ddwttActiveItem {
+	background-color: #EAEEF1;
+	outline: none;
+}
+
+.ddwttImmutableItem {
+	display: inline;
+	text-align: left;
+}
+
+.ddwttItemLabel {
+	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
+	padding: 0.2em 8px;
+	display: block;
+}
+
+/* Tooltip */
+.ddwttTooltip {
+	min-width: 200px;
+	max-width: 500px;
+	background-color: #464646;
+	border-radius: 1em;
+	position: fixed;
+	box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+	display: none;
+	z-index: 9999999999999999;
+}
+
+.ddwttActiveItem .ddwttTooltip {
+	display: flex;
+	flex-direction: column;
+}
+
+/* tooltip Arrow */
+.ddwttTooltip::after {
+	content: '';
+	position: absolute;
+	width: var(--ttArrow-dim);
+	height: var(--ttArrow-dim);
+	top: var(--ttArrow-top);
+	transform: var(--ttArrow-trans);
+	background-color: #464646;
+	--ttArrow-dim: 18px;
+}
+
+.ddwttTtArrowLeft::after {
+	left: 2px;
+	--ttArrow-trans: translate(-50%, -50%);
+	clip-path: polygon(50% 0%, 0% 50%, 50% 100%);
+}
+
+.ddwttTtArrowRight::after {
+	right: 2px;
+	--ttArrow-trans: translate(50%, -50%);
+	clip-path: polygon(50% 0%, 100% 50%, 50% 100%);
+}
+
+.ddwttTooltipContent {
+	overflow-y: auto;
+	white-space: normal;
+	overflow-wrap: break-word;
+	max-height: calc(100vh - (var(--ttPadding) * 4));
+	--ttPadding: 8px;
+	padding: var(--ttPadding) 12px;
+	line-height: 1.5 !important;
+	color: white;
+}
+
+.ddwttTooltipContent * {
+	margin: 0;
+	color: white;
+	line-height: 1.5 !important;
+	padding: 0 !important;
+}
+
+.ddwttTooltipContent :is(h1, h2, h3, h4, h5, h6) {
+    text-align: center;
+    clear: both;
+	/* padding: 8px 12px; */ /* estimated setting for new design-theme */
+	margin-bottom: 8px;
+}
+
+.ddwttTagLoc, .ddwttTag {
+	display: inline-block;
+    width: fit-content;
+    text-align: left;
+}
+
+.ddwttTagX {
+	padding: 0;
+	/* Style from .input-image */
+	background-color: var(--LAYOUT_MAIN_COLOR);
+	background: var(--IMAGE_BUTTON_BACKGROUND);
+	border: var(--IMAGE_BUTTON_BACKGROUND_BORDER);
+	box-shadow: var(--IMAGE_BUTTON_BACKGROUND_BOXSHADOW);
+	display: inline-block;
+	width: var(--ICON_SIZE_NORMAL);
+	height: var(--ICON_SIZE_NORMAL);
+	/* Style from .fClear */
+	transform: scale(0.7);
+	margin-right: 5px;
+	margin-left: -2px;
+	margin-top: -2px;
+}
+
+.ddwttTagX i {
+	/* Style from .input-image i */
+	color: var(--ICON_COLOR_BUTTON_BASIC);
+	font-size: 14px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}

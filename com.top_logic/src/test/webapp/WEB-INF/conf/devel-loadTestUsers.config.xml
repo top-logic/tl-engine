@@ -1,0 +1,15 @@
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+        <config service-class="com.top_logic.base.security.device.TLSecurityDeviceManager">
+			<instance>
+				<security-devices>
+					<security-device id="dbSecurity">
+						<initial-user-resources>
+							<initial-user-resource name="/WEB-INF/database/Users.test.xml"/>
+						</initial-user-resources>
+					</security-device>
+				</security-devices>
+			</instance>
+		</config>
+	</services>
+</application>

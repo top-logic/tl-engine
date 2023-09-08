@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<t:type name="Example_Structure">
+				<t:attributes>
+					<t:attribute name="Left_Attribute" type="string" multiple="true">
+						<t:default>
+							<t:entry>First Left Value</t:entry>
+							<t:entry>Second Left Value</t:entry>
+							<t:entry>Third Left Value</t:entry>
+						</t:default>
+					</t:attribute>
+					<t:attribute name="Right_Attribute" type="string" multiple="true">
+						<t:default>
+							<t:entry>First Right Value</t:entry>
+							<t:entry>Second Right Value</t:entry>
+							<t:entry>Third Right Value</t:entry>
+						</t:default>
+					</t:attribute>
+				</t:attributes>
+			</t:type>
+			
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Example_Parameter" type="Example_Structure" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:foreach var="entry" values="$Example_Parameter.Left_Attribute">
+			<t:value expr="entry" />
+		</t:foreach>
+		<t:foreach var="entry" values="$Example_Parameter.Right_Attribute">
+			<t:value expr="entry" />
+		</t:foreach>
+		
+	</t:body>
+</t:template>

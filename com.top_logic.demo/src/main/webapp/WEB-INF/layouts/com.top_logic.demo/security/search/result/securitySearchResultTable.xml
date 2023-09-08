@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="search/searchReportingResultTable.xml"
+	accessorClass="com.top_logic.knowledge.wrap.WrapperAccessor"
+	metaElement="DemoSecurity.A,DemoSecurity.B"
+	namePrefix="SecuritySearch"
+	securityProvider="com.top_logic.demo.layout.security.DomainAwareSecurityObjectProvider"
+>
+	<columnDefinitions>
+		<columns>
+			<column name="name"
+				accessor="com.top_logic.layout.IdentityAccessor"
+				headStyle="background:red;"
+				renderer="com.top_logic.layout.basic.BookmarkRenderer"
+			/>
+		</columns>
+	</columnDefinitions>
+</include>

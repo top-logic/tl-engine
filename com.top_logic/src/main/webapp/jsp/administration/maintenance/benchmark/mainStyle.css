@@ -1,0 +1,441 @@
+/*
+ * Top-Logic Default Look and Feel
+ *
+ */
+
+/* Colours
+ *
+ *  the "official" Top-Logic colour (dark blue) is #2961AD (r41/g97/b173),
+ *  though #003399 is often used as well
+ */
+
+
+/* defaults */
+.normal_bold {font-size:12px;font-weight:bold}
+.normal {font-size:12px}
+.title {font-size:14px;font-weight:bold}
+.menu_active {font-size:10pt;text-decoration:none;color:#000000;}
+.menu_inactive {font-size:10pt;text-decoration:none;color:#666666;}
+.header {font-weight:bold;}
+.errormessage {color:red;}
+.help {color:black;font-size:10pt;vertical-align:top;}
+.alerttext {color:black;}
+
+/* Assorted Bodies */
+
+body {
+	background-color:#F5F5F5;font-size:12pt;font-family:Arial,Helvetica,sans-serif;
+	color:black;margin-bottom:2px; margin-top:2px; margin-right:2px; margin-left:2px;
+}
+
+
+body.start {background-image:url(/top-logic/images/backgrounds/top_logic_start.jpg)}
+body.login {background-image:url(/top-logic/images/backgrounds/top_logic_login.jpg)}
+
+body.topframe {background-image:url(/top-logic/images/backgrounds/top_logic_top.jpg)}
+body.miframe {background-image:url(/top-logic/images/backgrounds/mittleres_frame.jpg)}
+body.linkframe {background-image:url(/top-logic/images/backgrounds/top_logic_left.jpg);background-attachment:fixed;}
+
+body.menu {background-color:#D6D3CE;font-size:10pt;text-decoration:none;color:#000000;}
+
+body.documentation {background-color:#F5F5F5;font-size:10px}
+
+body.footer {background-color:#D6D3CE;font-size:10px;}
+
+body.admin {background-color:#FF0000; }
+
+/* Links */
+
+a {color:#003399;}
+a.menuitem {color:black;text-decoration:none;font-size:10pt;}
+a.menuitem:hover {color:#003399;}
+
+/*
+a:link {color:#003399;}
+a:visited {color:#006699;}
+a:active {color:#003399;}
+a:hover {color:#003399;}
+*/
+
+/*
+ * Tabbed pane All Gray for TL, Projects may use color
+ */
+body.tabber_bar    {margin-left:4px;}
+body.tabber_body   {background-color:#D6D3CE;margin-left:8px;margin-right:8px;margin-top:8px;margin-bottom:8px;}
+body.tabber_spacer {background-color:#CCCCCC;}
+
+td.tabLink {font-family:Arial,Helvetica,sans-serif; 
+			cursor:default;
+		    color:black; 
+		    font-size:11px; 
+		    font-weight:bold; 
+		    white-space:nowrap; 
+		    text-decoration:none;}
+a.tabLink {font-family:Arial,Helvetica,sans-serif; 
+		   cursor:pointer;
+		   color:black; 
+		   font-size:12px; 
+		   font-weight:bold;
+		   white-space:nowrap; 
+		   text-decoration:none;}
+a.tabLink:link    {color:black;}
+a.tabLink:visited {color:black;}
+a.tabLink:active  {color:black;}
+a.tabLink:hover   {color:white;}
+
+/** Main tabbed pane found at top of layout */
+
+td.mainLeftImage {	}
+td.mainTabTitle {
+    color:#2961AD;
+    font-family:Arial,Helvetica,sans-serif;
+    font-size:18px;
+    font-weight:bold;
+    text-align:right;
+    padding-right:100px;
+
+   	height:28px;	/** add some extra pixels for the logos */
+}
+td.mainRightImage { text-align:right; width:400px; }
+
+body.mainSpacer    {
+	    background-color:#CCCCCC;
+	    margin:0;
+	    padding:0;
+	    height:19;
+}
+
+table.mainSpacerTable  {	    
+	    margin:0;
+	    padding:0;
+	    border-spacing:0;
+	    border-collapse:collapse;
+
+}
+
+td.mainSpacerLeft  {	    
+	    margin:0;
+	    padding:0;
+		color:#2961AD;
+	    font-family:Arial,Helvetica,sans-serif;
+	    font-size:12px;
+   		text-align:center;
+   		min-width:200px;
+   		width:100px;
+}
+
+td.mainSpacerMiddle  {	    
+	    margin:0; padding:0;
+		color:#2961AD;
+	    font-family:Arial,Helvetica,sans-serif;
+	    font-size:12px;
+   		text-align:center;
+   		width:600px;
+}
+
+td.mainSpacerRight {
+	    margin:0;
+	    padding:0;
+	    width:200px;
+   		text-align:right;
+}
+
+/* Spacers framing the content of the main tabber */
+.topSpacer			{ background-color:#f2f2f8; padding:0; border:0; margin:0;vertical-align:bottom;} 
+table.topSpacer		{ border-style:solid; border-collapse:collapse; height:23px; } 
+td.topSpacerLeft   	{ background-image:url(../images/spacer/top-left.png); background-repeat:no-repeat; width:10px; }
+td.topSpacer   		{ background-image:url(../images/spacer/top.png);     background-repeat:repeat-x; }
+td.topSpacerRight   { background-image:url(../images/spacer/top-right.png);background-repeat:no-repeat; width:10px; }
+
+body.leftSpacer  	{ background-color:#f2f2f8; background-image:url(../images/spacer/left.png);   background-repeat:repeat-y; font-size:6px;
+					  padding:0; border:0; margin:0;}
+body.rightSpacer 	{ background-color:#f2f2f8; background-image:url(../images/spacer/right.png);  background-repeat:repeat-y; font-size:6px;
+					  padding:0; border:0; margin:0;}
+
+.bottomSpacer		{ background-color:#f2f2f8; padding:0; border:0; margin:0; height:12px;} 
+table.bottomSpacer	{ border-collapse:collapse;} 
+td.bottomSpacerLeft	{ background-image:url(../images/spacer/bottom-left.png); background-repeat:no-repeat; width:10px; }
+td.bottomSpacer		{ background-image:url(../images/spacer/bottom.png);      background-repeat:repeat-x; }
+td.bottomSpacerRight{ background-image:url(../images/spacer/bottom-right.png);background-repeat:no-repeat; width:10px; }
+
+/* ImagetextSpacer styles for top-Spacer */  
+td.topSpacerLeftText 	{ background-image:url(../images/spacer/top.png);     background-repeat:repeat-x; 
+						  color:white; font-size:10pt; width:80px;
+						  text-align:left; vertical-align:bottom;	}
+td.topSpacerLeftImg 	{ background-image:url(../images/spacer/top.png);     background-repeat:repeat-x;
+						  width:20px;
+						  text-align:left; vertical-align:bottom; }
+td.topSpacerCenterText 	{ background-image:url(../images/spacer/top.png);     background-repeat:repeat-x; 
+						  color:white; font-size:10pt; width:300px;
+						  text-align:center; vertical-align:bottom;	}
+td.topSpacerCenterImg 	{ background-image:url(../images/spacer/top.png);     background-repeat:repeat-x; 
+						  width:18px;
+						  text-align:center; vertical-align:bottom;}
+td.topSpacerRightText 	{ background-image:url(../images/spacer/top.png);     background-repeat:repeat-x; 
+						  color:white; font-size:10pt; width:100px;
+						  text-align:right; vertical-align:bottom;	}
+td.topSpacerRightImg 	{ background-image:url(../images/spacer/top.png);     background-repeat:repeat-x; 
+						  width:18px;
+						  text-align:center; vertical-align:bottom;}
+
+/* Headers */
+
+h1,h2,h3,h4,h5
+	{font-family:sans-serif;font-weight:bold;color:#003399;}
+
+h1 {font-size:20pt;}
+h2 {font-size:16pt;}
+h3 {font-size:12pt;}
+h4 {font-size:11pt;}
+h5 {font-size:10pt;}
+
+
+/* Paragraphs and Such */
+
+p	{font-size:12pt;font-family:sans-serif;color:black;}
+
+p    {}
+nobr {}
+em   {font-style:italic;}
+
+big {font-size:12pt;}
+small {font-size:9pt;}
+strong {font-size:12pt;color:#003399;font-weight:bold;}
+
+tt,code,pre {font-size:9pt;font-family:monospace;}
+
+address {font-style:italic;}
+blockquote {margin-left:5em;margin-right:5em;}
+
+
+
+/* Forms */
+
+input.text {font-size:12pt;}
+select {font-size:10pt;}
+
+
+/* List Items */
+li,dt,dd {font-family:sans-serif;color:black;}
+
+li {}
+dt {font-weight:bold;}
+dd {}
+
+
+
+/* Table Elements */
+
+th,td {font-size:12pt;color:#003399;}
+th.center {font-size:12pt;color:#003399;text-align:center;}
+th.right {font-size:12pt;color:#003399;text-align:right;}
+
+th.small {font-size:10pt;}
+th.small_center {font-size:10pt;text-align:center;}
+td.small {font-size:10pt;}
+
+
+th {text-align:left;font-weight:bold;}
+
+td.label {text-align:right;color:#003399;vertical-align:top;padding-right:8px;white-space:nowrap;}
+td.label_center {text-align:center;color:#003399;vertical-align:top;padding-right:8px;white-space:nowrap;}
+td.label_small {text-align:right;color:#003399;vertical-align:top;padding-right:8px;white-space:nowrap;font-size:10pt;}
+
+td.content {text-align:left;color:black;vertical-align:top;}
+td.content_right {text-align:right;color:black;vertical-align:top;}
+td.content_small {text-align:left;color:black;vertical-align:top;font-size:10pt;}
+td.content_small_right {text-align:right;color:black;vertical-align:top;font-size:10pt;}
+td.content_small_middle {text-align:center;color:black;vertical-align:top;font-size:10pt;}
+td.content_middle {text-align:center;}
+
+td.content_center {vertical-align:center;}
+td.checkbox {color:black;vertical-align:top;}
+
+/* tables with even/odd tr need cellspacing=0 */
+table.evenodd { border-spacing:10px;
+				border-collapse:collapse;
+				border:1px #336699 solid; }
+
+/* Even and odd rows for better readability */
+tr.even 	{ white-space:nowrap; background-color:white;}
+tr.odd  	{ white-space:nowrap; background-color:#EEEEEE;}
+tr.selected { white-space:nowrap; background-color:#88BBFF;}
+
+/* header for upward or downward sorted columns */
+th.sortUp    {text-align:center; white-space:nowrap; background-color:#DDDDEE;}
+th.sortDown  {text-align:center; white-space:nowrap; background-color:#DDDDEE;}
+
+/* used for displaying date/time at the bottom right of the main window. */
+td.footer {font-size:9pt;color:black;}
+
+/* Horizontal Rule */
+hr {height:1;}
+
+/* Form Elements */
+textarea {font-size:10pt;}
+button {font-size:9pt;}
+
+
+
+/* NavigationNodes */
+/* full documentation will follow; see com.top_logic.knowledge.gui.KnowledgeTreeCellRenderer.java
+   for implementation details */
+a.navnode {white-space:nowrap;font-size:9pt;text-decoration:none;}
+a.navnode:hover {white-space:nowrap;font-size:9pt;text-decoration:underline;}
+
+.navnode_3_1 {font-size:9pt;background-color:#003399;color:white;}
+.navnode_3_0 {font-size:9pt;background-color:#003399;color:white;}
+
+.navnode_2_1 {font-size:9pt;background-color:#99F599;color:black;}
+.navnode_2_0 {font-size:9pt;background-color:#99F599;}
+
+.navnode_1_1 {font-size:9pt;background-color:#99F5F5;color:black;}
+.navnode_1_0 {font-size:9pt;background-color:#99F5F5;}
+
+.navnode_0_1 {font-size:9pt;background-color:#F5F5F5;color:black;}
+.navnode_0_0 {font-size:9pt;background-color:#F5F5F5;}
+
+.navnode_g_0 {font-size:9pt;background-color:#d6d6d6;color:black;}
+.navnode_g_1 {font-size:9pt;background-color:#003399;color:white;}
+
+/* New NavigationNodes using HTree and KnowledgeTreeRenderer  */
+
+body.tree {
+    background-color:#F5F5F5;font-size:9pt;line-height:8pt;font-family:Arial,Helvetica,sans-serif;
+    color:black;margin-bottom:2px;margin-top:2px;margin-left:2px;margin-right:0px;
+    padding:0;border:0;white-space:nowrap;
+}
+
+/* Our images are to "spacy" to we must use negative margins :-) */
+img.m { margin-top:0px;margin-bottom:0px;padding:0;border:0;vertical-align:bottom; }
+
+/* The numbers are Bitflags, so s3 is actually s2 and s1 */
+a.s0       {text-decoration:none;}
+a.s0:hover {text-decoration:underline;}
+
+a.s1       {font-size:9pt;line-height:8pt;background-color:#BBBBFF;color:black;}
+a.s2       {} /* Current object is not visibly marked */
+a.s3       {background-color:#BBBBFF;color:black;}
+a.s4       {background-color:#55EE55;color:black;}
+a.s5       {background-color:#99EEFF;color:black;}
+a.s6       {background-color:#55EE55;color:black;}
+a.s7       {background-color:#99EEFF;color:black;}
+
+/* Bit 8 indicates cotainment in Clipboard */
+a.s8       {font-style:italic;text-decoration:none;}
+a.s8:hover {font-style:italic;text-decoration:underline;}
+a.s9       {font-style:italic;background-color:#BBBBFF;color:black;}
+a.s10      {font-style:italic;} /* Current object is not visibly marked */
+a.s11      {font-style:italic;background-color:#BBBBFF;color:black;}
+a.s12      {font-style:italic;background-color:#55EE55;color:black;}
+a.s13      {font-style:italic;background-color:#99EEFF;color:black;}
+a.s14      {font-style:italic;background-color:#55EE55;color:black;}
+a.s15      {font-style:italic;background-color:#99EEFF;color:black;}
+
+
+/* Styles for Buttons, especially BoundButtonInfo */
+
+td.cmdButtonCell {
+	/* need this empyt style otherwise the default(s) kills us ? */
+}
+
+a.cmdButton {
+	font-family:Arial,Helvetica,sans-serif;
+	font-size:9pt;
+	font-weight:bold;
+	text-decoration:none;
+	color:white;
+	cursor:pointer;
+	background-color:#336699;
+	border-width:2px;
+	border-color:white;
+	border-style:outset;
+	padding:0.2em;
+}
+
+/* a.cmdButton:hover	does not work when onMouseOver is used  */
+a.cmdButtonHover {	
+	font-family:Arial,Helvetica,sans-serif;
+	font-size:9pt;
+	font-weight:bold;
+	text-decoration:none;
+	color:#eeeeee;
+	cursor:pointer;
+	background-color:#1c517e;
+	border-width:2px;
+	border-color:white;
+	border-style:outset;
+	padding:0.2em;
+}
+
+a.cmdButtonDisabled
+{
+	font-family:Arial,Helvetica,sans-serif;
+	font-size:9pt;
+	font-weight:bold;
+	text-decoration:none;
+	color:#aaaaaa;
+	background-color:#336699;
+	border-width:2px;
+	border-color:white;
+	border-style:outset;
+	padding:0.2em;
+}
+
+img.cmdImg {
+	border:no-border;
+}
+
+/* Fieldsets */
+
+legend {font-weight:bold;}
+fieldset {
+	font-size:9pt;
+	padding-top:2em;
+	padding:1em;
+	border-color:#336699;
+	border-style:solid;
+	border-width:1px;
+	}
+	
+/* Styles for HelpComponent */
+
+th.help_title     { font-family:Arial,sans-serif; 
+                   font-size:13px; 
+                   font-weight:normal;
+                   color:white; 
+                   background-color:#35679A;
+		 		   padding:2px;
+                   border-color:#555555; 
+			 	 }
+td.help_header    { font_size:11px;
+                   color: black;
+				   vertical-align:top;
+                 }
+                 
+tr.help_header    { background-color:#35679A;
+					color:white;
+                 }
+tr.help_height0	  { height:0px; }
+td.help_width100  { width:100%; }
+td.help_height2   { height:2px; }
+tr.help_height100 { height:100%; }
+td.help_empty1    {
+				  height:1px; 
+				  background-color:gray;
+				  }
+				  
+/* Styles for ButtonComponent */
+body.button_body	{  }
+div.button_progress { position:absolute; 
+					  text-align:center;
+					  vertical-align:bottom;
+					  left:0px; top:0px; 
+					  width:100%; height:100%; 
+					  z-index:1000; 
+					  background-color:#F5F5F5; 
+					  visibility:hidden; 
+					  display:block;
+					}
+table.button_table_align {  }
+tr.button_tr_align       {  }

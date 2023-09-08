@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="structure"/>
+		<param name="namePrefix"
+			value="${structure}"
+		/>
+		<param name="master"/>
+		<param name="defaultFor"
+			value="tl.element:StructuredElement"
+		/>
+		<param name="class"
+			value="com.top_logic.element.layout.structured.AdminElementComponent"
+		/>
+		<param name="page"
+			value="/jsp/element/EditStructuredElement.jsp"
+		/>
+		<param name="createJSP"
+			optional="true"
+		/>
+		<param name="createComponent"
+			optional="true"
+		/>
+		<param name="createExecutability"
+			value="CreateElementRule"
+		/>
+		<param name="createCommandGroups"
+			optional="true"
+		/>
+		<param name="editCommandGroups"
+			optional="true"
+		/>
+		<param name="openCreateCommandGroup"
+			value="Write"
+		/>
+		<param name="dialogs">
+			<!-- Additional dialogs -->
+		</param>
+	</params>
+
+	<layout>
+		<components>
+			<!-- component to edit structured elements -->
+			<component class="${class}"
+				buttonComponent="${namePrefix}Buttons"
+				commandGroups="${editCommandGroups}"
+				defaultFor="${defaultFor}"
+				model="selection(${master})"
+				name="${namePrefix}Edit"
+				page="${page}"
+				resPrefix="element.structure.edit."
+				structure="${structure}"
+			>
+				<dialogs>
+					<include name="element/createStructuredElement.xml"
+						createCommandGroups="${createCommandGroups}"
+						detailComponent="${createComponent}"
+						jSPNewPage="${createJSP}"
+						namePrefix="${namePrefix}"
+					>
+						<inject>
+							<dialogInfo
+								executability="${createExecutability}"
+								height="250"
+								openerCommandGroup="${openCreateCommandGroup}"
+								width="450"
+							/>
+						</inject>
+					</include>
+					${dialogs}
+				</dialogs>
+			</component>
+			<!-- buttons -->
+			<buttonbar name="${namePrefix}Buttons"/>
+		</components>
+	</layout>
+</template>

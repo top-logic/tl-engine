@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/treeWithMultipleSelection/childrenTree.layout.xml#Tree)">
+		<titleKey key="dynamic.ab0761a5-db64-41cc-89c3-bab495f81859">
+			<en>Tree selection</en>
+			<de>Baumauswahl</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model -> $model"
+			modelForElement="listElement -> model -> $model"
+			supportsElement="listElement -> model -> $model.containsElement($listElement)"
+		/>
+	</arguments>
+</config:template-call>

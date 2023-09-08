@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8" xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<metaobjects>
+		<metaobject object_name="I18NHTMLAttributeStorage" super_class="HTMLAttributeStorage">
+			<attributes>
+				<mo_attribute att_name="lang" att_type="String" mandatory="true" db_size="10" />
+			</attributes>
+			<index>
+				<mo_index name="file" unique="true">
+					<index-parts>
+						<index_part name="object" part="name" />
+						<index_part name="metaAttribute" part="name" />
+						<index_part name="lang"/>
+						<index_part name="filename"/>
+					</index-parts>
+				</mo_index>
+			</index>
+		</metaobject>
+	</metaobjects>
+</objectlist>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Browser error reporting</title>
+    
+    <link type="text/css" rel="stylesheet" href="../../style/ajax-form.css"/>
+    
+    <script src="../../script/tl/bal.js"></script>
+    <script src="../../script/tl/bal-ff.js"></script>
+	<script src="../../script/tl/bal-ie.js"></script>
+	
+	<script type="text/javascript">
+		
+		function triggerError() {
+			try {
+				var a = undefined;
+				
+				log(a.doesNotExist);
+			} catch (ex) {
+				logObject("ex", ex);
+			}
+			
+			return false;
+		}
+
+		function logObject(name, obj) {
+			for (p in obj) {
+				var propertyValue = obj[p];
+				var propertyName = name + "." + p;
+				log("(" + typeof(propertyValue) + ") " + propertyName + ": " + propertyValue);
+			}
+		}
+		
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+	</script>
+  </head>
+  <body id="body" style="margin:50px;">
+  	<h1>Browser error reporting</h1>
+  	
+  	<button onclick="return triggerError();">Trigger Error</button>
+  	
+	<h2>Console output</h2>
+	
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+	
+  </body>
+</html>

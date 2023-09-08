@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.demo.layout.form.demo.TestBoxesComponent"
+	name="TestBoxesInput"
+	page="/jsp/test/boxes/TestBoxesInput.jsp"
+	resPrefix="layouts.layoutdemo.boxes.demoInput.TestBoxesInput."
+	securityProviderClass="securityRoot"
+/>

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<bpmn:definitions
+	xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+	xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+	xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+	xmlns:tl="http://www.top-logic.com/ns/BPMN/extensions/7.0"
+	targetNamespace="http://bpmn.io/schema/bpmn"
+>
+	<bpmn:collaboration id="Collaboration_0rxd91k">
+		<bpmn:participant id="Participant_1jf73bx"
+			name="Der Prozess"
+			processRef="Process_1"
+		>
+			<bpmn:extensionElements>
+				<tl:modelType value="tl.bpe.execution:ProcessExecution"/>
+				<tl:taskTitle><![CDATA[Hello World: {$model}]]></tl:taskTitle>
+				<tl:displayDescription/>
+				<tl:exportDescription/>
+			</bpmn:extensionElements>
+		</bpmn:participant>
+		<bpmn:extensionElements>
+			<tl:name value="The Process"/>
+			<tl:myTasksIcon/>
+			<tl:myTasksTitle/>
+			<tl:myTasksDescription/>
+			<tl:myProcessesIcon/>
+			<tl:myProcessesTitle/>
+			<tl:myProcessesDescription/>
+			<tl:state value="Released"/>
+			<tl:icon value="css:fas fa-bullhorn"/>
+			<tl:description/>
+		</bpmn:extensionElements>
+	</bpmn:collaboration>
+	<bpmn:process id="Process_1"
+		isExecutable="false"
+	>
+		<bpmn:laneSet>
+			<bpmn:lane id="Lane_1p43qgc"
+				name="Erzeuger"
+			>
+				<bpmn:flowNodeRef>Task_16uk174</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>ExclusiveGateway_1rr4x9r</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>EndEvent_0co6i3s</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>StartEvent_0menbhe</bpmn:flowNodeRef>
+				<bpmn:extensionElements>
+					<tl:actorGroups>
+						<group name="user"/>
+					</tl:actorGroups>
+					<tl:actorRule/>
+				</bpmn:extensionElements>
+			</bpmn:lane>
+			<bpmn:lane id="Lane_0k0ea4v"
+				name="Computer"
+			>
+				<bpmn:flowNodeRef>Task_1n019e0</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>EndEvent_1dc6q3j</bpmn:flowNodeRef>
+				<bpmn:extensionElements>
+					<tl:actorGroups/>
+					<tl:actorRule><![CDATA[all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#name`) == "root")]]></tl:actorRule>
+				</bpmn:extensionElements>
+			</bpmn:lane>
+		</bpmn:laneSet>
+		<bpmn:exclusiveGateway id="ExclusiveGateway_1rr4x9r">
+			<bpmn:outgoing>SequenceFlow_1wun6az</bpmn:outgoing>
+			<bpmn:outgoing>SequenceFlow_1p9scyc</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_0d048ep</bpmn:incoming>
+		</bpmn:exclusiveGateway>
+		<bpmn:endEvent id="EndEvent_1dc6q3j">
+			<bpmn:incoming>SequenceFlow_1vnmfhz</bpmn:incoming>
+		</bpmn:endEvent>
+		<bpmn:manualTask id="Task_16uk174"
+			name="Anlegen"
+		>
+			<bpmn:outgoing>SequenceFlow_0d048ep</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_16fzfu0</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:displayDescription/>
+				<tl:title><![CDATA[Machs mit {$model}]]></tl:title>
+				<tl:icon value="css:far fa-laugh-wink"/>
+				<tl:description>
+					<text img-count="1"><![CDATA[<p>Eine <strong>neue </strong><em>lustige </em><u>Aufgabe</u> mit <img src="ref:addElementDisabled_49432.png" style="opacity:1" />Bild.</p>]]></text>
+					<image name="addElementDisabled_49432.png">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAc0lEQVQ4y91RsQ2AMAxzUQeEhIBrekO+8le5Id8gARNDWRjKUKjUAYRXJ3YcA5VwOYLkAGABEEnG3JzPEWY2lxg1tRHeF3Dnwzoz20qXQgg9yfXyHBGJpQKq6qoikBwf60kvSh1/WKO/qaoFsAOYVBXfxQGXeh7V7BrRYQAAAABJRU5ErkJggg==</image>
+				</tl:description>
+			</bpmn:extensionElements>
+		</bpmn:manualTask>
+		<bpmn:endEvent id="EndEvent_0co6i3s">
+			<bpmn:incoming>SequenceFlow_1p9scyc</bpmn:incoming>
+		</bpmn:endEvent>
+		<bpmn:serviceTask id="Task_1n019e0"
+			name="Übernehmen"
+		>
+			<bpmn:outgoing>SequenceFlow_1vnmfhz</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_1wun6az</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:action><![CDATA[x -> null]]></tl:action>
+				<tl:title/>
+				<tl:icon/>
+				<tl:description/>
+			</bpmn:extensionElements>
+		</bpmn:serviceTask>
+		<bpmn:startEvent id="StartEvent_0menbhe"
+			name="Start"
+		>
+			<bpmn:outgoing>SequenceFlow_16fzfu0</bpmn:outgoing>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:description/>
+			</bpmn:extensionElements>
+		</bpmn:startEvent>
+		<bpmn:sequenceFlow id="SequenceFlow_16fzfu0"
+			sourceRef="StartEvent_0menbhe"
+			targetRef="Task_16uk174"
+		>
+			<bpmn:extensionElements>
+				<tl:rule/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1wun6az"
+			sourceRef="ExclusiveGateway_1rr4x9r"
+			targetRef="Task_1n019e0"
+		>
+			<bpmn:extensionElements>
+				<tl:rule/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1p9scyc"
+			sourceRef="ExclusiveGateway_1rr4x9r"
+			targetRef="EndEvent_0co6i3s"
+		>
+			<bpmn:extensionElements>
+				<tl:rule><![CDATA[true]]></tl:rule>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1vnmfhz"
+			sourceRef="Task_1n019e0"
+			targetRef="EndEvent_1dc6q3j"
+		>
+			<bpmn:extensionElements>
+				<tl:rule/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_0d048ep"
+			sourceRef="Task_16uk174"
+			targetRef="ExclusiveGateway_1rr4x9r"
+		>
+			<bpmn:extensionElements>
+				<tl:rule/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:textAnnotation id="TextAnnotation_1pi6avo">
+			<bpmn:text>Aller Anfang ist schwer</bpmn:text>
+		</bpmn:textAnnotation>
+		<bpmn:association id="Association_0wzd3mi"
+			sourceRef="Task_16uk174"
+			targetRef="TextAnnotation_1pi6avo"
+		/>
+		<bpmn:extensionElements>
+			<tl:actorGroups/>
+			<tl:actorRule/>
+		</bpmn:extensionElements>
+	</bpmn:process>
+	<bpmndi:BPMNDiagram id="BPMNDiagram_1">
+		<bpmndi:BPMNPlane id="BPMNPlane_1"
+			bpmnElement="Collaboration_0rxd91k"
+		>
+			<bpmndi:BPMNShape id="Participant_1jf73bx_di"
+				bpmnElement="Participant_1jf73bx"
+			>
+				<dc:Bounds
+					height="421"
+					width="650"
+					x="138"
+					y="-91"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="StartEvent_0menbhe_di"
+				bpmnElement="StartEvent_0menbhe"
+			>
+				<dc:Bounds
+					height="36"
+					width="36"
+					x="206"
+					y="71"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="24"
+						x="212"
+						y="114"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_16fzfu0_di"
+				bpmnElement="SequenceFlow_16fzfu0"
+			>
+				<di:waypoint
+					x="242"
+					y="89"
+				/>
+				<di:waypoint
+					x="292"
+					y="89"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="ManualTask_1upfd26_di"
+				bpmnElement="Task_16uk174"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="292"
+					y="49"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Lane_1p43qgc_di"
+				bpmnElement="Lane_1p43qgc"
+			>
+				<dc:Bounds
+					height="301"
+					width="620"
+					x="168"
+					y="-91"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Lane_0k0ea4v_di"
+				bpmnElement="Lane_0k0ea4v"
+			>
+				<dc:Bounds
+					height="120"
+					width="620"
+					x="168"
+					y="210"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="ExclusiveGateway_1rr4x9r_di"
+				bpmnElement="ExclusiveGateway_1rr4x9r"
+				isMarkerVisible="true"
+			>
+				<dc:Bounds
+					height="50"
+					width="50"
+					x="442"
+					y="64"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_0d048ep_di"
+				bpmnElement="SequenceFlow_0d048ep"
+			>
+				<di:waypoint
+					x="392"
+					y="89"
+				/>
+				<di:waypoint
+					x="442"
+					y="89"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="EndEvent_0co6i3s_di"
+				bpmnElement="EndEvent_0co6i3s"
+			>
+				<dc:Bounds
+					height="36"
+					width="36"
+					x="652"
+					y="71"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_1p9scyc_di"
+				bpmnElement="SequenceFlow_1p9scyc"
+			>
+				<di:waypoint
+					x="492"
+					y="89"
+				/>
+				<di:waypoint
+					x="652"
+					y="89"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="SequenceFlow_1wun6az_di"
+				bpmnElement="SequenceFlow_1wun6az"
+			>
+				<di:waypoint
+					x="467"
+					y="114"
+				/>
+				<di:waypoint
+					x="467"
+					y="268"
+				/>
+				<di:waypoint
+					x="522"
+					y="268"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="EndEvent_1dc6q3j_di"
+				bpmnElement="EndEvent_1dc6q3j"
+			>
+				<dc:Bounds
+					height="36"
+					width="36"
+					x="652"
+					y="250"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_1vnmfhz_di"
+				bpmnElement="SequenceFlow_1vnmfhz"
+			>
+				<di:waypoint
+					x="622"
+					y="268"
+				/>
+				<di:waypoint
+					x="652"
+					y="268"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="TextAnnotation_1pi6avo_di"
+				bpmnElement="TextAnnotation_1pi6avo"
+			>
+				<dc:Bounds
+					height="42"
+					width="100"
+					x="392"
+					y="-31"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="Association_0wzd3mi_di"
+				bpmnElement="Association_0wzd3mi"
+			>
+				<di:waypoint
+					x="382"
+					y="49"
+				/>
+				<di:waypoint
+					x="421"
+					y="11"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="ServiceTask_0036unk_di"
+				bpmnElement="Task_1n019e0"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="522"
+					y="228"
+				/>
+			</bpmndi:BPMNShape>
+		</bpmndi:BPMNPlane>
+	</bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,75 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<t:type name="Example_Type_With_Defaults">
+				<t:attributes>
+					<!-- The default values defined here are used if the structure is given but some attributes are omitted. -->
+					<t:attribute name="Example_Attribute_A" type="string" default="Some default value"/>
+					<t:attribute name="Example_Attribute_B" type="string" default="Another default value"/>
+					<t:attribute name="Example_Attribute_C" type="string"/>
+				</t:attributes>
+				<!-- It's not possible to define a default value for a whole type in its declaration.
+				But it's possible to define the default value for a whole type when it's used as attribute or parameter. -->
+			</t:type>
+			
+			<t:type name="Example_Type_Nested_Structure_With_Default">
+				<t:attributes>
+					<!-- The default here is the default in case the outer structure is given. -->
+					<t:attribute name="Example_Attribute_Alpha" type="string" default="Fubar"/>
+					<t:attribute name="Example_Attribute_Beta_Structure" type="Example_Type_With_Defaults">
+						<t:default>
+							<!-- If the Example_Attribute_Beta_Structure attribute is omitted,
+							Example_Attribute_A should have a different value as if Example_Attribute_Beta_Structure
+							was given but Example_Attribute_A itself would be omitted. -->
+							<t:attribute name="Example_Attribute_A" value="Some different default value" />
+							
+							<!-- Example_Attribute_B can be omitted. Its already defined default value will be used. -->
+							
+							<!-- Example_Attribute_C cannot be omitted, as it has no default value. -->
+							<t:attribute name="Example_Attribute_C" value="Yet another default value" />
+						</t:default>
+					</t:attribute>
+				</t:attributes>
+			</t:type>
+			
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Example_Structure_With_Defaults_Not_Redefined" type="Example_Type_Nested_Structure_With_Default" />
+			
+			<t:parameter name="Example_Structure_With_Defaults_Redefined" type="Example_Type_Nested_Structure_With_Default">
+				<t:default>
+					<!-- Here are the defaults in case this whole parameter is not given. -->
+					<t:attribute name="Example_Attribute_Alpha" value="Snafu"/>
+					<t:attribute name="Example_Attribute_Beta_Structure">
+						<!-- Redefine the value for the case this whole parameter is not given. -->
+						<t:attribute name="Example_Attribute_B" value="Bliblablub"/>
+						
+						<!-- Example_Attribute_C cannot be omitted, as it has no default value.
+						The default defined for Example_Attribute_Beta_Structure is only used if
+						that whole attribute is missing, not if it's given but Example_Attribute_C is missing. -->
+						<t:attribute name="Example_Attribute_C" value="Yet another default value" />
+					</t:attribute>
+				</t:default>
+			</t:parameter>
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:value expr="$Example_Structure_With_Defaults_Not_Redefined.Example_Attribute_Alpha" />
+		<t:value expr="$Example_Structure_With_Defaults_Not_Redefined.Example_Attribute_Beta_Structure.Example_Attribute_A" />
+		<t:value expr="$Example_Structure_With_Defaults_Not_Redefined.Example_Attribute_Beta_Structure.Example_Attribute_B" />
+		<t:value expr="$Example_Structure_With_Defaults_Not_Redefined.Example_Attribute_Beta_Structure.Example_Attribute_C" />
+		
+		<t:value expr="$Example_Structure_With_Defaults_Redefined.Example_Attribute_Alpha" />
+		<t:value expr="$Example_Structure_With_Defaults_Redefined.Example_Attribute_Beta_Structure.Example_Attribute_A" />
+		<t:value expr="$Example_Structure_With_Defaults_Redefined.Example_Attribute_Beta_Structure.Example_Attribute_B" />
+		<t:value expr="$Example_Structure_With_Defaults_Redefined.Example_Attribute_Beta_Structure.Example_Attribute_C" />
+		
+	</t:body>
+</t:template>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="searchResultTable"/>
+		<param name="searchInputComponent"/>
+		<param name="package"
+			value="${namePrefix}reporting_flex_search_searchResultChart_"
+		/>
+		<param name="resPrefix"
+			value="layouts.reporting.flex.search.searchResultChart."
+		/>
+		<param name="defaultSettingsWidth"
+			optional="true"
+		/>
+	</params>
+
+	<layout name="${package}Layout"
+		resizable="false"
+	>
+		<components>
+			<component class="com.top_logic.reporting.flex.search.SearchResultStoredReportSelector"
+				configurator="${package}Configurator"
+				model="model(${searchResultTable})"
+				name="${package}QuerySelector"
+				page="/jsp/reporting/flex/search/selectQuery.jsp"
+				resPrefix="${resPrefix}QuerySelector."
+				result-table="${searchResultTable}"
+				search-input-component="${searchInputComponent}"
+				securityProviderClass="searchReportSecurityObjectProvider"
+				toolbar="false"
+			>
+				<layoutInfo size="%FILTER_SINGLE_LINE_HEIGHT%"/>
+			</component>
+
+			<include name="reporting/flex/search/searchReportDisplay.xml"
+				defaultSettingsWidth="${defaultSettingsWidth}"
+				model="model(${searchResultTable})"
+				namePrefix="${package}"
+			>
+				<configOptions>
+					<query-selector>${package}QuerySelector</query-selector>
+				</configOptions>
+			</include>
+		</components>
+	</layout>
+</template>

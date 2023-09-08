@@ -1,0 +1,74 @@
+<h2>Syntax</h2>
+<pre>	<code>resource($userObject, $icon, $label, $tooltip, $cssClass, $url, $type)
+</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Erstellt ein Ressourcen-Objekt mit den gegebenen Werten. Ein Ressourcen-Objekt entspricht der Darstellung eines Fachobjektes in der Anwendungsoberfläche. Die Darstellung setzt sich aus einem Icon und einem beschreibenden Text zusammen. Über beidem wird optional ein Tooltip angezeigt und beim Klick auf die Darstellung springt die Anwendung zur Standardsicht des dargestellten Objektes. Mit der Ressource-Funktion kann entweder die Darstellung eines angegebenen Fachobjektes angepasst werden, oder ein selbstdefiniertes Sprungziel mit frei definierbaren Werten erzeugt werden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>userObject</td>
+   <td>Fachobjekt</td>
+   <td>Das Fachobjekt das als Basis für die Ressource dient</td>
+   <td>nein</td>
+   <td>null</td>
+  </tr>
+  <tr>
+   <td>icon</td>
+   <td>Icon/Icon Quelle</td>
+   <td>Ein Icon das angezeigt wird</td>
+   <td>nein</td>
+   <td>Das Icon für den angegeben Typ (z.B. "application/pdf") oder das Icon des User-Objekts.</td>
+  </tr>
+  <tr>
+   <td>label</td>
+   <td>Zeichenkette/Internationalisierter Text</td>
+   <td>Der angezeigte Text</td>
+   <td>nein</td>
+   <td>Das Icon für das angegebene User-Objekt</td>
+  </tr>
+  <tr>
+   <td>tooltip</td>
+   <td>Zeichenkette/Internationalisierter Text</td>
+   <td>Der Tooltip, der über der Darstellung angezeigt wird.</td>
+   <td>nein</td>
+   <td>Der Tooltip für das angegebene Label (wenn das Label als Übersetzungsschlüssel angegeben wurde). Wenn kein Label angegeben wurde, der Tooltip für das angegebene User-Objekt.</td>
+  </tr>
+  <tr>
+   <td>cssClass</td>
+   <td>Zeichenkette</td>
+   <td>CSS-Klasse, die der Darstellung hinzugefügt werden soll.</td>
+   <td>nein</td>
+   <td>null</td>
+  </tr>
+  <tr>
+   <td>url</td>
+   <td>Zeichenkette</td>
+   <td>Die URL, die beim Klick auf die Ressource geöffnet werden soll</td>
+   <td>nein</td>
+   <td>Sprung zu dem angegeben User-Objekt.</td>
+  </tr>
+  <tr>
+   <td>type</td>
+   <td>Zeichenkette</td>
+   <td>Der MIME-Typ, aus dem ein Icon abgeleitet werden soll, wenn dieses nicht explizit gegeben ist (z.B. "application/pdf").</td>
+   <td>nein</td>
+   <td>null</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><strong>Typ:</strong> Ressource</p>
+<h2>Beispiele</h2>
+<pre>	<code>resource(null, "css:far fa-thumbs-up", #("Daumen hoch"@de,"Thumbs up"@en), "Some tooltip")</code>
+</pre>

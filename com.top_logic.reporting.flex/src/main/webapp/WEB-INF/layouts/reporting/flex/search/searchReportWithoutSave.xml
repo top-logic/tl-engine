@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="model"/>
+		<param name="namePrefix"/>
+		<param name="resPrefix"
+			value="layouts.reporting.flex.search.searchResultChart."
+		/>
+		<param name="defaultSettingsWidth"
+			value="360px"
+		/>
+		<param name="configOptions">
+			<!-- By default empty. -->
+		</param>
+		<param name="maximizeRoot"
+			optional="true"
+		/>
+		<param name="showMaximize"
+			optional="true"
+		/>
+		<param name="applyExecutabilityRules"
+			optional="true"
+		/>
+	</params>
+
+	<layout name="${namePrefix}OverviewLayout"
+		horizontal="true"
+	>
+		<components>
+			<include class="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent"
+				base-config-file="reporting/flex/search/searchChart.xml"
+				componentName="${namePrefix}Configurator"
+				isSecurityMaster="true"
+				model="${model}"
+				name="reporting/flex/chart/chartConfigurator.xml"
+				resPrefix="${resPrefix}Configurator."
+			>
+				<inject>
+					<layoutInfo size="${defaultSettingsWidth}"/>
+				</inject>
+				<options>${configOptions}</options>
+				<applyExecutability>${applyExecutabilityRules}</applyExecutability>
+			</include>
+
+			<layout name="${namePrefix}ChartLayout">
+				<components>
+					<component class="com.top_logic.reporting.flex.search.SearchResultChartComponent"
+						maximizeRoot="${maximizeRoot}"
+						model="selection(${namePrefix}Configurator)"
+						name="${namePrefix}Chart"
+						page="/jsp/layout/image/chart.jsp"
+						post-preparation-handler="com.top_logic.reporting.flex.search.SearchResultPostPreparationHandler"
+						resPrefix="${resPrefix}Chart."
+						securityProviderClass="securityRoot"
+						showMaximize="${showMaximize}"
+					>
+						<export-manager class="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager"
+							export-objects="LEAF"
+						/>
+					</component>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

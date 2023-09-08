@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+				
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-contact" />
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.mail.MailHelper">
+			<instance class="com.top_logic.contact.layout.mail.ContactMailHelper"/>
+		</config>
+		
+        <config service-class="com.top_logic.layout.provider.LabelProviderService">
+            <instance>
+                <label-providers>
+					<provider kind="MODEL" type="Contacts:Contact.Person" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
+					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.mandatoraware.COSContactResourceProvider" />
+		            <provider kind="CODE" type="com.top_logic.util.Country" implementation="com.top_logic.contact.layout.CountryResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContactAssignment" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
+                </label-providers>
+                <resource-providers>
+					<provider kind="MODEL" type="Contacts:Contact.Person" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
+					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.mandatoraware.COSContactResourceProvider" />
+		            <provider kind="CODE" type="com.top_logic.util.Country" implementation="com.top_logic.contact.layout.CountryResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContactAssignment" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
+                </resource-providers>
+            </instance>
+        </config>
+		
+		<config service-class="com.top_logic.element.meta.kbbased.filtergen.FilterFactory">
+			<instance>
+				<filters>
+					<filter name="Supplier" impl="com.top_logic.contact.mandatoraware.filter.SupplierFilter"/>
+					<filter name="Client" impl="com.top_logic.contact.mandatoraware.filter.ClientFilter"/>
+					<filter name="PersonContact" impl="com.top_logic.contact.mandatoraware.filter.COSPersonContactFilter"/>
+					<filter name="CompanyContact" impl="com.top_logic.contact.mandatoraware.filter.COSCompanyContactFilter"/>
+					<filter name="SupportsContacts" impl="com.top_logic.contact.mandatoraware.filter.SupportsContactsFilter"/>
+				</filters>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="ContactMessages" />
+					<bundle name="model.tl.contact.external.messages" />
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<group-mapper class="com.top_logic.contact.boundsec.manager.rule.ContactGroupMapper"/>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory">
+			<instance>
+				<dependencies>
+					<!-- Instantiation of com.top_logic.contact.filter.CachedPersonContactGenerator needs KnowledgeBase -->
+					<dependency
+						key="com.top_logic.knowledge.service.PersistencyLayer$Module"
+						value="true" />
+				</dependencies>
+				<generators>
+					<generator 
+						name="Supplier" 
+						impl="com.top_logic.contact.mandatoraware.filter.COSCachedSupplierGenerator" />
+					<generator 
+						name="Client" 
+						impl="com.top_logic.contact.mandatoraware.filter.COSCachedClientGenerator" />
+					<generator 
+						name="CompanyContact" 
+						impl="com.top_logic.contact.mandatoraware.filter.COSCachedCompanyContactGenerator" />
+					<generator 
+						name="PersonContact" 
+						impl="com.top_logic.contact.mandatoraware.filter.COSCachedPersonContactGenerator" />
+					<generator 
+						name="AnyPersonContact" 
+						impl="com.top_logic.contact.filter.CachedPersonContactGenerator" />
+				</generators>				
+			</instance>
+		</config>
+		
+	
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/tl.contact.external.model.xml"/>
+					<declaration file="/WEB-INF/model/Contacts.model.xml"/>
+				</declarations>
+				<settings>
+					<module name="Contacts">
+						<factory value="com.top_logic.contact.business.ContactFactory"/>
+					</module>
+				</settings>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
+			<instance>
+				<attribute-settings>
+					<attribute-setting config-name="EXTERNAL_CONTACT">
+						<tag-provider impl="com.top_logic.element.meta.form.tag.PopupSelectTagProvider"/>
+						<filter-provider impl="com.top_logic.contact.external.meta.ExternalContactFilterProvider"/>
+						<field-provider>
+							<impl class="com.top_logic.contact.external.meta.ExternalContactFieldProvider"
+								multiple="true"
+							/>
+						</field-provider>
+					</attribute-setting>
+
+					<attribute-setting config-name="SINGLE_EXTERNAL_CONTACT">
+						<tag-provider impl="com.top_logic.element.meta.form.tag.PopupSelectTagProvider"/>
+						<filter-provider impl="com.top_logic.contact.external.meta.ExternalContactFilterProvider"/>
+						<field-provider impl="com.top_logic.contact.external.meta.ExternalContactFieldProvider"/>
+					</attribute-setting>
+				</attribute-settings>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.execution.ExecutabilityRuleManager">
+			<instance>
+				<definitions>
+		            <definition id="companyContactDelete">
+		            	<executability>
+							<rule class="com.top_logic.contact.layout.company.CompanyContactDeleteCommandHandler$CompanyContactDeleteRule"/>
+		            	</executability>
+					</definition>
+				</definitions>
+			</instance>
+		</config>
+        
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<handlers>
+		            <handler id="resetStartPage" class="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent$ResetStartPageCommandHandler"
+		            	group="System"
+		            	image="theme:ICON_RESET_STARTPAGE" 
+		            />
+					<handler id="contactApply" class="com.top_logic.contact.layout.ContactApplyHandler" clique="apply"/>
+					<handler id="contactDelete" class="com.top_logic.contact.layout.ContactDeleteHandler" clique="delete"/>
+					<handler id="personContactApply" class="com.top_logic.contact.layout.person.PersonContactApplyHandler" clique="apply"/>
+					<handler id="personContactDelete" class="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler" clique="delete"/>
+					<handler id="personContactCreate" class="com.top_logic.contact.layout.person.PersonContactCreateHandler" clique="create"/>
+					<handler id="companyContactDelete" class="com.top_logic.contact.layout.company.CompanyContactDeleteCommandHandler" clique="delete"/>
+					<handler id="companyContactCreate" class="com.top_logic.contact.layout.company.CompanyContactCreateHandler" clique="create"/>
+		            <!-- Override person handling to (optionally) relate them to PersonContacts --> 
+		            <handler id="applyPerson" class="com.top_logic.contact.layout.person.related.ApplyRelatedPersonCommandHandler" clique="apply"/>
+		            <handler id="newPerson" class="com.top_logic.contact.layout.person.related.NewRelatedPersonCommandHandler" clique="create"/>
+		            <handler id="startSAPImport" class="com.top_logic.contact.mandatoraware.imp.SAPProgressComponent$StartSAPImportCommandHandler"/>
+		            <handler id="finishSAPImport" class="com.top_logic.contact.mandatoraware.imp.SAPProgressComponent$FinishSAPImportCommandHandler"/>
+		            <handler id="ContactSwitchEditCommand" class="com.top_logic.contact.mandatoraware.layout.COSEditPersonContactComponent$ContactSwitchEditCommandHandler" clique="edit"/>
+				</handlers>
+			</instance>		
+		</config>
+	
+		<config service-class="com.top_logic.knowledge.wrap.person.PersonManager">
+			<instance class="com.top_logic.contact.layout.person.ContactPersonManager" />
+		</config>
+		
+	</services>
+	
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+			            <declaration resource="webinf://kbase/ContactMeta.xml"/>
+					</declarations>
+					<schemas>
+						<schema name="externalContact" resource="schema://externalContact.schema.xml"/>
+					</schemas>
+				</type-system>
+			</type-systems>
+		</config>
+		<config config:interface="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent$EditRelatedPersonConfig">
+			<allow-manual-contact-assigning>false</allow-manual-contact-assigning>
+		</config>
+
+		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">
+			<types>
+				<type name="Contacts:Contact.Person" attributes="name,firstname"/>
+				<type name="Contacts:Contact.Company" attributes="name"/>
+			</types>
+		</config>
+	</configs>
+
+</application>

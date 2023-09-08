@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Erstelle und speichere eine Suche."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Modellbasierte Suche"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Ergebnistyp"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+							tab-path="Modellbasierte Suche"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Benutzerkonto"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsOpenDialogCommand"
+					command-label="Speichern unter..."
+					command-name="displayDialog_SaveSearchAs"
+					component-implementation-comment="com.top_logic.model.search.ui.selector.SearchSelectorComponent"
+					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchSelectorComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.model.search/search/modelSearch.layout.xml#SaveSearchAsForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestSaveSearchAsWhenSearchSelectorComponentHasErrors"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsCommand"
+					command-label="Speichern"
+					command-name="saveModelSearchAs"
+					component-implementation-comment="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsComponent"
+					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SaveSearchAsForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Verursache einen Fehler in der Suchausdruck-Auswahlkomponente."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Veröffentlicht"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchSelectorComponent"
+							tab-path="Modellbasierte Suche"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Gruppen"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchSelectorComponent"
+							tab-path="Modellbasierte Suche"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="xxx"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Prüfe ob das Speichern funktioniert."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsOpenDialogCommand"
+					command-label="Speichern unter..."
+					command-name="displayDialog_SaveSearchAs"
+					component-implementation-comment="com.top_logic.model.search.ui.selector.SearchSelectorComponent"
+					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchSelectorComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.model.search/search/modelSearch.layout.xml#SaveSearchAsForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="TestSaveSearchAsWhenSearchSelectorComponentHasErrors_2"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsCommand"
+					command-label="Speichern"
+					command-name="saveModelSearchAs"
+					component-implementation-comment="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsComponent"
+					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SaveSearchAsForm"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="multi-set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Suchausdruck"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchSelectorComponent"
+								tab-path="Modellbasierte Suche"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
+						<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Suchausdruck"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchSelectorComponent"
+								tab-path="Modellbasierte Suche"
+							/>
+						</context-name>
+						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+							<values>
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+									label="TestSaveSearchAsWhenSearchSelectorComponentHasErrors_2"
+								/>
+							</values>
+						</local-name>
+					</expected-value>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Lösche die Suchen wieder, um das System aufzuräumen."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.ui.selector.DeleteSearchCommand"
+					command-label="Löschen"
+					command-name="deleteModelSearch"
+					component-implementation-comment="com.top_logic.model.search.ui.selector.SearchSelectorComponent"
+					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchSelectorComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Modellbasierte Suche > Suchausdruck"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="TestSaveSearchAsWhenSearchSelectorComponentHasErrors"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.ui.selector.DeleteSearchCommand"
+					command-label="Löschen"
+					command-name="deleteModelSearch"
+					component-implementation-comment="com.top_logic.model.search.ui.selector.SearchSelectorComponent"
+					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchSelectorComponent"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

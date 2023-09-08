@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_0fdb2127_dfbd_437a_97ed_2e4a1a833203"
+		tabIcon=""
+	>
+		<tabLabel>
+			<en>Model Editor</en>
+			<de>Modell Editor</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.element/admin/model/modelEditor/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

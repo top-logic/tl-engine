@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component name="a_value"
+	ns0:definition-file="/WEB-INF/layouts/masterFrame.xml,/WEB-INF/layouts/template1.xml,/WEB-INF/layouts/template2.xml"
+	ns0:inlined="true"
+	xmlns:ns0="http://www.top-logic.com/ns/layout/annotation/1.0"
+	bar="a_value-b_value"
+	comment="b_value"
+>
+	<testAdditional name="additional">
+		<foobar/>
+	</testAdditional>
+	<content1 name="con1"
+		ns0:definition-file="/WEB-INF/layouts/layout3.xml"
+	/>
+	<content2 name="con2"
+		ns0:definition-file="/WEB-INF/layouts/layout3.xml"
+	/>
+	<content3 name="con3"
+		ns0:definition-file="/WEB-INF/layouts/layout3.xml"
+	/>
+	<d foobar="b_value"/>
+	<e1
+		bar="a_value-b_value"
+		foo="a_value"
+	>
+		<d foobar="b_value"/>
+	</e1>
+	<e2
+		bar="a_value-b_value"
+		foo="a_value"
+	>
+		textBefore
+		<d foobar="b_value"/>
+		textAfter
+		<e3>
+			<d foobar="b_value"/>
+		</e3>
+	</e2>
+	<e1
+		bar="a_value-b_value"
+		foo="a_value"
+	>
+		<d foobar="b_value"/>
+	</e1>
+	<e2
+		bar="a_value-b_value"
+		foo="a_value"
+	>
+		textBefore
+		<d foobar="b_value"/>
+		textAfter
+		<e3>
+			<d foobar="b_value"/>
+		</e3>
+	</e2>
+</component>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="builderClass"/>
+		<param name="master"/>
+		<param name="executability"/>
+		<param name="openHandlerName"/>
+		<param name="openHandlerClass"
+			value="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+		/>
+		<param name="applyCommand"
+			value="com.top_logic.layout.scripting.template.gui.templates.TemplateSaveCommand"
+		/>
+		<param name="applyGroup"
+			value="Write"
+		/>
+	</params>
+
+	<layout name="${namePrefix}Layout"
+		dontRecord="true"
+		titleKey="tl.scripting.recorder.templates.templateEdit.title"
+	>
+		<dialogInfo
+			disabledImage="theme:ICONS_BUTTON_NEW_ELEMENT_DISABLED"
+			executability="${executability}"
+			height="80%"
+			image="theme:ICONS_BUTTON_NEW_ELEMENT"
+			openHandlerClass="${openHandlerClass}"
+			openHandlerName="${openHandlerName}"
+			openerClique="additional"
+			openerCommandGroup="System"
+			target="selection(self())"
+			targetComponent="${namePrefix}Form"
+			width="80%"
+		/>
+
+		<components>
+			<layoutControl name="${namePrefix}Parameters"
+				componentName="${namePrefix}Form"
+			>
+				<layoutInfo size="150px"/>
+				<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"
+					page="/jsp/layout/scripting/TemplateEditParameters.jsp"
+				/>
+			</layoutControl>
+
+			<form name="${namePrefix}Form"
+				buttonComponent="${namePrefix}Buttons"
+				dontRecord="true"
+				page="/jsp/layout/scripting/TemplateEditContent.jsp"
+				resPrefix="tl.scripting.recorder.templates.templateEdit."
+				resetInvisible="true"
+				securityProviderClass="securityRoot"
+				toolbar="false"
+			>
+				<layoutInfo size="100%"/>
+				<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"/>
+
+				<modelBuilder class="${builderClass}">
+					<xml-display
+						indent-char=" "
+						indent-step="2"
+						xml-header="false"
+					/>
+				</modelBuilder>
+
+				<buttons>
+					<button id="save"
+						class="com.top_logic.tool.boundsec.CommandSequence"
+						group="${applyGroup}"
+					>
+						<commands>
+							<call
+								command-id="apply"
+								group="${applyGroup}"
+							/>
+							<reference command-id="closeModalDialog"/>
+						</commands>
+					</button>
+					<button id="apply"
+						class="${applyCommand}"
+						group="${applyGroup}"
+					/>
+				</buttons>
+			</form>
+			<buttonbar name="${namePrefix}Buttons"/>
+		</components>
+	</layout>
+</template>

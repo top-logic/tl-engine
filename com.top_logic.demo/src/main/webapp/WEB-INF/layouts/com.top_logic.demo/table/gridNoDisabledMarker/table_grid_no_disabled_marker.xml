@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/table/grid/table_grid_shared.xml"
+	defaultColumns="name,booleanMandatory,date,float,long,string"
+	nameSuffix="NoDisabledMarker"
+	resPrefix="layouts.demo.table.table_grid_no_disabled_marker.tableGridNoDisabledMarker."
+>
+	<selectionModelFactory class="com.top_logic.mig.html.DefaultSelectionModelFactory"
+		filter="com.top_logic.demo.table.grid.DemoSelectableObjectsFilter"
+		multiple="true"
+	/>
+</include>

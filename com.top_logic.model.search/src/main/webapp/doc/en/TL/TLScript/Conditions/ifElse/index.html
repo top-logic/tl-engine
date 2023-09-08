@@ -1,0 +1,57 @@
+<h2>Syntax</h2> 
+<pre>	<code>ifElse($test, $then, $else)
+
+$test.ifElse($then, $else)</code>
+</pre> 
+<h2>Description</h2> 
+<p><span style="background-color:rgba(255, 255, 255, 0); font-size:16pt"></span>Returns the result of the evaluation of <code class="hljs inlineCode">then</code> or <code class="hljs inlineCode">else</code> depending on the evaluation of <code class="hljs inlineCode">test</code>. If the evaluation of <code class="hljs inlineCode">test</code> is <code class="hljs inlineCode">true</code>, then <code class="hljs inlineCode">then</code> is evaluated and the result is returned, otherwise <code class="hljs inlineCode">else</code>.</p> 
+<p>Alternative notation for <code class="hljs inlineCode">if($text, $then, $else)</code>, which sometimes fits more legibly into an evaluation chain, see <a class="tlObject" data-custom="false" href="?page=if&amp;uuid=c1d156e8-1eb4-452a-acc2-e334bce44ca9">if</a> <a class="tlObject" data-custom="true" href="?page=if&amp;uuid=c1d156e8-1eb4-452a-acc2-e334bce44ca9">.</a></p> 
+<p>For case distinctions where multiple conditions must be evaluated, there is the alternative <a class="tlObject" data-custom="true" href="?page=switch&amp;uuid=5887a3b1-3e57-4227-bbab-5581a3023d53">switch</a> syntax. This avoids the nesting of conditions and leads to a much better readability in this case.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>test</td> 
+   <td>Business object</td> 
+   <td>An expression that returns <code class="hljs inlineCode">true</code> or <code class="hljs inlineCode">false</code> after evaluation.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>then</td> 
+   <td>Business object</td> 
+   <td>An expression that evaluates when <code class="hljs inlineCode">test</code> returns <code class="hljs inlineCode">true </code>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>else</td> 
+   <td>Business object</td> 
+   <td>An expression that evaluates if <code class="hljs inlineCode">test</code> results in <code class="hljs inlineCode">false</code>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2><span style="background-color:rgba(255, 255, 255, 0); font-size:16pt">Return value</span></h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p> 
+<p>The result of evaluating <code class="hljs inlineCode">then</code> or <code class="hljs inlineCode">else</code>, depending on the result of <code class="hljs inlineCode">test</code>.</p> 
+<h2>Examples</h2> 
+<pre>	<code>{
+  x = 55;
+  ($x % 10 == 0).ifElse($x / 10, $x * 2)
+}
+</code>
+</pre> 
+<p><strong><span style="color:#3498db">Output:</span></strong> 110</p> 
+<p>If x is divisible by 10, the result of x/10 is returned. Otherwise the result of x*2</p> 
+<p> </p>

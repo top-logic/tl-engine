@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<components>
+	<component name="personContactEdit">
+		<dialogs>
+			<include name="commons/dispatchingImportEVA_dialog.xml"
+				importerNames="personExcel, personCSV"
+				masterComponent="personContactFilterTable"
+				namePrefix="DemoPersonImport"
+				securityProvider="securityRoot"
+			/>
+		</dialogs>
+	</component>
+</components>

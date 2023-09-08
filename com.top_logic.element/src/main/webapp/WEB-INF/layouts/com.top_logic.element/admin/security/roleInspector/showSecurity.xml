@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="ShowSecurityContainer">
+	<component class="com.top_logic.element.layout.admin.component.ShowSecurityComponent"
+		maximizeRoot="ShowSecurityContainer"
+		name="ShowSecurityComponent"
+		page="/jsp/layout/admin/security/showSecurityComponent.jsp"
+		resPrefix="main.admin.showSecurity.component."
+		securityProviderClass="securityRoot"
+		tableName="field_result"
+	>
+		<layoutInfo size="165px"/>
+		<buttons>
+			<button id="refreshShowSecurity"
+				class="com.top_logic.element.layout.admin.component.ShowSecurityComponent$RefreshCommand"
+				clique="refresh"
+				tableName="field_result"
+			/>
+		</buttons>
+		<tables>
+			<table name="field_result"
+				defaultColumns="target,wrapper,role,reason,secParent,type,meType,moType,bus_obj"
+				fixedColumns="1"
+				pageSizeOptions="100"
+				resPrefix="main.admin.showSecurity.component.field_result"
+			>
+				<column-default
+					accessor="com.top_logic.element.layout.admin.component.SecurityRowAccessor"
+					filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+				/>
+				<exporter
+					downloadNameKey="/sSecurity"
+					executability="com.top_logic.element.layout.admin.component.ShowSecurityComponent$ShowSecurityExecutability"
+					templateName="showSecurityTemplate.xls"
+				/>
+			</table>
+		</tables>
+	</component>
+	<layoutControl name="ShowSecurityTable"
+		componentName="ShowSecurityComponent"
+	>
+		<componentControlProvider class="com.top_logic.layout.structure.SeparateTableControlProvider"
+			showMaximize="false"
+			showMinimize="false"
+			tableName="field_result"
+		/>
+	</layoutControl>
+</layout>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminPersonEditView"
+	helpIDLegacy="main.admin.persons.person.tabber"
+	titleKey="main.admin.persons.person.tabber"
+>
+	<tabInfo label="main.admin.persons.person.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/security/accounts/editPerson.xml"/>
+	</components>
+</securityLayout>

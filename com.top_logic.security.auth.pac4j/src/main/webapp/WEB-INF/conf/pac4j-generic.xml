@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+	<alias>
+        <entry name="%PAC_DISCOVERY_URI%" value="${env:tl_pac_discovery_uri}" />
+	</alias>
+</root>

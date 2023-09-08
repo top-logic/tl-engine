@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="main.admin.monitor.tabber"
+		z_legacy_componentName="adminMonitorView"
+		z_legacy_tabBarName="adminMonitorView_tabBar"
+		z_legacy_tabLabel="main.admin.monitor.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic/admin/monitor/app/applicationMonitor.layout.xml"/>
+			<layout-reference resource="com.top_logic/admin/monitor/thread/threadMonitor.layout.xml"/>
+			<layout-reference resource="com.top_logic/admin/monitor/systemEnvironment.layout.xml"/>
+			<layout-reference resource="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml"/>
+			<layout-reference resource="com.top_logic/admin/monitor/event/eventMonitor.layout.xml"/>
+			<layout-reference resource="com.top_logic/admin/monitor/memory/memoryMonitor.layout.xml"/>
+			<layout-reference resource="com.top_logic/admin/monitor/performance/performanceMonitor.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<fallback-test-d xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	class="test.com.top_logic.basic.config.TestConfigurationFallback$DImplSub"
+	string="oldString"
+/>

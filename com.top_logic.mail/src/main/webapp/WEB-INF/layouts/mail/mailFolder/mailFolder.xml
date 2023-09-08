@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- BoundLayout showing a mail folder -->
+<include name="mail/mailFolder/mailFolder_aliased.xml"
+	masterComponent="navigationTree"
+	namePrefix="mailFolder"
+/>

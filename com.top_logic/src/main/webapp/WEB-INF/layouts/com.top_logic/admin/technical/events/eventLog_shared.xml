@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Shared log event view for top-logic. -->
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="model"
+			optional="true"
+		/>
+		<param name="eventGroups"
+			optional="true"
+		/>
+	</params>
+
+	<layout
+		resPrefix="layouts.admin.logEntries.layout."
+		toolbar="true"
+	>
+		<components>
+			<component class="com.top_logic.event.layout.LogEntryFilterComponent"
+				allowedEventGroups="${eventGroups}"
+				isSecurityMaster="true"
+				model="${model}"
+				name="${namePrefix}LogEntryFilterComponent"
+				page="/jsp/layout/event/logEntryFilter.jsp"
+				resPrefix="logentry.conf.filter."
+				securityProviderClass="securityRoot"
+				tableName="LogEntryTable"
+				toolbar="false"
+			>
+				<layoutInfo size="34px"/>
+				<tables>
+					<table name="LogEntryTable"
+						defaultSortOrder="date:descending"
+						fixedColumns="0"
+						resPrefix="logentry.conf.filter.LogEntryTable"
+					>
+						<column-default
+							accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+							filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+						/>
+						<columns>
+							<column name="date"
+								cellStyle="text-align:center;"
+								columnWidth="120px"
+								filterProvider="com.top_logic.layout.table.filter.SimpleDateFilterProvider"
+								labelProvider="com.top_logic.layout.provider.DateTimeLabelProvider"
+							/>
+							<column name="message"
+								cellStyle="text-align:left;"
+								columnWidth="500px"
+								renderer="com.top_logic.layout.table.renderer.MessageRenderer"
+								sortKeyProvider="com.top_logic.layout.LogEntryMessageMapping"
+							/>
+							<column name="trigger"
+								accessor="com.top_logic.event.layout.LogEntryTriggerAccessor"
+								cellStyle="text-align:left;"
+								columnWidth="200px"
+								sortKeyProvider="com.top_logic.layout.LabelMapping"
+							/>
+							<column name="source"
+								accessor="com.top_logic.event.layout.LogEntrySourceAccessor"
+								cellStyle="text-align:left;"
+								columnWidth="200px"
+							/>
+						</columns>
+					</table>
+				</tables>
+				<dialogs>
+					<layout name="${namePrefix}DialogLogEntriesSelection">
+						<dialogInfo
+							defaultI18n="layouts.admin.logEntries.openConfigureDialog"
+							height="480"
+							image="theme:ICONS_CONFIGURE"
+							openHandlerName="eventFilterConfigurationOpener"
+							openerClique="settings"
+							width="600"
+						/>
+
+						<components>
+							<component class="com.top_logic.event.layout.ConfigureLogEntriesComponent"
+								name="${namePrefix}DialogLogEntries"
+								page="/jsp/layout/event/configureEntries.jsp"
+								resPrefix="logentry.conf."
+							/>
+							<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+						</components>
+					</layout>
+				</dialogs>
+			</component>
+			<layoutControl name="${namePrefix}LogEntryFilter"
+				componentName="${namePrefix}LogEntryFilterComponent"
+			>
+				<componentControlProvider class="com.top_logic.layout.structure.SeparateTableControlProvider"
+					tableName="LogEntryTable"
+					toolbar="false"
+				/>
+			</layoutControl>
+		</components>
+	</layout>
+</template>

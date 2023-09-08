@@ -1,0 +1,40 @@
+<h2>Syntax</h2> 
+<pre>	<code>$calendar.withYearAdded($value)</code>
+</pre> 
+<h2>Description</h2> 
+<p>Creates a new calendar from the given calendar, adding <code class="hljs inlineCode">value</code> to the <a class="tlObject" data-custom="false" href="?page=year&amp;uuid=914035cc-d113-4b70-9b71-44de79ef3d5e">year</a>. The addition of the value can have an effect on other values, for example the <a class="tlObject" data-custom="true" href="?page=dayOfWeek&amp;uuid=994c8b37-d3ce-4979-8e2c-c5c159d4000a">day of the week</a>.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>calendar</td> 
+   <td>Business object</td> 
+   <td>The calendar whose day is to be changed. It can be a <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">system</a> or <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">user calendar</a>.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>value</td> 
+   <td>Number</td> 
+   <td>Value to be added to the current year of the calendar.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong> </span>Business object</p> 
+<p>A calendar with the modified value for the year.</p> 
+<h2>Examples</h2> 
+<pre>	<code>date(2012, 8, 10).toUserCalendar().withYearAdded(2).year()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 2014</p>

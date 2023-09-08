@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<list name="tl.yesnoundef" type="Classification" multiselect="false" system="true">
+	<elements>
+		<element name="tl.yesnoundef.yes" />
+		<element name="tl.yesnoundef.no" />
+		<element name="tl.yesnoundef.undefined" default="true" />
+	</elements>
+</list>

@@ -1,0 +1,7 @@
+com.top_logic.config.xdiff.ms.MSXDiffSchema.java: Invalid camel case word 'BeforeXPath', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.xdiff.ms.MSXDiffSchema.java: Invalid camel case word 'NodeAdd', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.xdiff.ms.MSXDiffSchema.java: Invalid camel case word 'NodeName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.xdiff.ms.MSXDiffSchema.java: Invalid camel case word 'rootCertificateSubjectKeyIdentifier', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.xdiff.ms.MSXDiffSchema.java: Invalid camel case word 'rootCertificateSubjectKeyIndentifier', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.config.xdiff.ms.MSXDiffSchema.java: Missing documentation: com.top_logic.config.xdiff.ms.MSXDiffSchema.CUSTOMCONFIG_XSD
+com.top_logic.config.xdiff.ms.MSXDiffSchema.java: Missing documentation: com.top_logic.config.xdiff.ms.MSXDiffSchema.NO_NAMESPACE_SCHEMA_LOCATION

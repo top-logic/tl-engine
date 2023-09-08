@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="mainTabbar"/>
+	</params>
+
+	<layout name="Content"
+		resizable="false"
+	>${mainTabbar}</layout>
+</template>

@@ -1,0 +1,99 @@
+.djs-context-pad {
+  background-color: white;
+}
+
+/*
+ * 24px for each item
+ */
+.djs-overlay-context-pad {
+  width: 96px;
+}
+
+.djs-context-pad {
+	background-color: #f0f0f0;
+	border-style: solid;
+	border-width: 1px;
+	padding: 3px;
+	border-color: #dddcdc;
+}
+
+.djs-context-pad .entry {
+	margin: 0;
+	box-shadow: none;
+	background-color: #f0f0f0;
+}
+
+html,
+body,
+#canvas,
+#canvas > div {
+    height: 100%;
+    margin: 0;
+}
+
+.djs-label {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.djs-label::selection {
+	background: transparent;
+}
+
+.palette-icon-lasso-tool {
+  background-image: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-dasharray%3D%225%2C%205%22%20width%3D%2246%22%20height%3D%2246%22%3E%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%2226%22%20height%3D%2226%22%2F%3E%3C%2Fsvg%3E');
+}
+
+.palette-icon-create-shape {
+  background-image: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20width%3D%2246%22%20height%3D%2246%22%3E%3Crect%20x%3D%2210%22%20y%3D%2213%22%20width%3D%2226%22%20height%3D%2220%22%2F%3E%3C%2Fsvg%3E');
+}
+
+.palette-icon-create-class {
+  background-image: url('../images/icons/palette/create_class.svg') !important;
+}
+
+.palette-icon-create-enumeration {
+  background-image: url('../images/icons/palette/create_enumeration.svg') !important;
+}
+
+.context-pad-icon-goto {
+  background-image: url('../images/icons/context-pad/goto-element.svg') !important;
+}
+
+.context-pad-icon-hide {
+  background-image: url('../images/icons/context-pad/eye-slash-regular.svg') !important;
+}
+
+.context-pad-icon-delete {
+  background-image: url('../images/icons/context-pad/trash-alt-regular.svg') !important;
+}
+
+.context-pad-icon-create-property {
+  background-image: url('../images/icons/context-pad/property.svg') !important;
+}
+
+.context-pad-icon-inheritance {
+  background-image: url('../images/icons/context-pad/inheritance.svg') !important;
+}
+
+.context-pad-icon-association {
+  background-image: url('../images/icons/context-pad/association.svg') !important;
+}
+
+.context-pad-icon-composition {
+  background-image: url('../images/icons/context-pad/composition.svg') !important;
+}
+
+.context-pad-icon-dependency {
+  background-image: url('../images/icons/context-pad/dependency.svg') !important;
+}
+
+.context-pad-icon-realization {
+  background-image: url('../images/icons/context-pad/realization.svg') !important;
+}
+
+.context-pad-icon-aggregation {
+  background-image: url('../images/icons/context-pad/aggregation.svg') !important;
+}

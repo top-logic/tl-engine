@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<!-- Type String -->
+			
+			<!-- For parameters of type String, the default is given in the "default" parameter. Not in tags. -->
+			<t:parameter name="Example_Attribute_Type_String_Default" type="string" default="" />
+			
+			<!-- Type XML -->
+			
+			<!-- For parameters of type XML, the default is given in the "default" tags. Not in the attribute. -->
+			<!-- This parameter has an empty XML tree as default value. -->
+			<t:parameter name="Example_Attribute_Type_XML_Default_Empty" type="xml" default="" />
+			
+			<!-- This parameter has a single text node as default value. -->
+			<t:parameter name="Example_Attribute_Type_XML_Default_Text" type="xml" default="" />
+			
+			<!-- This parameter has a single comment node as default value. -->
+			<t:parameter name="Example_Attribute_Type_XML_Default_Comment" type="xml" default="" />
+			
+			<!-- This parameter has a single tag as default value. -->
+			<t:parameter name="Example_Attribute_Type_XML_Default_Tag" type="xml" default="" />
+			
+			<!-- This parameter has a list of three tags as default value. -->
+			<t:parameter name="Example_Attribute_Type_XML_Default_Three_Tags" type="xml" default="" />
+			
+			<!-- This parameter has a more complex default value. -->
+			<t:parameter name="Example_Attribute_Type_XML_Default_Complex" type="xml" default="" />
+			
+			<!-- Further Types -->
+			
+			<!-- For parameters of type Boolean, the default is given in the "default" attribute. Not in tags. -->
+			<t:parameter name="Example_Attribute_Type_Boolean_Default_True" type="boolean" default="" />
+			
+			<t:parameter name="Example_Attribute_Type_Boolean_Default_False" type="boolean" default="" />
+			
+			<!-- For parameters of type Integer, the default is given in the "default" attribute. Not in tags. -->
+			<t:parameter name="Example_Attribute_Type_Integer_Default" type="integer" default="" />
+			
+			<!-- For parameters of type Float, the default is given in the "default" attribute. Not in tags. -->
+			<t:parameter name="Example_Attribute_Type_Float_Default" type="float" default="" />
+			
+			<!-- For parameters of type Date, the default is given in the "default" attribute. Not in tags. -->
+			<t:parameter name="Example_Attribute_Type_Date_Default" type="date" default="" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:value expr='$Example_Attribute_Type_String_Default' />
+		
+		<t:value expr='$Example_Attribute_Type_XML_Default_Empty' />
+		<t:value expr='$Example_Attribute_Type_XML_Default_Text' />
+		<t:value expr='$Example_Attribute_Type_XML_Default_Comment' />
+		<t:value expr='$Example_Attribute_Type_XML_Default_Tag' />
+		<t:value expr='$Example_Attribute_Type_XML_Default_Three_Tags' />
+		<t:value expr='$Example_Attribute_Type_XML_Default_Complex' />
+		
+		<t:value expr='$Example_Attribute_Type_Boolean_Default_True' />
+		<t:value expr='$Example_Attribute_Type_Boolean_Default_False' />
+		
+		<t:value expr='$Example_Attribute_Type_Integer_Default' />
+		
+		<t:value expr='$Example_Attribute_Type_Float_Default' />
+		
+		<t:value expr='$Example_Attribute_Type_Date_Default' />
+		
+	</t:body>
+</t:template>

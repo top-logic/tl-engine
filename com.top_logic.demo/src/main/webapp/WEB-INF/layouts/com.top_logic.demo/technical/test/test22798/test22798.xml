@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/structure/demoTypes/treeGrid/tree_grid.xml"
+	namePrefix="ticket22798"
+	partnerGroup="gridGroup"
+	resetInvisible="true"
+>
+	<modelBuilder class="com.top_logic.element.layout.grid.TreeGridBuilder">
+		<builder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
+	</modelBuilder>
+</include>

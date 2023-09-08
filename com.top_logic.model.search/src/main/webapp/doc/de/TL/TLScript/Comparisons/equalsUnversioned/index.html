@@ -1,0 +1,59 @@
+<h2>Syntax</h2>
+<pre>	<code>$object1.equalsUnversioned($object2)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Die Funktion testet ob die gegebenen Fachobjekte gleich sind, unabhängig in welcher Version sie vorliegen.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object1</td>
+   <td>Fachobjekt</td>
+   <td>Erstes Fachobjekt zum Vergleich</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>object2</td>
+   <td>Fachobjekt</td>
+   <td>Zweites Fachobjekt zum Vergleich</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+<p><code class="hljs inlineCode">TRUE</code>, wenn die beiden Fachobjekte das selbe Objekt repräsentieren, auch wenn sie in verschiedenen Revision vorliegen, <code class="hljs inlineCode">FALSE</code> andernfalls.</p>
+<h2>Beispiele</h2>
+<h3>Beispiel 1</h3>
+<pre>	<code>{
+$businessObject = ... ;
+$businessObject.inRevision(revisionOfCommit(42)).equalsUnversioned($businessObject.inCurrent());
+}
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">TRUE</code></p>
+<p>Es wird ein Fachobjekt in CURRENT mit Revision 42 dieses Fachobjektes verglichen. Diese sind gleich.</p>
+<h3>Beispiel 2</h3>
+<pre>	<code>{
+$businessObject = ... ;
+$r42 = revisionOfCommit(42);
+$r666 = revisionOfCommit(666);
+$businessObject.inRevision($r666).equalsUnversioned($businessObject.inRevision($r42));
+}
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">TRUE</code></p>
+<p>Hier wird das selbe Fachobjekt in verschiedenen historischen Ständen verglichen. Diese ins gleich.</p>
+<p></p>
+<p></p>

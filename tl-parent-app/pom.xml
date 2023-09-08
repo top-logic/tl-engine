@@ -1,0 +1,276 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-core</artifactId>
+		<version>7.6.0-SNAPSHOT</version>
+
+		<relativePath>../tl-parent-core</relativePath>
+	</parent>
+
+	<artifactId>tl-parent-app</artifactId>
+
+	<description>Parent module for TopLogic applications.</description>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<packaging>pom</packaging>
+	
+	<modules>
+		<module>internal</module>
+	</modules>
+
+	<properties>
+		<deployAspects>local</deployAspects>
+		<licenseExcludedGroups>^com\.top-logic(?:\..*)?</licenseExcludedGroups>
+		<javadocOutput>${project.build.directory}/javadoc</javadocOutput>
+		<tl.app.metaConfAddons>db-jndi.xml</tl.app.metaConfAddons>
+		<tl.app.buildQualifier>${maven.build.timestamp}</tl.app.buildQualifier>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-scripting-template</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+		    <groupId>com.h2database</groupId>
+		    <artifactId>h2</artifactId>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+
+	<profiles>
+		<!-- Profile for starting an app without deployment. -->
+		<profile>
+			<id>ide</id>
+			
+			<dependencies>
+				<dependency>
+					<groupId>com.top-logic</groupId>
+					<artifactId>tl-ide-jetty</artifactId>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+	
+		<!-- Profiles for including a database driver to the final application WAR. -->
+		<!-- 
+			Note: This section must be repeated in the internal POM tl-parent-app-internal. -->
+		<profile>
+			<id>with-h2</id>
+			
+			<properties>
+				<tl.app.metaConfAddons>db-h2.xml</tl.app.metaConfAddons>
+			</properties>
+
+			<dependencies>
+				<dependency>
+				    <groupId>com.h2database</groupId>
+				    <artifactId>h2</artifactId>
+			  	</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>with-mysql</id>
+
+			<properties>
+				<tl.app.metaConfAddons>db-mysql.xml</tl.app.metaConfAddons>
+			</properties>
+
+			<dependencies>
+				<dependency>
+				    <groupId>com.mysql</groupId>
+				    <artifactId>mysql-connector-j</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>with-oracle</id>
+
+			<properties>
+				<tl.app.metaConfAddons>db-oracle.xml</tl.app.metaConfAddons>
+			</properties>
+
+			<dependencies>
+				<dependency>
+				    <groupId>com.oracle.database.jdbc</groupId>
+				    <artifactId>ojdbc11</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>with-postgresql</id>
+
+			<properties>
+				<tl.app.metaConfAddons>db-postgres.xml</tl.app.metaConfAddons>
+			</properties>
+
+			<dependencies>
+				<dependency>
+				    <groupId>org.postgresql</groupId>
+				    <artifactId>postgresql</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>with-db2</id>
+
+			<properties>
+				<tl.app.metaConfAddons>db-db2.xml</tl.app.metaConfAddons>
+			</properties>
+
+			<dependencies>
+				<dependency>
+					<groupId>com.top-logic</groupId>
+					<artifactId>ext-com-ibm-db2</artifactId>
+					<type>pom</type>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>with-mssql</id>
+
+			<properties>
+				<tl.app.metaConfAddons>db-mssql.xml</tl.app.metaConfAddons>
+			</properties>
+
+			<dependencies>
+				<dependency>
+					<groupId>com.top-logic</groupId>
+					<artifactId>ext-com.microsoft-sqlserver-jdbc</artifactId>
+					<type>pom</type>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
+
+	<build>
+		<defaultGoal>tl:resolve compile exec:java</defaultGoal>
+		<plugins>
+	  		<plugin>
+	  			<groupId>org.codehaus.mojo</groupId>
+	  			<artifactId>license-maven-plugin</artifactId>
+	  			
+	  			<executions>
+	  				<execution>
+	  					<id>generate-license-information</id>
+	  					<goals>
+	  						<goal>add-third-party</goal>
+	  					</goals>
+	  					
+	  					<phase>prepare-package</phase>
+	  					
+	  					<configuration>
+	  						<outputDirectory>${project.build.directory}/license-info/license</outputDirectory>
+	  						<excludedGroups>${licenseExcludedGroups}</excludedGroups>
+	  						<excludedScopes>test,provided</excludedScopes>
+	  					</configuration>
+	  				</execution>
+	  			</executions>
+	  		</plugin>
+	  		
+			<plugin>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-maven-plugin</artifactId>
+				<version>7.6.0-SNAPSHOT</version>
+
+				<executions>
+					<execution>
+						<id>build-version-info</id>
+						<goals>
+							<goal>create-version-info</goal>
+						</goals>
+						<configuration>
+	  						<excludedScopes>test,provided</excludedScopes>
+	  						<buildQualifier>${tl.app.buildQualifier}</buildQualifier>
+						</configuration>
+					</execution>
+					
+					<execution>
+						<id>build-app</id>
+						<goals>
+							<goal>app</goal>
+						</goals>
+						<configuration>
+							<overlays>
+								<overlay>
+									<path>${project.build.directory}/license-info</path>
+								</overlay>
+								<overlay>
+									<path>${project.build.directory}/version-info</path>
+								</overlay>
+								<overlay>
+									<deployAspects>${deployAspects}</deployAspects>
+								</overlay>
+							</overlays>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				
+				<executions>
+					<execution>
+						<id>start-app</id>
+						
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+
+				<configuration>
+					<mainClass>com.top_logic.ide.jetty.Bootstrap</mainClass>
+					
+					<arguments>
+						<argument>-port</argument>
+						<argument>8080</argument>
+						<argument>-contextPath</argument>
+						<argument>${project.artifactId}</argument>
+					</arguments>
+
+					<includePluginDependencies>true</includePluginDependencies>
+				</configuration>
+				
+				<dependencies>
+					<dependency>
+						<groupId>com.top-logic</groupId>
+						<artifactId>tl-ide-jetty</artifactId>
+						<version>${tl.version}</version>
+					</dependency>
+					<dependency>
+						<groupId>com.top-logic</groupId>
+						<artifactId>tl-basic-logging-log4j</artifactId>
+						<version>${tl.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+		</plugins>
+	</build>
+</project>

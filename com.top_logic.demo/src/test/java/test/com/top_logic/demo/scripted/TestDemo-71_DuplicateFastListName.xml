@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id="root"
+	window-name=""
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Navigate to create component"
+			failure-message=""
+			user-id="root"
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+					window-name=""
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name=""
+						tab-path="Administration > Demo Administration > Checklisten"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create fast list"
+			failure-message=""
+			user-id="root"
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Neue Checkliste..."
+					command-name="displayDialog_adminChecklistnewListDialog"
+					comment=""
+					component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent"
+					component-name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklisteditListComponent"
+					failure-message=""
+					user-id="root"
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent$NewListComponent"
+						component-name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklistnewListComponent"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Name"
+									field-name="name"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="TestDuplicateName"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.admin.component.EditListComponent$NewListCommandHandler"
+					command-label="Anlegen"
+					command-name="CreateNewList"
+					comment=""
+					component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent$NewListComponent"
+					component-name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklistnewListComponent"
+					failure-message=""
+					user-id="root"
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklisteditListComponent"
+						tab-path="Administration > Demo Administration > Checklisten"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Name (Deutsch)"
+									field-name="field_name_i18n_de"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="TestDuplicateName"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklisteditListComponent"
+						tab-path="Administration > Demo Administration > Checklisten"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Name (Englisch)"
+									field-name="field_name_i18n_en"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="TestDuplicateName"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					comment=""
+					component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent"
+					component-name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklisteditListComponent"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check creating another list with same name fails."
+			failure-message=""
+			user-id="root"
+			window-name=""
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Neue Checkliste..."
+					command-name="displayDialog_adminChecklistnewListDialog"
+					comment=""
+					component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent"
+					component-name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklisteditListComponent"
+					failure-message=""
+					user-id="root"
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+					window-name=""
+				>
+					<model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent$NewListComponent"
+						component-name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklistnewListComponent"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Name"
+									field-name="name"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="TestDuplicateName"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+					command-implementation-comment="com.top_logic.layout.admin.component.EditListComponent$NewListCommandHandler"
+					command-label="Anlegen"
+					command-name="CreateNewList"
+					comment=""
+					component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent$NewListComponent"
+					component-name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklistnewListComponent"
+					contained-keys="class.com.top_logic.layout.admin.component.I18NConstants.DUPLICATE_LIST_NAME"
+					failure-message=""
+					reason-key=""
+					reason-keys=""
+					user-id="root"
+					window-name=""
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent$CancelHandler"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
+					comment=""
+					component-implementation-comment="com.top_logic.layout.admin.component.EditListComponent$NewListComponent"
+					component-name="com.top_logic/admin/model/checklists/adminChecklists.layout.xml#adminChecklistnewListComponent"
+					failure-message=""
+					user-id=""
+					window-name=""
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

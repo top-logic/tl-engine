@@ -1,0 +1,108 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-all</artifactId>
+		<version>7.6.0-SNAPSHOT</version>
+		
+		<relativePath>../tl-parent-all</relativePath>
+	</parent>
+
+	<artifactId>tl-archetype-deploy</artifactId>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<packaging>maven-archetype</packaging>
+
+	<description>A Maven archetype that creates a deployment configuration module for a TopLogic app.</description>
+
+	<properties>
+		<tlVersion>${project.version}</tlVersion>
+		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+	</properties>
+
+	<distributionManagement>
+		<repository>
+			<id>tl-releases</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		
+		<snapshotRepository>
+			<id>tl-snapshots</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic-snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<dependencies>
+		<!-- 
+			Note: The archetype is test by building an app generated with this archetype. To do this successfully, 
+			all other parts of the framework have to be built first. 
+		-->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-bpe-app</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<filtering>true</filtering>
+			</testResource>
+		</testResources>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<configuration>
+					<addDefaultExcludes>false</addDefaultExcludes>
+					<escapeString>\</escapeString>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-archetype-plugin</artifactId>
+				<!-- Note: Old version as workaround for .gitignore files not copied 
+					into the archive. -->
+				<version>2.4</version>
+			</plugin>
+		</plugins>
+
+		<extensions>
+			<extension>
+				<groupId>org.apache.maven.archetype</groupId>
+				<artifactId>archetype-packaging</artifactId>
+				<version>3.1.1</version>
+			</extension>
+		</extensions>
+	</build>
+</project>

@@ -1,0 +1,12 @@
+com.top_logic.model.search.annotate.TLSearchOptions.java: Missing documentation: com.top_logic.model.search.annotate.TLSearchOptions.ConfiguredLiterals.Config
+com.top_logic.model.search.annotate.TLSearchOptions.java: Missing documentation: com.top_logic.model.search.annotate.TLSearchOptions.ConfiguredLiterals.Config.getLiterals
+com.top_logic.model.search.annotate.TLSearchOptions.java: Missing documentation: com.top_logic.model.search.annotate.TLSearchOptions.ConfiguredOperators.Config
+com.top_logic.model.search.annotate.TLSearchOptions.java: Missing documentation: com.top_logic.model.search.annotate.TLSearchOptions.ConfiguredOperators.Config.getOperators
+com.top_logic.model.search.providers.MarkerFactoryByExpression.java: Invalid camel case word 'lowerBound', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.model.search.providers.MarkerFactoryByExpression.java: Invalid camel case word 'upperBound', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.model.search.providers.TitleByExpression.java: Invalid camel case word 'TitleByExpression', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.model.search.ui.GUISearchExpressionEditor.java: Invalid camel case word 'SearchExpressions', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.model.search.ui.ModelPartMatch.java: Invalid camel case word 'TLModelPart', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.model.search.ui.SearchComponent.java: Invalid camel case word 'SearchSelector', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.model.search.ui.model.operator.Operator.java: Missing documentation: com.top_logic.model.search.ui.model.operator.Operator.Impl.buildExpression
+com.top_logic.model.search.ui.model.operator.Operator.java: Missing documentation: com.top_logic.model.search.ui.model.operator.Operator.Impl.filterFunction

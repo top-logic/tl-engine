@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	
+	<configs>
+		
+		<config config:interface="test.com.top_logic.basic.TestComment$Config">
+			<ignore>
+				<entry value="com.top_logic.template.parser.ParseException" />
+				<entry value="com.top_logic.template.parser.SimpleCharStream" />
+				<entry value="com.top_logic.template.parser.TemplateParser" />
+				<entry value="com.top_logic.template.parser.TemplateParserConstants" />
+				<entry value="com.top_logic.template.parser.TemplateParserTokenManager" />
+				<entry value="com.top_logic.template.parser.Token" />
+				<entry value="com.top_logic.template.parser.TokenMgrError" />
+			</ignore>
+		</config>
+		
+	</configs>
+	
+</application>

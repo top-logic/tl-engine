@@ -1,0 +1,48 @@
+<h2>Syntax</h2>
+<pre><code>$input.translate(
+    sourceLang: $sourceLang, 
+    targetLang: $targetLang
+)</code></pre>
+<p>Übersetzt den Eingabetext in die Zielsprache.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>input</td>
+   <td>Zeichenkette</td>
+   <td>Die zu übersetzende Zeichenkette.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>targetLang</td>
+   <td>Zeichenkette</td>
+   <td>Die Sprache in die übersetzt werden soll</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>sourceLang</td>
+   <td>Zeichenkette</td>
+   <td>Die Sprache der Eingabezeichenkette oder <code>"auto"</code> um die Sprache durch den Übersetzungsservice erkennen zu lassen.</td>
+   <td>nein</td>
+   <td>Die Sprache des angemeldeten Nutzers oder die Default-Sprache der Anwendung.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><strong>Typ:</strong> Zeichenkette</p>
+<p>Der Eingabewert in der geforderten Zielsprache.</p>
+<h2>Beispiele</h2>
+<p>Übersetzung von "Hello world!" nach Deutsch.</p>
+<pre><code>"Hello world!".translate(targetLang: "de")</code></pre>
+<p></p>

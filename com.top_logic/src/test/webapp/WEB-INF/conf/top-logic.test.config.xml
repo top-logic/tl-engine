@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.util.CachePolicy">
+			<instance class="com.top_logic.util.CachePolicy">
+				<headers>
+					<header name="Expires" value="0" />
+					<header name="Cache-Control" value="must-revalidate" />
+					<!-- Other possible entries, depending on personal taste, nasty proxies and unexplainable, weird things -->
+<!-- 					<header name="Cache-Control" value="no-cache" /> -->
+<!-- 					<header name="Pragma" value="no-cache" /> -->
+				</headers>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry">
+			<instance class="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry">
+				<schemes>
+					<scheme type="java.lang.Object" provider="test.com.top_logic.layout.scripting.recorder.ref.FakeValueNamingScheme" />
+				</schemes>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+			<instance>
+				<group name="TestCommandGroupRegistry_write1" type="write" />
+				<group name="TestCommandGroupRegistry_read1" type="read" />
+				<group name="TestCommandGroupRegistry_delete1" type="delete" />
+				
+				<group name="TestPersBoundComp_write1" type="write" />
+				<group name="TestPersBoundComp_read1" type="read" />
+				<group name="TestPersBoundComp_read2" type="read" />
+				<group name="TestPersBoundComp_read3" type="read" />
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.layout.provider.LabelProviderService">
+			<instance>
+				<label-providers>
+		            <provider kind="CODE" type="test.com.top_logic.base.office.excel.streaming.AbstractExcelWriterTest$MyValue" implementation="test.com.top_logic.base.office.excel.streaming.AbstractExcelWriterTest$MyValue$MyValueLabel" />
+		            <provider kind="CODE" type="test.com.top_logic.layout.provider.TestLabelProviderService$TestClassWithProvider" implementation="test.com.top_logic.layout.provider.TestLabelProviderService$TestClassLabelProvider" />
+		            <provider kind="CODE" type="test.com.top_logic.layout.provider.TestLabelProviderService$TestInterface" implementation="test.com.top_logic.layout.provider.TestLabelProviderService$TestInterfaceLabelProvider" />
+				</label-providers>
+			</instance>
+		</config>
+	
+        <config service-class="com.top_logic.base.monitor.bus.DocumentMonitor">
+			<instance class="com.top_logic.base.monitor.bus.DocumentMonitor"
+				number-events-to-store="50"
+				output-file="file://tmp/documents.log"
+			/>
+		</config>
+        
+		<config service-class="com.top_logic.base.monitor.bus.WebContentMonitor">
+			<instance class="com.top_logic.base.monitor.bus.WebContentMonitor"
+				number-events-to-store="50"
+				output-file="file://tmp/webcontent_monitor.log"
+			/>
+		</config>
+        
+		<config service-class="com.top_logic.basic.encryption.EncryptionService">
+			<instance class="com.top_logic.knowledge.service.encryption.pbe.PasswordBasedEncryptionService"
+				pbe-algorithm="PBEWithMD5AndDES"
+				salt-length="8"
+				iterations="10000"
+				encryption-algorithm="DESede"
+				signature-digest-algorithm="SHA1"
+			/>
+		</config>
+	
+		<config service-class="com.top_logic.dob.persist.DataManager">
+			<instance class="com.top_logic.dob.persist.EncryptedDataManager"
+				algorithm="AES"
+				key="5ef76046a5915196aa6ff8daf87c97e3"
+				connection-pool="default"
+			/>
+		</config>
+	
+		<config service-class="com.top_logic.knowledge.journal.JournalManager">
+			<instance class="com.top_logic.knowledge.journal.JournalManager" 
+				connection-pool="default"
+			>
+				<journaled-knowledge-objects>
+					<journaled-knowledge-object value="Ticket" />
+					<journaled-knowledge-object value="WorkflowInstance" />
+				</journaled-knowledge-objects>
+			</instance>
+		</config>
+	
+	    <config service-class="com.top_logic.tool.export.ExportQueueManager">
+			<instance class="com.top_logic.tool.export.ExportQueueManager">
+				<queue-managers>
+					<queue-manager key="Test" value="technology:WORD;duration:LONG" />
+				</queue-managers>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.tool.export.ExportHandlerRegistry">
+			<instance class="com.top_logic.tool.export.ExportHandlerRegistry">
+				<export-handlers>
+					<export-handler name="TestedExportHandler" handler="test.com.top_logic.tool.export.AbstractExportTest$TestedExportHandler" />
+					<export-handler name="TestedWaitingExportHandler" handler="test.com.top_logic.tool.export.AbstractExportTest$TestedWaitingExportHandler" />
+					<export-handler name="TestedLongWaitingExportHandler" handler="test.com.top_logic.tool.export.AbstractExportTest$TestedLongWaitingExportHandler" />
+					<export-handler name="TestedFailingExportHandler" handler="test.com.top_logic.tool.export.AbstractExportTest$TestedFailingExportHandler" />
+					<export-handler name="TestedErrorExportHandler" handler="test.com.top_logic.tool.export.AbstractExportTest$TestedErrorExportHandler" />
+					<export-handler name="TestedLongWordHandler" handler="test.com.top_logic.tool.export.AbstractExportTest$TestedLongWordHandler" />
+					<export-handler name="TestedShortWordHandler" handler="test.com.top_logic.tool.export.AbstractExportTest$TestedShortWordHandler" />
+					<export-handler name="TestedShortPptHandler" handler="test.com.top_logic.tool.export.AbstractExportTest$TestedShortPptHandler" />
+					<export-handler name="TestedUserExportHandler" handler="test.com.top_logic.tool.export.AbstractExportTest$TestedUserExportHandler" />
+				</export-handlers>
+			</instance>
+		</config>
+				
+		<config service-class="com.top_logic.knowledge.service.listener.ContentChangeEventListener">
+			<instance class="com.top_logic.knowledge.service.listener.ContentChangeEventListener"
+				types="Document"
+			/>
+		</config>
+	
+		<config service-class="com.top_logic.base.services.CurrencySystem">
+			<instance class="com.top_logic.base.services.CurrencySystem"
+				system-currency="EUR"
+			>
+				<known-codes>
+					<known-code value="EUR"/>
+					<known-code value="USD"/>
+					<known-code value="GBP"/>
+					<known-code value="ARS"/>
+					<known-code value="AUD"/>
+					<known-code value="BRL"/>
+					<known-code value="CAD"/>
+					<known-code value="CHF"/>
+					<known-code value="CZK"/>
+					<known-code value="DKK"/>
+					<known-code value="HKD"/>
+					<known-code value="HRK"/>
+					<known-code value="HUF"/>
+					<known-code value="JPY"/>
+					<known-code value="KRW"/>
+					<known-code value="MXN"/>
+					<known-code value="NZD"/>
+					<known-code value="PLN"/>
+					<known-code value="RUR"/>
+					<known-code value="SEK"/>
+					<known-code value="SGD"/>
+					<known-code value="SIT"/>
+					<known-code value="TWD"/>
+					<known-code value="TRL"/>
+					<known-code value="ZAR"/>
+				</known-codes>
+			</instance>
+		</config>
+	
+ 		<config service-class="com.top_logic.dsa.DataAccessService">
+			<instance>
+				<adaptors>
+	        	<!-- For TestWebfolder -->
+					<adaptor name="repository">
+                        <config class="com.top_logic.dsa.repos.RepositoryDataSourceAdaptor">
+                            <repository class="com.top_logic.dsa.repos.file.FileRepository"
+								attic="./tmp/attic"
+								path="./tmp/repository"
+								workarea="./tmp/workarea" />
+						</config>
+					</adaptor>
+	        	<!-- For TestWebfolder -->
+					<adaptor name="file">
+						<config	class="com.top_logic.dsa.file.FilesystemDataSourceAdaptor"
+							home="." />
+					</adaptor>
+	        	<!-- For TestWebfolder -->
+					<adaptor name="webapp">
+						<config class="com.top_logic.dsa.file.FileManagerDataSourceAdaptor"/>
+					</adaptor>
+            	</adaptors>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<classifications>
+					<classification name="tl.systemList" mode="use" />
+					<classification name="TestFastList_1" mode="use" />
+				</classifications>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.event.logEntry.LogEntryConfiguration">
+			<instance>
+				<object-types>
+					<!-- "testGroup" used in  test.com.top_logic.event.logEntry.TestLogEventManager -->
+					<object-type
+						name="TestB"
+						display-group="testGroup"
+						event-types="created,modified,deleted" />
+					<object-type
+						name="Wrapper"
+						display-group="testGroup"
+						event-types="created,modified" />
+				</object-types>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance log-deprecated-keys="true"
+				dynamic-storage="./src/test/webapp/WEB-INF/conf/resources"
+			>
+				<supported-locales>
+					<locale name="xx_XX_TEST"/>
+				</supported-locales>
+
+				<bundles>
+					<bundle name="TestMessages" />
+				</bundles>
+			</instance>
+		</config>
+
+        <config service-class="com.top_logic.layout.table.model.TableConfigurationFactory">
+			<instance>
+				<table-defaults pageSizeOptions="20,40,all">
+				</table-defaults>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.thread.ThreadContextManager">
+			<instance class="com.top_logic.util.MultiKBContextManager" />
+		</config>
+
+		<config service-class="com.top_logic.base.cluster.ClusterManager">
+			<instance class="test.com.top_logic.base.cluster.ClusterManagerForTest" />
+		</config>
+
+		<config service-class="com.top_logic.tool.execution.ExecutabilityRuleManager">
+			<instance>
+				<definitions>
+					<definition id="TestAbstractCommandHandlerNotConfigured">
+						<executability>
+							<rule class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingRuleNotConfigured"/>
+						</executability>
+					</definition>
+					
+					<definition id="TestExecutabilityRuleManagerCombined">
+						<executability>
+							<rule class="test.com.top_logic.tool.execution.TestExecutabilityRuleManager$TestedExecutabilityRule"/>
+							<reference rule-id="TestAbstractCommandHandlerNotConfigured"/>
+							<rule class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingRuleConfigured" 
+								my-property="combinedValue"/>
+						</executability>
+					</definition>
+					
+					<definition id="TestExecutabilityRuleManagerReference">
+						<executability>
+							<reference rule-id="TestExecutabilityRuleManagerReference1"/>
+						</executability>
+					</definition>
+					
+					<definition id="TestExecutabilityRuleManagerReference1">
+						<executability>
+							<reference rule-id="TestExecutabilityRuleManagerReference2"/>
+						</executability>
+					</definition>
+					
+					<definition id="TestExecutabilityRuleManagerReference2">
+						<executability>
+							<reference rule-id="TestExecutabilityRuleManagerReference3"/>
+						</executability>
+					</definition>
+					
+					<definition id="TestExecutabilityRuleManagerReference3">
+						<executability>
+							<rule class="test.com.top_logic.tool.execution.TestExecutabilityRuleManager$TestedExecutabilityRule"/>
+						</executability>
+					</definition>
+					
+					<definition id="TestExecutabilityRuleManagerCompact1" executability="test.com.top_logic.tool.execution.TestExecutabilityRuleManager$TestedExecutabilityRule"/>
+					<definition id="TestExecutabilityRuleManagerCompact2" executability="TestExecutabilityRuleManagerCompact1"/>
+					<definition id="TestExecutabilityRuleManagerCompact3" executability="TestExecutabilityRuleManagerCompact2, test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingRuleConfigured"/>
+					
+					<definition id="TestExecutabilityRuleManagerEmpty" executability=""/>
+				</definitions>
+			</instance>
+		</config>
+        
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<cliques>
+					<!-- Test configuration for test.com.top_logic.layout.basic.TestCommandCommandHandler.testCliqueOverride() -->
+					<group name="basic-edit">
+						<cliques>
+							<clique name="apply" config:operation="remove"/>
+						</cliques>
+					</group>
+					<group name="additional-edit">
+						<cliques>
+							<clique name="apply" config:operation="add" config:position="before" config:reference="additional-apply"
+								image="/icons/saveButtonIcon.png" disabledImage="/icons/saveButtonIconDisabled.png"
+							/>
+						</cliques>
+					</group>
+					<!-- Test configuration for test.com.top_logic.layout.toolbar.TestDefaultToolbar -->
+					<group name="TestDefaultToolbar_Group0" />
+					<group name="TestDefaultToolbar_Group1" />
+					<group name="TestDefaultToolbar_Group2" />
+					<group name="TestDefaultToolbar_Group3" />
+					<group name="TestDefaultToolbar_Group4" />
+				</cliques>
+				
+				<handlers>
+					<handler id="createFolder" class="com.top_logic.knowledge.gui.layout.webfolder.CreateFolderHandler"/>
+					<handler id="download" class="com.top_logic.knowledge.gui.layout.webfolder.DownloadHandler"/>
+					<handler id="addToClipboard" class="com.top_logic.knowledge.gui.layout.webfolder.AddToClipboardHandler"/>
+					<handler id="deleteObject" class="com.top_logic.knowledge.gui.layout.webfolder.DeleteHandler"/>
+					<handler id="gotoCmd" class="com.top_logic.tool.boundsec.commandhandlers.GotoHandler"
+						clique="internal"
+					/>
+					<handler id="setHomepage" class="com.top_logic.tool.boundsec.commandhandlers.SetHomepageHandler"/>			
+					<handler id="exportPowerpoint" class="com.top_logic.tool.export.PowerpointExportHandler"/>
+					<handler id="exportExcel" class="com.top_logic.tool.export.ExcelExportHandler"/>
+					<handler id="closeModalDialog" class="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"/>
+					<handler id="assistentForward" class="com.top_logic.tool.boundsec.assistent.commandhandler.ForwardAssistentCommandHandler"/>
+					<handler id="assistentBackward" class="com.top_logic.tool.boundsec.assistent.commandhandler.BackwardAssistentCommandHandler"/>
+					<handler id="assistentCancel" class="com.top_logic.tool.boundsec.assistent.commandhandler.CancelAssistentCommandHandler"/>
+					<handler id="assistentFinish" class="com.top_logic.tool.boundsec.assistent.commandhandler.FinishAssistentCommandHandler"/>
+					<handler id="applyPerson" class="com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler"/>
+					<handler id="deletePerson" class="com.top_logic.knowledge.gui.layout.person.DeletePersonCommandHandler"/>
+					<handler id="newPerson" class="com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler"/>
+					<handler id="applyRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$ApplyRoleCommand"/>
+					<handler id="deleteRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"/>
+					<handler id="newRole" class="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleCommand"/>
+					<handler id="applyPersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$ApplyPersonGroupCommand"/>
+					<handler id="savePersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$SavePersonGroupCommand"/>
+					<handler id="switchToAJAXEdit" class="com.top_logic.layout.form.component.SwitchEditCommandHandler"/>
+					<handler id="refreshPersonsCommand" class="com.top_logic.knowledge.gui.layout.person.RefreshPersonsCommandHandler"/>
+					
+					<handler id="updateLogEntries" class="com.top_logic.event.layout.LogEntryFilterComponent$UpdateLogEntriesCommandHandler"/>
+					<handler id="configureLogEntries" class="com.top_logic.event.layout.ConfigureLogEntriesCommandHandler"/>
+					
+					<handler id="ChoiceChartCommand" class="com.top_logic.base.chart.component.ChoiceJFreeChartComponent$ChoiceChartCommand"/>
+					<handler id="refreshFilters" class="com.top_logic.base.chart.flex.control.FilterRefreshCommandHandler"/>
+					
+					
+					<handler id="TestIntrinsicCommands" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand"/>
+					<handler id="TestAbstractCommandHandlerDefaults" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand"/>
+					<handler id="TestAbstractCommandHandlerConfigured" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand"
+						group="System"
+						confirm="true"
+						resourceKey="my.resource.key" 
+						image="/my-image.png" 
+						disabledImage="/my-disabled-image.png" 
+					/>
+					<handler id="TestAbstractCommandHandlerLegacyDefaults" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommandLegacy"/>
+					<handler id="TestAbstractCommandHandlerLegacyConfigured" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommandLegacy"
+						group="System"
+						confirm="false"
+						resourceKey="my.resource.key" 
+					>
+						<executability>
+							<rule class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingRuleConfigured" 
+								my-property="localValue"/>
+						</executability>
+						<checkScopeProvider class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingProviderConfigured" 
+							provider-property="localValue"/>
+					</handler>
+					<handler id="TestAbstractCommandHandlerGlobalRule" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand">
+
+						<executability>
+							<reference rule-id="TestAbstractCommandHandlerNotConfigured"/>
+						</executability>
+					</handler>
+					<handler id="TestAbstractCommandHandlerInlineRule" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand">
+
+						<executability>
+							<rule class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingRuleConfigured" 
+								my-property="localValue"/>
+						</executability>
+					</handler>
+					<handler id="TestAbstractCommandHandlerInlineRuleNotConfigured" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand">
+
+						<!-- Does not work, since inline configured rules must have a configuration constructor. -->
+						<!-- 
+						<executability>
+							<rule class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingRuleNotConfigured" />
+						</executability>
+						 -->
+						<checkScopeProvider class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingProviderNotConfigured" />
+					</handler>
+					<handler id="TestAbstractCommandHandlerModifyCommandModel" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommandChangeModel">
+					</handler>
+				</handlers>
+			</instance>		
+		</config>
+	
+		<config service-class="com.top_logic.base.services.simpleajax.RequestLockFactory">
+			<instance>
+				<reorder-timeout>257</reorder-timeout>
+				<reader-waiting-time>3000</reader-waiting-time>
+				<writer-waiting-time>3000</writer-waiting-time>
+
+				<!-- Make testing more easy: No seeding. -->
+				<seed-limit>1</seed-limit>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance class="com.top_logic.util.sched.Scheduler" 
+				dont-run-tasks-on-startup="false" 
+				polling-interval="1000"
+				max-tasktime="120000" 
+				max-task="1" 
+			>
+				<tasks>
+					<task name="RefreshUsersTask" enabled="false" />
+					<task name="DayEntryArchiverTask" enabled="false" />
+					<task name="CheckUnusedAccountsTask" enabled="false" />
+					<task
+						class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+						name="Persistent Node Local Test Task"
+						blocked-by-default="true"
+						node-local="true"
+						persistent="true"
+						working-time-min="0"
+						working-time-max="3000"
+						>
+					</task>
+					<task
+						class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+						name="Persistent Cluster Global Test Task"
+						blocked-by-default="true"
+						node-local="true"
+						persistent="true"
+						working-time-min="0"
+						working-time-max="3000"
+						>
+					</task>
+					<task
+						class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+						name="Persistent Node Local Composite Test Task"
+						blocked-by-default="true"
+						node-local="true"
+						persistent="true"
+						working-time-min="0"
+						working-time-max="3000"
+						>
+					</task>
+					<task
+						class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+						name="Persistent Cluster Global Composite Test Task"
+						blocked-by-default="true"
+						node-local="true"
+						persistent="true"
+						working-time-min="0"
+						working-time-max="3000"
+						>
+					</task>
+					<task
+						class="com.top_logic.util.sched.task.composite.CompositeTaskImpl"
+						name="Persistent Node Local Deep Composite Test Task"
+						blocked-by-default="true"
+						enabled="false"
+						>
+						<task
+							class="com.top_logic.util.sched.task.composite.CompositeTaskImpl"
+							name="Persistent Node Local Deep Composite Test Task 1"
+							>
+							<task
+								class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+								name="Persistent Node Local Deep Composite Test Task 1.1"
+								persistent="true"
+								working-time-min="0"
+								working-time-max="3000"
+								>
+							</task>
+							<task
+								class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+								name="Persistent Node Local Deep Composite Test Task 1.2"
+								persistent="true"
+								working-time-min="0"
+								working-time-max="3000"
+								>
+							</task>
+						</task>
+						<task
+							class="com.top_logic.util.sched.task.composite.CompositeTaskImpl"
+							name="Persistent Node Local Deep Composite Test Task 2"
+							>
+							<task
+								class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+								name="Persistent Node Local Deep Composite Test Task 2.1"
+								persistent="true"
+								working-time-min="0"
+								working-time-max="3000"
+								>
+							</task>
+							<task
+								class="com.top_logic.util.sched.task.impl.InstructableTestTask"
+								name="Persistent Node Local Deep Composite Test Task 2.2"
+								persistent="true"
+								working-time-min="0"
+								working-time-max="3000"
+								>
+							</task>
+						</task>
+					</task>
+				</tasks>
+				<kb-tasks>EMailTask</kb-tasks>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.knowledge.service.KnowledgeBaseFactory">
+			<instance class="com.top_logic.knowledge.service.KnowledgeBaseFactory">
+				<knowledge-bases>
+					<knowledge-base name="Default2" connection-pool="default" single-node-optimization="false" />
+				</knowledge-bases>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+			<instance>
+				<schemes>
+					<scheme class="test.com.top_logic.layout.scripting.recorder.ref.FakeModelNamingScheme"/>
+				</schemes>
+			</instance>
+		</config>
+		
+        <config service-class="com.top_logic.base.security.device.TLSecurityDeviceManager">
+			<instance>
+				<security-devices>
+					<security-device 
+						id="dbSecurity"
+					>
+						<mappings>
+							<mapping key="genericMapping" value="/WEB-INF/database/bos/genericMapping.properties"/>
+							<mapping key="person" value="/WEB-INF/database/bos/person.properties"/>
+						</mappings>
+					</security-device>
+				</security-devices>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.knowledge.service.encryption.SecurityService">
+			<instance class="com.top_logic.knowledge.service.encryption.SecurityService">
+				<providers>
+					<provider class="org.bouncycastle.jce.provider.BouncyCastleProvider" />
+				</providers>
+			</instance>
+		</config>
+	</services>
+	
+	<configs>
+		<config config:interface="com.top_logic.event.logEntry.UserDayEntryManager$Config"
+			duplicateInterval="600"
+		/>
+	
+		<config config:interface="test.com.top_logic.basic.jsp.TestJSPContent$Config">
+			<ignore>
+				<entry value="applicationPassword.jsp" />
+				<entry value="deferredBoot.jsp" />
+				<entry value="enterApplicationPassword.jsp" />
+				<entry value="setupApplicationPassword.jsp" />
+				<entry value="jsp/administration/UnallowedAccess.jsp" />
+				<entry value="jsp/display/error/dumpRequest.inc.jsp" />
+				<entry value="jsp/display/error/404ErrorPage.jsp" />
+				<entry value="jsp/display/error/NoXssProtection.jsp" />
+				<entry value="jsp/main/loginError.jsp" />
+				<entry value="jsp/main/LoginErrorPage_noCookies.jsp" />
+				<entry value="jsp/main/LogoutPage.jsp" />
+				<entry value="login.jsp" />
+				<entry value="index.jsp" />
+				<entry value="SystemState.jsp" />
+				<entry value="administration/maintenance/benchmark"/>
+				<entry value="layout/webfolder"/>
+			</ignore>
+			<content-checkers>
+				<checker class="test.com.top_logic.util.CheckTLJSPContent"/>
+			</content-checkers>
+		</config>
+
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/KBTestMeta.xml"/>
+						<declaration resource="webinf://kbase/TestTaskMeta.xml"/>
+						<declaration resource="webinf://kbase/TestJournalMeta.xml"/>
+					</declarations>
+					<data config:override="true">
+						<definition resource="webinf://kbase/KBDataRoot.xml"/>
+						<definition resource="webinf://kbase/KBDataTestAccounts.xml"/>
+						<definition resource="webinf://kbase/KBDataUnit.xml"/>
+						<definition resource="webinf://kbase/KBDataTestCurrency.xml"/>
+						<definition resource="webinf://kbase/KBDataTest.xml"/>
+					</data>
+				</type-system>
+				<type-system name="TestTypes" class="com.top_logic.knowledge.service.TypeSystemSetup">
+					<declarations>
+						<declaration resource="webinf://kbase/BasicMeta.xml"/>
+					</declarations>
+					<providers>
+						<provider name="basic">
+							<impl class="com.top_logic.knowledge.service.db2.BasicTypeProvider" />
+						</provider>
+					</providers>
+				</type-system>
+			</type-systems>
+		</config>
+		
+		<config config:interface="test.com.top_logic.basic.TestComment$Config">
+			<ignore>
+				<entry value="com.top_logic.base.search.parser" />
+				<entry value="com.top_logic.tool.equationparser.parser" />
+				<entry value="com.top_logic.basic.version.model" />
+				<entry value="com.top_logic.html.template.parser" />
+			</ignore>
+		</config>
+		
+		<config config:interface="test.com.top_logic.basic.TestNameClashClassVsPackage$Config">
+			<ignore>
+				<entry value="com.top_logic.layout.form.values.edit.editor" />
+				<entry value="com.top_logic.tool.boundsec.securityObjectProvider" />
+			</ignore>
+		</config>
+	</configs>
+	
+</application>

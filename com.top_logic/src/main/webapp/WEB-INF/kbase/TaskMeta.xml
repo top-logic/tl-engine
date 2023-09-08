@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Defines the Metaobject for a Task (see TaskWrapper) -->
+
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+<metaobjects>
+
+<!-- See TaskWrapper for details -->
+<metaobject object_type="MOKnowledgeObject" object_name="Task" abstract="true" super_class="KnowledgeObject" >
+<attributes>
+	<mo_attribute att_name="name" 		 att_type="String"	db_size="250" mandatory="true" />
+	<mo_attribute att_name="daytype" 	 att_type="Integer" mandatory="true"/>
+	<mo_attribute att_name="daymask" 	 att_type="Integer" mandatory="true"/>
+	<mo_attribute att_name="hour" 	 	 att_type="Integer" mandatory="true"/>
+	<mo_attribute att_name="minute" 	 att_type="Integer" mandatory="true"/>
+	<mo_attribute att_name="stopHour" 	 att_type="Integer"	mandatory="false" />
+	<mo_attribute att_name="stopMinute"  att_type="Integer"	mandatory="false" />
+	<mo_attribute att_name="interval" 	 att_type="Long"	mandatory="false" db_name="TASK_INTERVAL" />
+	<mo_attribute att_name="when" 		 att_type="Date"    mandatory="false" db_name="TASK_WHEN"     />
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="EMailTask" super_class="Task" >
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.knowledge.wrap.EMailTask"/>
+	</annotation>
+</annotations>
+<attributes>
+	<mo_attribute att_name="active" 	 att_type="Boolean" mandatory="true"	/>
+	<mo_attribute att_name="users"   	 att_type="String"	db_size="254" mandatory="true" />
+	<mo_attribute att_name="subject" 	 att_type="String"	db_size="254" mandatory="true" />
+	<mo_attribute att_name="message" 	 att_type="String"	db_size="100000" mandatory="true" />
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="TaskLog" super_class="KnowledgeObject" versioned="false">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.util.sched.task.log.TaskLogWrapper"/>
+	</annotation>
+</annotations>
+<attributes>
+	<mo_attribute att_name="name"			att_type="String"	db_size="250" mandatory="true"/>
+	<mo_attribute att_name="clusterNode"	att_type="String"	db_size="250" mandatory="false" />
+	<mo_attribute att_name="state"			att_type="String"	db_size="20" mandatory="true"/>
+	<!--
+	clusterId is at the end, as it was added afterwards and
+	Oracle does not support adding columns in the middle of a table, only at the end.
+	-->
+	<mo_attribute att_name="clusterId"		att_type="Long" mandatory="false"/>
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="TaskResult" super_class="KnowledgeObject" versioned="false">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="com.top_logic.util.sched.task.result.TaskResultWrapper"/>
+	</annotation>
+</annotations>
+<attributes>
+	<mo_attribute att_name="taskName"		att_type="String"	db_size="250" mandatory="true"/>
+	<mo_attribute att_name="message"		att_type="String"	db_size="4000"	mandatory="false" />
+	<mo_attribute att_name="start"			att_type="Date" mandatory="true"/>
+	<mo_attribute att_name="end"			att_type="Date" 					mandatory="false" />
+	<mo_attribute att_name="exceptionDump"	att_type="String"	db_size="66000"	mandatory="false" />
+	<mo_attribute att_name="warnings"		att_type="String"	db_size="66000"	mandatory="false" />
+	<mo_attribute att_name="logFile"		att_type="String"	db_size="250"	mandatory="false" />
+	<mo_attribute att_name="resultType"		att_type="String"	db_size="20" mandatory="true"/>
+	<mo_attribute att_name="clusterName"	att_type="String"	db_size="250" mandatory="true"/>
+	<mo_attribute att_name="clusterId"		att_type="Long" mandatory="true"/>
+</attributes>
+</metaobject>
+
+<association super_class="Association" object_name="hasTaskResult" versioned="false">
+	<!-- Association from TaskLog to its hundreds of TaskResults. -->
+	<attributes>
+		<source
+			override="true"
+			target-type="TaskLog"
+		/>
+		<destination
+			override="true"
+			target-type="TaskResult"
+		/>
+	</attributes>
+</association>
+
+</metaobjects>
+</objectlist>

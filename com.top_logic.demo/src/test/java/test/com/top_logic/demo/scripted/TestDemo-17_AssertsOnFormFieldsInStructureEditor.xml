@@ -1,0 +1,1737 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment=""
+	failure-message=""
+	user-id=""
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+					card-comment="Strukturen"
+					card-name="demo.structure.tabber"
+					component-name="mainTabbar.layout.xml#mainTabber"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+					card-comment="Typendemo"
+					card-name="demo.structure.demoTypes.tabber"
+					component-name="com.top_logic.demo/structure/index.layout.xml#structureTab_tabBar"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.NamedTabSwitchOp"
+					card-comment="Typendemo"
+					card-name="layouts.demo.editStructureWithExport.demoStructureDemoTypes.tab"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoStructureTab"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="FirstAlpha"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="SecondAlpha"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="ThirdAlpha"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp">
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+								component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-name="ElementSwitchEditCommand"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="date"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									tab-path="Strukturen > Typendemo > Typendemo"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="01.01.2001"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="string"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									tab-path="Strukturen > Typendemo > Typendemo"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="zoom zoom"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="long"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									tab-path="Strukturen > Typendemo > Typendemo"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="42"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="SecondAlpha"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="float"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									tab-path="Strukturen > Typendemo > Typendemo"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="314.159,00"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="booleanMandatory"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									tab-path="Strukturen > Typendemo > Typendemo"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="ThirdAlpha"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+									tab-path="Strukturen > Typendemo"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="date"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									tab-path="Strukturen > Typendemo > Typendemo"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="03.03.2033"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Tabellen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Tabellen > Struktureditor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+								tab-path="Tabellen > Struktureditor"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="formTree"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+									field-label-comment=""
+								>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+											label="FirstAlpha"
+										/>
+									</path>
+								</node>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="date"
+								>
+									<attribute-ref attribute-name="date">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="FirstAlpha"/>
+										</structure-path>
+									</self-ref>
+								</node>
+							</path>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="01.01.2001"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+					validity="VALID"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="date"
+							>
+								<attribute-ref attribute-name="date">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					comment=""
+					failure-message=""
+					mode="IMMUTABLE"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="date"
+							>
+								<attribute-ref attribute-name="date">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldLabelAssertionOp"
+					comment=""
+					failure-message=""
+					label="date"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="date"
+							>
+								<attribute-ref attribute-name="date">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+					validity="VALID"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="SecondAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="float"
+							>
+								<attribute-ref attribute-name="float">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="SecondAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+								tab-path="Tabellen > Struktureditor"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="formTree"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+									field-label-comment=""
+								>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+											label="SecondAlpha"
+										/>
+									</path>
+								</node>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="float"
+								>
+									<attribute-ref attribute-name="float">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="SecondAlpha"/>
+										</structure-path>
+									</self-ref>
+								</node>
+							</path>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="314.159,00"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					comment=""
+					failure-message=""
+					mode="IMMUTABLE"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="SecondAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="float"
+							>
+								<attribute-ref attribute-name="float">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="SecondAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldLabelAssertionOp"
+					comment=""
+					failure-message=""
+					label="float"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="SecondAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="float"
+							>
+								<attribute-ref attribute-name="float">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="SecondAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+								tab-path="Tabellen > Struktureditor"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="formTree"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+									field-label-comment=""
+								>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+											label="FirstAlpha"
+										/>
+									</path>
+								</node>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="long"
+								>
+									<attribute-ref attribute-name="long">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="FirstAlpha"/>
+										</structure-path>
+									</self-ref>
+								</node>
+							</path>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="42"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+					validity="VALID"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="long"
+							>
+								<attribute-ref attribute-name="long">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					comment=""
+					failure-message=""
+					mode="IMMUTABLE"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="long"
+							>
+								<attribute-ref attribute-name="long">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldLabelAssertionOp"
+					comment=""
+					failure-message=""
+					label="long"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="long"
+							>
+								<attribute-ref attribute-name="long">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+								tab-path="Tabellen > Struktureditor"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="formTree"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+									field-label-comment=""
+								>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+											label="FirstAlpha"
+										/>
+									</path>
+								</node>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="string"
+								>
+									<attribute-ref attribute-name="string">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="FirstAlpha"/>
+										</structure-path>
+									</self-ref>
+								</node>
+							</path>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="zoom zoom"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+					validity="VALID"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="string"
+							>
+								<attribute-ref attribute-name="string">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					comment=""
+					failure-message=""
+					mode="IMMUTABLE"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="string"
+							>
+								<attribute-ref attribute-name="string">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldLabelAssertionOp"
+					comment=""
+					failure-message=""
+					label="string"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="string"
+							>
+								<attribute-ref attribute-name="string">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+								tab-path="Tabellen > Struktureditor"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="formTree"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+									field-label-comment=""
+								>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+											label="FirstAlpha"
+										/>
+									</path>
+								</node>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="booleanMandatory"
+								>
+									<attribute-ref attribute-name="booleanMandatory">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="FirstAlpha"/>
+										</structure-path>
+									</self-ref>
+								</node>
+							</path>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+					validity="VALID"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="booleanMandatory"
+							>
+								<attribute-ref attribute-name="booleanMandatory">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					comment=""
+					failure-message=""
+					mode="IMMUTABLE"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="booleanMandatory"
+							>
+								<attribute-ref attribute-name="booleanMandatory">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldLabelAssertionOp"
+					comment=""
+					failure-message=""
+					label="booleanMandatory"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="FirstAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="booleanMandatory"
+							>
+								<attribute-ref attribute-name="booleanMandatory">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="FirstAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.form.FormMemberName">
+							<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+								tab-path="Tabellen > Struktureditor"
+							/>
+							<path>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment=""
+									field-name="formTree"
+								/>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+									field-label-comment=""
+								>
+									<path>
+										<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+											label="SecondAlpha"
+										/>
+									</path>
+								</node>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+									field-label-comment="booleanMandatory"
+								>
+									<attribute-ref attribute-name="booleanMandatory">
+										<type type-name="DemoTypes.A">
+											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+												table-name="TLModule"
+											>
+												<key-values>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+															string="DemoTypes"
+														/>
+													</attribute>
+												</key-values>
+											</scope-ref>
+										</type>
+									</attribute-ref>
+									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+										structure-name="DemoTypes"
+									>
+										<structure-path>
+											<node name="SecondAlpha"/>
+										</structure-path>
+									</self-ref>
+								</node>
+							</path>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="false"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment=""
+					failure-message=""
+					user-id="root"
+					validity="VALID"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="SecondAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="booleanMandatory"
+							>
+								<attribute-ref attribute-name="booleanMandatory">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="SecondAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					comment=""
+					failure-message=""
+					mode="IMMUTABLE"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="SecondAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="booleanMandatory"
+							>
+								<attribute-ref attribute-name="booleanMandatory">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="SecondAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldLabelAssertionOp"
+					comment=""
+					failure-message=""
+					label="booleanMandatory"
+					user-id=""
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+						<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/table/structureEdit/demoStructureEdit.layout.xml#DemoStructureEditComponent"
+							tab-path="Tabellen > Struktureditor"
+						/>
+						<path>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+								field-label-comment=""
+								field-name="formTree"
+							/>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.TreeFieldRef"
+								field-label-comment=""
+							>
+								<path>
+									<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="SecondAlpha"
+									/>
+								</path>
+							</node>
+							<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+								field-label-comment="booleanMandatory"
+							>
+								<attribute-ref attribute-name="booleanMandatory">
+									<type type-name="DemoTypes.A">
+										<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+											table-name="TLModule"
+										>
+											<key-values>
+												<attribute name="name">
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+														string="DemoTypes"
+													/>
+												</attribute>
+											</key-values>
+										</scope-ref>
+									</type>
+								</attribute-ref>
+								<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+									structure-name="DemoTypes"
+								>
+									<structure-path>
+										<node name="SecondAlpha"/>
+									</structure-path>
+								</self-ref>
+							</node>
+						</path>
+					</model-name>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Clean up"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="FirstAlpha"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="SecondAlpha"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="ThirdAlpha"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+							tab-path="Strukturen > Typendemo"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Variable/Action-Variable-Alle loeschen.xml"
+					template-name-comment="Variable Alle löschen"
+				/>
+			</actions>
+		</action>
+	</actions>
+</action>

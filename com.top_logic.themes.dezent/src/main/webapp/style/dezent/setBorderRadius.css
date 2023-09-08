@@ -1,0 +1,50 @@
+.breadcrumb .selectableNode,
+div.cCollapsibleToolbar .input-image,
+a.cmdButton,
+a.cmdButton:link,
+a.cmdButton:visited,
+a.cmdButton:active,
+a.cmdButtonHover,
+a.cmdButtonHover:link,
+a.cmdButtonHover:visited,
+a.cmdButtonHover:active,
+a.cmdButtonDisabled,
+a.cmdButtonDisabled:link,
+a.cmdButtonDisabled:visited,
+a.cmdButtonDisabled:active,
+.ColorChooser,
+.cIconChooser .input-image,
+.searchIrrelevant input,
+.searchIrrelevant textarea,
+.searchIrrelevant select,
+span.cButton .input-image,
+span.cImageButton .input-image,
+.cDownload .input-image,
+.cDataItem label.cmdButton,
+.cDataItem label.cmdButtonDisabled,
+span.urlWithIcon .input-image,
+div.ToolContainer div.IconContainer ul.mtbGroup .cButton.cmdLinkActive .input-image,
+span.cButton,
+span.input-image,
+a.is-action,
+input,
+textarea,
+select
+{
+    border-radius: 4px;
+}
+
+.BreadCrumbOuter
+{
+    border-radius: 1.2em;
+}
+
+td.fhrLeft
+{
+    border-radius: 5px 0 0 0;
+}
+
+td.fhrRight
+{
+    border-radius: 0 5px 0 0 ;
+}

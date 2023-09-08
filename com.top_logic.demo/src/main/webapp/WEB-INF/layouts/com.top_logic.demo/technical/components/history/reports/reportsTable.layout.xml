@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="id,description,version"
+		isSecurityMaster="false"
+		model="selection(com.top_logic.demo/technical/components/history/projekteTable.layout.xml#Table)"
+		type="test.history:Report"
+	>
+		<name key="dynamic.f79c7ca0-2af8-46f8-b7f7-6c455d659a1a">
+			<en>Reports</en>
+			<de>Berichte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->$model.get(`test.history:Project#reports`)"
+			modelForElement="model->$model.referers(`test.history:Project#reports`).singleElement()"
+			supportsElement="element->$element.instanceOf(`test.history:Report`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+		</buttons>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				accessor="r -> $r.get(`test.history:Report#version`).get(`test.history:Project#progress`).round()"
+				columnId="ID_00d93fef_7cf5_4b94_b728_0388b8ae3e93"
+				columnType="tl.core:Double"
+				columnVisibility="visible"
+				updater=""
+			>
+				<columnLabel key="dynamic.b3750a8c-9930-43ee-957f-24ac3f0a839f">
+					<en>Completion</en>
+					<de>Fertigstellung</de>
+				</columnLabel>
+			</configurationProvider>
+			<sort-columns order="id:ascending"/>
+		</configurationProviders>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/history/reports/createReport/createReportDialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/history/reports/projectDetails/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/history/reports/milestoneDetails/dialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="tileName"/>
+		<param name="resPrefix"/>
+		<param name="securityDomain"/>
+		<param name="component"/>
+
+		<param name="ignoreContexts"
+			optional="true"
+		/>
+		<param name="tileConfig">
+			<!-- No preview by default -->
+		</param>
+	</params>
+	<tile name="${tileName}"
+		ignore-contexts="${ignoreContexts}"
+		label="${resPrefix}label"
+	>
+		<securityLayout name="${tileName}SecLayout"
+			securityDomain="${securityDomain}"
+			titleKey="${resPrefix}tabber"
+		>${component}</securityLayout>
+		${tileConfig}
+	</tile>
+</template>

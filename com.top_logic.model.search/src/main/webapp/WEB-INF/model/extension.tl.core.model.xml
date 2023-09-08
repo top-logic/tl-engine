@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0" xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<modules>
+		<module name="tl.core">
+			<types>
+				<datatype name="DateTime">
+					<annotations>
+						<search-options>
+							<operators>
+								<operator config:interface="com.top_logic.model.search.ui.model.operator.ComparableCompare"
+									kind="GE"
+								>
+									<comparison-value config:interface="com.top_logic.model.search.ui.model.literal.LiteralDateTimeValue"/>
+								</operator>
+								<operator config:interface="com.top_logic.model.search.ui.model.operator.ComparableCompare"
+									kind="LE"
+								>
+									<comparison-value config:interface="com.top_logic.model.search.ui.model.literal.LiteralDateTimeValue"/>
+								</operator>
+								<operator config:interface="com.top_logic.model.search.ui.model.operator.ComparableRangeCompare"
+									kind="IN_RANGE"
+								>
+									<lower-bound config:interface="com.top_logic.model.search.ui.model.literal.LiteralDateTimeValue"/>
+									<upper-bound config:interface="com.top_logic.model.search.ui.model.literal.LiteralDateTimeValue"/>
+								</operator>
+							</operators>
+							<literals>
+								<literal config:interface="com.top_logic.model.search.ui.model.literal.LiteralDateTimeValue">
+								</literal>
+							</literals>
+						</search-options>
+					</annotations>
+				</datatype>
+			</types>
+		</module>
+	</modules>
+</model>

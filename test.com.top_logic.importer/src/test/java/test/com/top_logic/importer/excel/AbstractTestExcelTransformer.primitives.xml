@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<transformer>
+	<transformers>
+		<transformer name="long"      transformer="com.top_logic.importer.excel.transformer.LongTransformer" />
+		<transformer name="double"    transformer="com.top_logic.importer.excel.transformer.DoubleTransformer" />
+		<transformer name="boolean"   transformer="com.top_logic.importer.excel.transformer.BooleanTransformer" />
+
+		<transformer name="date">
+			<transformer class="com.top_logic.importer.excel.transformer.DateTransformer"
+				format="dd.MM.yyyy hh:mm" />
+		</transformer>
+		<transformer name="dateDoW">
+			<transformer class="com.top_logic.importer.excel.transformer.DateTransformer"
+				format="dd.MM.yyyy hh:mm" day-of-week="7" />
+		</transformer>
+
+		<transformer name="string">
+			<transformer class="com.top_logic.importer.excel.transformer.StringTransformer" 
+				max-length="10" length-error="false" />
+		</transformer>
+		<transformer name="sub-string">
+			<transformer class="com.top_logic.importer.excel.transformer.SubStringTransformer" end-char="%" />
+		</transformer>
+		<transformer name="int2string">
+			<transformer class="com.top_logic.importer.excel.transformer.Integer2StringTransformer" max-length="5" />
+		</transformer>
+		<transformer name="string2number">
+			<transformer class="com.top_logic.importer.excel.transformer.StringToNumberByListTransformer" mandatory="false">
+				<mappings>
+					<mapping value="Hallo" element="23" />
+					<mapping value="Huhu"  element="42" />
+					<mapping value="Hey"   element="7"  />
+				</mappings>
+			</transformer>
+		</transformer>
+		<transformer name="url">
+			<transformer class="com.top_logic.importer.excel.transformer.URLStringTransformer" />
+		</transformer>
+		<transformer name="boolean-no-trim">
+			<transformer class="com.top_logic.importer.excel.transformer.BooleanTransformer" trim="false"/>
+		</transformer>
+
+		<transformer name="string-mandatory">
+			<transformer class="com.top_logic.importer.excel.transformer.StringTransformer" mandatory="true" 
+				max-length="10" length-error="true" />
+		</transformer>
+		<transformer name="long-mandatory">
+			<transformer class="com.top_logic.importer.excel.transformer.LongTransformer" mandatory="true" />
+		</transformer>
+		<transformer name="double-mandatory">
+			<transformer class="com.top_logic.importer.excel.transformer.DoubleTransformer" mandatory="true" />
+		</transformer>
+		<transformer name="boolean-mandatory">
+			<transformer class="com.top_logic.importer.excel.transformer.BooleanTransformer" mandatory="true" />
+		</transformer>
+		<transformer name="date-mandatory">
+			<transformer class="com.top_logic.importer.excel.transformer.DateTransformer" mandatory="true"
+				format="dd.MM.yyyy hh:mm" />
+		</transformer>
+		<transformer name="dateDoW-mandatory">
+			<transformer class="com.top_logic.importer.excel.transformer.DateTransformer" mandatory="true"
+				format="dd.MM.yyyy hh:mm" day-of-week="7" />
+		</transformer>
+		<transformer name="int2string-mandatory">
+			<transformer class="com.top_logic.importer.excel.transformer.Integer2StringTransformer" mandatory="true" 
+				max-length="5" />
+		</transformer>
+	</transformers>
+</transformer>

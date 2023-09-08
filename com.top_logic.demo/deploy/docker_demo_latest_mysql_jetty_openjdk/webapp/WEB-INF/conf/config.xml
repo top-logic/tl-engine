@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<root>
+	<alias>
+		<!-- The Reminders need this for generating external links -->
+		<entry name="%HOST%" value="http://apps.top-logic.com"/>
+
+		<!-- DB setup -->
+        <entry name="%MYSQL_HOST%" value="${env:mysql_host:mysql.bos.local}" />
+        <entry name="%MYSQL_PORT%" value="${env:mysql_port:3306}" />
+        <entry name="%MYSQL_SCHEMA%" value="${env:mysql_schema:tldemo_latest}" />
+        <entry name="%MYSQL_USER%" value="${env:mysql_user:sa}"/>
+        <entry name="%MYSQL_PASSWD%" value="${env:mysql_passwd:unencrypted:bup}"/>
+	</alias>
+</root>
+

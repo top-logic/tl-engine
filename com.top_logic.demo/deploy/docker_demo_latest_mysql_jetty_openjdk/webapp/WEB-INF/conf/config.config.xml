@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- $Id: config.config.xml 310900 2022-05-11 13:08:40Z bhu $ -->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+	</services>
+	
+	<configs>
+		<config config:interface="com.top_logic.knowledge.gui.layout.LayoutConfig">
+			<stable-window-name>demo1</stable-window-name>
+		</config>
+	</configs>
+	
+</application>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Import file for test "TestDemo-A4_RolesProfileImport.xml".
+	
+	The content of this file is currently used Base64 encoded in the test file:
+	Changes in this file requires a manual update of the upper test file.
+-->
+<security>
+	<profiles>
+		<profile name="SecurityStructure.Role_TestRolesProfileImport_01">
+			<view name="admin/index.layout.xml#adminView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="admin/security/index.layout.xml#adminRolesView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#adminSecurity">
+				<commandGroup name="Write"/>
+				<commandGroup name="Read"/>
+			</view>
+		</profile>
+	</profiles>
+</security>

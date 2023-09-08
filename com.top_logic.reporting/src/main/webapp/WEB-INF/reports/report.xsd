@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<schema xmlns="http://www.w3.org/2001/XMLSchema">
+
+	<element name="root">
+		<complexType>
+			<sequence>
+				<element name="business-object-type" minOccurs="1"
+					maxOccurs="1">
+					<simpleType>
+						<restriction base="string">
+							<whiteSpace value="collapse"></whiteSpace>
+						</restriction>
+					</simpleType>
+				</element>
+
+				<element name="report-type" minOccurs="1"
+					maxOccurs="1">
+					<simpleType>
+						<restriction base="string">
+							<whiteSpace value="collapse"></whiteSpace>
+						</restriction>
+					</simpleType>
+				</element>
+				
+				<element name="selected-language" minOccurs="1"
+					maxOccurs="1">
+					<simpleType>
+						<restriction base="string">
+							<enumeration value="de"></enumeration>
+							<enumeration value="en"></enumeration>
+						</restriction>
+					</simpleType>
+				</element>
+			</sequence>
+		</complexType>
+	</element>
+
+</schema>

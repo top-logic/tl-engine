@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_d791dce4_981e_4d99_9b68_d16c8afedef2"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.92fcc9ec-fa69-4553-b2d2-c1f5eaa74731">
+			<de>Tabellen und Bäume</de>
+			<en>Tables and trees</en>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

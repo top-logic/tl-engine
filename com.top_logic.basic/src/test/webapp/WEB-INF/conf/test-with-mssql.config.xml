@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry">
+			<instance>
+				<pools>
+					<pool name="mssql">
+						<class>test.com.top_logic.basic.sql.TestingConnectionPool</class>
+						<read-pool>
+							<maxActive>30</maxActive>
+						</read-pool>
+						<write-pool />
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.top_logic.basic.sql.MSSQLDataSourceProxy</driver-class>
+							<options>
+								<option name="serverName" value="%MSSQL_HOST%" />
+								<option name="portNumber" value="%MSSQL_PORT%" />
+								<option name="databaseName" value="%MSSQL_SCHEMA%" />
+								<option name="maxStatements" value="128" />
+								<option name="user" value="%MSSQL_USER%" />
+								<encrypted-option name="password" value="%MSSQL_PASSWD%" />
+								<option name="trustServerCertificate" value="true" />
+							</options>
+						</data-source>
+					</pool>
+					<pool name="testUnitMssql">
+						<class>test.com.top_logic.basic.sql.TestingConnectionPool</class>
+						<read-pool>
+							<maxActive>30</maxActive>
+						</read-pool>
+						<write-pool />
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.top_logic.basic.sql.MSSQLDataSourceProxy</driver-class>
+							<options>
+								<option name="serverName" value="%MSSQL_HOST%" />
+								<option name="portNumber" value="%MSSQL_PORT%" />
+								<option name="databaseName" value="%MSSQL_SCHEMA_TEST_UNIT%" />
+								<option name="maxStatements" value="128" />
+								<option name="user" value="%MSSQL_USER%" />
+								<encrypted-option name="password" value="%MSSQL_PASSWD%" />
+								<option name="trustServerCertificate" value="true" />
+							</options>
+						</data-source>
+					</pool>
+					<pool name="testMigrationMssql">
+						<class>test.com.top_logic.basic.sql.TestingConnectionPool</class>
+						<read-pool>
+							<maxActive>30</maxActive>
+						</read-pool>
+						<write-pool />
+						<data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory">
+							<driver-class>com.top_logic.basic.sql.MSSQLDataSourceProxy</driver-class>
+							<options>
+								<option name="serverName" value="%MSSQL_HOST%" />
+								<option name="portNumber" value="%MSSQL_PORT%" />
+								<option name="databaseName" value="%MSSQL_SCHEMA_TEST_MIGRATION%" />
+								<option name="maxStatements" value="128" />
+								<option name="user" value="%MSSQL_USER%" />
+								<encrypted-option name="password" value="%MSSQL_PASSWD%" />
+								<option name="trustServerCertificate" value="true" />
+							</options>
+						</data-source>
+					</pool>
+				</pools>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	When this configuration is not longer needed,
+	"com.top_logic.basic.db.schema.setup.config.SchemaConfiguration#getKeyAttributes()" can be removed.
+-->
+<migration schema-update="true">
+	<version name="migration_23387"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="migration_23376"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+	</processors>
+</migration>

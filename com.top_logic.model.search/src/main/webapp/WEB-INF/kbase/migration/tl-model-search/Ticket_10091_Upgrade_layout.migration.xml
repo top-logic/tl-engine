@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_10091_Upgrade_layout"
+		module="tl-model-search"
+	/>
+	<dependencies>
+		<dependency name="Ticket_25242_Use_legacy_tabbar_template_for_old_layouts"
+			module="tl"
+		/>
+		<dependency name="Ticket_25210_Model_references_in_form_definitions"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.layout.tools.rewrite.LayoutMigrationProcessor"
+			rewriter="com.top_logic.model.search.migrate.ticket10091.UpgradeGridCreateHandlerByExpression"
+		/>
+	</processors>
+</migration>

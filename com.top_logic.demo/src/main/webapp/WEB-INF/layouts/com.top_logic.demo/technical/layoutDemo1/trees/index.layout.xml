@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="demo.tree.tabber"
+		z_legacy_componentName="demoTrees"
+		z_legacy_tabBarName="demoTrees_tabBar"
+		z_legacy_tabLabel="demo.tree.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/trees/merge/mergeTree.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/trees/edit/editTree.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/trees/dynamic/dynamicTree.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

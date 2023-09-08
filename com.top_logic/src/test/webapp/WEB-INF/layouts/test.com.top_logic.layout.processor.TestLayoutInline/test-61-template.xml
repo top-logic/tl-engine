@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="param1"/>
+		<param name="param2"/>
+		<param name="param3"/>
+		<param name="param4"/>
+		<param name="inner1"
+			value="inner1value"
+		/>
+	</params>
+	<component class="X"
+		i4="${inner1}"
+		p1="${param1}"
+		p2="${param2}"
+		p3="${param3}"
+	>${param4}</component>
+</template>

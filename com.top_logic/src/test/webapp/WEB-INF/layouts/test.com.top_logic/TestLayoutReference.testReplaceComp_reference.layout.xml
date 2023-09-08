@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		content="origContent"
+		name="comp"
+	/>
+</layout>

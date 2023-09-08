@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+	<alias>
+        <entry name="%PAC_KEYCLOAK_BASE_URI%" value="${env:tl_pac_keycloak_base_uri}" />
+        <entry name="%PAC_KEYCLOAK_REALM%" value="${env:tl_pac_keycloak_realm}" />
+	</alias>
+</root>

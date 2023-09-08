@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="tableComponentClass"
+			value="com.top_logic.contact.layout.PersonContactTable"
+		/>
+		<param name="tableModelBuilderClass"
+			value="com.top_logic.contact.layout.person.PersonContactModelBuilder"
+		/>
+		<param name="tableAccessorClass"
+			value="com.top_logic.knowledge.wrap.WrapperAccessor"
+		/>
+		<param name="tableFilterProvider"
+			value="com.top_logic.layout.table.filter.LabelFilterProvider"
+		/>
+		<param name="columns"
+			value="name,firstname"
+		/>
+		<param name="defaultSortOrder"
+			value="name"
+		/>
+		<param name="fixedColumns"
+			value="0"
+		/>
+		<param name="columnWidth"
+			value="186px"
+		/>
+		<param name="detailComponentClass"
+			value="com.top_logic.contact.layout.person.EditPersonContactComponent"
+		/>
+		<param name="createComponentClass"
+			value="com.top_logic.contact.layout.person.CreatePersonContactComponent"
+		/>
+		<param name="createDialogWidth"
+			value="430"
+		/>
+		<param name="createDialogHeight"
+			value="270"
+		/>
+		<param name="editCommandGroups"
+			value=""
+		/>
+		<param name="tableSecurityProvider"
+			value="securityRoot"
+		/>
+		<param name="editSecurityProvider"
+			value="default"
+		/>
+		<param name="createSecurityProvider"
+			value="securityRoot"
+		/>
+		<param name="createCommandGroups"
+			value=""
+		/>
+		<param name="openCreateCommandGroup"
+			value="Create"
+		/>
+		<param name="openCreateHandler"
+			value="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+		/>
+		<param name="jSPPage"
+			value="/jsp/contact/person/editPersonContact.jsp"
+		/>
+		<param name="createJSP"
+			value="/jsp/contact/person/newPersonContact.jsp"
+		/>
+		<param name="additionalDialogs">
+			<!-- No additional dialogs by default -->
+		</param>
+	</params>
+
+	<layout horizontal="true">
+		<components>
+			<component class="${tableComponentClass}"
+				isSecurityMaster="true"
+				modelBuilder="${tableModelBuilderClass}"
+				name="personContactFilterTable"
+				objectType="me:Contact.Person"
+				resPrefix="layouts.contact.EditPersonContacts_shared.personContactFilterTable."
+				securityProviderClass="${tableSecurityProvider}"
+				selectable="true"
+			>
+				<layoutInfo size="413"/>
+				<table
+					defaultColumns="${columns}"
+					defaultSortOrder="${defaultSortOrder}"
+					fixedColumns="${fixedColumns}"
+					rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
+				>
+					<column-default
+						accessor="${tableAccessorClass}"
+						columnWidth="${columnWidth}"
+						filterProvider="${tableFilterProvider}"
+					/>
+					<columns>
+						<column name="name">
+							<renderer class="com.top_logic.layout.basic.ResourceRenderer">
+								<resourceProvider class="com.top_logic.mig.html.DefaultResourceProvider"/>
+							</renderer>
+						</column>
+						<column name="firstname"/>
+						<column name="fullName"
+							accessor="com.top_logic.contact.layout.PersonContactFullnameAccessor"
+						/>
+					</columns>
+				</table>
+			</component>
+			<include name="com.top_logic.contact/admin/personContacts/EditPersonContactDetail.xml"
+				createCommandGroups="${createCommandGroups}"
+				createComponentClass="${createComponentClass}"
+				createDialogHeight="${createDialogHeight}"
+				createDialogWidth="${createDialogWidth}"
+				createJSP="${createJSP}"
+				createSecurityProvider="${createSecurityProvider}"
+				detailComponentClass="${detailComponentClass}"
+				editCommandGroups="${editCommandGroups}"
+				editSecurityProvider="${editSecurityProvider}"
+				jSPPage="${jSPPage}"
+				masterComponent="personContactFilterTable"
+				openCreateCommandGroup="${openCreateCommandGroup}"
+				openCreateHandler="${openCreateHandler}"
+			>
+				<additionalDialogs>${additionalDialogs}</additionalDialogs>
+			</include>
+		</components>
+	</layout>
+</template>

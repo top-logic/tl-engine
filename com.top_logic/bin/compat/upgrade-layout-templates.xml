@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!--
+	See build_new.doc in the tl-build project for a description.
+
+-->
+
+<project name="upgrade-layout-templates" basedir="../..">
+
+	<delete dir="${basedir}/tmp/upgrade-layout-templates"/>
+
+	<target name="update" description="Upgrades all layouts in workspace.">
+		<xslt
+			style="${basedir}/bin/compat/upgrade-layout-templates.xsl" 
+			basedir="${basedir}/.." 
+			destdir="${basedir}/tmp/upgrade-layout-templates"
+			extension=".xml"
+		>
+			<include name="*/webapp/WEB-INF/layouts/**/*.layout.xml"/>
+		</xslt>
+		
+		<copy todir="${basedir}/..">
+			<fileset dir="${basedir}/tmp/upgrade-layout-templates">
+			</fileset>
+		</copy>
+		
+		<delete dir="${basedir}/tmp/upgrade-layout-templates"/>
+	</target>
+	
+</project>

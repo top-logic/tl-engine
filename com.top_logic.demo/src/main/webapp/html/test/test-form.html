@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Static AJAX Form Test</title>
+    
+    <link type="text/css" rel="stylesheet" href="../../style/ajax-form.css"/>
+    
+    <script src="../../script/tl/bal.js"></script>
+    <script src="../../script/tl/bal-ff.js"></script>
+    <script src="../../script/tl/ajax-form.js"></script>
+  </head>
+  <body>
+  	<h1>Static AJAX From Test</h1>
+
+	<form id="form1">
+		<p id="onvisible1">
+			<label for="field1" class="is-control" accesskey="i">F<span class="is-accesskey">i</span>eld 1:</label>
+			<input id="field1" class="is-control" type="text" />
+		</p>
+		
+		<div id="onvisible2">
+			<!-- on error handler -->
+			<div class="invisible" id="onerror2">
+				<p class="error-message">
+					<!-- error message -->
+					<span id="error2">There is some problem with your input here:</span>
+				</p>
+			</div>
+			<p>
+				<!-- Label for input field "field2" -->
+				<span class="can-edit">
+					<label class="is-control" for="field2" accesskey="e">Fi<span class="is-accesskey">e</span>ld 2:</label>
+					<span class="is-display">Field 2:</span>
+				</span>
+
+				<!-- Input field "field2" -->
+				<span class="can-edit">
+					<input class="is-control" id="field2" type="text" value="Hello World!"/>
+					<span class="is-display" id="display2">Hello World!</span>
+				</span>
+			</p>
+		</div>
+		
+		<p id="onvisible3">
+			<label for="field3" class="is-control" accesskey="d">Fiel<span class="is-accesskey">d</span> 3:</label>
+			<input id="field3" class="is-control has-error" type="text" />
+		</p>
+		
+		<script type="text/javascript">
+			var form1 = new ajaxform.Form("form1");
+			new function() {
+				var field1 = new ajaxform.InputField("field1", form1);
+				var field2 = new ajaxform.InputField("field2", form1);
+				var field3 = new ajaxform.InputField("field3", form1);
+
+				new ajaxform.OnVisibleHandler("onvisible1", field1);
+				new ajaxform.OnVisibleHandler("onvisible2", field2);
+				new ajaxform.OnVisibleHandler("onvisible3", field3);
+
+				new ajaxform.OnErrorHandler("onerror2", field2);
+				new ajaxform.ErrorOutput("error2", field2);
+				
+				new ajaxform.InputValueDisplay("display2", field2);
+				
+				// FormHandler.registerForm(form1);
+			}();
+		</script>
+		
+	</form>
+  </body>
+</html>

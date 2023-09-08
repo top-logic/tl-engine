@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="commons"
+	usable-in-context="com.top_logic.mig.html.layout.tiles.IsInTileContext"
+>
+	<properties extends="com.top_logic.mig.html.layout.tiles.TileComponentName">
+		<property name="name"
+			type="ResKey"
+		>
+			<formatted-default value="layout.editor.groupTile.title"/>
+		</property>
+		<property name="components"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<available-templates value="tile"/>
+			<options
+				fun="com.top_logic.layout.editor.DynamicComponentOptions"
+				mapping="com.top_logic.layout.editor.DynamicComponentOptionMapping"
+			/>
+			<option-labels value="com.top_logic.layout.editor.DynamicComponentDefinition$Labels"/>
+		</property>
+	</properties>
+
+	<component class="com.top_logic.mig.html.layout.tiles.GroupTileComponent"
+		components="${components}"
+		name="GroupTile"
+		titleKey="${name}"
+	>
+		<buttons>
+			<reference command-id="editComponentCommand"/>
+			<reference command-id="deleteComponentCommand"/>
+		</buttons>
+	</component>
+</config:template>

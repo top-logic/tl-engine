@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tiles.template.xml"
+>
+	<arguments>
+		<component class="com.top_logic.mig.html.layout.LayoutReference$LayoutReferenceComponent"
+			resource="com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml"
+		/>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Used for testing the Element Handler and such -->
+<!--
+	SPDX-FileCopyrightText: 2004 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<tl:wurz a="root" xmlns:tl="http://top-logic.com/test">
+<!-- PROCESSING INSTRUCTION -->
+<?test.com.top_logic.basic.xml.TestDispatchingHandler TEST="yes"?>     
+Start of root Tag
+<middle a="mittel">
+Start of middle Tag
+<inner a="innen">
+Text in inner Tag
+</inner>
+End of middle Tag
+</middle>
+End of root Tag
+</tl:wurz>    

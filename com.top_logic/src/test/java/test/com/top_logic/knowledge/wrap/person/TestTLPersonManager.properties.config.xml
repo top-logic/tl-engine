@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+        <config service-class="com.top_logic.base.security.device.TLSecurityDeviceManager">
+			<instance class="com.top_logic.base.security.device.TLSecurityDeviceManager">
+				<security-devices>
+					<security-device 
+						class="test.com.top_logic.knowledge.wrap.person.MockPersonDataAccessDevice"
+						id="dbSecurity"
+					/>
+				</security-devices>
+			</instance>
+		</config>
+	</services>
+</application>

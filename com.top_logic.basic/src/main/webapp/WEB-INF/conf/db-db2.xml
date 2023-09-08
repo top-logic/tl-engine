@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%DB2_HOST%" value="${env:db2_host:localhost}" />
+        <entry name="%DB2_PORT%" value="${env:db2_port:50000}" />
+        <entry name="%DB2_SCHEMA%" value="${env:db2_schema:toplogic}" />
+        <entry name="%DB2_USER%" value="${env:db2_user:toplogic}" />
+        <entry name="%DB2_PASSWD%" value="${env:db2_passwd:unencrypted:theautomatedappengine}" />
+	</alias>
+</root>

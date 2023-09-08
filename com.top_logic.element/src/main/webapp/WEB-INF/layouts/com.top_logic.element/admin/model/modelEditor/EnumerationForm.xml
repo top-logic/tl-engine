@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Configuration of the form displaying or creating a TLStructuredTypePart. -->
+<template>
+	<params>
+		<param name="showNoModel"
+			value="false"
+		/>
+	</params>
+
+	<modelBuilder class="com.top_logic.element.layout.meta.TLEnumerationFormBuilder"
+		showNoModel="${showNoModel}"
+	>
+		<customizations>
+			<property name="com.top_logic.element.layout.meta.TLEnumerationFormBuilder$EditModel#annotations">
+				<annotations>
+					<options
+						fun="com.top_logic.element.layout.meta.EnumAnnotationOptions"
+						mapping="com.top_logic.layout.form.values.ItemOptionMapping"
+					/>
+				</annotations>
+			</property>
+
+			<property name="com.top_logic.model.annotate.TLDefaultValue#provider">
+				<annotations>
+					<options
+						fun="com.top_logic.model.annotate.util.EnumDefaultProviderOptions"
+						mapping="com.top_logic.layout.form.values.ImplOptionMapping"
+					/>
+				</annotations>
+			</property>
+		</customizations>
+	</modelBuilder>
+</template>

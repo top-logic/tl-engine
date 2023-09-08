@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="compoundSecurity">
+			<annotations>
+				<singletons>
+					<singleton type="compoundSecurityRoot"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="CompoundSecurityME">
+					<annotations>
+						<instance-presentation
+							expanded-icon="/tree/proj/iO.png"
+							icon="/tree/proj/i.png"
+						/>
+						<legacy-qualified-name qualified-name="CompoundSecurityME"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="CompoundSecurityChild1ME">
+					<annotations>
+						<instance-presentation icon="/tree/proj/i.png"/>
+						<legacy-qualified-name qualified-name="CompoundSecurityChild1ME"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="CompoundSecurityChild2ME">
+					<annotations>
+						<instance-presentation icon="/tree/proj/i.png"/>
+						<legacy-qualified-name qualified-name="CompoundSecurityChild2ME"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="CompoundSecurityChild3ME">
+					<annotations>
+						<instance-presentation icon="/tree/proj/i.png"/>
+						<legacy-qualified-name qualified-name="CompoundSecurityChild3ME"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<class name="compoundSecurityRoot">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="ROOT"/>
+								</default-value>
+							</annotations>
+						</property>
+						<reference name="children"
+							override="true"
+							type="compoundSecurityRootChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="CompoundSecurityME"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="CompoundSecurityChild1">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="test.com.top_logic.demo.layout.security.DummyType1"/>
+					</annotations>
+					<generalizations>
+						<generalization type="CompoundSecurityChild1ME"/>
+						<generalization type="compoundSecurity:compoundSecurityRootChild"/>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</class>
+				<class name="CompoundSecurityChild2">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="test.com.top_logic.demo.layout.security.DummyType2"/>
+					</annotations>
+					<generalizations>
+						<generalization type="CompoundSecurityChild2ME"/>
+						<generalization type="compoundSecurity:compoundSecurityRootChild"/>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</class>
+				<class name="CompoundSecurityChild3">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="test.com.top_logic.demo.layout.security.DummyType3"/>
+					</annotations>
+					<generalizations>
+						<generalization type="CompoundSecurityChild3ME"/>
+						<generalization type="compoundSecurity:compoundSecurityRootChild"/>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</class>
+				<interface name="compoundSecurityRootChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+			</types>
+		</module>
+	</modules>
+</model>

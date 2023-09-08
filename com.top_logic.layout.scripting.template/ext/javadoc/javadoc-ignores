@@ -1,0 +1,27 @@
+com.top_logic.layout.scripting.template.excel.ExcelCollector.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.layout.scripting.template.excel.ExcelCollector.ExcelFileConfig.BasicSheetSet
+com.top_logic.layout.scripting.template.excel.ExcelCollector.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.layout.scripting.template.excel.ExcelCollector.ExcelSheetConfig.SheetOperator
+com.top_logic.layout.scripting.template.excel.ExcelCollector.java: Invalid configuration reference 'ExcelChecker#isActive(org.apache.poi.ss.usermodel.Sheet, org.apache.poi.ss.usermodel.FormulaEvaluator)'. A configuration property and a configured class may only reference other classes or configuration properties from their JavaDoc without providing a label for the reference. The documentation must be written to be usfull for in-app configuration. Notes to the developer may be given in @see tags.
+com.top_logic.layout.scripting.template.excel.ExcelRow.java: Invalid camel case word 'rowNr', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.excel.ExcelRow.java: Invalid camel case word 'sheetName', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.gui.ApplyApplicationAction.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.layout.scripting.template.gui.ApplyApplicationAction.Config
+com.top_logic.layout.scripting.template.gui.ScriptRecorderComponent.java: Invalid camel case word 'ScriptRecorderComponent', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.java: Missing documentation: com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.Group
+com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.java: Missing documentation: com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.Paste
+com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.java: Missing documentation: com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.Start
+com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.java: Missing documentation: com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.Start.Config
+com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.java: Missing documentation: com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.Start.Config.getPauseImage
+com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.java: Missing documentation: com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.Start.Config.getPauseLabel
+com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.java: Missing documentation: com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.UnGroup
+com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.java: Missing documentation: com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.action
+com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.java: Missing documentation: com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.isActionNode
+com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.java: Missing documentation: com.top_logic.layout.scripting.template.gui.ScriptRecorderTree.isRecording
+com.top_logic.layout.scripting.template.gui.ScriptUploadComponent.java: Invalid camel case word 'ScriptingGui', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.gui.ScriptingGuiUtil.java: Invalid camel case word 'ScriptingGui', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.gui.templates.DownloadAllScriptRecorderTemplatesHandler.java: Invalid camel case word 'ScriptRecorder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.gui.templates.DownloadScriptRecorderTemplateFoldersHandler.java: Invalid camel case word 'ScriptRecorder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.gui.templates.DownloadScriptRecorderTemplateHandler.java: Invalid camel case word 'ScriptRecorder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.gui.templates.ImportScriptRecorderTemplateCommand.java: Invalid camel case word 'ScriptRecorder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.gui.templates.ScriptRecorderTemplateConstraint.java: Invalid camel case word 'ScriptRecorder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.gui.templates.ScriptTemplateUtil.java: Invalid camel case word 'ScriptRecorder', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.layout.scripting.template.gui.templates.TemplateEditModel.java: Missing documentation: com.top_logic.layout.scripting.template.gui.templates.TemplateEditModel.Parameter.setDefault
+com.top_logic.layout.scripting.template.gui.templates.UploadScriptRecorderTemplateHandler.java: Invalid camel case word 'ScriptRecorder', this may only be used within JavaDoc links or HTML code tags.

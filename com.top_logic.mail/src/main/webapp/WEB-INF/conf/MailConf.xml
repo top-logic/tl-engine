@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Mail module main configuration file                   -->
+
+<root>
+	<alias>
+        <entry name="%IMAP_ACTIVE%"  value="${env:imap_active:false}" />
+        
+		<entry name="%IMAP_SERVER%"  value="${env:imap_server:localhost}" />
+		<entry name="%IMAP_PROTOCOL%"  value="${env:imap_protocol:imaps}" />
+		<entry name="%IMAP_STARTTLS%"  value="${env:imap_starttls:false}" />
+        <entry name="%IMAP_PORT%"    value="${env:imap_port:-1}" comment="Port to receive mails, -1 means default port."/>
+        <entry name="%IMAP_USER%"    value="${env:imap_user:}" />
+        <entry name="%IMAP_PASS%"    value="${env:imap_pass:}" />
+    </alias>
+</root>

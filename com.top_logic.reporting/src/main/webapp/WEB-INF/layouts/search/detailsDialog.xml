@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="search/searchResultChartDetails.xml"
+	builderClass="com.top_logic.reporting.layout.search.ReportingSearchModelBuilder"
+	masters="ReportingChartComponent"
+	metaElement="projElement.Project"
+	namePrefix="Reporting"
+>
+	<inject>
+		<dialogInfo
+			createOpenerButtons="false"
+			defaultI18n="search.displayDialog_displayChartDetails"
+			height="700"
+			openButtonSecComp="ReportingReportingSearchResultChartDetails"
+			openHandlerName="showDetailCharts"
+			width="1000"
+		>
+			<open-handler id="displayDialog_ReportingSearchResultChartDetails"
+				class="com.top_logic.reporting.layout.meta.search.ReportingSearchDetailComponent$SearchReportDetailChartHandler"
+				detailTable="ReportingSearchResultChartDetails"
+				executability="Always"
+				group="Read"
+				resourceKey="search.displayDialog_displayChartDetails"
+			/>
+		</dialogInfo>
+	</inject>
+</include>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%H2_SCHEMA%" value="${env:h2_schema_test:mem:test;DB_CLOSE_DELAY=-1}" />
+        <entry name="%H2_SCHEMA_TEST_UNIT%" value="${env:h2_schema_testUnit:mem:testUnit;DB_CLOSE_DELAY=-1}" />
+        <entry name="%H2_SCHEMA_TEST_MIGRATION%" value="${env:h2_schema_testMigration:mem:testMigration;DB_CLOSE_DELAY=-1}" />
+        <entry name="%H2_USER%" value="${env:h2_user:sa}"/>
+        <entry name="%H2_PASSWD%" value="${env:h2_passwd:unencrypted:bup}"/>
+	</alias>
+</root>

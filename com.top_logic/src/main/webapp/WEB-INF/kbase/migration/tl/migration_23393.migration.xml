@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration schema-update="true">
+	<version name="migration_23393"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_24218"
+			module="tl"
+		/>
+	</dependencies>
+	<!-- Migration introduces the new table LAYOUT_CONFIGURATIONS, and updates the persistent schema definition. -->
+	<migration>
+	</migration>
+</migration>

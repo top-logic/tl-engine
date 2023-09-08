@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID=""
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<open-handler id="ID_9b9b7837_b510_4024_ae6f_a86a98ef3327"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			clique="create"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			image=""
+			targetComponent="com.top_logic.demo/technical/components/dynamicColumns/newObjective/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.9f0871a5-8047-41cd-9bf5-72261e56d635">
+				<en>New objective</en>
+				<de>Neues Ziel</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.9f0871a5-8047-41cd-9bf5-72261e56d635">
+				<en>Create new objective</en>
+				<de>Neues Ziel anlegen</de>
+			</title>
+		</title>
+		<typeOptions
+			include-subtypes="true"
+			type="test.dynamictable:Objective"
+		/>
+		<create-handler id="ID_8e034771_9f27_4f23_b05c_1cdab044b2b3"
+			clique="save"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			ignoreWarnings="default"
+			image=""
+			linkOperation=""
+		/>
+	</arguments>
+</config:template-call>

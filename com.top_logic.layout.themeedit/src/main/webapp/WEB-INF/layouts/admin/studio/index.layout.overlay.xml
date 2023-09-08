@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<arguments>
+	<components>
+		<layout-reference resource="com.top_logic.layout.themeedit/themeEditorView.layout.xml"/>
+	</components>
+</arguments>

@@ -1,0 +1,10 @@
+
+<p>
+On the right you see a <i>TabSwitchingWindowLayout</i>.
+</p>
+<p>
+This is the same as a <i>WindowLayout</i> but with the ability to switch between more
+contents like a <i>TabFrame</i>.
+</p>
+Indeed this Component is as defined as a TabFrame. The windowbar contains a link to switch
+to the next tab.

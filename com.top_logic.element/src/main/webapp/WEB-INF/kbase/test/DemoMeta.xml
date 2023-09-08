@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- the following are only demo-objects, do not plain copy to other modules  -->
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<metaobject object_name="Product" super_class="StructuredElement" />
+		<metaobject object_name="ProductType" super_class="StructuredElement" />
+		<metaobject object_name="ProductVersion" super_class="StructuredElement" />
+		
+		<association super_class="hasWrapperAttValueBaseAssociation" object_name="otherHasWrapperAttValue" />
+		
+		<metaobject object_name="BElement" super_class="StructuredElement">
+		<attributes>
+			<reference att_name="historicRef"
+				target-type="StructuredElement"
+				mandatory="false"
+				history-type="historic"
+			/>
+		</attributes>
+		</metaobject>
+	
+		<association
+			object_name="hasSimpleRefAttValue"
+			super_class="hasWrapperAttValue"
+		/>
+	
+		<association
+			object_name="hasExternAttValue"
+			super_class="hasWrapperAttValue"
+		/>
+	
+		<association
+			object_name="hasWeightedRefAttValue" 
+			super_class="hasWrapperAttValue"
+		>
+			<attributes>
+			<mo_attribute
+				att_name="weight" 
+				att_type="Double"
+				mandatory="true"
+			/>
+			</attributes>
+		</association>
+	
+	</metaobjects>
+</objectlist>

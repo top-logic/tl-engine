@@ -1,0 +1,9 @@
+<p>In the view, a global list of abstract objectives can be created in the table "Objectives". An&nbsp;objective consists only of a name. Each development project can be evaluated with respect to the fulfillment of each of the objectives. To do this, the development project table has an additional column for each objective in which a value can be entered for that objective. This rating is not stored as a direct attribute of the development project, but in a separate rating object. This rating object is linked to the development project and the objective, and stores the entered rating value.</p> 
+<p><img src="ref:image_1.png" style="opacity:1"></p> 
+<p>The grid table configuration contains an additional column configuration in which a column is created for each of the objective objects. The function that calculates the column value searches for the rating object that matches the displayed development project and objective and returns its value as the result.</p> 
+<p>The save operation for a newly entered column value must distinguish between three cases:</p> 
+<ul> 
+ <li>If no rating object has yet been created for the development project and the objective, a new rating object must be created and linked to the development project and the objective before the entered value can be saved.</li> 
+ <li>If a rating object already exists for the combination of development project and target, the value can be updated.</li> 
+ <li>If a previously existing value was deleted, the rating object itself must be deleted so that no value (and not, for example, the value <code class="hljs inlineCode">0</code>) is displayed in the corresponding table cell after saving.</li> 
+</ul>

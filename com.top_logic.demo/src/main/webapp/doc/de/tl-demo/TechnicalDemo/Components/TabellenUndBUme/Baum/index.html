@@ -1,0 +1,15 @@
+<p>Die Sicht stellt die Demotypen als Baum dar. Die konkrete Konfiguration für das Modell sieht wie folgt aus:</p> 
+<p><img src="ref:grafik.png" style="opacity:1"></p> 
+<p>Die Struktur des Baumes ist durch die Kinder und den Wurzelknoten selbst implizit gegeben. Als Wurzel wird das Singleton</p> 
+<pre><code>`DemoTypes#ROOT`</code></pre> 
+<p>benutzt. Die Kinder werden über das Attribut <code class="hljs inlineCode">children</code> bestimmt, beginnend beim Wurzelknoten. Das Knoten-Prädikat bestimmt, nur für Bäume, u.a. welche Knoten durch den Nutzer selektiert werden dürfen. Das Zusammenspiel der Knoten-Prädikat-, Eltern- und Modell-Abfrage-Konfiguration ist insbesondere von Bedeutung, um zu entscheiden, falls in einer anderen Sicht ein Objekt erzeugt wurde, ob dieses Objekt auch in diesem Baum automatisch hinzugefügt bzw. dargestellt wird.</p> 
+<p>In dieser konkreten, trivialen Konfiguration ignoriert der Baumersteller das Komponentenmodell, welches durch</p> 
+<p><img src="ref:grafik_1.png" style="opacity:1"></p> 
+<p>konfiguriert werden könnte. Das gleiche Ergebnis erhält man bspw. indem man als Komponentenmodell</p> 
+<p><img src="ref:grafik_2.png" style="opacity:1"></p> 
+<p>und als Wurzelobjekt im Baumersteller den Standard, also</p> 
+<p><img src="ref:grafik_3.png" style="opacity:1"></p> 
+<p>angibt.</p> 
+<p>Außerdem besteht die Möglichkeit das Verhalten und Aussehen des Baums durch die folgenden Optionen</p> 
+<p><img src="ref:grafik_4.png" style="opacity:1"></p> 
+<p>weiter zu verfeinern.</p>

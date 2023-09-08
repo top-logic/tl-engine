@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<Configuration com.top_logic.basic.Logger.traceExceptions="false">
+	<Appenders>
+		<RollingFile name="ALL"
+			fileName="tmp/logAll.log"
+			filePattern="tmp/logAll.%i.log"
+		>
+			<Property name="pattern.long">%date{ISO8601} %-5level [%thread]: %logger - %message%n%throwable</Property>
+			<DefaultRolloverStrategy
+				fileIndex="min"
+				max="10"
+			/>
+			<SizeBasedTriggeringPolicy size="500 KB"/>
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+		<Root level="debug">
+			<AppenderRef ref="ALL"/>
+		</Root>
+	</Loggers>
+</Configuration>

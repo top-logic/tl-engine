@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<t:type name="Example_Type_Empty" />
+			
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Example_Structure_Empty" type="Example_Type_Empty" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		fubar
+	</t:body>
+</t:template>

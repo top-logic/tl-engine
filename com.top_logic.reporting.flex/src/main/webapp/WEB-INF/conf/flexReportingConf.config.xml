@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+				   	<module key="com.top_logic.reporting.flex.chart.config.util.ChartThemeConfigurator$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+	
+		<config service-class="com.top_logic.tool.boundsec.SecurityObjectProviderManager">
+			<instance class="com.top_logic.tool.boundsec.SecurityObjectProviderManager">
+				<providers>
+		            <provider name="searchReportSecurityObjectProvider">
+		             	<impl class="com.top_logic.tool.boundsec.DispatchingSecurityObjectProvider"
+		             		default="selection"
+		             	>
+		             		<providers>
+		             			<provider command-group="publish" impl="securityRoot" />
+		             			<provider command-group="Read" impl="securityRoot" />
+		             			<provider command-group="Create" impl="securityRoot" />
+		             		</providers>
+		             	</impl>
+		            </provider>
+				</providers>
+			</instance>
+		</config>
+		
+        <config service-class="com.top_logic.layout.provider.LabelProviderService">
+            <instance>
+                <label-providers>
+					<provider kind="CODE" type="com.top_logic.reporting.flex.chart.config.util.MetaAttributeProvider" implementation="com.top_logic.reporting.flex.chart.config.util.MetaAttributeProviderLabels" />
+                </label-providers>
+            </instance>
+        </config>
+
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="FlexReportingMessages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<handlers>
+		        	<handler id="newStoredConfigChartReport"
+						class="com.top_logic.reporting.flex.search.handler.CreateReportCommand"
+					/>
+		        	<handler id="resetStoredConfigChartReport"
+						class="com.top_logic.reporting.flex.search.handler.ResetReportCommand"
+					/>
+		        	<handler id="deleteStoredConfigChartReport"
+		        		class="com.top_logic.reporting.flex.search.handler.DeleteReportCommand"
+		        	/>
+		        	<handler id="writeSearchChartReport" 
+		        		class="com.top_logic.reporting.flex.search.handler.SaveReportCommand"
+					/>
+        			<handler id="displaySearchResultDetails"
+						class="com.top_logic.reporting.flex.search.handler.DisplayDetailsCommand"
+						clique="internal"
+					/>
+		        	<handler id="selectChartType"
+						class="com.top_logic.reporting.flex.chart.component.CockpitChartComponent$SelectChartTypeCommandHandler"
+						clique="settings"
+						image="theme:ICONS_CONFIGURE"
+						resourceKey="layouts.reporting.flex.chart.cockpit.Chart.config"
+					/>
+				</handlers>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.reporting.flex.chart.config.util.ChartThemeConfigurator">
+			<instance class="com.top_logic.reporting.flex.chart.config.util.ChartThemeConfigurator" default-theme="Reporting" >
+				<themes>
+					<theme name="Reporting"
+						fallback="JFree"
+						chart-background-paint="#FFFFFF"
+						plot-background-paint="#F5F5F5"
+						shadow-visible="false"
+						domain-gridline-paint="#404040"
+						range-gridline-paint="#C0C0C0"
+					>
+						<bar-painter class="org.jfree.chart.renderer.category.StandardBarPainter" />
+						<xy-bar-painter class="org.jfree.chart.renderer.xy.StandardXYBarPainter" />
+					</theme>
+				</themes>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.gui.ThemeFactory">
+			<instance is-deployed="false" />
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.reporting.flex.chart.config.color.ConfiguredColorProvider$GlobalConfig">
+			<color-maps>
+				<color-map name="null">
+					<colors>
+						<!-- Use black for null values. -->
+						<color key="null" value="#000000"/>
+					</colors>
+				</color-map>
+				<color-map name="Boolean">
+					<colors>
+						<color key="true" value="#1D6914"/>
+						<color key="false" value="#AD2323"/>
+						
+						<!-- Use black for null values. -->
+						<color key="reporting.classification.notset" value="#000000"/>
+					</colors>
+				</color-map>
+				<color-map name="tl.yesno">
+					<colors>
+						<color key="tl.yes" value="#1D6914"/>
+						<color key="tl.no" value="#AD2323"/>
+
+						<!-- Use black for null values. -->
+						<color key="reporting.classification.notset" value="#000000"/>
+					</colors>
+				</color-map>
+				<color-map name="tl.yesnoundef">
+					<colors>
+						<color key="tl.yesnoundef.yes" value="#1D6914"/>
+						<color key="tl.yesnoundef.no" value="#AD2323"/>
+						<color key="tl.yesnoundef.undefined" value="#575757"/>
+						
+						<!-- Use black for null values. -->
+						<color key="reporting.classification.notset" value="#000000"/>
+					</colors>
+				</color-map>
+				<color-map name="Tristate">
+					<colors>
+						<!-- Use black for null values. -->
+						<color key="reporting.classification.notset" value="#000000"/>
+					</colors>
+				</color-map>
+			</color-maps>
+
+			<!-- Best distinguishable colors according to http://alumni.media.mit.edu/~wad/color/palette.html -->			
+			<colors>
+				<!-- Red -->
+    			<color value="#dd0000"/>
+    			<!-- Original suggestion, but looks too dark. -->
+    			<!-- 
+    			 <color value="#AD2323"/>
+				-->
+    			
+				<!-- Blue -->
+    			<color value="#2A4BD7"/>
+    			
+				<!-- Green -->
+    			<color value="#1D6914"/>
+    			
+				<!-- Orange -->
+    			<color value="#FF9233"/>
+    			
+				<!-- Yellow -->
+    			<color value="#FFEE33"/>
+    			
+				<!-- Purple -->
+    			<color value="#8126C0"/>
+    			
+				<!-- Tan -->
+    			<color value="#E9DEBB"/>
+    			
+				<!-- Lt. Blue -->
+    			<color value="#9DAFFF"/>
+    			
+				<!-- Lt. Green -->
+    			<color value="#81C57A"/>
+
+				<!-- Pink -->
+    			<color value="#FFCDF3"/>
+
+				<!-- Cyan -->
+    			<color value="#29D0D0"/>
+
+				<!-- Brown -->
+    			<color value="#814A19"/>
+
+				<!-- Lt. Gray -->
+    			<color value="#A0A0A0"/>
+
+				<!-- Dk. Gray -->
+    			<color value="#575757"/>
+
+				<!-- White -->
+    			<color value="#FFFFFF"/>
+
+				<!-- Black -->
+				<!-- Do not use black as default color, since it is reserved for "not set". -->
+				<!-- 
+    			<color value="#000000"/>
+				 -->
+    		</colors>
+		</config>
+		
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+			            <declaration resource="webinf://kbase/FlexReportMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+		
+		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">
+			<types>
+				<type name="tl.legacy.tabletypes:FlexReportTable" attributes="name"/>
+			</types>
+		</config>
+	</configs>
+	
+	<defaults>
+		<config interface="com.top_logic.reporting.flex.chart.config.chartbuilder.bar.BarChartBuilder$Config">
+			<property name="maximum-bar-width" value="0.05"/>
+		</config>
+	</defaults>
+	
+</application>

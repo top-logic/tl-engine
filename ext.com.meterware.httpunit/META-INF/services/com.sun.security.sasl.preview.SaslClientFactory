@@ -1,0 +1,2 @@
+com.sun.security.sasl.digest.ClientFactory
+com.sun.security.sasl.gsskerb.ClientFactory

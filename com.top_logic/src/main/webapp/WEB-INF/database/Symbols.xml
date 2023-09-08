@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<root
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	config:interface="com.top_logic.base.security.authorisation.symbols.file.FileSymbolFactory$Config">
+	<symbols>
+		<symbol
+			name="test1"
+			allow="admin,editor,user"
+			deny="developer" />
+		<symbol
+			name="toplogic.knowledge.browse"
+			allow="admin,tl.admin"
+			deny="" />
+		<symbol
+			name="toplogic.admin"
+			allow="admin,tl.admin"
+			deny="" />
+		<symbol
+			name="toplogic.query.editor"
+			allow="admin,user"
+			deny="" />
+		<symbol
+			name="test5"
+			allow=""
+			deny="" />
+		<symbol
+			name="test4"
+			allow="user"
+			deny="admin,developer" />
+		<symbol
+			name="test3"
+			allow=""
+			deny="admin,editor,user" />
+		<symbol
+			name="test2"
+			allow="admin,editor,user"
+			deny="" />
+		<symbol
+			name="toplogic.admin.useradmin"
+			allow="admin"
+			deny="" />
+		<symbol
+			name="toplogic.extensions.tse.user"
+			allow="user"
+			deny="" />
+		<symbol
+			name="toplogic.extensions.tse.developer"
+			allow="root,admin,god,dau"
+			deny="" />
+		<symbol
+			name="toplogic.extensions.tse.admin"
+			allow="admin,god"
+			deny="" />
+		<!-- allow access to removed objects, too -->
+		<symbol
+			name="viewRemoved"
+			allow="god"
+			deny="" />
+	</symbols>
+</root>

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!--
+	SPDX-FileCopyrightText: 2005 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<ConcurrencySchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation='ConcurrencySchema.xsd'>
+  <!-- TODO shoud be registered in global namespace -->
+<TokenSchemaDeklarationen>
+    <TokenSchemaDeklaration Typ="exampleGlobalToken" Wirkungsbereich="global"/>
+    <TokenSchemaDeklaration Typ="exampleToken" 		 Wirkungsbereich="definedInContextScheme"/>
+    <TokenSchemaDeklaration Typ="test" 				 Wirkungsbereich="definedInContextScheme"/>
+    <TokenSchemaDeklaration Typ="test1" 			 Wirkungsbereich="definedInContextScheme"/>
+    <TokenSchemaDeklaration Typ="test2" 			 Wirkungsbereich="definedInContextScheme"/>
+    <TokenSchemaDeklaration Typ="test1a" 			 Wirkungsbereich="definedInContextScheme"/>
+    <TokenSchemaDeklaration Typ="test1b" 			 Wirkungsbereich="definedInContextScheme"/>
+    <TokenSchemaDeklaration Typ="testa" 			 Wirkungsbereich="definedInContextScheme"/>
+    <TokenSchemaDeklaration Typ="edit" 			 Wirkungsbereich="definedInContextScheme"/>
+    <TokenSchemaDeklaration Typ="RefreshUsersToken"     Wirkungsbereich="definedInContextScheme"/>   
+</TokenSchemaDeklarationen>
+<KontextSchemata>
+    <KontextSchema Instanziierungsbereich="StructureContext" ID="exampleContext">
+        <TokenSchema Nummer="1" Typ="exampleGlobalToken" Sperrtyp="exclusiv" Wirkungsbereich="definedInDeklaration"/>
+        <TokenSchema Nummer="2" Typ="exampleToken"       Sperrtyp="shared"   Wirkungsbereich="local"/>
+    </KontextSchema>
+    <KontextSchema Instanziierungsbereich="any" ID="RefreshUsersTask">
+        <TokenSchema Nummer="1" 	Typ="RefreshUsersToken" 	Sperrtyp="exclusiv" 	Wirkungsbereich="local"/>
+    </KontextSchema>
+</KontextSchemata>
+</ConcurrencySchema>

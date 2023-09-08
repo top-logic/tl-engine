@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_25881_Removed_legacy_types"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26117_security_object"
+			module="tl"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_25800_inconsistent_signature_create_handler"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-mail"
+		/>
+		<dependency name="Ticket_25962_Remove_EWE"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<processors>
+		<change-part-type
+			part="DemoSecurity:DemoSecurity.All$singlePersonContact#singlePersonContact"
+			target="Contacts:Contact.Person"
+		/>
+		<change-part-type
+			part="DemoSecurity:DemoSecurity.All$personContactList#personContactList"
+			target="Contacts:Contact.Person"
+		/>
+
+		<!-- Cleanup actions for the invalid  data. -->
+		<delete-module name="UIConfig"/>
+		<delete-module name="WorkflowInstance"/>
+
+		<delete-class name="tl.legacy.tabletypes:hasInfoTable"/>
+
+		<delete-class name="tl.tables:StoredViewInfoTableInterface"/>
+		<delete-class name="tl.tables:AttributeConfigTableInterface"/>
+		<delete-class name="tl.tables:WorkflowTableInterface"/>
+		<delete-class name="tl.tables:WorkflowInstanceTableInterface"/>
+		<delete-class name="tl.tables:AttributeGroupTableInterface"/>
+		<delete-class name="tl.tables:AttributeGroupReferenceTableInterface"/>
+		<delete-class name="tl.tables:MEConfigDescriptorTableInterface"/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

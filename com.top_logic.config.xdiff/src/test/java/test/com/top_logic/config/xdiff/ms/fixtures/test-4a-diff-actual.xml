@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="customconfig.xsd">
+    <components>
+        <ConfigCustomizations>
+            <Settings>
+                <NodeAdd BeforeXPath="/r[1]/a[1]/v[2]" Component="test-4a" XPath="/r[1]/a[1]">
+                    <v name="v1a">v1a</v>
+                </NodeAdd>
+                <NodeValue Component="test-4a" Value="v2new" XPath="/r[1]/a[1]/v[3]"/>
+                <NodeValue Component="test-4a" Value="v3new" XPath="/r[1]/a[1]/v[4]"/>
+            </Settings>
+        </ConfigCustomizations>
+    </components>
+</configuration>

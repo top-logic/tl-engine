@@ -1,0 +1,305 @@
+/*
+  Overwrites the global styles inherited from templates.css
+*/
+a:visited, a:hover, a:link, a:active, a.gotoLink, a.gotoLink:visited, a.cmdLink, a.cmdLink:visited{
+	color:var(--NORMAL_TEXT);
+}
+
+label{
+	color:var(--NORMAL_TEXT);	
+}
+
+tbody tr td{
+	color:var(--NORMAL_TEXT);	
+}
+
+body.title { 
+	margin: 0px;
+	background-color: #E7E7E7; 
+	color:            var(--NORMAL_TEXT);
+	font-family:      Arial;
+	font-weight:      bold;
+	font-size:        13px;
+}
+
+tr.head th{
+	color:            var(--NORMAL_TEXT);
+}
+
+tr.sum td{
+	color:            var(--NORMAL_TEXT);
+	border:0px;	
+}
+
+h1,h2,h3{
+	color:var(--NORMAL_TEXT);	
+}
+
+/*
+	Help
+*/
+
+td.infoTD {
+	color: var(--NORMAL_TEXT);	
+}
+
+.infoTable{
+    border-top: 2px solid var(--TERTIARY_BACKGROUND_COLOR);
+    border-bottom: 2px solid var(--TERTIARY_BACKGROUND_COLOR);
+}
+
+th.infoTH {
+    padding-left:        5px;
+    padding-right:       30px;
+    font-family:         Arial;
+    font-size:           11px;
+    font-weight:         normal;
+    text-align:          left;
+	white-space:         nowrap; 
+}
+
+td.tl-table__cell--selected {
+	background-color: var(--TABLE_SELECT_BACKGROUND_COLOR);
+}
+
+div.tblMandatory .tl-table__title {
+	/* For legacy browsers. */
+	background-color: var(--FRAME_BACK);
+
+	background: var(--TABLE_TITLE_BACKGROUND);
+    font-family:      var(--TEXT_FAMILY);
+    color:            var(--TBLMANDATORY_THTBLTITLE_COLOR);
+    font-size:        13px;
+    font-weight:      normal;
+	line-height: var(--TABLE_TITLE_HEIGHT);
+	padding-top: 0px;
+	padding-bottom: 0px;
+	padding-left: 2px;
+	padding-right: 2px;
+    border-color:     #555555;
+    border-right:      none;
+}
+
+div.tblMandatory th.tblTitleRight {
+	/* For legacy browsers. */
+    background-color: var(--FRAME_BACK);
+
+	background: var(--TABLE_TITLE_BACKGROUND);
+	font-family:      var(--TEXT_FAMILY);
+    color:            var(--INVERT_TEXT);
+    font-size:        13px;
+    font-weight:      normal;
+	line-height: var(--TABLE_TITLE_HEIGHT);
+	padding-top: 0px;
+	padding-bottom: 0px;
+	padding-left: 2px;
+	padding-right: 2px;
+    border-color:     #555555;
+    text-align:       right;
+    border-left:      none;
+}
+
+th.tl-table__cell {
+	font-family:         var(--TEXT_FAMILY);
+	font-size:           12px; 
+	font-weight:         bold;
+	background-color:    var(--TABLE_HEADER);
+    white-space:         nowrap;     
+	border-bottom-width: var(--TABLE_HEADER_BORDER_BOTTOM_WIDTH);
+	border-top-width:    0px;
+}
+
+.tl-table__cell .tblCellInnerSpacer {
+	margin-left: 0px;
+}
+
+td.tblTDPVDate {
+	padding:        	0px;
+	margin:				0px;
+	border-width:		0px;
+	border-style: 		none;
+	border-collapse: 	collapse;
+	border-spacing: 	0px;
+	width: 				100%;
+	text-align: 		center;
+}
+
+td.tblTDPVDateSelect {
+	background-color: 	var(--TABLE_SELECT_BACKGROUND_COLOR);
+	padding:        	0px;
+	margin:				0px;
+	border-width:		0px;
+	border-style: 		none;
+	border-collapse: 	collapse;
+	border-spacing: 	0px;
+	width: 				100%;
+	text-align: 		center;
+}
+
+.tblCounter {
+	background-color: #CCCCCC;
+	border-top: 1px solid #999999;
+	border-bottom: 1px solid #999999;
+}
+
+.tl-table__footer-pager {
+	background-color: #CCCCCC;	
+	text-align: center;
+}
+
+/*
+ Fieldsets
+*/
+
+fieldset {
+	border:        1px solid var(--FIELDSET_BORDER_COLOR);
+
+	color:         var(--NORMAL_TEXT);
+
+	margin-left:   5px;
+	margin-right:  5px;
+}
+
+
+/*
+ * "label" can be nested in "legend" and has to be treated exactly the same way
+ * as the usual legend
+ */
+fieldset legend, legend label {
+	color:             var(--COLOR_LEGEND);
+	background-color:  var(--LEGEND_BACKGROUND_SELECTED);
+	foreground-color:  var(--COLOR_LEGEND);
+
+	padding-left:      5px;
+	padding-right:     5px;
+	padding-top:       1px;
+	padding-bottom:    1px;
+
+	margin-bottom:     2px;
+}
+
+td.label{
+	color: var(--NORMAL_TEXT);
+	font-weight: bold;
+	
+	text-align: left;	
+}
+
+/*
+	Dialogs
+*/
+
+div.dialog {
+	background-color: #666666;
+	border-color: #666666;
+}
+
+.dialogTitleBar {
+	background-color: #666666;
+}
+
+/*
+  Calendar	
+*/
+table.cal_table {
+	border-color:	  #666666;
+}
+
+table.cal_title {
+	background-color:	  #666666;
+}
+
+tr.cal_tr {
+	background-color:	  #666666;
+}
+
+th.cal_title {
+	background-color:	  #666666;
+	font-family:      Arial;
+	font-size:        12px;
+	font-weight:      normal;
+}
+
+/* Quick Search - START */
+
+span.quickSearch {
+    margin-top: 3px;
+	display: table-row;
+}
+
+span.quickSearch .quickSearchButton{
+    width: 0px;
+	display: table-cell;
+}
+
+span.quickSearch:ACTIVE {
+	background: white;
+}
+
+span.quickSearch span.cButton input.input-image,
+span.quickSearch span.cButton a.input-image {
+	box-sizing: content-box;
+	width: var(--ICON_SIZE_NORMAL);
+	height: var(--ICON_SIZE_NORMAL);
+	background: none;
+	
+	border: 1px solid gray;
+	border-top-left-radius: 0px;
+	border-top-right-radius: 10px;
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 10px;
+    padding: 0px 5px 0px 5px;
+    border-left: none;
+    display: inline-block;
+}
+
+span.quickSearch span.cButton input.input-image.disabled,
+span.quickSearch span.cButton a.input-image.disabled {
+	cursor: default;
+}
+
+span.quickSearchInput {
+	display: table-cell;
+	vertical-align: middle;
+    background: transparent;
+    
+    border: 1px solid gray;
+    border-right: none;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 0px;
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 0px;
+}
+
+span.quickSearchInput input {
+    background: transparent;
+	
+	box-sizing: border-box;
+	height: 22px;
+
+	border: none;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 0px;
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 0px;
+
+	color: gray;
+    padding: 0px 0px 0px 5px;
+}
+
+span.quickSearchInput input::-ms-clear {
+}
+
+span.quickSearch:hover input,
+span.quickSearch:hover span.cButton input.input-image {
+    color: gray;
+    background-color: white;
+}
+
+span.quickSearchInput input:focus {
+    color: black;
+    border-color: gray;
+    background-color: white;
+}
+
+/* Quick Search - END */

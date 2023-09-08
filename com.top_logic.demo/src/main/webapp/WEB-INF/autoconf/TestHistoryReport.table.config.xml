@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system config:interface="com.top_logic.knowledge.service.TypeSystemConfiguration">
+					<meta-objects>
+						<metaobject
+							object_name="test.history.Report"
+							super_class="TLObject"
+						>
+							<reference
+								att_name="version"
+								history-type="historic"
+								mandatory="true"
+								target-type="GenericObject"
+							/>
+							<mo_attribute
+								att_name="name"
+								att_type="String"
+							/>
+						</metaobject>
+					</meta-objects>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

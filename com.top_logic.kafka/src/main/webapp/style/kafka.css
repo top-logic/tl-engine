@@ -1,0 +1,14 @@
+
+.mapDetailValue {
+	border: 1px lightgray; 
+	border-style:solid; 
+	padding-left: 5px; 
+	padding-right: 5px;
+}
+
+.listDetailValue {
+	border: 1px gray; 
+	border-style:solid; 
+	padding-left: 5px; 
+	padding-right: 5px;
+}

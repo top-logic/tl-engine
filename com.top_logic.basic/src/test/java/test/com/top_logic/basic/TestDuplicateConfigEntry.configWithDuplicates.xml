@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+	<properties>
+		<section name="TestDuplicateConfigEntry">
+			<entry name="duplicate" value="irrelevant_1" />
+		</section>
+		<section name="TestDuplicateConfigEntry">
+			<entry name="duplicate" value="irrelevant_2" />
+		</section>
+	</properties>
+	<custom />
+	<custom />
+</root>

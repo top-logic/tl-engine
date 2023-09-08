@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Used by TestLayoutBasedSecurity -->
+<component class="com.top_logic.knowledge.gui.layout.TLMainLayout"
+	horizontal="true"
+	name="testPLMAsterFrame"
+	titleKey="tl.title"
+>
+	<components>
+		<tabbar name="testMainDBar">
+			<layoutInfo size="100%"/>
+			<components>
+					<component class="com.top_logic.tool.boundsec.compound.CompoundSecurityProjectLayout"
+						horizontal="true"
+						name="testPLD"
+						primaryChecker="testDTree"
+						secondaryChecker="testDBar"
+						securityDomain="SecurityStructure"
+						titleKey="pos.report.tabber"
+					>
+				<tabInfo label="testMainDBarInfo1"/>
+						<components>
+							<!-- Delegate Tree -->
+
+							<treeView
+								name="testDTree"
+							>
+								<layoutInfo size="150"/>
+								<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
+									structureName="SecurityStructure"
+								/>
+							</treeView>
+
+							<!-- Tree tab frame -->
+
+							<tabbar name="testDBar">
+								<components>
+										<securityLayout name="testPL1"
+											horizontal="false"
+											titleKey="pos.closureView.checklists.tabber"
+										>
+									<tabInfo label="testDBarInfo1"/>
+											<components>
+												<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
+													commandGroups="Read,Write"
+													defaultFor="compoundSecurity:CompoundSecurityChild1ME"
+													name="boundInPL1"
+												/>
+											</components>
+										</securityLayout>
+										<securityLayout name="testPL2"
+											horizontal="false"
+											titleKey="pos.closureView.checklists.tabber"
+										>
+									<tabInfo label="testDBarInfo2"/>
+											<components>
+												<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
+													commandGroups="Read,Write"
+													defaultFor="compoundSecurity:CompoundSecurityChild1ME,compoundSecurity:CompoundSecurityChild3ME"
+													name="boundInPL2"
+												/>
+											</components>
+										</securityLayout>
+								</components>
+							</tabbar>
+
+							<!-- end tree tab frame -->
+						</components>
+					</component>
+					<securityLayout name="testPL3"
+						horizontal="false"
+						titleKey="pos.closureView.checklists.tabber"
+					>
+				<tabInfo label="testMainDBarInfo2"/>
+						<components>
+							<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
+								commandGroups="Read,Write"
+								defaultFor="compoundSecurity:CompoundSecurityChild3ME"
+								name="boundInPL3"
+							/>
+						</components>
+					</securityLayout>
+			</components>
+		</tabbar>
+	</components>
+</component>

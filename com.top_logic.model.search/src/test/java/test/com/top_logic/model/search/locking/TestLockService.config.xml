@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<service xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	lock-timeout="10s"
+>
+	<model type="TestLockService:A">
+		<operation name="editValues" lock-timeout="1s">
+			<local kind="exclusive" aspect="values"/>
+		</operation>
+	</model>
+	
+	<model type="TestLockService:S">
+		<operation name="editValues">
+			<local kind="exclusive" aspect="values"/>
+			<tokens kind="shared" aspect="structure" objects="m -> recursion($m, n -> $n.get(`tl.element:StructuredElement#parent`), 0)"/>
+		</operation>
+		
+		<operation name="editStructure">
+			<local kind="exclusive" aspect="structure"/>
+			<tokens kind="shared" aspect="structure" objects="m -> recursion($m, n -> $n.get(`tl.element:StructuredElement#parent`), 1)"/>
+		</operation>
+	</model>
+	
+	<java impl="test.com.top_logic.model.search.locking.TestLockService$CustomObject">
+		<operation name="edit">
+			<strategy class="test.com.top_logic.model.search.locking.TestLockService$CustomStrategy"/>
+		</operation>
+	</java>
+</service>

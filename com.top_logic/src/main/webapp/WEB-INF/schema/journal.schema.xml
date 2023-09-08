@@ -1,0 +1,138 @@
+<schema name="journal">
+	<tables>
+		<table name="JOURNAL_LINE_STORAGE">
+			<columns>
+				<column name="COMMIT_ID" type="long" mandatory="true"/>
+				<column name="TIME" type="datetime" mandatory="false"/>
+				<column name="USER_ID" type="string" size="70" binary="true" mandatory="false"/>
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="COMMIT_ID"/>
+				</columns>
+			</primary-key>
+		</table>
+		
+		<table name="JOURNAL_ENTRY_STORAGE">
+			<columns>
+				<column name="COMMIT_ID" type="long" mandatory="true" />
+				<column name="IDENTIFIER" type="id" size="100" binary="true" mandatory="true"/>
+				<column name="TYPE" type="string" size="70" binary="true" mandatory="true"/>
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="COMMIT_ID"/>
+					<column name="IDENTIFIER"/>
+				</columns>
+			</primary-key>
+			<foreign-keys>
+				<foreign-key name="LINE">
+					<source-columns>
+						<source-column name="COMMIT_ID"/>
+					</source-columns>
+					<target-table name="JOURNAL_LINE_STORAGE"/>
+					<target-columns>
+						<target-column name="COMMIT_ID"/>
+					</target-columns>
+				</foreign-key>
+			</foreign-keys>
+		</table>
+		
+		<table name="JOURNAL_ATTRIBUTE_PRE">
+			<columns>
+				<column name="COMMIT_ID" type="long" mandatory="true"/>
+				<column name="IDENTIFIER" type="id" size="100" binary="true" mandatory="true"/>
+				<column name="ATTR" type="string" size="100" binary="true" mandatory="true"/>
+				<column name="ATTR_TYPE" type="byte" mandatory="true"/>
+				<column name="LVAL" type="long" mandatory="false"/>
+				<column name="DVAL" type="double" mandatory="false"/>
+				<column name="SVAL" type="string" size="254" mandatory="false"/>
+				<column name="TVAL" type="clob"/>
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="COMMIT_ID"/>
+					<column name="IDENTIFIER"/>
+					<column name="ATTR"/>
+				</columns>
+			</primary-key>
+			<foreign-keys>
+				<foreign-key name="ENTRY">
+					<source-columns>
+						<source-column name="COMMIT_ID"/>
+						<source-column name="IDENTIFIER"/>
+					</source-columns>
+					<target-table name="JOURNAL_ENTRY_STORAGE"/>
+					<target-columns>
+						<target-column name="COMMIT_ID"/>
+						<target-column name="IDENTIFIER"/>
+					</target-columns>
+				</foreign-key>
+			</foreign-keys>
+		</table>
+		
+		<table name="JOURNAL_ATTRIBUTE_POST">
+			<columns>
+				<column name="COMMIT_ID" type="long" mandatory="true"/>
+				<column name="IDENTIFIER" type="id" size="100" binary="true" mandatory="true"/>
+				<column name="ATTR" type="string" size="100" binary="true" mandatory="true"/>
+				<column name="ATTR_TYPE" type="byte" mandatory="true"/>
+				<column name="LVAL" type="long" mandatory="false"/>
+				<column name="DVAL" type="double" mandatory="false"/>
+				<column name="SVAL" type="string" size="254" mandatory="false"/>
+				<column name="TVAL" type="clob"/>
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="COMMIT_ID"/>
+					<column name="IDENTIFIER"/>
+					<column name="ATTR"/>
+				</columns>
+			</primary-key>
+			<foreign-keys>
+				<foreign-key name="ENTRY">
+					<source-columns>
+						<source-column name="COMMIT_ID"/>
+						<source-column name="IDENTIFIER"/>
+					</source-columns>
+					<target-table name="JOURNAL_ENTRY_STORAGE"/>
+					<target-columns>
+						<target-column name="COMMIT_ID"/>
+						<target-column name="IDENTIFIER"/>
+					</target-columns>
+				</foreign-key>
+			</foreign-keys>
+		</table>
+		
+		<table name="JOURNAL_ATTRIBUTE_MESSAGE">
+			<columns>
+				<column name="COMMIT_ID" type="long" mandatory="true"/>
+				<column name="IDENTIFIER" type="id" size="100" binary="true" mandatory="true"/>
+				<column name="ATTR" type="string" size="100" binary="true" mandatory="true"/>
+				<column name="ATTR_TYPE" type="string" size="70" binary="true" mandatory="true"/>
+				<column name="CAUSE" type="string" size="254" mandatory="false"/>
+				<column name="MESSAGE" type="string" size="254" mandatory="false"/>
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="COMMIT_ID"/>
+					<column name="IDENTIFIER"/>
+					<column name="ATTR"/>
+				</columns>
+			</primary-key>
+			<foreign-keys>
+				<foreign-key name="ENTRY">
+					<source-columns>
+						<source-column name="COMMIT_ID"/>
+						<source-column name="IDENTIFIER"/>
+					</source-columns>
+					<target-table name="JOURNAL_ENTRY_STORAGE"/>
+					<target-columns>
+						<target-column name="COMMIT_ID"/>
+						<target-column name="IDENTIFIER"/>
+					</target-columns>
+				</foreign-key>
+			</foreign-keys>
+		</table>
+	</tables>
+</schema>

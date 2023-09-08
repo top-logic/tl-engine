@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="placeholder"
+>
+	<properties>
+		<property name="components"
+			default="com.top_logic.layout.editor.components.ComponentPlaceholder$Config"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<available-templates value="commons"/>
+			<hidden/>
+		</property>
+	</properties>
+
+	<layout name="Layout"
+		titleKey="layout.editor.placeholder.title"
+		toolbar="true"
+	>
+		<components>${components}</components>
+
+		<buttons>
+			<reference command-id="editLayoutCommand"/>
+		</buttons>
+	</layout>
+</config:template>

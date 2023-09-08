@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>7.6.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>ext-com-fontawesome</artifactId>
+  
+  <description>Font-Awesome Icon Font version 5.13.0</description>
+  <url>https://fontawesome.com/</url>
+  
+  <licenses>
+  	<license>
+  		<name>CC-BY-4.0 (Creative Commons Attribution 4.0), OFL-1.1 (SIL Open Font License 1.1), MIT (MIT License)</name>
+  		<url>https://github.com/FortAwesome/Font-Awesome/blob/master/LICENSE.txt</url>
+  	</license>
+  </licenses>
+  
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+    </dependency>
+  </dependencies>
+</project>

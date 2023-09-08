@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- Basic definition of Objects you will usually need as super classes. -->
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8" xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+<!-- MetaObjects -->
+
+<metaobjects>
+	<metaobject
+		object_name="Revision"
+		versioned="false"
+	>
+		<annotations>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.SystemAnnotation"/>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+				<implementation-factory class="com.top_logic.knowledge.service.db2.RevisionFactory"/>
+			</annotation>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.DBAccessFactoryAnnotation">
+				<db-access class="com.top_logic.knowledge.service.db2.RevisionDBAccess$Factory"/>
+			</annotation>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.InstancesQueryAnnotation"
+				builder="com.top_logic.knowledge.search.MonomorphicQueryBuilder"
+			/>
+		</annotations>
+		<attributes>
+			<mo_attribute att_name="_identifier" db_name="rev" att_type="Long" mandatory="true" immutable="true" system="true">
+				<storage class="com.top_logic.knowledge.service.db2.RevisionType$RevisionStorage"/>
+			</mo_attribute>
+			<mo_attribute att_name="author" db_name="author" att_type="String" db_type="String" db_size="256" mandatory="true" immutable="true" system="false">
+				<storage class="com.top_logic.knowledge.service.db2.RevisionType$AuthorStorage"/>
+			</mo_attribute>
+			<mo_attribute att_name="date" db_name="date" att_type="Long" mandatory="true" immutable="true" system="false">
+				<storage class="com.top_logic.knowledge.service.db2.RevisionType$DateStorage"/>
+			</mo_attribute>
+			<mo_attribute att_name="log" db_name="log" att_type="String" db_type="Clob" db_size="4096" mandatory="true" immutable="true" system="false">
+				<storage class="com.top_logic.knowledge.service.db2.RevisionType$LogStorage"/>
+			</mo_attribute>
+		</attributes>
+		<primary-key>
+			<index-parts>
+				<index_part name="_identifier"/>
+			</index-parts>
+		</primary-key>
+		<index>
+			<mo_index name="IDX_DATE" unique="false" custom="true">
+				<index-parts>
+					<index_part name="date"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+	
+	
+	<metaobject object_name="Item" abstract="true">
+		<annotations>
+			<annotation config:interface="com.top_logic.dob.schema.config.annotation.IndexColumnsStrategyAnnotation"
+				strategy="com.top_logic.knowledge.service.db2.DefaultIndexColumnsStrategy"
+			/>
+			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.InstancesQueryAnnotation"
+				builder="com.top_logic.knowledge.search.MonomorphicQueryBuilder"
+			/>
+		</annotations>
+		<attributes>
+			<mo_attribute att_name="_branch" db_name="BRANCH" att_type="Long" mandatory="true" immutable="false" system="true">
+				<storage class="com.top_logic.knowledge.service.db2.BranchStorage" />
+			</mo_attribute>
+			<mo_attribute att_name="_identifier" db_name="IDENTIFIER" att_type="id" mandatory="true" immutable="true" system="true">
+				<storage class="com.top_logic.dob.attr.storage.MOIdentifierStorageImpl" />
+			</mo_attribute>
+			<mo_attribute att_name="_rev_max" db_name="REV_MAX" att_type="Long" mandatory="true" immutable="false" system="true" />
+			<mo_attribute att_name="_rev_min" db_name="REV_MIN" att_type="Long" mandatory="true" immutable="false" system="true" />
+			<mo_attribute att_name="createRev" db_name="REV_CREATE" att_type="Long" mandatory="true" immutable="true">
+		    	<default-provider class="com.top_logic.dob.attr.NextCommitNumberFutureProvider" />
+			</mo_attribute>
+			<!-- LifecycleAttributes -->
+			<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+				att_name="created" att_type="Long" mandatory="false" system="true">
+				<storage class="com.top_logic.dob.attr.storage.ComputedAttributeStorage"
+						value-factory="com.top_logic.knowledge.service.db2.LifecycleStorageCreated"
+				/>
+			</mo_attribute>
+			<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+				att_name="creatorid" att_type="String" mandatory="false" system="true">
+				<storage class="com.top_logic.dob.attr.storage.ComputedAttributeStorage"
+						value-factory="com.top_logic.knowledge.service.db2.LifecycleStorageCreator"
+				/>
+			</mo_attribute>
+			<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+				att_name="modified" att_type="Long" mandatory="false" system="true">
+				<storage class="com.top_logic.dob.attr.storage.ComputedAttributeStorage"
+						value-factory="com.top_logic.knowledge.service.db2.LifecycleStorageModified"
+				/>
+			</mo_attribute>
+			<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+				att_name="modifier" att_type="String" mandatory="false" system="true">
+				<storage class="com.top_logic.dob.attr.storage.ComputedAttributeStorage"
+						value-factory="com.top_logic.knowledge.service.db2.LifecycleStorageModifier"
+				/>
+			</mo_attribute>
+		</attributes>
+		<primary-key>
+		<index-parts>
+			<index_part name="_branch"/>
+				<index_part name="_identifier"/>
+				<index_part name="_rev_max"/>
+		</index-parts>
+		</primary-key>
+		<index>
+			<mo_index name="rev_max" unique="false" custom="true">
+				<index-parts>
+					<index_part name="_rev_max"/>
+				</index-parts>
+			</mo_index>
+			<mo_index name="rev_min" unique="false" custom="true">
+				<index-parts>
+					<index_part name="_rev_min"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
+	<metaobject object_name="Object" super_class="Item" abstract="true">
+	</metaobject>
+	
+<metaobject object_name="KnowledgeObject" super_class="Object" abstract="true">
+	<annotations>
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+			<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeObjectFactory" />
+		</annotation>
+	</annotations>
+	
+	<attributes>
+	<!-- Warning the DB_KB relies on the precise order of these Attributes ! -->
+    <mo_attribute att_name="physicalResource"   att_type="String" 
+		db_size="1333" db_name="PHYSICAL_RESOURCE" mandatory="false" hidden="true"/>
+	</attributes>
+</metaobject>
+
+<metaobject object_name="ObjectLabel" super_class="Object" abstract="false">
+	<annotations>
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+			<implementation-factory class="com.top_logic.knowledge.service.db2.StaticKnowledgeObjectFactory" />
+		</annotation>
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
+			full-load="true" />
+	</annotations>
+	
+	<attributes>
+	<mo_attribute att_name="label" att_type="String" mandatory="true"/>
+    <reference att_name="target"
+    	by-value="false"
+    	mandatory="true"
+    	history-type="current" 
+    	branch-global="false" 
+    	monomorphic="false" 
+    	is-container="false" 
+    	deletion-policy="delete-referer" 
+    	target-type="KnowledgeObject"
+	/>
+	</attributes>
+	<index>
+   	<mo_index name="labelIdx" unique="true">
+   		<index-parts>
+        <index_part name="label"/>
+        </index-parts>
+    </mo_index>
+	</index>
+</metaobject>
+
+<association object_name="Association" super_class="Item" abstract="true">
+<!-- Super class is set here as default superclass for Associations is Association which leads to a cyclic super class hierarchy -->
+	<annotations>
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+			<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeAssociationFactory" />
+		</annotation>
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
+			full-load="true" />
+		<key-attributes attributes="source,dest"/>
+	</annotations>
+	
+	<attributes>
+		<source
+	    	target-type="Object"
+	    />
+	    <destination
+	    	target-type="Object"
+	    />
+    	</attributes>
+</association>
+
+<metaobject object_type="MOKnowledgeObject" object_name="DublinCore" super_class="KnowledgeObject" abstract="true">
+<attributes>
+    <mo_attribute att_name="dc_language" 	att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_contributor" att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_description" att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_coverage" 	att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_format" 		att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_rights" 		att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_type" 		att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_identifier" 	att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_subject" 	att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_relation" 	att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_publisher" 	att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_source" 		att_type="String" immutable="true" mandatory="false" />
+    <mo_attribute att_name="dc_title" 		att_type="String" immutable="true" mandatory="false" />
+    <!-- use Lifecycle Attributes instead  
+     mo_attribute att_name="dc_creator" att_type="String" immutable="true" mandatory="false" />
+     mo_attribute att_name="dc_date" att_type="String" immutable="true" mandatory="false" />
+    -->
+    </attributes>
+</metaobject>
+
+</metaobjects>
+</objectlist>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_25544_Remove_attribute_group_tables"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_25421_multiple_forms_inapp"
+			module="tl"
+		/>
+		<dependency name="Ticket_25533_Move_Roles_from_Singletons_to_Modules"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.DeleteTableProcessor">
+			<tables>
+				<table object_name="AttributeConfig"/>
+				<table object_name="AttributeGroup"/>
+				<table object_name="AttributeGroupReference"/>
+				<table object_name="MEConfigDescriptor"/>
+			</tables>		
+		</processor>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

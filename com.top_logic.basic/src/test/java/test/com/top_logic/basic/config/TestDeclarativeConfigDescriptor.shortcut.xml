@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<declarative-config-descriptor>
+	<property name="string-property"
+		default="hallo"
+		type="String"
+	/>
+	<property name="Long-property"
+		default="15"
+		type="Long"
+	/>
+	<property name="long-property"
+		type="long"
+	/>
+	<property name="int-property"
+		default="15"
+		type="Integer"
+	/>
+	<property name="short-property"
+		default="15"
+		type="Short"
+	/>
+	<property name="byte-property"
+		default="15"
+		type="Byte"
+	/>
+	<property name="boolean-property"
+		default="true"
+		type="Boolean"
+	/>
+	<property name="class-property"
+		default="test.com.top_logic.basic.config.TestDeclarativeConfigDescriptor$TestValue"
+		type="Class"
+	/>
+	<property name="date-property"
+		default="2019-11-08T08:51:00.003Z"
+		type="Date"
+	/>
+	<property name="config-property"
+		instance-type="com.top_logic.basic.col.Mapping"
+		type="PolymorphicConfiguration"
+	/>
+	<property name="polymorphic-list-property"
+		element-type="PolymorphicConfiguration"
+		instance-type="com.top_logic.basic.col.Mapping"
+		type="List"
+	/>
+	<property name="map-property"
+		element-type="test.com.top_logic.basic.config.TestDeclarativeConfigDescriptor$TestValue"
+		key-attribute="name"
+		type="Map"
+	>
+		<mandatory/>
+	</property>
+	<property name="plain-list-property"
+		default="a,b,c"
+		element-type="String"
+		type="List"
+	>
+		<format value="com.top_logic.basic.config.CommaSeparatedStrings"/>
+	</property>
+	<property name="instance-type-property"
+		default="com.top_logic.basic.col.FirstCharacterMapping"
+		type="com.top_logic.basic.col.Mapping"
+	>
+		<instance-format/>
+	</property>
+</declarative-config-descriptor>

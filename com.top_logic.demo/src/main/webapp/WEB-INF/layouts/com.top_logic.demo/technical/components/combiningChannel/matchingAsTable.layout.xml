@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,checklistMulti,checklistSingle"
+		isSecurityMaster="false"
+		type="DemoTypes:A"
+	>
+		<name key="dynamic.c91f6870-f935-4a93-9676-0f69160fc042">
+			<en>Matching As</en>
+			<de>Passende As</de>
+		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/combiningChannel/attributeChecklistMultiSelector.layout.xml#Selector"/>
+			</channel>
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/combiningChannel/attributeChecklistSingleSelector.layout.xml#Selector"/>
+			</channel>
+		</model>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+			<elements><![CDATA[model->all(`DemoTypes:A`)
+  .filter(x->$x.get(`DemoTypes:A#checklistMulti`).containsElement($model[0]))
+  .filter(x->$x.get(`DemoTypes:A#checklistSingle`) == $model[1])]]></elements>
+			<supportsElement>element-&gt;$element.instanceOf(`DemoTypes:A`)</supportsElement>
+			<modelForElement>null</modelForElement>
+			<supportsModel>true</supportsModel>
+		</modelBuilder>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

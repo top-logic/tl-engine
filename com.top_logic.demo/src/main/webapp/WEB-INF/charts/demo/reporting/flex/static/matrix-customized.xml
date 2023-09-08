@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<chart config:interface="com.top_logic.reporting.flex.search.chart.SearchResultChartConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	columns="name,checklistSingle,checklistMulti"
+	type="DemoTypes.A"
+>
+	<data-source class="com.top_logic.reporting.flex.chart.config.datasource.MetaElementObjectProducer"
+		type="DemoTypes.A"
+	/>
+	<model-preparation class="com.top_logic.reporting.flex.chart.config.model.DefaultModelPreparation">
+		<aggregations/>
+		<partitions>
+			<partition class="com.top_logic.reporting.flex.chart.config.partition.SingleClassificationPartition"
+				add-empty="true"
+				meta-attribute="DemoTypes.A#checklistSingle"
+			/>
+			<partition class="com.top_logic.reporting.flex.chart.config.partition.MultiClassificationPartition"
+				add-empty="true"
+				meta-attribute="DemoTypes.A#checklistMulti"
+			/>
+		</partitions>
+	</model-preparation>
+	<chart-builder class="com.top_logic.reporting.flex.chart.config.chartbuilder.matrix.MatrixChartBuilder"
+		domain-gridline-paint="#FF0000"
+		range-gridline-paint="#0000FF"
+	/>
+</chart>

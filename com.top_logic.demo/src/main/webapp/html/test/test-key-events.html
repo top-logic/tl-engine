@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Test key events</title>
+    
+	<script type="text/javascript">
+
+	function handleKeyUp1() {
+		log("1");
+		return false;
+	}
+	
+	function handleKeyUp2() {
+		log("2");
+		return false;
+	}
+
+	window.document.onkeydown = function() {
+		log("3");
+		return true;
+	}
+
+	function log(message) {
+		document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+	}
+	
+	</script>
+  </head>
+  <body>
+  	<h1>Test key events</h1>
+
+	<div onkeyup="return handleKeyUp1();">
+		<form action="" onsubmit="return false;">
+			<div onkeyup="return handleKeyUp2();">
+			
+			<input type="text" name="in1"/>
+		
+			</div>
+		</form>
+	</div>
+
+  	
+	<h2>Console output</h2>
+	
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+	
+  </body>
+</html>

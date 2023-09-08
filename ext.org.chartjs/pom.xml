@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>7.6.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>ext-org-chartjs</artifactId>
+  
+  <description>chartjs version 3.9.1 - simple yet flexible JavaScript charting for designers &amp; developers</description>
+  <url>https://www.chartjs.org/</url>
+  
+  <licenses>
+  	<license>
+  		<name>MIT (MIT License)</name>
+  		<url>https://raw.githubusercontent.com/chartjs/Chart.js/v3.9.1/LICENSE.md</url>
+  		<comments>https://raw.githubusercontent.com/chartjs/Chart.js/v3.9.1/README.md</comments>
+  	</license>
+  </licenses>
+  
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+    </dependency>
+
+	<dependency>
+	    <groupId>org.webjars</groupId>
+	    <artifactId>chartjs</artifactId>
+	    <version>4.1.2</version>
+	</dependency>
+  </dependencies>
+  
+  <build>
+  	<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+				
+				<executions>
+					<execution>
+						<goals>
+							<goal>use-latest-releases</goal>
+						</goals>
+					</execution>
+				</executions>
+				
+				<configuration>
+					<excludes>
+						<exclude>org.webjars:chartjs:*:*:26962ce-1</exclude>
+						<exclude>org.webjars:chartjs:*:*:26962ce</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+  	</plugins>
+  </build>
+</project>

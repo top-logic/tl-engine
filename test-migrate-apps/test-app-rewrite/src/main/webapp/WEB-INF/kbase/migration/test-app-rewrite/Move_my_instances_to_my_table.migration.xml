@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Move_my_instances_to_my_table"
+		module="test-app-rewrite"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26699_Update_layout_configuration"
+			module="tl"
+		/>
+		<dependency name="Ticket_25881_Remove_model_annotations_from_tables"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_26398_remove_table_interfaces"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_25800_inconsistent_signature_create_handler"
+			module="tl-model-search"
+		/>
+	</dependencies>
+	
+	<processors>
+		<update-annotations name="test.app.rewrite:MyType">
+			<annotations>
+				<table name="MyInstances"/>			
+			</annotations>
+		</update-annotations>
+		
+		<update-annotations name="test.app.rewrite:MyType#single">
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage storage-attribute="single" storage-type="MyInstances"/>
+				</storage-algorithm>
+			</annotations>
+		</update-annotations>
+	</processors>
+	
+	<migration>
+		<steps>
+			<step name="Move instances">
+				<model-index>
+					<indexed-types>
+						<type name="test.app.rewrite:MyType"/>
+					</indexed-types>
+				
+					<association-inline
+						types="hasWrapperAttValue"
+						target-object="source"
+						reference-value="dest"
+						reference-name="single"	
+					>
+						<filters>
+							<reference-has-type reference="source">
+								<types>
+									<type name="test.app.rewrite:MyType"/>
+								</types>
+							</reference-has-type>
+							<references-model-element reference="metaAttribute">
+								<model-elements>
+									<model-element name="test.app.rewrite:MyType#single"/>
+								</model-elements>
+							</references-model-element>
+						</filters>
+					</association-inline>
+
+					<!-- Note: The move operation must happen as last one since it changes the 
+						ID of the object which makes the model index invalid for that object. -->					
+					<move-to-table
+						target-table="MyInstances"
+						value-rewriter="com.top_logic.test.app.rewrite.CreateUuidRewriter"
+					>
+						<types>
+							<type name="test.app.rewrite:MyType"/>
+						</types>
+					</move-to-table>
+				</model-index>
+			</step>
+		</steps>
+	</migration>
+	
+	<post-processors/>
+</migration>

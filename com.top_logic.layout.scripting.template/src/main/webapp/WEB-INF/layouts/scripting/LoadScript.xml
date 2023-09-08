@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+	</params>
+
+	<component class="com.top_logic.mig.html.layout.Layout"
+		name="${namePrefix}Dialog"
+	>
+		<dialogInfo
+			executability="com.top_logic.layout.scripting.template.gui.ServerScriptSelectorExecutability"
+			height="100%"
+			image="theme:LOAD_SCRIPT"
+			openerClique="additional-apply"
+			openerCommandGroup="System"
+			width="655px"
+		/>
+
+		<components>
+			<component class="com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorComponent"
+				buttonComponent="${namePrefix}Buttons"
+				columns="name, _type, _date, _size"
+				model="provider(com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder)"
+				name="${namePrefix}Table"
+				resPrefix="tl.scripting.recorder.scriptSelector."
+				securityProviderClass="securityRoot"
+			>
+				<layoutInfo size="100%"/>
+				<modelBuilder class="com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder"/>
+				<treeBuilder>
+					<fileFilter class="com.top_logic.basic.col.filter.typed.TypedFilterAdapter"
+						default="false"
+					>
+						<!--
+							This is inconsistent with the "save script as" dialog, which allows only ".script.xml".
+							But as there are still legacy tests which don't use the ".script.xml" ending,
+							it needs to be possible to open these. It is therefore allowed to open all ".xml" files,
+							but create only ".script.xml" files.
+						-->
+						<filter class="com.top_logic.basic.col.filter.configurable.NamedEndingFilter"
+							allowed-endings=".xml, .xlsx"
+						/>
+					</fileFilter>
+				</treeBuilder>
+			</component>
+			<buttonbar name="${namePrefix}Buttons"/>
+		</components>
+	</component>
+</template>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<editor name="TemplateArgumentEditor"
+	applyCommand="storeTemplateArgument"
+	securityProviderClass="securityRoot"
+	titleKey="tl.layouteditor.templateArgumentEditor.title"
+>
+	<model class="com.top_logic.layout.editor.KeyToLayoutTransformLinking"
+		input="selection(admin/studio/layoutEditor/layoutsTable.layout.xml#LayoutTreeTable)"
+	/>
+	<modelBuilder class="com.top_logic.layout.editor.TLLayoutTemplateArgumentFormBuilder"/>
+	<buttons>
+		<button id="storeTemplateArgument"
+			class="com.top_logic.layout.editor.StoreTemplateArgumentIntoDatabase"
+			clique="apply"
+		>
+			<executability>
+				<reference rule-id="InEditMode"/>
+			</executability>
+		</button>
+	</buttons>
+</editor>

@@ -1,0 +1,5 @@
+<r xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<map>
+		<e k="a" v="10" config:operation="add"></e>
+	</map>
+</r>

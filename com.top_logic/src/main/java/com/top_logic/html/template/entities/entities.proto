@@ -1,0 +1,27 @@
+package com.top_logic.html.template.entities;
+
+option NoReflection;
+option NoXml;
+option NoBinary;
+option NoInterfaces;
+option NoListener;
+
+/**
+ * The format of the HTML5 named entity table.
+ */
+message Entities {
+	/**
+	 * All entities indexed by their name including an optional tailing semicolon.
+	 */
+	map<string, Entity> entities;
+}
+
+/**
+ * A single entity of the {@link Entities} table.
+ */
+message Entity {
+	/**
+	 * The replacement string of the referenced entity.
+	 */
+	string characters;
+}

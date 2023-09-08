@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="Layout"
+	horizontal="true"
+>
+	<tabInfo label="element.meta.StructuredTypeEditorTab"/>
+
+	<components>
+		<editor name="Editor"
+			applyCommand="apply"
+			defaultFor="tl.model:TLClass"
+			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
+			resPrefix="element.meta.StructuredTypeEditor."
+			securityProviderClass="master"
+		>
+			<include name="com.top_logic.element/admin/model/modelEditor/StructuredTypeForm.xml"
+				showNoModel="false"
+			/>
+
+			<buttons>
+				<button id="apply"
+					class="com.top_logic.element.layout.meta.TLStructuredTypeApplyHandler"
+					clique="additional-apply"
+					resourceKey="tl.command.apply"
+				>
+					<executability>
+						<reference rule-id="InEditMode"/>
+					</executability>
+				</button>
+
+				<button id="delete"
+					class="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+					clique="delete"
+					resourceKey="tl.command.delete"
+				/>
+			</buttons>
+		</editor>
+	</components>
+</layout>

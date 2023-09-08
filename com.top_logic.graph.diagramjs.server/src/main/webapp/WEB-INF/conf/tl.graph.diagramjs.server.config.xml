@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="tl.graph.diagramjs.server.messages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.gui.JSFileCompiler">
+			<instance>
+				<additional-files>
+					<!--
+						Note: The client-side module script cannot be included from the client modules, 
+						since these do not not depend on tl-basic and therefore cannot refer to the 
+						file compiler configuration. -->
+					<file resource="/TLGraphClientDiagramJS/TLGraphClientDiagramJS.nocache.js" />
+				</additional-files>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<handlers>
+					<handler id="deleteServerGraphPart"
+						class="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+						clique="delete" 
+						resourceKey="tl.command.delete" 
+						group="Delete" 
+						confirm="true"
+					>
+						<executability>
+							<reference rule-id="GeneralDelete"/>
+							<rule class="com.top_logic.element.layout.meta.DisableIfDeleteProtected"/>
+						</executability>
+					</handler>
+				</handlers>
+			</instance>		
+		</config>
+		
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
+			<layout>
+				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper" />
+			</layout>
+		</config>
+		
+		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
+			isEnabled="false"
+		/>
+	</configs>
+	
+</application>

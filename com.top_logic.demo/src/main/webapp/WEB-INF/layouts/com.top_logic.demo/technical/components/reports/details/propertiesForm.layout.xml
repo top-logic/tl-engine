@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/reports/contractsTable.layout.xml#Table)">
+		<name key="dynamic.28ee8cd0-2afa-431d-96ce-5201f29f365e">
+			<en>Properties</en>
+			<de>Datenblatt</de>
+		</name>
+		<forms>
+			<form type="test.report:Contract">
+				<formDefinition>
+					<field attribute="name"/>
+					<columnsLayout
+						columns="ONE"
+						labelPlacement="ABOVE"
+					>
+						<field
+							attribute="owner"
+							fullQualifiedName="test.report:Contract#owner"
+							type="Contacts:PersonContact"
+						>
+							<annotations>
+								<input-before-label value="false"/>
+							</annotations>
+						</field>
+						<field attribute="partner"/>
+					</columnsLayout>
+					<field
+						attribute="text"
+						fullQualifiedName="test.report:Contract#text"
+						type="tl.model.wysiwyg:Html"
+					/>
+					<other-attributes/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	This layout-xml has a corresponding "documents_alias"-file! Some of the here-defined variables
+	are optional and must not be defined by the AliasedReferenceComponent.
+	Please have a look at the "documents_alias"-file to get an idea of the substitutions you have
+	to deal with
+-->
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="model"/>
+		<param name="componentClass"
+			value="com.top_logic.common.webfolder.ui.WebFolderComponent"
+		/>
+		<param name="componentResPrefix"
+			value="class.com.top_logic.common.webfolder.ui.I18NConstants.TABLE."
+		/>
+		<param name="securityProviderClass"
+			value="default"
+		/>
+		<param name="defaultFor"
+			value=""
+		/>
+		<param name="hasClipboardCommand"
+			optional="true"
+		/>
+		<param name="hasNewFolderCommand"
+			optional="true"
+		/>
+		<param name="hasZipDownloadCommand"
+			optional="true"
+		/>
+		<param name="hasUploadCommand"
+			optional="true"
+		/>
+		<param name="manual-locking"
+			optional="true"
+		/>
+		<param name="modelBuilder">
+			<modelBuilder class="com.top_logic.common.webfolder.model.WebFolderAwareModelBuilder"/>
+		</param>
+	</params>
+
+	<layout>
+		<components>
+			<component class="${componentClass}"
+				defaultFor="${defaultFor}"
+				hasClipboardCommand="${hasClipboardCommand}"
+				hasNewFolderCommand="${hasNewFolderCommand}"
+				hasUploadCommand="${hasUploadCommand}"
+				hasZipDownloadCommand="${hasZipDownloadCommand}"
+				manual-locking="${manual-locking}"
+				model="${model}"
+				name="${namePrefix}Folder"
+				resPrefix="${componentResPrefix}"
+				securityProviderClass="${securityProviderClass}"
+			>${modelBuilder}</component>
+		</components>
+	</layout>
+</template>

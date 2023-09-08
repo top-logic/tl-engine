@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<root>
+<component class="A"
+	p1="p2Value"
+	p2="p2Value"
+>
+</component>
+<component class="A"
+	p1="p1Value"
+>
+</component>
+</root>

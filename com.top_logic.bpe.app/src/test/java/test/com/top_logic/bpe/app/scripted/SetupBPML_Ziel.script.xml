@@ -1,0 +1,1526 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Basis"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Personen anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Personen anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Person"
+						>
+							<parameters>
+								<parameter name="Email"
+									value="fma@top-logic.com"
+								/>
+								<parameter name="Nachname"
+									value="Mausz"
+								/>
+								<parameter name="Titel"
+									value="Projektleiter"
+								/>
+								<parameter name="Login"
+									value="fma"
+								/>
+								<parameter name="Vorname"
+									value="Frank"
+								/>
+								<parameter name="Passwort"
+									value="abcd1234"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Person"
+						>
+							<parameters>
+								<parameter name="Email"
+									value="cca@top-logic.com"
+								/>
+								<parameter name="Nachname"
+									value="Canterino"
+								/>
+								<parameter name="Titel"
+									value="Manager"
+								/>
+								<parameter name="Login"
+									value="cca"
+								/>
+								<parameter name="Vorname"
+									value="Christian"
+								/>
+								<parameter name="Passwort"
+									value="abcd1234"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Person"
+						>
+							<parameters>
+								<parameter name="Email"
+									value="bhu@top-logic.com"
+								/>
+								<parameter name="Nachname"
+									value="Haumacher"
+								/>
+								<parameter name="Titel"
+									value="PV ProFI"
+								/>
+								<parameter name="Login"
+									value="bhu"
+								/>
+								<parameter name="Vorname"
+									value="Bernhard"
+								/>
+								<parameter name="Passwort"
+									value="abcd1234"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Person"
+						>
+							<parameters>
+								<parameter name="Email"
+									value="hme@top-logic.com"
+								/>
+								<parameter name="Nachname"
+									value="Meier"
+								/>
+								<parameter name="Titel"
+									value="PV ProKA"
+								/>
+								<parameter name="Login"
+									value="hme"
+								/>
+								<parameter name="Vorname"
+									value="Heinz"
+								/>
+								<parameter name="Passwort"
+									value="abcd1234"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Person"
+						>
+							<parameters>
+								<parameter name="Email"
+									value="dsc@top-logic.com"
+								/>
+								<parameter name="Nachname"
+									value="Schmitz"
+								/>
+								<parameter name="Titel"
+									value="Produktlinienleiter"
+								/>
+								<parameter name="Login"
+									value="dsc"
+								/>
+								<parameter name="Vorname"
+									value="Dieter"
+								/>
+								<parameter name="Passwort"
+									value="abcd1234"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Gruppen anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Gruppen anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Gruppe"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="Projektleiter"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Gruppe"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="ProKA"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Gruppe"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="ProFI"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Gruppe"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="Manager"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Gruppe"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="Alle"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Anlegen"
+							business-object="Gruppe"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="Sonstige"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Gruppe zuordnen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Gruppe zuordnen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Zuordnen"
+							business-object="Gruppe"
+						>
+							<parameters>
+								<parameter name="Login"
+									value="fma"
+								/>
+								<parameter name="Gruppe1"
+									value="Projektleiter"
+								/>
+								<parameter name="Gruppe2"
+									value="Alle"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Zuordnen"
+							business-object="Gruppe"
+						>
+							<parameters>
+								<parameter name="Login"
+									value="bhu"
+								/>
+								<parameter name="Gruppe1"
+									value="ProFI"
+								/>
+								<parameter name="Gruppe2"
+									value="Alle"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Zuordnen"
+							business-object="Gruppe"
+						>
+							<parameters>
+								<parameter name="Login"
+									value="cca"
+								/>
+								<parameter name="Gruppe1"
+									value="Manager"
+								/>
+								<parameter name="Gruppe2"
+									value="Alle"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Zuordnen"
+							business-object="Gruppe"
+						>
+							<parameters>
+								<parameter name="Login"
+									value="hme"
+								/>
+								<parameter name="Gruppe1"
+									value="ProKA"
+								/>
+								<parameter name="Gruppe2"
+									value="Alle"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Alle Rechte aktivieren"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Alle Rechte aktivieren"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="AlleAktivieren"
+							business-object="Rechte"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Demotyp BG anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Demotyp BG anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="BG"
+								/>
+								<parameter name="Englisch"
+									value="BG"
+								/>
+								<parameter name="Id"
+									value="BG"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="AttributAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="Einheit"
+								/>
+								<parameter name="Typ"
+									value="String"
+								/>
+								<parameter name="Id"
+									value="einheit"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Demotyp PV anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Demotyp PV anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="PV"
+								/>
+								<parameter name="Englisch"
+									value="PV"
+								/>
+								<parameter name="Id"
+									value="PV"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ReferenzAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="Leiter"
+								/>
+								<parameter name="Typ"
+									value="Person"
+								/>
+								<parameter name="Id"
+									value="leiter"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Demotyp Projekt anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Demotyp Projekt anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="Projekt"
+								/>
+								<parameter name="Englisch"
+									value="Projekt"
+								/>
+								<parameter name="Id"
+									value="Projekt"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ReferenzAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="Leiter"
+								/>
+								<parameter name="Typ"
+									value="Person"
+								/>
+								<parameter name="Id"
+									value="leiter"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Demotyp BGRow anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Demotyp BGRow anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="BGRow"
+								/>
+								<parameter name="Englisch"
+									value="BGRow"
+								/>
+								<parameter name="Id"
+									value="BGRow"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ReferenzAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Englisch"
+									value="BG"
+								/>
+								<parameter name="Typ"
+									value="BG"
+								/>
+								<parameter name="Id"
+									value="bg"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="AttributAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="PVAngebot"
+								/>
+								<parameter name="Typ"
+									value="Double"
+								/>
+								<parameter name="Id"
+									value="pvAngebot"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="AttributAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="Zielvorschlag"
+								/>
+								<parameter name="Typ"
+									value="Double"
+								/>
+								<parameter name="Id"
+									value="zielvorschlag"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="AttributAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="ZV fähig"
+								/>
+								<parameter name="Typ"
+									value="Boolean"
+								/>
+								<parameter name="Id"
+									value="zvFaehig"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Modelltyp anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Modelltyp anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="Zielabstimmung"
+								/>
+								<parameter name="Englisch"
+									value="Zielabstimmung"
+								/>
+								<parameter name="Id"
+									value="Zielabstimmung"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ReferenzAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="Projekt"
+								/>
+								<parameter name="Englisch"
+									value="Projekt"
+								/>
+								<parameter name="Typ"
+									value="Projekt"
+								/>
+								<parameter name="Id"
+									value="projekt"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ReferenzAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="BG"
+								/>
+								<parameter name="Multiple"
+									value="true"
+								/>
+								<parameter name="Id"
+									value="fixeBGs"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ReferenzAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="BG"
+								/>
+								<parameter name="Multiple"
+									value="true"
+								/>
+								<parameter name="Id"
+									value="bgsProKA"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ReferenzAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="BG"
+								/>
+								<parameter name="Multiple"
+									value="true"
+								/>
+								<parameter name="Id"
+									value="bgsProFI"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ReferenzAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="BGRow"
+								/>
+								<parameter name="Multiple"
+									value="true"
+								/>
+								<parameter name="Id"
+									value="rowsProKA"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ReferenzAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="BGRow"
+								/>
+								<parameter name="Multiple"
+									value="true"
+								/>
+								<parameter name="Id"
+									value="rowsProFI"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="FolderAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="Dokumente ProKA"
+								/>
+								<parameter name="Englisch"
+									value="Documents"
+								/>
+								<parameter name="Id"
+									value="folderProKA"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="FolderAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Deutsch"
+									value="Dokumente ProFI"
+								/>
+								<parameter name="Englisch"
+									value="Documents"
+								/>
+								<parameter name="Id"
+									value="folderProFI"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="AttributAnlegen"
+							business-object="Modelltyp"
+						>
+							<parameters>
+								<parameter name="Typ"
+									value="Datum mit Uhrzeit"
+								/>
+								<parameter name="Id"
+									value="unterschriftsdatum"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Demoinstanzen anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Demoinstanzen anlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="BGErstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Einheit"
+									value="Euro"
+								/>
+								<parameter name="Name"
+									value="HK"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="BGErstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Einheit"
+									value="kg"
+								/>
+								<parameter name="Name"
+									value="Gewicht"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="BGErstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Einheit"
+									value="TEuro"
+								/>
+								<parameter name="Name"
+									value="Strukturinvest"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="BGErstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Einheit"
+									value="TEuro"
+								/>
+								<parameter name="Name"
+									value="SBM"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="BGErstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Einheit"
+									value="g/100km"
+								/>
+								<parameter name="Name"
+									value="C02"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="BGErstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Einheit"
+									value="Anzahl"
+								/>
+								<parameter name="Name"
+									value="Anzahl neue SN"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ProjektErstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Leiter"
+									value="Mausz, Frank"
+								/>
+								<parameter name="Name"
+									value="Omnibus"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="ProjektErstellen"
+							business-object="Demotyp"
+						>
+							<parameters>
+								<parameter name="Leiter"
+									value="Haumacher, Bernhard"
+								/>
+								<parameter name="Name"
+									value="Pickup"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Workflow hochladen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Workflow hochladen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Hochladen"
+							business-object="Workflow"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="bmw-ziel-1.xml"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektiere"
+							business-object="Workflow"
+						>
+							<parameters>
+								<parameter name="Workflow"
+									value="bmw-ziel-1"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="bmw-ziel-1"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeName"
+							business-object="Workflow"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="Zielabstimmung"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Freigeben"
+							business-object="Workflow"
+						/>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Workflow attributieren"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Kommentar"
+							business-object=""
+						>
+							<parameters>
+								<parameter name="text"
+									value="Workflow attributieren"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeModellTyp"
+							business-object="Workflow"
+						>
+							<parameters>
+								<parameter name="Pfad"
+									value="Zielabstimmung > Zielabstimmung"
+								/>
+								<parameter name="Modelltyp"
+									value="Zielabstimmung"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Symbol"
+								/>
+								<parameter name="Wert"
+									value="css:fas fa-bullseye"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Projektmanager"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeGruppe"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Gruppe der Akteure"
+								/>
+								<parameter name="Gruppe"
+									value="Manager"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Projektleiter"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeGruppe"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Gruppe der Akteure"
+								/>
+								<parameter name="Gruppe"
+									value="Projektleiter"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Alle Projektleiter"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeGruppe"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Gruppe der Akteure"
+								/>
+								<parameter name="Gruppe"
+									value="Projektleiter"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > PVProKA"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeGruppe"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Gruppe der Akteure"
+								/>
+								<parameter name="Gruppe"
+									value="ProKA"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > PVProFI"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeGruppe"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Gruppe der Akteure"
+								/>
+								<parameter name="Gruppe"
+									value="ProFI"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Neue Zielabstimmung"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Symbol"
+								/>
+								<parameter name="Wert"
+									value="css:fas fa-plus-circle"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<group collapsible="true" columns="DEFAULT" initiallyOpened="true" labelPlacement="DEFAULT" showBorder="true" showTitle="true" wholeLine="true"><field attribute="fixeBGs" visibility="mandatory"/><label><de>Daten</de><en>Data</en></label></group>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Neue Zielabstimmung"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > BGs für ProFI auswählen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Symbol"
+								/>
+								<parameter name="Wert"
+									value="css:fas fa-question"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeBeschreibung"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Wert"
+									value="Geben sie die zusätzlichen Berichtsgrößen für ProFI an"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<group collapsible="true" columns="DEFAULT" initiallyOpened="true" labelPlacement="DEFAULT"  showBorder="true" showTitle="true" wholeLine="true"><field attribute="fixeBGs" visibility="read-only"/><field attribute="bgsProFI" visibility="editable"/><field attribute="folderProFI" visibility="read-only"/><label><de>Daten</de><en>Data</en></label></group>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > BGs für ProFI auswählen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<formTable type="tl.bpe.app:BGRow"><label><de>Mein Titel</de><en>My title</en></label><rows>x -> $x.get(`tl.bpe.execution:Zielabstimmung#rowsProFI`)</rows><columns><column name="zielvorschlag" visibility="editable"/><column name="pvAngebot" visibility="read-only"/></columns></formTable>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Werte für ProFI festlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung >BGZeilen ProFI berechnen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Aktion"
+								/>
+								<parameter name="Wert">
+									<value>x -&gt; "ProFI"</value>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung >BGZeilen ProKA berechnen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Aktion"
+								/>
+								<parameter name="Wert">
+									<value>x -&gt; "ProKA"</value>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<formTable type="tl.bpe.app:BGRow"><label><de>Mein Titel</de><en>My title</en></label><rows>x -> $x.get(`tl.bpe.execution:Zielabstimmung#rowsProFI`)</rows><columns><column name="zielvorschlag" visibility="read-only"/><column name="pvAngebot" visibility="editable"/></columns></formTable>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Werte eingeben ProFI"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<formTable type="tl.bpe.app:BGRow"><label><de></de><en></en></label><rows>x -> $x.get(`tl.bpe.execution:Zielabstimmung#rowsProFI`)</rows><columns><column name="zielvorschlag" visibility="read-only"/><column name="pvAngebot" visibility="read-only"/></columns></formTable>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Werte ProFI akzeptieren"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > BGs für ProKA auswählen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Symbol"
+								/>
+								<parameter name="Wert"
+									value="css:fas fa-question"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeBeschreibung"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Wert"
+									value="Geben sie die zusätzlichen Berichtsgrößen für ProKA an"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<group collapsible="true" columns="DEFAULT" initiallyOpened="true" labelPlacement="DEFAULT" showBorder="true" showTitle="true" wholeLine="true"><field attribute="fixeBGs" visibility="read-only"/><field attribute="bgsProKA" visibility="editable"/><field attribute="folderProKA" visibility="read-only"/><label><de>Daten</de><en>Data</en></label></group>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > BGs für ProKA auswählen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<formTable type="tl.bpe.app:BGRow"><label><de></de><en></en></label><rows>x -> $x.get(`tl.bpe.execution:Zielabstimmung#rowsProFI`)</rows><columns><column name="zielvorschlag" visibility="editable"/><column name="pvAngebot" visibility="read-only"/></columns></formTable>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Werte für ProKA festlegen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung >BGZeilen ProKA berechnen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Aktion"
+								/>
+								<parameter name="Wert">
+									<value>x -&gt; "ProKA"</value>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung >BGZeilen ProKA berechnen"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Aktion"
+								/>
+								<parameter name="Wert">
+									<value>x -&gt; "ProKA"</value>
+								</parameter>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<formTable type="tl.bpe.app:BGRow"><label><de></de><en></en></label><rows>x -> $x.get(`tl.bpe.execution:Zielabstimmung#rowsProFI`)</rows><columns><column name="zielvorschlag" visibility="read-only"/><column name="pvAngebot" visibility="editable"/></columns></formTable>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Werte eingeben ProKA"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<formTable type="tl.bpe.app:BGRow"><label><de></de><en></en></label><rows>x -> $x.get(`tl.bpe.execution:Zielabstimmung#rowsProFI`)</rows><columns><column name="zielvorschlag" visibility="read-only"/><column name="pvAngebot" visibility="read-only"/></columns></formTable>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Werte ProKA akzeptieren"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<group collapsible="true" columns="DEFAULT" initiallyOpened="true" labelPlacement="DEFAULT" showBorder="true" showTitle="true" wholeLine="true"><field attribute="unterschriftsdatum" visibility="mandatory"/><field attribute="bgsProFI" visibility="read-only"/><field attribute="bgsProKA" visibility="read-only"/><label><de>Daten</de><en>Data</en></label></group>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Eingabe Freigabetermin"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Digitale Unterschrift PL"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Template für Titel"
+								/>
+								<parameter name="Wert"
+									value="Digitale Unterschrift bis {$model.get(`tl.bpe.execution:Token#processExecution`).get(`tl.bpe.execution:Zielabstimmung#unterschriftsdatum`)}"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<group collapsible="true" columns="DEFAULT" initiallyOpened="true" labelPlacement="DEFAULT" showBorder="true" showTitle="true" wholeLine="true"><field attribute="fixeBGs"/><field attribute="bgsProFI" visibility="read-only"/><field attribute="bgsProKA" visibility="read-only"/><label><de>Daten</de><en>Data</en></label></group>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Digitale Unterschrift PL"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Digitale Unterschrift ProKA"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Template für Titel"
+								/>
+								<parameter name="Wert"
+									value="Digitale Unterschrift bis {$model.get(`tl.bpe.execution:Token#processExecution`).get(`tl.bpe.execution:Zielabstimmung#unterschriftsdatum`)}"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<group collapsible="true" columns="DEFAULT" initiallyOpened="true" labelPlacement="DEFAULT" showBorder="true" showTitle="true" wholeLine="true"><field attribute="fixeBGs" visibility="read-only"/><label><de>Daten</de><en>Data</en></label></group>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Digitale Unterschrift ProKA"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Selektieren"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Digitale Unterschrift ProFI"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="SetzeAttribut"
+							business-object="Modellelement"
+						>
+							<parameters>
+								<parameter name="Attribut"
+									value="Template für Titel"
+								/>
+								<parameter name="Wert"
+									value="Digitale Unterschrift bis {$model.get(`tl.bpe.execution:Token#processExecution`).get(`tl.bpe.execution:Zielabstimmung#unterschriftsdatum`)}"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<group collapsible="true" columns="DEFAULT" initiallyOpened="true" labelPlacement="DEFAULT" showBorder="true" showTitle="true" wholeLine="true"><field attribute="fixeBGs" visibility="read-only"/><label><de>Daten</de><en>Data</en></label></group>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Digitale Unterschrift ProFI"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+							business-action="Erstellen"
+							business-object="Formular"
+						>
+							<parameters>
+								<parameter name="Formular">
+									<value><![CDATA[<group collapsible="true" columns="DEFAULT" initiallyOpened="true" labelPlacement="DEFAULT" showBorder="true" showTitle="true" wholeLine="true"><field attribute="fixeBGs" visibility="read-only"/><label><de>Daten</de><en>Data</en></label></group>]]></value>
+								</parameter>
+								<parameter name="Element"
+									value="Zielabstimmung > Zielabstimmung > Zielabstimmung erfolgt"
+								/>
+							</parameters>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

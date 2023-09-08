@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="ownerModel"/>
+		<param name="target"/>
+		<param name="postCreateActions">
+			<postCreateActions>
+				<setModel target="selection(${target})"/>
+			</postCreateActions>
+		</param>
+		<param name="typePartFormBuilder"
+			value="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder"
+		/>
+		<param name="createContextType"
+			value="com.top_logic.element.meta.PersistentClass"
+		/>
+		<param name="resPrefix"/>
+	</params>
+
+	<layout name="${namePrefix}Dialog">
+		<components>
+			<form name="${namePrefix}Form"
+				buttonComponent="${namePrefix}ButtonBar"
+				closeHandlerName="cancelCreate"
+				model="${ownerModel}"
+				resPrefix="${resPrefix}"
+				resetInvisible="true"
+				securityProviderClass="dialogParent"
+			>
+				<include name="com.top_logic.element/admin/model/modelEditor/TypePartForm.xml"
+					create="true"
+					createContextType="${createContextType}"
+					typePartFormBuilder="${typePartFormBuilder}"
+				/>
+
+				<buttons>
+					<button id="createPart"
+						class="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+						clique="create"
+						group="Create"
+						postCreateActions="${postCreateActions}"
+						resourceKey="${resPrefix}.create"
+					/>
+				</buttons>
+			</form>
+			<buttonbar name="${namePrefix}ButtonBar"/>
+		</components>
+	</layout>
+</template>

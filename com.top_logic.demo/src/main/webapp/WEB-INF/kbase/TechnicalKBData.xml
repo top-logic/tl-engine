@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- $Source: -->
+<objectlist>
+
+<knowledgeobject object_type="WebFolder" object_name="demoWebfolderId">
+	<!-- Corresponding repository folder was checked in into SVN -->
+	<ko_attribute att_name="physicalResource" att_value="repository://demo"/>
+	<ko_attribute att_name="dc_type" att_value="WebFolder"/>
+	<ko_attribute att_name="dc_title" att_value="Demo WebFolder"/>
+	<ko_attribute att_name="name" att_value="DemoWebfolder"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="ObjectLabel" object_name="demoWebfolderName">
+	<ko_attribute att_name="label" att_value="demoWebfolder"/>
+	<ko_attribute att_name="target" att_value="demoWebfolderId"/>
+</knowledgeobject>
+
+</objectlist>

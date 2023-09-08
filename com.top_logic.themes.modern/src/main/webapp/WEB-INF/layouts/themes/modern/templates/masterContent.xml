@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="mainTabbar"/>
+	</params>
+
+	<layout name="Content"
+		resizable="false"
+	>
+		<components>
+			<layoutControl>
+				<layoutInfo size="%TITLEBAR_HEIGHT%"/>
+				<componentControlProvider class="com.top_logic.themes.modern.layout.structure.LayoutViewProvider">
+					<view class="com.top_logic.themes.modern.layout.views.TitleView">
+						<logout-view class="com.top_logic.layout.component.configuration.LogoutView"
+							image="theme:IMAGES_CLOSE_BTN"
+							name="titleLogoutButton"
+						/>
+					</view>
+				</componentControlProvider>
+			</layoutControl>
+			<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+				<layoutInfo
+					scrolleable="false"
+					size="%MAIN_TAB_BAR_HEIGHT%"
+				/>
+				<componentControlProvider class="com.top_logic.layout.tabbar.TabBarControlProvider"/>
+			</layoutControl>
+			<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+				<layoutInfo size="%TOOL_ROW_HEIGHT%"/>
+				<componentControlProvider class="com.top_logic.themes.modern.layout.structure.LayoutViewProvider">
+					<view class="com.top_logic.themes.modern.layout.views.ToolRowView">
+						<include name="ToolRowView.xml"/>
+					</view>
+				</componentControlProvider>
+			</layoutControl>
+			<include name="templates/navigationComponent.xml"
+				componentName="mainNavigationComponent"
+			>
+				<inject>
+					<layoutInfo size="%MAIN_NAVIGATION_BAR_HEIGHT%"/>
+				</inject>
+			</include>
+			<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+				<layoutInfo size="100%"/>
+				<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
+			</layoutControl>
+			${mainTabbar}
+			<component class="com.top_logic.themes.modern.layout.ModernStatusLineComponent"
+				name="mainStatusLineComponent"
+				versionRendererClass="%VERSION_RENDERER_CLASS%"
+			>
+				<layoutInfo size="%VERSION_ROW_HEIGHT%"/>
+			</component>
+		</components>
+	</layout>
+</template>

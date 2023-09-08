@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="ergebnis"
+				default="-"
+				type="string"
+			/>
+			<t:parameter name="kontext"
+				default="-"
+				type="string"
+			/>
+			<t:parameter name="name"
+				type="string"
+			/>
+			<t:parameter name="type"
+				type="string"
+			/>
+			<t:parameter name="booleanMandatory"
+				default="true"
+				type="string"
+			/>
+			<t:parameter name="booleanRadioMandatory"
+				default="true"
+				type="string"
+			/>
+			<t:parameter name="booleanSelectMandatory"
+				default="true"
+				type="string"
+			/>
+			<t:parameter name="Tester"
+				default="root"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create Element"
+			failure-message="Failed to create Element '${$name}' of type '${$type}' in '${$kontext}' and store it in variable '${$ergebnis}'. (user: ${$Tester})"
+			user-id="${$Tester}"
+		>
+			<actions>
+				<t:if condition="#equals($type, &quot;Demo A&quot;)">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-A.xml"
+							template-name-comment="Create ${$type}"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="${$kontext}"
+								/>
+								<parameter name="Typ"
+									value="${$type}"
+								/>
+								<parameter name="Name"
+									value="${$name}"
+								/>
+								<parameter name="booleanMandatory"
+									value="${$booleanMandatory}"
+								/>
+								<parameter name="booleanRadioMandatory"
+									value="${$booleanRadioMandatory}"
+								/>
+								<parameter name="booleanSelectMandatory"
+									value="${$booleanSelectMandatory}"
+								/>
+								<parameter name="ergebnis"
+									value="${$ergebnis}"
+								/>
+								<parameter name="Tester"
+									value="${$Tester}"
+								/>
+							</parameters>
+						</action>
+					</t:then>
+					<t:else>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:/demo/create-B.xml"
+							template-name-comment="Create ${$type}"
+						>
+							<parameters>
+								<parameter name="kontext"
+									value="${$kontext}"
+								/>
+								<parameter name="Typ"
+									value="${$type}"
+								/>
+								<parameter name="Name"
+									value="${$name}"
+								/>
+								<parameter name="ergebnis"
+									value="${$ergebnis}"
+								/>
+								<parameter name="Tester"
+									value="${$Tester}"
+								/>
+							</parameters>
+						</action>
+					</t:else>
+				</t:if>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

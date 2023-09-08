@@ -1,0 +1,143 @@
+<?xml version="1.0"?>
+<!--
+	See build_new.doc in the tl-build project for a description.
+
+-->
+
+<project name="migrate-create-columns-column" basedir="../..">
+
+	<target name="update">
+		<xslt
+			style="${basedir}/bin/compat/normalize-layout.xsl" 
+			basedir="${basedir}/.." 
+			destdir="${basedir}/columns-normal"
+			extension=".xml"
+		>
+			<include name="*/webapps/*/WEB-INF/layouts/**/*.xml"/>
+		</xslt>
+		
+		<xslt
+			style="${basedir}/bin/compat/migrate-create-columns.xsl" 
+			basedir="${basedir}/columns-normal" 
+			includes="*/webapps/*/WEB-INF/layouts/**/*.xml"
+			destdir="${basedir}/columns-new"
+			extension=".xml"
+		>
+		</xslt>
+	</target>
+	
+	<target name="install">
+		<!-- Note: Filter is built from output of:
+		 
+			diff -u -r -\-brief columns-normal columns-new
+		 -->
+		 
+		<xslt
+			style="${basedir}/bin/compat/migrate-create-columns.xsl" 
+			basedir="${basedir}/.." 
+			destdir="${basedir}/columns-newds"
+			extension=".xml"
+		>
+<include name="com.top_logic/webapp/WEB-INF/layouts/admin/groupTable.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/admin/list/listAdmin_shared.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/admin/logEntries.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/admin/persons/personTable_alias.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/admin/technical/deleteLocks.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/admin/technical/memoryObserver.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/admin/technical/performanceMonitor.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/admin/technical/scheduler.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/admin/technical/userMonitor.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/admin/units/editUnit.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/history/historyDialog_alias.xml" />
+<include name="com.top_logic/webapp/WEB-INF/layouts/resource/resourceFrame_shared.xml" />
+<include name="com.top_logic.contact/webapp/WEB-INF/layouts/contact/EditCompanyContacts_shared.xml" />
+<include name="com.top_logic.contact/webapp/WEB-INF/layouts/contact/EditPersonContacts_shared.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/demo/grid.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/demo/search/searchResultTable.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/demo/table/demoEditableTable.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/demo/table/demoTable.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/demo/table/demoTreeTable.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/demo/table/frozenTable.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/demo/table/table_grid.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/demo/table/tree_grid.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/layoutdemo/TestControlsForm.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/layoutdemo/table/DemoLargeTableComponentFrozen.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/layoutdemo/table/DemoTableColDesc.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/layoutdemo/table/DemoTableComponent.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/layoutdemo/table/DemoTableComponentFrozen.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/layoutdemo/table/DemoTableComponentSecond.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/layoutdemo/table/DemoTableComponentThird.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/layoutdemo/table/FormulaTable.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/layoutdemo/table/TableVisiblePaneDemo.xml" />
+<include name="com.top_logic.demo/webapp/WEB-INF/layouts/layoutdemo/table/TableWithPartialColumnWidthDefinition.xml" />
+<include name="com.top_logic.element/webapp/WEB-INF/layouts/admin/attRoleClass.xml" />
+<include name="com.top_logic.element/webapp/WEB-INF/layouts/admin/attSecurity.xml" />
+<include name="com.top_logic.element/webapp/WEB-INF/layouts/admin/roles/rolesTable.xml" />
+<include name="com.top_logic.element/webapp/WEB-INF/layouts/element/meta/editMetaAttribute.xml" />
+<include name="com.top_logic.mail/webapp/WEB-INF/layouts/mail/mailFolder/mailFolder_aliased.xml" />
+<include name="com.top_logic.project.cost/webapp/WEB-INF/layouts/costType/EditPlannedCosts.xml" />
+<include name="com.top_logic.project.cost/webapp/WEB-INF/layouts/project/common/budget.xml" />
+<include name="com.top_logic.project.cost/webapp/WEB-INF/layouts/project/common/editProject.xml" />
+<include name="com.top_logic.project.cost/webapp/WEB-INF/layouts/project/orgUnit/report/OrgUnitCapacityTable.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/admin/archive/projectarchivetool_shared_alias.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/kpi/structureTracing.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/meetings/meetings_shared.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/project/budget/budgetActual.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/project/budget/budgetPlan.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/project/common/assignVirtualResources.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/project/management/activities/tableBasedActivities.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/project/management/goals/tableBasedGoals.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/project/management/issues/tableBasedIssues.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/project/management/risks/tableBasedRisks.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/project/meetings/tableBasedMeetings_alias.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/project/milestones/tableBasedMilestones_alias.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/reporting/program/milestoneReportPortfolioTable.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/reporting/program/statusReportPortfolioTable.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/reporting/statusreport/mta.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/reporting/statusreport/reporttable.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/resources/VirtualToRealAssistent.xml" />
+<include name="com.top_logic.project.pos/webapp/WEB-INF/layouts/risk/risks/riskRating.xml" />
+<include name="com.top_logic.project.stem/webapp/WEB-INF/layouts/snapshot/editSnapshot.xml" />
+<include name="com.top_logic.project.stem/webapp/WEB-INF/layouts/templates/levelOneSelectProgram.xml" />
+<include name="com.top_logic.purchasing.core/webapp/WEB-INF/layouts/contact/EditCompanyContacts_shared.xml" />
+<include name="com.top_logic.purchasing.core/webapp/WEB-INF/layouts/purchasing/numberrange/generatedNumbersTable.xml" />
+<include name="com.top_logic.purchasing.core/webapp/WEB-INF/layouts/purchasing/report/supplierDUNSTable.xml" />
+<include name="com.top_logic.purchasing.core/webapp/WEB-INF/layouts/purchasing/tables/commentsInline.xml" />
+<include name="com.top_logic.purchasing.core/webapp/WEB-INF/layouts/purchasing/tables/companyContactsInline.xml" />
+<include name="com.top_logic.purchasing.core/webapp/WEB-INF/layouts/purchasing/tables/externalContactsInline.xml" />
+<include name="com.top_logic.purchasing.core/webapp/WEB-INF/layouts/purchasing/tables/generatedNumbersInline.xml" />
+<include name="com.top_logic.purchasing.core/webapp/WEB-INF/layouts/purchasing/tables/personContactsInline.xml" />
+<include name="com.top_logic.purchasing.invoice/webapp/WEB-INF/layouts/purchasing/invoice/invoiceDescriptionGrid.xml" />
+<include name="com.top_logic.purchasing.invoice/webapp/WEB-INF/layouts/purchasing/invoice/invoicePlan.xml" />
+<include name="com.top_logic.purchasing.payments/webapp/WEB-INF/layouts/payments/payment/paymentsGrid.xml" />
+<include name="com.top_logic.purchasing.process/webapp/WEB-INF/layouts/cockpit/cockpit_shared_alias.xml" />
+<include name="com.top_logic.purchasing.process/webapp/WEB-INF/layouts/process/project/searchProjectsResultTable_alias.xml" />
+<include name="com.top_logic.purchasing.process/webapp/WEB-INF/layouts/purchasing/tables/projects.xml" />
+<include name="com.top_logic.purchasing.process/webapp/WEB-INF/layouts/purchasing/tables/projectsInline.xml" />
+<include name="com.top_logic.reporting/webapp/WEB-INF/layouts/admin/technical/userMonitor.xml" />
+<include name="com.top_logic.reporting/webapp/WEB-INF/layouts/admin/technical/userMonitorWithFailedLogin.xml" />
+<include name="com.top_logic.resources/webapp/WEB-INF/layouts/resources/VirtualToRealAssistent.xml" />
+<include name="com.top_logic.risk/webapp/WEB-INF/layouts/risk/perf/structureSwing_shared.xml" />
+<include name="com.top_logic.ticket/webapp/WEB-INF/layouts/admin/technical/deleteLocks.xml" />
+<include name="com.top_logic.ticket/webapp/WEB-INF/layouts/search/searchResultChartDetails.xml" />
+<include name="com.top_logic.ticket/webapp/WEB-INF/layouts/ticket/list/ticketList.xml" />
+<include name="webapp/WEB-INF/layouts/admin/groupTable.xml" />
+<include name="webapp/WEB-INF/layouts/admin/list/listAdmin_shared.xml" />
+<include name="webapp/WEB-INF/layouts/admin/logEntries.xml" />
+<include name="webapp/WEB-INF/layouts/admin/persons/personTable_alias.xml" />
+<include name="webapp/WEB-INF/layouts/admin/technical/deleteLocks.xml" />
+<include name="webapp/WEB-INF/layouts/admin/technical/memoryObserver.xml" />
+<include name="webapp/WEB-INF/layouts/admin/technical/performanceMonitor.xml" />
+<include name="webapp/WEB-INF/layouts/admin/technical/scheduler.xml" />
+<include name="webapp/WEB-INF/layouts/admin/technical/userMonitor.xml" />
+<include name="webapp/WEB-INF/layouts/admin/units/editUnit.xml" />
+<include name="webapp/WEB-INF/layouts/history/historyDialog_alias.xml" />
+<include name="webapp/WEB-INF/layouts/resource/resourceFrame_shared.xml" />
+		</xslt>
+		 
+		<copy todir="${basedir}/..">
+			<fileset dir="${basedir}/columns-newds"/>
+		</copy>
+	</target>
+
+</project>

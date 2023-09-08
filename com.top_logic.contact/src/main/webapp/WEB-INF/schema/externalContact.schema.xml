@@ -1,0 +1,79 @@
+<schema name="externalContact">
+	<tables>
+		<table name="EXTERNAL_CONTACT_ALL">
+			<columns>
+				<column name="u_number" type="string" size="128" mandatory="true"/>
+				<column name="first_name" type="string" size="128" mandatory="true" />
+				<column name="family_name" type="string" size="128" mandatory="true" />
+				<column name="division" type="string" size="128" mandatory="false" />
+				<column name="e_mail" type="string" size="128" mandatory="false" />
+				<column name="phone" type="string" size="128" mandatory="false" />
+				<column name="sys_id" type="string" size="128" mandatory="true" />
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="u_number" />
+					<column name="sys_id" />
+				</columns>
+			</primary-key>
+			<keys>
+				<key name="by_first_name">
+					<columns>
+						<column name="first_name"/>
+					</columns>
+				</key>
+				<key name="by_family_name">
+					<columns>
+						<column name="family_name"/>
+					</columns>
+				</key>
+				<key name="by_division">
+					<columns>
+						<column name="division"/>
+					</columns>
+				</key>
+				<key name="by_e_mail">
+					<columns>
+						<column name="e_mail"/>
+					</columns>
+				</key>
+				<key name="by_phone">
+					<columns>
+						<column name="phone"/>
+					</columns>
+				</key>
+				<key name="by_sys_id">
+					<columns>
+						<column name="sys_id"/>
+					</columns>
+				</key>
+			</keys>
+		</table>
+
+		<table name="EXTERNAL_CONTACT_ASSIGNMENT">
+			<columns>
+				<column name="object" type="id" mandatory="true"/>
+				<column name="attribute" type="id" mandatory="true"/>
+				<column name="not_before" type="datetime" mandatory="true"/>
+				<column name="u_number" type="string" size="128" mandatory="true"/>
+				<column name="not_after" type="datetime" mandatory="false"/>
+				<column name="first_name" type="string" size="128" mandatory="true"/>
+				<column name="family_name" type="string" size="128" mandatory="true"/>
+				<column name="division" type="string" size="128" mandatory="false"/>
+				<column name="e_mail" type="string" size="128" mandatory="false"/>
+				<column name="phone" type="string" size="128" mandatory="false"/>
+				<column name="sys_id" type="string" size="128" mandatory="true"/>
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="object"/>
+					<column name="attribute"/>
+					<column name="not_before"/>
+					<column name="u_number"/>
+					<column name="sys_id"/>
+				</columns>
+			</primary-key>
+		</table>
+
+	</tables>
+</schema>

@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>HttpUnit Tutorial - create pool editor - step 2</title>
+<LINK REL="stylesheet" HREF="tutorial.css" TYPE="text/css">
+</head>
+
+<body>
+<p class="location"><a href="index.html">Tutorial</a>
+<img src="arrow_yellow.gif" width=13 height=9 align=bottom ALT="-&gt;"> <a href="task1.html">Task 1</a>
+<img src="arrow_yellow.gif" width=13 height=9 align=bottom ALT="-&gt;"> Step 2: The pool editor form</p>
+<h1>Examining a Form</h1>
+<p class="goals">In this step, you will learn how to:
+<br />&bull; Extract a form from a web page, using its ID
+<br />&bull; Examine form attributes
+<br />&bull; Check text and radio button input fields
+<br />&bull; Check form submit buttons</p>
+<p>Now that we can invoke our servlet, the next step will be to produce the <a href="pool_editor_static.html">form</a>
+in response to a GET command.  This form will POST back to the same URL, allow for entry of 10 pairs of team names,
+allow for selection of a tie-breaker game, and allow the user to either save his entries or save them <i>and</i> open
+the betting pool. We can write a test for each of these required behaviors.</p>
+
+<h2>Testing the Form action</h2>
+
+<p>Let us add the following test:</p>
+<pre class="test-code">
+<b>public void</b> testFormAction() <b>throws</b> Exception {
+    ServletRunner sr = <b>new</b> ServletRunner( "web.xml" );
+    ServletUnitClient client = sr.newClient();
+    client.setAuthorization( "aUser", "pool-admin" );
+    WebResponse response = client.getResponse( "http://localhost/PoolEditor" );
+
+    WebForm form = response.getFormWithID( "pool" );               // (1) obtain the desired form
+    assertNotNull( "No form found with ID 'pool'", form );
+    assertEquals( "Form method", "POST", form.getMethod() );       // (2) verify that the form uses POST
+    assertEquals( "Form action", "", form.getAction() );           // (3) verify that the default action is used
+}
+</pre>
+<p>The significant points in the code are:<ol>
+<li>Extracting the form from the page. In this case, we use the ID (which should be unique) attribute to find the form.
+We could also just ask for all the forms in the page and select the first one, but this skips the need to count the number
+of forms in the page. If the form is not present, we will just get a null value.</li>
+<li>Checking that the form uses the POST method.</li>
+<li>Checking that the form has no <code>action</code> attribute specified and will therefore default to the URL from
+which it was retrieved - in the case, the same servlet that produced it.</li></ol></p>
+
+<p>Again we run the test and fix the reported errors, one by one. The <code>printBody</code> method will now look like this:</p>
+<pre class="servlet-code">
+<b>private void</b> printBody( PrintWriter pw ) {
+    pw.println( "&lt;form id='pool' method='POST'&gt;" );
+    pw.println( "&lt;/form&gt;" );
+}
+</pre>
+<p>and we now have two working tests.</p>
+
+<h2>Testing the form contents</h2>
+
+<p>We can now test the input fields in the form:<p />
+<pre class="test-code">
+<b>public void</b> testFormContents() <b>throws</b> Exception {
+    ServletRunner sr = <b>new</b> ServletRunner( "web.xml" );
+    ServletUnitClient client = sr.newClient();
+    client.setAuthorization( "aUser", "pool-admin" );
+    WebResponse response = client.getResponse( "http://localhost/PoolEditor" );
+
+    WebForm form = response.getFormWithID( "pool" );
+    assertNotNull( "No form found with ID 'pool'", form );
+
+    <b>for</b> (int i = 0; i < 10; i++) {
+        assertTrue( "Missing home team " + i, form.isTextParameter( "home" + i ) ); // (1) text parameter
+        assertTrue( "Missing away team " + i, form.isTextParameter( "away" + i ) ); // (1) text parameter
+    }
+    assertEquals( "Tie breaker values",
+                  Arrays.asList( new String[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" } ),
+                  Arrays.asList( form.getOptionValues( "tiebreaker" ) ) );          // (2) radio button
+}
+</pre>
+<p>The significant points in the code are:<ol>
+<li>We verify that a text parameter has been defined with the desired name for each of the 20 possible team values.</li>
+<li>Here we verify that we have a set of radio buttons with a specific name and each of the desired values.</li></ol></p>
+
+<p>We satisfy this test by making the <code>printBody</code> method look like this:</p>
+<pre class="servlet-code">
+<b>private void</b> printBody( PrintWriter pw ) {
+    pw.println( "&lt;form id='pool' method='POST'&gt;" );
+    pw.println( "&lt;table&gt;" );
+    pw.println( "&lt;tr&gt;&lt;th&gt;Home Team&lt;/th&gt;&lt;th&gt;Away Team&lt;/th&gt;&lt;th&gt;Tiebreaker?&lt;/th&gt;&lt;/tr&gt;" );
+    <b>for</b> (int i = 0; i &lt; 10; i++) {
+        pw.println( "&lt;tr&gt;&lt;td&gt;&lt;input name='home" + i + "'&gt;&lt;/td&gt;" );
+        pw.println( "&lt;td&gt;&lt;input name='away" + i + "'&gt;&lt;/td&gt;" );
+        pw.println( "&lt;td&gt;&lt;input type='radio' name='tiebreaker' value='" + i + "'/&gt;&lt;/td&gt;&lt;/tr&gt;" );
+    }
+    pw.println( "&lt;/table&gt;" );
+    pw.println( "&lt;/form&gt;" );
+}
+</pre>
+
+<h2>Testing the Submit Buttons</h2>
+
+<p>We confirm the presence of the desired submit buttons as follows:<p />
+<pre class="test-code">
+<b>public void</b> testSubmitButtons() <b>throws</b> Exception {
+    ServletRunner sr = <b>new</b> ServletRunner( "web.xml" );
+    ServletUnitClient client = sr.newClient();
+    client.setAuthorization( "aUser", "pool-admin" );
+    WebResponse response = client.getResponse( "http://localhost/PoolEditor" );
+
+    WebForm form = response.getFormWithID( "pool" );
+    assertNotNull( "No form found with ID 'pool'", form );
+
+    assertEquals( "Number of submit buttons", 2, form.getSubmitButtons().length );    // (1) count the buttons
+    assertNotNull( "Save button not found", form.getSubmitButton( "save", "Save" ) ); // (2) look up by name
+    assertNotNull( "Open Pool button not found", form.getSubmitButton( "save", "Open Pool" ) );
+}
+</pre>
+<p>In this test, please note the following:<ol>
+<li>We ask for all the submit buttons associated with the form and just count them. This will ensure that we don't have
+more than we want, either.</li>
+<li>We ask for each button that we do want by specifying its name and value - which will be used when we submit the form.</li></ol></p>
+
+<p>This test will pass once we modify the end of <code>printBody</code>, inserting lines to generate the submit buttons:</p>
+<pre class="servlet-code">
+    }
+    pw.println( "&lt;/table&gt;" );
+    pw.println( "&lt;input type='submit' name='save' value='Save' /&gt;" );
+    pw.println( "&lt;input type='submit' name='save' value='Open Pool' /&gt;" );
+    pw.println( "&lt;/form&gt;" );
+}
+</pre>
+We now have our form being generated, along with tests to confirm it. In the <a href="task1editor-entry.html">next step</a>,
+we will test and code the response to a form submission.
+</body></html>

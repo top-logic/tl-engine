@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="commons"
+>
+	<properties extends="com.top_logic.element.layout.formeditor.builder.EditFormBuilder$UIOptions, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
+		<annotations>
+			<display-inherited value="APPEND"/>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		<property name="editExecutability"
+			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
+			instance-type="com.top_logic.tool.execution.ExecutabilityRule"
+			type="List"
+		>
+			<!-- Note: Required to produce format compatible with CommandHandler.Config#executability. -->
+			<entry-tag value="rule"/>
+		</property>
+		<property name="saveClosesDialog"
+			default="true"
+			type="boolean"
+		/>
+		<property name="securityObject"
+			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
+			type="com.top_logic.basic.config.PolymorphicConfiguration"
+		/>
+		<property name="securityProviderClass"
+			default="securityRoot"
+			type="String"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
+			<hidden/>
+		</property>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			type="List"
+		>
+			<acceptable-classifiers value="form, commons"/>
+		</property>
+	</properties>
+
+	<editor name="Form"
+		applyCommand="storeAttributes"
+		defaultFor="${defaultFor}"
+		dialogs="${dialogs}"
+		editCommand="customEdit"
+		model="${model}"
+		saveClosesDialog="${saveClosesDialog}"
+		securityObject="${securityObject}"
+		securityProviderClass="${securityProviderClass}"
+		titleKey="${name}"
+	>
+		<modelBuilder class="com.top_logic.element.layout.formeditor.builder.EditFormBuilder"
+			showNoModel="${showNoModel}"
+			type="${type}"
+		>
+			<forms>${forms}</forms>
+		</modelBuilder>
+		<buttons>
+			${buttons}
+			<button id="customEdit"
+				class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+				clique="edit"
+			>
+				<executability>
+					<reference rule-id="SwitchToEditMode"/>
+					${editExecutability}
+				</executability>
+			</button>
+
+			<include name="templates/editComponentCommands.xml"/>
+			<reference command-id="configureEditFormDefinitionCommand"/>
+			<reference command-id="deleteEditFormDefinitionCommand"/>
+		</buttons>
+	</editor>
+</config:template>

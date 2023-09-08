@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,partner"
+		model="selection(com.top_logic.demo/technical/components/reports/organizationTable.layout.xml#Table)"
+		type="test.report:Contract"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/reports/createContract/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.be53a780-a6f7-47f7-9d00-3b297ab767c8">
+			<en>Contracts</en>
+			<de>Verträge</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->$model.get(`test.report:BusinessUnit#contracts`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.report:Contract`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_41e4fa7c_a2b4_4b09_9c21_311e0314b166"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.7ff1cf43-8abd-4233-a5f3-6d5865325928">
+					<en>Delete contract</en>
+					<de>Vertrag löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

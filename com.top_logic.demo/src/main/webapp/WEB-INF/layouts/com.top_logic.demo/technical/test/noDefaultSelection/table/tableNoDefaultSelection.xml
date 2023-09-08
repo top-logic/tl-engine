@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.layout.table.component.TableComponent"
+	defaultSelection="false"
+	model="selection(com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesVersionSelector)"
+	name="noDefaultSelectionTable"
+	objectType="me:DemoTypes.All"
+	resPrefix="layouts.demo.table.demoTable.DemoTypesTable."
+>
+	<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
+
+	<buttons>
+		<reference command-id="clearSelection"/>
+	</buttons>
+</component>

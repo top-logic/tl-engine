@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="prodElement">
+			<annotations>
+				<singletons>
+					<singleton type="RootElement"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="prodElement.RootElement">
+					<annotations>
+						<instance-presentation
+							expanded-icon="/tree/prod/iO.png"
+							icon="/tree/prod/i.png"
+						/>
+						<legacy-qualified-name qualified-name="prodElement.RootElement"/>
+					</annotations>
+					<attributes>
+						<reference name="Verantwortlicher"
+							kind="forwards"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<class name="RootElement">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+		
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="ROOT"/>
+								</default-value>
+							</annotations>
+						</property>
+						<reference name="children"
+							override="true"
+							type="RootElementChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="prodElement.RootElement"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+					<types>
+						<interface name="prodElement.ProductVersion">
+							<annotations>
+								<instance-presentation
+									expanded-icon="/tree/prod/iO.png"
+									icon="/tree/prod/i.png"
+								/>
+								<legacy-qualified-name qualified-name="prodElement.ProductVersion"/>
+							</annotations>
+							<generalizations>
+								<generalization
+									scope="this"
+									type="prodElement.Product"
+								/>
+							</generalizations>
+						</interface>
+						<interface name="prodElement.Product">
+							<annotations>
+								<instance-presentation
+									expanded-icon="/tree/prod/iO.png"
+									icon="/tree/prod/i.png"
+								/>
+								<legacy-qualified-name qualified-name="prodElement.Product"/>
+							</annotations>
+							<generalizations>
+								<generalization type="prodElement.RootElement"/>
+							</generalizations>
+						</interface>
+						<interface name="prodElement.ProductType">
+							<annotations>
+								<instance-presentation
+									expanded-icon="/tree/prod/iO.png"
+									icon="/tree/prod/i.png"
+								/>
+								<legacy-qualified-name qualified-name="prodElement.ProductType"/>
+							</annotations>
+							<generalizations>
+								<generalization
+									scope="this"
+									type="prodElement.Product"
+								/>
+							</generalizations>
+						</interface>
+						<class name="Product">
+							<annotations>
+								<table name="Product"/>
+								<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+							</annotations>
+							<generalizations>
+								<generalization
+									scope="this"
+									type="prodElement.Product"
+								/>
+								<generalization type="Product"/>
+								<generalization type="tl.element:StructuredElement"/>
+							</generalizations>
+						</class>
+						<class name="ProductType">
+							<annotations>
+								<table name="ProductType"/>
+								<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+							</annotations>
+							<generalizations>
+								<generalization
+									scope="this"
+									type="prodElement.ProductType"
+								/>
+								<generalization type="ProductType"/>
+								<generalization type="tl.element:StructuredElement"/>
+							</generalizations>
+						</class>
+						<class name="ProductVersion">
+							<annotations>
+								<table name="ProductVersion"/>
+								<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+							</annotations>
+							<generalizations>
+								<generalization
+									scope="this"
+									type="prodElement.ProductVersion"
+								/>
+								<generalization type="ProductVersion"/>
+								<generalization type="tl.element:StructuredElement"/>
+							</generalizations>
+						</class>
+					</types>
+				</class>
+				<class name="Product"
+					abstract="true"
+				>
+					<annotations>
+						<table name="Product"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+						<create-scope
+							create-type="Product"
+							scope-ref="RootElement"
+						/>
+					</annotations>
+					<attributes>
+						<reference name="children"
+							override="true"
+							type="ProductChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="prodElement.RootElement"/>
+						<generalization type="prodElement:RootElementChild"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="ProductType"
+					abstract="true"
+				>
+					<annotations>
+						<table name="ProductType"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+						<create-scope
+							create-type="ProductType"
+							scope-ref="RootElement"
+						/>
+					</annotations>
+					<generalizations>
+						<generalization type="prodElement.RootElement"/>
+						<generalization type="prodElement:ProductChild"/>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</class>
+				<class name="ProductVersion"
+					abstract="true"
+				>
+					<annotations>
+						<table name="ProductVersion"/>
+						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
+						<create-scope
+							create-type="ProductVersion"
+							scope-ref="RootElement"
+						/>
+					</annotations>
+					<generalizations>
+						<generalization type="prodElement.RootElement"/>
+						<generalization type="prodElement:ProductChild"/>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</class>
+				<interface name="RootElementChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<interface name="ProductChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+			</types>
+		</module>
+	</modules>
+</model>

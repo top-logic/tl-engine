@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="test.com.top_logic.layout.processor.TestLayoutInline/test-G1-template.xml"
+	p1="x"
+	p2="y"
+>
+	<p3>
+		<component class="X"/>
+	</p3>
+	
+	<p4>
+		<component class="Y"/>
+	</p4>
+</include>

@@ -1,0 +1,46 @@
+-----------------------------00000000000000
+Content-Disposition: form-data; name="file"; filename="FileNameUsedForTesting"
+Content-Type: text/plain
+
+
+*** TestFile for Mulitpart Upload Test ***
+
+Status:		new
+
+
+Product:	Top-Logic
+Version:	3.0b2 / Build 215 / Stand 2001-12-17
+Type:		Bug 
+Behaviour:	UI
+Severity:	1 - Fix immediately
+Described at:	???
+Found By:	KHA
+
+Found At:	2001-12-17
+
+Description:	The following Pages wont work standalone
+
+	http://localhost/top-logic/jsp/cms/layouts/layout.jsp 
+	http://localhost/top-logic/jsp/display/document/PropertiesView.jsp 
+	http://localhost/top-logic/jsp/display/document/ViewVersions.jsp 
+	http://localhost/top-logic/jsp/display/util/noViewDefined.jsp 
+	http://localhost/top-logic/jsp/display/webFolder/PropertiesView.jsp  
+
+Browser:	IE 5.00.2920.000
+
+Fixed by:	MMA
+Testcase:
+Fixed at:	
+Fix Comment:	
+
+Fixed in:	
+
+Verfified by:
+
+To be reviewed:	[x]
+
+-----------------------------00000000000000
+Content-Disposition: form-data; name="submit"
+
+Submit Query
+-----------------------------00000000000000--

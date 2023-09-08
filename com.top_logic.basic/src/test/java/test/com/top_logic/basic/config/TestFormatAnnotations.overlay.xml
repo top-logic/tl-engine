@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<test xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<list-by-name>
+		<entry key="L3" value="L31" />
+		<entry key="L4" value="L41,L42" />
+	</list-by-name>
+	<strings>
+		<string value="s4" />
+		<string value="s5" />
+	</strings>
+</test>

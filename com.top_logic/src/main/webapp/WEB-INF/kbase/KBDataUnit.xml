@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<objectlist>
+
+<knowledgeobject object_type="Unit" object_name="percent">
+	<ko_attribute att_name="name" att_value="%"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0"/>
+	<ko_attribute att_name="sortOrder" att_value="10"/>
+    <!-- special case, formatter cases about factor -->
+	<ko_attribute att_name="factor" att_value="1.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="m">
+	<ko_attribute att_name="name" att_value="m"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="sortOrder" att_value="20"/>
+	<ko_attribute att_name="factor" att_value="1.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="cm">
+	<ko_attribute att_name="name" att_value="cm"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="sortOrder" att_value="21"/>
+	<ko_attribute att_name="baseUnit" att_value="m"/>
+	<ko_attribute att_name="factor" att_value="0.01"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="mm">
+	<ko_attribute att_name="name" att_value="mm"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="sortOrder" att_value="22"/>
+	<ko_attribute att_name="baseUnit" att_value="m"/>
+	<ko_attribute att_name="factor" att_value="0.001"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="km">
+	<ko_attribute att_name="name" att_value="km"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="sortOrder" att_value="23"/>
+	<ko_attribute att_name="baseUnit" att_value="m"/>
+	<ko_attribute att_name="factor" att_value="1000.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="s">
+	<ko_attribute att_name="name" att_value="s"/>
+	<ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="sortOrder" att_value="30"/>
+	<ko_attribute att_name="factor" att_value="1.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="min">
+    <ko_attribute att_name="name"      att_value="min"/>
+    <ko_attribute att_name="format"    att_value="###,###,###,##0.0"/>
+    <ko_attribute att_name="sortOrder" att_value="32"/>
+    <ko_attribute att_name="baseUnit"    att_value="s"/>
+    <ko_attribute att_name="factor"    att_value="60.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="h">
+    <ko_attribute att_name="name"      att_value="h"/>
+    <ko_attribute att_name="format"    att_value="###,###,###,##0.0"/>
+    <ko_attribute att_name="sortOrder" att_value="34"/>
+    <ko_attribute att_name="baseUnit"    att_value="s"/>
+    <ko_attribute att_name="factor"    att_value="3600.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="d">
+    <ko_attribute att_name="name"      att_value="d"/>
+    <ko_attribute att_name="format"    att_value="###,###,###,##0.00"/>
+    <ko_attribute att_name="sortOrder" att_value="36"/>
+    <ko_attribute att_name="baseUnit"    att_value="s"/>
+    <ko_attribute att_name="factor"    att_value="86400.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="piece0">
+	<ko_attribute att_name="name"      att_value="piece0"/>
+	<ko_attribute att_name="format"    att_value="###,###,###,##0"/>
+	<ko_attribute att_name="sortOrder" att_value="1000"/>
+	<ko_attribute att_name="factor"    att_value="1.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="piece1">
+	<ko_attribute att_name="name"      att_value="piece1"/>
+	<ko_attribute att_name="baseUnit" att_value="piece0"/>
+	<ko_attribute att_name="format"    att_value="###,###,###,##0.0"/>
+	<ko_attribute att_name="sortOrder" att_value="1001"/>
+	<ko_attribute att_name="factor"    att_value="1.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="piece2">
+	<ko_attribute att_name="name"      att_value="piece2"/>
+	<ko_attribute att_name="baseUnit" att_value="piece0"/>
+	<ko_attribute att_name="format"    att_value="###,###,###,##0.00"/>
+	<ko_attribute att_name="sortOrder" att_value="1002"/>
+	<ko_attribute att_name="factor"    att_value="1.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="piece3">
+	<ko_attribute att_name="name"      att_value="piece3"/>
+	<ko_attribute att_name="baseUnit" att_value="piece0"/>
+	<ko_attribute att_name="format"    att_value="###,###,###,##0.000"/>
+	<ko_attribute att_name="sortOrder" att_value="1003"/>
+	<ko_attribute att_name="factor"    att_value="1.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="kg">
+    <ko_attribute att_name="name" att_value="kg"/>
+    <ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+    <ko_attribute att_name="sortOrder" att_value="40"/>
+    <ko_attribute att_name="factor" att_value="1.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="m/s">
+    <ko_attribute att_name="name" att_value="m/s"/>
+    <ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+    <ko_attribute att_name="sortOrder" att_value="50"/>
+    <ko_attribute att_name="factor" att_value="1.0"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="km/h">
+    <ko_attribute att_name="name" att_value="km/h"/>
+    <ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+    <ko_attribute att_name="sortOrder" att_value="51"/>
+    <ko_attribute att_name="factor" att_value="0.27"/>
+</knowledgeobject>
+
+<knowledgeobject object_type="Unit" object_name="Nm">
+    <ko_attribute att_name="name" att_value="Nm"/>
+    <ko_attribute att_name="format" att_value="###,###,###,##0.00"/>
+    <ko_attribute att_name="sortOrder" att_value="60"/>
+    <ko_attribute att_name="factor" att_value="1.0"/>
+</knowledgeobject>
+
+</objectlist>

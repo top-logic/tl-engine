@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="tableModelBuilderClass"
+			value="com.top_logic.contact.layout.company.CompanyContactModelBuilder"
+		/>
+		<param name="tableComponentClass"
+			value="com.top_logic.layout.table.component.TableComponent"
+		/>
+		<param name="tableAccessorClass"
+			value="com.top_logic.contact.layout.company.CompanyContactAccessor"
+		/>
+		<param name="tableFilterProvider"
+			value=""
+		/>
+		<param name="tableColumns"
+			value="name,city"
+		/>
+		<param name="defaultSortOrder"
+			value="name"
+		/>
+		<param name="fixedColumns"
+			value="0"
+		/>
+		<param name="columnWidth"
+			value="186px"
+		/>
+		<param name="editComponentClass"
+			value="com.top_logic.contact.layout.company.EditCompanyContactComponent"
+		/>
+		<param name="createComponentClass"
+			value="com.top_logic.contact.layout.company.CreateCompanyContactComponent"
+		/>
+		<param name="editCommandGroups"
+			optional="true"
+		/>
+		<param name="tableSecurityProvider"
+			value="securityRoot"
+		/>
+		<param name="editSecurityProvider"
+			value="securityRoot"
+		/>
+		<param name="createSecurityProvider"
+			value="securityRoot"
+		/>
+		<param name="createCommandGroups"
+			optional="true"
+		/>
+		<param name="createDialogWidth"
+			value="530"
+		/>
+		<param name="createDialogHeight"
+			value="400"
+		/>
+		<param name="openCreateCommandGroup"
+			value="Create"
+		/>
+		<param name="openCreateHandler"
+			value="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+		/>
+		<param name="createJSP"
+			value="/jsp/contact/company/newCompanyContact.jsp"
+		/>
+		<param name="jSPPage"
+			value="/jsp/contact/company/editCompanyContact.jsp"
+		/>
+	</params>
+
+	<layout horizontal="true">
+		<components>
+			<component class="${tableComponentClass}"
+				isSecurityMaster="true"
+				modelBuilder="${tableModelBuilderClass}"
+				name="companyContactTable"
+				objectType="me:Contact.Company"
+				resPrefix="layouts.contact.EditCompanyContacts_shared.companyContactTable."
+				securityProviderClass="${tableSecurityProvider}"
+				selectable="true"
+			>
+				<layoutInfo size="413"/>
+				<table
+					defaultColumns="${tableColumns}"
+					defaultSortOrder="${defaultSortOrder}"
+					fixedColumns="${fixedColumns}"
+					rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
+				>
+					<column-default
+						accessor="${tableAccessorClass}"
+						columnWidth="${columnWidth}"
+						filterProvider="${tableFilterProvider}"
+					/>
+					<columns>
+						<column name="name">
+							<renderer class="com.top_logic.layout.basic.ResourceRenderer">
+								<resourceProvider class="com.top_logic.mig.html.DefaultResourceProvider"/>
+							</renderer>
+						</column>
+						<column name="city"/>
+					</columns>
+				</table>
+			</component>
+			<layout>
+				<components>
+					<component class="${editComponentClass}"
+						commandGroups="${editCommandGroups}"
+						defaultFor="Contacts:Contact.Company"
+						model="selection(companyContactTable)"
+						name="companyContactEdit"
+						page="${jSPPage}"
+						resPrefix="layouts.contact.EditCompanyContacts_shared.companyContactEdit."
+						resetInvisible="true"
+						securityProviderClass="${editSecurityProvider}"
+					>
+						<dialogs>
+							<layout name="addCompanyContactDialog">
+								<dialogInfo
+									executability="InViewMode"
+									height="${createDialogHeight}"
+									openHandlerClass="${openCreateHandler}"
+									openerCommandGroup="${openCreateCommandGroup}"
+									width="${createDialogWidth}"
+								/>
+
+								<components>
+									<component class="${createComponentClass}"
+										commandGroups="${createCommandGroups}"
+										model="null()"
+										name="addCompanyContact"
+										page="${createJSP}"
+										resPrefix="layouts.contact.EditCompanyContacts_shared.addCompanyContact."
+										securityProviderClass="${createSecurityProvider}"
+									/>
+									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+								</components>
+							</layout>
+						</dialogs>
+					</component>
+					<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

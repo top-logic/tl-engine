@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+				   <module key="com.top_logic.layout.scripting.template.ScriptTemplateFinder$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="scriptingTemplateMessages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.layout.scripting.template.ScriptTemplateFinder">
+			<instance class="com.top_logic.layout.scripting.template.ScriptTemplateFinder" />
+		</config>
+		
+		<config service-class="com.top_logic.template.xml.source.TemplateSourceFactory">
+			<instance>
+				<protocols>
+					<protocol name="script">
+						<locator class="com.top_logic.template.xml.source.TemplateResourceLocator"
+							base-path="%SCRIPT_TEMPLATE_PATH%"
+						/>
+					</protocol>
+				</protocols>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<cliques>
+					<clique name="scriptRecording" display="toolbar"/>
+					<clique name="scriptReplay" display="toolbar"/>
+					<clique name="scriptEditing" display="toolbar"/>
+				</cliques>
+			</instance>
+		</config>
+		
+	</services>
+
+</application>

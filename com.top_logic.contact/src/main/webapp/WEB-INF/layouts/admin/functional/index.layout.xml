@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="main.admin.functional.tabber"
+		z_legacy_componentName="adminFunctionalView"
+		z_legacy_tabBarName="adminFunctionalView_tabBar"
+		z_legacy_tabLabel="main.admin.functional.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.contact/admin/personContacts/personContactView.layout.xml"/>
+			<layout-reference resource="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml"/>
+			<layout-reference resource="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

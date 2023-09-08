@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://www.top-logic.com/ns/dynamic-types/1.0" xmlns:d="http://www.top-logic.com/ns/dynamic-types/1.0">
+  <xs:group name="defGlobalTypes">
+    <xs:annotation>
+      <xs:documentation>Container for die Definition von Typen.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="metaelementdefinition">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" ref="d:metaelement">
+              <xs:annotation>
+                <xs:documentation>Definition globaler Typen.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+          <xs:attribute name="holderType" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>TODO: Sinnlose Definition, die überall angegeben ist, aber hoffentlich 
+ignoriert wird.</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:group name="defLocalTypes">
+    <xs:annotation>
+      <xs:documentation>Typzuweisung für das umschließende Strukturelement und optional die Definition 
+lokaler Typen im Inhalt.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="metaelementdefinition">
+        <xs:annotation>
+          <xs:documentation>Typzuweisung und/oder Container für Typdefinitionen (siehe defGlobalTypes und 
+defLocalTypes)</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" ref="d:metaelement">
+              <xs:annotation>
+                <xs:documentation>Definition lokaler Typen relativ zum umschließenden Strukturelement.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+          <xs:attribute name="holderType" use="required">
+            <xs:annotation>
+              <xs:documentation>Gibt an, wo der Typ gesucht wird, der dem umschließenden Strukturelement 
+zugewiesen werden soll.</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:union>
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="global">
+                      <xs:annotation>
+                        <xs:documentation>Der gesuchte Typ ist ein globaler Typ, der in einer defGlobalTypes 
+Sektion definiert ist. </xs:documentation>
+                      </xs:annotation>
+                    </xs:enumeration>
+                  </xs:restriction>
+                </xs:simpleType>
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="this">
+                      <xs:annotation>
+                        <xs:documentation>Der gesuchte Typ is ein lokaler Typ, der bei der Instanz des umschließenden 
+Strukturelements definiert ist. (Der korrspondierende Wrapper muss 
+MetaElementHolder implementieren).</xs:documentation>
+                      </xs:annotation>
+                    </xs:enumeration>
+                  </xs:restriction>
+                </xs:simpleType>
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="parent">
+                      <xs:annotation>
+                        <xs:documentation>Der gesuchte Typ ist ein lokaler Typ, der beim Vaterknoten des 
+umschließenden Strukturelements definiert ist. Der Knotentyp muss 
+ein Untertyp von StructuredElement sein.</xs:documentation>
+                      </xs:annotation>
+                    </xs:enumeration>
+                  </xs:restriction>
+                </xs:simpleType>
+                <xs:simpleType>
+                  <xs:restriction base="xs:string"/>
+                </xs:simpleType>
+              </xs:union>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="meType" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>Lokaler Name des gesuchten Typs relativ zum spezifizierten Typcontainer.</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:element name="metaelement">
+    <xs:annotation>
+      <xs:documentation>Typdefinition.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group minOccurs="0" ref="d:defTypeProperties">
+          <xs:annotation>
+            <xs:documentation>Statisches Attribute des definierten Typs.</xs:documentation>
+          </xs:annotation>
+        </xs:group>
+        <xs:element minOccurs="0" ref="d:metaattributes">
+          <xs:annotation>
+            <xs:documentation>Attribute der Instanzen des definierten Typs.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="type" use="required" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name des definierten Typs.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="superType" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name des Obertyps des definierten Typs.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="superHolderType">
+        <xs:annotation>
+          <xs:documentation>Ort, wo der Obertyp zu finden ist. Siehe Attribut holderType in Element metaelementdefinition 
+in Definition defLocalTypes.</xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:union memberTypes="xs:string">
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="global"/>
+              </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="this"/>
+              </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="parent"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:union>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="defTypeProperties">
+    <xs:sequence>
+      <xs:element name="attributes">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" ref="d:meattribute"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:element name="meattribute">
+    <xs:annotation>
+      <xs:documentation>Typattribut.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="name" use="required" type="d:defTypePropertyName"/>
+      <xs:attribute name="value" use="required" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="defTypePropertyName">
+    <xs:union memberTypes="d:defObjectBasePropertsName">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="defaultIcon">
+            <xs:annotation>
+              <xs:documentation>Das Bild, mit dem Objekte des umschließenden Typs standardmäßig symbolisiert 
+werden.</xs:documentation>
+            </xs:annotation>
+          </xs:enumeration>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="largeIcon">
+            <xs:annotation>
+              <xs:documentation>Das Bild, mit dem Objekte des umschließenden Typs in Dialog-Titeln symbolisiert 
+werden.</xs:documentation>
+            </xs:annotation>
+          </xs:enumeration>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="system">
+            <xs:annotation>
+              <xs:documentation>Der Typ ist ein eingebauter Typ und wird nicht zur Bearbeitung angeboten. </xs:documentation>
+            </xs:annotation>
+          </xs:enumeration>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+  <xs:simpleType name="defObjectBasePropertsName">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="koType">
+        <xs:annotation>
+          <xs:documentation>Der Name des KnowledgeObject-Typs mit dem Instanzen des definierten Typs 
+in der KnowledgeBase abgelegt werden. </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="wrapperClass">
+        <xs:annotation>
+          <xs:documentation>Die Laufzeitklasse die für Objekte des definierten Typs verwendet wird.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="metaattributes">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="d:metaattribute"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="metaattribute">
+    <xs:complexType>
+      <xs:attribute name="name" use="required" type="xs:string"/>
+      <xs:attribute name="type" use="required" type="d:defInstancePropertyType"/>
+      <xs:attribute name="mandatory" type="xs:boolean"/>
+      <xs:attribute name="immutable" type="xs:boolean"/>
+      <xs:attribute name="deleteProtected" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Whether there are programatic references to the attribute. Such attributes 
+cannot be dynamically removed. </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="sortOrder" type="xs:float"/>
+      <xs:attribute name="additionalParam" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Read the code :-(</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="validityCheck" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Duration during which the value of the attribute is considered to be valid. 
+After the validity period, the attribute is flagged for manual check and 
+approval.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="defInstancePropertyType">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="TYPE_BOOLEAN"/>
+      <xs:enumeration value="TYPE_LONG"/>
+      <xs:enumeration value="TYPE_FLOAT"/>
+      <xs:enumeration value="TYPE_STRING"/>
+      <xs:enumeration value="TYPE_DATE"/>
+      <xs:enumeration value="TYPE_STRING_SET"/>
+      <xs:enumeration value="TYPE_CHECKLIST"/>
+      <xs:enumeration value="TYPE_COMPLEX"/>
+      <xs:enumeration value="TYPE_CALCULATED"/>
+      <xs:enumeration value="TYPE_BINARY"/>
+      <xs:enumeration value="TYPE_WRAPPER">
+        <xs:annotation>
+          <xs:documentation>Referenz auf ein anderes Objekt. Eine Typeinschränkung des referenzierten 
+Objekts findet in "additionalParam" statt.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="TYPE_SINGLEWRAPPER"/>
+      <xs:enumeration value="TYPE_COLLECTION"/>
+      <xs:enumeration value="TYPE_TYPEDSET"/>
+      <xs:enumeration value="TYPE_LIST"/>
+      <xs:enumeration value="TYPE_CLASSIFICATION"/>
+      <xs:enumeration value="TYPE_SINGLE_STRUCTURE"/>
+      <xs:enumeration value="TYPE_STRUCTURE"/>
+      <xs:enumeration value="TYPE_DAP"/>
+      <xs:enumeration value="TYPE_DAP_COLLECTION"/>
+      <xs:enumeration value="TYPE_WEBFOLDER">
+        <xs:annotation>
+          <xs:documentation>@deprecated Type should be replaced with better expressiveness of the type system. </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="TYPE_DOCUMENT">
+        <xs:annotation>
+          <xs:documentation>@deprecated Type should be replaced with better expressiveness of the type system.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="TYPE_EXTERNAL_CONTACT">
+        <xs:annotation>
+          <xs:documentation>@deprecated Type should be replaced with better expressiveness of the type system. </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="TYPE_SINGLE_EXTERNAL_CONTACT">
+        <xs:annotation>
+          <xs:documentation>@deprecated Type should be replaced with better expressiveness of the type system. </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="TYPE_HISTORIC_WRAPPER"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="structuredElements">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:group ref="d:defGlobalTypes"/>
+        <xs:element ref="d:structure"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="structure">
+    <xs:annotation>
+      <xs:documentation>Definition einer Struktur.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="d:lists"/>
+        <xs:element maxOccurs="unbounded" ref="d:element"/>
+      </xs:sequence>
+      <xs:attribute name="name" use="required" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name der Struktur. Bei der Erzeugung des Wurzelelements der Struktur muss 
+dieser Name angegeben werden.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="rootType" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name der Strukturelementart des Wurzelelements.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="lists">
+    <xs:annotation>
+      <xs:documentation>Beschreibung der Listen die an das Root Element der Struktur assoziiert werden</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="d:list"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="list">
+    <xs:annotation>
+      <xs:documentation>Beschreibung der Liste</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="name" use="required" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="element">
+    <xs:annotation>
+      <xs:documentation>Definition einer Strukturelementart.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:group ref="d:defLocalTypes">
+          <xs:annotation>
+            <xs:documentation>Typzuweisung an das definerte Strukturelement und optional die Definition 
+lokaler Typen. TODO: Was bedeutet das Weglassen der Typzuweisung? Wann führt 
+das nicht zu einem Fehler?</xs:documentation>
+          </xs:annotation>
+        </xs:group>
+        <xs:group ref="d:defNodeProperties">
+          <xs:annotation>
+            <xs:documentation>Statische Attribute der Strukturart. </xs:documentation>
+          </xs:annotation>
+        </xs:group>
+        <xs:element ref="d:children"/>
+      </xs:choice>
+      <xs:attribute name="type" use="required" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Name der definierten Strukturelementart.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="children">
+    <xs:annotation>
+      <xs:documentation>Definition möglicher Kindelemente des definierten Strukturelements.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="d:child"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="child">
+    <xs:complexType>
+      <xs:attribute name="name" use="required" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="defNodeProperties">
+    <xs:sequence>
+      <xs:element name="attributes">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" ref="d:attribute"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:element name="attribute">
+    <xs:complexType>
+      <xs:attribute name="name" use="required" type="d:defNodePropertyName"/>
+      <xs:attribute name="value" use="required" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="defNodePropertyName">
+    <xs:union memberTypes="d:defTypePropertyName">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="icon"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="openIcon"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+</xs:schema>

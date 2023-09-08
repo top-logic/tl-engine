@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="testapp740.app-messages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="testapp740" />
+				</modules>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+	</configs>
+</application>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="structure"
+			value="ignore"
+		/>
+	</params>
+
+	<include name="tl-bpe-modeler/editor/workflowAdmin.xml"/>
+</template>

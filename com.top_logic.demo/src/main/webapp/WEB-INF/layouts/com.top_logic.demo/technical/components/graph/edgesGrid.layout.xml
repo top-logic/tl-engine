@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name,source,target"
+		type="test.graph:Edge"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/graph/createEdge/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.efc9251c-36dd-4e75-98cd-8c4b45439ae7">
+			<en>Edges</en>
+			<de>Kanten</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.graph:Edge`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.graph:Edge`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_e99a58e8_06e9_40bb_8aa6_933b47c94948"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				image="css:fas fa-trash-alt"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.fbec6b16-e606-4cd4-a0d2-0586d234d9f4">
+					<en>Delete edge</en>
+					<de>Kante löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="componentName"
+			value="FaultyFormFieldComponent"
+		/>
+	</params>
+
+	<layout>
+		<components>
+			<component class="com.top_logic.layout.form.component.FormComponent"
+				buttonComponent="${componentName}Buttons"
+				modelBuilder="com.top_logic.demo.layout.form.demo.FaultyFormFieldModelBuilder"
+				name="${componentName}"
+				page="/jsp/test/layout/renderingRobustness/FaultyFormFields.jsp"
+				resPrefix="layouts.layoutdemo.${componentName}.main."
+				securityProviderClass="securityRoot"
+			/>
+			<buttonbar name="${componentName}Buttons"/>
+		</components>
+	</layout>
+</template>

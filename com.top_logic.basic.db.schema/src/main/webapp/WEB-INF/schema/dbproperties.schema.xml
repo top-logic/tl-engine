@@ -1,0 +1,17 @@
+<schema>
+	<tables>
+		<table name="TL_PROPERTIES">
+			<columns>
+				<column name="node" type="string" size="63" mandatory="true" binary="true"/>
+				<column name="propKey" type="string" size="255" mandatory="true" binary="true"/>
+				<column name="propValue" type="clob" mandatory="true"/>
+			</columns>
+			<primary-key>
+				<columns>
+					<column name="node"/>
+					<column name="propKey"/>
+				</columns>
+			</primary-key>
+		</table>
+	</tables>
+</schema>

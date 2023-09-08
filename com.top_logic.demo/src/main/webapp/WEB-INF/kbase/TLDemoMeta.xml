@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+	SPDX-FileCopyrightText: 2005 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<!-- MetaObjects used for Testing only
+     See test.com.top_logic.knowledge.service.KBTestMeta -->
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+<metaobjects>
+
+<!--  Test various types of mappings from java to DB  -->
+<metaobject object_type="MOKnowledgeObject" object_name="TypeDemo" super_class="KnowledgeObject">
+<attributes>
+  <mo_attribute att_name="string16"         att_type="String"        db_size="16" mandatory="false"/> 
+  <mo_attribute att_name="boolean"          att_type="boolean"       db_size="99" mandatory="false"/>  
+  <mo_attribute att_name="byte"             att_type="Byte"          mandatory="false"/>  
+  <mo_attribute att_name="short"            att_type="Short"         mandatory="false"/>  
+  <mo_attribute att_name="int"              att_type="int"           mandatory="false"  db_name="TL_INT"/>  
+  <mo_attribute att_name="long"             att_type="Long"          mandatory="false"  db_name="TL_LONG"/>  
+  <mo_attribute att_name="float"            att_type="float"         mandatory="false"  db_name="TL_FLOAT"/>  
+  <mo_attribute att_name="double"           att_type="double"        mandatory="false"  db_name="TL_DOUBLE"/>  
+  <mo_attribute att_name="javaDate"         att_type="Date"          db_name="JAVA_DATE" mandatory="false"/> 
+  <mo_attribute att_name="dbDate"           att_type="java.sql.Date"        mandatory="false"/> 
+  <mo_attribute att_name="dbTime"           att_type="java.sql.Time"        mandatory="false"/> 
+  <mo_attribute att_name="dbTimestamp"      att_type="java.sql.Timestamp"   mandatory="false"/> 
+  <mo_attribute att_name="string254"        att_type="String"       db_size="254"  mandatory="false" /> 
+  <mo_attribute att_name="string2000"       att_type="String"       db_size="2000" mandatory="false" /> 
+  <mo_attribute att_name="string4000"       att_type="String"       db_size="4000" mandatory="false" /> 
+  <mo_attribute att_name="stringXXL"        att_type="String"         mandatory="false" />
+</attributes> 
+</metaobject>
+</metaobjects>
+  
+</objectlist>

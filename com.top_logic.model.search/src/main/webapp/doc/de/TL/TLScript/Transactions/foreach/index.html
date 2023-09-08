@@ -1,0 +1,43 @@
+<h2>Syntax</h2> 
+<pre>	<code>$set.foreach($func)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Wendet die Funktion <code class="hljs inlineCode">func</code> auf jedes Element der Menge <code class="hljs inlineCode">set</code> an und gibt die Menge der Auswertungsergebnisse zurück. Alternative Syntax für <a class="tlObject" data-custom="true" href="?page=map&amp;uuid=c382824b-adb0-468c-8508-c4297b61bb3d">map()</a> , wenn nicht das Ergebnis der Abbildung sondern der Seiteneffekt der Funktion <code class="hljs inlineCode">func</code> relevant ist.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set</td> 
+   <td>Menge</td> 
+   <td>Eine Menge, auf dessen Elemente <code class="hljs inlineCode">func</code> aufgerufen werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>func</td> 
+   <td>Funktion</td> 
+   <td>Eine Funktion, die auf die Elemente von <code class="hljs inlineCode">set</code> ausgeführt werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Beispiele</h2> 
+<pre>	<code>{
+   a = new(`my.module:MyClass`);
+   b = new(`my.module:MyClass`);
+   list = list($a, $b);
+   $list.foreach(x -&gt; $x.set(`my.module:MyClass#date`, now()));
+}</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> /</p> 
+<p>Erstellt zwei Objekte des Typs <code class="hljs inlineCode">my.module:MyClass</code> und weist ihnen im Attribut <code class="hljs inlineCode">date</code> das heiutige Datum zu.</p>

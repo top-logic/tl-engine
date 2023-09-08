@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_e60973b3_0b6d_4931_89ef_8226750b0df4"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.a1008ab6-089b-4886-ad0d-7694b84a2ba3">
+			<en>Transaction</en>
+			<de>Transaktion</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/transaction/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

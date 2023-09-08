@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="commons/webfolder/documents.template.xml"
+>
+	<arguments>
+		<name key="dynamic.a7893d6d-e20f-45c9-b611-ad23bdf8a078">
+			<en>Documents of {0}</en>
+			<de>Dokumente von {0}</de>
+		</name>
+		<model class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+			function="x -> $x.get(`test.webfolder:Context#folder`)"
+			input="selection(com.top_logic.demo/technical/components/documentManagement/contextsContextList.layout.xml#List)"
+		/>
+	</arguments>
+</config:template-call>

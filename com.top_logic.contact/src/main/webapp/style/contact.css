@@ -1,0 +1,149 @@
+/* ============================================ */
+/* ====== Table styles (prefix is 'tbl') ===== */
+/* ============================================ */
+
+table.regTable {
+	/* border-collapse: expand; */ /* correct might be "collapse" or "separate" */
+	border-width: 	 0px;
+	border-style:    solid;
+	border:    		 none;
+	width:		     100%
+}
+
+th.regTitle {
+	background-color: var(--FRAME_BACK); 
+	font-family:      var(--TEXT_FAMILY);
+	color:            var(--INVERT_TEXT);
+	font-size:        13px;
+	font-weight:      normal;
+	padding:          2px;
+	border-color:     #555555;
+	border-style:     solid;
+}
+
+tr.regTH {
+}
+
+th.regTH {
+	font-family:      var(--TEXT_FAMILY); 
+	font-size:        13px; 
+	font-weight:      normal;
+    white-space:      nowrap; 
+	padding:          2px;
+	border-color:     #555555; 
+	color:            black; 
+	background-color: var(--TABLE_HEADER);
+}
+
+tr.regTR {
+	background-color:#F7F7E7;
+}
+
+tr.regTR_even {
+	background-color:#F7F7E7;
+}
+
+td.regTD {
+	font-family:    var(--TEXT_FAMILY); 
+	font-size:      10px;
+    white-space:    nowrap; 
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555;
+	border-style:   outset; 
+	color:          black; 
+}
+
+td.regTDStrong {
+	font-family:    var(--TEXT_FAMILY); 
+	font-size:      10px;
+	font-weight:	bold;
+    white-space:    nowrap; 
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555; 
+	color:          black; 
+}
+
+td.regTDwrap {
+	font-family:    var(--TEXT_FAMILY); 
+	font-size:      10px;
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555; 
+	color:          black; 
+}
+
+td.regTDCenter {
+	font-family:    var(--TEXT_FAMILY); 
+	font-size:      10px;
+	text-align:     center;
+    white-space:    nowrap; 
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555; 
+	color:          black; 
+}
+
+td.regTDRight {
+	font-family:    var(--TEXT_FAMILY); 
+	font-size:      10px;
+	text-align:     right;
+    white-space:    nowrap; 
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555; 
+	color:          black; 
+}
+
+td.regTD100 {
+	font-family:    var(--TEXT_FAMILY); 
+	font-size:      10px;
+    white-space:    nowrap; 
+	padding:        0px;
+	vertical-align: top;
+	border-color:   #555555; 
+	color:          black; 
+	width:          100%;
+}
+
+tr.regTRselect {
+	/* background-color: #ADAEAD; */
+	background-color:#F7F7E7;
+}
+
+td.regTDselected {
+	font-family:      var(--TEXT_FAMILY); 
+	font-size:        11px;
+	font-weight:	  bold;
+    white-space:      nowrap; 
+	padding:          0px;
+	vertical-align:   top;
+	border-color:     #555555; 
+	border-style:     outset; 
+}
+
+td.regTDselectedStrong {
+	font-family:      var(--TEXT_FAMILY); 
+	font-size:        10px;
+	font-weight:	  bold;
+    white-space:      nowrap; 
+	padding:          0px;
+	vertical-align:   top;
+	border-color:     #555555; 
+	color:            black;
+	background-color: #ADAEAD;
+}
+
+td.regTDselected100 {
+	font-family:      var(--TEXT_FAMILY); 
+	font-size:        10px;
+	font-weight:	  bold;
+    white-space:      nowrap; 
+	padding:          0px;
+	vertical-align:   top;
+	border-color:     #555555; 
+	color:            black;
+	background-color: #ADAEAD;
+	width:          100%;
+}

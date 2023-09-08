@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%ORACLE_URL%" value="${env:oracle_url:jdbc:oracle:thin:@%ORACLE_HOST%:%ORACLE_PORT%:%ORACLE_NAME%}" />
+        <entry name="%ORACLE_HOST%" value="${env:oracle_host:localhost}" />
+        <entry name="%ORACLE_PORT%" value="${env:oracle_port:1521}" />
+        <entry name="%ORACLE_NAME%" value="${env:oracle_name:xe}" />
+        <entry name="%ORACLE_USER%" value="${env:oracle_user:test}"/>
+        <entry name="%ORACLE_USER_TEST_UNIT%" value="${env:oracle_user_testUnit:testUnit}"/>
+        <entry name="%ORACLE_USER_TEST_MIGRATION%" value="${env:oracle_user_testMigration:testMigration}"/>
+        <entry name="%ORACLE_PASSWD%" value="${env:oracle_passwd:unencrypted:passwd}"/>
+	</alias>
+</root>

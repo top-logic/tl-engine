@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.inheritance.child">
+		<class name="ChildClass">
+			<generalizations>
+				<generalization type="test.inheritance.parent:BaseClass"/>
+			</generalizations>
+			<attributes>
+				<reference name="items"
+					override="true"
+					type="test.inheritance.parent:Item"
+				/>
+				<property name="foo"
+					override="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+	<module name="test.inheritance.parent">
+		<interface name="BaseClass">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="items"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Item"
+				/>
+				<property name="foo"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</interface>
+		<class name="Item">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</class>
+	</module>
+</model>

@@ -1,0 +1,1 @@
+/*! uml-js - {{ name }} v{{ version }} | Copyright (c) 2019 Business Operation Systems GmbH. All Rights Reserved */

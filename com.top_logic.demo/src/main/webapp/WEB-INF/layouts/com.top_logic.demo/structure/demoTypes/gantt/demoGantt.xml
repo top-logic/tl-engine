@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="model"
+			optional="true"
+		/>
+	</params>
+	<include name="reporting/gantt/ganttChart_shared.xml"
+		chartCreator="com.top_logic.demo.layout.gantt.DemoGanttChartCreator"
+		filterComponent="com.top_logic.demo.layout.gantt.DemoGanttFilterComponent"
+		filterJSP="/jsp/demo/reporting/gantt/ganttFilter.jsp"
+		model="${model}"
+	/>
+</template>

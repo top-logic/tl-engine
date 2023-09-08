@@ -1,0 +1,1461 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_25881_Removed_legacy_types"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26117_security_object"
+			module="tl"
+		/>
+		<dependency name="Ticket_25424_Move_custom_composition_links_to_structure_child_table"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- Recreate elements in tl.model -->
+		<delete-class name="tl.model:TLObject"/>
+		<delete-class name="tl.model:TLModelPart"/>
+		<delete-class name="tl.model:TLNamedPart"/>
+		<delete-class name="tl.model:TLModel"/>
+		<delete-class name="tl.model:TLScope"/>
+		<delete-class name="tl.model:TLModule"/>
+		<delete-class name="tl.model:TLType"/>
+		<delete-class name="tl.model:TLEnumeration"/>
+		<delete-class name="tl.model:TLPrimitive"/>
+		<delete-class name="tl.model:TLAssociation"/>
+		<delete-class name="tl.model:TLClass"/>
+		<delete-class name="tl.model:TLTypePart"/>
+		<delete-class name="tl.model:DerivedTLTypePart"/>
+		<delete-class name="tl.model:TLStructuredTypePart"/>
+		<delete-class name="tl.model:TLAssociationPart"/>
+		<delete-class name="tl.model:TLAssociationEnd"/>
+		<delete-class name="tl.model:TLAssociationProperty"/>
+		<delete-class name="tl.model:TLClassPart"/>
+		<delete-class name="tl.model:TLReference"/>
+		<delete-class name="tl.model:TLProperty"/>
+		<delete-class name="tl.model:TLClassProperty"/>
+		<delete-class name="tl.model:TLClassifier"/>
+		<delete-class name="tl.model:TLModelPart_model"/>
+		<delete-class name="tl.model:TLModel_modules"/>
+		<delete-class name="tl.model:TLAssociationEnd_reference"/>
+		<delete-class name="tl.model:TLClass_extends"/>
+		<delete-class name="tl.model:TLClassPart_owner"/>
+		<delete-class name="tl.model:TLAssociationPart_owner"/>
+		<delete-class name="tl.model:TLClassifier_owner"/>
+		<delete-class name="tl.model:TLAssociation_union"/>
+		<delete-class name="tl.model:TLPrimitive_scope"/>
+		<delete-class name="tl.model:TLAssociation_scope"/>
+		<delete-class name="tl.model:TLEnumeration_scope"/>
+		<delete-class name="tl.model:TLClass_scope"/>
+		<delete-class name="tl.model:TLType_scope"/>
+		<delete-class name="tl.model:TLModuleSingletons"/>
+		<delete-class name="tl.model:TLObject$tType"/>
+		<delete-class name="tl.model:TLTypePart$type"/>
+		<delete-class name="tl.model:TLAnnotation"/>
+
+		<update-annotations name="tl.model">
+			<annotations>
+				<package-binding interface-package="com.top_logic.model.model"/>
+				<factory value="com.top_logic.element.meta.PersistentModelFactory"/>
+			</annotations>
+		</update-annotations>
+
+		<create-class name="tl.model:TLObject"
+			abstract="true"
+		>
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.TLObject"/>
+			</annotations>
+		</create-class>
+		<processor class="com.top_logic.element.model.migration._25881.ExtendsTLObject"/>
+		
+		<create-datatype name="tl.model:TLAnnotation"
+			db_type="clob"
+			kind="Custom"
+		>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="com.top_logic.model.internal.PersistentModelPart$AnnotationConfigs"
+			/>
+		</create-datatype>
+		<create-class name="tl.model:TLModelPart"
+			abstract="true"
+			primary-generalization="tl.model:TLObject"
+		>
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.TLModelPart"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLNamedPart"
+			abstract="true"
+			primary-generalization="tl.model:TLModelPart"
+		>
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.TLNamedPart"/>
+				<main-properties properties="name"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLModel"
+			primary-generalization="tl.model:TLModelPart"
+		>
+			<annotations>
+				<table name="TLModel"/>
+				<implementation-binding interface-name="com.top_logic.model.TLModel"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLScope"
+			abstract="true"
+			primary-generalization="tl.model:TLObject"
+		>
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.TLScope"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLModule"
+			primary-generalization="tl.model:TLScope"
+		>
+			<annotations>
+				<table name="TLModule"/>
+				<implementation-binding interface-name="com.top_logic.model.TLModule"/>
+				<instance-presentation icon="theme:mime.TLModule"/>
+				<main-properties properties="name,types"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLType"
+			abstract="true"
+			primary-generalization="tl.model:TLNamedPart"
+		>
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.TLType"/>
+				<main-properties properties="name,module"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLStructuredType"
+			abstract="true"
+			primary-generalization="tl.model:TLType"
+		>
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.TLStructuredType"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLEnumeration"
+			primary-generalization="tl.model:TLStructuredType"
+		>
+			<annotations>
+				<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+				<implementation-binding interface-name="com.top_logic.model.TLEnumeration"/>
+				<instance-presentation icon="theme:mime.TLEnumeration"/>
+				<table name="FastList"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLPrimitive"
+			primary-generalization="tl.model:TLType"
+		>
+			<annotations>
+				<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+				<implementation-binding interface-name="com.top_logic.model.TLPrimitive"/>
+				<instance-presentation icon="theme:mime.TLPrimitive"/>
+				<table name="TLDatatype"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLAssociation"
+			primary-generalization="tl.model:TLStructuredType"
+		>
+			<annotations>
+				<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+				<implementation-binding interface-name="com.top_logic.model.TLAssociation"/>
+				<instance-presentation icon="theme:mime.TLAssociation"/>
+				<main-properties properties="name, module"/>
+				<table name="MetaElement"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLClass"
+			primary-generalization="tl.model:TLStructuredType"
+		>
+			<annotations>
+				<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+				<implementation-binding interface-name="com.top_logic.model.TLClass"/>
+				<instance-presentation icon="theme:mime.TLClass"/>
+				<main-properties properties="name, module"/>
+				<table name="MetaElement"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLTypePart"
+			abstract="true"
+			primary-generalization="tl.model:TLNamedPart"
+		>
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.TLTypePart"/>
+				<main-properties properties="name,owner,type"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:DerivedTLTypePart"
+			abstract="true"
+			primary-generalization="tl.model:TLTypePart"
+		>
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.DerivedTLTypePart"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLStructuredTypePart"
+			abstract="true"
+			primary-generalization="tl.model:TLTypePart"
+		>
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.TLStructuredTypePart"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLAssociationEnd"
+			primary-generalization="tl.model:TLStructuredTypePart"
+		>
+			<annotations>
+				<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+				<implementation-binding interface-name="com.top_logic.model.TLAssociationEnd"/>
+				<instance-presentation icon="theme:mime.TLAssociationEnd"/>
+				<main-properties properties="name, owner, type"/>
+				<table name="MetaAttribute"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLReference"
+			primary-generalization="tl.model:TLStructuredTypePart"
+		>
+			<annotations>
+				<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+				<implementation-binding interface-name="com.top_logic.model.TLReference"/>
+				<instance-presentation icon="theme:mime.TLReference"/>
+				<main-properties properties="name, owner, type"/>
+				<table name="MetaAttribute"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLProperty"
+			primary-generalization="tl.model:TLStructuredTypePart"
+		>
+			<annotations>
+				<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+				<implementation-binding interface-name="com.top_logic.model.TLProperty"/>
+				<instance-presentation icon="theme:mime.TLProperty"/>
+				<main-properties properties="name, owner, type"/>
+				<table name="MetaAttribute"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLClassifier"
+			primary-generalization="tl.model:TLTypePart"
+		>
+			<annotations>
+				<export-binding impl="com.top_logic.model.io.bindings.ModelPartReferenceValueBinding"/>
+				<implementation-binding interface-name="com.top_logic.model.TLClassifier"/>
+				<instance-presentation icon="theme:mime.TLClassifier"/>
+				<main-properties properties="name, owner"/>
+				<table name="FastListElt"/>
+			</annotations>
+		</create-class>
+		<create-class name="tl.model:TLModuleSingletons">
+			<annotations>
+				<table name="TLModule_singletons"/>
+				<implementation-binding interface-name="com.top_logic.model.TLModuleSingleton"/>
+			</annotations>
+		</create-class>
+		<add-class-generalizations name="tl.model:TLModule">
+			<generalizations>
+				<generalization type="tl.model:TLNamedPart"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.model:TLReference">
+			<generalizations>
+				<generalization type="tl.model:DerivedTLTypePart"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.model:TLProperty">
+			<generalizations>
+				<generalization type="tl.model:DerivedTLTypePart"/>
+			</generalizations>
+		</add-class-generalizations>
+
+		<create-reference name="tl.model:TLObject#tType"
+			type="tl.model:TLType"
+		>
+			<annotations>
+				<storage-algorithm>
+					<implementation class="com.top_logic.element.meta.kbbased.storage.ReadOnlyForeignKeyStorage"
+						storage-attribute="tType"
+						storage-type="TLObject"
+					/>
+				</storage-algorithm>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-reference>
+		<create-property name="tl.model:TLModelPart#annotations"
+			bag="false"
+			multiple="true"
+			type="tl.model:TLAnnotation"
+		/>
+		<create-reference name="tl.model:TLModelPart#model"
+			type="tl.model:TLModel"
+		/>
+		<create-property name="tl.model:TLNamedPart#name"
+			type="tl.core:String"
+		/>
+		<create-reference name="tl.model:TLModel#model"
+			type="tl.model:TLModel"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<!-- The model of a TLModel is the element itself. -->
+							<!-- Empty chain results in return of the object itself. -->
+							<chain/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLModel#model"
+			definition="tl.model:TLModelPart#model"
+		/>
+
+		<create-reference name="tl.model:TLModule#model"
+			type="tl.model:TLModel"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="model"
+						storage-type="TLModule"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLModule#model"
+			definition="tl.model:TLModelPart#model"
+		/>
+
+		<create-reference name="tl.model:TLType#module"
+			type="tl.model:TLModule"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="module"
+						storage-type="TLType"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+
+		<create-reference name="tl.model:TLType#scope"
+			type="tl.model:TLScope"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="scope"
+						storage-type="TLType"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.model:TLType#model"
+			type="tl.model:TLModel"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<get-value attribute="module"/>
+								<get-value attribute="model"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLType#model"
+			definition="tl.model:TLModelPart#model"
+		/>
+
+		<create-reference name="tl.model:TLEnumeration#scope"
+			type="tl.model:TLModule"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="module"
+						storage-type="TLType"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLEnumeration#scope"
+			definition="tl.model:TLType#scope"
+		/>
+
+		<create-property name="tl.model:TLClass#abstract"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.model:TLClass#final"
+			type="tl.core:Boolean"
+		/>
+		<create-reference name="tl.model:TLClass#generalizations"
+			multiple="true"
+			ordered="true"
+			type="tl.model:TLClass"
+		>
+			<annotations>
+				<storage-algorithm>
+					<list-storage
+						monomorphic-table="true"
+						order-attribute="order"
+						table="MetaElement_generalizations"
+					/>
+				</storage-algorithm>
+				<delete-protected/>
+			</annotations>
+		</create-reference>
+		<create-inverse-reference name="tl.model:TLClass#specializations"
+			inverse-reference="tl.model:TLClass#generalizations"
+			multiple="true"
+		/>
+
+		<create-reference name="tl.model:TLTypePart#type"
+			mandatory="true"
+			type="tl.model:TLType"
+		/>
+		<create-reference name="tl.model:TLTypePart#model"
+			type="tl.model:TLModel"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<get-value attribute="owner"/>
+								<get-value attribute="model"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLTypePart#model"
+			definition="tl.model:TLModelPart#model"
+		/>
+
+		<create-reference name="tl.model:TLTypePart#owner"
+			type="tl.model:TLType"
+		/>
+		<create-property name="tl.model:DerivedTLTypePart#derived"
+			type="tl.core:Boolean"
+		/>
+
+		<create-reference name="tl.model:TLStructuredTypePart#owner"
+			type="tl.model:TLStructuredType"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="owner"
+						storage-type="MetaAttribute"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLStructuredTypePart#owner"
+			definition="tl.model:TLTypePart#owner"
+		/>
+
+		<create-reference name="tl.model:TLStructuredTypePart#type"
+			mandatory="true"
+			type="tl.model:TLType"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="type"
+						storage-type="MetaAttribute"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLStructuredTypePart#type"
+			definition="tl.model:TLTypePart#type"
+		/>
+		<create-property name="tl.model:TLStructuredTypePart#mandatory"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.model:TLStructuredTypePart#multiple"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.model:TLStructuredTypePart#bag"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.model:TLStructuredTypePart#ordered"
+			type="tl.core:Boolean"
+		/>
+		<create-reference name="tl.model:TLStructuredTypePart#classifiedBy"
+			multiple="true"
+			type="tl.model:TLClassifier"
+		>
+			<annotations>
+				<storage-algorithm>
+					<set-storage
+						monomorphic-table="true"
+						table="classifiedBy"
+					/>
+				</storage-algorithm>
+				<delete-protected/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.model:TLAssociation#union"
+			multiple="true"
+			type="tl.model:TLAssociation"
+		/>
+
+		<create-property name="tl.model:TLAssociationEnd#composite"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.model:TLAssociationEnd#aggregate"
+			type="tl.core:Boolean"
+		/>
+		<create-property name="tl.model:TLAssociationEnd#navigate"
+			type="tl.core:Boolean"
+		/>
+
+		<create-reference name="tl.model:TLReference#end"
+			mandatory="true"
+			type="tl.model:TLAssociationEnd"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="end"
+						storage-type="MetaAttribute"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+
+		<create-reference name="tl.model:TLReference#type"
+			mandatory="true"
+			type="tl.model:TLType"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<get-value attribute="end"/>
+								<get-value attribute="type"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLReference#type"
+			definition="tl.model:TLTypePart#type"
+		/>
+		<create-property name="tl.model:TLReference#mandatory"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<get-value attribute="end"/>
+								<get-value attribute="mandatory"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<mark-override name="tl.model:TLReference#mandatory"
+			definition="tl.model:TLStructuredTypePart#mandatory"
+		/>
+		<create-property name="tl.model:TLReference#multiple"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<get-value attribute="end"/>
+								<get-value attribute="multiple"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<mark-override name="tl.model:TLReference#multiple"
+			definition="tl.model:TLStructuredTypePart#multiple"
+		/>
+		<create-property name="tl.model:TLReference#bag"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<get-value attribute="end"/>
+								<get-value attribute="bag"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<mark-override name="tl.model:TLReference#bag"
+			definition="tl.model:TLStructuredTypePart#bag"
+		/>
+		<create-property name="tl.model:TLReference#ordered"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<get-value attribute="end"/>
+								<get-value attribute="ordered"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<mark-override name="tl.model:TLReference#ordered"
+			definition="tl.model:TLStructuredTypePart#ordered"
+		/>
+		<create-property name="tl.model:TLClassifier#default"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<!-- FastListElement implements the method by fetching default from FastList and check for equality. This can not be described in the model. -->
+							<method-call method="com.top_logic.knowledge.wrap.list.FastListElement#isDefault()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-reference name="tl.model:TLClassifier#owner"
+			type="tl.model:TLEnumeration"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="owner"
+						storage-type="FastListElt"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLClassifier#owner"
+			definition="tl.model:TLTypePart#owner"
+		/>
+		<create-reference name="tl.model:TLClassifier#type"
+			mandatory="true"
+			type="tl.model:TLEnumeration"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<chain>
+								<get-value attribute="owner"/>
+							</chain>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<mark-override name="tl.model:TLClassifier#type"
+			definition="tl.model:TLTypePart#type"
+		/>
+
+		<create-property name="tl.model:TLModuleSingletons#name"
+			type="tl.core:String"
+		/>
+		<create-reference name="tl.model:TLModuleSingletons#module"
+			type="tl.model:TLModule"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="module"
+						storage-type="TLModule_singletons"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.model:TLModuleSingletons#singleton"
+			navigate="true"
+			type="tl.model:TLObject"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="singleton"
+						storage-type="TLModule_singletons"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-inverse-reference name="tl.model:TLModel#modules"
+			inverse-reference="tl.model:TLModule#model"
+			multiple="true"
+		/>
+		<create-inverse-reference name="tl.model:TLScope#types"
+			inverse-reference="tl.model:TLType#scope"
+			multiple="true"
+		/>
+
+		<create-inverse-reference name="tl.model:TLStructuredType#parts"
+			inverse-reference="tl.model:TLStructuredTypePart#owner"
+			multiple="true"
+			ordered="true"
+		/>
+
+		<create-inverse-reference name="tl.model:TLEnumeration#classifiers"
+			inverse-reference="tl.model:TLClassifier#owner"
+			multiple="true"
+		/>
+
+		<create-inverse-reference name="tl.model:TLAssociation#subsets"
+			inverse-reference="tl.model:TLAssociation#union"
+			multiple="true"
+		/>
+		<create-inverse-reference name="tl.model:TLAssociationEnd#reference"
+			inverse-reference="tl.model:TLReference#end"
+		/>
+		<create-inverse-reference name="tl.model:TLModule#singletons"
+			inverse-reference="tl.model:TLModuleSingletons#module"
+			multiple="true"
+		/>
+
+		<!-- tl.accounts -->
+		<create-module name="tl.accounts"/>
+		<create-class name="tl.accounts:Person"
+			primary-generalization="tl.model:TLObject"
+		>
+			<annotations>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.person.Person"/>
+				<instance-presentation
+					icon="theme:mime.tl.accounts.Person"
+					large-icon="theme:mime.tl.accounts.Person.large"
+				/>
+				<main-properties properties="name, name, locale"/>
+				<table name="Person"/>
+			</annotations>
+		</create-class>
+		<create-property name="tl.accounts:Person#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Person#locale"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Person#pwdhistory"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Person#lastPwdChange"
+			type="tl.core:Date"
+		>
+			<annotations>
+				<delete-protected/>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Person#unusedNotified"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Person#wasAlive"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Person#dataDeviceID"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Person#authDeviceID"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Person#restrictedUser"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-class name="tl.accounts:Group"
+			primary-generalization="tl.model:TLObject"
+		>
+			<annotations>
+				<table name="Group"/>
+				<implementation-binding class-name="com.top_logic.tool.boundsec.wrap.Group"/>
+				<instance-presentation
+					icon="theme:mime.tl.accounts.Group"
+					large-icon="theme:mime.tl.accounts.Group.large"
+				/>
+			</annotations>
+		</create-class>
+		<create-reference name="tl.accounts:Person#representativeGroup"
+			multiple="false"
+			type="tl.accounts:Group"
+		>
+			<annotations>
+				<storage-algorithm>
+					<singleton-link-storage
+						monomorphic-table="true"
+						table="definesGroup"
+					/>
+				</storage-algorithm>
+				<delete-protected/>
+			</annotations>
+		</create-reference>
+		<create-property name="tl.accounts:Group#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Group#isSystem"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-class name="tl.accounts:Address"
+			primary-generalization="tl.model:TLObject"
+		>
+			<annotations>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.Address"/>
+				<main-properties properties="name, zip, city, state, country"/>
+				<table name="Address"/>
+			</annotations>
+		</create-class>
+		<create-property name="tl.accounts:Address#street1"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#street2"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#zip"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#city"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#country"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#state"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#telephone1"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#telephone2"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#mobile"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#fax1"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#fax2"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Address#eMail"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-class name="tl.accounts:Role"
+			primary-generalization="tl.model:TLObject"
+		>
+			<annotations>
+				<table name="BoundedRole"/>
+				<implementation-binding class-name="com.top_logic.tool.boundsec.wrap.BoundedRole"/>
+				<instance-presentation icon="theme:mime.tl.accounts.Role"/>
+			</annotations>
+		</create-class>
+		<create-property name="tl.accounts:Role#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Role#isSystem"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Role#description"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+
+		<!-- tl.comments -->
+
+		<create-module name="tl.comments"/>
+		<create-class name="tl.comments:Comment"
+			primary-generalization="tl.model:TLObject"
+		>
+			<annotations>
+				<table name="Comment"/>
+				<implementation-binding class-name="com.top_logic.element.comment.wrap.Comment"/>
+				<instance-presentation icon="theme:mime.tl.comments.Comment"/>
+			</annotations>
+		</create-class>
+		<create-property name="tl.comments:Comment#content"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+
+		<!-- tl.folder -->
+
+		<create-module name="tl.folder"/>
+		<create-class name="tl.folder:WithResource"
+			abstract="true"
+			primary-generalization="tl.model:TLObject"
+		/>
+		<create-property name="tl.folder:WithResource#physicalResource"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+				<visibility value="hidden"/>
+				<fulltext-relevant value="false"/>
+			</annotations>
+		</create-property>
+		<create-class name="tl.folder:WebFolder"
+			primary-generalization="tl.folder:WithResource"
+		>
+			<annotations>
+				<table name="WebFolder"/>
+				<config-type value="WEBFOLDER"/>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.WebFolder"/>
+				<instance-presentation
+					icon="theme:tl.folder.WebFolder"
+					large-icon="theme:tl.folder.WebFolder.large"
+				/>
+			</annotations>
+		</create-class>
+		<create-property name="tl.folder:WebFolder#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.folder:WebFolder#description"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.folder:WebFolder#folderType"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-class name="tl.folder:Document"
+			primary-generalization="tl.folder:WithResource"
+		>
+			<annotations>
+				<table name="Document"/>
+				<config-type value="DOCUMENT"/>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.Document"/>
+				<instance-presentation icon="theme:tl.folder.Document"/>
+				<main-properties properties="name, size, versionNumber"/>
+			</annotations>
+		</create-class>
+		<create-property name="tl.folder:Document#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.folder:Document#size"
+			mandatory="true"
+			type="tl.core:Long"
+		>
+			<annotations>
+				<delete-protected/>
+				<fulltext-relevant value="false"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.folder:Document#versionNumber"
+			type="tl.core:Integer"
+		>
+			<annotations>
+				<delete-protected/>
+				<fulltext-relevant value="false"/>
+			</annotations>
+		</create-property>
+		<create-class name="tl.folder:DocumentVersion"
+			primary-generalization="tl.model:TLObject"
+		>
+			<annotations>
+				<table name="DocumentVersion"/>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.DocumentVersion"/>
+				<instance-presentation icon="theme:tl.folder.DocumentVersion"/>
+			</annotations>
+		</create-class>
+		<create-property name="tl.folder:DocumentVersion#revision"
+			mandatory="true"
+			type="tl.core:Integer"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-reference name="tl.folder:DocumentVersion#doc"
+			navigate="true"
+			type="tl.folder:Document"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="doc"
+						storage-type="DocumentVersion"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+
+		<!-- tl.units -->
+
+		<create-module name="tl.units"/>
+		<create-class name="tl.units:AbstractUnit"
+			abstract="true"
+			primary-generalization="tl.model:TLObject"
+		/>
+		<create-property name="tl.units:AbstractUnit#name"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.units:AbstractUnit#format"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.units:AbstractUnit#sortOrder"
+			mandatory="true"
+			type="tl.core:Integer"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-class name="tl.units:Currency"
+			primary-generalization="tl.units:AbstractUnit"
+		>
+			<annotations>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.currency.Currency"/>
+				<main-properties properties="name, factor"/>
+				<table name="Currency"/>
+			</annotations>
+		</create-class>
+		<create-reference name="tl.units:Currency#baseUnit"
+			navigate="true"
+			type="tl.units:Currency"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="baseUnit"
+						storage-type="Currency"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-property name="tl.units:Currency#factor"
+			type="tl.core:Double"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+		<create-class name="tl.units:Unit"
+			primary-generalization="tl.units:AbstractUnit"
+		>
+			<annotations>
+				<implementation-binding
+					class-name="com.top_logic.knowledge.wrap.unit.UnitWrapper"
+					interface-name="com.top_logic.knowledge.wrap.unit.Unit"
+				/>
+				<instance-presentation
+					icon="theme:mime.tl.units.Unit"
+					large-icon="theme:mime.tl.units.Unit.large"
+				/>
+				<main-properties properties="name, format"/>
+				<table name="Unit"/>
+			</annotations>
+		</create-class>
+		<create-reference name="tl.units:Unit#baseUnit"
+			navigate="true"
+			type="tl.units:Unit"
+		>
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="baseUnit"
+						storage-type="Unit"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<create-property name="tl.units:Unit#factor"
+			type="tl.core:Double"
+		>
+			<annotations>
+				<delete-protected/>
+			</annotations>
+		</create-property>
+
+		<change-part-type
+			source="tl.legacy.tabletypes:PersonTable"
+			target="tl.accounts:Person"
+		/>
+		<change-part-type
+			source="tl.tables:PersonTableInterface"
+			target="tl.accounts:Person"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:GroupTable"
+			target="tl.accounts:Group"
+		/>
+		<change-part-type
+			source="tl.tables:GroupTableInterface"
+			target="tl.accounts:Group"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:AddressTable"
+			target="tl.accounts:Address"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:BoundedRoleTable"
+			target="tl.accounts:Role"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:WebFolderTable"
+			target="tl.folder:WebFolder"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:DocumentTable"
+			target="tl.folder:Document"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:DocumentVersionTable"
+			target="tl.folder:DocumentVersion"
+		/>
+		<change-part-type
+			source="tl.tables:AbstractUnitTableInterface"
+			target="tl.units:AbstractUnit"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:CurrencyTable"
+			target="tl.units:Currency"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:UnitTable"
+			target="tl.units:Unit"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:CommentTable"
+			target="tl.comments:Comment"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:MetaElementTable"
+			target="tl.model:TLClass"
+		/>
+		<change-part-type
+			source="tl.tables:MetaElementTableInterface"
+			target="tl.model:TLClass"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:FastListEltTable"
+			target="tl.model:TLClassifier"
+		/>
+		<change-part-type
+			source="tl.tables:FastListEltTableInterface"
+			target="tl.model:TLClassifier"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:MetaAttributeTable"
+			target="tl.model:TLStructuredTypePart"
+		/>
+		<change-part-type
+			source="tl.tables:MetaAttributeTableInterface"
+			target="tl.model:TLStructuredTypePart"
+		/>
+		<change-part-type
+			source="tl.legacy.tabletypes:FastListTable"
+			target="tl.model:TLEnumeration"
+		/>
+		<change-part-type
+			source="tl.tables:FastListTableInterface"
+			target="tl.model:TLEnumeration"
+		/>
+
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.StringReplacementProcessor"
+			column="annotations"
+			table="MetaAttribute"
+		>
+			<replacements>
+				<!-- Removes references to "com.top_logic.element.meta.DefaultReferenceBuilder". -->
+				<reg-exp-replacement replacement="">
+					<search-pattern><![CDATA[<reference-builder\s*class="com\.top_logic\.element\.meta\.DefaultReferenceBuilder"\s*/>]]></search-pattern>
+				</reg-exp-replacement>
+				<reg-exp-replacement replacement="">
+					<search-pattern><![CDATA[<reference-builder\s*class="com\.top_logic\.element\.meta\.DefaultReferenceBuilder"\s*>\s*</reference-builder>]]></search-pattern>
+				</reg-exp-replacement>
+				<target-replacement
+					replacement="tl.accounts:Person"
+					target="tl.legacy.tabletypes:PersonTable"
+				/>
+				<target-replacement
+					replacement="tl.accounts:Person"
+					target="tl.tables:PersonTableInterface"
+				/>
+				<target-replacement
+					replacement="tl.accounts:Group"
+					target="tl.legacy.tabletypes:GroupTable"
+				/>
+				<target-replacement
+					replacement="tl.accounts:Group"
+					target="tl.tables:GroupTableInterface"
+				/>
+				<target-replacement
+					replacement="tl.accounts:Address"
+					target="tl.legacy.tabletypes:AddressTable"
+				/>
+				<target-replacement
+					replacement="tl.accounts:Role"
+					target="tl.legacy.tabletypes:BoundedRoleTable"
+				/>
+				<target-replacement
+					replacement="tl.folder:WebFolder"
+					target="tl.legacy.tabletypes:WebFolderTable"
+				/>
+				<target-replacement
+					replacement="tl.folder:Document"
+					target="tl.legacy.tabletypes:DocumentTable"
+				/>
+				<target-replacement
+					replacement="tl.folder:DocumentVersion"
+					target="tl.legacy.tabletypes:DocumentVersionTable"
+				/>
+				<target-replacement
+					replacement="tl.units:AbstractUnit"
+					target="tl.tables:AbstractUnitTableInterface"
+				/>
+				<target-replacement
+					replacement="tl.units:Currency"
+					target="tl.legacy.tabletypes:CurrencyTable"
+				/>
+				<target-replacement
+					replacement="tl.units:Unit"
+					target="tl.legacy.tabletypes:UnitTable"
+				/>
+				<target-replacement
+					replacement="tl.comments:Comment"
+					target="tl.legacy.tabletypes:CommentTable"
+				/>
+				<target-replacement
+					replacement="tl.model:TLClass"
+					target="tl.legacy.tabletypes:MetaElementTable"
+				/>
+				<target-replacement
+					replacement="tl.model:TLClassifier"
+					target="tl.tables:FastListEltTableInterface"
+				/>
+				<target-replacement
+					replacement="tl.model:TLStructuredTypePart"
+					target="tl.legacy.tabletypes:MetaAttributeTable"
+				/>
+				<target-replacement
+					replacement="tl.model:TLEnumeration"
+					target="tl.legacy.tabletypes:FastListTable"
+				/>
+			</replacements>
+		</processor>
+
+		<processor class="com.top_logic.element.model.migration._25881.UpdateFastListTable"/>
+
+		<processor class="com.top_logic.knowledge.service.migration.DeleteTableProcessor">
+			<tables>
+				<table object_name="hasCurrency"/>
+				<table object_name="hasArea"/>
+				<table object_name="hasContact"/>
+			</tables>
+		</processor>
+
+		<delete-class name="tl.tables:TLTypeBaseTableInterface"/>
+
+		<delete-class name="tl.legacy.tabletypes:FastList$defaultTable"/>
+		<delete-class name="tl.legacy.tabletypes:FastList.defaultTable"/>
+		<delete-class name="tl.legacy.tabletypes:FastList$moduleTable"/>
+		<delete-class name="tl.legacy.tabletypes:FastList.moduleTable"/>
+		<delete-class name="tl.legacy.tabletypes:FastListElt$ownerTable"/>
+		<delete-class name="tl.legacy.tabletypes:FastListElt.ownerTable"/>
+		<delete-class name="tl.legacy.tabletypes:FastListEltTable"/>
+		<delete-class name="tl.legacy.tabletypes:FastListTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute$definitionTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute.definitionTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute$endTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute.endTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute$ownerTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute.ownerTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute$typeTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttribute.typeTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaAttributeTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaElementTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaElement_generalizationsTable"/>
+		<delete-class name="tl.legacy.tabletypes:MetaElement_unionsTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLDatatypeTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLModelPartTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLModelTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLModule$modelTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLModule.modelTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLModuleTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLModule_singletonsTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLType$moduleTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLType.moduleTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLType$scopeTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLType.scopeTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLTypeBaseTable"/>
+		<delete-class name="tl.legacy.tabletypes:TLTypeTable"/>
+
+		<add-class-generalizations name="tl.tables:TLTypeTableInterface">
+			<generalizations>
+				<generalization type="tl.tables:TLModelPartTableInterface"/>
+			</generalizations>
+		</add-class-generalizations>
+
+		<add-class-generalizations name="tl.tables:FastListTableInterface">
+			<generalizations>
+				<generalization type="tl.tables:TLTypeTableInterface"/>
+			</generalizations>
+		</add-class-generalizations>
+
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_25881_Removed_legacy_types_model_transform.xslt"
+		/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

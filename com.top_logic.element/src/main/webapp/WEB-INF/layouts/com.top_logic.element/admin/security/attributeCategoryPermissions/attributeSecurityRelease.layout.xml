@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminRoleClassSec"
+	helpIDLegacy="element.admin.fuctional.attRoleClass.tabber"
+	titleKey="element.admin.fuctional.attRoleClass.tabber"
+>
+	<tabInfo label="element.admin.fuctional.attRoleClass.tabber"/>
+	<components>
+		<include name="com.top_logic.element/admin/security/attributeCategoryPermissions/attRoleClass.xml"/>
+	</components>
+</securityLayout>

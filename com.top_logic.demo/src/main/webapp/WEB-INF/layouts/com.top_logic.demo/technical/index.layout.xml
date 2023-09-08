@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/legacyTabbar.template.xml"
+>
+	<arguments
+		helpIDLegacy="demo.technical.tabber"
+		tabIcon="theme:ICON_BRIEFCASE"
+		z_legacy_componentName="technicalDemo"
+		z_legacy_tabBarName="technicalDemo_tabBar"
+		z_legacy_tabLabel="demo.technical.tabber"
+	>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo2/index.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/layoutTest.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

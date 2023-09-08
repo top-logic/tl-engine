@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="open"
+				default="true"
+				type="boolean"
+			/>
+			<t:parameter name="base"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="name"
+				type="string"
+			/>
+			<t:parameter name="de"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="en"
+				default=""
+				type="string"
+			/>
+			<t:parameter name="commit"
+				default="true"
+				type="boolean"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<t:if condition="$open">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Neuer Fachobjekttyp..."
+							command-name="displayDialog_CreateLayout"
+							component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+						>
+							<arguments/>
+						</action>
+					</t:then>
+				</t:if>
+				<t:if condition="!#equals($base, &quot;&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Obertypen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="${$base}"
+									/>
+								</values>
+							</value>
+						</action>
+					</t:then>
+				</t:if>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+							tab-path=""
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="${$name}"
+					/>
+				</action>
+				<t:if condition="!#equals($de, &quot;&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+								<path>
+									<labeled-member label="Bezeichnung"/>
+									<labeled-member label="Deutsch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="${$de}"
+							/>
+						</action>
+					</t:then>
+				</t:if>
+				<t:if condition="!#equals($en, &quot;&quot;) ">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+								<path>
+									<labeled-member label="Bezeichnung"/>
+									<labeled-member label="Englisch"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="${$en}"
+							/>
+						</action>
+					</t:then>
+				</t:if>
+				<t:if condition="$commit">
+					<t:then>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypeCreateHandler"
+							command-label="Anlegen"
+							command-name="createType"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+						>
+							<arguments/>
+						</action>
+					</t:then>
+				</t:if>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

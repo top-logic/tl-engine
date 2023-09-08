@@ -1,0 +1,31 @@
+<div id="{messageBoxID}" class="{messageBoxClasses}">
+
+	<div class="tl-info-service-item__header">
+		{closeButton}
+	
+	<tl:if test="hasMessageIcon">
+		<div class="tl-info-service-item__header-message">
+			<span class="tl-info-service-item__error-icon">
+				{messageIcon}
+			</span>
+			<div class="tl-info-service-item__header-message-text">
+				<span class="tl-info-service-item__header-type-message">
+					{header}
+				</span>
+				
+				<tl:if test="isErrorOrWarning">
+					<span class="tl-info-service-item__log-time">
+						{currentDateTime}
+					</span>
+				</tl:if>
+				
+			</div>
+		</div>
+	</tl:if>
+	
+	</div>
+	
+	<div class="tl-info-service-item__message">
+		{message}
+	</div>
+</div>

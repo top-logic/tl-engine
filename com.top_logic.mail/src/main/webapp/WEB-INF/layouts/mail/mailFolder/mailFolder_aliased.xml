@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- BoundLayout showing the mails with a mail folder -->
+<template>
+	<params>
+		<param name="masterComponent"/>
+		<param name="namePrefix"/>
+		<param name="tableComponent"
+			value="com.top_logic.mail.layout.MailFolderTableComponent"
+		/>
+		<param name="downloadNameKey"
+			value="mails.folder.export.name"
+		/>
+		<param name="templateName"
+			optional="true"
+		/>
+		<param name="tableModelBuilder"
+			value="com.top_logic.mail.layout.MailFolderListModelBuilder"
+		/>
+		<param name="tableColumns"
+			value="name,sendDate"
+		/>
+		<param name="defaultSortOrder"
+			value="name"
+		/>
+		<param name="fixedColumns"
+			value="0"
+		/>
+		<param name="fullFooter"
+			value="false"
+		/>
+		<param name="detailComponent"
+			value="com.top_logic.mail.layout.MailComponent"
+		/>
+		<param name="defaultFor"
+			value="tl.mail:Mail,tl.mail:MailFolder"
+		/>
+		<param name="objectType"
+			value="tl.mail:Mail,tl.mail:MailFolder"
+		/>
+		<param name="columns">
+			<column-default accessor="com.top_logic.knowledge.wrap.WrapperAccessor"/>
+			<columns>
+				<column name="name"
+					columnWidth="240px"
+					filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+				/>
+				<column name="sendDate"
+					accessor="com.top_logic.mail.layout.SendDateAccessor"
+					columnWidth="132px"
+					filterProvider="com.top_logic.layout.table.filter.SimpleDateFilterProvider"
+				/>
+			</columns>
+		</param>
+		<!-- Whether the mail table is displayed at the left side of the selected mail. -->
+		<param name="layoutHorizontal"
+			value="true"
+		/>
+		<!-- Size of the table component displaying the mails. Either height or width, depending on ${layoutHorizontal}. -->
+		<param name="tableSize"
+			value="415px"
+		/>
+	</params>
+
+	<layout name="${namePrefix}MailFolder"
+		horizontal="${layoutHorizontal}"
+	>
+		<components>
+			<component class="${tableComponent}"
+				isSecurityMaster="true"
+				model="selection(${masterComponent})"
+				modelBuilder="${tableModelBuilder}"
+				name="${namePrefix}Mail_List"
+				objectType="${objectType}"
+				resPrefix="mails.folder.table."
+				selectable="true"
+			>
+				<layoutInfo size="${tableSize}"/>
+				<table
+					columnCustomization="selection"
+					defaultColumns="${tableColumns}"
+					defaultSortOrder="${defaultSortOrder}"
+					fixedColumns="${fixedColumns}"
+					rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
+					showTitle="true"
+				>
+					<exporter class="com.top_logic.layout.table.model.SimpleTableDataExport"
+						downloadNameKey="${downloadNameKey}"
+						templateName="${templateName}"
+					/>
+					${columns}
+				</table>
+			</component>
+
+			<layout>
+				<components>
+					<component class="${detailComponent}"
+						defaultFor="${defaultFor}"
+						model="selection(${namePrefix}Mail_List)"
+						name="${namePrefix}Mail_content"
+						page="/jsp/mail/mailFolder/Mail.jsp"
+						resPrefix="mails.mail.details."
+					/>
+					<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+				</components>
+			</layout>
+		</components>
+	</layout>
+</template>

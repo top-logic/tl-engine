@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<declarative-config-descriptor abstract="false">
+	<property name="string-property"
+		type="String"
+	>
+		<abstract/>
+	</property>
+</declarative-config-descriptor>

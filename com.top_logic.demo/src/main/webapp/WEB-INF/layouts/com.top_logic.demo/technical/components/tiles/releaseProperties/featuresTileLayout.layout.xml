@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="ID_2fc57c4c_17ff_4aad_8d07_9ea58dcde65a"
+		securityDomain="SecurityStructure"
+		tileName="ID_908d3f97_d17a_489d_8fbe_6de4ef63fb50"
+	>
+		<tileLabel key="dynamic.b249f271-d93a-4b42-a77b-676c7a811a0c">
+			<en>Features</en>
+			<de>Eigenschaften</de>
+		</tileLabel>
+		<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+			icon="css:fas fa-cog"
+		/>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tiles/releaseProperties/featuresInnerLayout.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.DelGlobalVariableOp"
+			name="SecurityStructure.publisher"
+		/>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Rolle/Action-Rolle-Loeschen.xml"
+			template-name-comment="Rolle Loeschen"
+		>
+			<parameters>
+				<parameter name="Berechtigungsstruktur"
+					value="Zentrale Berechtigungen"
+				/>
+				<parameter name="Name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="publisher"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+			business-action="Loeschen"
+			business-object="Nutzer"
+		>
+			<parameters>
+				<parameter name="kontext">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="User_TestPersistentSearchSecurity_1"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+			business-action="Loeschen"
+			business-object="Nutzer"
+		>
+			<parameters>
+				<parameter name="kontext">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="User_TestPersistentSearchSecurity_2"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+	</actions>
+</action>

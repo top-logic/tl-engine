@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,boolean,booleanMandatory,booleanNullable,booleanRadio,booleanRadioMandatory,booleanRadioNullable,booleanSelect,booleanSelectMandatory,booleanSelectNullable,booleanWithAttributeSecurity,checklist,checklistMulti,checklistSingle,classificationLocal,classificationMulti,classificationMultiDropdown,classificationSingle,classificationSingleLegacy,classificationSinglePopup,classificationUnorderedMulti,classificationUnorderedMultiDropdown,classificationUnorderedSingle,classificationUnorderedSinglePopup,collection,color,comments,complexCountry,complexLanguage,complexUnit,containment,createdBy,createdDate,date,date2,dateTime,dependency1,dependency2,derivedPath,document,encryptedLong,float,floatConstraint,floatDefault,floatPercent,gallery,historicWrapper,html,i18NHTMLNormal,i18NStringMultiLine,i18NStringNormal,i18NStringShortLength,icon,inlineReference,inlineReferenceReverse,list,long,longConstraint,modifiedBy,modifiedDate,binary,offset,person,priorityTable,report,responsible,singleStructure,string,stringLengthConstraint,stringSet,stringWithAttributeSecurity,structure,template,text,text1333,text2000,text4000,timeUnit,typedSetOrdered,typedSetUnordered,typedWrapper,typedWrapperC,typedWrapperFiltered,typedWrapperGenerated,untypedWrapper,urlString,webFolder"
+		type="DemoTypes:A"
+	>
+		<name key="dynamic.b5a06250-0512-42a8-858f-e0ef903d2470">
+			<en>As</en>
+			<de>As</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`DemoTypes:A`)"
+			supportsElement="element->$element.instanceOf(`DemoTypes:A`)"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%POSTGRESQL_HOST%" value="${env:postgresql_host:localhost}" />
+        <entry name="%POSTGRESQL_PORT%" value="${env:postgresql_port:5432}" />
+        <entry name="%POSTGRESQL_DATABASE%" value="${env:postgresql_database:test}" />
+        <entry name="%POSTGRESQL_DATABASE_TEST_UNIT%" value="${env:postgresql_database_unit:testUnit}" />
+        <entry name="%POSTGRESQL_DATABASE_TEST_MIGRATION%" value="${env:postgresql_database_migration:testMigration}" />
+        <entry name="%POSTGRESQL_USER%" value="${env:postgresql_user:user}"/>
+        <entry name="%POSTGRESQL_PASSWD%" value="${env:postgresql_passwd:unencrypted:passwd}"/>
+        
+        <entry name="%POSTGRESQL_SCHEMA%" value="${env:postgresql_schema:public}" />
+        
+        <entry name="%POSTGRESQL_SSL%" value="${env:postgresql_ssl:false}" />
+        <entry name="%POSTGRESQL_SSL_MODE%" value="${env:postgresql_ssl_mode:prefer}" />
+        
+        <entry name="%POSTGRESQL_AUTOSAVE%" value="${env:postgresql_autosave:org.postgresql.jdbc.AutoSave:ALWAYS}" />
+	</alias>
+</root>

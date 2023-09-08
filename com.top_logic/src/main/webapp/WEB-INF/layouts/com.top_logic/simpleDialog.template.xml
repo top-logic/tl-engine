@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="com.top_logic/dialog.template.xml"
+	groups="dialogs"
+>
+	<properties>
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="openerIcon"
+			type="com.top_logic.layout.basic.ThemeImage"
+		/>
+		<property name="dialogID"
+			type="String"
+		>
+			<complex-default value="com.top_logic.layout.RandomIDProvider"/>
+			<hidden/>
+		</property>
+	</properties>
+
+	<config>
+		<open-handler id="${dialogID}"
+			class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			image="${openerIcon}"
+			resourceKey="${name}"
+		/>
+		<title class="com.top_logic.layout.component.title.ConstantTitle"
+			title="${name}"
+		/>
+	</config>
+</config:template>

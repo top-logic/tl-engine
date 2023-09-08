@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.contact/userSettings/editCurrentPerson.xml">
+	<inject>
+		<dialogInfo
+			createOpenerButtons="false"
+			height="700"
+			width="1000"
+		>
+			<open-handler id="showCurrentPersonDialog"
+				executability="Always"
+				group="Read"
+				image="theme:IMAGE_BUTTONS_PERSONAL_SETTINGS22"
+				resourceKey="tl.command.showCurrentPerson"
+				target="provider(com.top_logic.contact.layout.person.CurrentUserModelProvider)"
+				targetComponent="CurrentPersonEditPersonContainer"
+			/>
+		</dialogInfo>
+	</inject>
+</include>

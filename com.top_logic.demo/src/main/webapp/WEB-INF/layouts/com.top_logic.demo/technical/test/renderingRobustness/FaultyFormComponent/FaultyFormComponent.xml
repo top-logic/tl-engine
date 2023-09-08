@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="componentName"
+			value="FaultyModelBuilderFormComponent"
+		/>
+	</params>
+
+	<layout>
+		<component class="com.top_logic.layout.form.component.FormComponent"
+			modelBuilder="com.top_logic.demo.layout.form.demo.FaultyFormComponentModelBuilder"
+			name="${componentName}"
+			page="/jsp/test/layout/renderingRobustness/FaultyFormComponent.jsp"
+			resPrefix="layouts.layoutdemo.${componentName}.main."
+			securityProviderClass="securityRoot"
+		/>
+	</layout>
+</template>

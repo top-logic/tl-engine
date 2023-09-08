@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration>
+	<version name="migration_23376"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="migration_21612"
+			module="tl"
+		/>
+	</dependencies>
+	<migration force-replay="true"/>
+</migration>

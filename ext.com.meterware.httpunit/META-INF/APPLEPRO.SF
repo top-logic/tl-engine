@@ -1,0 +1,92 @@
+Signature-Version: 1.0
+Created-By: 1.5.0_13 (Apple Inc.)
+SHA1-Digest-Manifest-Main-Attributes: EzIjQZg0G1q4ezrjjypCNTiBnlI=
+SHA1-Digest-Manifest: XJ0dPYQF+BMLMQrZ4OCHBnycGNA=
+
+Name: com/apple/crypto/provider/SeedGenerator$ThreadedSeedGenerator.cl
+ ass
+SHA1-Digest: P7pB22HZc4obuuIVb6UHdTnJRVI=
+
+Name: com/apple/crypto/provider/KeychainStore$TrustedCertEntry.class
+SHA1-Digest: 10mE9BYQhJP+c5J1KZfK8UFrTS0=
+
+Name: com/apple/crypto/provider/JarVerifier$1.class
+SHA1-Digest: AGyDFgxDcnZetZP+BHAEUXbGGZE=
+
+Name: com/apple/crypto/provider/SeedGenerator$1.class
+SHA1-Digest: QE7vBcqCMC37dF3MhNXLhxiV6RQ=
+
+Name: com/apple/crypto/provider/PrivateKeyInfo.class
+SHA1-Digest: 808RNoYToSmx9xj7kjrN5vIA2ks=
+
+Name: com/apple/crypto/provider/MessageDigestCore.class
+SHA1-Digest: ZBuHwi+HvEqIi9U9R6h19sA8iic=
+
+Name: com/apple/crypto/provider/Apple$2.class
+SHA1-Digest: gK4H6BY2MgA0YxIFs1QOt+0ivEY=
+
+Name: com/apple/crypto/provider/CSPRandom.class
+SHA1-Digest: R8qdFV96zFYr0hMxjyYOhOkObK4=
+
+Name: com/apple/crypto/provider/SeedGenerator$ThreadedSeedGenerator$Bo
+ gusThread.class
+SHA1-Digest: bhmU8f0W3ESWmhk10qiR2motMY0=
+
+Name: com/apple/crypto/provider/SeedGenerator$2.class
+SHA1-Digest: hsJ4NurbrY1QWmauqFXy8b/o66g=
+
+Name: com/apple/crypto/provider/MessageDigestSHA1.class
+SHA1-Digest: LPK3/S6hYenHVaaBfESiMLNV+Z0=
+
+Name: com/apple/crypto/provider/SeedGenerator$4.class
+SHA1-Digest: k4/+MpqRIaWh9O+hytCL3b4Ti/Q=
+
+Name: com/apple/crypto/provider/Apple$1.class
+SHA1-Digest: Y5w+bD1/kcg7e6SJ644X/B7qrBc=
+
+Name: com/apple/crypto/provider/EncryptedPrivateKeyInfo.class
+SHA1-Digest: ++qmopH8Qf9vovgM15lUTwTnzk8=
+
+Name: com/apple/crypto/provider/MessageDigestMD5.class
+SHA1-Digest: W4yj9Gu5jhlWi68E53A2wMERvkg=
+
+Name: com/apple/crypto/provider/MacCore.class
+SHA1-Digest: I82C+z4PPthXzeUrJEK3XNe6Lfg=
+
+Name: com/apple/crypto/provider/KeychainStore$KeyEntry.class
+SHA1-Digest: JCSoQYdU9ShlAerrKRAPche/fcQ=
+
+Name: com/apple/crypto/provider/Apple.class
+SHA1-Digest: 6wrQzwLMRmAix9ugTc6YX48UdjU=
+
+Name: com/apple/crypto/provider/KeychainStore.class
+SHA1-Digest: BNzQWEiIWSh5g+QBm+K1xE/v1nk=
+
+Name: com/apple/crypto/provider/SeedGenerator.class
+SHA1-Digest: XKwuawAKKa+ofX5fJKKzjTpW0Dg=
+
+Name: com/apple/crypto/provider/SeedGenerator$URLSeedGenerator.class
+SHA1-Digest: AZ6HpVDMCY/h4UGz1/qPrXx0nu0=
+
+Name: com/apple/crypto/provider/SeedGenerator$3.class
+SHA1-Digest: zkYtCfPHmtFrN+iAhs2S3IwGaPQ=
+
+Name: com/apple/crypto/provider/MacMD5.class
+SHA1-Digest: qFFqotzL0jGZxySAcO7Em4CDz+c=
+
+Name: com/apple/crypto/provider/JarVerifier.class
+SHA1-Digest: dLtyYYwhkKPnfqKVrPwCDdV3GSM=
+
+Name: com/apple/crypto/provider/KeychainStore$CertKeychainItemPair.cla
+ ss
+SHA1-Digest: /XJRlY6wmhLBdbNH4mvkqVPRtbY=
+
+Name: com/apple/crypto/provider/CryptoGlobals.class
+SHA1-Digest: WjYrReyU3NfohWf5WkJrNfEmUa4=
+
+Name: com/apple/crypto/provider/MacSHA1.class
+SHA1-Digest: 2NLDJFv64aEYIxLm0fv1YNOgrVw=
+
+Name: com/apple/crypto/provider/Debug.class
+SHA1-Digest: TBUnW3OrdmNhyUDbxIDAJFE5LPI=
+

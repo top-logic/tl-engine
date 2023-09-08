@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<a
+	xmlns:additionalPrefix="http://example.com/additionalNS"
+	xmlns:foo="bar"
+>
+	<b>
+		<c foo:attr="foobar"/>
+	</b>
+	<b/>
+</a>

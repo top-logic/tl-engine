@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_079383a0_3389_4437_ae31_03255e62c09d"
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.1df9cf21-b82f-4568-b667-2d03891e430b">
+			<de>Tabelle</de>
+			<en>Table</en>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/tabelle/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

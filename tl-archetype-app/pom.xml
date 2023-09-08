@@ -1,0 +1,140 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-all</artifactId>
+		<version>7.6.0-SNAPSHOT</version>
+		
+		<relativePath>../tl-parent-all</relativePath>
+	</parent>
+
+	<artifactId>tl-archetype-app</artifactId>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<packaging>maven-archetype</packaging>
+
+	<description>A Maven archetype that creates a TopLogic app module.</description>
+
+	<properties>
+		<tlVersion>${project.version}</tlVersion>
+		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+	</properties>
+
+	<developers>
+		<developer>
+			<name>The TopLogic Developers</name>
+			<email>info@top-logic.com</email>
+			<organization>Business Operation Systems GmbH</organization>
+			<organizationUrl>https://www.top-logic.com</organizationUrl>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:https://github.com/top-logic/tl-engine.git</connection>
+		<developerConnection>scm:git:http://tl.bos.local:3000/TopLogic/tl-engine.git</developerConnection>
+		<url>https://github.com/top-logic/tl-engine</url>
+	</scm>
+
+	<dependencies>
+		<!-- 
+			Note: The archetype is test by building an app generated with this archetype. To do this successfully, 
+			all other parts of the framework have to be built first. 
+		-->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-bpe-app</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-demo</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<filtering>true</filtering>
+			</testResource>
+		</testResources>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<configuration>
+					<addDefaultExcludes>false</addDefaultExcludes>
+					<escapeString>\</escapeString>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-archetype-plugin</artifactId>
+				<!-- Note: Old version as workaround for .gitignore files not copied 
+					into the archive. -->
+				<version>2.4</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.12</version>
+				<executions>
+					<execution>
+						<id>timestamp-property</id>
+						<goals>
+							<goal>timestamp-property</goal>
+						</goals>
+						<phase>validate</phase>
+						<configuration>
+							<name>current.year</name>
+							<pattern>yyyy</pattern>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<executions>
+					<execution>
+		            	<goals>
+							<goal>jar</goal>
+		            	</goals>
+						<configuration>
+							<protected>true</protected>
+							<failOnError>false</failOnError>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+		</plugins>
+
+		<extensions>
+			<extension>
+				<groupId>org.apache.maven.archetype</groupId>
+				<artifactId>archetype-packaging</artifactId>
+				<version>3.1.1</version>
+			</extension>
+		</extensions>
+	</build>
+</project>

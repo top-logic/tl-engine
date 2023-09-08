@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="masterComponent"/>
+		<param name="extension"/>
+		<param name="securityProvider"
+			value="default"
+		/>
+		<param name="controller">
+			<controller class="com.top_logic.tool.boundsec.assistent.EVAAssistantController"
+				errorStep="${namePrefix}ErrorStep"
+				importHandler="com.top_logic.importer.dispatching.DispatchingEVAAssistantController$DummyDispatchingImporter"
+				inputStep="${namePrefix}InputStep"
+				outputStep="${namePrefix}OutputStep"
+				processStep="${namePrefix}ProcessStep"
+			>
+				<uploadHandler id="upload"
+					class="com.top_logic.importer.dispatching.DispatchingAssistentFileUploadComponent$DispatchingUploadHandler"
+				/>
+			</controller>
+		</param>
+		<param name="uploadComponent"
+			value="com.top_logic.tool.boundsec.assistent.AssistentFileUploadComponent"
+		/>
+		<param name="resPrefix"
+			value="tl.import.eva."
+		/>
+		<param name="inputJSP"
+			value="/jsp/layout/assistant/import/ChooseFile.jsp"
+		/>
+		<param name="processJSP"
+			value="/jsp/layout/assistant/import/Overview.jsp"
+		/>
+		<param name="errorJSP"
+			value="/jsp/layout/assistant/import/Error.jsp"
+		/>
+		<param name="processWidth"
+			value="450px"
+		/>
+		<param name="processHeight"
+			value="150px"
+		/>
+		<param name="componentName"
+			value="${namePrefix}ImportEVA"
+		/>
+		<param name="showStepsToolbar"
+			value="true"
+		/>
+		<param name="titleKey"
+			value=""
+		/>
+	</params>
+	<layout name="${componentName}"
+		titleKey="${titleKey}"
+	>
+		<components>
+			<assistent name="${namePrefix}GenericImport"
+				buttonComponent="${namePrefix}GenericImportButtons"
+				isSecurityMaster="true"
+				model="selection(${masterComponent})"
+				resPrefix="${resPrefix}"
+				securityProviderClass="${securityProvider}"
+			>
+				${controller}
+				<!-- assistent steps -->
+				<component class="${uploadComponent}"
+					extensions="${extension}"
+					model="selection(${masterComponent})"
+					name="${namePrefix}InputStep"
+					page="${inputJSP}"
+					resPrefix="${resPrefix}uploadFile."
+					securityProviderClass="assistant"
+					toolbar="${showStepsToolbar}"
+				>
+					<assistantInfo/>
+				</component>
+
+				<component class="com.top_logic.tool.boundsec.assistent.eva.ProcessingComponent"
+					name="${namePrefix}ProcessStep"
+					page="${processJSP}"
+					resPrefix="${resPrefix}overview."
+					securityProviderClass="assistant"
+					toolbar="${showStepsToolbar}"
+				>
+					<assistantInfo/>
+				</component>
+
+				<component class="com.top_logic.tool.boundsec.assistent.eva.OutputComponent"
+					model="selection(${namePrefix}ProcessStep)"
+					name="${namePrefix}OutputStep"
+					progressComponentHeight="${processHeight}"
+					progressComponentWidth="${processWidth}"
+					resPrefix="${resPrefix}import."
+					securityProviderClass="assistant"
+					toolbar="${showStepsToolbar}"
+				>
+					<assistantInfo/>
+				</component>
+
+				<component class="com.top_logic.tool.boundsec.assistent.eva.ErrorComponent"
+					name="${namePrefix}ErrorStep"
+					page="${errorJSP}"
+					resPrefix="${resPrefix}error."
+					securityProviderClass="assistant"
+					toolbar="${showStepsToolbar}"
+				>
+					<assistantInfo/>
+				</component>
+			</assistent>
+			<buttonbar name="${namePrefix}GenericImportButtons"/>
+		</components>
+	</layout>
+</template>

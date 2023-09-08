@@ -1,0 +1,25 @@
+<p>The view demonstrates the use of Drag&amp;Drop between components. On the right side a template structure can be administered and from it elements can be inserted into the factory plan on the left side using drag&amp;drop. The elements of the factory plan can also be rearranged using drag&amp;drop. In doing so, the user receives corresponding feedback as to where which elements can be inserted.</p> 
+<p><img src="ref:image.png" style="height:223px; opacity:1; width:600px"></p> 
+<p>In the corresponding example model, factories can consist of floors and floors can consist of workstations. In the drag&amp;drop operation, floors can only be placed in factories and workstations can only be placed within floors.</p> 
+<h2>Import of library elements</h2> 
+<p>The burger menu of the template library contains an import command that can be used to import library elements from an XML structure. This functionality demonstrates the configurable XML import. If you save the following structure to a file, you can use it to create library elements in the template library via the import:</p> 
+<pre><code class="language-xml">&lt;items&gt;
+	&lt;factory name="F1"&gt;
+		&lt;floor name="Ebene 0"&gt;
+			&lt;location name="Raum1"&gt;
+				&lt;entry name="Robot 1"/&gt;
+			&lt;/location&gt;
+		&lt;/floor&gt;
+	&lt;/factory&gt;
+
+	&lt;floor name="Ebene"&gt;
+		&lt;location name="Raum A"&gt;
+			&lt;Entry name="Robot 1"/&gt;
+		&lt;/location&gt;
+		&lt;location name="Raum B"&gt;
+			&lt;Entry name="Robot 2"/&gt;
+		&lt;/location&gt;
+	&lt;/floor&gt;
+&lt;/items&gt;
+</code></pre> 
+<p> </p>

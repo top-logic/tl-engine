@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<components>
+		<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+			buttonComponent="dialogDemoButtons"
+			name="demoDialog1"
+			page="/jsp/test/layout/dialog/DemoDialog.jsp"
+			resPrefix="layouts.layoutdemo.dialog.DemoDialog.demoDialog1."
+			securityProviderClass="securityRoot"
+		>
+			<dialogs>
+				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dynamicLayoutDemo.xml">
+					<inject>
+						<dialogInfo>
+							<model-title key="layouts.layoutdemo.dialog.DemoDialog.demoDialog1.dynamicLayoutTitle"
+								model="model(layoutSelectDemoLayoutContainer)"
+							/>
+						</dialogInfo>
+					</inject>
+				</include>
+
+				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialog1.xml">
+					<inject>
+						<dialogInfo
+							height="300"
+							width="400"
+						/>
+					</inject>
+				</include>
+
+				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialog2.xml">
+					<inject>
+						<dialogInfo/>
+					</inject>
+				</include>
+
+				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogn.xml"
+					n="4"
+				>
+					<inject>
+						<dialogInfo
+							height="240"
+							width="240"
+						/>
+					</inject>
+				</include>
+
+				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogInline1.xml">
+					<inject>
+						<dialogInfo
+							height="240"
+							width="240"
+						/>
+					</inject>
+				</include>
+
+				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogInline2.xml">
+					<inject>
+						<dialogInfo
+							height="240"
+							width="240"
+						/>
+					</inject>
+				</include>
+
+				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogn.xml"
+					n="3"
+				>
+					<inject>
+						<dialogInfo
+							closableUsingX="false"
+							height="170"
+							width="800"
+						/>
+					</inject>
+				</include>
+
+				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogn.xml"
+					n="5"
+				>
+					<inject>
+						<dialogInfo
+							height="70%"
+							width="95%"
+						/>
+					</inject>
+				</include>
+
+				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogn.xml"
+					n="6"
+				>
+					<inject>
+						<dialogInfo/>
+					</inject>
+				</include>
+			</dialogs>
+		</component>
+		<buttonbar name="dialogDemoButtons"/>
+	</components>
+</layout>

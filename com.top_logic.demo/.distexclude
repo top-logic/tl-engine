@@ -1,0 +1,4 @@
+bin/launch/Generate*.launch
+bin/launch/*Test selection*.launch
+webapp/html/test/**
+webapp/WEB-INF/conf/google-openid-demo*.xml

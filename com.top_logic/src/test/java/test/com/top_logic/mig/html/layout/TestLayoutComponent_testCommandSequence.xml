@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.mig.html.layout.SimpleComponent">
+	<commands>
+		<sequence id="testCommandSequence"
+			group="Write"
+		>
+			<commands>
+				<command id="command1"
+					class="test.com.top_logic.mig.html.layout.TestLayoutComponent$TestingCommand"
+					test-value="value1"
+				/>
+				<command id="command2"
+					class="test.com.top_logic.mig.html.layout.TestLayoutComponent$TestingCommand"
+					test-value="value2"
+				/>
+			</commands>
+		</sequence>
+	</commands>
+</component>

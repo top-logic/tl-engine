@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="customconfig.xsd">
+    <components>
+        <ConfigCustomizations>
+            <Settings>
+                <NodeDelete Component="test-3" XPath="/r[1]/a[1]/v[1]"/>
+                <NodeAdd BeforeXPath="/r[1]/a[1]/v[2]" Component="test-3" XPath="/r[1]/a[1]">
+                    <v/>
+                </NodeAdd>
+                <AttributeSet Component="test-3" Name="a0" Value="v0" XPath="/r[1]/a[1]"/>
+                <AttributeSet Component="test-3" Name="a1a" Value="v1a" XPath="/r[1]/a[1]/v[1]"/>
+                <AttributeSet Component="test-3" Name="a1b" Value="v1b" XPath="/r[1]/a[1]/v[1]"/>
+                <AttributeSet Component="test-3" Name="name" Value="v1" XPath="/r[1]/a[1]/v[1]"/>
+                <AttributeSet Component="test-3" Name="a3" Value="v3" XPath="/r[1]/a[1]/v[3]"/>
+            </Settings>
+        </ConfigCustomizations>
+    </components>
+</configuration>

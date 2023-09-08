@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<list name="test.element.classification.multi" type="Classification" multiselect="true" useNameAsId="true">
+	<elements>
+		<element name="test.element.classification.multi.a" default="true" />
+		<element name="test.element.classification.multi.b" />
+		<element name="test.element.classification.multi.c" />
+		<element name="test.element.classification.multi.d" />
+	</elements>
+</list>

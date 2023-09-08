@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.accounts">
+		<class name="Person">
+			<annotations>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.person.Person"/>
+				<instance-presentation
+					icon="theme:mime.tl.accounts.Person"
+					large-icon="theme:mime.tl.accounts.Person.large"
+				/>
+				<main-properties properties="name, locale"/>
+				<table name="Person"/>
+			</annotations>
+			<generalizations>
+				<generalization type="tl.core:Author"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="locale"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="pwdhistory"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<property name="lastPwdChange"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<delete-protected/>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<property name="unusedNotified"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="wasAlive"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="dataDeviceID"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="authDeviceID"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="restrictedUser"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<reference name="representativeGroup"
+					multiple="false"
+					type="tl.accounts:Group"
+				>
+					<annotations>
+						<storage-algorithm>
+							<singleton-link-storage
+								monomorphic-table="true"
+								table="definesGroup"
+							/>
+						</storage-algorithm>
+						<delete-protected/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Group">
+			<annotations>
+				<table name="Group"/>
+				<implementation-binding class-name="com.top_logic.tool.boundsec.wrap.Group"/>
+				<instance-presentation
+					icon="theme:mime.tl.accounts.Group"
+					large-icon="theme:mime.tl.accounts.Group.large"
+				/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="isSystem"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Address">
+			<annotations>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.Address"/>
+				<main-properties properties="name, zip, city, state, country"/>
+				<table name="Address"/>
+			</annotations>
+			<attributes>
+				<property name="street1"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="street2"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="zip"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="city"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="country"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="state"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="telephone1"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="telephone2"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="mobile"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="fax1"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="fax2"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="eMail"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Role">
+			<annotations>
+				<table name="BoundedRole"/>
+				<implementation-binding class-name="com.top_logic.tool.boundsec.wrap.BoundedRole"/>
+				<instance-presentation icon="theme:mime.tl.accounts.Role"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="isSystem"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="description"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -1,0 +1,80 @@
+default namespace = "http://www.top-logic.com/ns/dynamic-types/1.0"
+
+##
+## RelaxNG schema for the definition of exports.
+##
+## This schema applies to conf/exportConfig.xml files. For validation use the generated 
+## version in XML syntax (element.rng).
+##
+##
+
+start =
+    defExporter
+
+## .
+defExporter = 
+(
+    element exportPath {
+        attribute path { xsd:string }
+    },
+    
+    defTables*
+)
+    
+defTables =
+    element metaElement {
+        attribute name { xsd:string },
+        
+        attribute keyAttribute { xsd:string }?,
+        
+        attribute isStructure { xsd:boolean }?,
+        
+        element metaAttribute {
+            attribute name { xsd:string },
+            attribute type { defType },
+
+            attribute mandatory { xsd:boolean }?,
+            
+            attribute formatClass { xsd:string }?
+        }+
+    }
+
+defType = 
+(
+    token "TYPE_BOOLEAN" |
+    token "TYPE_LONG" | 
+    token "TYPE_FLOAT" | 
+    
+    token "TYPE_STRING" |
+    token "TYPE_DATE" |
+    token "TYPE_STRING_SET" |
+    token "TYPE_CHECKLIST" |
+
+    token "TYPE_COMPLEX" | 
+    token "TYPE_CALCULATED" | 
+    
+    ## Referenz auf ein anderes Objekt. Eine Typeinschränkung des referenzierten 
+    ## Objekts findet in "additionalParam" statt.
+    token "TYPE_WRAPPER" |
+    token "TYPE_SINGLEWRAPPER" | 
+    token "TYPE_COLLECTION" |
+    token "TYPE_TYPEDSET" |
+    token "TYPE_LIST" |
+    
+    token "TYPE_CLASSIFICATION" |
+    token "TYPE_STRUCTURE" | 
+    token "TYPE_DAP" |
+    token "TYPE_DAP_COLLECTION" |
+    
+    ## @deprecated Type should be replaced with better expressiveness of the type system. 
+    token "TYPE_WEBFOLDER" |
+    
+    ## @deprecated Type should be replaced with better expressiveness of the type system.
+    token "TYPE_DOCUMENT" |
+    
+    ## @deprecated Type should be replaced with better expressiveness of the type system. 
+    token "TYPE_EXTERNAL_CONTACT" |
+    
+    ## @deprecated Type should be replaced with better expressiveness of the type system. 
+    token "TYPE_SINGLE_EXTERNAL_CONTACT"
+)

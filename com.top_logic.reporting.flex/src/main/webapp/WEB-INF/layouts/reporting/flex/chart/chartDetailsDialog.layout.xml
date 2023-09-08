@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="ChartDetailsTableDialog"
+	titleKey="chart.details.table.layout.tabber"
+>
+	<dialogInfo
+		createOpenerButtons="false"
+		executability="Always"
+		height="700"
+		openerCommandGroup="Read"
+		width="1000"
+	/>
+
+	<components>
+		<component class="com.top_logic.reporting.flex.chart.component.DetailsTableDialog"
+			buttonComponent="ChartDetailsButtons"
+			metaElement=""
+			modelBuilder="com.top_logic.element.layout.meta.search.AttributedSearchResultComponent$AttributedSearchResultBuilder"
+			name="ChartDetailsTable"
+			objectType=""
+			resPrefix="chart.details.table.dialog."
+			securityProviderClass="securityRoot"
+			selectable="false"
+		>
+			<table
+				defaultColumns="name"
+				fixedColumns="1"
+			>
+				<column-default accessor="com.top_logic.knowledge.wrap.WrapperAccessor"/>
+			</table>
+			<buttons>
+				<button id="exportExcel"
+					class="com.top_logic.layout.table.export.ExcelExportHandler"
+					downloadNameKey="chart.details.table.dialog.export.filename"
+				/>
+			</buttons>
+		</component>
+		<buttonbar name="ChartDetailsButtons"/>
+	</components>
+</securityLayout>

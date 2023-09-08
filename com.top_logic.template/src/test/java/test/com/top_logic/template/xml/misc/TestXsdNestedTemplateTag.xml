@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<t:parameter name="Example_Attribute_Type_String" type="string" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<foo>
+			<bar>
+				<t:value expr='$Example_Attribute_Type_String' />
+			</bar>
+		</foo>
+	</t:body>
+</t:template>

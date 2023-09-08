@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="A"
+	p3="c-y"
+	p4="d-x"
+>
+	<p1>
+		a-
+		<component class="Y"/>
+	</p1>
+	<p2>
+		b-
+		<component class="X"/>
+	</p2>
+	<p3>c-y</p3>
+	<p4>d-x</p4>
+</component>

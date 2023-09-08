@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%ORACLE12_URL%" value="${env:oracle12_url:jdbc:oracle:thin:@%ORACLE12_HOST%:%ORACLE12_PORT%/%ORACLE12_NAME%}" />
+        <entry name="%ORACLE12_HOST%" value="${env:oracle12_host:localhost}" />
+        <entry name="%ORACLE12_PORT%" value="${env:oracle12_port:1521}" />
+        <entry name="%ORACLE12_NAME%" value="${env:oracle12_name:pdbora1}" />
+        <entry name="%ORACLE12_USER%" value="${env:oracle12_user:user}"/>
+        <entry name="%ORACLE12_PASSWD%" value="${env:oracle12_passwd:unencrypted:passwd}"/>
+	</alias>
+</root>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.layout.form.control.IconInputControl$Config">
+			<resources>
+				<resource name="bootstrap-icons" resource="/style/bootstrapIconIndex.json">
+					<icon-mappings>
+						<icon-mapping style="" encoded-icon="css:bi bi-${name}" />
+					</icon-mappings>
+				</resource>
+			</resources>
+		</config>
+	</configs>
+</application>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.mig.html.layout.PageComponent"
+	name="TestImageTag"
+	page="/jsp/test/taglibs/TestImageTag.jsp"
+	resPrefix="layouts.layoutdemo.TestImageTag.TestImageTag."
+	securityProviderClass="securityRoot"
+/>

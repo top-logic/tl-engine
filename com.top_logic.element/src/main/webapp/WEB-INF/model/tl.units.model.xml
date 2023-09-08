@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.units">
+		<interface name="AbstractUnit">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="format"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+				<property name="sortOrder"
+					mandatory="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+			</attributes>
+		</interface>
+		<class name="Currency">
+			<generalizations>
+				<generalization type="AbstractUnit"/>
+			</generalizations>
+			<annotations>
+				<implementation-binding class-name="com.top_logic.knowledge.wrap.currency.Currency"/>
+				<main-properties properties="name, factor"/>
+				<table name="Currency"/>
+			</annotations>
+			<attributes>
+				<reference name="baseUnit"
+					kind="forwards"
+					navigate="true"
+					type="Currency"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="baseUnit"
+								storage-type="Currency"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<property name="factor"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Unit">
+			<generalizations>
+				<generalization type="AbstractUnit"/>
+			</generalizations>
+			<annotations>
+				<implementation-binding
+					class-name="com.top_logic.knowledge.wrap.unit.UnitWrapper"
+					interface-name="com.top_logic.knowledge.wrap.unit.Unit"
+				/>
+				<instance-presentation
+					icon="theme:mime.tl.units.Unit"
+					large-icon="theme:mime.tl.units.Unit.large"
+				/>
+				<main-properties properties="name, format"/>
+				<table name="Unit"/>
+			</annotations>
+			<attributes>
+				<reference name="baseUnit"
+					kind="forwards"
+					navigate="true"
+					type="Unit"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="baseUnit"
+								storage-type="Unit"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<property name="factor"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

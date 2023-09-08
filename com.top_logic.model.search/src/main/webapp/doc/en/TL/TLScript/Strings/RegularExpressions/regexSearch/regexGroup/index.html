@@ -1,0 +1,51 @@
+<h2>Syntax</h2> 
+<pre>	<code>$match.regexGroup()
+
+$match.regexGroup($index)
+</code>
+</pre> 
+<h2>Description</h2> 
+<p>Returns the substrings of the search hits <code class="hljs inlineCode">match</code>. These are selected by groups defined in the regex expression enclosed by <code class="hljs inlineCode">()</code>.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>match</td> 
+   <td>Business object</td> 
+   <td>The list of <a class="tlObject" data-custom="true" href="?page=regexSearch&amp;uuid=74b294a0-955f-4fc0-b55e-793641445745">search hits</a> from which only a substring should be selected.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>index</td> 
+   <td>Number</td> 
+   <td>Only groups with the index will be considered</td> 
+   <td>no</td> 
+   <td>0 - returns the full text of the search hit</td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong> </span>Set</p> 
+<p>A set of substrings of the search hits.</p> 
+<h2>Examples</h2> 
+<h3>Without index</h3> 
+<pre>	<code>regex('ab+').regexSearch("XXXabbbYYYabb").regexGroup()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span>["abbb", "abb"]</p> 
+<p>Since no index was specified for the group, the search will be fully returned.</p> 
+<h3>With index</h3> 
+<pre>	<code>regex('a(b+)').regexSearch("XXXabbbYYYabb").regexGroup(1)</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: [</strong></span>"bbb", "bb"]</p> 
+<p>Only the substrings of group 1, i.e. (b+) are returned.</p> 
+<p> </p>

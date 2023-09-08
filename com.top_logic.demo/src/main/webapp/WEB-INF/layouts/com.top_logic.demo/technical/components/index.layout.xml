@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		securityDomain=""
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.947d253d-93af-4c21-aa69-d14810bd5078">
+			<en>Components</en>
+			<de>Komponenten</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/componentsLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

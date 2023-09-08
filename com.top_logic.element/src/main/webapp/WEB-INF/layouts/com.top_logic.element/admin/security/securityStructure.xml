@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="toolbar"
+			optional="true"
+		/>
+	</params>
+	<component class="com.top_logic.element.layout.tree.StructureSelectorComponent"
+		isSecurityMaster="true"
+		name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+		page="/jsp/element/StructureSelector.jsp"
+		resPrefix="admin.roles.filter."
+		securityProviderClass="securityRoot"
+		toolbar="${toolbar}"
+	>
+		<layoutInfo size="%FILTER_SINGLE_LINE_HEIGHT%"/>
+	</component>
+</template>

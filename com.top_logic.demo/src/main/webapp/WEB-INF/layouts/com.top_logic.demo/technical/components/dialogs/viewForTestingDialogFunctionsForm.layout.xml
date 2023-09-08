@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments>
+		<name key="dynamic.b7c15143-2026-44a7-b36f-3a6eab5ba308">
+			<en>View for testing dialog functions</en>
+			<de>Sicht zum Testeten von Dialogfunktionen</de>
+		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+			<script expr="`SecurityStructure#ROOT`"/>
+		</model>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/dialogs/dialogForTestingDeclarationOfButtonsOnDialog/dialog.layout.xml"/>
+		</dialogs>
+		<forms>
+			<form type="SecurityStructure:Root">
+				<formDefinition>
+					<static-html>
+						<content><![CDATA[<p><span style="font-size:18px"><span style="font-family:Times New Roman,Times,serif"><strong>Test-Sicht für Dialoge</strong></span></span></p>
+
+<p><span style="font-size:18px"><span style="font-family:Times New Roman,Times,serif">In dieser Sicht können Dialoge geöffnet und deren Funktionen getestet werden</span></span></p>
+]]></content>
+					</static-html>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

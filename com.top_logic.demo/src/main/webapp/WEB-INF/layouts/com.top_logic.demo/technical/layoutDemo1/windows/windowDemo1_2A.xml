@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="demoWindow1">
+	<components>
+		<component class="com.top_logic.mig.html.layout.IncludeComponent"
+			encodings="Cp1252"
+			files="/html/contents/layoutdemo/buergschaft.incl"
+			name="buergschaft"
+			resPrefix="layouts.layoutdemo.window.windowDemo1_2A.buergschaft."
+		/>
+	</components>
+</layout>

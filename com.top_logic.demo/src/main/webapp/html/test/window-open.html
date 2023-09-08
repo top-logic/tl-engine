@@ -1,0 +1,202 @@
+<html>
+
+<head>
+	<!-- Import thread library. --> 
+	<script type="text/javascript" src="../../script/tl/thread.js"></script>
+
+	<script type="text/javascript">
+		var windowRef = null;
+		var attachedWindowRef = null;
+		var windowState = "undefined";
+		
+		// Lock for synchonizing event handlers and timer functions in IE.
+		var monitor = new Lock();
+		
+		function lock(id) {
+			var success = monitor.acquire(id);
+			if (success) {
+				log("Acquired lock for id '" + id + "'.");
+				setLockMessage(id);
+			}
+			return success;
+		}
+		
+		function unlock(id) {
+			var success = monitor.release(id);
+
+			log("Released lock for id '" + id + "'.");
+			setLockMessage(0);
+			
+			return success;
+		}
+		
+		function handleLockClick(button) {
+			if (! lock('button')) {
+				log("Cannot acquire lock.");
+				return false;
+			}
+
+			if (monitor.depth('button') > 1) {
+				// Was already owning lock, this click should release the lock.
+				unlock('button');
+				unlock('button');
+				return false;
+			}
+		}
+		
+		function setLockMessage(id) {
+			var button = document.getElementById("lock-button");
+			while (button.lastChild != null) button.removeChild(button.lastChild);
+			button.appendChild(document.createTextNode(id == 0 ? "Unlocked" : "Locked (" + id + ")"));
+		}
+		
+		function openWindow() {
+			log("Before window open.");
+			windowRef = window.open('opended-window.html', 'popupWindow', 'width=800,height=600,toolbar=no,status=no');
+			log("After window open.");
+			
+			// Create watcher thread.
+			var t = new Thread(
+				function() {
+					if (windowRef.closed) {
+						log("Watcher: Window has been closed.");
+					} else {
+						if (windowState == "open") {
+							log("Watcher: Stopped after onload callback has been received.");
+						} else {
+							if (this.tick % 20 == 0) {
+								log("Watcher: Window open, onload still missing.");
+							}
+							this.tick++;
+							
+							// Continue thread.
+							return;
+						}
+					}
+					
+					// Stop thread.
+					this.stop();
+				});
+
+			// Initialize thread state.
+			t.tick = 0;	
+			
+			// Start thread.
+			t.start();
+			
+			return false;
+		}
+
+		function attachWindow() {
+			log("Before window attach.");
+			attachedWindowRef = window.open('', 'popupWindow', 'width=100,height=100,toolbar=no,status=no');
+			log("After window attach.");
+			
+			log("URL of attached window: " + attachedWindowRef.document.location);
+			
+			checkState();
+			return false;
+		}
+
+		function onloadCallback() {
+			windowState = "open";
+		}
+		
+		function onunloadCallback(unloadedWindow) {
+			log("Callback for onunload, unloadedWindow.closed=" + unloadedWindow.closed);
+			windowState = "closed";
+
+			var timer = function() {
+				if (! lock('callback')) {
+					// Simulated wait by re-scheduling the timer function.
+					log("Waiting for lock in onunloadCallback.");
+					window.setTimeout(timer, 1);
+					return;
+				}
+				try {
+					if (unloadedWindow.closed) {
+						log("Unloaded window was closed.");
+					} else {
+						log("Unloaded window has been reloaded.");
+					}
+				} finally {
+					unlock('callback');
+				}				
+			}
+			window.setTimeout(timer, 0);
+		}
+
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+		
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+		
+		function handleOnLoad() {
+			log("Main onload() called.");
+			return true;
+		}
+
+		function checkState() {
+			log("Window callback state: " + windowState);
+			if (windowRef != null) {
+				// For a closed window, IE does not allow to access any properties but 'closed'. 
+				log("Window properties: closed=" + windowRef.closed + (windowRef.closed ? "" : ", name=" + windowRef.name));
+			}
+			if (attachedWindowRef != null) {
+				log("Attached window properties: closed=" + attachedWindowRef.closed + (attachedWindowRef.closed ? "" : ", name=" + attachedWindowRef.name));
+			}
+			return false;
+		}
+		
+		function resetState() {
+			windowState = "undefined";
+			if (windowRef != null && windowRef.closed) {
+				windowRef = null;
+			}
+			return checkState();
+		}
+	</script>
+</head>
+
+<body onload="return handleOnLoad();">
+
+	<h2>Action triggers</h2>
+	
+	<p>
+	<a href="#" onclick="return openWindow();">Open window!</a>
+	</p>
+	
+	<p>
+	<a href="#" onclick="return attachWindow();">Reattach window!</a>
+	</p>
+	
+	<p>
+	<a href="#" onclick="return checkState();">Check window state!</a>
+	</p>
+	
+	<p>
+	<a href="#" onclick="return resetState();">Reset window state!</a>
+	</p>
+	
+	<p>
+	<a href="#" onclick="return clearConsole();">Clear console!</a>
+	</p>
+	
+	<p>
+		<button id="lock-button" onclick="return handleLockClick(this);">Unlocked</button>
+	</p>
+	
+	<h2>Console output</h2>
+	
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+</body>
+
+</html>

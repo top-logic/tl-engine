@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<chart xmlns:config="http://www.top-logic.com/ns/config/6.0" config:interface="com.top_logic.reporting.flex.search.chart.SearchResultChartConfig" columns="name,structureReverse,stringInBAndC,isAssignable" type="DemoTypes.C.All">
+	<data-source class="com.top_logic.reporting.flex.chart.config.datasource.MetaElementObjectProducer" type="DemoTypes.C.All" />
+	<model-preparation class="com.top_logic.reporting.flex.chart.config.model.DefaultModelPreparation">
+		<aggregations/>
+		<partitions>
+			<partition class="com.top_logic.reporting.flex.chart.config.partition.DateAttributePartition" meta-attribute="DemoTypes.C.All#dependentDate" period="YEAR"/>
+			<partition class="com.top_logic.reporting.flex.chart.config.partition.BooleanValuePartition" meta-attribute="DemoTypes.C.All#isAssignable"/>
+		</partitions>
+	</model-preparation>
+	<chart-builder class="com.top_logic.reporting.flex.chart.config.chartbuilder.time.TimeSeriesChartBuilder" >
+		<domain-axis class="com.top_logic.reporting.flex.chart.config.axis.PeriodAxisBuilder" />
+		<color-provider class="com.top_logic.reporting.flex.chart.config.color.OrderedColorProvider">
+			<colors>
+				<color value="#ff0000"/>
+				<color value="#00ff00"/>
+				<color value="#0000ff"/>
+				<color value="#ffff00"/>
+				<color value="#ff00ff"/>
+			</colors>
+		</color-provider>
+	</chart-builder>
+</chart>

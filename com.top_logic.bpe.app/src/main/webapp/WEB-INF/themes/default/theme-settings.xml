@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICON_CLIPBOARD_LIST"
+		value="css:fas fa-clipboard-list"
+	/>
+	<icon name="ICON_PEN_FANCY"
+		value="css:fas fa-pen-fancy"
+	/>
+	<icon name="ICON_PLAY"
+		value="css:fas fa-play"
+	/>
+	<icon name="ICON_QRCODE"
+		value="css:fas fa-qrcode"
+	/>
+	<icon name="ICON_TH_LIST"
+		value="css:fas fa-th-list"
+	/>
+</settings>

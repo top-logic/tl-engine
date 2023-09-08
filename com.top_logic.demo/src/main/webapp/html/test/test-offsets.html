@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Testing Absolute Element Positions</title>
+    
+    <link type="text/css" rel="stylesheet" href="../../style/ajax-form.css"/>
+    
+    <script src="../../script/tl/bal.js"></script>
+    <script src="../../script/tl/bal-ff.js"></script>
+	 <script src="../../script/tl/bal-ie.js"></script>
+	
+	<script type="text/javascript">
+		function testElementPosition(){
+		
+			var element = document.getElementById("c2");
+			var topX = 0;
+			var topY = 0;
+
+			//In every cycle of the while loop the next parent is added to the positions.
+			//Is needed for cells in tables.
+			while(element.offsetParent){
+				topX = BAL.getElementX(element);
+				topY = BAL.getElementY(element);
+				log(element.tagName + ": X of the Element: " + topX + "  Y of the Element: " + topY + "OffsetParent: " + element.offsetParent.tagName);
+				element = element.offsetParent;
+			}
+		log(element.tagName + ": X of the Element: " + BAL.getElementX(element) + "  Y of the Element: " + BAL.getElementY(element) );
+		testBALElementPosition();
+		}
+		function testBALElementPosition(){
+			var element =document.getElementById("c2");
+			var coordinates=BAL.getAbsoluteElementPosition(element);
+			var body = document.getElementsByTagName("body");
+			var marker = document.createElement("div");
+			
+			marker.style.width = "5px";
+			marker.style.height= "5px";
+			marker.style.backgroundColor= "blue";
+			marker.style.position = "absolute";
+			document.getElementById("body").appendChild(marker);
+			BAL.setElementX(marker, coordinates.x);
+			BAL.setElementY(marker, coordinates.y);
+			
+			
+		}
+		
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+	</script>
+  </head>
+  <body id="body" onload="testElementPosition();"  onclick = "document.getElementById('div1').style.border = 'solid red 20px'; testElementPosition();" style="margin:50px;">
+  	<h1>Testing Absolute Element Positions</h1>
+		<div id = "div1" style="padding:10px; background-color:yellow; border-color:#FF0000; border:7px; border-style:solid;">
+			<div style="margin:15px; padding:5px;background-color:#FF0000;">
+				<table style="background-color:#00FF00;" >
+					<tr>
+						<th>h1						</th>
+						<th>h2						</th>
+						<th>h3						</th>
+				
+					</tr>
+					<tr>
+						<td>c1						</td>
+						<td id="c2">c2				</td>
+						<td>c3						</td>
+				
+					</tr>
+					
+				</table>
+			</div>
+		</div>
+	<h2>Console output</h2>
+	
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+	
+  </body>
+</html>

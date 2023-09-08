@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<params>
+		<param name="namePrefix"
+			value="themEditor"
+		/>
+		<param name="resPrefix"
+			value="layouts.tl-layout-themeedit.themeEditor"
+		/>
+	</params>
+
+	<layout>
+		<tabInfo label="${resPrefix}.settings.tab"/>
+
+		<editor name="${namePrefix}SettingsForm"
+			applyCommand="applyThemeConfig"
+			model="selection(${namePrefix}ThemeTable)"
+			securityProviderClass="securityRoot"
+			titleKey="${resPrefix}.settings.title"
+		>
+			<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+				formType="com.top_logic.gui.config.ThemeConfig"
+				modelToFormMapping="com.top_logic.layout.themeedit.browser.providers.CopyConfig"
+			>
+				<customizations>
+					<property name="com.top_logic.gui.config.ThemeConfig#id">
+						<annotations>
+							<annotation config:interface="com.top_logic.basic.config.annotation.ReadOnly"/>
+						</annotations>
+					</property>
+					<property name="com.top_logic.gui.config.ThemeConfig#protected">
+						<annotations>
+							<annotation config:interface="com.top_logic.basic.config.annotation.ReadOnly"/>
+						</annotations>
+					</property>
+					<property name="com.top_logic.gui.config.ThemeConfig#path-effective">
+						<annotations>
+							<annotation config:interface="com.top_logic.basic.config.annotation.ReadOnly"/>
+						</annotations>
+					</property>
+					<property name="com.top_logic.gui.config.ThemeConfig#extends">
+						<annotations>
+							<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.Options"
+								fun="com.top_logic.layout.themeedit.browser.providers.theme.AllThemeIds"
+							/>
+						</annotations>
+					</property>
+					<type name="com.top_logic.gui.config.ThemeConfig">
+						<annotations>
+							<annotation config:interface="com.top_logic.basic.config.order.DisplayOrder">
+								<value>
+									<property name="id"/>
+									<property name="path-effective"/>
+									<property name="extends"/>
+									<property name="state"/>
+									<property name="protected"/>
+								</value>
+							</annotation>
+						</annotations>
+					</type>
+				</customizations>
+			</modelBuilder>
+
+			<buttons>
+				<button id="applyThemeConfig"
+					class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeConfigApplyHandler"
+					clique="apply"
+					group="Write"
+				>
+					<executability>
+						<reference rule-id="InEditMode"/>
+					</executability>
+				</button>
+
+				<button id="switchToAJAXEdit"
+					class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					clique="edit"
+				>
+					<executability>
+						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"/>
+						<reference rule-id="NullModelDisabled"/>
+						<reference rule-id="HistoricModelDisabled"/>
+						<reference rule-id="ComponentIsVisible"/>
+						<reference rule-id="InViewMode"/>
+					</executability>
+				</button>
+			</buttons>
+		</editor>
+	</layout>
+</template>

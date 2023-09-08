@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminChecklists"
+	helpIDLegacy="tl.admin.checklist.tabber"
+	titleKey="tl.admin.checklist.tabber"
+>
+	<tabInfo label="tl.admin.checklist.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/model/checklists/checklist.xml"/>
+	</components>
+</securityLayout>

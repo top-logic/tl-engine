@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<chart config:interface="com.top_logic.reporting.flex.search.chart.SearchResultChartConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	type="DemoTypes.A"
+>
+	<data-source class="com.top_logic.reporting.flex.chart.config.datasource.MetaElementObjectProducer" type="DemoTypes.A" />
+	<model-preparation class="com.top_logic.reporting.flex.chart.config.model.DefaultModelPreparation">
+		<aggregations/>
+		<partitions>
+			<partition add-empty="true" class="com.top_logic.reporting.flex.chart.config.partition.MultiClassificationPartition" meta-attribute="DemoTypes.A#checklist"/>
+			<partition class="com.top_logic.reporting.flex.chart.config.partition.BooleanValuePartition" meta-attribute="DemoTypes.A#boolean"/>
+			<partition class="com.top_logic.reporting.flex.chart.config.partition.BooleanValuePartition" meta-attribute="DemoTypes.A#booleanMandatory"/>
+		</partitions>
+	</model-preparation>
+	<chart-builder class="com.top_logic.reporting.flex.chart.config.chartbuilder.spider.SpiderChartBuilder" >
+		<default-series>
+			<serie color="#ff0000" alpha="0.5" />
+			<serie color="#ffff00" alpha="0.5" />
+			<serie color="#0000ff" alpha="0.5" />
+			<serie color="#00ff00" alpha="0.5" />
+		</default-series>
+	</chart-builder>
+</chart>

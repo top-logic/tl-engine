@@ -1,0 +1,66 @@
+<h2>Syntax</h2>
+<pre>	<code>$fun($a0, $a1, ..., $an)
+
+$fun.apply($a0, $a1, ..., $an)</code>
+</pre>
+<h2>Description</h2>
+<p>Evaluates the <code class="hljs inlineCode">fun</code> function and passes the result of the evaluations of the <code class="hljs inlineCode">a1, ..., an</code> expressions as arguments.</p>
+<p>The syntax with the explicit <code class="hljs inlineCode">apply(...)</code> may only be used for <a class="tlObject" data-custom="true" href="?page=Functions&amp;uuid=8f4a805f-125a-4905-8df3-65aa54e20947">user-defined functions</a> defined in the same script. Expressions like <code class="hljs inlineCode">date.apply(2015, 8, 6)</code> are not possible.</p>
+<p>When using a function, the function can be called on the first argument or the first argument is written with in the brackets:</p>
+<pre><code>3.14.round(1)</code></pre>
+<p>is equivalent to</p>
+<pre><code>round(3.14, 1)</code></pre>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>fun</td>
+   <td>Function</td>
+   <td>A function to be executed.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>a</td>
+   <td>number/string/boolean/object/collection</td>
+   <td>One or more parameters to pass to the function.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Examples</h2>
+<h3>Function with one parameter</h3>
+<pre>	<code>{
+   myFunc = x -&gt; 5 * $x;
+   $myFunc.apply(8);
+}</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong>40</p>
+<p>The function receives the number 8 as parameter and multiplies it by 5.</p>
+<h3>Function with two parameters</h3>
+<pre>	<code>{
+   myFunc = x -&gt; y -&gt; $x * $y;
+   $myFunc.apply(8, 2);
+}</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong>16</p>
+<p>Multiplies the two parameters 8 and 2 with each other.</p>
+<h3>Direct function application without function variable (apply)</h3>
+<pre>	<code>(x -&gt; y -&gt; $x * $y).apply(8,3)</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong>24</p>
+<p>Functions do not have to be stored in a variable to be called. Apply can also be called directly.</p>
+<h3>Direct function application without function variable</h3>
+<pre>	<code>(x -&gt; y -&gt; $x * $y)(8,3)</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong>24</p>

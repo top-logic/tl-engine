@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<objectlist>
+
+<knowledgeobject object_type="Person" object_name="Person:guest_en">
+	<ko_attribute att_name="name" att_value="guest_en"/>
+	<ko_attribute att_name="locale" att_value="en_EN_dynamic"/>
+	<ko_attribute att_name="dataDeviceID" att_value="defaultDataAccessID"/>
+	<ko_attribute att_name="authDeviceID" att_value="defaultAuthenticationID"/>		
+</knowledgeobject>
+
+<knowledgeobject object_type="Group" object_name="Group:guest_en">
+	<ko_attribute att_name="name" att_value="guest_en"/>
+	<ko_attribute att_name="isSystem" att_value="true"/>		
+</knowledgeobject>
+
+<knowledgeassociation object_type="definesGroup" object_name="definesGroup:guest_en">
+	<ko_attribute att_name="source" att_value="Person:guest_en"/>
+	<ko_attribute att_name="dest" att_value="Group:guest_en"/>
+</knowledgeassociation>
+
+<knowledgeobject object_type="Person" object_name="Person:dau">
+	<ko_attribute att_name="name" att_value="dau"/>
+	<ko_attribute att_name="locale" att_value="de_DE_dynamic"/>
+	<ko_attribute att_name="dataDeviceID" att_value="defaultDataAccessID"/>
+	<ko_attribute att_name="authDeviceID" att_value="defaultAuthenticationID"/>		
+</knowledgeobject>
+
+<knowledgeobject object_type="Group" object_name="Group:dau">
+	<ko_attribute att_name="name" att_value="dau"/>
+	<ko_attribute att_name="isSystem" att_value="true"/>		
+</knowledgeobject>
+
+<knowledgeassociation object_type="definesGroup" object_name="definesGroup:dau">
+	<ko_attribute att_name="source" att_value="Person:dau"/>
+	<ko_attribute att_name="dest" att_value="Group:dau"/>
+</knowledgeassociation>
+
+<knowledgeobject object_type="Person" object_name="Person:dummy">
+	<ko_attribute att_name="name" att_value="dummy"/>
+	<ko_attribute att_name="locale" att_value="en_EN_dynamic"/>
+	<ko_attribute att_name="dataDeviceID" att_value="defaultDataAccessID"/>
+	<ko_attribute att_name="authDeviceID" att_value="defaultAuthenticationID"/>		
+</knowledgeobject>
+
+<knowledgeobject object_type="Group" object_name="Group:dummy">
+	<ko_attribute att_name="name" att_value="dummy"/>
+	<ko_attribute att_name="isSystem" att_value="true"/>		
+</knowledgeobject>
+
+<knowledgeassociation object_type="definesGroup" object_name="definesGroup:dummy">
+	<ko_attribute att_name="source" att_value="Person:dummy"/>
+	<ko_attribute att_name="dest" att_value="Group:dummy"/>
+</knowledgeassociation>
+
+<knowledgeobject object_type="Person" object_name="Person:guest_de">
+	<ko_attribute att_name="name" att_value="guest_de"/>
+	<ko_attribute att_name="locale" att_value="de_DE_dynamic"/>
+	<ko_attribute att_name="dataDeviceID" att_value="defaultDataAccessID"/>
+	<ko_attribute att_name="authDeviceID" att_value="defaultAuthenticationID"/>		
+</knowledgeobject>
+
+<knowledgeobject object_type="Group" object_name="Group:guest_de">
+	<ko_attribute att_name="name" att_value="guest_de"/>
+	<ko_attribute att_name="isSystem" att_value="true"/>		
+</knowledgeobject>
+
+<knowledgeassociation object_type="definesGroup" object_name="definesGroup:guest_de">
+	<ko_attribute att_name="source" att_value="Person:guest_de"/>
+	<ko_attribute att_name="dest" att_value="Group:guest_de"/>
+</knowledgeassociation>
+
+</objectlist>

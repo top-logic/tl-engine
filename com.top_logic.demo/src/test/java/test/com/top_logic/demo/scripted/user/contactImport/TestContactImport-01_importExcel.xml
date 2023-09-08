@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Navigate"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Fach. Administration"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Fach. Administration > Personen"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Import"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Importieren..."
+					command-name="displayDialog_DemoPersonImportImportEVA"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportInputStep"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Art des Importes"
+									field-name="_importer"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="personExcel"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportInputStep"
+						tab-path=""
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Datei auswählen"
+									field-name="uploadField"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+								base64data="UEsDBBQABgAIAAAAIQCEfXCndgEAACAGAAATAAgCW0NvbnRlbnRfVHlwZXNdLnhtbCCiBAIooAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADMVMtqwzAQvBf6D0bXYitJoZQSJ4c-jm2g6Qco1joWkSWhVdLk77tWHpTiJoQY2osXW7sz413tDMfrWicr8KisyVk_67EETGGlMvOcfUxf0nuWYBBGCm0N5GwDyMaj66vhdOMAE6o2mLMqBPfAORYV1AIz68DQSWl9LQK9-jl3oliIOfBBr3fHC2sCmJCGBoONhk9QiqUOyfOaPm-VeNDIksdtYsOVM-GcVoUIpJSvjPzBku4YMqqMOVgphzckg_FWhubkd4Jd3Ru1xisJyUT48CpqksHXmn9av5hZu8iOg7SotGWpCpC2WNbUgQydByGxAgi1zmLMaqHMXvcR_piMPIZ-x0Ka_4vAZ-oY_BMdt3-kI9D9Bx6fl48kwpwYAIaNBuz6GkbQU8yV8CDfgyen6FzAd-wTOoKYUQd4DF2vQQQ9xk97PPHWITmah_OnsLespjp1BAQ-KDiYVtvyHxjJDS8eOzR-K0G2cPPo76MvAAAA__8DAFBLAwQUAAYACAAAACEAtVUwI_QAAABMAgAACwAIAl9yZWxzLy5yZWxzIKIEAiigAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKySTU_DMAyG70j8h8j31d2QEEJLd0FIuyFUfoBJ3A-1jaMkG92_JxwQVBqDA0d_vX78ytvdPI3qyCH24jSsixIUOyO2d62Gl_pxdQcqJnKWRnGs4cQRdtX11faZR0p5KHa9jyqruKihS8nfI0bT8USxEM8uVxoJE6UchhY9mYFaxk1Z3mL4rgHVQlPtrYawtzeg6pPPm3_XlqbpDT-IOUzs0pkVyHNiZ9mufMhsIfX5GlVTaDlpsGKecjoieV9kbMDzRJu_E_18LU6cyFIiNBL4Ms9HxyWg9X9atDTxy515xDcJw6vI8MmCix-o3gEAAP__AwBQSwMEFAAGAAgAAAAhAN4J_SgCAQAA1AMAABoACAF4bC9fcmVscy93b3JrYm9vay54bWwucmVscyCiBAEooAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALyTz2rDMAzG74O9g9F9cZJuZZQ6vYxBr1v3ACZR4tDENpb2J28_k0O6QMkuoReDJPx9P9Cn_eGn78QXBmqdVZAlKQi0pata2yj4OL0-PIMg1rbSnbOoYECCQ3F_t3_DTnP8RKb1JKKKJQWG2e-kpNJgrylxHm2c1C70mmMZGul1edYNyjxNtzL81YBipimOlYJwrDYgToOPzv9ru7puS3xx5WePlq9YyG8XzmQQOYrq0CArmFokx8kmicQgr8PkN4bJl2CyG8NkSzDbNWHI6IDVO4eYQrqsatZegnlaFYaHLoZ-CgyN9ZL945r2HE8JL-5jKcd32oec3WLxCwAA__8DAFBLAwQUAAYACAAAACEAmdKITyYCAABlBAAADwAAAHhsL3dvcmtib29rLnhtbKRUy27bMBC8F-g_ELzbetgxWsNy0MQJ6ksQtGl8ERBQ1MoiwldJKk7-Pkupjo26BVL0Iu6Si-HuzFCL82clyRM4L4wuaDZOKQHNTS30tqA_7q5HnyjxgemaSaOhoC_g6fny44fFzrjHyphHggDaF7QNwc6TxPMWFPNjY0HjSWOcYgFTt028dcBq3wIEJZM8TWeJYkLTAWHu3oNhmkZwWBneKdBhAHEgWcD2fSus36Mp_h44xdxjZ0fcKIsQlZAivPSglCg-X2-1caySOPZzdrZHxvAEWgnujDdNGCNUMjR5Mm-WJlk2jLxcNELC_UA7YdbeMBVvkZRI5sNVLQLUBZ1hanZw2MAmXGcvOiHxNJtO85Qmyzcpbh2poWGdDHcowh4eC_Npns9iJQ71RQZwmgW4NDogh7_Y_1--euzL1qA65Bv87IQDNEWkbbnAL-NzVvlbFlrSOVnQ1bxcwRNIY6OOZTSTt4yDLy833x_SSYk8joOxD9JsBR_XoEy5gwqZKjdXF6P1zXUplDUurFhg5ZE07FT3fxCH8chSgjQNowzx75QtF9H49wJ2_kB-TMnzRuja7FC5FB_SyyGjZNefbEQd2oLmaRYNNex9BbFtA8qU5p97PZMj-P654DX9SnRvkztWgZSQ4cuMj2kdvYDGmAsM3LrO4gx_qM-P6jF-q8__Uj85qsf4rX7Sc7RvjDPJ0Xhx6RuZns3yvoNk_4dYvgIAAP__AwBQSwMEFAAGAAgAAAAhAIOv6uONBgAA4xsAABMAAAB4bC90aGVtZS90aGVtZTEueG1s7FnNbhs3EL4X6DsQe08s2ZJjGZEDS5biNnFi2EqKHKkVtcuYu1yQlB3diuRYoEDRtOilQG89FG0DJEAv6dO4TdGmQF6hQ3IlkRYV24mB_sUGbIn7cTicn48z3KvXHmQMHRIhKc-bUfVyJUIkj_mA5kkzutPrXlqLkFQ4H2DGc9KMxkRG1zbef-8qXlcpyQiC-blcx80oVapYX1qSMQxjeZkXJIdnQy4yrOCrSJYGAh-B3IwtLVcqq0sZpnmEcpyB2NvDIY0J6mmR0cZEeIfB11xJPRAzsa9FE2-GwQ4Oqhohx7LNBDrErBnBOgN-1CMPVIQYlgoeNKOK-YmWNq4u4fVyElML5jrzuuannFdOGBwsmzVF0p8uWu3WGle2pvINgKl5XKfTaXeqU3kGgOMYdmp1cWXWumvV1kSmA7If52W3K_VKzcc78lfmdG60Wq16o9TFCjUg-7E2h1-rrNY2lz28AVl8fQ5fa22226se3oAsfnUO373SWK35eANKGc0P5tDaod1uKX0KGXK2HYSvAXytUsJnKIiGaXTpJYY8V4tiLcP3uegCQAMZVjRHalyQIY4hits46wuKI1TgnEsYqCxXupUV-Kt_a-ZTTS-P1wl25tmhWM4NaU2QjAUtVDP6EKRGDuTV8-9fPX-KXj1_cvzw2fHDn44fPTp--KOV5U3cxnniTnz57Wd_fv0x-uPpNy8ffxHGSxf_6w-f_PLz52Eg5Nds_y--fPLbsycvvvr09-8eB-CbAvddeI9mRKJb5Ajt8Qz2Zgzja0764nwzeimm3gycguyA6I5KPeCtMWYhXIv4xrsrgFpCwOuj-56u-6kYKRpY-UaaecAdzlmLi6ABbui1HAv3RnkSXlyMXNwexoehtds491zbGRXAqRCy87Zvp8RTc5fhXOGE5EQh_YwfEBKYdo9Sz647NBZc8qFC9yhqYRo0SY_2vUCaTdqmGfhlHFIQXO3ZZucuanEW2vUWOfSRkBCYBZTvEeaZ8ToeKZyFRPZwxlyD38QqDSm5Pxaxi-tIBZ5OCOOoMyBShubcFrBfx-k3MLBZ0O07bJz5SKHoQUjmTcy5i9ziB-0UZ0VQZ5qnLvYDeQAhitEuVyH4DvczRH8HP-B8obvvUuK5-3QiuEMTT6VZgOgnIxHw5XXC_XwcsyEmhmWA8D0ez2j-OlJnFFj9BKnX35G6PZVOkvomHICh1No-QeWLcP9CAt_Co3yXQM7Mk-g7_n7H39F_nr8X5fLFs_aMqIHDZ3W6qdqzhUX7kDK2r8aM3JSmbpdwPA26MGgaCtNVTpu4IoWPZYvg4RKBzRwkuPqIqnQ_xQWU-FXTgiayFJ1IVHAJlb8ZNs0wOSHbtLcUCnvTqdZ1D2OZQ2K1wwd2eMXtVadiTOeamH54stCKFnDWxVauvN1iVavVQrP5W6sa1Qwpelubbhl8OL81GJxaE-oeBNUSWHkVrgy07tANYUYG2u62j5-4RS99oS6SKR6Q0kd63_M-qhonTWJlEkYBH-m-8xQfOas1tNi3WO0sTnKXqy1YbuK9t_HSpNmeeUnn7Yl0ZLmbnCxHR82oUV-uRyjGRTMaQpsNH7MCvC51qYlZAndVsRI27E9NZhOuM282wmFZhZsTa_e5DXs8UAiptrBMbWiYR2UIsNxcChj9l-tg1ovagI30N9BiZQ2C4W_TAuzou5YMhyRWrrOdEXMrYgAllfKRImI_HRyhPhuJPQzu16EK-xlQCfchhhH0F7ja09Y2j3xyLpPOvVAzODuOWZHikm51ik4y2cJNHk91MN-stkY92FtQd7O582_FpPwFbcUN4__ZVvR5AhcUKwPtgRhulgVGOl-bERcq5cBCRUrjroBrNcMdEC1wPQyPIajgftv8F-RQ_7c5Z2WYtIY-U-3RBAkK55FKBSG7QEsm-k4RVi3PLiuSlYJMRDnqysKq3SeHhPU0B67qsz1CKYS6YZOSBgzuZPz538sM6ie6yPmnVj42mc9bHujqwJZYdv4Za5GaQ_rOUdAInn2mpprSwWsO9nMetZax5na8XD_zUVvANRPcLiuIiZiKmNmXJfpA7fE94FYE7z5seYUgqi_ZwgNpgrT02IfCyQ7aYNKibMFSVrcXXkbBDXlZ6U7XhSx9k0r3nMaeFmf-cl4uvr76PJ-xSwt7tnYr3YCpIWlPpqgujyaNjHGMecvmvgjj_fvg6C145TBiStqXCQ_gUhG6DPvSApLfOtdM3fgLAAD__wMAUEsDBBQABgAIAAAAIQConPUAvAAAACUBAAAjAAAAeGwvd29ya3NoZWV0cy9fcmVscy9zaGVldDEueG1sLnJlbHOEj8EKwjAQRO-C_xD2btJ6EJGmvYjQq-gHrOm2DbZJyEbRvzfgRUHwNOwO-2anah7zJO4U2XqnoZQFCHLGd9YNGs6nw2oLghO6DifvSMOTGJp6uaiONGHKRzzawCJTHGsYUwo7pdiMNCNLH8hlp_dxxpTHOKiA5ooDqXVRbFT8ZED9xRRtpyG2XQni9Aw5-T_b9701tPfmNpNLPyJUwstEGYhxoKRByveG31LK_CyoulJf5eoXAAAA__8DAFBLAwQUAAYACAAAACEAN7h46HoBAACkAgAAGAAAAHhsL3dvcmtzaGVldHMvc2hlZXQyLnhtbIyST0_zMAzG76_Ed4hyp-lgY2xahxATggMSesWfc5q6bbQkrhKPsW-P22oIaUIipzh2fvHzOKubT-_EB8RkMRRykuVSQDBY2dAU8vXl_vxaikQ6VNphgEIeIMmb9dm_1R7jNrUAJJgQUiFbom6pVDIteJ0y7CBwpsboNXEYG5W6CLoaLnmnLvL8SnltgxwJy_gXBta1NbBBs_MQaIREcJq4_9TaLh1p3vwF53Xc7rpzg75jRGmdpcMAlcKb5WMTMOrSse7PyVSbI3sITvDemogJa8oYp8ZGTzUv1EIxab2qLCvobRcR6kLeTqRarwZz3izs04-96L0uEbd94rEqZN6XqpPa-8Hr5yhKneAO3butqOWh8kwrqPXO0X_cP4BtWuLTGavpRS2rwwaSYTcZnF3MvtvYaNL8TqcbeNKxsSEJB_VQNZcijpg84z1h19-dX8-n-WQ2ny7GdSVFiUTof0m2_BuAp55nl1LUiHQMenXf_2v9BQAA__8DAFBLAwQUAAYACAAAACEAN7h46HoBAACkAgAAGAAAAHhsL3dvcmtzaGVldHMvc2hlZXQzLnhtbIyST0_zMAzG76_Ed4hyp-lgY2xahxATggMSesWfc5q6bbQkrhKPsW-P22oIaUIipzh2fvHzOKubT-_EB8RkMRRykuVSQDBY2dAU8vXl_vxaikQ6VNphgEIeIMmb9dm_1R7jNrUAJJgQUiFbom6pVDIteJ0y7CBwpsboNXEYG5W6CLoaLnmnLvL8SnltgxwJy_gXBta1NbBBs_MQaIREcJq4_9TaLh1p3vwF53Xc7rpzg75jRGmdpcMAlcKb5WMTMOrSse7PyVSbI3sITvDemogJa8oYp8ZGTzUv1EIxab2qLCvobRcR6kLeTqRarwZz3izs04-96L0uEbd94rEqZN6XqpPa-8Hr5yhKneAO3butqOWh8kwrqPXO0X_cP4BtWuLTGavpRS2rwwaSYTcZnF3MvtvYaNL8TqcbeNKxsSEJB_VQNZcijpg84z1h19-dX8-n-WQ2ny7GdSVFiUTof0m2_BuAp55nl1LUiHQMenXf_2v9BQAA__8DAFBLAwQUAAYACAAAACEAdl2CJ7wDAABFDQAAGAAAAHhsL3dvcmtzaGVldHMvc2hlZXQxLnhtbJRX246jOBB9X2n_AfE-XALpXJRkNAlB2w8rjWZvzw44idWAWdvpdP_9lp0O2MVkRfdDk3AOp-qUXaay-vpWV94rFZLxZu3HQeR7tCl4yZrT2v_rz_zL3PekIk1JKt7Qtf9Opf918-svqysXL_JMqfJAoZFr_6xUuwxDWZxpTWTAW9oAcuSiJgq-ilMoW0FJaR6qq3ASRU9hTVjj3xSWYowGPx5ZQTNeXGraqJuIoBVRkL88s1be1epijFxNxMul_VLwugWJA6uYejeivlcXy-dTwwU5VOD7LU5Jcdc2XwbyNSsEl_yoApALb4kOPS_CRQhKm1XJwIEuuyfoce1_i5d5HPvhZmUK9DejV2l99hQ5_EErWihawjr5nq7_gfMXTXyGWxFISkPQkqRQ7JXuaFWt_XwKS_ivCQIfIUDYRbA_36PlZsW-C-9AJN3x6h9WqjOEhJ1R0iO5VOoHv_5G2ems4C5om2osy_eMygLWBFIJJiZOwSsQhf9ezWBzTaCm5M1crx-ak2A6i5IY6F5xkYrX92A6ze7B9ONBuN4fnAaT-TSePuknD1SqnOlk_lcFmCY8XO8q8yBOoxEa4c2JKVtGFNmsBL96sF8homyJ3v3x8ulRJcCJ5n4DMiQpYZ1eN8liFb5C9YsPcGuDkYvtbCx2sczBnlxw74AzF8wdcN6BIVjr_MGSjfcH5M5fijxsHXCKDDogMpHpHEylO_EYFW8_pEx6imMo-YShLZB7QyhlG0N2Mh3EzXiCyrEfUhJEyZ3o_eI5dqAjxq8PkHs7aB9tHRB5tTG8OjoD5BVJ74eUBFFyJ_oDr_oUG91rQO69TlCv2SDqip2N9U1hGjjTGSCvSHo_pCSIok_jPrUHXuEsGe11C-ROEHXGzsZitMMyHQX5SdAJMqQkiJLbIdIedPbp7DN-gNy3OtopOwdEpc10GGQoRYaGlARRcjvEI0N6Khq7GbdA7g9-1Fs2FqPSZjoK8oPOmv2QkiBKbod45GfxGT9AfrxANogPRh0F-cGvrCElQZTcjvDIj55Wxi-QZveO0H7YOSg-_0wg5AmdKfufcJLB29hOIe1TcNoI5sPPuHLe8Pidq7U6z7iRTCDkCp2G-59wEsTRA6112GFXtzn0NlC15ER_J-LEGulV9GimSGhEcRszo0A3JW_1bDmbz9Ions7Sxe0Pzp8DVzA7PgDP8JuDwvwVBfBGPXKu7l9gxIShuqLfiVDSK_hFz64xjGfdXU8sWbn2xXNpBvOwp8Po1v0A2vwHAAD__wMAUEsDBBQABgAIAAAAIQBDIhInmQEAAK4FAAAUAAAAeGwvc2hhcmVkU3RyaW5ncy54bWyElN9OwjAUxu9NfIemVxKBbfzHbCMRNFGCMQE18a6OA2vStdh2Rt7NO1_MIl7Ytbrd9ft97Tn9lp548l4w9AZSUcETHLVDjIBnYk35NsEPq-vWCCOlCV8TJjgkeA8KT9LTk1gpjcxerhKca727CAKV5VAQ1RY74IZshCyINku5DdROAlmrHEAXLOiE4SAoCOUYZaLkOsF9U6Xk9LWE6VHojXAaK5rGOr0jWc5JAXGg0zg4aEf9UUifvKBZToBV3TMKGmRVXXx-aF0Vr8y5VW1OpHPkMssLuna2zxkplVMIqFv93tfSk2Cb6u4bvnWuf1kqkzbnbqW9W-lZMOa5vXihzq1WwGAjnGOnOThtnffG6Cwahg0UheaLqq1UeKeGd2t4r4b3a_ighg9r-KiGj__nUejlgyjsNNBwPO62oj8itCz-FC2LP0jL4s_SsvjjtCz-RC2LP1TL4s_Vsvij_W1x011R7RkDsl39CzO6Y21knphLpF__nhpN5JsTP8g7LgoinWFxCxvnWS0PxiayUWDmbfoFAAD__wMAUEsDBBQABgAIAAAAIQBE_afPmwIAAAEGAAANAAAAeGwvc3R5bGVzLnhtbKRU227bMAx9H7B_EPTu-tI4SwLbxdLUQIEOKJAO2Ktiy4lQXTxJ7pIN-_dStmO76LBbXyySpo4ODyklV0fB0RPVhimZ4vAiwIjKQpVM7lP8-SH3FhgZS2RJuJI0xSdq8FX2_l1i7InT7YFSiwBCmhQfrK1Xvm-KAxXEXKiaSvhTKS2IBVfvfVNrSkrjNgnuR0Ew9wVhEncIK1H8DYgg-rGpvUKJmli2Y5zZU4uFkShWt3upNNlxoHoMZ6Q4Y7fOK3jBCq2MquwFwPmqqlhBX7Nc-ksfkLKkUtIaVKhGWtAKoN0Jq0epvsnc_XLBLitLzHf0RDhEQuxnSaG40siCMkCsjUgiaJdxTTjbaebSKiIYP3XhyAVaMfs8waA0F_Qdj34xsIlxPrCKHAEIZAmoY6mWOTiotx9ONRwvoZEdTJv3h-y9Jqcwiicb_PbALNkpXcLgjHqcQ1nCaWWBqGb7g1utquG7U9aCyllSMrJXknBXSgcyGFBOQTnfuuH6Ur3APlZINiIX9rZMMYypE-FsQiG92eF1jsOfonXYE1gn1r_DomM14L9hN_raKEvvNa3YsZ-Jli3wm4jwQoKhGOSmJ8Xb9mLqEiaxp4R2DeOWyV8IAKjlcZQ0cB217qa0Yg_ngLIlrUjD7cPwM8Wj_YmWrBHRkHXPnpRtIVI82neu8-HcnUGP9s7AuMKKGs1S_ONm_WG5uckjbxGsF97sksbeMl5vvHh2vd5s8mUQBdc_Jxf3Dde2fV6gyeFsZThcbt0X25e4HWOg5uh09NuZB9pT7stoHnyMw8DLL4PQm83JwlvML2Mvj8NoM5-tb-I8nnCP_497GPhh2L2Njny8skxQzuS5V-cOTaPQJHB_U4R_7oQ_vt3ZMwAAAP__AwBQSwMEFAAGAAgAAAAhAJpAibS7AQAAhAMAABAACAFkb2NQcm9wcy9hcHAueG1sIKIEASigAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAnJPBbtswDIbvA_YOhu6NnKQbhkBW0aUdeujQAHF7V2Q6ESZLhsgY8Z5nb7IXm2wvidMVPexG8qd_fyIlcXOobNJAQONdxqaTlCXgtC-M22bsOf929YUlSMoVynoHGWsB2Y38-EGsgq8hkAFMooXDjO2I6gXnqHdQKZxE2UWl9KFSFNOw5b4sjYY7r_cVOOKzNP3M4UDgCiiu6pMhGxwXDf2vaeF1x4cveVtHYClyT8rmpgKZCn5OxG1dW6MVxdPL70YHj76k5P6gwQo-FkWkXoPeB0Nt5zFOxVorC8v4Q1kqiyD4uSAeQHXDXCkTUIqGFg1o8iFB8zOOc8aSjULoMDPWqGCUo4jbtQ1JH9saKcjbsAFDuLG_fxFBEDx2DUofjj8Yx-ZazvuGGFw2dgYDTRQuOXNDFvCpXKlAb2DPx9g9wwA94ORqA9bCdEx4Yv0rzt4TB97x2fqZRcpXXEtf1cq18usejQPE5CneyX6bybpFggoFP_aIR-N-4HOd-ztFcNzUZVGsdypAEZd72uSpIB7ikoLtTJY75bZQHHv-Fbp79TI8Kjn9NEnnabwyo5rg5-cj_wAAAP__AwBQSwMEFAAGAAgAAAAhAGGcC7FBAQAAZQIAABQAAAB4bC90YWJsZXMvdGFibGUxLnhtbHSRUU_CMBSF3038D03fpQMVDWEjhmSJifAg6HvZ7liTtndp70T-vd3mAHU-9vQ7veeezhefRrMPcF6hjfl4FHEGNsNc2X3M37bpzSNnnqTNpUYLMT-C54vk-mpOcqeBBbf1MS-JqpkQPivBSD_CCmy4KdAZSeHo9sJXDmTuSwAyWkyiaCqMVJYzlYexnFlpwutbuQOtIZxz5Sstj-tfsoMi5k_jWToODCFJ7V_xsCnxENJHPJnLmjBVmsCxS1YkXeAl6tpYzzKsLcV8GhztIp3ehnk4hVEEmv90tsSkJ9YyK5vgQ9BtD72j-4-565kV7tTgqPtTGNBQoB2aNO2ZZQlFA4iLlfz3ghs6ani2BZ6b1tCKK8hVbcJOPrSYKuepK6Pps9Ve5B-p6ZycqiD8ffiIxtmZTmp0DpJ8AQAA__8DAFBLAwQUAAYACAAAACEAHygCBF8BAABvAgAAEQAIAWRvY1Byb3BzL2NvcmUueG1sIKIEASigAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfJLfToMwGMXvTXwH0muh_HG4NcCSucwbl5iI0XjXtN-2Riik7WR7H9_EF7PAhhiNl-0536_nfGkyP5SF8w5Ki0qmKPB85IBkFRdym6KnfOVOkaMNlZwWlYQUHUGjeXZ5kbCasErBg6pqUEaAdixJasLqFO2MqQnGmu2gpNqzDmnFTaVKauxRbXFN2RvdAg59P8YlGMqpobgFuvVARCckZwOy3quiA3CGoYASpNE48AL87TWgSv3nQKeMnKUwx9p2OsUdsznrxcF90GIwNk3jNVEXw-YP8Mv6_rGr6grZ7ooByhLOCFNATaWytWA7CoVz9_khdQEqwSOxXWRBtVnbnW8E8MUxW-zbzV05SyoFFAn-7bD0rkz_BHDHxiN9mbPyHN0u8xXKQj-IXf_G9ae5H5PrGZnMXtsAP-bbuP1FeYrxP9HiIjcM8iAmUUwm4Yh4BmRd7p9fJPsCAAD__wMAUEsBAi0AFAAGAAgAAAAhAIR9cKd2AQAAIAYAABMAAAAAAAAAAAAAAAAAAAAAAFtDb250ZW50X1R5cGVzXS54bWxQSwECLQAUAAYACAAAACEAtVUwI_QAAABMAgAACwAAAAAAAAAAAAAAAACvAwAAX3JlbHMvLnJlbHNQSwECLQAUAAYACAAAACEA3gn9KAIBAADUAwAAGgAAAAAAAAAAAAAAAADUBgAAeGwvX3JlbHMvd29ya2Jvb2sueG1sLnJlbHNQSwECLQAUAAYACAAAACEAmdKITyYCAABlBAAADwAAAAAAAAAAAAAAAAAWCQAAeGwvd29ya2Jvb2sueG1sUEsBAi0AFAAGAAgAAAAhAIOv6uONBgAA4xsAABMAAAAAAAAAAAAAAAAAaQsAAHhsL3RoZW1lL3RoZW1lMS54bWxQSwECLQAUAAYACAAAACEAqJz1ALwAAAAlAQAAIwAAAAAAAAAAAAAAAAAnEgAAeGwvd29ya3NoZWV0cy9fcmVscy9zaGVldDEueG1sLnJlbHNQSwECLQAUAAYACAAAACEAN7h46HoBAACkAgAAGAAAAAAAAAAAAAAAAAAkEwAAeGwvd29ya3NoZWV0cy9zaGVldDIueG1sUEsBAi0AFAAGAAgAAAAhADe4eOh6AQAApAIAABgAAAAAAAAAAAAAAAAA1BQAAHhsL3dvcmtzaGVldHMvc2hlZXQzLnhtbFBLAQItABQABgAIAAAAIQB2XYInvAMAAEUNAAAYAAAAAAAAAAAAAAAAAIQWAAB4bC93b3Jrc2hlZXRzL3NoZWV0MS54bWxQSwECLQAUAAYACAAAACEAQyISJ5kBAACuBQAAFAAAAAAAAAAAAAAAAAB2GgAAeGwvc2hhcmVkU3RyaW5ncy54bWxQSwECLQAUAAYACAAAACEARP2nz5sCAAABBgAADQAAAAAAAAAAAAAAAABBHAAAeGwvc3R5bGVzLnhtbFBLAQItABQABgAIAAAAIQCaQIm0uwEAAIQDAAAQAAAAAAAAAAAAAAAAAAcfAABkb2NQcm9wcy9hcHAueG1sUEsBAi0AFAAGAAgAAAAhAGGcC7FBAQAAZQIAABQAAAAAAAAAAAAAAAAA-CEAAHhsL3RhYmxlcy90YWJsZTEueG1sUEsBAi0AFAAGAAgAAAAhAB8oAgRfAQAAbwIAABEAAAAAAAAAAAAAAAAAayMAAGRvY1Byb3BzL2NvcmUueG1sUEsFBgAAAAAOAA4AnwMAAAEmAAAAAA"
+								content-type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+								name="PersonContacts.xlsx"
+							/>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.assistent.CommandChain"
+					command-label="Weiter"
+					command-name="commandChain_upload_switchAssistentForward"
+					component-implementation-comment="com.top_logic.importer.dispatching.DispatchingAssistentFileUploadComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportInputStep"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.assistent.CommandChain"
+					command-label="Weiter"
+					command-name="commandChain_processImportFile_switchAssistentForward"
+					component-implementation-comment="com.top_logic.tool.boundsec.assistent.eva.ProcessingComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportProcessStep"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.AwaitProgressActionOp"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportOutputStep"
+					max-sleep="300000"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.assistent.CommandChain"
+					command-label="Fertigstellen"
+					command-name="commandChain_assistentFinish_switchAssistentShow"
+					component-implementation-comment="com.top_logic.tool.boundsec.assistent.eva.OutputComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#DemoPersonImportOutputStep"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Cleanup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Smart"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Jeff"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Mütt"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Erna"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Mütt"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Karl"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Schmidt"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Klaus"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Meier"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Peter"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Wolf"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Inge"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Dieter"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Busemann"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Wolf"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Erna"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Meyer"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Karl"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+							table-name="Contact"
+						>
+							<key-values>
+								<attribute name="name">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Zoller"
+									/>
+								</attribute>
+								<attribute name="firstname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Michael"
+									/>
+								</attribute>
+							</key-values>
+						</selectee>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactFilterTable"
+							tab-path="Administration > Fach. Administration > Personen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.contact.layout.person.PersonContactDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="personContactDelete"
+					component-implementation-comment="com.top_logic.contact.layout.person.EditPersonContactComponent"
+					component-name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

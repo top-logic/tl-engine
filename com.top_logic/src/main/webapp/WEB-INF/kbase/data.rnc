@@ -1,0 +1,37 @@
+##
+## RelaxNG schema for KnowledgeBase instance dumps.
+##
+##
+start =
+	defInstances
+	
+defInstances = 
+	element objectlist {
+		element knowledgeobject {
+			defIdentification,
+
+			defProperty+
+		}+,
+		
+		element knowledgeassociation {
+			defIdentification,
+
+			element ka_src { defIdentification },
+			element ka_dest { defIdentification },
+
+			defProperty*
+		}*
+	}
+	
+defIdentification = 
+	(
+		attribute object_type { text },
+		attribute object_name { text }
+	)
+
+	
+defProperty =
+	element ko_attribute {
+		attribute att_value { text },
+		attribute att_name { text }
+	}

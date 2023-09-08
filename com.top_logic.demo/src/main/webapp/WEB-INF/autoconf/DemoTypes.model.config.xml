@@ -1,0 +1,120 @@
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/DemoTypes.model.xml"/>
+				</declarations>
+				<classifications>
+					<classification name="demo.classification.multi" mode="use" />
+					<classification name="demo.classification.single" mode="use" />
+					<classification name="demo.checklist" mode="use" />
+					<classification name="demo.systemList" mode="use" />
+					<classification name="demo.nonSystemList" mode="use" />
+					<classification name="tl.beacon.three" mode="use" />
+					<classification name="demo.attribute.classifier.global" mode="use" />
+					<classification name="demo.attribute.classifier.local" mode="use" />
+					<classification name="demo.federalstates" mode="use" />
+				</classifications>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="model.DemoTypes.messages" />
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.services.InitialGroupManager">
+			<instance>
+				<groups>
+					<group name="demoTypeAdministrators"/>
+					<group name="demoTypeBAdministrators"/>
+				</groups>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+	            <structures>
+	            	<structure name="DemoTypes"/>
+				</structures>
+				<meta-elements>
+					<meta-element name="DemoTypes:DemoTypes.A" role-root="DemoTypes"/>
+					<meta-element name="DemoTypes:DemoTypes.X" role-root="DemoTypes"/>
+				</meta-elements>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
+			<instance>
+				<meta-objects>
+					<meta-object value="DemoTypes" />
+					<meta-object value="DemoTypesC" />
+				</meta-objects>
+			</instance>
+		</config>
+		
+        <config service-class="com.top_logic.layout.provider.LabelProviderService">
+            <instance>
+                <resource-providers>
+		            <provider kind="MODEL" type="DemoTypes:A" implementation="com.top_logic.element.layout.meta.ConfiguredAttributedTooltipProvider" />
+		            <provider kind="MODEL" type="DemoTypes:C" implementation="com.top_logic.element.layout.meta.ConfiguredAttributedTooltipProvider" />
+                </resource-providers>
+               	<context-menus>
+               		<context-menu kind="MODEL" type="DemoTypes:A" >
+            			<command id="ShowInfo" class="com.top_logic.demo.layout.contextMenu.ShowInfoCommand" clique="help"/>
+               		</context-menu>
+               	</context-menus>
+            </instance>
+        </config>
+        
+		<config service-class="com.top_logic.element.meta.kbbased.filtergen.FilterFactory">
+			<instance>
+				<filters>
+					<filter name="IsAssignable">
+						<filter-by-expression
+							predicate="self -> value -> $value.get(`DemoTypes:DemoTypes.C.All#isAssignable`)"/>
+					</filter>
+				</filters>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.element.boundsec.attribute.AttributeClassifierManager">
+			<instance global-classifications="demo.attribute.classifier.global">
+				<type-classifications>
+					<type-classification type="DemoTypes:DemoTypes.A" classifications="demo.attribute.classifier.local" />
+				</type-classifications>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.event.logEntry.LogEntryConfiguration">
+			<instance>
+				<object-types>
+					<object-type
+						name="DemoTypes.A"
+						display-group="DemoTypes"
+						event-types="%DEFAULT_EVENT_TYPES%" />
+					<object-type
+						name="DemoTypes.B"
+						display-group="DemoTypes"
+						event-types="%DEFAULT_EVENT_TYPES%" />
+				</object-types>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/DemoTypesMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

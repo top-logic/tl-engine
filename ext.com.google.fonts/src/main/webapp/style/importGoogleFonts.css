@@ -1,0 +1,62 @@
+@font-face {
+	font-family: "DroidSans-Bold";
+	src: url("../webfonts/DroidSans-Bold.eot"); /* IE9 compat modes */
+	src: url("../webfonts/DroidSans-Bold.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
+		 url("../webfonts/DroidSans-Bold.woff") format("woff"),
+		 url("../webfonts/DroidSans-Bold.ttf") format("truetype"),
+		 url("../webfonts/DroidSans-Bold.svg#droid_sansbold") format("svg");
+}
+
+@font-face {
+	font-family: "DroidSans";
+	src: url("../webfonts/DroidSans.eot"); /* IE9 compat modes */
+	src: url("../webfonts/DroidSans.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
+		 url("../webfonts/DroidSans.woff") format("woff"),
+		 url("../webfonts/DroidSans.ttf") format("truetype"),
+		 url("../webfonts/DroidSans.svg#droid_sansregular") format("svg");
+}
+
+@font-face {
+	font-family: "DroidSansMono";
+	src: url("../webfonts/DroidSansMono.eot"); /* IE9 compat modes */
+	src: url("../webfonts/DroidSansMono.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
+		 url("../webfonts/DroidSansMono.woff") format("woff"),
+		 url("../webfonts/DroidSansMono.ttf") format("truetype"),
+		 url("../webfonts/DroidSansMono.svg#droid_sans_monoregular") format("svg");
+}
+
+@font-face {
+	font-family: "DroidSerif-Bold";
+	src: url("../webfonts/DroidSerif-Bold.eot"); /* IE9 compat modes */
+	src: url("../webfonts/DroidSerif-Bold.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
+		 url("../webfonts/DroidSerif-Bold.woff") format("woff"),
+		 url("../webfonts/DroidSerif-Bold.ttf") format("truetype"),
+		 url("../webfonts/DroidSerif-Bold.svg#droid_serifbold") format("svg");
+}
+
+@font-face {
+	font-family: "DroidSerif-BoldItalic";
+	src: url("../webfonts/DroidSerif-BoldItalic.eot"); /* IE9 compat modes */
+	src: url("../webfonts/DroidSerif-BoldItalic.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
+		 url("../webfonts/DroidSerif-BoldItalic.woff") format("woff"),
+		 url("../webfonts/DroidSerif-BoldItalic.ttf") format("truetype"),
+		 url("../webfonts/DroidSerif-BoldItalic.svg#droid_serifbold_italic") format("svg");
+}
+
+@font-face {
+	font-family: "DroidSerif-Italic";
+	src: url("../webfonts/DroidSerif-Italic.eot"); /* IE9 compat modes */
+	src: url("../webfonts/DroidSerif-Italic.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
+		 url("../webfonts/DroidSerif-Italic.woff") format("woff"),
+		 url("../webfonts/DroidSerif-Italic.ttf") format("truetype"),
+		 url("../webfonts/DroidSerif-Italic.svg#droid_serifitalic") format("svg");
+}
+
+@font-face {
+	font-family: "DroidSerif-Regular";
+	src: url("../webfonts/DroidSerif-Regular.eot"); /* IE9 compat modes */
+	src: url("../webfonts/DroidSerif-Regular.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
+		 url("../webfonts/DroidSerif-Regular.woff") format("woff"),
+		 url("../webfonts/DroidSerif-Regular.ttf") format("truetype"),
+		 url("../webfonts/DroidSerif-Regular.svg#droid_serifregular") format("svg");
+}

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.3b63cf0f-0ae7-4890-b309-66b844cd7f1d">
+				<en>New Processor</en>
+				<de>Neuer Bearbeiter</de>
+			</title>
+		</title>
+		<open-handler id="ID_f3d6adf2_0a54_42b9_8957_7a577e54b299"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="css:fas fa-plus"
+			target="selection(self())"
+			targetComponent="com.top_logic.demo/technical/components/dropOn/newProcessor/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.3b63cf0f-0ae7-4890-b309-66b844cd7f1d">
+				<en>New Processor</en>
+				<de>Neuer Bearbeiter</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="test.dnd.dropon:Processor"/>
+		<create-handler id="ID_159fb52f_61c3_4f2a_b433_936a37ff18b8">
+			<linkOperation><![CDATA[context -> obj -> {
+  parent = $context == null ? `test.dnd.dropon#ROOT` : $context;
+  switch ($parent.type()) {
+    `test.dnd.dropon:Root`: $parent.add(`test.dnd.dropon:Root#processors`, $obj);
+    default: $parent.add(`test.dnd.dropon:Processor#subprocessors`, $obj);
+  }
+}]]></linkOperation>
+		</create-handler>
+	</arguments>
+</config:template-call>

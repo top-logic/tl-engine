@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0" xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<modules>
+		<module name="tl.util">
+			<types>
+				<!-- Placeholder for an unknown type. -->
+				<datatype name="Any" db_type="varchar" db_size="1333" kind="Custom">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.Object"
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="ANY"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="Color" db_type="varchar" db_size="9" kind="Custom">
+					<storage-mapping class="com.top_logic.element.meta.complex.ColorValueProvider" />
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="COLOR"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="Country" db_type="varchar" db_size="8" kind="Custom">
+					<storage-mapping class="com.top_logic.element.meta.complex.CountryValueProvider" />
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="COUNTRY"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="Language" db_type="varchar" db_size="8" kind="Custom">
+					<storage-mapping class="com.top_logic.element.meta.complex.LanguageValueProvider" />
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="LANGUAGE"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="URL" db_type="varchar" db_size="1333" kind="String">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.String"
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="URL"/>
+					</annotations>
+				</datatype>
+				
+				<datatype name="JSON" db_type="varchar" db_size="1333" kind="Custom">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.JSONStorageMapping" 
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="JSON"/>
+					</annotations>
+				</datatype>
+				<datatype name="Resource" db_type="varchar" db_size="1333" kind="Custom">
+					<storage-mapping
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="com.top_logic.layout.Resource"
+					/>
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="RESOURCE"/>
+					</annotations>
+				</datatype>
+				<datatype name="IconResource" db_type="varchar" db_size="1333" kind="Custom">
+					<storage-mapping
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="com.top_logic.layout.Resource"
+					/>
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="ICON_RESOURCE"/>
+					</annotations>
+				</datatype>
+			</types>
+		</module>
+	</modules>
+</model>

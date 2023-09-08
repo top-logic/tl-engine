@@ -1,0 +1,606 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/demo/create-A.xml"
+					template-name-comment="Create A"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="TestUnicode"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Chinese 海 𠖪 䀖"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teste non-ASCII Zeichen in längenbeschränktem Feld"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="string"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="海海海海海海海海海海"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="string (with length constraint: max 10)"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="海海海海海海海海海海a"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+					comment="Prüfe Längenbeschränkung"
+					user-id="root"
+					validity="ERROR"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="string (with length constraint: max 10)"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+					command-label="Abbrechen"
+					command-name="nothing"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Teste Non-BMP Characters"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="string (with length constraint: max 10)"
+										>
+											<attribute-ref attribute-name="stringLengthConstraint">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="Chinese 海 𠖪 䀖"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="𠖪𠖪𠖪𠖪𠖪"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementApplyHandler"
+							command-label="Übernehmen"
+							command-name="elementApply"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="string (with length constraint: max 10)"
+										>
+											<attribute-ref attribute-name="stringLengthConstraint">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="Chinese 海 𠖪 䀖"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="𠖪𠖪𠖪𠖪𠖪a"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+							user-id="root"
+							validity="ERROR"
+						>
+							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="string (with length constraint: max 10)"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+									tab-path="Strukturen > Typendemo > Typendemo"
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+							command-label="Abbrechen"
+							command-name="nothing"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Teste lange Textfelder"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="ElementSwitchEditCommand"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="string (with length constraint: max 10)"
+										>
+											<attribute-ref attribute-name="stringLengthConstraint">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="Chinese 海 𠖪 䀖"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="text1333"
+										>
+											<attribute-ref attribute-name="text1333">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="Chinese 海 𠖪 䀖"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="text2000"
+										>
+											<attribute-ref attribute-name="text2000">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="Chinese 海 𠖪 䀖"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+								tab-path="Strukturen > Typendemo > Typendemo"
+							/>
+							<field-values>
+								<value>
+									<field-path>
+										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+											field-label-comment="text4000"
+										>
+											<attribute-ref attribute-name="text4000">
+												<type type-name="DemoTypes.A">
+													<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
+														table-name="TLModule"
+													>
+														<key-values>
+															<attribute name="name">
+																<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+																	string="DemoTypes"
+																/>
+															</attribute>
+														</key-values>
+													</scope-ref>
+												</type>
+											</attribute-ref>
+											<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+												structure-name="DemoTypes"
+											>
+												<structure-path>
+													<node name="Chinese 海 𠖪 䀖"/>
+												</structure-path>
+											</self-ref>
+										</field>
+									</field-path>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖"
+									/>
+								</value>
+							</field-values>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+							component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="true"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="string (with length constraint: max 10)"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="true"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="text1333"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="true"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="text2000"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+								raw-value="true"
+							>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="text4000"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+										tab-path="Strukturen > Typendemo > Typendemo"
+									/>
+								</field-name>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+								string="䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖䀖"
+							/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Tear down"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Chinese 海 𠖪 䀖"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Variable/Action-Variable-Alle loeschen.xml"
+					template-name-comment="Variable Alle loeschen"
+				/>
+			</actions>
+		</action>
+	</actions>
+</action>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="Dialog">
+	<dialogInfo
+		image="theme:ICON_PLUS"
+		openHandlerName="createColumn"
+		targetComponent="Form"
+	>
+		<defaultI18n>
+			<de>Neue Spalte hinzufügen</de>
+			<en>Add new column</en>
+		</defaultI18n>
+
+		<executability>
+			<rule class="com.top_logic.tool.execution.ExecutableIfChannelActive"
+				channel="editMode(com.top_logic.element/admin/model/dbAdmin/tables/tableDetailsForm.layout.xml#Form)"
+			/>
+		</executability>
+	</dialogInfo>
+
+	<form name="Form"
+		buttonComponent="Buttons"
+	>
+		<titleKey>
+			<de>Neue Spalte</de>
+			<en>New column</en>
+		</titleKey>
+
+		<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+			context="model(com.top_logic.element/admin/model/dbAdmin/tables/tablesTable.layout.xml#Table)"
+			create="true"
+			createContextType="com.top_logic.dob.schema.config.MetaObjectConfig"
+			formType="com.top_logic.dob.schema.config.PrimitiveAttributeConfig"
+			showNoModel="true"
+		>
+			<customizations>
+				<type name="com.top_logic.dob.schema.config.PrimitiveAttributeConfig">
+					<annotations>
+						<display-order>
+							<value>
+								<property name="att_name"/>
+								<property name="att_type"/>
+								<property name="mandatory"/>
+								<property name="binary"/>
+								<property name="db_name"/>
+								<property name="db_type"/>
+								<property name="db_size"/>
+								<property name="db_prec"/>
+							</value>
+						</display-order>
+						<display-inherited value="IGNORE"/>
+					</annotations>
+				</type>
+
+				<property name="com.top_logic.dob.schema.config.PrimitiveAttributeConfig#att_type">
+					<annotations>
+						<options fun="com.top_logic.dob.attr.AllMOPrimitives"/>
+					</annotations>
+				</property>
+			</customizations>
+		</modelBuilder>
+
+		<buttons>
+			<button id="addColumn"
+				class="com.top_logic.layout.configEdit.AddNewConfiguration"
+				clique="create"
+				group="Create"
+				property="attributes"
+				result="selection(com.top_logic.element/admin/model/dbAdmin/columns/columnsTable.layout.xml#Table)"
+			>
+				<resourceKey>
+					<de>Spalte anlegen</de>
+					<en>Create column</en>
+				</resourceKey>
+
+				<executability>
+					<rule class="com.top_logic.tool.execution.ExecutableIfChannelActive"
+						channel="editMode(com.top_logic.element/admin/model/dbAdmin/tables/tableDetailsForm.layout.xml#Form)"
+					/>
+				</executability>
+			</button>
+		</buttons>
+	</form>
+
+	<buttonbar name="Buttons"/>
+</layout>

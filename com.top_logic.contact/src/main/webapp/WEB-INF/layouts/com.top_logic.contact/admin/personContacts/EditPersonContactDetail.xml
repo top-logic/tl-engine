@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="masterComponent"/>
+		<param name="detailComponentClass"
+			value="com.top_logic.contact.layout.person.EditPersonContactComponent"
+		/>
+		<param name="createComponentClass"
+			value="com.top_logic.contact.layout.person.CreatePersonContactComponent"
+		/>
+		<param name="createDialogWidth"
+			value="430"
+		/>
+		<param name="createDialogHeight"
+			value="240"
+		/>
+		<param name="editCommandGroups"
+			optional="true"
+		/>
+		<param name="editSecurityProvider"
+			value="default"
+		/>
+		<param name="createSecurityProvider"
+			value="securityRoot"
+		/>
+		<param name="createCommandGroups"
+			optional="true"
+		/>
+		<param name="openCreateCommandGroup"
+			value="Create"
+		/>
+		<param name="openCreateHandler"
+			value="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+		/>
+		<param name="jSPPage"
+			value="/jsp/contact/person/editPersonContact.jsp"
+		/>
+		<param name="createJSP"
+			value="/jsp/contact/person/newPersonContact.jsp"
+		/>
+		<param name="additionalDialogs">
+			<!-- No additional dialogs by default -->
+		</param>
+	</params>
+
+	<layout>
+		<components>
+			<component class="${detailComponentClass}"
+				commandGroups="${editCommandGroups}"
+				defaultFor="Contacts:Contact.Person"
+				model="selection(${masterComponent})"
+				name="personContactEdit"
+				page="${jSPPage}"
+				resPrefix="layouts.contact.EditPersonContactDetail.personContactEdit."
+				securityProviderClass="${editSecurityProvider}"
+			>
+				<dialogs>
+					<layout name="addPersonContactDialog">
+						<dialogInfo
+							executability="InViewMode"
+							height="${createDialogHeight}"
+							openHandlerClass="${openCreateHandler}"
+							openerCommandGroup="${openCreateCommandGroup}"
+							width="${createDialogWidth}"
+						/>
+
+						<components>
+							<component class="${createComponentClass}"
+								commandGroups="${createCommandGroups}"
+								model="null()"
+								name="addPersonContact"
+								page="${createJSP}"
+								resPrefix="layouts.contact.EditPersonContactDetail.addPersonContact."
+								securityProviderClass="${createSecurityProvider}"
+							/>
+							<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+						</components>
+					</layout>
+					${additionalDialogs}
+				</dialogs>
+			</component>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

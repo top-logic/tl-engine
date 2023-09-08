@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="filesystem:./src/main/webapp/WEB-INF/test/TestFilepathTemplateAction.xml"
+		>
+			<parameters>
+				<parameter name="name">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="TestResourceTemplateAction_FilesystemProtocol"
+					/>
+				</parameter>
+				<parameter name="type">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Demo A"
+					/>
+				</parameter>
+				<parameter name="booleanMandatory">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="false"
+					/>
+				</parameter>
+				<parameter name="booleanRadioMandatory">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="false"
+					/>
+				</parameter>
+				<parameter name="booleanSelectMandatory">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="false"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp">
+			<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue">
+				<field-name config:interface="com.top_logic.layout.form.FormMemberName">
+					<form-handler-name config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
+						component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+						component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					/>
+					<path>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
+							field-label-comment="Name"
+						>
+							<attribute-ref attribute-name="name">
+								<type type-name="DemoTypes.All">
+									<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+								</type>
+							</attribute-ref>
+							<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
+								structure-name="DemoTypes"
+							>
+								<structure-path>
+									<node name="TestResourceTemplateAction_FilesystemProtocol"/>
+								</structure-path>
+							</self-ref>
+						</node>
+					</path>
+				</field-name>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+				string="TestResourceTemplateAction_FilesystemProtocol"
+			/>
+		</action>
+	</actions>
+</action>

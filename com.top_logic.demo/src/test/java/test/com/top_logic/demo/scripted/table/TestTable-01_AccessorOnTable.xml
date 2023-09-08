@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Test that an accessor set on the table itself is used. If not, the asserts below fail, as the tested cell has null as value."
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+			business-action="Anzeigen"
+			business-object="Sicht"
+		>
+			<parameters>
+				<parameter name="Pfad">
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Technisches Demo > Layout-Framework#1 > Tabellen > Tabelle 1"
+					/>
+				</parameter>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-name="givenName"
+					>
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/layoutDemo1/tables/table1/demoTableComponentContainer.layout.xml#DemoTableComponent"
+								tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Tabelle 1"
+							/>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+							provider-name="com.top_logic.demo.layout.form.demo.model.DemoPersonNaming"
+						>
+							<name>
+								<part key="surname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Haummacher"
+									/>
+								</part>
+								<part key="givenName">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Bernhard"
+									/>
+								</part>
+							</name>
+						</row-object>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Bernhard"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comment=""
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-name="givenName"
+					>
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/layoutDemo1/tables/table1/demoTableComponentContainer.layout.xml#DemoTableComponent"
+								tab-path="Technisches Demo > Layout-Framework#1 > Tabellen > Tabelle 1"
+							/>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+							provider-name="com.top_logic.demo.layout.form.demo.model.DemoPersonNaming"
+						>
+							<name>
+								<part key="surname">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Haummacher"
+									/>
+								</part>
+								<part key="givenName">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+										string="Bernhard"
+									/>
+								</part>
+							</name>
+						</row-object>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="Bernhard"
+					/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

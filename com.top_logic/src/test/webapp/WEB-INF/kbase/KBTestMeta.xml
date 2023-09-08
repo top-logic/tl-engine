@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+	SPDX-FileCopyrightText: 2005 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<!-- MetaObjects used for Testing only
+     See test.com.top_logic.knowledge.service.KBTestMeta
+ -->
+<objectlist 
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+
+<metaobjects>
+
+<metaobject object_type="MOKnowledgeObject" super_class="Object" abstract="true" object_name="AbstractTestType">
+	<annotations xmlns:config="http://www.top-logic.com/ns/config/6.0">
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+			<implementation-factory class="com.top_logic.knowledge.service.db2.StaticKnowledgeObjectFactory" />
+		</annotation>
+	</annotations>
+</metaobject>
+
+<!--  Test various types of mappings from java to DB  -->
+<metaobject object_type="MOKnowledgeObject" object_name="TestDBTypes" super_class="AbstractTestType" db_name="TEST_DB_TYPES">
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="test.com.top_logic.knowledge.wrap.TestDBTypesWrapper"/>
+	</annotation>
+</annotations>
+<attributes>
+  <mo_attribute att_name="string16"         att_type="String"        db_size="16" mandatory="false"/> 
+  <mo_attribute att_name="boolean"          att_type="boolean"       db_size="99" mandatory="false"/>  
+  <mo_attribute att_name="character"        att_type="Character"     db_size="1" mandatory="false" db_name="TL_CHAR"/>  
+  <mo_attribute att_name="byte"             att_type="Byte"          mandatory="false"/>  
+  <mo_attribute att_name="short"            att_type="Short"         mandatory="false"/>  
+  <mo_attribute att_name="int"              att_type="int"           mandatory="false"  db_name="TL_INT"/>  
+  <mo_attribute att_name="long"             att_type="Long"          mandatory="false"  db_name="TL_LONG"/>  
+  <mo_attribute att_name="float"            att_type="float"         mandatory="false"  db_name="TL_FLOAT"/>  
+  <mo_attribute att_name="double"           att_type="double"        mandatory="false"  db_name="TL_DOUBLE"/>  
+  <mo_attribute att_name="javaDate"         att_type="Date"          db_name="JAVA_DATE" mandatory="false"/> 
+  <mo_attribute att_name="dbDate"           att_type="java.sql.Date"        mandatory="false"/> 
+  <mo_attribute att_name="dbTime"           att_type="java.sql.Time"        mandatory="false"/> 
+  <mo_attribute att_name="dbTimestamp"      att_type="java.sql.Timestamp"   mandatory="false"/> 
+  <mo_attribute att_name="string254"        att_type="String"       db_size="254"  mandatory="false" /> 
+  <mo_attribute att_name="string2000"       att_type="String"       db_size="2000" mandatory="false" /> 
+  <mo_attribute att_name="string4000"       att_type="String"       db_size="4000" mandatory="false" /> 
+  <mo_attribute att_name="stringXXL"        att_type="String"         mandatory="false" /> 
+</attributes>
+</metaobject>
+  
+<!-- A Simple Hierarchy -->
+
+<metaobject object_type="MOKnowledgeObject" object_name="TestA" super_class="KnowledgeObject" abstract="true">
+
+<attributes>
+      <mo_attribute att_name="nameA"  att_type="String"  mandatory="false"/> 
+      <mo_attribute att_name="intA"   att_type="int"     mandatory="false"/>  
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="TestB"  super_class="TestA" >
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="test.com.top_logic.knowledge.wrap.TestBWrapper"/>
+	</annotation>
+</annotations>
+<attributes>
+      <mo_attribute att_name="nameB"  att_type="String"  mandatory="false"/> 
+      <mo_attribute att_name="intB"   att_type="int"     mandatory="false"/>  
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="TestC"  super_class="TestA" >
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="test.com.top_logic.knowledge.wrap.FlexTestC"/>
+	</annotation>
+</annotations>
+<attributes>
+      <mo_attribute att_name="nameC"  att_type="String"  mandatory="false"/> 
+      <mo_attribute att_name="intC"   att_type="int"     mandatory="false"/>  
+</attributes>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="TestD"  super_class="TestB" >
+<annotations>
+	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+		<binding application-type="test.com.top_logic.knowledge.wrap.TestDWrapper"/>
+	</annotation>
+</annotations>
+<attributes>
+      <mo_attribute att_name="nameD"  att_type="String"  mandatory="false"/> 
+      <mo_attribute att_name="stringD"  att_type="String"  mandatory="false"/> 
+      <mo_attribute att_name="intD"   att_type="int"     mandatory="false"/>  
+</attributes>
+</metaobject>
+
+<association super_class="Association" object_name="hasTestAssocA" />
+
+<association super_class="Association" object_name="hasTestAssocB">
+<attributes>
+    <mo_attribute att_name="stringAttr" att_type="String" mandatory="false"/>
+    <mo_attribute att_name="intAttr"    att_type="int"    mandatory="false"/>
+</attributes>
+</association>
+
+<association object_name="hasTestAssocC" super_class="hasTestAssocB" >
+<attributes>
+    <mo_attribute att_name="booleanAttr" att_type="boolean" mandatory="false"/>
+</attributes>
+</association>
+
+
+<!-- MetaObjects for Testing Indexes -->
+
+<metaobject object_type="MOKnowledgeObject" object_name="IDXSuper" super_class="AbstractTestType" >
+
+<attributes>
+    <mo_attribute att_name="sattr3"         att_type="String"  mandatory="false"/>
+    <mo_attribute att_name="iattr3"         att_type="Integer" mandatory="false"/>
+</attributes>
+<index>
+    <mo_index name="IDXSuperSattr3idx"  unique="false" inMemory="true">
+<index-parts>
+        <index_part name="sattr3"/>
+</index-parts>
+    </mo_index>
+    <mo_index name="IDXSuperIattr3idx"  unique="false" inMemory="true">
+<index-parts>
+        <index_part name="iattr3"/>
+</index-parts>
+    </mo_index>
+</index>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="IDXTest" super_class="IDXSuper">
+<attributes>
+    <mo_attribute att_name="sattr1"         att_type="String"  mandatory="false"/>
+    <mo_attribute att_name="sattr2"         att_type="String"  mandatory="true"/>
+    <mo_attribute att_name="iattr1"         att_type="Integer" mandatory="false"/>
+    <mo_attribute att_name="iattr2"         att_type="Integer" mandatory="false"/>
+</attributes>
+<index>
+    <mo_index name="IDXTestSattr2idx" db_name="IDX_TEST_SATTR2_IDX">
+<index-parts>
+        <index_part name="sattr2"/>
+</index-parts>
+    </mo_index>
+    <mo_index name="IDXTestIattr2idx" unique="false">
+<index-parts>
+        <index_part name="iattr2"/>
+</index-parts>
+    </mo_index>
+    <mo_index name="IDXTestMattr1idx" unique="false">
+<index-parts>
+        <index_part name="sattr1"/>
+        <index_part name="iattr1"/>
+</index-parts>
+    </mo_index>
+    <mo_index name="IDXTestMattr2idx" unique="false" inMemory="true">
+<index-parts>
+        <index_part name="iattr1"/>
+        <index_part name="sattr1"/>
+</index-parts>
+    </mo_index>
+</index>
+</metaobject>
+
+<!-- Some DBs have different ideas about nulls in Indexes -->
+<metaobject object_type="MOKnowledgeObject" object_name="IDXNullTest" super_class="AbstractTestType" db_name="IDX_NULL_TEST">
+	
+<attributes>
+    <mo_attribute att_name="sattr1"         att_type="String"  mandatory="true"/>
+    <mo_attribute att_name="iattr1"         att_type="Integer" mandatory="true"/>
+</attributes>
+<index>
+    <mo_index name="IDXNullTestidx" unique="true">
+<index-parts>
+        <index_part name="sattr1"/>
+        <index_part name="iattr1"/>
+</index-parts>
+    </mo_index>
+</index>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="IDXCompress"  super_class="AbstractTestType" db_PKeyStorage="true" db_compress="0" db_name="TST_COMPR"  >
+
+<attributes>
+    <!--  ORA-25193: Option COMPRESS kann für einspaltigen Schlüssel nicht benutzt werden  -->
+    <mo_attribute att_name="sattr"         att_type="String"  mandatory="false" />
+    <mo_attribute att_name="iattr"         att_type="Integer" mandatory="false" />
+</attributes>
+<index>
+    <mo_index name="IDXCompressIdx" unique="false" db_compress="1"> 
+<index-parts>
+        <index_part name="sattr" />
+        <index_part name="iattr" />
+</index-parts>
+    </mo_index>
+</index>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="IDXCustom"  super_class="AbstractTestType" db_PKeyStorage="true" db_compress="0">
+	<attributes>
+		<mo_attribute att_name="sattr" att_type="String" mandatory="true" />
+		<mo_attribute att_name="iattr" att_type="Integer" mandatory="true" />
+	</attributes>
+	<index>
+		<mo_index name="IDXCustomGlobal" unique="false" custom="true">
+			<index-parts>
+				<index_part name="sattr" />
+				<index_part name="iattr" />
+			</index-parts>
+		</mo_index>
+		<mo_index name="IDXCustomUnique" unique="true" custom="true">
+			<index-parts>
+				<index_part name="sattr" />
+				<index_part name="iattr" />
+				<index_part name="_branch" />
+				<index_part name="_rev_max" />
+			</index-parts>
+		</mo_index>
+	</index>
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="empty" super_class="AbstractTestType" db_name="EMPTY">
+</metaobject>
+
+<metaobject object_type="MOKnowledgeObject" object_name="TestDeleteObjectWithComputedAttribute" db_name="TEST_COMUTED" super_class="KnowledgeObject">
+	<annotations>
+		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+			<binding application-type="com.top_logic.knowledge.wrap.DefaultWrapper"/>
+		</annotation>
+	</annotations>
+	
+	<attributes>
+		<mo_attribute att_name="name" att_type="String"  mandatory="true"/>
+		
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute" att_name="computed" att_type="Void"  mandatory="false">
+			<storage class="test.com.top_logic.knowledge.TestKnowledgeBase$TestingComputedAttributeStorage"/>
+		</mo_attribute>
+	</attributes>
+</metaobject>
+
+</metaobjects>
+</objectlist>

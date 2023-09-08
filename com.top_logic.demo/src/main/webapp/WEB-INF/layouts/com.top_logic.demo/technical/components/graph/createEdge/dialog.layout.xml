@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.65c67127-f0a8-40f0-b30d-b23f5fa93a69">
+				<en>Create edge</en>
+				<de>Kante anlegen</de>
+			</title>
+		</title>
+		<open-handler id="ID_eb090d13_6b90_40e0_b79a_cda01adb699d"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			targetComponent="com.top_logic.demo/technical/components/graph/createEdge/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.65c67127-f0a8-40f0-b30d-b23f5fa93a69">
+				<en>Create edge</en>
+				<de>Kante anlegen</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="test.graph:Edge"/>
+		<create-handler id="ID_fe9b0c92_07e5_4c0c_bda1_46785c74b808"/>
+	</arguments>
+</config:template-call>

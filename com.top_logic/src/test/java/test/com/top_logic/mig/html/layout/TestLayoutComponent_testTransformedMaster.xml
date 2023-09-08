@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="layout">
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		name="master"
+	/>
+	<component class="com.top_logic.mig.html.layout.SimpleComponent"
+		name="slave"
+	>
+		<model class="test.com.top_logic.mig.html.layout.TestLayoutComponent$TestModelTransform" input="model(master)"/>
+	</component>
+</layout>

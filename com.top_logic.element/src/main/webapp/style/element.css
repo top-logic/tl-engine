@@ -1,0 +1,50 @@
+@charset "UTF-8";
+
+/* URL with Icon */
+
+table td span.urlWithIcon {
+	display: table;
+	width: 100%;
+	height: 100%;
+}
+
+table td span.urlWithIcon > .cTextInput,
+table td span.urlWithIcon > a,
+table td span.urlWithIcon > span.cTextInput span.lFlexible {
+	display: inline;
+}
+
+table.tblFrozen td span.urlWithIcon > .cTextInput.active,
+table.tblFrozen td span.urlWithIcon > .cTextInput.active + a  {
+	display: table-cell;
+	position:relative;
+	height: 100%;
+}
+
+table.tblFrozen td span.urlWithIcon > .cTextInput.active {
+	width: 100%;
+}
+
+table.tblFrozen td span.urlWithIcon > .cTextInput.active + a {
+	width: 0px;
+}
+
+.rf_cell span.urlWithIcon {
+	display: flex;
+	align-items: center;
+}
+
+.rf_cell span.urlWithIcon .cTextInput.active,
+.rf_cell span.urlWithIcon .cTextInput.active .lFlexible {
+	display: contents;
+}
+
+.rf_cell span.urlWithIcon .is-input:not([size]) {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.rf_cell span.urlWithIcon .is-input {
+	min-width: 20px;
+	max-width: 100%;
+}

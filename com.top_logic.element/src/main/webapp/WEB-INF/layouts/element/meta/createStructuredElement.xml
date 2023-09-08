@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- DEPRECATED: Use "com.top_logic.element/create/genericCreateStructure.xml" -->
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="structureName"/>
+		<param name="detailComponent"
+			value="com.top_logic.element.layout.structured.CreateAttributedStructuredElementComponent"
+		/>
+		<param name="model"
+			value="model(dialogParent())"
+		/>
+		<param name="newModelAction"
+			value="set-parent-model"
+		/>
+		<param name="jSPNewPage"
+			value="/jsp/element/NewElementDialog.jsp"
+		/>
+		<param name="createCommandGroups"
+			optional="true"
+		/>
+		<param name="newResPrefix"
+			value="element.structure.edit."
+		/>
+	</params>
+
+	<layout name="${namePrefix}newElementLayoutDialog">
+		<components>
+			<!-- component to edit structured elements -->
+			<component class="${detailComponent}"
+				commandGroups="${createCommandGroups}"
+				model="${model}"
+				name="${namePrefix}newElementDialog"
+				newModelAction="${newModelAction}"
+				page="${jSPNewPage}"
+				resPrefix="${newResPrefix}"
+				structureName="${structureName}"
+			/>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

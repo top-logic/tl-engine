@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.kafka.module">
+		<class name="TestInstallModelFragment">
+			<attributes>
+				<!-- Without this property, the test does not find the problem. -->
+				<property name="foo"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

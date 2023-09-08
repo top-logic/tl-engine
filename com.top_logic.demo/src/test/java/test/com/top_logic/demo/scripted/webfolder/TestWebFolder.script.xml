@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	comment="TestWebFolder"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Im Formular hochladen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="name"
+							value="ElementTestWebFolder 1"
+						/>
+						<parameter name="type"
+							value="Demo A"
+						/>
+						<parameter name="ergebnis"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Bearbeiten"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Im Formular hochladen"
+					business-object="Dokument"
+				>
+					<parameters>
+						<parameter name="Typ"
+							value="text/plain"
+						/>
+						<parameter name="Inhalt"
+							value="SW5oYWx0IHZvbiBUZXN0IERva3VtZW50IDE"
+						/>
+						<parameter name="Name"
+							value="Test Dokument 1.txt"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Im Formular runterladen"
+					business-object="Dokument"
+				>
+					<parameters>
+						<parameter name="Typ"
+							value="text/plain"
+						/>
+						<parameter name="Inhalt"
+							value="SW5oYWx0IHZvbiBUZXN0IERva3VtZW50IDE"
+						/>
+						<parameter name="Name"
+							value="Test Dokument 1.txt"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Speichern"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Im Formular löschen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="name"
+							value="ElementTestWebFolder 1"
+						/>
+						<parameter name="type"
+							value="Demo A"
+						/>
+						<parameter name="ergebnis"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Bearbeiten"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Im Formular hochladen"
+					business-object="Dokument"
+				>
+					<parameters>
+						<parameter name="Typ"
+							value="text/plain"
+						/>
+						<parameter name="Inhalt"
+							value="SW5oYWx0IHZvbiBUZXN0IERva3VtZW50IDE"
+						/>
+						<parameter name="Name"
+							value="Test Dokument 1.txt"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Speichern"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Bearbeiten"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Im Formular loeschen"
+					business-object="Dokument"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Test Dokument 1.txt"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Speichern"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Im Webfolder Tab hochladen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="name"
+							value="ElementTestWebFolder 1"
+						/>
+						<parameter name="type"
+							value="Demo A"
+						/>
+						<parameter name="ergebnis"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad"
+							value="Strukturen > Typendemo > 0 Dokumente"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Im Webfolder Tab hochladen"
+					business-object="Dokument"
+				>
+					<parameters>
+						<parameter name="Typ"
+							value="text/plain"
+						/>
+						<parameter name="Inhalt"
+							value="SW5oYWx0IHZvbiBUZXN0IERva3VtZW50IDE"
+						/>
+						<parameter name="Name"
+							value="Test Dokument 1.txt"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Im Webfolder Tab runterladen"
+					business-object="Dokument"
+				>
+					<parameters>
+						<parameter name="Typ"
+							value="text/plain"
+						/>
+						<parameter name="Inhalt"
+							value="SW5oYWx0IHZvbiBUZXN0IERva3VtZW50IDE"
+						/>
+						<parameter name="Name"
+							value="Test Dokument 1.txt"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Andere Session &amp; Tab Label"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="name"
+							value="ElementTestWebFolder 2"
+						/>
+						<parameter name="type"
+							value="Demo A"
+						/>
+						<parameter name="ergebnis"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Nutzer"
+				>
+					<parameters>
+						<parameter name="ergebnis"
+							value="Nutzer 1"
+						/>
+						<parameter name="Loginname"
+							value="NutzerTestWebfolder1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Rolle"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur"
+							value="DemoTypes"
+						/>
+						<parameter name="ergebnis"
+							value="Rolle 1"
+						/>
+						<parameter name="Name"
+							value="RolleTestWebfolder1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Alle Rechte geben"
+					business-object="Rolle"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur"
+							value="DemoTypes"
+						/>
+						<parameter name="Name"
+							value="RolleTestWebfolder1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Rolle zuweisen"
+					business-object="Nutzer"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur"
+							value="DemoTypes"
+						/>
+						<parameter name="kontext"
+							value="Nutzer 1"
+						/>
+						<parameter name="Rolle"
+							value="Rolle 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Rolle"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur"
+							value="Zentrale Berechtigungen"
+						/>
+						<parameter name="ergebnis"
+							value="Rolle 2"
+						/>
+						<parameter name="Name"
+							value="RolleTestWebfolder2"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Alle Rechte geben"
+					business-object="Rolle"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur"
+							value="Zentrale Berechtigungen"
+						/>
+						<parameter name="Name"
+							value="RolleTestWebfolder2"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Rolle zuweisen"
+					business-object="Nutzer"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur"
+							value="Zentrale Berechtigungen"
+						/>
+						<parameter name="kontext"
+							value="Nutzer 1"
+						/>
+						<parameter name="Rolle"
+							value="Rolle 2"
+						/>
+						<parameter name="Knoten"
+							value="SecurityRoot"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+						<parameter name="Tester"
+							value="root"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+						<parameter name="Tester"
+							value="NutzerTestWebfolder1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Tester"
+							value="root"
+						/>
+						<parameter name="Name"
+							value="Bearbeiten"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Im Formular hochladen"
+					business-object="Dokument"
+				>
+					<parameters>
+						<parameter name="Typ"
+							value="text/plain"
+						/>
+						<parameter name="Tester"
+							value="root"
+						/>
+						<parameter name="Inhalt"
+							value="SW5oYWx0IHZvbiBUZXN0IERva3VtZW50IDE"
+						/>
+						<parameter name="Name"
+							value="Test Dokument 1.txt"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Tester"
+							value="root"
+						/>
+						<parameter name="Name"
+							value="Speichern"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="F5"
+					business-object=""
+				>
+					<parameters>
+						<parameter name="Tester"
+							value="NutzerTestWebfolder1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Sicht"
+				>
+					<parameters>
+						<parameter name="Pfad"
+							value="Strukturen > Typendemo > 1 Dokumente"
+						/>
+						<parameter name="Tester"
+							value="NutzerTestWebfolder1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Rolle"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur"
+							value="DemoTypes"
+						/>
+						<parameter name="kontext"
+							value="Rolle 1"
+						/>
+						<parameter name="Name"
+							value="RolleTestWebfolder1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Rolle"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur"
+							value="Zentrale Berechtigungen"
+						/>
+						<parameter name="kontext"
+							value="Rolle 2"
+						/>
+						<parameter name="Name"
+							value="RolleTestWebfolder2"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Ordner im Formular anlegen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="name"
+							value="ElementTestWebFolder 1"
+						/>
+						<parameter name="type"
+							value="Demo A"
+						/>
+						<parameter name="ergebnis"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anzeigen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Bearbeiten"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Im Formular anlegen"
+					business-object="Ordner"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Test Ordner 1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Druecken"
+					business-object="Knopf"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="Speichern"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Element"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="Element 1"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

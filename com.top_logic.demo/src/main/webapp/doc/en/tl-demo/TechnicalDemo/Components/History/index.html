@@ -1,0 +1,8 @@
+<p>The view demonstrates the handling of historical versions of objects using a rudimentary project management system. Projects can be created in the project table. You can plan milestones for these projects in the milestone table.</p> 
+<p><img src="ref:image.png" style="height:214px; opacity:1; width:799px"></p> 
+<p>The milestones can declare dependencies on each other and are evaluated according to their degree of completion using a classification list. Their percentage of completion is calculated from their status using a value table. The status is also used to calculate the open dependencies. The Milestones view is the working view in which all objects are displayed in their current processable version.</p> 
+<h2>Reports on project versions</h2> 
+<p>In the "Reports" view, a comment on the current project progress can be formulated as a report. Each report is linked to the status of the project at the time it was created. A report is given a sequential number and its version column contains a reference to the state of the project at the time the report was created.</p> 
+<p><img src="ref:image_1.png" style="height:179px; opacity:1; width:800px"></p> 
+<h2>Open and navigate history</h2> 
+<p>The link in the Version column opens a view of the project at the time the report was created. In addition to the properties of the project, the milestones are also displayed in their state at that time the report was created. In addition to the direct properties of the objects, calculations are also performed in their historical states. The overall progress of the project is calculated from the individual milestones. The milestones, in turn, are valuated with a percentage progress, which results from their historical classification.</p>

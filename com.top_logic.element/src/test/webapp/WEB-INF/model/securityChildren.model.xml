@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="securityChildren">
+			<annotations>
+				<singletons>
+					<singleton type="SecurityChildRoot"/>
+				</singletons>
+			</annotations>
+			<types>
+				<interface name="SecurityChildME">
+					<annotations>
+						<legacy-qualified-name qualified-name="SecurityChildME"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+				<class name="SecurityChildRoot">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="test.com.top_logic.element.boundsec.manager.SecurityChild"/>
+						<instance-presentation
+							expanded-icon="/tree/proj/iO.png"
+							icon="/tree/proj/i.png"
+						/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<delete-protected/>
+		
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="ROOT"/>
+								</default-value>
+							</annotations>
+						</property>
+						<reference name="children"
+							override="true"
+							type="SecurityChildRootChild"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="SecurityChildME"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
+					</generalizations>
+				</class>
+				<class name="SecurityChild">
+					<annotations>
+						<table name="StructuredElement"/>
+						<implementation-binding class-name="test.com.top_logic.element.boundsec.manager.SecurityChild"/>
+						<instance-presentation icon="/tree/proj/i.png"/>
+					</annotations>
+					<generalizations>
+						<generalization type="SecurityChildME"/>
+						<generalization type="securityChildren:SecurityChildRootChild"/>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</class>
+				<interface name="SecurityChildRootChild">
+					<generalizations>
+						<generalization type="tl.element:StructuredElement"/>
+					</generalizations>
+				</interface>
+			</types>
+		</module>
+	</modules>
+</model>

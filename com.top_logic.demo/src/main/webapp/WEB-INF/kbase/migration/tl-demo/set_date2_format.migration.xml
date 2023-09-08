@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration>
+	<dependencies>
+		<dependency name="migration_21612"
+			module="tl"
+		/>
+	</dependencies>
+	<migration>
+		<type-mapping/>
+		<steps>
+			<step name="Set date format">
+				<set-part-annotation  module="DemoTypes" type="DemoTypes.A" attribute="date2">
+					<annotations>
+						<annotations>
+							<format format="d. MMMMM y"/>
+						</annotations>
+					</annotations>
+				</set-part-annotation>
+				<set-part-annotation  module="DemoTypes" type="DemoTypes.X" attribute="date2">
+					<annotations>
+						<annotations>
+							<format format="d. MMMMM y"/>
+							<storage-algorithm>
+								<derived-storage>
+									<expression-evaluation>
+										<chain>
+											<config-reference name="parent"/>
+											<get-value attribute="date2"/>
+										</chain>
+									</expression-evaluation>
+								</derived-storage>
+							</storage-algorithm>
+						</annotations>
+					</annotations>
+				</set-part-annotation>
+			</step>
+		</steps>
+	</migration>
+	<version name="set_date2_format"
+		module="tl-demo"
+	/>
+</migration>

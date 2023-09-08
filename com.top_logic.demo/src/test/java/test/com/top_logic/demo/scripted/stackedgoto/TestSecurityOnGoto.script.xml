@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="ergebnis"
+							value="user:TestGotoWithSecurity"
+						/>
+						<parameter name="Loginname"
+							value="TestGotoWithSecurity"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="TestGotoWithSecurity"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Rolle/Action-Rolle-Anlegen.xml"
+					template-name-comment="Rolle Anlegen"
+				>
+					<parameters>
+						<parameter name="ergebnis"
+							value="role:TestGotoWithSecurity"
+						/>
+						<parameter name="Name"
+							value="TestGotoWithSecurity"
+						/>
+						<parameter name="Berechtigungsstruktur"
+							value="Zentrale Berechtigungen"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Rolle zuweisen.xml"
+					template-name-comment="Nutzer Rolle zuweisen"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="user:TestGotoWithSecurity"
+						/>
+						<parameter name="Rolle"
+							value="role:TestGotoWithSecurity"
+						/>
+						<parameter name="Berechtigungsstruktur"
+							value="Zentrale Berechtigungen"
+						/>
+						<parameter name="Knoten"
+							value="SecurityRoot"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Rollenprofile/Alle Rechte an Rolle geben.xml"
+					template-name-comment="Alle Rechte an Rolle geben"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur"
+							value="Zentrale Berechtigungen"
+						/>
+						<parameter name="Rolle"
+							value="TestGotoWithSecurity"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer anmelden.xml"
+					template-name-comment="Nutzer anmelden"
+				>
+					<parameters>
+						<parameter name="Username"
+							value="TestGotoWithSecurity"
+						/>
+						<parameter name="ProcessId"
+							value="TestGotoWithSecurity"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="TestGotoWithSecurity"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Tests > PersonAjaxForm"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test goto self"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="multi-set-equals"
+							inverted="false"
+							user-id="TestGotoWithSecurity"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Goto zur Person"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Tests > PersonAjaxForm > Demo für E-Mail-Kommando"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
+								<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Goto zur Person"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Technisches Demo > Tests > PersonAjaxForm > Demo für E-Mail-Kommando"
+									/>
+								</context-name>
+								<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+									<values>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+											label="TestGotoWithSecurity, TestGotoWithSecurity"
+										/>
+									</values>
+								</local-name>
+							</expected-value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+							command-name="gotoCmd"
+							component-implementation-comment="com.top_logic.demo.layout.form.demo.PersonAjaxForm"
+							component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm"
+							user-id="TestGotoWithSecurity"
+						>
+							<arguments>
+								<argument name="view">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming$Name"
+										value="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+									/>
+								</argument>
+								<argument name="goto_object">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="Person"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+										<attributes>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="TestGotoWithSecurity"
+												/>
+											</attribute>
+										</attributes>
+									</value>
+								</argument>
+							</arguments>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							user-id="TestGotoWithSecurity"
+							visible="true"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
+							command-label="Schließen"
+							command-name="closeDialogInView"
+							component-implementation-comment="com.top_logic.contact.layout.person.related.EditCurrentPersonComponent"
+							component-name="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml#CurrentPersonEditPerson"
+							user-id="TestGotoWithSecurity"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.PersonAjaxForm"
+					component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm"
+					user-id="TestGotoWithSecurity"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="TestGotoWithSecurity"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Goto zur Person"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm"
+							tab-path="Technisches Demo > Tests > PersonAjaxForm"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Super, Administrator"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.PersonAjaxForm"
+					component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm"
+					user-id="TestGotoWithSecurity"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.PersonAjaxForm$GotoPerson"
+					command-label="Dialog zur Person öffnen"
+					command-name="openDialogForPerson"
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.PersonAjaxForm"
+					component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm"
+					user-id="TestGotoWithSecurity"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.demo.layout.form.demo.PersonAjaxForm$GotoPerson"
+					command-label="Dialog zur Person öffnen"
+					command-name="openDialogForPerson"
+					component-implementation-comment="com.top_logic.demo.layout.form.demo.PersonAjaxForm"
+					component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm"
+					user-id="TestGotoWithSecurity"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="TestGotoWithSecurity"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Benutzername"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm_PersonDialog"
+								tab-path=""
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="root"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
+					component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm_PersonDialog"
+					user-id="TestGotoWithSecurity"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test configured goto target."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.GotoActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler"
+							command-name="gotoCmd"
+							component-implementation-comment="com.top_logic.demo.layout.form.demo.PersonAjaxForm"
+							component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm"
+							user-id="TestGotoWithSecurity"
+						>
+							<arguments>
+								<argument name="goto_object">
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+										table="Person"
+									>
+										<branch config:interface=""/>
+										<revision config:interface=""/>
+										<attributes>
+											<attribute name="name">
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="root"
+												/>
+											</attribute>
+										</attributes>
+									</value>
+								</argument>
+							</arguments>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+							comment="Test that component local goto target is used for standard goto."
+							component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm_PersonDialog"
+							user-id="TestGotoWithSecurity"
+							visible="true"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+							component-implementation-comment="com.top_logic.contact.layout.person.related.EditRelatedPersonComponent"
+							component-name="com.top_logic.demo/technical/test/PersonAjaxForm/personDemo.layout.xml#PersonAjaxForm_PersonDialog"
+							user-id="TestGotoWithSecurity"
+						/>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="TearDown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Loeschen.xml"
+					template-name-comment="Nutzer Loeschen"
+				>
+					<parameters>
+						<parameter name="kontext"
+							value="user:TestGotoWithSecurity"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Rolle/Action-Rolle-Loeschen.xml"
+					template-name-comment="Rolle Loeschen"
+				>
+					<parameters>
+						<parameter name="Berechtigungsstruktur"
+							value="Zentrale Berechtigungen"
+						/>
+						<parameter name="Name"
+							value="TestGotoWithSecurity"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Variable/Action-Variable-Alle loeschen.xml"
+					template-name-comment="Variable Alle löschen"
+				/>
+			</actions>
+		</action>
+	</actions>
+</action>

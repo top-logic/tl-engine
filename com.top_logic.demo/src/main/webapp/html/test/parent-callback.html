@@ -1,0 +1,60 @@
+<html>
+<head>
+	<title>Callback frame</title>
+	
+	<script type="text/javascript">
+		function onLoad() {
+			parent.log("frame.onload init.");
+			parent.window.setTimeout(function () {longRunningFunction("timer.frame.onload (registered in parent)"); }, 0);
+			window.setTimeout(function() {longRunningFunction("timer.frame.onload (registered in frame)"); }, 0);
+			parent.onloadCallback(window); 
+			longRunningFunction("frame.onload");
+			parent.log("frame.onload exit.");
+			return false;
+		}
+		
+		function onUnload() {
+			parent.log("frame.onunload init.");
+			parent.window.setTimeout(function () {longRunningFunction("timer.frame.onunload (registered in parent)"); }, 0);
+			window.setTimeout(function() {longRunningFunction("timer.frame.onunload (registered in frame)"); }, 0);
+			parent.onunloadCallback(window);
+			longRunningFunction("frame.onunload");
+			parent.log("frame.onunload exit.");
+			return false;
+		}
+		
+		function handleClick(button) {
+			parent.log("frame.onclick init.");
+			parent.window.setTimeout(function () {longRunningFunction("timer.frame.onclick (registered in parent)"); }, 0);
+			window.setTimeout(function() {longRunningFunction("timer.frame.onclick (registered in frame)"); }, 0);
+			parent.onclickCallback(window);
+			longRunningFunction("frame.onclick");
+			parent.log("frame.onclick exit.");
+			return false;
+		}
+
+		function longRunningFunction(id) {
+			while (! parent.monitor.acquire(id)) {
+				// Retry.
+				parent.log(id + " blocked!");
+			}
+			try {
+				parent.log(id + " wait started.");
+				var dummy = 0;
+				for (var n = 0; n < 200000; n++) {
+					dummy += n;
+				}
+				parent.log(id + " wait completed (" + dummy + ").");
+			} finally {
+				parent.monitor.release(id);
+			}
+		}
+	
+	</script>
+</head>
+<body onload="return onLoad();" onunload="return onUnload();">
+	<p>Frame. <button onclick="handleClick(this)">Click</button> to send event to 
+	opender, reload to trigger onunload/onload sequence, 
+	<a href="static-content.html">click</a> to trigger onunload.</p>
+</body>
+</html>

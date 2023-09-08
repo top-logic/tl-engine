@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<params>
+		<param name="namePrefix"
+			value="DeclarativeFormDefinitionDemo"
+		/>
+	</params>
+
+	<include name="com.top_logic.demo/technical/layoutDemo1/forms/declarative/declarativeFormDemo.xml"
+		formType="com.top_logic.demo.layout.form.declarative.config.TypeDemos"
+		namePrefix="${namePrefix}"
+		resPrefix="layouts.layoutdemo.form.declarativeFormComponentDemo.DeclarativeFormDefinitionDemo"
+	>
+		<customizations>
+			<property name="com.top_logic.demo.layout.form.declarative.config.ObjectTypesMandatory#string-configured-mandatory">
+				<annotations>
+					<mandatory/>
+				</annotations>
+			</property>
+			<type name="com.top_logic.demo.layout.form.declarative.config.TypeDemos">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.order.DisplayOrder">
+						<value>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#PRIMITIVE_TYPES"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#CONSTRAINTS"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#PRIMITIVE_OBJECT_TYPES"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#PRIMITIVE_OBJECT_TYPES_NON_NULL_DEFAULT"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#NON_NULLABLE_OBJECT_TYPES"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#NULLABLE_OBJECT_TYPES"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#NULLABLE_OBJECT_TYPES_WITH_NULL_DEFAULT"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#NULLABLE_OBJECT_TYPES_WITH_NON_NULL_DEFAULT"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#OBJECT_TYPES_MANDATORY"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#OBJECT_TYPES_READ_ONLY"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#OBJECT_TYPES_OPTIONS"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#OBJECT_TYPES_WHOLE_LINE"/>
+						</value>
+					</annotation>
+				</annotations>
+			</type>
+
+			<type name="com.top_logic.demo.layout.form.declarative.config.DemoDeclarativeConstraints">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.order.DisplayOrder">
+						<value>
+							<property name="com.top_logic.demo.layout.form.declarative.config.DemoDeclarativeConstraints#GREATER_THAN_TEN"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.DemoDeclarativeConstraints#START"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.DemoDeclarativeConstraints#STOP"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.DemoDeclarativeConstraints#ONLY_LETTERS"/>
+						</value>
+					</annotation>
+				</annotations>
+			</type>
+
+			<property name="com.top_logic.demo.layout.form.declarative.config.ObjectTypesOptions#singleton">
+				<annotations>
+					<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.Options"
+						fun="com.top_logic.demo.layout.form.declarative.config.options.DemoSingletonOptions"
+					/>
+					<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.ItemDisplay"
+						value="value"
+					/>
+				</annotations>
+			</property>
+		</customizations>
+
+		<content>
+			<dialogs>
+				<include name="com.top_logic.demo/technical/layoutDemo1/forms/declarative/declarativeFormDemo.xml"
+					create="true"
+					formType="com.top_logic.demo.layout.form.declarative.config.TypeDemos"
+					namePrefix="${namePrefix}Create"
+					resPrefix="layouts.layoutdemo.form.declarativeFormComponentDemo.DeclarativeFormDefinitionDemo"
+				>
+					<content>
+						<dialogInfo
+							defaultI18n="element.structure.edit.layout.openAsDialog"
+							image="theme:TREE_NEW_ELEMENT"
+							openerClique="create"
+						/>
+					</content>
+				</include>
+			</dialogs>
+		</content>
+	</include>
+</template>

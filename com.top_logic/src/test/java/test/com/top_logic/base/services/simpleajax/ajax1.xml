@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+	<env:Header>
+		<source xmlns="http://top-logic.com/base/services/cs">masterFrame</source>
+	</env:Header>
+	<env:Body>
+		<execute xmlns="http://top-logic.com/base/services/ajax">
+			<component xmlns="http://top-logic.com/base/services/cs"
+				env:role="http://top-logic.com/component" source="masterFrame"
+				target="masterFrame" />
+			<command>notifyUnload</command>
+			<arguments></arguments>
+		</execute>
+	</env:Body>
+</env:Envelope>

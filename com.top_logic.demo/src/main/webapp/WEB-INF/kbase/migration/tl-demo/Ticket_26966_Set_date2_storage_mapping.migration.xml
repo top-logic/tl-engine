@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26966_Set_date2_storage_mapping"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26872_id_column_to_sort_config"
+			module="tl"
+		/>
+		<dependency name="Ticket_26554_Make_WebFolder_references_compositions"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_26959_drop_api_generalization"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_26398_remove_table_interfaces"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-mail"
+		/>
+		<dependency name="Ticket_26660_Remove_dependency_to_tl_remote"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<processors/>
+	<migration>
+		<type-mapping/>
+		<steps>
+			<step name="Set date format">
+				<set-part-annotation
+					attribute="date2"
+					module="DemoTypes"
+					type="DemoTypes.A"
+				>
+					<annotations>
+						<annotations>
+							<format format="d. MMMMM y"/>
+							<storage-algorithm>
+								<primitive-storage storage-mapping="com.top_logic.element.meta.complex.DateToLongMapping"/>
+							</storage-algorithm>
+						</annotations>
+					</annotations>
+				</set-part-annotation>
+			</step>
+			<step name="Change data">
+				<attribute-value-rewrite
+					source-attribute="date2"
+					target-attribute="date2"
+					types="DemoTypes"
+					value-mapping="com.top_logic.element.meta.complex.DateToLongMapping"
+				/>
+			</step>
+		</steps>
+	</migration>
+	<post-processors/>
+</migration>

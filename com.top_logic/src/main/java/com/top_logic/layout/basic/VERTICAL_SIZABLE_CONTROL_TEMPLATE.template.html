@@ -1,0 +1,15 @@
+<!-- 
+	min-width is set to 0 to create horizontal scrollbars
+	https://stackoverflow.com/questions/43311943/prevent-content-from-expanding-grid-items
+-->
+
+<div id="{id}"
+	class="{cssClass}"
+	style="position:relative;max-height:{maxHeight}px;min-width:0;"
+>
+	{content}
+	<div class="verticalResizer"
+		style="width:100%;height:3px;position:absolute;bottom:0;cursor:ns-resize"
+		onmousedown="TABLE.resizeHeight(event, '{id}');"
+	></div>
+</div>

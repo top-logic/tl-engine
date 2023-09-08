@@ -1,0 +1,54 @@
+<h2>Syntax</h2> 
+<pre>	<code>$value.toBoolean()</code>
+</pre> 
+<h2>Description</h2> 
+<p>Converts a value to a boolean. This conversion usually happens automatically when a value is used in a context where a boolean is expected, e.g. in a <a class="tlObject" data-custom="true" href="?page=Conditions&amp;uuid=95128d3b-50fa-4735-9042-546171acc251">condition</a> like <code class="hljs inlineCode">$value.ifElse(true, false)</code>. The explicit conversion may be necessary if a boolean value is to be stored in an attribute of a model element.</p> 
+<p>The result is calculated as follows:</p> 
+<ul> 
+ <li><code class="hljs inlineCode">false</code>, if <code class="hljs inlineCode">value</code> is <code class="hljs inlineCode">false</code>, <code class="hljs inlineCode">null</code>, or empty,</li> 
+ <li><code class="hljs inlineCode">true</code> for all other cases</li> 
+</ul> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>value</td> 
+   <td>Number/string/boolean/Business object/set</td> 
+   <td>A value to be converted to a boolean.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p> 
+<p>The converted value.</p> 
+<h2>Examples</h2> 
+<h3>Boolean value</h3> 
+<pre>	<code>false.toBoolean()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong> </span><code class="hljs inlineCode">false</code></p> 
+<h3>Non-boolean value</h3> 
+<pre>	<code>date(2021, 5, 8).toBoolean()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">true</code></p> 
+<p>Since the date value is neither null, empty, nor false, this results in true.</p> 
+<h3>Null</h3> 
+<pre>	<code>null.toBoolean()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">false</code></p> 
+<h3>Empty list</h3> 
+<pre>	<code>list().toBoolean()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">false</code></p> 
+<p>Since the list is empty, this results in <code class="hljs inlineCode">false</code>.</p> 
+<p> </p>

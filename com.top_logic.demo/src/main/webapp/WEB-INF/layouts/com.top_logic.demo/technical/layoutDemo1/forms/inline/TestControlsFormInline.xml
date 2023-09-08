@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsForm_shared.xml"
+	componentName="TestControlsFormInline"
+>
+	<conf>
+		<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"/>
+	</conf>
+</include>

@@ -1,0 +1,48 @@
+<h2>Syntax</h2>
+<pre><code>$input.translate(
+    sourceLang: $sourceLang, 
+    targetLang: $targetLang
+)</code></pre>
+<p>Translates the input text into the target language.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>input</td>
+   <td>String</td>
+   <td>The string to be translated.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>targetLang</td>
+   <td>String</td>
+   <td>The language to translate into</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>sourceLang</td>
+   <td>String</td>
+   <td>The language of the input string, or <code>"auto"</code> to auto-detect the language.</td>
+   <td>no</td>
+   <td>The language of the current user, or the default language of the application.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><strong>Type:</strong> string</p>
+<p>The input value in the requested target language.</p>
+<h2>Examples</h2>
+<p>Translation of "Hello world!" to German.</p>
+<pre><code>"Hello world!".translate(targetLang: "de")</code></pre>
+<p></p>

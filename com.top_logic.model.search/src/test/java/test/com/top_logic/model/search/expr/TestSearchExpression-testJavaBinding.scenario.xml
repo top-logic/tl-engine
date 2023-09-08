@@ -1,0 +1,75 @@
+<objects>
+	<object id="empty" type="TestJavaBinding:A">
+		<attribute name="name" value="empty"/>
+	</object>
+	<object id="singleton" type="TestJavaBinding:A">
+		<attribute name="name" value="empty"/>
+		<attribute name="primitives">
+			<ref id="p1"/>
+		</attribute>
+		<attribute name="enums">
+			<model-ref name="TestJavaBinding:E#A"/>
+		</attribute>
+	</object>
+	<object id="multiple" type="TestJavaBinding:A">
+		<attribute name="name" value="empty"/>
+		<attribute name="primitives">
+			<ref id="p1"/>
+			<ref id="p2"/>
+			<ref id="p3"/>
+		</attribute>
+		<attribute name="enums">
+			<model-ref name="TestJavaBinding:E#A"/>
+			<model-ref name="TestJavaBinding:E#B"/>
+			<model-ref name="TestJavaBinding:E#C"/>
+		</attribute>
+	</object>
+	
+	<object id="p1" type="TestJavaBinding:Primitives">
+		<attribute name="name" value="A"/>
+	</object>
+	<object id="p2" type="TestJavaBinding:Primitives">
+		<attribute name="name" value="B"/>
+	</object>
+	<object id="p3" type="TestJavaBinding:Primitives">
+		<attribute name="name" value="C"/>
+	</object>
+	
+	<object id="ReferencesDerivedEmpty" type="TestJavaBinding:ReferencesDerived">
+		<attribute name="name" value="ReferencesDerivedEmpty"/>
+		<attribute name="in">
+			<ref id="empty"/>
+		</attribute>
+	</object>
+	<object id="ReferencesDerivedSingleton" type="TestJavaBinding:ReferencesDerived">
+		<attribute name="name" value="ReferencesDerivedSingleton"/>
+		<attribute name="in">
+			<ref id="singleton"/>
+		</attribute>
+	</object>
+	<object id="ReferencesDerivedMultiple" type="TestJavaBinding:ReferencesDerived">
+		<attribute name="name" value="ReferencesDerivedMultiple"/>
+		<attribute name="in">
+			<ref id="multiple"/>
+		</attribute>
+	</object>
+	
+	<object id="EnumsDerivedEmpty" type="TestJavaBinding:EnumsDerived">
+		<attribute name="name" value="EnumsDerivedEmpty"/>
+		<attribute name="in">
+			<ref id="empty"/>
+		</attribute>
+	</object>
+	<object id="EnumsDerivedSingleton" type="TestJavaBinding:EnumsDerived">
+		<attribute name="name" value="EnumsDerivedSingleton"/>
+		<attribute name="in">
+			<ref id="singleton"/>
+		</attribute>
+	</object>
+	<object id="EnumsDerivedMultiple" type="TestJavaBinding:EnumsDerived">
+		<attribute name="name" value="EnumsDerivedMultiple"/>
+		<attribute name="in">
+			<ref id="multiple"/>
+		</attribute>
+	</object>
+</objects>

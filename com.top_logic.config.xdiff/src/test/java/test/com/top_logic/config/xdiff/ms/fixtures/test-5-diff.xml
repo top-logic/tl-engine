@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="customconfig.xsd">
+    <components>
+        <ConfigCustomizations>
+            <Settings>
+                <NodeAdd Component="test-5" XPath="/r/a[1]" NodeName="v" NodeText="v4value"/>
+                <NodeAdd Component="test-5" XPath="/r/a[1]" NodeName="v"/>
+            </Settings>
+        </ConfigCustomizations>
+    </components>
+</configuration>

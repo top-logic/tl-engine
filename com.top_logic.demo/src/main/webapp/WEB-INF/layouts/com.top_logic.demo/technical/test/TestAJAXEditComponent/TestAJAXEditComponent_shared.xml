@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="componentName"/>
+		<param name="dialogs">
+			<!-- No dialogs is default -->
+		</param>
+	</params>
+	<layout name="${componentName}Container">
+		<components>
+			<component class="com.top_logic.demo.layout.form.demo.TestAJAXEditComponent"
+				model="provider(com.top_logic.layout.component.model.SelfModelProvider)"
+				name="${componentName}"
+				page="/jsp/test/layout/TestAJAXEditComponent.jsp"
+				resPrefix="layouts.layoutdemo.test.TestAJAXEditComponent_shared.main."
+				securityProviderClass="securityRoot"
+			>
+				<dialogs>${dialogs}</dialogs>
+			</component>
+			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
+		</components>
+	</layout>
+</template>

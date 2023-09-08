@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="componentName"/>
+		<param name="resPrefix"/>
+		<param name="class"
+			value="com.top_logic.reporting.flex.chart.component.ChartConfigComponent"
+		/>
+		<param name="buttonComponent"
+			value=""
+		/>
+		<param name="isSecurityMaster"
+			value="false"
+		/>
+		<param name="model"
+			value=""
+		/>
+		<param name="base-config-file"
+			value=""
+		/>
+		<param name="options">
+			<!-- No options. -->
+		</param>
+		<param name="securityProviderClass"
+			value="securityRoot"
+		/>
+		<param name="toolbar"
+			value="true"
+		/>
+		<param name="maximizeRoot"
+			value=""
+		/>
+		<param name="applyIcon"
+			value="theme:ICONS_BUTTON_REFRESH"
+		/>
+		<param name="applyDisabledIcon"
+			value="theme:ICONS_BUTTON_REFRESH_DISABLED"
+		/>
+		<param name="applyExecutability">
+			<!-- No explicit default executability -->
+		</param>
+	</params>
+
+	<component class="${class}"
+		base-config-file="${base-config-file}"
+		buttonComponent="${buttonComponent}"
+		isSecurityMaster="${isSecurityMaster}"
+		maximizeRoot="${maximizeRoot}"
+		model="${model}"
+		name="${componentName}"
+		page="/jsp/reporting/flex/chart/chartConfigBuilder.jsp"
+		resPrefix="${resPrefix}"
+		securityProviderClass="${securityProviderClass}"
+		toolbar="${toolbar}"
+	>
+		<toolbar-groups>
+			<toolbar-group name="refresh">
+				<buttons>
+					<button command-id="apply"/>
+				</buttons>
+			</toolbar-group>
+		</toolbar-groups>
+
+		<commands>
+			<command id="apply"
+				class="com.top_logic.reporting.flex.chart.component.ChartConfigComponent$ApplySettings"
+				disabledImage="${applyDisabledIcon}"
+				image="${applyIcon}"
+				resourceKey="layouts.reporting.flex.chart.chartConfigurator.applySettrings"
+			>${applyExecutability}</command>
+		</commands>
+		${options}
+	</component>
+</template>

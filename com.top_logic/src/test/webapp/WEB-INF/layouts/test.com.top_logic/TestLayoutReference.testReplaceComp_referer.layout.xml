@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout>
+	<component class="test.com.top_logic.mig.html.layout.TestLayoutReference$ReferencingComp"
+		content="origContent"
+		name="comp"
+		other="test.com.top_logic/TestLayoutReference.testReplaceComp_reference.layout.xml#comp"
+	/>
+</layout>

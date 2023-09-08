@@ -1,0 +1,12 @@
+<model>
+	<module name="TestModelConfigurationChange">
+		<class name="A">
+			<attributes>
+				<reference name="ab" type="C"/>
+			</attributes>
+		</class>
+		
+		<class name="C">
+		</class>
+	</module>
+</model>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="false"
+		height="500px"
+		helpID="ID_ef70e07e_67d4_4830_b9ae_1d994e4d9f21"
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<open-handler id="ID_fffd7138_04d8_47bb_8e92_8b88a5835b69"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			clique=""
+			confirm="false"
+			disabledImage=""
+			group=""
+			image="css:far fa-question-circle"
+			targetComponent="com.top_logic.demo/technical/components/history/reports/projectDetails/projectVersionForm.layout.xml#Form"
+		>
+			<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+				function="report -> $report.get(`test.history:Report#version`)"
+				input="selection(com.top_logic.demo/technical/components/history/reports/reportsTable.layout.xml#Table)"
+			/>
+			<resourceKey key="dynamic.363a4c2f-386e-471f-bd16-ac33545d9f17">
+				<en>Project details</en>
+				<de>Projektdetails</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.363a4c2f-386e-471f-bd16-ac33545d9f17">
+				<en>Project details</en>
+				<de>Projektdetails</de>
+			</title>
+		</title>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/history/reports/projectDetails/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

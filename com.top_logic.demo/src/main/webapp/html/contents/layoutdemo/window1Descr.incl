@@ -1,0 +1,12 @@
+
+<p>
+On the right side you see a simple <i>WindowLayout</i>. 
+</p>
+<p>
+The idea of this layout is to
+decorate a <i>LayoutComponent</i> or a whole <i>Layout</i> with a border called window.
+</p>
+<p>
+The <i>LayoutComponent</i> you can see here, is a <i>IncludeComponent</i> 
+displaying a german poem.
+</p>

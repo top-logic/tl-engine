@@ -1,0 +1,166 @@
+/* Default color (on white background) */
+.tl-icon {
+	color: var(--ICON_COLOR_BASIC);
+}
+
+.tl-icon span::before {
+	color: var(--ICON_COLOR_HIGHLIGHT_BG);
+}
+
+.tl-icon span::after {
+	color: var(--ICON_COLOR_HIGHLIGHT);
+}
+
+/* Disabled */
+.disabled .tl-icon,
+.cmdButtonDisabled .tl-icon,
+.menuEntryDisabled .tl-icon {
+	color: var(--ICON_COLOR_DISABLED_BASIC);
+}
+
+.disabled .tl-icon span::before,
+.cmdButtonDisabled .tl-icon span::before,
+.menuEntryDisabled .tl-icon span::before {
+	color: var(--ICON_COLOR_DISABLED_HIGHLIGHT_BG);
+}
+
+.disabled .tl-icon span::after,
+.cmdButtonDisabled .tl-icon span::after,
+.menuEntryDisabled .tl-icon span::after {
+	color: var(--ICON_COLOR_DISABLED_HIGHLIGHT);
+}
+
+/* Colors */
+i.tl-icon.icon-red,
+i.tl-icon.icon-red span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-red,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-red span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-red,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-red span::after,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-red,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-red span::after,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-red,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-red span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-first-red,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-second-red,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-third-red,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-fourth-red {
+	color: var(--ICON_COLOR_RED);
+}
+
+i.tl-icon.icon-yellow,
+i.tl-icon.icon-yellow span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-yellow,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-yellow span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-yellow,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-yellow span::after,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-yellow,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-yellow span::after,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-yellow,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-yellow span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-first-yellow,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-second-yellow,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-third-yellow,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-fourth-yellow {
+	color: var(--ICON_COLOR_YELLOW);
+}
+
+i.tl-icon.icon-green,
+i.tl-icon.icon-green span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-green,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-green span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover:not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-green,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-green span::after,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-green,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-green span::after,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-green,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-green span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-first-green,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-second-green,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-third-green,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-fourth-green {
+	color: var(--ICON_COLOR_GREEN);
+}
+
+i.tl-icon.icon-grey,
+i.tl-icon.icon-grey span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-grey,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-grey span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-grey,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-grey span::after,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-grey,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-grey span::after,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-grey,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-grey span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-first-grey,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-second-grey,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-third-grey,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-fourth-grey {
+	color: var(--ICON_COLOR_GREY);
+}
+
+i.tl-icon.icon-lightgrey,
+i.tl-icon.icon-lightgrey span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-lightgrey,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-lightgrey span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-lightgrey,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-lightgrey span::after,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-lightgrey,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-lightgrey span::after,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-lightgrey,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-lightgrey span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-first-lightgrey,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-second-lightgrey,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-third-lightgrey,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-fourth-lightgrey {
+	color: var(--ICON_COLOR_LIGHTGREY);
+}
+
+i.tl-icon.icon-white,
+i.tl-icon.icon-white span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-white,
+.cButton:not(.disabled):not(.cmdButtonDisabled) .input-image:not(.disabled) .tl-icon.icon-white span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-white,
+.cButton:not(.disabled):not(.cmdButtonDisabled):hover .input-image:not(.disabled) .tl-icon.icon-white span::after,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-white,
+.cMenuButton:not(.menuEntryDisabled) .menuEntryImage .tl-icon.icon-white span::after,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-white,
+.cMenuButton:not(.menuEntryDisabled):hover .menuEntryImage .tl-icon.icon-white span::after,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-first-white,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-second-white,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-third-white,
+.cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.icon-fourth-white {
+	color: var(--ICON_COLOR_WHITE);
+}
+
+/* Special selectors */
+.icon-circle {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	background: var(--ICON_COLOR_HIGHLIGHT_BG);
+	border-radius: 30px;
+	font-size: 30px;
+	padding: 8px;
+	color: var(--ICON_COLOR_CIRCLE_BASIC);
+}
+
+.tl-icon.traffic { color: var(--ICON_COLOR_GREY); }
+.tl-icon.traffic span::before { color: var(--ICON_COLOR_GREY); }
+.tl-icon.traffic span::after { color: var(--ICON_COLOR_GREY); }
+.tl-icon.traffic::after { color: var(--ICON_COLOR_WHITE); }
+
+.tl-icon.traffic.red { color: var(--ICON_COLOR_RED); }
+.tl-icon.traffic.yellow span::before { color: var(--ICON_COLOR_YELLOW); }
+.tl-icon.traffic.green span::after { color: var(--ICON_COLOR_GREEN); }
+
+.tl-icon.traffic.on { color: var(--ICON_COLOR_RED); }
+.tl-icon.traffic.on span::before { color: var(--ICON_COLOR_YELLOW); }
+.tl-icon.traffic.on span::after { color: var(--ICON_COLOR_GREEN); }
+
+.tl-icon.type::before, .cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.type::before {	color: var(--ICON_COLOR_LIGHTGREY); }
+.tl-icon.type span::before, .cButton:not(.disabled):not(.cmdButtonDisabled):not(.menuEntryDisabled) .input-image:not(.disabled) .tl-icon.type span::before { color: var(--ICON_COLOR_HIGHLIGHT); }
+
+/* Smaller main icon when getting an overlay. */
+i[class*=" overlay-"]::before { font-size: 0.8em; }
+i[class*=" overlay-"] span::before { margin-left: -0.8em; color: var(--ICON_COLOR_OVERLAY_HIGHLIGHT_BG); }

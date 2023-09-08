@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<report xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="report.xsd">
+    <businessObjectProducer>
+        <class>com.top_logic.reporting.report.model.objectproducer.AttributedSearchResultObjectProducer</class>
+        <objectType>Wrapper</objectType>
+    </businessObjectProducer>
+    <partitionFunctions>
+        <datePartitionFunction>
+            <attribute>dateBegin</attribute>
+            <ignoreNullValues>true</ignoreNullValues>
+            <dateIntervalCriteria>
+                <begin relative="absolute">1970-01-01T00:00:00</begin>
+                <end relative="absolute">2010-01-01T00:00:00</end>
+                <dateGranularity>8760</dateGranularity>
+            </dateIntervalCriteria>
+        </datePartitionFunction>
+    </partitionFunctions>
+    <aggregationFunctions>
+        <function>
+            <type>count</type>
+            <accessor>
+                <class>com.top_logic.knowledge.wrap.WrapperAccessor</class>
+            </accessor>
+            <ignoreNullValues>true</ignoreNullValues>
+            <attribute>number</attribute>
+        </function>
+    </aggregationFunctions>
+    <presentation>
+        <chartType>bar-chart</chartType>
+        <colors>
+            <definition>
+                <functionName>count</functionName>
+                <color>#FF0066</color>
+            </definition>
+        </colors>
+    </presentation>
+</report>

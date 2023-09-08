@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+<!--  ======================================================================= -->
+<!--  httpunit tutorial build file                                            -->
+<!--  ======================================================================= -->
+<project name="tutorial" default="test" basedir=".">
+    <property name="src.dir" value="src/main/java" />
+    <property name="jars.dir" value="jars" />
+
+    <property name="classes.dir" value="classes" />
+    <property name="test.class" value="tutorial.PoolEditorTest" />
+
+    <property name="classpath" value="" />
+
+<!-- =================================================================== -->
+<!-- Defines the classpath used for compilation and test.                -->
+<!-- =================================================================== -->
+<path id="base.classpath">
+    <fileset dir="${jars.dir}">
+        <include name="*.jar"/>
+    </fileset>
+    <pathelement location="${classpath}" />
+</path>
+
+
+<!--  ===================================================================  -->
+<!--  Compiles the source code                                             -->
+<!--  ===================================================================  -->
+<target name="compile">
+    <mkdir dir="${jars.dir}" />
+    <mkdir dir="${classes.dir}" />
+    <javac srcdir="${src.dir}" destdir="${classes.dir}"
+           debug="on" deprecation="off" optimize="off">
+         <classpath refid="base.classpath" />
+    </javac>
+</target>
+
+
+<!--  ===================================================================  -->
+<!--  Runs the test code                                                   -->
+<!--  ===================================================================  -->
+<target name="test" depends="compile">
+    <java classname="${test.class}" fork="yes" >
+         <classpath>
+             <path refid="base.classpath" />
+             <pathelement location="${classes.dir}" />
+             <pathelement location="${classpath}" />
+         </classpath>
+    </java>
+</target>
+
+
+<!--  ===================================================================  -->
+<!--  Cleans up generated stuff                                            -->
+<!--  ===================================================================  -->
+<target name="clean">
+    <delete dir="${classes.dir}" />
+</target>
+
+
+</project>

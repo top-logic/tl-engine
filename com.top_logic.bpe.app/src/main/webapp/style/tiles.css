@@ -1,0 +1,94 @@
+span.circle-red {
+	position:absolute;
+	right:100px;
+	margin-top:0px;
+	min-height: 20px;
+	min-width: 20px;
+	line-height: 20px;
+	padding: 2px;
+	background-color: red;
+	border-radius: 50%;
+	color:#FFF;
+	text-align: center;
+	font-weight: bold;
+	border: 2px solid #FFF;
+	font-size: 10px;
+}
+span.circle-blue {
+	position:absolute;
+	right:100px;
+	margin-top:0px;
+	min-height: 20px;
+	min-width: 20px;
+	line-height: 20px;
+	padding: 2px;
+	background-color: blue;
+	border-radius: 50%;
+	color:#FFF;
+	text-align: center;
+	font-weight: bold;
+	border: 2px solid #FFF;
+	font-size: 10px;
+}
+
+/* Text shortening starts here */
+
+.card-text {
+  height: 34px; /* line-height x2 */
+  overflow: hidden;
+  position: relative;
+}
+
+.card-text:hover {
+  overflow: visible;
+  background: rgba(255,255,255,1.0);
+  height: auto;
+  z-index:2;
+}
+
+.card-text:before {
+  background: #FFF;
+  content: '...';
+  top: 24px;
+  margin-right: 3px;
+  position: absolute;
+  right: 0;
+  text-align: right;
+  text-weight: bold;
+}	
+
+.card-text:after {
+  content: '';
+  position: absolute;
+  margin-top: 1.6em;
+  right: 0em;
+  width: 1em;
+  height: 1em;
+  background: #FFF;
+}
+
+/* Delete dots */
+.card-text:hover:before {
+  content: '';
+}
+
+.card-text:hover:after {
+  background: none;
+}
+
+/* Tables among tiles */
+tr.tileTableOddRow {
+	background-color:#EAEAEA;
+}
+
+tr.tileTableEvenRow {
+	background-color:#F6F6F6;
+}
+
+tr.tileTableFont td {
+	font-size: 1.5em;
+}
+
+th.bpeTileCockpitTH td {
+	font-size: 1.5em;
+}

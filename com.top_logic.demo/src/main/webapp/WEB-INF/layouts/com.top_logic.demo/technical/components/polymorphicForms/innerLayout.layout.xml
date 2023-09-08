@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/contentLayout.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicForms/objectsTable.layout.xml">
+				<layoutInfo size="300px"/>
+			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicForms/customizedFormForm.layout.xml">
+				<layoutInfo/>
+			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicForms/featuresForm.layout.xml">
+				<layoutInfo/>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

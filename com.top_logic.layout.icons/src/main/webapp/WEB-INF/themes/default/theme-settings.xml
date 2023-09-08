@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<color name="ICON_COLOR_BASIC"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="ICON_COLOR_CIRCLE_BASIC"
+		value="#454952"
+	/>
+	<color name="ICON_COLOR_DARK_CONTEXT_BASIC"
+		expr="%ICON_COLOR_WHITE%"
+	/>
+	<color name="ICON_COLOR_DARK_CONTEXT_HIGHLIGHT"
+		expr="%ICON_COLOR_WHITE%"
+	/>
+	<string name="ICON_COLOR_DARK_CONTEXT_HIGHLIGHT_BG"
+		expr="%ICON_COLOR_TRANSPARENT%"
+	/>
+	<color name="ICON_COLOR_DARK_CONTEXT_DISABLED_BASIC"
+		expr="%ICON_COLOR_DISABLED_BASIC%"
+	/>
+	<color name="ICON_COLOR_DARK_CONTEXT_DISABLED_HIGHLIGHT"
+		expr="%ICON_COLOR_DISABLED_HIGHLIGHT%"
+	/>
+	<string name="ICON_COLOR_DARK_CONTEXT_DISABLED_HIGHLIGHT_BG"
+		expr="%ICON_COLOR_DISABLED_HIGHLIGHT_BG%"
+	/>
+	<color name="ICON_COLOR_DISABLED_BASIC"
+		expr="%ICON_COLOR_GREY%"
+	/>
+	<color name="ICON_COLOR_DISABLED_HIGHLIGHT"
+		expr="%ICON_COLOR_GREY%"
+	/>
+	<string name="ICON_COLOR_DISABLED_HIGHLIGHT_BG"
+		expr="%ICON_COLOR_WHITE%"
+	/>
+	<color name="ICON_COLOR_GREEN"
+		value="#00CC00"
+	/>
+	<color name="ICON_COLOR_GREY"
+		value="#CFD1D2"
+	/>
+	<color name="ICON_COLOR_HIGHLIGHT"
+		expr="%LAYOUT_HIGHLIGHT_COLOR%"
+	/>
+	<string name="ICON_COLOR_HIGHLIGHT_BG"
+		expr="%ICON_COLOR_WHITE%"
+	/>
+	<color name="ICON_COLOR_LIGHTGREY"
+		value="#EAEEF1"
+	/>
+	<string name="ICON_COLOR_OVERLAY_HIGHLIGHT_BG"
+		expr="%ICON_COLOR_WHITE%"
+	/>
+	<color name="ICON_COLOR_RED"
+		value="#E4246F"
+	/>
+	<string name="ICON_COLOR_TRANSPARENT"
+		value="rgba(0,0,0,0.0)"
+	/>
+	<color name="ICON_COLOR_WHITE"
+		value="#FBFBFD"
+	/>
+	<color name="ICON_COLOR_YELLOW"
+		value="#FFCC00"
+	/>
+</settings>

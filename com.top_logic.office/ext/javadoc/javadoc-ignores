@@ -1,0 +1,8 @@
+com.top_logic.office.word.DOCXWordAccess.java: Invalid camel case word 'DOCXWordAccess', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.office.word.tokenReplacer.DOCXCopyReplacer.java: Invalid camel case word 'CopyReplaceronfig', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.office.word.tokenReplacer.TableReplacerConfig.java: Missing documentation: com.top_logic.office.word.tokenReplacer.TableReplacerConfig.getTableValues
+com.top_logic.office.word.tokenReplacer.TableReplacerConfig.java: Missing documentation: com.top_logic.office.word.tokenReplacer.TableReplacerConfig.isAddColumns
+com.top_logic.office.word.tokenReplacer.TableReplacerConfig.java: Missing documentation: com.top_logic.office.word.tokenReplacer.TableReplacerConfig.isAddRows
+com.top_logic.office.word.tokenReplacer.TableReplacerConfig.java: Missing documentation: com.top_logic.office.word.tokenReplacer.TableReplacerConfig.isRemoveColumns
+com.top_logic.office.word.tokenReplacer.TableReplacerConfig.java: Missing documentation: com.top_logic.office.word.tokenReplacer.TableReplacerConfig.isRemoveRows
+com.top_logic.office.word.visitor.DOCXReplaceToken.java: Missing documentation: com.top_logic.office.word.visitor.DOCXReplaceToken.getParagraphsToAdd

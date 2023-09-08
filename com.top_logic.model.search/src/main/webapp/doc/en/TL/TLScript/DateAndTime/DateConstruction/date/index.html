@@ -1,0 +1,58 @@
+<h2>Syntax</h2> 
+<pre>	<code>date($year, $month, $day)</code>
+</pre> 
+<h2>Description</h2> 
+<p>Constructs a date value representing a day of a year (in the system calendar). Compatible with <code class="hljs inlineCode">tl.core:Date</code> values.</p> 
+<p>This value can be stored in attributes of type <code class="hljs inlineCode">tl.core:Date</code> or can be further examined with <a class="tlObject" data-custom="false" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">toSystemCalendar</a>.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>year</td> 
+   <td>Number</td> 
+   <td>Year of the date</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>month</td> 
+   <td>Number</td> 
+   <td>Month of the date. Counting starts from 0 (January = 0, February = 1 etc.)</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>day</td> 
+   <td>Number</td> 
+   <td>Day of the date. Counting starts at 1 (1 = first day of the month)</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business Object</p> 
+<p>A date value for the specified day of the year in the system calendar.</p> 
+<h2>Examples</h2> 
+<p><strong>Note: </strong>The output may differ depending on the calendar's time zone.</p> 
+<h3>Unformatted date</h3> 
+<pre>	<code>date(2012, 11, 31)
+</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 31.12.2012</p> 
+<h3>Formatted date</h3> 
+<pre>	<code>dateFormat("dd-MM-yyy").format(date(2012, 11, 31))</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output:</strong></span> 30-12-2012</p> 
+<p> </p> 
+<p> </p> 
+<p> </p>

@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+	</params>
+
+	<layout name="${namePrefix}TopContainer"
+		dontRecord="true"
+		horizontal="true"
+	>
+		<components>
+			<component class="com.top_logic.layout.scripting.template.gui.ScriptRecorderTree"
+				maximizeRoot="${namePrefix}ScriptRecorderTree"
+				model="provider(com.top_logic.layout.scripting.template.gui.ScriptRecorderTreeModelProvider)"
+				name="${namePrefix}ScriptRecorderTree"
+				resPrefix="tl.scripting.recorder."
+				securityProviderClass="securityRoot"
+				showMaximize="true"
+				toolbar="true"
+			>
+				<layoutInfo size="40%"/>
+				<commands>
+					<command id="start"
+						class="com.top_logic.layout.scripting.template.gui.ScriptRecorderTree$Start"
+						image="theme:ICONS_BUTTON_RECORD"
+						pause-image="theme:ICONS_BUTTON_PAUSE"
+						pause-label="tl.scripting.recorder.stopRecording"
+						resourceKey="tl.scripting.recorder.startRecording"
+					/>
+					<command id="play"
+						class="com.top_logic.layout.scripting.template.gui.ApplyApplicationAction"
+						disabledImage="theme:ICONS_BUTTON_START_DISABLED"
+						image="theme:ICONS_BUTTON_START"
+						mode="PLAY"
+						resourceKey="tl.scripting.recorder.play"
+					/>
+					<command id="exec"
+						class="com.top_logic.layout.scripting.template.gui.StartBackgroundReplayCommand"
+						disabledImage="theme:ICONS_BUTTON_FAST_FORWARD_DISABLED"
+						executability="com.top_logic.layout.scripting.template.gui.DisabledWhenBuzzy"
+						image="theme:ICONS_BUTTON_FAST_FORWARD"
+						resourceKey="tl.scripting.recorder.exec"
+					/>
+					<command id="stepOver"
+						class="com.top_logic.layout.scripting.template.gui.ApplyApplicationAction"
+						disabledImage="theme:ICONS_BUTTON_STEP_OVER_DISABLED"
+						image="theme:ICONS_BUTTON_STEP_OVER"
+						mode="STEP_OVER"
+						resourceKey="tl.scripting.recorder.stepOver"
+					/>
+					<command id="stepInto"
+						class="com.top_logic.layout.scripting.template.gui.ApplyApplicationAction"
+						disabledImage="theme:ICONS_BUTTON_STEP_INTO_DISABLED"
+						image="theme:ICONS_BUTTON_STEP_INTO"
+						mode="STEP_INTO"
+						resourceKey="tl.scripting.recorder.stepInto"
+					/>
+					<command id="stepOut"
+						class="com.top_logic.layout.scripting.template.gui.ApplyApplicationAction"
+						disabledImage="theme:ICONS_BUTTON_STEP_OUT_DISABLED"
+						image="theme:ICONS_BUTTON_STEP_OUT"
+						mode="STEP_OUT"
+						resourceKey="tl.scripting.recorder.stepOut"
+					/>
+					<command id="stop"
+						class="com.top_logic.layout.scripting.template.gui.StopActionReplay"
+						disabledImage="theme:ICONS_BUTTON_STOP_DISABLED"
+						image="theme:ICONS_BUTTON_STOP"
+						resourceKey="tl.scripting.recorder.stop"
+					/>
+					<command id="group"
+						class="com.top_logic.layout.scripting.template.gui.ScriptRecorderTree$Group"
+						disabledImage="theme:ICONS_BUTTON_GROUP_DISABLED"
+						image="theme:ICONS_BUTTON_GROUP"
+						resourceKey="tl.scripting.recorder.group"
+					/>
+					<command id="ungroup"
+						class="com.top_logic.layout.scripting.template.gui.ScriptRecorderTree$UnGroup"
+						disabledImage="theme:ICONS_BUTTON_UNGROUP_DISABLED"
+						image="theme:ICONS_BUTTON_UNGROUP"
+						resourceKey="tl.scripting.recorder.ungroup"
+					/>
+					<command id="cut"
+						class="com.top_logic.layout.scripting.template.gui.ScriptRecorderTree$Delete"
+						disabledImage="theme:ICONS_BUTTON_CUT_DISABLED"
+						image="theme:ICONS_BUTTON_CUT"
+						resourceKey="tl.scripting.recorder.cut"
+					/>
+					<command id="paste"
+						class="com.top_logic.layout.scripting.template.gui.ScriptRecorderTree$Paste"
+						disabledImage="theme:ICONS_BUTTON_PASTE_DISABLED"
+						image="theme:ICONS_BUTTON_PASTE"
+						resourceKey="tl.scripting.recorder.paste"
+					/>
+				</commands>
+
+				<buttons>
+					<button id="storeCurrentRevision"
+						class="com.top_logic.layout.scripting.template.gui.StoreCurrentRevisionCommand"
+						clique="additional"
+						disabledImage="theme:ICONS_BUTTON_TIME_DISABLED"
+						group="System"
+						image="theme:ICONS_BUTTON_TIME"
+						resourceKey="tl.scripting.recorder.storeCurrentRevision"
+					/>
+					<button class="com.top_logic.layout.scripting.template.gui.SaveScriptCommand"/>
+					<button id="switchTechnical"
+						activeImage="theme:com.top_logic.layout.form.control.Icons.TRISTATE_TRUE"
+						class="com.top_logic.layout.scripting.template.gui.SwitchRecordTechnicalCommands"
+						clique="settings"
+						group="System"
+						image="theme:com.top_logic.layout.form.control.Icons.TRISTATE_NULL"
+					/>
+					<button id="switchAll"
+						activeImage="theme:com.top_logic.layout.form.control.Icons.TRISTATE_TRUE"
+						class="com.top_logic.layout.scripting.template.gui.SwitchRecordAllCommands"
+						clique="settings"
+						group="System"
+						image="theme:com.top_logic.layout.form.control.Icons.TRISTATE_NULL"
+					/>
+				</buttons>
+
+				<dialogs>
+					<component class="com.top_logic.mig.html.layout.Layout"
+						name="${namePrefix}ScriptUploadContainer"
+						resizable="false"
+					>
+						<dialogInfo
+							executability="com.top_logic.layout.scripting.template.gui.ServerScriptSelectorExecutability"
+							height="100px"
+							image="theme:ICONS_IMPORT"
+							openerClique="additional-apply"
+							openerCommandGroup="System"
+							width="600px"
+						/>
+						<components>
+							<component class="com.top_logic.layout.scripting.template.gui.ScriptUploadComponent"
+								buttonComponent="${namePrefix}ScriptUploadButtons"
+								name="${namePrefix}ScriptUploadForm"
+								page="/jsp/layout/scripting/ScriptUploadComponent.jsp"
+								resPrefix="tl.scripting.recorder.scriptUpload."
+								securityProviderClass="securityRoot"
+								toolbar="false"
+							>
+								<buttons>
+									<button id="uploadScript"
+										class="com.top_logic.layout.scripting.template.gui.ScriptUploadCommand"
+									/>
+								</buttons>
+							</component>
+							<buttonbar name="${namePrefix}ScriptUploadButtons"/>
+						</components>
+					</component>
+					<include name="scripting/LoadScript.xml"
+						namePrefix="${namePrefix}LoadScript"
+					/>
+					<include name="scripting/SaveScriptAs.xml"
+						namePrefix="${namePrefix}SaveScriptAs"
+					/>
+					<include name="scripting/TemplateEditor.xml"
+						builderClass="com.top_logic.layout.scripting.template.gui.templates.TemplateCreateBuilder"
+						executability="com.top_logic.tool.execution.NoSelectionDisabled,com.top_logic.layout.scripting.template.gui.DisabledWhenBuzzy"
+						master="${namePrefix}ScriptRecorderTree"
+						namePrefix="${namePrefix}templateCreate"
+						openHandlerName="openTemplateCreate"
+					/>
+				</dialogs>
+
+				<toolbar-groups>
+					<toolbar-group name="scriptRecording">
+						<buttons>
+							<button command-id="start"/>
+						</buttons>
+					</toolbar-group>
+					<toolbar-group name="scriptReplay">
+						<buttons>
+							<button command-id="play"/>
+							<button command-id="exec"/>
+							<button command-id="stepOver"/>
+							<button command-id="stepInto"/>
+							<button command-id="stepOut"/>
+							<button command-id="stop"/>
+						</buttons>
+					</toolbar-group>
+					<toolbar-group name="scriptEditing">
+						<buttons>
+							<button command-id="group"/>
+							<button command-id="ungroup"/>
+							<button command-id="cut"/>
+							<button command-id="paste"/>
+						</buttons>
+					</toolbar-group>
+				</toolbar-groups>
+			</component>
+			<component class="com.top_logic.layout.scripting.template.gui.ScriptRecorderComponent"
+				isSecurityMaster="true"
+				model="selection(${namePrefix}ScriptRecorderTree)"
+				name="${namePrefix}ScriptRecorderComponent"
+				page="/jsp/layout/scripting/ScriptRecorderComponent.jsp"
+				resPrefix="tl.scripting.recorder."
+				securityProviderClass="securityRoot"
+				titleKey="tl.scripting.recorder.details.title"
+			>
+				<layoutInfo size="60%"/>
+				<xml-display
+					preserve-whitespace="true"
+					xml-header="false"
+				/>
+			</component>
+			<include name="scripting/templateTree.xml"
+				namePrefix="${namePrefix}"
+			/>
+		</components>
+	</layout>
+</template>

@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:parameters>
+			
+			<t:parameter name="Example_Parameter" type="string" />
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<foo bar="${$Example_Parameter}"/>
+		
+		pre<t:value expr='$Example_Parameter' />after
+		
+	</t:body>
+</t:template>

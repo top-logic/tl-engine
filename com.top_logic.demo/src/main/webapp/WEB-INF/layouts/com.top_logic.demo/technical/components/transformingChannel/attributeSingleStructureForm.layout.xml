@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor=""
+		saveClosesDialog="true"
+		type=""
+	>
+		<name key="dynamic.3cca55be-2c96-4fa8-8404-d515bc117190">
+			<en>Attribute singleStructure</en>
+			<de>Attribut singleStructure</de>
+		</name>
+		<model class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+			function="x -> $x.get(`DemoTypes:A#singleStructure`)"
+			input="selection(com.top_logic.demo/technical/components/transformingChannel/asTable.layout.xml#Table)"
+		/>
+	</arguments>
+</config:template-call>

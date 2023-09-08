@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- This component manages the scheduled tasks. -->
+<layout name="sysScheduler"
+	horizontal="true"
+>
+	<components>
+		<layout name="schedulerTables">
+			<components>
+				<component class="com.top_logic.util.sched.layout.table.TaskTreeComponent"
+					buttonComponent="EditTaskButtons"
+					isSecurityMaster="true"
+					maximizeRoot="sysSchedulerTable"
+					model="provider(com.top_logic.util.sched.Scheduler#getSchedulerInstance)"
+					name="sysSchedulerTable"
+					resPrefix="admin.sys.scheduler."
+					securityProviderClass="securityRoot"
+					showMaximize="true"
+					treeBuilder="com.top_logic.util.sched.layout.table.TaskTreeTableBuilder"
+				>
+					<buttons>
+						<reference command-id="releaseTaskClusterLock"/>
+						<reference command-id="blockTask"/>
+						<reference command-id="unblockTask"/>
+						<reference command-id="scheduleTask"/>
+					</buttons>
+
+					<table
+						defaultColumns="name, lastSched, nextSched, isBlocked, isBlockingAllowed, combinedState, exception, warnings, message, startDate, endDate, duration, logFile, isEnabled, runOnStartup, perNode, persistent, clusterLock, needsMaintenanceMode"
+						defaultSortOrder="name:ascending"
+						fixedColumns="1"
+					>
+						<column-default
+							accessor="com.top_logic.util.sched.layout.table.TaskAccessor"
+							filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+						/>
+						<columns>
+							<column name="name"
+								columnWidth="250px"
+								mandatory="true"
+							>
+								<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="lastSched"
+								columnWidth="125px"
+								labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
+									comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="nextSched"
+								columnWidth="125px"
+								labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
+									comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="isBlocked"
+								cellStyle="text-align: center;"
+								columnWidth="60px"
+								renderer="com.top_logic.util.sched.layout.block.BlockStateRenderer"
+							/>
+							<column name="isBlockingAllowed"
+								cellStyle="text-align: center;"
+								columnWidth="60px"
+								filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
+							/>
+							<column name="combinedState"
+								cellStyle="text-align: center;"
+								columnWidth="60px"
+								renderer="com.top_logic.util.sched.layout.CombinedStateRenderer"
+							/>
+							<column name="exception"
+								cellStyle="text-align: center;"
+								columnWidth="60px"
+								renderer="com.top_logic.util.sched.layout.ExceptionRenderer"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="warnings"
+								cellStyle="text-align: center;"
+								columnWidth="60px"
+								renderer="com.top_logic.util.sched.layout.WarningsRenderer"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="message"
+								columnWidth="500px"
+								filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+								resourceProvider="com.top_logic.mig.html.I18NResourceProvider"
+							/>
+							<column name="isEnabled"
+								cellStyle="text-align: center;"
+								columnWidth="100px"
+								filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
+							/>
+							<column name="startDate"
+								columnWidth="125px"
+								labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
+									comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="endDate"
+								columnWidth="125px"
+								labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
+									comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="logFile"
+								cellStyle="text-align: left;"
+								columnWidth="300px"
+								filterProvider=""
+								renderer="com.top_logic.util.sched.layout.table.LogFileRenderer"
+							/>
+							<column name="duration"
+								cellStyle="text-align: right;"
+								columnWidth="70px"
+								filterProvider=""
+								renderer="com.top_logic.util.sched.layout.DurationRenderer"
+							/>
+							<column name="runOnStartup"
+								cellStyle="text-align: center;"
+								columnWidth="100px"
+								filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
+							/>
+							<column name="perNode"
+								cellStyle="text-align: center;"
+								columnWidth="100px"
+								filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
+							/>
+							<column name="persistent"
+								cellStyle="text-align: center;"
+								columnWidth="100px"
+								filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
+							/>
+							<column name="clusterLock"
+								cellStyle="text-align: center;"
+								columnWidth="100px"
+								filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+							/>
+							<column name="needsMaintenanceMode"
+								cellStyle="text-align: center;"
+								columnWidth="100px"
+								filterProvider="com.top_logic.layout.table.filter.SimpleBooleanFilterProvider"
+							/>
+							<column name="className"
+								cellStyle="text-align: left;"
+								columnWidth="400px"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="false"
+								/>
+							</column>
+						</columns>
+					</table>
+				</component>
+				<component class="com.top_logic.util.sched.layout.table.results.TaskResultTreeComponent"
+					buttonComponent="EditTaskButtons"
+					maximizeRoot="schedulerResult"
+					model="model(sysEditTask)"
+					name="schedulerResult"
+					resPrefix="admin.sys.scheduler.detail."
+					showMaximize="true"
+				>
+					<table
+						defaultColumns="taskName, result, exception, warnings, message, startDate, duration, endDate, logFile"
+						defaultSortOrder="startDate:descending"
+						fixedColumns="1"
+					>
+						<column-default
+							accessor="com.top_logic.util.sched.layout.table.results.TaskResultAccessor"
+							filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+						/>
+						<columns>
+							<column name="taskName"
+								cellStyle="text-align: left;"
+								columnWidth="150px"
+							>
+								<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
+							</column>
+							<column name="result"
+								cellStyle="text-align: center;"
+								columnWidth="80px"
+								renderer="com.top_logic.util.sched.layout.ResultTypeRenderer"
+							/>
+							<column name="exception"
+								cellStyle="text-align: center;"
+								columnWidth="80px"
+								renderer="com.top_logic.util.sched.layout.ExceptionRenderer"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="warnings"
+								cellStyle="text-align: center;"
+								columnWidth="60px"
+								renderer="com.top_logic.util.sched.layout.WarningsRenderer"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="message"
+								cellStyle="text-align: left;"
+								columnWidth="400px"
+								resourceProvider="com.top_logic.mig.html.I18NResourceProvider"
+							/>
+							<column name="startDate"
+								cellStyle="text-align: right;"
+								columnWidth="125px"
+								labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
+									comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="duration"
+								cellStyle="text-align: right;"
+								columnWidth="60px"
+								filterProvider=""
+								renderer="com.top_logic.util.sched.layout.DurationRenderer"
+							/>
+							<column name="endDate"
+								cellStyle="text-align: right;"
+								columnWidth="125px"
+								labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
+									comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="clusterNode"
+								cellStyle="text-align: left;"
+								columnWidth="125px"
+							/>
+							<column name="logFile"
+								cellStyle="text-align: left;"
+								columnWidth="300px"
+								filterProvider=""
+								renderer="com.top_logic.util.sched.layout.table.LogFileRenderer"
+							/>
+						</columns>
+					</table>
+				</component>
+				<buttonbar name="EditTaskButtons"/>
+			</components>
+		</layout>
+		<layout name="schedulerInfoBoxes">
+			<layoutInfo size="550"/>
+
+			<components>
+				<component class="com.top_logic.mig.html.layout.PageComponent"
+					name="sysSchedulerInfo"
+					page="/jsp/layout/sched/SchedulerInfo.jsp"
+					resPrefix="admin.sys.scheduler.info."
+					showMaximize="true"
+				/>
+
+				<component class="com.top_logic.layout.task.EditTaskWrapperComponent"
+					buttonComponent="EditTaskButtons"
+					defaultFor="tl.legacy.tabletypes:TaskImplTable"
+					maximizeRoot="sysEditTask"
+					model="selection(sysSchedulerTable)"
+					name="sysEditTask"
+					page="/jsp/layout/sched/EditTask.jsp"
+					resPrefix="admin.sys.scheduler.task."
+					securityProviderClass="securityRoot"
+					showMaximize="true"
+				>
+					<dialogs>
+						<layout name="failedTaskResultsDialog">
+							<dialogInfo
+								height="80%"
+								resizable="true"
+								width="920px"
+							/>
+
+							<components>
+								<component class="com.top_logic.util.sched.layout.table.results.failed.FailedTaskResultTreeComponent"
+									buttonComponent="failedTaskResultsButtons"
+									model="provider(com.top_logic.util.sched.Scheduler#getSchedulerInstance)"
+									name="failedTaskResultsTable"
+									resPrefix="admin.sys.scheduler.failed."
+									securityProviderClass="securityRoot"
+								>
+									<table
+										defaultColumns="taskName, result, exception, warnings, message, startDate, duration, endDate, clusterNode, logFile"
+										defaultSortOrder="startDate:descending"
+										fixedColumns="1"
+									>
+										<column-default accessor="com.top_logic.util.sched.layout.table.results.TaskResultAccessor"/>
+
+										<columns>
+											<column name="taskName"
+												cellStyle="text-align: left;"
+												columnWidth="250px"
+												filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+											>
+												<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
+											</column>
+											<column name="result"
+												cellStyle="text-align: center;"
+												columnWidth="80px"
+												renderer="com.top_logic.util.sched.layout.ResultTypeRenderer"
+											/>
+											<column name="exception"
+												cellStyle="text-align: center;"
+												columnWidth="80px"
+												renderer="com.top_logic.util.sched.layout.ExceptionRenderer"
+											>
+												<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+													show-option-entries="false"
+												/>
+											</column>
+											<column name="warnings"
+												cellStyle="text-align: center;"
+												columnWidth="60px"
+												renderer="com.top_logic.util.sched.layout.WarningsRenderer"
+											>
+												<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+													show-option-entries="false"
+												/>
+											</column>
+											<column name="message"
+												cellStyle="text-align: left;"
+												columnWidth="400px"
+												filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+												resourceProvider="com.top_logic.mig.html.I18NResourceProvider"
+											/>
+											<column name="startDate"
+												cellStyle="text-align: right;"
+												columnWidth="125px"
+												labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+											>
+												<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
+													comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
+													show-option-entries="false"
+												/>
+											</column>
+											<column name="duration"
+												cellStyle="text-align: right;"
+												columnWidth="60px"
+												filterProvider=""
+												renderer="com.top_logic.util.sched.layout.DurationRenderer"
+											/>
+											<column name="endDate"
+												cellStyle="text-align: right;"
+												columnWidth="125px"
+												labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+											>
+												<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
+													comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
+													show-option-entries="false"
+												/>
+											</column>
+											<column name="clusterNode"
+												cellStyle="text-align: left;"
+												columnWidth="125px"
+												filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+											/>
+											<column name="logFile"
+												cellStyle="text-align: left;"
+												columnWidth="300px"
+												filterProvider=""
+												renderer="com.top_logic.util.sched.layout.table.LogFileRenderer"
+											/>
+										</columns>
+									</table>
+								</component>
+								<buttonbar name="failedTaskResultsButtons"/>
+							</components>
+						</layout>
+					</dialogs>
+				</component>
+				<component class="com.top_logic.util.sched.layout.TaskResultComponent"
+					maximizeRoot="sysTaskResultInfo"
+					model="selection(schedulerResult)"
+					name="sysTaskResultInfo"
+					page="/jsp/layout/sched/TaskResultInfo.jsp"
+					resPrefix="admin.sys.scheduler.taskResult."
+					securityProviderClass="securityRoot"
+					showMaximize="true"
+				/>
+			</components>
+		</layout>
+	</components>
+</layout>

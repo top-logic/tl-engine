@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="visual"
+   viewBox="0 0 22 22"
+   version="1.1"
+   sodipodi:docname="element.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata29">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>newElement</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1680"
+     inkscape:window-height="987"
+     id="namedview27"
+     showgrid="false"
+     inkscape:zoom="15.170655"
+     inkscape:cx="25.308298"
+     inkscape:cy="-6.3575982"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="visual" />
+  <defs
+     id="defs4">
+    <style
+       id="style2">.cls-1{fill:none;stroke:#fbfbfd;stroke-miterlimit:10;}.cls-2{fill:#fbfbfd;}</style>
+  </defs>
+  <title
+     id="title6">newElement</title>
+  <path
+     style="fill:#008fb8;fill-opacity:1;stroke-width:1.29371619"
+     d="M 0.75 0.00390625 L 0.75 8.8769531 L 0.75 21.996094 L 21.449219 21.996094 L 21.449219 8.8769531 L 21.449219 0.00390625 L 16.767578 0.00390625 L 5.4316406 0.00390625 L 0.75 0.00390625 z M 3.3378906 2.5917969 L 7.0371094 2.5917969 L 15.162109 2.5917969 L 18.861328 2.5917969 L 18.861328 8.8769531 L 18.861328 19.410156 L 3.3378906 19.410156 L 3.3378906 8.8769531 L 3.3378906 2.5917969 z M 4.6308594 3.8847656 L 4.6308594 6.4726562 L 17.568359 6.4726562 L 17.568359 3.8847656 L 4.6308594 3.8847656 z M 4.6308594 7.765625 L 4.6308594 10.353516 L 17.568359 10.353516 L 17.568359 7.765625 L 4.6308594 7.765625 z M 4.6308594 11.646484 L 4.6308594 14.234375 L 17.568359 14.234375 L 17.568359 11.646484 L 4.6308594 11.646484 z M 4.6308594 15.527344 L 4.6308594 18.115234 L 17.568359 18.115234 L 17.568359 15.527344 L 4.6308594 15.527344 z "
+     id="rect18" />
+</svg>

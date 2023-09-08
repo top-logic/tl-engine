@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="X"
+	p1="x-y-outer1value"
+	p2="y-outer1value"
+	p3="z-y-outer1value"
+>
+	<component class="C"
+		conf1="x-y-outer1value"
+		conf2="y-outer1value"
+		conf3="z-y-outer1value"
+		conf4="outer2value"
+	/>
+	<component class="B"
+		conf1="x-y-outer1value"
+		conf2="y-outer1value"
+		conf3="z-y-outer1value"
+		conf4="outer1value"
+	/>
+</component>

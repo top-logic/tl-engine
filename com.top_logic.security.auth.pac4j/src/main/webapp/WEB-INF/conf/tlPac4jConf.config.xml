@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+				   	<module key="com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+	
+        <config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles >
+					<bundle name="tlPac4jMessages"/>
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory">
+			<instance class="com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory">
+				<callback-url>%PAC_CALLBACK_URL%</callback-url>
+				<callback-url-absolute>%PAC_CALLBACK_ABSOLUTE%</callback-url-absolute>
+			</instance>
+		</config>
+	</services>
+	
+	<configs>
+		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
+			isEnabled="true"
+		/>
+	</configs>
+</application>

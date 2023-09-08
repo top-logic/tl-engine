@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<tableView name="EventMonitorTable"
+	modelBuilder="com.top_logic.layout.admin.component.EventModelBuilder"
+	resPrefix="admin.event.monitor."
+	securityProviderClass="securityRoot"
+>
+	<table
+		defaultColumns="date,channel,user,source,message,type"
+		defaultSortOrder="date"
+		pageSizeOptions="16"
+	>
+		<column-default accessor="com.top_logic.base.bus.MonitorEventAccessor"/>
+		<columns>
+			<column name="date"
+				labelProvider="com.top_logic.layout.table.renderer.ShortDateTimeFormat"
+			/>
+		</columns>
+	</table>
+	<buttons>
+		<button id="reloadEventMonitorTableCommand"
+			class="com.top_logic.layout.form.component.InvalidateCommand"
+			disabledImage="theme:ICONS_BUTTON_REFRESH_DISABLED"
+			image="theme:ICONS_BUTTON_REFRESH"
+		/>
+	</buttons>
+</tableView>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<list name="demo.attribute.classifier.local" type="Classification" system="true" de="Lokale Attribut-Klassifizierung" en="Local attribute classification">
+	<elements>
+		<element name="demo.attribute.classifier.local.dateAttributes"/>
+	</elements>
+</list>

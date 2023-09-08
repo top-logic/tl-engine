@@ -1,0 +1,99 @@
+<html>
+<head>
+	<title>Callback window</title>
+	
+	<script type="text/javascript">
+		function onLoad() {
+			opener.log("window.onload init.");
+			opener.window.setTimeout(function() {longRunningFunction("timer.window.onload (registered in opener)"); }, 0);
+			window.setTimeout(function () {longRunningFunction("timer.window.onload (registered in window)"); }, 0);
+			opener.onloadCallback(window); 
+			longRunningFunction("window.onload");
+			opener.log("window.onload exit.");
+			return false;
+		}
+		
+		function onUnload() {
+			opener.log("window.onunload init.");
+			opener.window.setTimeout(function() {longRunningFunction("timer.window.onunload (registered in opener)"); }, 0);
+			window.setTimeout(function () {longRunningFunction("timer.window.onunload (registered in window)"); }, 0);
+			opener.onunloadCallback(window);
+			longRunningFunction("window.onunload");
+			opener.log("window.onunload exit.");
+			return false;
+		}
+		
+		function handleClick(button) {
+			opener.log("window.onclick init.");
+			opener.window.setTimeout(function() {longRunningFunction("timer.window.onclick (registered in opener)"); }, 0);
+			window.setTimeout(function () {longRunningFunction("timer.window.onclick (registered in window)"); }, 0);
+			opener.onclickCallback(window);
+			longRunningFunction("window.onclick");
+			opener.log("window.onclick exit.");
+			return false;
+		}
+		
+		function handleSynchronizedClick(button) {
+			var id = "window.onclickSynchronized";
+			var count = 0;
+			while (! opener.monitor.acquire(id)) {
+				// Retry.
+				if (count % 1000 == 0) {
+					opener.log(id + " blocked in handleSynchronizedClick.");
+				}
+				count++;
+				if (count > 10000) {
+					opener.log("Deadlock for " + id + " in handleSynchronizedClick.");
+					return;
+				}
+			}
+			try {
+				opener.log("enter " + id);
+				opener.window.setTimeout(function() {longRunningFunction("timer.window.onclick (registered in opener)"); }, 0);
+				window.setTimeout(function () {longRunningFunction("timer.window.onclick (registered in window)"); }, 0);
+				opener.onclickSynchronizedCallback(id);
+				longRunningFunction(id);
+				opener.log("exit " + id);
+			} catch (ex) {
+				throw ex;
+			} finally {
+				opener.monitor.release(id);
+			}
+			return false;
+		}
+
+		function longRunningFunction(id) {
+			var count = 0;
+			while (! opener.monitor.acquire(id)) {
+				// Retry.
+				if (count % 1000 == 0) {
+					opener.log(id + " blocked!");
+				}
+				count++;
+				if (count > 10000) {
+					opener.log("Deadlock for " + id + ".");
+					return;
+				}
+			}
+			try {
+				opener.log(id + " wait started.");
+				var dummy = 0;
+				for (var n = 0; n < 200000; n++) {
+					dummy += n;
+				}
+				opener.log(id + " wait completed (" + dummy + ").");
+			} catch (ex) {
+				throw ex;
+			} finally {
+				opener.monitor.release(id);
+			}
+		}
+	
+	</script>
+</head>
+<body onload="return onLoad();" onunload="return onUnload();">
+	<p>External Window. <button onclick="handleClick(this)">Click</button> to 
+	send event to opender, <button onclick="handleSynchronizedClick(this)">Click</button> to 
+	send synchronized event to opender, close to trigger onunload.</p>
+</body>
+</html>

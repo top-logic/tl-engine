@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="documentName"/>
+		<param name="model"/>
+		<param name="modelBuilder"/>
+		<param name="securityId"
+			optional="true"
+		/>
+	</params>
+	<form name="displayDocument"
+		model="${model}"
+		resPrefix="layouts.tiles.documents.displayDocumentTile."
+		resetInvisible="true"
+		securityId="${securityId}"
+		titleKey="/s${documentName}"
+	>
+		<modelBuilder class="${modelBuilder}"
+			documentName="${documentName}"
+		/>
+		<!--
+			Do not use "frmBody" (with margin 10px) as "cssClass", because then setting width and height of
+			pdf document iframe causes scrollbars.
+		-->
+		<componentControlProvider class="com.top_logic.layout.form.declarative.DirectFormControlProvider"
+			cssClass=""
+		/>
+	</form>
+</template>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor=""
+		model="selection(com.top_logic.demo/technical/components/commandExecutability/operationsTable.layout.xml#Table)"
+		saveClosesDialog="true"
+		type=""
+	>
+		<name key="dynamic.6c5fd73a-dac3-4a0d-9f96-19a9539707a6">
+			<en>Details</en>
+			<de>Details</de>
+		</name>
+	</arguments>
+</config:template-call>

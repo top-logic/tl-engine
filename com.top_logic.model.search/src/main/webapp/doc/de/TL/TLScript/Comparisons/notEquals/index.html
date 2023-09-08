@@ -1,0 +1,52 @@
+<h2>Syntax</h2> 
+<pre>	<code>$e1 != $e2
+
+!$e1.isEqual($e2)</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Boolescher Ausdruck, der als wahr bewertet wird, wenn <code class="hljs inlineCode">e1</code> und <code class="hljs inlineCode">e2</code> nicht zum gleichen Wert ausgewertet werden.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>e1</td> 
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td> 
+   <td>Objekt, das mit <code class="hljs inlineCode">e2</code> verglichen werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>e2</td> 
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td> 
+   <td>Objekt, das mit <code class="hljs inlineCode">e1</code> verglichen werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Wahrheitswert</p> 
+<p><code class="hljs inlineCode">true</code>, wenn das Ergebnis der Auswertung besagt, dass die beiden Objekte nicht gleich sind.</p> 
+<h2>Beispiele</h2> 
+<h3>Zahlen</h3> 
+<pre>	<code>1 != 2
+</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong> <code class="hljs inlineCode">true</code></p> 
+<h3>Gleiche Menge</h3> 
+<pre>	<code>!list(1, 2).isEqual(list(1, 2))</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong><code class="hljs inlineCode">false</code></p> 
+<h3>Ungleiche Menge</h3> 
+<pre>	<code>!list(1, 2).isEqual(list("one", "two"))</code>
+</pre> 
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong><code class="hljs inlineCode">true</code></p>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.8d59e27f-2812-4953-a7a3-5a2a0c4b3359">
+				<en>New thing</en>
+				<de>Neues Ding</de>
+			</title>
+		</title>
+		<open-handler id="ID_95810005_375b_41e6_bf37_3466f2fa3863"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="colored:fas fa-cube overlay-add"
+			targetComponent="com.top_logic.demo/technical/components/containmentContext/newThing/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.8d59e27f-2812-4953-a7a3-5a2a0c4b3359">
+				<en>New thing</en>
+				<de>Neues Ding</de>
+			</resourceKey>
+		</open-handler>
+		<forms>
+			<form type="test.containmentContext:Thing">
+				<formDefinition>
+					<field
+						attribute="createdFor"
+						fullQualifiedName="test.containmentContext:Thing#createdFor"
+						type="test.containmentContext:World"
+					/>
+					<field attribute="name"/>
+					<field
+						attribute="uses"
+						fullQualifiedName="test.containmentContext:Thing#uses"
+						type="test.containmentContext:Usage"
+					>
+						<annotations>
+							<main-properties properties="thing,reason"/>
+						</annotations>
+					</field>
+				</formDefinition>
+			</form>
+		</forms>
+		<typeOptions
+			include-subtypes="false"
+			type="test.containmentContext:Thing"
+		/>
+		<create-handler id="ID_b6697fc0_8555_4954_a697_21888a2af2ec"
+			linkOperation="world -> thing -> $world.add(`test.containmentContext:World#things`, $thing)"
+		/>
+	</arguments>
+</config:template-call>

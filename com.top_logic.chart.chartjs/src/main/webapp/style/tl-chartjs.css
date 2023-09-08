@@ -1,0 +1,7 @@
+
+/* Expand the ChartJS control of a ChartJS component to 100% of its available space. */
+div.cjsComp {
+	position: relative;
+	width: 100%;
+	height: 100%
+}

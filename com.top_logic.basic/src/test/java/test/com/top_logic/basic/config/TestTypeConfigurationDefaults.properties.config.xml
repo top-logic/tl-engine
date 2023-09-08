@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<defaults>
+		<config interface="test.com.top_logic.basic.config.TestTypeConfigurationDefaults$AConfig">
+			<property name="int" value="15"/>
+		</config>
+		<config interface="test.com.top_logic.basic.config.TestTypeConfigurationDefaults$BConfig">
+			<property name="int" value="987546"/>
+		</config>
+		<!-- 
+			BSubConfig must not be mentioned in the configuration to test, whether inheritance 
+			also works for configuration interfaces that have no global defaults set at all.
+		-->
+		<!--
+		<config interface="test.com.top_logic.basic.config.TestTypeConfigurationDefaults$BSubConfig">
+		</config>
+		 -->
+		<config interface="test.com.top_logic.basic.config.TestTypeConfigurationDefaults$CConfig">
+			<property name="string" value="configuredStringDefault"/>
+		</config>
+	</defaults>
+
+</application>

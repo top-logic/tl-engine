@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<abstract-test
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	class="test.com.top_logic.basic.config.TestConfigurationAbstract$ExampleAbstractBaseClass"
+	int-value-one="101"
+	int-value-two="201"
+	int-value-three="301"
+	int-value-four="401"
+	int-value-five="501"
+	int-value-six="601"
+	/>

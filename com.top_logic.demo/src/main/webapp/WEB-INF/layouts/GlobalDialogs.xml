@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<layout-reference resource="export/exportDialog.layout.xml"/>
+	<layout-reference resource="export/gridExportDialog.layout.xml"/>
+	<layout-reference resource="com.top_logic.contact/userSettings/editCurrentPersonDialog.layout.xml"/>
+	<securityLayout name="globalDialogDemoTypesTop"
+		securityDomain="DemoTypes"
+		titleKey="demo.globalDialogs.DemoTypes.show.tabber"
+	>
+		<dialogInfo
+			createOpenerButtons="false"
+			executability="Always"
+			height="500"
+			openerCommandGroup="Read"
+			width="680"
+		/>
+
+		<components>
+			<include name="com.top_logic.demo/structure/demoTypes/detail/editStructureDetail.xml"
+				defaultFor="DemoTypes:DemoTypes.A,DemoTypes:DemoTypes.B,DemoTypes:DemoTypes.C.All,DemoTypes:DemoTypes.L"
+				master=""
+				namePrefix="globalDialog"
+				structure="DemoTypes"
+			/>
+		</components>
+	</securityLayout>
+	<securityLayout name="globalDialogDemoPlainTop"
+		securityDomain="DemoPlain"
+		titleKey="demo.DemoPlain.edit.dialog.tabber"
+	>
+		<components>
+			<include name="element/editAttributedDetail.xml"
+				defaultFor="DemoPlain:DemoPlain.All"
+				metaElementName="DemoPlain.All"
+				modifier="com.top_logic.demo.edit.DemoFormContextModificator"
+				namePrefix="globalDialogPlain"
+			/>
+		</components>
+		<dialogInfo
+			createOpenerButtons="false"
+			executability="Always"
+			height="500"
+			openerCommandGroup="Read"
+			width="680"
+		/>
+	</securityLayout>
+	<layout-reference resource="reporting/flex/chart/chartDetailsDialog.layout.xml"/>
+	<layout-reference resource="admin/loginMessageDialog.layout.xml"/>
+</template>

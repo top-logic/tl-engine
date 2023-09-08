@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		defaultFor=""
+		model="selection(com.top_logic.demo/technical/test/attributeOverride/instancesTable.layout.xml#Table)"
+		saveClosesDialog="true"
+		type=""
+	>
+		<name key="dynamic.c5e375d3-acdf-46fc-93ea-54bf12c43878">
+			<en>Specialized form</en>
+			<de>Spezialisiertes Formular</de>
+		</name>
+		<forms>
+			<form type="test.override:A">
+				<formDefinition>
+					<field attribute="name"/>
+					<field attribute="goLeft"/>
+					<field attribute="left"/>
+					<field attribute="right"/>
+					<field attribute="root"/>
+				</formDefinition>
+			</form>
+			<form type="test.override:R">
+				<formDefinition>
+					<field attribute="name"/>
+					<field attribute="root"/>
+				</formDefinition>
+			</form>
+			<form type="test.override:S">
+				<formDefinition>
+					<field attribute="name"/>
+					<field attribute="root"/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

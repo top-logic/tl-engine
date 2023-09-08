@@ -1,0 +1,40 @@
+<h2>Syntax</h2> 
+<pre>	<code>$set.firstElement()
+
+$set[0]</code>
+</pre> 
+<h2>Beschreibung</h2> 
+<p>Gibt das erste Element von <code class="hljs inlineCode">set</code> zurück.</p> 
+<h2>Parameter</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Typ</th> 
+   <th>Beschreibung</th> 
+   <th>Pflicht</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>set</td> 
+   <td>Menge</td> 
+   <td>Eine Menge, aus der das erste Element zurückgegeben werden soll.</td> 
+   <td>ja</td> 
+   <td> </td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Rückgabewert</h2> 
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</p> 
+<p>Das erste Element von <code class="hljs inlineCode">set</code> oder <code class="hljs inlineCode">null</code>, falls die Liste leer ist.</p> 
+<h2>Beispiele</h2> 
+<h3>Gefüllte Liste</h3> 
+<pre>	<code>list("hello", "how", "are", "you").firstElement()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> hello</p> 
+<h3>Leere Liste</h3> 
+<pre>	<code>list().firstElement()</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> <code class="hljs inlineCode">null</code></p>

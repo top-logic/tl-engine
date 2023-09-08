@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Grid displaying the plain demo types. -->
+<template>
+	<params>
+		<param name="namePrefix"
+			value="kafkaNode"
+		/>
+	</params>
+	<include name="element/gridWithDetail.xml"
+		columns="name,otherNode,notExternalized"
+		namePrefix="${namePrefix}"
+		types="kafka.demo:Node"
+	>
+		<buttons>
+			<reference command-id="createManyObjects"/>
+		</buttons>
+	</include>
+</template>

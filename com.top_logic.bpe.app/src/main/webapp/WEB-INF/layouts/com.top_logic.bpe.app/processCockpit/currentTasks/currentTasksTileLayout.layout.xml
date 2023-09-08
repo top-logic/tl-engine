@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="ID_3e3c9d91_3d26_45f1_a231_d3d2f8bb25a4"
+		securityDomain="SecurityStructure"
+		tileLabel="%LAYOUT_RESPREFIX%tileName"
+		tileName="ID_925e0b13_78ac_4439_9b7c_db1292381d0c"
+	>
+		<preview class="com.top_logic.bpe.app.layout.tiles.ActiveTasksTilePreview"
+			description="ActiveTasksTableTile.description"
+			icon="theme:ICON_CLIPBOARD_LIST"
+			model="selection(com.top_logic.bpe.app/processCockpit/contextListContext.layout.xml#List)"
+		/>
+		<components>
+			<layout-reference resource="com.top_logic.bpe.app/processCockpit/currentTasks/currentTasksInnerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

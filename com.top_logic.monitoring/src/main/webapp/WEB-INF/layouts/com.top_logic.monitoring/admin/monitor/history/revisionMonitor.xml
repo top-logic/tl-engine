@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout
+	horizontal="false"
+	titleKey="admin.monitor.revisionMonitor.title"
+	toolbar="true"
+>
+	<components>
+		<component class="com.top_logic.layout.form.component.SelectableFormComponent"
+			modelBuilder="com.top_logic.monitoring.revision.ChangeSetSelector"
+			name="revisionFilterComponent"
+			page="/jsp/monitoring/revision/revisionMonitor.jsp"
+			resPrefix="admin.monitor.revisionMonitor.filter"
+			securityProviderClass="securityRoot"
+			toolbar="false"
+		>
+			<layoutInfo size="40px"/>
+			<buttons>
+				<button id="refreshRevisionTable"
+					class="com.top_logic.monitoring.revision.UpdateChangeSetTreeCommand"
+					clique="refresh"
+				/>
+			</buttons>
+		</component>
+		<tree-table name="revisionTable"
+			model="selection(revisionFilterComponent)"
+			securityProviderClass="securityRoot"
+			toolbar="false"
+		>
+			<treeBuilder class="com.top_logic.monitoring.revision.ChangeSetTreeBuilder"/>
+			<table
+				defaultColumns="name, author, date, changedObjectCount, modificationType, oldValue, newValue "
+				defaultSortOrder="date:descending"
+				fixedColumns="4"
+				id-column="name"
+				resPrefix="admin.monitor.revisionMonitor.table"
+			>
+				<column-default filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"/>
+				<columns>
+					<column name="name"
+						accessor="com.top_logic.monitoring.revision.ChangeSetTreeAccessors$SelfAccessor"
+						columnWidth="170px"
+					/>
+					<column name="author"
+						accessor="com.top_logic.monitoring.revision.ChangeSetTreeAccessors$AuthorAccessor"
+						columnWidth="250px"
+					>
+						<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+							type="com.top_logic.knowledge.event.ChangeSet"
+						/>
+					</column>
+					<column name="date"
+						accessor="com.top_logic.monitoring.revision.ChangeSetTreeAccessors$DateAccessor"
+						columnWidth="130px"
+						labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+					>
+						<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+							type="com.top_logic.knowledge.event.ChangeSet"
+						/>
+					</column>
+					<column name="changedObjectCount"
+						accessor="com.top_logic.monitoring.revision.ChangeSetTreeAccessors$ObjectCountAccessor"
+						columnWidth="120px"
+					>
+						<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+							type="com.top_logic.knowledge.event.ChangeSet"
+						/>
+					</column>
+
+					<column name="modificationType"
+						accessor="com.top_logic.monitoring.revision.ChangeSetTreeAccessors$ChangeTypeAccessor"
+						columnWidth="110px"
+					>
+						<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+							type="com.top_logic.knowledge.event.ItemEvent"
+						/>
+					</column>
+					<column name="objectType"
+						accessor="com.top_logic.monitoring.revision.ChangeSetTreeAccessors$ObjectTypeAccessor"
+						columnWidth="220px"
+					>
+						<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+							type="com.top_logic.knowledge.event.ItemEvent"
+						/>
+					</column>
+					<column name="supportsHistory"
+						accessor="com.top_logic.monitoring.revision.ChangeSetTreeAccessors$SupportsHistoryAccessor"
+						columnWidth="110px"
+					>
+						<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+							type="com.top_logic.knowledge.event.ItemEvent"
+						/>
+					</column>
+					<column name="log"
+						accessor="com.top_logic.monitoring.revision.ChangeSetTreeAccessors$LogAccessor"
+						columnWidth="500px"
+					>
+						<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+							type="com.top_logic.knowledge.event.ChangeSet"
+						/>
+					</column>
+					<column name="oldValue"
+						accessor="com.top_logic.monitoring.revision.ChangeSetTreeAccessors$OldAttributeValueAccessor"
+						columnWidth="110px"
+					>
+						<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+							type="com.top_logic.monitoring.revision.ChangeSetTreeBuilder$ChangeEntry"
+						/>
+					</column>
+					<column name="newValue"
+						accessor="com.top_logic.monitoring.revision.ChangeSetTreeAccessors$NewAttributeValueAccessor"
+						columnWidth="110px"
+					>
+						<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+							type="com.top_logic.monitoring.revision.ChangeSetTreeBuilder$ChangeEntry"
+						/>
+					</column>
+				</columns>
+			</table>
+			<buttons>
+				<button id="revertSelected"
+					class="com.top_logic.monitoring.revision.RevertSelectedRevisionCommand"
+					clique="additional"
+					group="Write"
+				/>
+			</buttons>
+		</tree-table>
+	</components>
+</layout>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE taglib
+  PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN"
+  "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd">
+
+<!-- Layout is a supplement for some standard HTML tags
+	 that adds support for Layout aware pages.
+	 
+ -->
+<taglib>
+  <!-- after this the default space is
+	"http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd"
+   -->
+
+  <!-- The version number of this tag library -->
+  <tlibversion>1.0</tlibversion>
+
+  <!-- The JSP specification version required to function -->
+  <jspversion>1.1</jspversion>
+
+  <!-- The short name of this tag library -->
+  <shortname>layout</shortname>
+  
+  <!-- General information about this tag library -->
+   <info>Layout aware html - tags</info>
+
+
+  <tag>
+    <name>html</name>
+    <tagclass>com.top_logic.mig.html.layout.tag.LayoutHtml</tagclass>
+    <info>
+		Layout aware supplement for html tag.
+    </info>
+  </tag>
+  
+  <tag>
+    <name>head</name>
+    <tagclass>com.top_logic.mig.html.layout.tag.LayoutHead</tagclass>
+    <info>
+		Layout aware supplement for head tag.
+    </info>
+  </tag>
+
+  <tag>
+    <name>body</name>
+    <tagclass>com.top_logic.mig.html.layout.tag.LayoutBody</tagclass>
+    <info>
+		Layout aware supplement for body tag.
+    </info>
+    <attribute>
+	    <name>formBodyClass</name>
+	    <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+  
+  <tag>
+    <name>img</name>
+    <tagclass>com.top_logic.base.chart.LayoutImgTag</tagclass>
+    <info>
+		extract one or more Images form an ImageComponent
+    </info>
+    <attribute>
+	    <name>imgId</name>
+	    <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>width</name>
+	    <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>height</name>
+	    <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>ignoreHorizontalScrollbar</name>
+	    <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>ignoreVerticalScrollbar</name>
+	    <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>useWaitingSlider</name>
+	    <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+	    <name>noImageMap</name>
+	    <required>false</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>   
+  </tag>
+  
+  <tag>
+    <name>display</name>
+    <tagclass>com.top_logic.mig.html.layout.tag.DisplayTag</tagclass>
+    <info>Display an object in a JSP page (using the ResourceProvider).</info>
+    <attribute>
+        <name>object</name>
+        <required>true</required>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>destination</name>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+    <attribute>
+        <name>hideImage</name>
+        <rtexprvalue>true</rtexprvalue>
+    </attribute>
+  </tag>
+
+</taglib>
+
+
+

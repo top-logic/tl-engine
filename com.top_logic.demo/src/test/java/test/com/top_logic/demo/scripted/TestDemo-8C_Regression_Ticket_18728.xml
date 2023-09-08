@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Tests"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Tests > AJAX EditComponent"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="switchToAJAXEdit"
+			component-implementation-comment="com.top_logic.demo.layout.form.demo.TestAJAXEditComponent"
+			component-name="com.top_logic.demo/technical/test/TestAJAXEditComponent/editDemo.layout.xml#TestAJAXEditComponent"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FormRawInputOp">
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				name="com.top_logic.demo/technical/test/TestAJAXEditComponent/editDemo.layout.xml#TestAJAXEditComponent"
+				tab-path="Technisches Demo > Tests > AJAX EditComponent"
+			/>
+			<field-values>
+				<value>
+					<field-path>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="Termin"
+							field-name="date"
+						/>
+						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+							field-label-comment="Hinreise"
+							field-name="begin"
+						/>
+					</field-path>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="2012-01-15"
+					/>
+				</value>
+			</field-values>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="TestAJAXEditComponent im Dialog anzeigen"
+			command-name="openTestAJAXEditComponent"
+			component-implementation-comment="com.top_logic.demo.layout.form.demo.TestAJAXEditComponent"
+			component-name="com.top_logic.demo/technical/test/TestAJAXEditComponent/editDemo.layout.xml#TestAJAXEditComponent"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Verwerfen"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+			component-implementation-comment="com.top_logic.demo.layout.form.demo.TestAJAXEditComponent"
+			component-name="com.top_logic.demo/technical/test/TestAJAXEditComponent/editDemo.layout.xml#TestAJAXEditComponentInDialog"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckExecutabilityOp"
+			command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"
+			command-label="Abbrechen"
+			command-name="nothing"
+			comment="Component is in edit mode: Cancel is active."
+			component-implementation-comment="com.top_logic.demo.layout.form.demo.TestAJAXEditComponent"
+			component-name="com.top_logic.demo/technical/test/TestAJAXEditComponent/editDemo.layout.xml#TestAJAXEditComponent"
+			failure-message="Component is in edit mode: Cancel is active."
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+			comment="Component is in edit mode: Field is active."
+			mode="ACTIVE"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Hinreise"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/test/TestAJAXEditComponent/editDemo.layout.xml#TestAJAXEditComponent"
+					tab-path="Technisches Demo > Tests > AJAX EditComponent"
+				/>
+			</model-name>
+		</action>
+	</actions>
+</action>

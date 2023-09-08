@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model 
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="tl.demo.aspect">
+			<annotations>
+				<annotation config:interface="com.top_logic.model.config.JavaPackage"
+					interface-package="com.top_logic.demo.model.aspect"
+					implementation-package="com.top_logic.demo.model.aspect.wrap"
+				/>
+				<singletons>
+					<singleton type="RootNode" />
+				</singletons>
+	 			<factory value="com.top_logic.demo.model.aspect.TlDemoAspectFactory"/>
+			</annotations>
+
+			<types>
+				<interface name="Common">
+					<attributes>
+						<property name="name" type="tl.core:String" mandatory="true" />
+						<reference name="children" type="CommonChild" override="true" />
+						<reference name="overrideDiamond" type="Common">
+							<!-- An attribute that is overridden multiple times. -->
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:StructuredElementContainer" />
+					</generalizations>
+				</interface>
+				
+				<interface name="A">
+					<generalizations>
+						<generalization type="Common"/>
+					</generalizations>
+					<attributes>
+						<property name="long" type="tl.core:Long" />
+						<reference name="override" type="Common" />
+						<reference name="overrideDerivedSameAlgorithm" type="Common">
+							<annotations>
+								<storage-algorithm>
+									<implementation class="com.top_logic.element.meta.kbbased.storage.DerivedStorage">
+										<algorithm expr="override" />
+									</implementation>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="overrideDerivedDifferentAlgorithm" type="Common">
+							<annotations>
+								<storage-algorithm>
+									<implementation class="com.top_logic.element.meta.kbbased.storage.DerivedStorage">
+										<algorithm expr="override" />
+									</implementation>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="overrideDiamond" override="true" type="A" />
+						<reference name="overrideCollection" type="Common" multiple="true" />
+					</attributes>
+				</interface>
+				
+				<interface name="B">
+					<generalizations>
+						<generalization type="Common"/>
+					</generalizations>
+					<attributes>
+						<property name="date" type="tl.core:Date" />
+						<reference name="overrideDiamond" override="true" type="B" />
+					</attributes>
+				</interface>
+				
+				<interface name="C">
+					<generalizations>
+						<generalization type="A"/>
+						<generalization type="B"/>
+					</generalizations>
+					<attributes>
+						<property name="boolean" type="tl.core:Boolean" />
+						<reference name="override" override="true" type="B" />
+						<reference name="overrideDerivedSameAlgorithm" override="true" type="B" />
+						<reference name="overrideDerivedDifferentAlgorithm" override="true" type="B" >
+							<annotations>
+								<storage-algorithm>
+									<implementation class="com.top_logic.element.meta.kbbased.storage.DerivedStorage">
+										<algorithm expr="self()" />
+									</implementation>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="overrideDiamond" override="true" type="C" />
+						<reference name="overrideCollection" override="true" type="B" />
+					</attributes>
+				</interface>
+				
+				<interface name="CDefaults">
+					<generalizations>
+						<generalization type="C"/>
+					</generalizations>
+					<attributes>
+						<property name="booleanWithDefault" type="tl.core:Boolean">
+							<annotations>
+								<annotation 
+									config:interface="com.top_logic.model.annotate.TLDefaultValue">
+								  	<provider class="com.top_logic.model.provider.BooleanDefaultProvider"
+								  		value="true"/>
+								</annotation>
+							</annotations>
+						</property>
+						<property name="dateWithDefault" type="tl.core:Date">
+							<annotations>
+								<annotation 
+									config:interface="com.top_logic.model.annotate.TLDefaultValue">
+								  	<provider class="com.top_logic.model.provider.DateDefaultProvider"
+								  		value="1978-01-19T00:00:00Z"/>
+								</annotation>
+							</annotations>
+						</property>
+						<property name="longWithDefault" type="tl.core:Long">
+							<annotations>
+								<annotation 
+									config:interface="com.top_logic.model.annotate.TLDefaultValue">
+								  	<provider class="com.top_logic.model.provider.LongDefaultProvider"
+								  		value="-1"/>
+								</annotation>
+							</annotations>
+						</property>
+					</attributes>
+				</interface>
+
+				<class name="RootNode">
+					<annotations>
+						<table name="DemoAspect" />
+						<implementation-binding 
+							class-name="com.top_logic.demo.model.aspect.wrap.RootNode"
+						/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+							override="true"
+						>
+							<annotations>
+								<delete-protected/>
+		
+								<!-- Singletons must be created without additional input. -->
+								<default-value>
+									<string value="ROOT"/>
+								</default-value>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="Common" />
+					</generalizations>
+				</class>
+				
+				<class name="ANode">
+					<annotations>
+						<table name="DemoAspect" />
+						<implementation-binding
+							class-name="com.top_logic.demo.model.aspect.wrap.ANode"
+						/>
+						<instance-presentation icon="theme:DEMO_AS" />
+					</annotations>
+					<generalizations>
+						<generalization type="A" />
+						<generalization type="CommonChild" />
+					</generalizations>
+				</class>
+				
+				<class name="BNode">
+					<annotations>
+						<table name="DemoAspect" />
+						<implementation-binding
+							class-name="com.top_logic.demo.model.aspect.wrap.BNode"
+						/>
+						<instance-presentation icon="theme:DEMO_BS" />
+					</annotations>
+					<generalizations>
+						<generalization type="B" />
+						<generalization type="CommonChild" />
+					</generalizations>
+				</class>
+				
+				<class name="CNode">
+					<annotations>
+						<table name="DemoAspect" />
+						<implementation-binding
+							class-name="com.top_logic.demo.model.aspect.wrap.CNode"
+						/>
+						<instance-presentation icon="theme:DEMO_CS" />
+					</annotations>
+					<generalizations>
+						<generalization type="C" />
+						<generalization type="CommonChild" />
+					</generalizations>
+				</class>
+				
+				<class name="CNodeDefaults">
+					<annotations>
+						<table name="DemoAspect" />
+						<implementation-binding
+							class-name="com.top_logic.demo.model.aspect.wrap.CNode"
+						/>
+						<instance-presentation icon="theme:DEMO_CS" />
+					</annotations>
+					<generalizations>
+						<generalization type="CDefaults" />
+						<generalization type="CNode" />
+					</generalizations>
+				</class>
+				
+				<interface name="CommonChild">
+					<generalizations>
+						<generalization type="Common" />
+					</generalizations>
+				</interface>
+				
+			</types>
+		</module>
+
+	</modules>
+</model>

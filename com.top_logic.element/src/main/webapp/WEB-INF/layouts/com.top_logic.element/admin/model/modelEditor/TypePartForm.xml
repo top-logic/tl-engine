@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Configuration of the form displaying or creating a TLStructuredTypePart. -->
+<template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<params>
+		<param name="showNoModel"
+			value="false"
+		/>
+		<param name="create"/>
+		<param name="createContextType"
+			optional="true"
+		/>
+		<param name="typePartFormBuilder"
+			value="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder"
+		/>
+	</params>
+
+	<modelBuilder class="${typePartFormBuilder}"
+		create="${create}"
+		createContextType="${createContextType}"
+		showNoModel="${showNoModel}"
+	>
+		<customizations>
+			<type name="com.top_logic.element.config.annotation.ConfigType">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+				</annotations>
+			</type>
+
+			<type name="com.top_logic.element.config.annotation.ScopeRef">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+				</annotations>
+			</type>
+
+			<type name="com.top_logic.model.annotate.TLI18NKey">
+				<annotations>
+					<annotation config:interface="com.top_logic.basic.config.annotation.Hidden"/>
+				</annotations>
+			</type>
+
+			<property name="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder$PartModel#annotations">
+				<annotations>
+					<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.Options"
+						fun="com.top_logic.layout.form.model.utility.PartAnnotationOptions"
+						mapping="com.top_logic.layout.form.values.ItemOptionMapping"
+					>
+						<args>
+							<ref>
+								<steps>
+									<step value="resolved-type"/>
+								</steps>
+							</ref>
+							<ref>
+								<steps>
+									<step value="type-kind"/>
+								</steps>
+							</ref>
+							<ref>
+								<steps>
+									<step value="override"/>
+								</steps>
+							</ref>
+						</args>
+					</annotation>
+				</annotations>
+			</property>
+
+			<property name="com.top_logic.model.annotate.TLDefaultValue#provider">
+				<annotations>
+					<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.Options"
+						fun="com.top_logic.model.annotate.util.DefaultProviderOptions"
+						mapping="com.top_logic.layout.form.values.ImplOptionMapping"
+					>
+						<args>
+							<ref>
+								<steps>
+									<step value="annotated"/>
+									<step
+										type="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder$PartModel"
+										value="resolved-type"
+									/>
+								</steps>
+							</ref>
+							<ref>
+								<steps>
+									<step value="annotated"/>
+									<step
+										type="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder$PartModel"
+										value="type-kind"
+									/>
+								</steps>
+							</ref>
+						</args>
+					</annotation>
+				</annotations>
+			</property>
+
+			<property name="com.top_logic.model.annotate.ui.FormatBase#format-ref">
+				<annotations>
+					<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.Options"
+						fun="com.top_logic.element.layout.meta.FormatOptions"
+					/>
+				</annotations>
+			</property>
+		</customizations>
+	</modelBuilder>
+</template>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+        <listEntry value="/com.top_logic.ide.jetty/src/main/java/com/top_logic/ide/jetty/Bootstrap.java"/>
+    </listAttribute>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+        <listEntry value="1"/>
+    </listAttribute>
+    <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
+    <stringAttribute key="org.eclipse.debug.core.source_locator_id" value="org.eclipse.jdt.launching.sourceLocator.JavaSourceLookupDirector"/>
+    <booleanAttribute key="org.eclipse.debug.ui.ATTR_LAUNCH_IN_BACKGROUND" value="false"/>
+    <listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+        <listEntry value="org.eclipse.debug.ui.launchGroup.debug"/>
+    </listAttribute>
+    <booleanAttribute key="org.eclipse.debug.ui.private" value="false"/>
+    <stringAttribute key="org.eclipse.debug.ui.target_debug_perspective" value="org.eclipse.debug.ui.DebugPerspective"/>
+    <stringAttribute key="org.eclipse.debug.ui.target_run_perspective" value="org.eclipse.debug.ui.DebugPerspective"/>
+    <booleanAttribute key="org.eclipse.jdt.debug.ui.INCLUDE_EXTERNAL_JARS" value="true"/>
+    <mapAttribute key="org.eclipse.jdt.junit.FILTER_DATA"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_EXCLUDE_TEST_CODE" value="true"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR" value="false"/>
+    <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_SOURCE_PATH" value="false"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.top_logic.ide.jetty.Bootstrap"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="com.top_logic.doc.app"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-port 8080 -contextPath /tl-doc-app"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.top_logic.doc.app"/>
+    <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms256m&#13;&#10;-Xmx1024M &#13;&#10;-Declipse.workspace=&quot;${workspace_loc}&quot;&#13;&#10;-Dcom.top_logic.util.sched.task.SystemPropertyTaskClusterNodeName=8080&#13;&#10;-ea&#13;&#10;-XX:+HeapDumpOnOutOfMemoryError"/>
+</launchConfiguration>

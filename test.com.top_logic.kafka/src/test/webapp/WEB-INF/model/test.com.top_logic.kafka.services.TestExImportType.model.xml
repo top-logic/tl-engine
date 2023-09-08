@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="test.com.top_logic.kafka.services.TestExImportType">
+			<types>
+				<class name="Node">
+					<annotations>
+						<table name="SourceTable1"/>
+						<exported/>
+						<imported/>
+					</annotations>
+					<attributes>
+						<reference name="otherNode"
+							type="test.com.top_logic.kafka.services.TestExImportType:Node"
+						/>
+						<property name="string"
+							type="tl.core:String"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.element:Attributed"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

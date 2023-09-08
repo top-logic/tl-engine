@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-all</artifactId>
+		<version>7.6.0-SNAPSHOT</version>
+		
+		<relativePath>../tl-parent-all</relativePath>	
+	</parent>
+	
+	<artifactId>tl-tools-resources</artifactId>
+	
+	<properties>
+	<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<dependency>
+		    <groupId>de.haumacher.msgbuf</groupId>
+		    <artifactId>msgbuf-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>de.haumacher.msgbuf</groupId>
+				<artifactId>msgbuf-generator-maven-plugin</artifactId>
+				<version>${msgbuf.version}</version>
+				
+				<executions>
+					<execution>
+						<id>generate-protocols</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>		
+		</plugins>
+	</build>
+</project>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<list name="demo.checklist" type="Checklist" de="Demo Checkliste" en="Demo Checklist">
+	<elements>
+		<element name="demo.checklist.a"/>
+		<element name="demo.checklist.b"/>
+		<element name="demo.checklist.c"/>
+		<element name="demo.checklist.d"/>
+	</elements>
+</list>

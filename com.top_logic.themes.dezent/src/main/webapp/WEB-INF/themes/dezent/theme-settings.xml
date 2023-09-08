@@ -1,0 +1,1613 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings config:interface="com.top_logic.gui.config.ThemeSettings$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<color name="ACCORDION_BACKGROUND_COLOR"
+		expr=""
+		value="#CFD1D2"
+	/>
+	<color name="ACCORDION_BEVEL_COLOR"
+		expr=""
+		value="#07606E"
+	/>
+	<color name="ACCORDION_GROUP_BACKGROUND_COLOR"
+		expr=""
+		value="#07606E"
+	/>
+	<color name="ACCORDION_HOVER_BACKGROUND_COLOR"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="ACCORDION_ICON_COLOR"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<string name="ACCORDION_ICON_SECOND_COLOR"
+		expr="%ICON_COLOR_TRANSPARENT%"
+	/>
+	<string name="ACCORDION_ICON_THIRD_COLOR"
+		expr="%ICON_COLOR_HIGHLIGHT%"
+	/>
+	<color name="ACCORDION_SELECTED_BACKGROUND_COLOR"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="ACTIVE_ELEMENT_COLOR"
+		expr=""
+		value="#E4246F"
+	/>	
+	<icon name="BEACON_BALLS_GREEN"
+		expr=""
+		value="colored:tl-icon circle-light icon-green"
+	/>
+	<icon name="BEACON_BALLS_RED"
+		expr=""
+		value="colored:tl-icon circle-light icon-red"
+	/>
+	<icon name="BEACON_BALLS_WHITE"
+		expr=""
+		value="colored:tl-icon circle-light icon-grey"
+	/>
+	<icon name="BEACON_BALLS_YELLOW"
+		expr=""
+		value="colored:tl-icon circle-light icon-yellow"
+	/>
+	<color name="BREADCRUMB_BG_COLOR"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="BREADCRUMB_HOVER_COLOR"
+		expr=""
+		value="#6F6F6F"
+	/>
+	<boolean name="com.top_logic.layout.renderers.Icons.BUTTONBAR_ARROW_DECORATION"
+		value="false"
+	/>
+	<string name="BUTTON_BACKGROUND"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<string name="BUTTON_BACKGROUND_HOVER"
+		expr="%TL-atoll%"
+	/>
+	<string name="BUTTON_BORDER"
+		expr=""
+		value="none"
+	/>
+	<color name="BUTTON_COLOR"
+		expr=""
+		value="#FFFFFF"
+	/>
+	<color name="BUTTON_COLOR_HOVER"
+		expr="%BUTTON_COLOR%"
+	/>
+	<color name="CALENDAR_HOVER_BACKGROUND_COLOR"
+		expr=""
+		value="#CFD1D2"
+	/>
+	<int name="CHANGE_PASSWORD_DIAGLOG_HEIGHT"
+		value="300"
+	/>
+	<icon name="DEMO_A"
+		expr=""
+		value="colored:tl-icon type-a type"
+	/>
+	<icon name="DEMO_AS"
+		expr=""
+		value="colored:tl-icon type-as type"
+	/>
+	<icon name="DEMO_B"
+		expr=""
+		value="colored:tl-icon type-b type"
+	/>
+	<icon name="DEMO_BS"
+		expr=""
+		value="colored:tl-icon type-bs type"
+	/>
+	<icon name="DEMO_C"
+		expr=""
+		value="colored:tl-icon type-c type"
+	/>
+	<icon name="DEMO_CS"
+		value="colored:tl-icon type-cs type"
+	/>
+	<icon name="DEMO_NEW_AP"
+		expr=""
+		value="colored:tl-icon type-new-ap type"
+	/>
+	<icon name="DEMO_NEW_AS"
+		expr=""
+		value="colored:tl-icon type-new-as type"
+	/>
+	<icon name="DEMO_NEW_AS_CHILD"
+		expr=""
+		value="colored:tl-icon type-new-as-child type"
+	/>
+	<icon name="DEMO_NEW_BP"
+		expr=""
+		value="colored:tl-icon type-new-bp type"
+	/>
+	<icon name="DEMO_NEW_BS"
+		expr=""
+		value="colored:tl-icon type-new-bs type"
+	/>
+	<icon name="DEMO_NEW_BS_CHILD"
+		expr=""
+		value="colored:tl-icon type-new-bs-child type"
+	/>
+	<icon name="DEMO_NEW_CP"
+		expr=""
+		value="colored:tl-icon type-new-cp type"
+	/>
+	<icon name="DEMO_NEW_CS"
+		expr=""
+		value="colored:tl-icon type-new-cs type"
+	/>
+	<icon name="DEMO_NEW_CS_CHILD"
+		expr=""
+		value="colored:tl-icon type-new-cs-child type"
+	/>
+	<string name="ERROR_BORDER"
+		expr="2px solid %ICON_COLOR_RED%"
+	/>
+	<string name="ERROR_OUTLINE"
+		value="none"
+	/>
+	<color name="FILTER_BACKGROUNDCOLOR"
+		expr=""
+		value="#CFD1D2"
+	/>
+	<color name="GROUP_LABEL_COLOR"
+		expr="%TL-bright%"
+	/>
+	<icon name="HEAD_HOME"
+		value="css:fas fa-house-user"
+	/>
+	<color name="HIGHLIGHT_SECONDARY"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="ICONCHOOSER_BACKGROUND"
+		expr="%TL-bright%"
+	/>
+	<color name="ICONCHOOSER_BACKGROUND_HOVER"
+		expr="%TL-atoll%"
+	/>
+	<color name="ICONCHOOSER_BACKGROUND_SELECTED"
+		expr="%TL-atoll%"
+	/>	
+	<color name="ICON_COLOR_BASIC"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="ICON_COLOR_DARK_CONTEXT_BASIC"
+		expr="%ICON_COLOR_WHITE%"
+	/>
+	<color name="ICON_COLOR_DARK_CONTEXT_HIGHLIGHT"
+		expr="%ICON_COLOR_WHITE%"
+	/>
+	<color name="ICON_COLOR_DISABLED"
+		expr="%ICON_COLOR_GREY%"
+	/>
+	<color name="ICON_COLOR_GREEN"
+		value="#00CC00"
+	/>
+	<color name="ICON_COLOR_GREY"
+		value="#CFD1D2"
+	/>
+	<color name="ICON_COLOR_HIGHLIGHT"
+		expr="%LAYOUT_HIGHLIGHT_COLOR%"
+	/>
+	<string name="ICON_COLOR_HIGHLIGHT_BG"
+		expr="%ICON_COLOR_WHITE%"
+	/>
+	<string name="ICON_COLOR_OVERLAY_DARK_CONTEXT_HIGHLIGHT_BG"
+		expr="%IMAGE_BUTTON_BACKGROUND%"
+	/>
+	<string name="ICON_COLOR_OVERLAY_DARK_CONTEXT_HIGHLIGHT_BG_HOVER"
+		expr="%IMAGE_BUTTON_BACKGROUND_HOVER%"
+	/>
+	<color name="ICON_COLOR_RED"
+		value="#E4246F"
+	/>
+	<color name="ICON_COLOR_WHITE"
+		value="#FBFBFD"
+	/>
+	<color name="ICON_COLOR_YELLOW"
+		value="#FFCC00"
+	/>
+	<icon name="ICONS_ADD2_CLIPBOARD"
+		value="colored:tl-icon clipboard-add"
+	/>
+	<icon name="ICONS_ADD2_CLIPBOARD_DISABLED"
+		expr=""
+		value="colored:tl-icon clipboard-add"
+	/>
+	<icon name="ICONS_BUTTON_ARROW"
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="ICONS_BUTTON_ARROW_DISABLED"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="ICONS_BUTTON_EDIT"
+		expr=""
+		value="colored:tl-icon pencil"
+	/>
+	<icon name="ICONS_BUTTON_EDIT_DISABLED"
+		expr=""
+		value="colored:tl-icon pencil"
+	/>
+	<icon name="ICONS_BUTTON_FAST_FORWARD"
+		value="colored:tl-icon chevron-double-right icon-green"
+	/>
+	<icon name="ICONS_BUTTON_FAST_FORWARD_DISABLED"
+		expr=""
+		value="colored:tl-icon chevron-double-right icon-green"
+	/>
+	<icon name="ICONS_BUTTON_OK"
+		expr=""
+		value="colored:tl-icon check"
+	/>
+	<icon name="ICONS_BUTTON_OK_DISABLED"
+		value="colored:tl-icon check"
+	/>
+	<icon name="ICONS_BUTTON_PAUSE"
+		expr=""
+		value="colored:tl-icon paused icon-red"
+	/>
+	<icon name="ICONS_BUTTON_RECORD"
+		expr=""
+		value="colored:tl-icon circle icon-red"
+	/>
+	<icon name="ICONS_BUTTON_REFRESH"
+		expr=""
+		value="colored:tl-icon reload"
+	/>
+	<icon name="ICONS_BUTTON_REFRESH_DISABLED"
+		expr=""
+		value="colored:tl-icon reload"
+	/>
+	<icon name="ICONS_BUTTON_SAVE"
+		expr=""
+		value="colored:tl-icon save"
+	/>
+	<icon name="ICONS_BUTTON_SAVE_DISABLED"
+		expr=""
+		value="colored:tl-icon save"
+	/>
+	<icon name="ICONS_BUTTON_START"
+		value="colored:tl-icon start icon-green"
+	/>
+	<icon name="ICONS_BUTTON_START_DISABLED"
+		expr=""
+		value="colored:tl-icon start icon-green"
+	/>
+	<icon name="ICONS_BUTTON_STEP_INTO"
+		value="colored:tl-icon step-into icon-green"
+	/>
+	<icon name="ICONS_BUTTON_STEP_INTO_DISABLED"
+		expr=""
+		value="colored:tl-icon step-into icon-green"
+	/>
+	<icon name="ICONS_BUTTON_STEP_OUT"
+		expr=""
+		value="colored:tl-icon step-out icon-green"
+	/>
+	<icon name="ICONS_BUTTON_STEP_OUT_DISABLED"
+		expr=""
+		value="colored:tl-icon step-out icon-green"
+	/>
+	<icon name="ICONS_BUTTON_STEP_OVER"
+		value="colored:tl-icon step-over icon-green"
+	/>
+	<icon name="ICONS_BUTTON_STEP_OVER_DISABLED"
+		expr=""
+		value="colored:tl-icon step-over icon-green"
+	/>
+	<icon name="ICONS_BUTTON_STOP"
+		expr=""
+		value="colored:tl-icon stop"
+	/>
+	<icon name="ICONS_BUTTON_STOP_DISABLED"
+		expr=""
+		value="colored:tl-icon stop"
+	/>
+	<icon name="ICONS_BUTTON_TIME"
+		expr=""
+		value="colored:tl-icon clock"
+	/>
+	<icon name="ICONS_BUTTON_TIME_DISABLED"
+		expr=""
+		value="colored:tl-icon clock"
+	/>
+	<icon name="ICONS_BUTTON_XML_EXPORT"
+		value="colored:tl-icon export-xml"
+	/>
+	<icon name="ICONS_BUTTON_XML_EXPORT_DISABLED"
+		expr=""
+		value="colored:tl-icon export-xml"
+	/>
+	<icon name="ICONS_CANCEL_BUTTON"
+		expr=""
+		value="colored:tl-icon cross-circle-border"
+	/>
+	<icon name="ICONS_CANCEL_BUTTON_DISABLED"
+		expr=""
+		value="colored:tl-icon cross-circle-border"
+	/>
+	<icon name="ICONS_CLIPBOARD_BUTTON_ICON"
+		expr=""
+		value="colored:tl-icon clipboard"
+	/>
+	<icon name="ICONS_CLIPBOARD_BUTTON_ICON_DISABLED"
+		expr=""
+		value="colored:tl-icon clipboard"
+	/>
+	<icon name="ICONS_COLLAPSE_ALL"
+		value="colored:tl-icon collapse"
+	/>
+	<icon name="ICONS_COLLAPSE_ALL_DISABLED"
+		expr=""
+		value="colored:tl-icon collapse"
+	/>
+	<color name="ICON_COLOR_CIRCLE_OVERLAY_BASIC"
+		expr="%TL-mako%"
+	/>
+	<string name="ICON_COLOR_DARK_CONTEXT_HIGHLIGHT_BG"
+		expr="%ICON_COLOR_TRANSPARENT%"
+	/>
+	<string name="ICON_COLOR_TRANSPARENT"
+		value="rgba(0,0,0,0.0)"
+	/>
+	<icon name="ICONS_CONFIGURE"
+		expr=""
+		value="colored:tl-icon tools"
+	/>
+	<icon name="ICONS_DELETE_MENU"
+		expr=""
+		value="colored:tl-icon cross icon-red"
+	/>
+	<icon name="ICONS_DELETE_MENU_DISABLED"
+		expr=""
+		value="colored:tl-icon cross icon-red"
+	/>
+	<icon name="ICONS_DELETE_TOOLBAR"
+		expr=""
+		value="colored:tl-icon cross"
+	/>
+	<icon name="ICONS_DELETE_TOOLBAR_DISABLED"
+		expr=""
+		value="colored:tl-icon cross icon-red"
+	/>
+	<icon name="ICONS_DIALOG_QUESTION"
+		expr=""
+		value="colored:tl-icon question-speachbubble"
+	/>
+	<icon name="ICONS_EXCEL_IMPORT_BUTTON_ICON_DISABLED"
+		value="colored:tl-icon import-excel"
+	/>
+	<icon name="ICONS_EXPAND_ALL"
+		expr=""
+		value="colored:tl-icon expand"
+	/>
+	<icon name="ICONS_EXPAND_ALL_DISABLED"
+		expr=""
+		value="colored:tl-icon expand"
+	/>
+	<icon name="ICONS_EXPORT_GRID"
+		expr=""
+		value="colored:tl-icon export-excel"
+	/>
+	<icon name="ICONS_EXPORT_GRID_DISABLED"
+		expr=""
+		value="colored:tl-icon export-excel"
+	/>
+	<icon name="ICONS_EXPORT_GRID_PPT"
+		expr=""
+		value="colored:tl-icon export-ppt"
+	/>
+	<icon name="ICONS_EXPORT_GRID_PPTDISABLED"
+		expr=""
+		value="colored:tl-icon export-ppt"
+	/>
+	<icon name="ICONS_EXPORT_PDF"
+		expr=""
+		value="colored:tl-icon export-pdf"
+	/>
+	<icon name="ICONS_EXPORT_PDFDISABLED"
+		expr=""
+		value="colored:tl-icon export-pdf"
+	/>
+	<icon name="ICONS_EXPORT_POWERPOINT"
+		expr=""
+		value="colored:tl-icon export-ppt"
+	/>
+	<icon name="ICONS_EXPORT_POWERPOINT_DISABLED"
+		expr=""
+		value="colored:tl-icon export-ppt"
+	/>
+	<icon name="ICONS_GRID_CANCEL"
+		expr=""
+		value="colored:tl-icon cancel"
+	/>
+	<icon name="ICONS_LARGE_PROCESS60"
+		expr=""
+		value="colored:tl-icon gear-reload"
+	/>
+	<icon name="ICONS_LARGE_PROCESS_INSTANCE60"
+		expr=""
+		value="colored:tl-icon gear-arrow-right"
+	/>
+	<icon name="ICONS_OPEN_SELECTOR"
+		expr=""
+		value="colored:tl-icon arrow-top-right"
+	/>
+	<icon name="ICONS_OPEN_SELECTOR_DISABLED"
+		expr=""
+		value="colored:tl-icon arrow-top-right"
+	/>
+	<icon name="ICONS_PERSON_ASSIGNMENTS48"
+		value="colored:tl-icon group icon-circle"
+	/>
+	<icon name="ICONS_REMOVE_CHECKBOX"
+		value="colored:tl-icon checkbox-remove"
+	/>
+	<icon name="ICONS_REMOVE_CHECKBOX_DISABLED"
+		expr=""
+		value="colored:tl-icon checkbox-remove"
+	/>
+	<icon name="ICONS_SAVE_BUTTON_ICON"
+		expr=""
+		value="colored:tl-icon save"
+	/>
+	<icon name="ICONS_SAVE_BUTTON_ICON_DISABLED"
+		expr=""
+		value="colored:tl-icon save"
+	/>
+	<icon name="ICONS_SELECT_ALL_CHECKBOXES"
+		value="colored:tl-icon checkbox-select-all"
+	/>
+	<icon name="ICONS_SELECT_ALL_CHECKBOXES_DISABLED"
+		expr="%ICONS_SELECT_ALL_CHECKBOXES%"
+	/>
+	<icon name="ICONS_UPLOAD"
+		value="colored:tl-icon upload"
+	/>
+	<icon name="IMAGES_CLOSE_BTN"
+		expr=""
+		value="colored:tl-icon leave"
+	/>
+	<string name="IMAGE_BUTTON_BACKGROUND"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<string name="IMAGE_BUTTON_BACKGROUND_DISABLED"
+		value="#697677"
+	/>
+	<string name="IMAGE_BUTTON_BACKGROUND_HOVER"
+		expr="%TL-atoll%"
+	/>
+	<icon name="IMAGE_BUTTONS_ADMINISTRATION22"
+		value="colored:tl-icon tools-details"
+	/>
+	<icon name="IMAGE_BUTTONS_CHART"
+		expr=""
+		value="colored:tl-icon chart-bar-line"
+	/>
+	<icon name="IMAGE_BUTTONS_CHART_ACTIVE"
+		expr=""
+		value="colored:tl-icon chart-bar-line"
+	/>
+	<icon name="IMAGE_BUTTONS_CLIPBOARD"
+		value="colored:tl-icon clipboard"
+	/>
+	<icon name="IMAGE_BUTTONS_CLIPBOARD_ACTIVE"
+		expr=""
+		value="colored:tl-icon clipboard"
+	/>
+	<icon name="IMAGE_BUTTONS_DASH_BOARD22"
+		expr=""
+		value="colored:tl-icon dashboard"
+	/>
+	<icon name="IMAGE_BUTTONS_GUI_INSPECTOR22"
+		expr=""
+		value="colored:tl-icon pointer-chevron"
+	/>
+	<icon name="IMAGE_BUTTONS_I18N_DEBUG22"
+		expr=""
+		value="colored:tl-icon debug"
+	/>
+	<icon name="IMAGE_BUTTONS_I18N_DEBUG_ACTIVE22"
+		expr=""
+		value="colored:tl-icon debug"
+	/>
+	<icon name="IMAGE_BUTTONS_I18N_RELOAD22"
+		expr=""
+		value="colored:tl-icon international-text"
+	/>
+	<icon name="IMAGE_BUTTONS_ORG_UNIT22"
+		expr=""
+		value="css:fas fa-sitemap"
+	/>
+	<icon name="IMAGE_BUTTONS_PROJECT22"
+		expr=""
+		value="colored:tl-icon project"
+	/>
+	<icon name="IMAGE_BUTTONS_RESULT"
+		value="colored:tl-icon result"
+	/>
+	<icon name="IMAGE_BUTTONS_RESULT_ACTIVE"
+		value="colored:tl-icon result"
+	/>
+	<icon name="IMAGE_BUTTONS_SCRIPT_RECORDER22"
+		expr=""
+		value="colored:tl-icon circle"
+	/>
+	<icon name="IMAGE_BUTTONS_SEARCH22"
+		expr=""
+		value="colored:tl-icon search"
+	/>
+	<icon name="IMAGE_BUTTONS_SET_HOMEPAGE22"
+		expr=""
+		value="css:fas fa-house-user"
+	/>
+	<icon name="IMAGE_BUTTONS_STRUCTURE22"
+		expr=""
+		value="colored:tl-icon structure"
+	/>
+	<icon name="IMAGE_BUTTONS_THEME_RELOAD22"
+		expr=""
+		value="colored:tl-icon design-reload"
+	/>
+	<icon name="IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS"
+		value="colored:tl-icon commands"
+	/>
+	<icon name="IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS_ACTIVE"
+		expr=""
+		value="colored:tl-icon commands"
+	/>
+	<color name="LAYOUT_HIGHLIGHT_COLOR"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="LAYOUT_MAIN_COLOR"
+		expr="%TL-pacific-blue%"
+	/>
+	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
+		value="24"
+	/>
+	<color name="LINK_VISITED"
+		expr=""
+		value="#07606E"
+	/>
+	<icon name="LOGO_FILE"
+		value="/images/logos/top-logic.svg"
+	/>
+	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
+		expr=""
+		value="32"
+	/>
+	<icon name="MAIN_TAB_LEFT_SCROLL_BUTTON"
+		expr=""
+		value="colored:tl-icon caret-left"
+	/>
+	<icon name="MAIN_TAB_LEFT_SCROLL_BUTTON_HOVER"
+		expr=""
+		value="colored:tl-icon caret-left"
+	/>
+	<icon name="MAIN_TAB_RIGHT_SCROLL_BUTTON"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="MAIN_TAB_RIGHT_SCROLL_BUTTON_HOVER"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="MAIN_TAB_SCROLL_BUTTON_PLACEHOLDER"
+		expr=""
+		value="/icons/buttonEmpty.png"
+	/>
+	<color name="MANDATORY_FIELD_BG"
+		expr="%TL-bright%"
+	/>
+	<color name="MENUENTRYDISABLED_MENUENTRYCELL_COLOR"
+		expr="%TL-disabled%"
+	/>
+	<icon name="MIMETYPES_COMPANY_CONTACT_16"
+		value="colored:tl-icon company"
+	/>
+	<icon name="MIMETYPES_GROUP_16"
+		expr=""
+		value="colored:tl-icon group"
+	/>
+	<icon name="MIMETYPES_LARGE_GROUP_60"
+		expr=""
+		value="colored:tl-icon group"
+	/>
+	<icon name="MIMETYPES_LARGE_PERSON_CONTACT_60"
+		expr=""
+		value="colored:tl-icon person"
+	/>
+	<icon name="MIMETYPES_MANDATOR"
+		expr=""
+		value="colored:tl-icon file-i"
+	/>
+	<icon name="MIMETYPES_MANDATOR_ROOT"
+		expr=""
+		value="colored:tl-icon file-i"
+	/>
+	<icon name="MIMETYPES_PERSON_CONTACT_16"
+		expr=""
+		value="colored:tl-icon person"
+	/>
+	<icon name="MIMETYPES_TAG"
+		value="colored:tl-icon file-hashtag"
+	/>
+	<icon name="MIMETYPES_WORK_ITEM"
+		value="colored:file"
+	/>
+	<icon name="MISC_COMPARE_COMPARE_MODE_ACTIVE"
+		expr=""
+		value="colored:tl-icon compare"
+	/>
+	<icon name="MISC_COMPARE_COMPARE_MODE_INACTIVE"
+		expr=""
+		value="colored:tl-icon compare"
+	/>
+	<color name="SBL_LOGO_COLOR"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<icon name="SPACER_BAR_CHART_TYPE"
+		expr=""
+		value="colored:tl-icon chart-bar"
+	/>
+	<dim name="TABBAR_L1_PADDING_TOP"
+		value="0px"
+	/>
+	<color name="TABBAR_SCROLL_BUTTON_COLOR"
+		expr="%ICON_COLOR_BASIC%"
+	/>
+	<color name="TABBAR_SCROLL_BUTTON_DISABLED_COLOR"
+		expr="%ICON_COLOR_DISABLED%"
+	/>
+	<color name="TABBAR_SCROLL_BUTTON_HOVER_COLOR"
+		value="#7dc4da"
+	/>
+	<color name="TABLE_TITLE"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<icon name="TAB_SCROLL_BUTTON_PLACEHOLDER"
+		expr=""
+		value="/icons/buttonEmpty.png"
+	/>
+	<color name="TERTIARY_TEXT_COLOR"
+		expr=""
+		value="#07606E"
+	/>
+	<string name="TITLEBAR_BACKGROUND"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<color name="TL-atoll"
+		value="#07606E"
+	/>
+	<color name="TL-black"
+		value="#060612"
+	/>
+	<color name="TL-bright"
+		value="#EAEEF1"
+	/>
+	<color name="TL-cerise"
+		value="#E4246F"
+	/>
+	<color name="TL-bg-disabled"
+		expr=""
+		value="#697677"
+	/>
+	<color name="TL-disabled"
+		expr="%TL-iron%"
+	/>
+	<color name="TL-iron"
+		value="#CFD1D2"
+	/>
+	<string name="TL-iron-rgb"
+		value="207, 209, 210"
+	/>
+	<color name="TL-light-shade"
+		value="#F5F5F5"
+	/>
+	<color name="TL-mako"
+		expr=""
+		value="#454952"
+	/>
+	<color name="TL-pacific-blue"
+		value="#008FB8"
+	/>
+	<color name="TL-shark"
+		value="#262B36"
+	/>
+	<color name="TL-white-grey"
+		value="#FBFBFD"
+	/>
+	<icon name="TREE_NEW_ELEMENT"
+		expr=""
+		value="colored:tl-icon element-create"
+	/>
+	<icon name="TREE_NEW_ELEMENT_DISABLED"
+		expr=""
+		value="colored:tl-icon element-create"
+	/>
+	<icon name="TREE_PROJ_I"
+		value="colored:tl-icon file-i"
+	/>
+	<icon name="TREE_PROJ_I_O"
+		expr=""
+		value="colored:tl-icon file-iO"
+	/>
+	<icon name="TREE_PROJ_O"
+		value="colored:tl-icon file-o"
+	/>
+	<icon name="TREE_PROJ_P"
+		value="colored:tl-icon file-p"
+	/>
+	<icon name="TREE_PROJ_SP"
+		expr=""
+		value="colored:tl-icon file-sp"
+	/>
+	<icon name="TREE_PROJ_WP"
+		expr=""
+		value="colored:tl-icon file-wp"
+	/>
+	<icon name="TREE_ROOT"
+		value="colored:tl-icon file-root"
+	/>
+	<icon name="TREE_TEST_I"
+		expr=""
+		value="colored:tl-icon file-i"
+	/>
+	<icon name="Test"
+		expr=""
+		value="colored:tl-icon expand"
+	/>
+	<icon name="USER_MENU_ICON"
+		expr=""
+		value="colored:tl-icon person"
+	/>
+	<icon name="USER_MENU_ICON_HOVER"
+		expr=""
+		value="colored:tl-icon person"
+	/>
+	<string name="WARNING_BORDER"
+		expr="2px solid %ICON_COLOR_YELLOW%"
+	/>
+	<string name="WARNING_OUTLINE"
+		value="none"
+	/>
+	<icon name="bea3_1"
+		value="/beacon/green.svg"
+	/>
+	<icon name="bea3_2"
+		value="/beacon/yellow.svg"
+	/>
+	<icon name="bea3_3"
+		value="/beacon/red.svg"
+	/>
+	<icon name="bea3_EMPTY"
+		value="/beacon/empty.svg"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.ADD_CLIPBOARD"
+		expr=""
+		value="colored:tl-icon clipboard-add"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.ADD_CLIPBOARD_DISABLED"
+		expr=""
+		value="colored:tl-icon clipboard-add"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.CLIPBOARD"
+		expr=""
+		value="colored:tl-icon clipboard"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.CLIPBOARD_DISABLED"
+		expr=""
+		value="colored:tl-icon clipboard"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.clipboard.Icons.REMOVE_CLIPBOARD"
+		expr=""
+		value="colored:tl-icon clipboard-remove"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOCUMENT_UPDATE_60"
+		value="colored:tl-icon file-reset"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOCUMENT_VERSIONS_60"
+		value="colored:tl-icon file-clock"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOC_COMMIT"
+		expr=""
+		value="colored:tl-icon file-upload"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOC_COMMIT_DISABLED"
+		value="colored:tl-icon file-upload"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOWNLOAD60"
+		expr=""
+		value="colored:tl-icon download"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOWNLOAD_FOLDER"
+		expr=""
+		value="colored:tl-icon folder-download"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOWNLOAD_FOLDER_DISABLED"
+		expr=""
+		value="colored:tl-icon folder-download"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.NEW_FOLDER"
+		expr=""
+		value="colored:tl-icon folder-create"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.NEW_FOLDER_DISABLED"
+		expr=""
+		value="colored:tl-icon folder-create"
+	/>
+	<icon name="com.top_logic.common.folder.ui.commands.Icons.REMOVE_NODE"
+		value="colored:tl-icon cross"
+	/>
+	<icon name="com.top_logic.common.folder.ui.commands.Icons.REMOVE_NODE_DISABLED"
+		value="colored:tl-icon cross icon-red"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.UPLOAD"
+		expr=""
+		value="colored:tl-icon upload"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.UPLOAD60"
+		expr=""
+		value="colored:tl-icon upload"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.UPLOAD_DISABLED"
+		expr=""
+		value="colored:tl-icon upload"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS"
+		value="colored:tl-icon element-search"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS_60"
+		value="colored:tl-icon element-search"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS_DISABLED"
+		expr="%com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS_60%"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_16"
+		value="css:far fa-envelope"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_60"
+		expr="%com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_16%"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.similar.Icons.DOCUMENT_SIMILAR_60"
+		expr="%com.top_logic.common.webfolder.ui.similar.Icons.SIMILAR_OBJECTS%"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.similar.Icons.SIMILAR_OBJECTS"
+		value="css:far fa-copy"
+	/>
+	<icon name="com.top_logic.common.webfolder.ui.similar.Icons.SIMILAR_OBJECTS_DISABLED"
+		expr="%com.top_logic.common.webfolder.ui.similar.Icons.SIMILAR_OBJECTS%"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_ERROR"
+		expr=""
+		value="colored:tl-icon error icon-red"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_INFORMATION"
+		expr=""
+		value="colored:tl-icon lightbulb-circle"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_QUESTION"
+		expr=""
+		value="colored:tl-icon question-speachbubble"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_WARNING"
+		expr=""
+		value="colored:tl-icon exclamation-border icon-red"
+	/>
+	<icon name="com.top_logic.demo.layout.form.demo.Icons.TOP_LOGIC"
+		value="/images/logos/top-logic.svg"
+	/>
+	<icon name="com.top_logic.element.comment.layout.Icons.EDIT"
+		expr=""
+		value="colored:tl-icon edit"
+	/>
+	<icon name="com.top_logic.element.comment.layout.Icons.EDIT_DISABLED"
+		expr=""
+		value="colored:tl-icon edit"
+	/>
+	<icon name="com.top_logic.element.comment.layout.Icons.QUOTE"
+		expr=""
+		value="colored:tl-icon quote"
+	/>
+	<icon name="com.top_logic.element.comment.layout.Icons.QUOTE_DISABLED"
+		expr=""
+		value="colored:tl-icon quote"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.OPEN_DETAIL"
+		expr=""
+		value="colored:tl-icon edit"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.OPEN_DETAIL_DISABLED"
+		expr=""
+		value="colored:tl-icon edit"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON"
+		expr=""
+		value="colored:tl-icon save"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON_DISABLED"
+		expr=""
+		value="colored:tl-icon save"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_MODIFIED"
+		value="colored:tl-icon save-modified"
+	/>
+	<icon name="com.top_logic.element.layout.meta.search.quick.Icons.SEARCH"
+		value="colored:tl-icon search"
+	/>
+	<icon name="com.top_logic.element.layout.uiconfig.Icons.ADD_ROW_TOP"
+		expr=""
+		value="colored:tl-icon row-top-add icon-first-lightgrey"
+	/>
+	<icon name="com.top_logic.element.workItem.favorites.Icons.TRUE"
+		expr=""
+		value="colored:tl-icon star-circle"
+	/>
+	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_ERROR"
+		expr=""
+		value="colored:tl-icon error icon-red"
+	/>
+	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_WARNING"
+		value="colored:tl-icon exclamation-border icon-red"
+	/>
+	<icon name="com.top_logic.event.infoservice.Icons.INFOSERVICE_INFO"
+		value="colored:tl-icon info-square"
+	/>
+	<icon name="com.top_logic.event.infoservice.Icons.INFO_SERVICE_DETAIL_EXPANDER"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.Icons.V"
+		expr=""
+		value="colored:tl-icon file-v"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.ADD_BOOKMARK"
+		value="colored:tl-icon bookmark"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.BUTTON_REFRESH"
+		value="colored:tl-icon reload"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.BUTTON_REFRESH_DISABLED"
+		value="colored:tl-icon reload"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.COLLAPSE_ALL"
+		expr=""
+		value="colored:tl-icon collapse"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.COLLAPSE_ALL_DISABLED"
+		expr=""
+		value="colored:tl-icon collapse"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.EXPAND_ALL"
+		expr=""
+		value="colored:tl-icon expand"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.EXPAND_ALL_DISABLED"
+		expr=""
+		value="colored:tl-icon expand"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.RENDERING_ERROR_NORMAL"
+		expr=""
+		value="colored:tl-icon error icon-red"
+	/>
+	<icon name="com.top_logic.layout.basic.Icons.SELECT_FILTER"
+		value="colored:tl-icon arrow-top-right"
+	/>
+	<icon name="com.top_logic.layout.compare.Icons.OPEN_COMPARE_VIEW"
+		expr=""
+		value="colored:tl-icon compare"
+	/>
+	<icon name="com.top_logic.layout.form.boxes.tag.Icons.NULL"
+		expr=""
+		value="colored:tl-icon null-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ALERT"
+		expr=""
+		value="colored:tl-icon exclamation-border icon-red"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.BOX_COLLAPSED"
+		expr=""
+		value="colored:tl-icon chevron-round-right"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.BOX_EXPANDED"
+		value="colored:tl-icon chevron-round-down"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.BUTTON_MISSING_DISABLED"
+		value="colored:tl-icon question-chevron"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.CALENDAR"
+		value="colored:tl-icon calendar"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.CLOCK"
+		value="colored:tl-icon clock"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.EDIT_MAXIMIZE"
+		expr=""
+		value="colored:tl-icon maximize-arrows"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.EDIT_MINIMIZE"
+		expr="%com.top_logic.layout.form.control.Icons.EDIT_MAXIMIZE%"
+		value="colored:tl-icon minimize-arrows"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_FALSE"
+		expr=""
+		value="colored:tl-icon minus-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_FALSE_DISABLED"
+		expr=""
+		value="colored:tl-icon minus-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_NULL"
+		expr=""
+		value="colored:tl-icon null-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_NULL_DISABLED"
+		expr=""
+		value="colored:tl-icon null-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE"
+		expr=""
+		value="colored:tl-icon check-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE_DISABLED"
+		value="colored:tl-icon check-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.OPEN_TEXT_EDITOR"
+		expr=""
+		value="colored:tl-icon arrow-top-right"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.OPEN_TEXT_EDITOR_DISABLED"
+		expr=""
+		value="colored:tl-icon arrow-top-right"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE"
+		expr=""
+		value="colored:tl-icon minus-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE_DISABLED"
+		expr=""
+		value="colored:tl-icon minus-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_NULL"
+		expr=""
+		value="colored:tl-icon null-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_NULL_DISABLED"
+		expr=""
+		value="colored:tl-icon null-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE"
+		expr=""
+		value="colored:tl-icon check-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE_DISABLED"
+		expr=""
+		value="colored:tl-icon check-square"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.URL_LINK"
+		expr=""
+		value="colored:tl-icon arrow-top-right-square"
+	/>
+	<img name="com.top_logic.layout.form.control.Icons.WAIT_IMAGE"
+		expr=""
+		value="/animation/hourglass.svg"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.CHANGED"
+		expr=""
+		value="colored:tl-icon arrow-right"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.COMPARE_MODE_ACTIVE"
+		expr=""
+		value="colored:tl-icon compare"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.COMPARE_MODE_INACTIVE"
+		expr=""
+		value="colored:tl-icon compare"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.CREATED"
+		expr=""
+		value="colored:tl-icon arrow-right-plus"
+	/>
+	<icon name="com.top_logic.layout.form.decorator.Icons.DEEP_CHANGED"
+		value="colored:tl-icon arrow-right-circle"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_LOCKED"
+		value="colored:tl-icon locked"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_LOCKED_DISABLED"
+		expr=""
+		value="colored:tl-icon locked"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_UNLOCK"
+		expr=""
+		value="colored:tl-icon unlock"
+	/>
+	<icon name="com.top_logic.layout.form.model.Icons.DOC_UNLOCK_DISABLED"
+		value="colored:tl-icon unlock"
+	/>
+	<icon name="com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR"
+		value="colored:tl-icon pointer-chevron"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_DISABLED_IMAGE"
+		expr=""
+		value="colored:tl-icon chevron-down"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.DECREMENT_BUTTON_IMAGE"
+		value="colored:tl-icon chevron-down"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.DELETE_BUTTON"
+		expr=""
+		value="colored:tl-icon cross"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED"
+		expr=""
+		value="colored:tl-icon cross icon-red"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.FILTER_FORM"
+		expr=""
+		value="colored:tl-icon filter"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.INCREMENT_BUTTON_DISABLED_IMAGE"
+		expr=""
+		value="colored:tl-icon chevron-up"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.INCREMENT_BUTTON_IMAGE"
+		expr=""
+		value="colored:tl-icon chevron-up"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.OPEN_CHOOSER"
+		value="colored:tl-icon arrow-top-right"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.OPEN_CHOOSER_DISABLED"
+		expr=""
+		value="colored:tl-icon arrow-top-right"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.PLUS48"
+		value="colored:tl-icon plus"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.RELOAD_SMALL"
+		value="colored:tl-icon reload"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.RELOAD_SMALL_DISABLED"
+		value="colored:tl-icon reload"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.UP"
+		value="colored:tl-icon caret-up"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.MNL"
+		expr=""
+		value="colored:tl-icon caret-bottom-right"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PL"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PNL"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.tree.Icons.PS"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.DELETE_MENU_DISABLED"
+		expr=""
+		value="colored:tl-icon cross icon-red"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.INVERT_SELECTION"
+		expr=""
+		value="colored:tl-icon selection-invert"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.INVERT_SELECTION_DISABLED"
+		expr=""
+		value="colored:tl-icon selection-invert"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.REMOVE_CHECKBOX"
+		value="colored:tl-icon checkbox-remove"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.REMOVE_CHECKBOX_DISABLED"
+		value="colored:tl-icon checkbox-remove"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.SELECT_ALL_CHECKBOXES"
+		expr="%ICONS_SELECT_ALL_CHECKBOXES%"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.SELECT_ALL_CHECKBOXES_DISABLED"
+		expr="%ICONS_SELECT_ALL_CHECKBOXES%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.ITEM_ICON"
+		expr=""
+		value="colored:tl-icon circle"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON"
+		expr=""
+		value="colored:tl-icon cross icon-red"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON_DISABLED"
+		expr=""
+		value="colored:tl-icon cross icon-red"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS"
+		expr=""
+		value="colored:tl-icon sort"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS_DISABLED"
+		expr=""
+		value="colored:tl-icon sort"
+	/>
+	<icon name="com.top_logic.layout.inspector.resources.Icons.PUBLIC"
+		value="colored:tl-icon circle-light icon-green"
+	/>
+	<icon name="com.top_logic.layout.provider.Icons.FALSE_DISABLED"
+		expr=""
+		value="colored:tl-icon minus-square"
+	/>
+	<icon name="com.top_logic.layout.provider.Icons.NULL_DISABLED"
+		expr=""
+		value="colored:tl-icon null-square"
+	/>
+	<icon name="com.top_logic.layout.renderers.Icons.BUTTON_ARROW_DISABLED"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.HELP"
+		expr=""
+		value="css:fas fa-question-circle"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MINIMIZE"
+		expr=""
+		value="colored:tl-icon window-minimize"
+	/>
+	<icon name="com.top_logic.layout.table.component.Icons.EXPORT_GRID"
+		expr=""
+		value="colored:tl-icon export-excel"
+	/>
+	<icon name="com.top_logic.layout.table.component.Icons.EXPORT_GRID_DISABLED"
+		value="colored:tl-icon export-excel"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.ADD_ROW"
+		value="colored:tl-icon row-add"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.ADD_ROW_DISABLED"
+		expr="%com.top_logic.layout.table.control.Icons.ADD_ROW%"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR"
+		expr=""
+		value="colored:tl-icon cross"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR_DISABLED"
+		value="colored:tl-icon cross icon-red"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.OPEN_SELECTOR"
+		expr=""
+		value="colored:tl-icon arrow-top-right"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.OPEN_SELECTOR_DISABLED"
+		expr=""
+		value="colored:tl-icon arrow-top-right"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.ROW_SELECTION_SPACER"
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.SORT_CONFIG_60"
+		expr=""
+		value="colored:tl-icon table-sort"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_GLOBAL"
+		expr=""
+		value="colored:tl-icon search"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_GLOBAL_ACTIVE"
+		expr=""
+		value="colored:tl-icon search"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER_OPTIONS"
+		expr=""
+		value="colored:tl-icon gear"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER"
+		value="colored:tl-icon filter-remove icon-red"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER_DISABLED"
+		value="colored:tl-icon filter-remove icon-red"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.RESET_TABLE"
+		expr=""
+		value="colored:tl-icon table-reset"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_BUTTON_ICON"
+		value="colored:tl-icon sort"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_COLUMN_CONFIG"
+		expr=""
+		value="colored:tl-icon table-add"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.TRUE_DISABLED"
+		expr=""
+		value="colored:tl-icon check-square"
+	/>
+	<icon name="com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU"
+		expr=""
+		value="colored:tl-icon bars"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.REFRESH_SMALL"
+		value="colored:tl-icon reload icon-red"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_COLLAPSED"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_EXPANDED"
+		expr=""
+		value="colored:tl-icon caret-down"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_MF"
+		expr=""
+		value="colored:tl-icon caret-bottom-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_ML"
+		expr=""
+		value="colored:tl-icon caret-bottom-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_MNL"
+		expr=""
+		value="colored:tl-icon caret-bottom-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_MS"
+		expr=""
+		value="colored:tl-icon caret-bottom-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PF"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PL"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PNL"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.TREE_PS"
+		expr=""
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE"
+		expr=""
+		value="colored:tl-icon window-maximize"
+	/>
+	<icon name="com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE"
+		expr=""
+		value="colored:tl-icon window-normalize"
+	/>
+	<icon name="com.top_logic.reporting.flex.chart.config.datasource.Icons.ADD_BUTTON"
+		value="colored:tl-icon plus"
+	/>
+	<icon name="com.top_logic.tool.boundsec.assistent.Icons.STEP_ACTUAL"
+		expr=""
+		value="css:fas fa-question-circle"
+	/>
+	<icon name="com.top_logic.tool.boundsec.assistent.Icons.STEP_FINISHED"
+		expr=""
+		value="colored:tl-icon check-circle icon-green"
+	/>
+	<icon name="com.top_logic.tool.boundsec.assistent.Icons.STEP_OPEN"
+		value="css:fas fa-question-circle"
+	/>
+	<icon name="com.top_logic.tool.export.Icons.DOWNLOAD"
+		expr="colored:tl-icon download"
+	/>	
+	<icon name="com.top_logic.tool.export.Icons.DOWNLOAD_DISABLED"
+		expr="%com.top_logic.tool.export.Icons.DOWNLOAD%"
+	/>
+	<icon name="com.top_logic.tool.export.Icons.REFRESH_DISABLED"
+		value="colored:tl-icon reload"
+	/>
+	<icon name="com.top_logic.util.error.Icons.ERROR"
+		expr=""
+		value="colored:tl-icon exclamation-border icon-red"
+	/>
+	<icon name="com.top_logic.util.error.Icons.INFO"
+		expr=""
+		value="colored:tl-icon lightbulb-circle"
+	/>
+	<icon name="com.top_logic.util.error.Icons.QUESTION"
+		expr=""
+		value="colored:tl-icon question-speachbubble"
+	/>
+	<icon name="com.top_logic.util.error.Icons.SYSTEM_FAILURE"
+		value="colored:tl-icon error icon-red"
+	/>
+	<icon name="com.top_logic.util.error.Icons.WARNING"
+		expr=""
+		value="colored:tl-icon exclamation-circle"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.GREEN"
+		expr=""
+		value="colored:tl-icon circle-light icon-green"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.RED_CROSS"
+		expr=""
+		value="colored:tl-icon cross-circle icon-red"
+	/>
+	<icon name="com.top_logic.util.monitor.Icons.YELLOW"
+		expr=""
+		value="colored:tl-icon circle-light icon-yellow"
+	/>
+	<icon name="com.top_logic.util.monitor.thread.Icons.BUTTON_START"
+		expr=""
+		value="colored:tl-icon start icon-green"
+	/>
+	<icon name="com.top_logic.util.monitor.thread.Icons.BUTTON_STOP"
+		expr=""
+		value="colored:tl-icon stop"
+	/>
+	<icon name="com.top_logic.util.sched.layout.Icons.EXCEPTION"
+		value="colored:tl-icon exclamation-circle-border"
+	/>
+	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_RED"
+		expr=""
+		value="colored:tl-icon paused icon-red"
+	/>
+	<icon name="com.top_logic.util.sched.layout.block.Icons.PAUSED_YELLOW"
+		expr=""
+		value="colored:tl-icon paused icon-yellow"
+	/>
+	<icon name="com.top_logic.util.sched.task.Icons.CANCELING"
+		expr=""
+		value="colored:tl-icon play-cancel"
+	/>
+	<icon name="com.top_logic.util.sched.task.Icons.INACTIVE"
+		expr=""
+		value="colored:tl-icon stop"
+	/>
+	<icon name="com.top_logic.util.sched.task.Icons.RUNNING"
+		expr=""
+		value="colored:tl-icon start"
+	/>
+	<icon name="com.top_logic.util.sched.task.result.Icons.CANCELED"
+		expr=""
+		value="colored:tl-icon cross-circle icon-grey-red"
+	/>
+	<icon name="com.top_logic.util.sched.task.result.Icons.FAILURE"
+		value="colored:tl-icon exclamation-circle icon-yellow"
+	/>
+	<icon name="com.top_logic.util.sched.task.result.Icons.NOT_FINISHED"
+		expr=""
+		value="colored:tl-icon start"
+	/>
+	<icon name="com.top_logic.util.sched.task.result.Icons.SUCCESS"
+		expr=""
+		value="colored:tl-icon check-circle icon-green"
+	/>
+	<icon name="com.top_logic.util.sched.task.result.Icons.UNKNOWN"
+		expr=""
+		value="css:fas fa-question-circle"
+	/>
+	<icon name="layouts.themes.default.toolrow.helpButton.ShowHelpCommand"
+		expr=""
+		value="css:fas fa-question-circle"
+	/>
+	<icon name="layouts.themes.default.toolrow.helpButton.ShowHelpCommand@disabled"
+		expr=""
+		value="css:fas fa-question-circle"
+	/>
+	<icon name="mime.ClassificationMetaAttribute"
+		value="colored:tl-icon file-metaClass"
+	/>
+	<icon name="mime.Clipboard"
+		expr=""
+		value="colored:tl-icon clipboard"
+	/>
+	<icon name="mime.Clipboard.large"
+		expr=""
+		value="colored:tl-icon clipboard"
+	/>
+	<icon name="mime.FloatMetaAttribute"
+		value="colored:tl-icon file-float"
+	/>
+	<icon name="mime.Link"
+		value="colored:tl-icon arrow-top-right-square"
+	/>
+	<icon name="mime.Project"
+		expr=""
+		value="colored:tl-icon network-small"
+	/>
+	<icon name="mime.Project.large"
+		expr=""
+		value="colored:tl-icon network"
+	/>
+	<icon name="mime.RoleRule"
+		value="colored:tl-icon rule"
+	/>
+	<icon name="mime.SearchExpressionTable"
+		value="colored:tl-icon search"
+	/>
+	<icon name="mime.TLAssociationEnd@containment@mandatory@multiple"
+		expr=""
+		value="colored:tl-icon selection-invert"
+	/>
+	<icon name="mime.TLEnumeration"
+		expr=""
+		value="colored:tl-icon chain"
+	/>
+	<icon name="mime.WebFolderMetaAttribute"
+		value="colored:tl-icon file-knowledgeObject"
+	/>
+	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.large"
+		value="colored:tl-icon export-excel"
+	/>
+	<icon name="mime.application/zip.large"
+		value="colored:tl-icon file-zip"
+	/>
+	<icon name="mime.image/bmp"
+		expr=""
+		value="colored:tl-icon image"
+	/>
+	<icon name="mime.image/gif"
+		expr=""
+		value="colored:tl-icon image"
+	/>
+	<icon name="mime.image/png"
+		expr=""
+		value="colored:tl-icon image"
+	/>
+	<icon name="mime.text/plain.large"
+		value="colored:tl-icon file-text"
+	/>
+	<icon name="mime.tl.accounts.Role"
+		value="colored:tl-icon person-gear"
+	/>
+	<icon name="mime.tl.folder.Document"
+		value="css:far fa-file"
+	/>
+	<icon name="mime.tl.folder.DocumentVersion"
+		expr="%mime.tl.folder.Document%"
+	/>
+	<icon name="mime.tl.accounts.Group"
+		expr=""
+		value="colored:tl-icon group"
+	/>
+	<icon name="mime.tl.accounts.Group.large"
+		expr=""
+		value="colored:tl-icon group"
+	/>
+	<icon name="mime.tl.accounts.Person"
+		expr=""
+		value="colored:tl-icon person"
+	/>
+	<icon name="mime.tl.accounts.Person.large"
+		expr=""
+		value="colored:tl-icon person"
+	/>
+	<icon name="mime.video/x-msvideo"
+		value="colored:tl-icon camera"
+	/>
+	<icon name="mime.video/x-msvideo.large"
+		value="colored:tl-icon camera"
+	/>
+	<icon name="selectInputArrow"
+		expr=""
+		value="colored:tl-icon chevron-flat-down"
+	/>
+	<icon name="selectInputArrowActive"
+		expr=""
+		value="colored:tl-icon chevron-flat-down"
+	/>
+	<color name="TOOLBAR_BUTTON_ICON_COLOR"
+		expr="%LAYOUT_MAIN_COLOR%"
+	/>
+	<dim name="TOOLBAR_BUTTON_ICON_SIZE"
+		value="26px"
+	/>
+	<color name="BUTTONBAR_BACKGROUND"
+		value="#FFFFFF"
+	/>
+	<dim name="BUTTONBAR_PADDING"
+		value="12px"
+	/>
+</settings>

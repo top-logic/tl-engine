@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID=""
+		securityDomain="SecurityStructure"
+		tabIcon=""
+	>
+		<tabLabel key="dynamic.2fff6cf5-0c5c-48e4-9582-900de6acfbfc">
+			<en>Documents</en>
+			<de>Dokumente</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/componentVisibility/documents/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

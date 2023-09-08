@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="com.top_logic.demo/table/grid/table_grid_shared.xml"
+	nameSuffix=""
+	resPrefix="layouts.demo.table.table_grid.tableGrid."
+	showMarkerFields="false"
+>
+	<dialogs>
+		<include name="com.top_logic.demo/technical/layoutDemo1/tables/frozenLarge/DemoLargeTableComponentFrozen.xml"
+			tableName="LargeTableComponentFrozenGridDialog"
+		>
+			<inject>
+				<dialogInfo
+					defaultI18n="demo.table.demoLargeTableDialog"
+					executability="Always"
+					height="450"
+					image="theme:ICONS_OPEN_SELECTOR"
+					width="720"
+				/>
+			</inject>
+		</include>
+		<include name="com.top_logic.demo/structure/demoTypes/treeGrid/tree_grid.xml"
+			namePrefix="TreeGridInDialog"
+		>
+			<modelBuilder class="com.top_logic.demo.model.types.util.CyclicDemoTreeBuilder"/>
+			<inject>
+				<dialogInfo
+					defaultI18n="demo.table.treeGridDialog"
+					executability="Always"
+					image="theme:ICONS_OPEN_SELECTOR"
+				/>
+			</inject>
+		</include>
+	</dialogs>
+</include>

@@ -1,0 +1,179 @@
+/* Common Style */
+body {margin:0; padding:0; background:#fff; font-family:var(--TEXT_FAMILY); font-size:12px; color:#000;}
+a {color:#646463; text-decoration:underline;}
+a:hover {color:#646463; text-decoration:none;}
+
+input, textarea, select {font-size:12px;}
+img {border:0 none;}
+
+.Lt1 {float:left;}
+.Rt1 {float:right;}
+.clr {clear:both; font-size:0; margin:0; padding:0; line-height:0; visibility:hidden; height:0;}
+
+.OuterContainer {margin:0; padding:0px; background:#ffffff; font-family:var(--TEXT_FAMILY); font-size:12px; color:#000000;} 
+.Container {margin:0 auto;  border:1px solid #9bb0d1;}
+
+.TitleTop {height:21px; background:var(--TITLE_BACKGROUND);}
+.TitleTop .TitleName {/*float:left;*/ line-height:21px; color:var(--FONT_COLOR_TITLE); text-align:center;}
+.TitleTop .Close {width:25px; height:17px; margin-top:2px; float:right;}
+.IE8 .TitleTop .Close {overflow: hidden;}
+.MenuContainer {padding:0 0 0 10px; height:26px; background:var(--MAIN_TABBAR_BACKGROUND);}
+
+.MenuContainer ul li a.MenuSimple {text-decoration:none; color:#000000; padding:0 9px; line-height:26px; height:26px; display:block; border-left:1px solid #d1e0f4; border-right:1px solid #d1e0f4; font-weight:bold;}
+.MenuContainer ul li a.MenuHover {text-decoration:none; height:26px; border-left:1px solid #9bb0d1; border-right:1px solid #9bb0d1; font-weight:bold;}
+.MenuContainer ul li a.MenuClick {text-decoration:none; height:26px; border-left:1px solid #9bb0d1; border-right:1px solid #9bb0d1; background:url(../images/menu_bar_hover_bg.png) left top repeat-x; font-weight:bold;}
+
+.ToolBarContainer {height:56px; background:var(--TOOLBAR_BACKGROUND); display:block;}
+.ToolBarContainer .ToolContainer {float:left; z-index:1;}
+.ToolBarContainer .ToolContainerRight {float:right; z-index:1;}
+
+.ToolContainerRight .IconContainer {float:left; margin:0 0 0 0;}
+.ToolContainerRight .IconContainer ul {margin:0; padding:0; list-style-type:none;}
+.ToolContainerRight .IconContainer ul li {margin:0; padding:0; float:left;}
+.ToolContainer .IconContainer ul.mtbGroup {margin-right: 5px;}
+.ToolContainer .IconContainer {float:left; margin:10px 0 0 0;}
+.ToolContainer .IconContainer ul {margin:0; padding:0; list-style-type:none;}
+.ToolContainer .IconContainer ul li {margin:0; padding:0; float:left;}
+.ToolContainer .IconContainer ul li a.Edit {background:url(../images/icons/edit_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.EditHover {background:url(../images/icons/edit_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.EditActive {background:url(../images/icons/edit_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.Save {background:url(../images/icons/save_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.SaveHover {background:url(../images/icons/save_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.SaveActive {background:url(../images/icons/save_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.Export {background:url(../images/icons/export_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.ExportHover {background:url(../images/icons/export_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.ExportActive {background:url(../images/icons/export_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.EditMilestone {background:url(../images/icons/edit_milestone_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.EditMilestoneHover {background:url(../images/icons/edit_milestone_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.EditMilestoneActive {background:url(../images/icons/edit_milestone_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.CompareMilestone {background:url(../images/icons/compare_milestone_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.CompareMilestoneHover {background:url(../images/icons/compare_milestone_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.CompareMilestoneActive {background:url(../images/icons/compare_milestone_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.Budget {background:url(../images/icons/budget_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.BudgetHover {background:url(../images/icons/budget_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.BudgetActive {background:url(../images/icons/budget_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.Debtors {background:url(../images/icons/debtors_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.DebtorsHover {background:url(../images/icons/debtors_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.DebtorsActive {background:url(../images/icons/debtors_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.Payable {background:url(../images/icons/payable_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.PayableHover {background:url(../images/icons/payable_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.PayableActive {background:url(../images/icons/payable_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.WeeklyReport {background:url(../images/icons/weekly_report_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.WeeklyReportHover {background:url(../images/icons/weekly_report_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.WeeklyReportActive {background:url(../images/icons/weekly_report_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.MonthlyReport {background:url(../images/icons/monthly_report_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.MonthlyReportHover {background:url(../images/icons/monthly_report_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.MonthlyReportActive {background:url(../images/icons/monthly_report_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.Report {background:url(../images/icons/report_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.ReportHover {background:url(../images/icons/report_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.ReportActive {background:url(../images/icons/report_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.Requirement {background:url(../images/icons/requirement_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.RequirementHover {background:url(../images/icons/requirement_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.RequirementActive {background:url(../images/icons/requirement_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.TestContainer {background:url(../images/icons/test_container_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.TestContainerHover {background:url(../images/icons/test_container_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.TestContainerActive {background:url(../images/icons/test_container_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.Search {background:url(../images/icons/search_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.SearchHover {background:url(../images/icons/search_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.SearchActive {background:url(../images/icons/search_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.Help {background:url(../images/icons/help_simple.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.HelpHover {background:url(../images/icons/help_hover.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolContainer .IconContainer ul li a.HelpActive {background:url(../images/icons/help_active.png) left top no-repeat; height:36px; width:36px; float:left;}
+.ToolBarContainer .header-logo {position:relative; height:var(--HEADER_RIGHT_IMAGE_HEIGHT); width:var(--HEADER_RIGHT_IMAGE_WIDTH); padding-right:10px; overflow:hidden;}
+.BreadCrumbOuter {height:23px; background:var(--BREADCRUMB_BACKGROUND); margin-left:0px}
+.BreadCrumbOuter .breadcrumb {margin-left:0px}
+.BreadCrumbOuter .Left {height:19px; line-height:19px; margin:2px 0px 0px 0px; float:left; background:var(--BREADCRUMB_BACKGROUND_OUTER_LEFT); padding:0px 0px 0px 19px; text-align:left;}
+.BreadCrumbOuter .Right {height:19px; line-height:19px; margin:2px 0px 0px 0px; float:right; background:var(--BREADCRUMB_BACKGROUND_OUTER_RIGHT); padding:0px 19px 0px 0px; text-align:right;}
+
+.TreeContainerSmall {overflow:scroll; width:50px; height:500px; overflow-x:hidden; padding:0px; margin:0px auto; display:block; position:relative; float:left; background:#FFFFFF;}
+.stammdaten_box {padding:35px 0px 0px 15px;}
+.stammdaten_box1 {padding:30px 0px 0px 15px;}
+.stammdaten_content {line-height:25px;}
+.box1_float {float:left; margin:0px; padding:0px; width:65%;}
+.sidebar_title {padding:0px 0px 0px 10px; margin:0px; line-height:22px; height:22px; border-bottom:1px solid #636465; background-color:#e7e8e9;}
+.sidebar_content {padding:0px 0px 0px 10px; margin:0px; line-height:22px; height:72px; background-color:#f3f4f4;}
+.sidebox_content {float:right; width:241px; border:1px solid #e7e8e9; padding:0px 0px 0px 0px; margin:70px 5px 0px 0px; height:95px; background-color:white;}
+.sidebox_content1 {float:right; width:241px; border:1px solid #e7e8e9; padding:0px 0px 0px 0px; margin:15px 5px 0px 0px; height:95px; background-color:white;}
+.Help_icon {width:32px; border:0px; padding:2px 2px 0px 0px; margin:0px; float:right;}
+a.HelpIcon {background:url(../images/help_new_simple.png) left top no-repeat; height:31px; width:32px; float:left;}
+a.HelpIconHover {background:url(../images/help_new_hover.png) left top no-repeat; height:31px; width:32px; float:left;}
+a.HelpIconActive {background:url(../images/help_new_active.png) left top no-repeat; height:31px; width:32px; float:left;}
+
+/* Tree Menu */
+.TreeTitle {text-decoration:none; cursor:pointer;}
+.TreeTitleHover {background:#e7e8ea; text-decoration:none; cursor:pointer;}
+.Footer {height:19px; overflow:hidden; background:url(../images/footer_bg.png) left top repeat-x;}
+.Footer .FooterStatus {width:140px; height:17px; padding:2px 0 0 11px; float:right; background:url(../images/footer_status_bg.png) left top no-repeat; color:#333333; font-size:11px;}
+
+/* Budget List Page*/
+.Title {font-family:var(--TEXT_FAMILY); font-size:12px; font-weight:bold; color:#000000; background:url(../images/baudget_table_bg.png) left top repeat-x; height:19px; padding-left:10px;}
+.blueRow {font-family:var(--TEXT_FAMILY); font-size:11px; font-weight:normal; color:#000000; background-color:#dce7f3;}
+.greyRow {font-family:var(--TEXT_FAMILY); font-size:11px; font-weight:normal; color:#000000; background-color:#edeeee; text-align:center;}
+#budgetlist {height:260px; overflow:scroll; overflow-x:hidden; border:1px solid #666666; padding:1px;}
+
+
+
+
+
+
+
+
+/* Budget Table */
+table.budgetlistTbl {border-collapse:collapse; background:#edeeee; font-size:11px; text-align:center;}
+table.budgetlistTbl td {padding:3px 8px;}
+table.budgetlistTbl th {padding:3px 8px; font-weight:bold; text-align:left; background:url(../images/bgTh1.png) bottom right no-repeat;}
+table.budgetlistTbl td.fst {background:#dce7f3;}
+.tier1 {margin-left:0; text-align:left;}
+.tier2 {margin-left:1.5em; text-align:left;}
+.tier3 {margin-left:3em; text-align:left;}
+.tier4 {margin-left:4.5em; text-align:left;}
+.tier5 {margin-left:6em; text-align:left;}
+.tier6 {margin-left:7.5em; text-align:left;}
+.folder {background:url(../images/arrowOF.png) left top no-repeat; float:left; height:11px; width:12px;}
+/* Budget Table */
+
+
+
+.IconList{margin:0; height:34px; float:right; width:255px;}
+
+.IconList ul{margin:0; padding:0; list-style-type:none; background:url(../images/icons_budgets/bg.png) left top repeat-x; height:31px; padding-bottom:3px;}
+.IconList ul li{margin:0; padding:0; float:left;}
+
+.IconList ul li a.ListHorizontal{background:url(../images/icons_budgets/list_horizontal_simple.png) left top no-repeat; height:31px; width:29px; float:left;}
+.IconList ul li a.ListHorizontalHover{background:url(../images/icons_budgets/list_horizontal_hover.png) left top no-repeat; height:31px; width:29px; float:left;}
+.IconList ul li a.ListHorizontalActive{background:url(../images/icons_budgets/list_horizontal_active.png) left top no-repeat; height:31px; width:29px; float:left;}
+
+.IconList ul li a.ListVertical{background:url(../images/icons_budgets/list_verticle_simple.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.ListVerticalHover{background:url(../images/icons_budgets/list_verticle_hover.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.ListVerticalActive{background:url(../images/icons_budgets/list_verticle_active.png) left top no-repeat; height:31px; width:27px; float:left;}
+
+.IconList ul li a.One{background:url(../images/icons_budgets/one_simple.png) left top no-repeat; height:31px; width:27px; float:left; margin:0 0 0 4px;}
+.IconList ul li a.OneHover{background:url(../images/icons_budgets/one_hover.png) left top no-repeat; height:31px; width:27px; float:left; margin:0 0 0 4px;}
+.IconList ul li a.OneActive{background:url(../images/icons_budgets/one_active.png) left top no-repeat; height:31px; width:27px; float:left; margin:0 0 0 4px;}
+
+.IconList ul li a.Two{background:url(../images/icons_budgets/two_simple.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.TwoHover{background:url(../images/icons_budgets/two_hover.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.TwoActive{background:url(../images/icons_budgets/two_active.png) left top no-repeat; height:31px; width:27px; float:left;}
+
+.IconList ul li a.Three{background:url(../images/icons_budgets/three_simple.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.ThreeHover{background:url(../images/icons_budgets/three_hover.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.ThreeActive{background:url(../images/icons_budgets/three_active.png) left top no-repeat; height:31px; width:27px; float:left;}
+
+.IconList ul li a.Four{background:url(../images/icons_budgets/four_simple.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.FourHover{background:url(../images/icons_budgets/four_hover.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.FourActive{background:url(../images/icons_budgets/four_active.png) left top no-repeat; height:31px; width:27px; float:left;}
+
+.IconList ul li a.Five{background:url(../images/icons_budgets/five_simple.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.FiveHover{background:url(../images/icons_budgets/five_hover.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.FiveActive{background:url(../images/icons_budgets/five_active.png) left top no-repeat; height:31px; width:27px; float:left;}
+
+.IconList ul li a.Six{background:url(../images/icons_budgets/six_simple.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.SixHover{background:url(../images/icons_budgets/six_hover.png) left top no-repeat; height:31px; width:27px; float:left;}
+.IconList ul li a.SixActive{background:url(../images/icons_budgets/six_active.png) left top no-repeat; height:31px; width:27px; float:left;}
+
+.IconList ul li a.Help{background:url(../images/icons_budgets/help_simple.png) left top no-repeat; height:31px; width:29px; float:left; margin:0 0 0 4px;}
+.IconList ul li a.HelpHover{background:url(../images/icons_budgets/help_hover.png) left top no-repeat; height:31px; width:29px; float:left; margin:0 0 0 4px;}
+.IconList ul li a.HelpActive{background:url(../images/icons_budgets/help_active.png) left top no-repeat; height:31px; width:29px; float:left; margin:0 0 0 4px;}
+
+
+

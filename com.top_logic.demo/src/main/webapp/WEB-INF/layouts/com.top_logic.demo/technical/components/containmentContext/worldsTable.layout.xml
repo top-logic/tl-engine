@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,things"
+		isSecurityMaster="false"
+		type="test.containmentContext:World"
+	>
+		<name key="dynamic.a9ff8c3f-c154-414b-ac62-76a2e2456731">
+			<en>Worlds</en>
+			<de>Welten</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.containmentContext:World`)"
+			modelForElement="null"
+			supportsElement="true"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_172830e1_81a8_4e94_b7c4_65d65763e17d"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				confirm="true"
+				disabledImage=""
+				group="Delete"
+				image=""
+				target="selection(self())"
+			>
+				<confirmMessage key="dynamic.2e18f255-72cf-41c8-b4c8-132b0239b04e">
+					<en>Shall the world "{0}" be irrevocably extinguished?</en>
+					<de>Soll die Welt "{0}" unwiderruflich ausgelöscht werden?</de>
+				</confirmMessage>
+				<resourceKey key="dynamic.cb408c04-a9c7-4ffd-898b-8a974d2442b7">
+					<en>Delete world</en>
+					<de>Welt löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/containmentContext/newWorld/dialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

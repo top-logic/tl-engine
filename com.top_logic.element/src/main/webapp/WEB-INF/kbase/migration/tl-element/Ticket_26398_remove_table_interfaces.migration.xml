@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26398_remove_table_interfaces"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26117_security_object"
+			module="tl"
+		/>
+		<dependency name="Ticket_25881_Removed_legacy_types"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<change-part-type
+			source="tl.tables:TagTableInterface"
+			target="Tag:Tag"
+		/>
+		<change-reference-type
+			reference="Tag:Tag.all#taggedObj"
+			target="tl.model:TLObject"
+		/>
+		<change-reference-type
+			reference="WorkItem:WorkItem.WorkItem#subject"
+			target="tl.model:TLObject"
+		/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

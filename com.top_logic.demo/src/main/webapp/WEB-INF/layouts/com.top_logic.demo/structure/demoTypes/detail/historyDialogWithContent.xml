@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="structure"/>
+	</params>
+
+	<include name="history/historyDialog.xml"
+		namePrefix="${namePrefix}Histroy"
+	>
+		<contentView>
+			<tabbar name="${namePrefix}ShowHistoryTab">
+				<components>
+					<layout>
+						<tabInfo label="layouts.demo.history.historyDialogWithContent.demoStructureDemoTypes.tab"/>
+						<components>
+							<!-- component to edit structured elements -->
+							<component class="com.top_logic.element.layout.structured.AdminElementComponent"
+								buttonComponent="${namePrefix}ShowHistoryButtons"
+								model="selection(${namePrefix}HistroyTable)"
+								name="Historic${namePrefix}Edit"
+								page="/jsp/element/EditStructuredElement.jsp"
+								resPrefix="element.structure.edit."
+								securityProviderClass="default"
+								structure="${structure}"
+								titleKey="layouts.demo.history.historyDialogWithContent.HistoricEdit.title"
+							>
+								<dialogs>
+									<include name="export/exportTableDialog_shared.xml"
+										exportHandlers="demoExportTypes,demoExportTypesSubstructure"
+										namePrefix="Historic${namePrefix}Edit"
+									/>
+								</dialogs>
+							</component>
+
+							<buttonbar name="${namePrefix}ShowHistoryButtons"/>
+						</components>
+					</layout>
+					<include name="commons/webfolder/documents.xml"
+						model="selection(${namePrefix}HistroyTable)"
+						namePrefix="${namePrefix}historicDemoTypesDocuments"
+					>
+						<inject>
+							<tabInfo
+								decorator="${namePrefix}historicDemoTypesDocumentsFolder"
+								label="layouts.demo.history.historyDialogWithContent.demoStructureDemoTypesDocuments.tab"
+							/>
+						</inject>
+					</include>
+				</components>
+			</tabbar>
+		</contentView>
+	</include>
+</template>

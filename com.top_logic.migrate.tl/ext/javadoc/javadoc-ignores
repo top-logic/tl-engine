@@ -1,0 +1,11 @@
+com.top_logic.migrate.tl.meta.UpdateMetaAttributes.java: Missing documentation: com.top_logic.migrate.tl.meta.UpdateMetaAttributes.DEFAULT_FACTORY_CONFIG_PATH
+com.top_logic.migrate.tl.skip.SchemaCompacter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.migrate.tl.skip.SchemaCompacter
+com.top_logic.migrate.tl.util.EnhancedKnowledgeEventVisitor.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.migrate.tl.util.EnhancedKnowledgeEventVisitor
+com.top_logic.migrate.tl.util.MigrateParameters.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.migrate.tl.util.MigrateParameters
+com.top_logic.migrate.tl.util.MigrateUtils.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.migrate.tl.util.MigrateUtils
+com.top_logic.migrate.tl.util.MigrateUtils.java: Invalid camel case word 'connectionPool', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.migrate.tl.util.MigrateUtils.java: Invalid camel case word 'contentType', this may only be used within JavaDoc links or HTML code tags.
+com.top_logic.migrate.tl.util.MigrateUtils.java: Missing documentation: com.top_logic.migrate.tl.util.MigrateUtils.INSTANCE
+com.top_logic.migrate.tl.util.MigrateUtils.java: Missing documentation: com.top_logic.migrate.tl.util.MigrateUtils.createKnowledgeEventReader
+com.top_logic.migrate.tl.util.MigrateUtils.java: Missing documentation: com.top_logic.migrate.tl.util.MigrateUtils.doMigrateWithKB
+com.top_logic.migrate.tl.util.MigrateUtils.java: Missing documentation: com.top_logic.migrate.tl.util.MigrateUtils.getDestinationPool

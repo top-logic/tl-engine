@@ -1,0 +1,1 @@
+char reference: &#8226;

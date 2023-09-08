@@ -1,0 +1,79 @@
+.djs-context-pad {
+  background-color: white;
+}
+
+/*
+ * 24px for each item
+ */
+.djs-overlay-context-pad {
+  width: 96px;
+}
+
+#canvas,
+#canvas > div {
+    height: 100%;
+    margin: 0;
+}
+
+.djs-label {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.palette-icon-lasso-tool {
+  background-image: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-dasharray%3D%225%2C%205%22%20width%3D%2246%22%20height%3D%2246%22%3E%3Crect%20x%3D%2210%22%20y%3D%2210%22%20width%3D%2226%22%20height%3D%2226%22%2F%3E%3C%2Fsvg%3E');
+}
+
+.palette-icon-create-shape {
+  background-image: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20width%3D%2246%22%20height%3D%2246%22%3E%3Crect%20x%3D%2210%22%20y%3D%2213%22%20width%3D%2226%22%20height%3D%2220%22%2F%3E%3C%2Fsvg%3E');
+}
+
+.context-pad-icon-hide {
+  background-image: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20width%3D%2246%22%20height%3D%2246%22%3E%3Cline%20x1%3D%225%22%20y1%3D%225%22%20x2%3D%2215%22%20y2%3D%2215%22%2F%3E%3Cline%20x1%3D%2215%22%20y1%3D%225%22%20x2%3D%225%22%20y2%3D%2215%22%2F%3E%3C%2Fsvg%3E') !important;
+}
+
+.palette-icon-create-class {
+  background-image: url('../palette_icons/create_class.svg') !important;
+}
+
+.palette-icon-create-enumeration {
+  background-image: url('../palette_icons/create_enumeration.svg') !important;
+}
+
+.palette-icon-create-label {
+  background-image: url('../palette_icons/create_label.svg') !important;
+}
+
+.context-pad-icon-delete {
+  background-image: url('../context_pad_icons/delete.svg') !important;
+}
+
+.context-pad-icon-create-property {
+  background-image: url('../context_pad_icons/property.svg') !important;
+}
+
+.context-pad-icon-inheritance {
+  background-image: url('../context_pad_icons/inheritance.svg') !important;
+}
+
+.context-pad-icon-association {
+  background-image: url('../context_pad_icons/association.svg') !important;
+}
+
+.context-pad-icon-composition {
+  background-image: url('../context_pad_icons/composition.svg') !important;
+}
+
+.context-pad-icon-dependency {
+  background-image: url('../context_pad_icons/dependency.svg') !important;
+}
+
+.context-pad-icon-realization {
+  background-image: url('../context_pad_icons/realization.svg') !important;
+}
+
+.context-pad-icon-aggregation {
+  background-image: url('../context_pad_icons/aggregation.svg') !important;
+}

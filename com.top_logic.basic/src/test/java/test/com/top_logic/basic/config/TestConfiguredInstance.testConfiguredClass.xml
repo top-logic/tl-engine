@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<config>
+	<a-config class="test.com.top_logic.basic.config.TestConfiguredInstance$A2" x="Hello world!" z="1">
+	</a-config>
+	<a class="test.com.top_logic.basic.config.TestConfiguredInstance$A2" x="Hello world!" z="1">
+	</a>
+	<b-config class="test.com.top_logic.basic.config.TestConfiguredInstance$B3" z="3">
+	</b-config>
+	<b class="test.com.top_logic.basic.config.TestConfiguredInstance$B3" y="1" z="3">
+	</b>
+
+	<a-config-list>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$A2" x="Hello world!" z="1">
+		</entry>
+		<entry x="Hello moon!">
+		</entry>
+	</a-config-list>
+	<a-list>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$A2" x="Hello world!" z="1">
+		</entry>
+		<entry x="Hello moon!">
+		</entry>
+	</a-list>
+	<b-config-list>
+		<entry>
+		</entry>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$B2">
+		</entry>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$B3" y="2" z="3">
+		</entry>
+	</b-config-list>
+	<b-list>
+		<entry>
+		</entry>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$B2">
+		</entry>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$B3" y="2" z="3">
+		</entry>
+	</b-list>
+
+	<a-config-map>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$A2" x="Hello world!" z="1">
+		</entry>
+		<entry x="Hello moon!">
+		</entry>
+	</a-config-map>
+	<a-map>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$A2" x="Hello world!" z="1">
+		</entry>
+		<entry x="Hello moon!">
+		</entry>
+	</a-map>
+	<b-config-map>
+		<entry>
+		</entry>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$B2">
+		</entry>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$B3" y="2" z="3">
+		</entry>
+	</b-config-map>
+	<b-map>
+		<entry>
+		</entry>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$B2">
+		</entry>
+		<entry class="test.com.top_logic.basic.config.TestConfiguredInstance$B3" y="2" z="3">
+		</entry>
+	</b-map>
+
+</config>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ns1:a
+	ns1:b="value"
+	xmlns:ns1="http://foo"
+/>

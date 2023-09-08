@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<root>
+	<alias />
+
+
+	<properties>
+		<section name="FlexDataManagerFactory">
+			<entry name="class" value="com.top_logic.knowledge.service.encryption.data.EncryptedFlexDataManagerFactory" />
+			
+			<entry name="dataManager.type.MEConfigDescriptor" value="exclude"/>
+		</section>
+	</properties>
+
+</root>

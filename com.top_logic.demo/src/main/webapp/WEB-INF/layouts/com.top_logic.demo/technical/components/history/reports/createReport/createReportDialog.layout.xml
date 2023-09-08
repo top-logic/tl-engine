@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID=""
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<open-handler id="ID_3a8ae565_9a34_4e49_b037_5800a8fc0934"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			clique="create"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			image=""
+			target="selection(com.top_logic.demo/technical/components/history/projekteTable.layout.xml#Table)"
+			targetComponent="com.top_logic.demo/technical/components/history/reports/createReport/createReportDialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.5f702d53-f57b-4001-80e8-1ec45db9f985">
+				<en>Generate report</en>
+				<de>Bericht erzeugen</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.5f702d53-f57b-4001-80e8-1ec45db9f985">
+				<en>Create report</en>
+				<de>Bericht erzeugen</de>
+			</title>
+		</title>
+		<typeOptions
+			include-subtypes="true"
+			type="test.history:Report"
+		/>
+		<create-handler id="ID_a77260e6_8656_4893_94ec_0a6692ee8373"
+			clique="save"
+			confirm="false"
+			disabledImage=""
+			group="Create"
+			ignoreWarnings="default"
+			image=""
+			linkOperation="project -> report -> $project.add(`test.history:Project#reports`, $report)"
+		>
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/history/reports/reportsTable.layout.xml#Table)"/>
+			</postCreateActions>
+		</create-handler>
+	</arguments>
+</config:template-call>

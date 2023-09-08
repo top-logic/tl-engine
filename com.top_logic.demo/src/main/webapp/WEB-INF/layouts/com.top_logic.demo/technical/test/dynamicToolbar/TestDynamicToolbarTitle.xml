@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.demo.layout.form.demo.TestDynamicToolbarTitle"
+	displayWithoutModel="true"
+	name="TestDynamicToolbarTitle"
+	page="/jsp/test/layout/TestDynamicToolbarTitle.jsp"
+	resPrefix="layouts.layoutdemo.test.TestDynamicToolbarTitle.TestDynamicToolbarTitle."
+	securityProviderClass="securityRoot"
+/>

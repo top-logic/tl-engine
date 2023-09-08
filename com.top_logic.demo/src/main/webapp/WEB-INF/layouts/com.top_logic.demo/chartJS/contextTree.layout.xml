@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tree.template.xml"
+>
+	<arguments>
+		<name key="dynamic.a04228a8-afb1-4fd1-b6a9-8c2e6724e37a">
+			<en>Context</en>
+			<de>Kontext</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
+			nodePredicate="node->$node.instanceOf(`tl.element:StructuredElement`)"
+			parents="node->$node.get(`tl.element:StructuredElement#parent`)"
+			rootNode="`DemoTypes#ROOT`"
+		/>
+	</arguments>
+</config:template-call>

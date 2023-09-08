@@ -1,0 +1,74 @@
+<h2>Syntax</h2>
+<pre>	<code>resource($userObject, $icon, $label, $tooltip, $cssClass, $url, $type)
+</code>
+</pre>
+<h2>Description</h2>
+<p>Creates a resource object with the given values. A resource object corresponds to the representation of an object in the application interface. The representation consists of an icon and a descriptive text. A tooltip is optionally displayed above both and when clicking on the representation, the application jumps to the standard view of the represented object. With the resource function, either the representation of a specified object can be adapted, or a self-defined jump target with freely definable values can be created.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>userObject</td>
+   <td>User object</td>
+   <td>The object that serves as the basis for the resource.</td>
+   <td>no</td>
+   <td>null</td>
+  </tr>
+  <tr>
+   <td>icon</td>
+   <td>Icon/Icon Source</td>
+   <td>An icon that will be displayed</td>
+   <td>no</td>
+   <td>The icon for the given type (e.g. "application/pdf") or the icon of the user object.</td>
+  </tr>
+  <tr>
+   <td>label</td>
+   <td>String/Internationalized text</td>
+   <td>The text to be displayed</td>
+   <td>no</td>
+   <td>The icon for the specified user object.</td>
+  </tr>
+  <tr>
+   <td>tooltip</td>
+   <td>String/Internationalized text</td>
+   <td>The tooltip that will be displayed above the rendering.</td>
+   <td>no</td>
+   <td>The tooltip for the specified label (if the label was specified as a translation key). If no label was specified, the tooltip for the specified user object.</td>
+  </tr>
+  <tr>
+   <td>cssClass</td>
+   <td>String</td>
+   <td>CSS class to add to the rendering.</td>
+   <td>no</td>
+   <td>null</td>
+  </tr>
+  <tr>
+   <td>url</td>
+   <td>string</td>
+   <td>The URL to be opened when the resource is clicked.</td>
+   <td>no</td>
+   <td>Jump to the specified user object.</td>
+  </tr>
+  <tr>
+   <td>type</td>
+   <td>String</td>
+   <td>The MIME type from which an icon should be derived if not explicitly given (e.g. "application/pdf").</td>
+   <td>no</td>
+   <td>null</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><strong>type:</strong> resource</p>
+<h2>Examples</h2>
+<pre>	<code>resource(null, "css:far fa-thumbs-up", #("Daumen hoch"@de,"Thumbs up"@en), "Some tooltip")</code>
+</pre>

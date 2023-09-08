@@ -1,0 +1,1 @@
+alter table meta_attribute drop is_sorted;

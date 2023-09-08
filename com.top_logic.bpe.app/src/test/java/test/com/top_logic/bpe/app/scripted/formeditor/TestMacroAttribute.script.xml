@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Workflow/Action-Workflow-Hochladen.xml"
+			template-name-comment="Workflow Hochladen"
+		>
+			<parameters>
+				<parameter name="Name"
+					value="TestMacroAttribute.bpml"
+				/>
+				<parameter name="URL"
+					value="file:src/test/java/test/com/top_logic/bpe/app/scripted/formeditor/TestMacroAttribute.bpml"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Prozess Cockpit"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="TestMacroAttribute"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Prozess Cockpit > Alle Prozesse > Alle Prozesse"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="TestMacroAttribute > Actor 1 > Start"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.mig.html.layout.tiles.scripting.InlinedTileComponentNaming$InlinedTileName"
+				component-implementation-comment="com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent"
+				component-name="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRunObjects.layout.xml#Objects"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.bpe.app.layout.StartProcessExecutionHandler"
+			command-label="Prozess starten"
+			command-name="startProcessExecution"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRun.layout.xml#createProcessExecutionNewAttributed"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="VALID"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Nummer"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldValidityAssertionOp"
+			user-id="root"
+			validity="VALID"
+		>
+			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Dauer in Minuten"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+					tab-path="Prozess Cockpit > Alle Prozesse > {0} > Aktuelle Aufgaben > Aktuelle Aufgabe"
+				/>
+			</model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+			command-label="Aufgabe abschließen"
+			command-name="finishTask"
+			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ja"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Workflow/Action-Workflow-Loeschen.xml"
+			template-name-comment="Workflow Loeschen"
+		>
+			<parameters>
+				<parameter name="name"
+					value="TestMacroAttribute"
+				/>
+			</parameters>
+		</action>
+	</actions>
+</action>

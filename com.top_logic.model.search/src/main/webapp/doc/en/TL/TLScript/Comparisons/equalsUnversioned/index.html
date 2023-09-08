@@ -1,0 +1,59 @@
+<h2>Syntax</h2>
+<pre>	<code>$object1.equalsUnversioned($object2)</code>
+</pre>
+<h2>Description</h2>
+<p>The function tests if the given business objects are the same, regardless of their version.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object1</td>
+   <td>Business object</td>
+   <td>First business object for comparison</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>object2</td>
+   <td>Business object</td>
+   <td>Second business object for comparison</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> True value</p>
+<p><code class="hljs inlineCode">TRUE</code>if the two business objects represent the same object, even if they are in different revisions, <code class="hljs inlineCode">FALSE</code> otherwise.</p>
+<h2>Examples</h2>
+<h3>Example 1</h3>
+<pre>	<code>{
+$businessObject = ... ;
+$businessObject.inRevision(revisionOfCommit(42)).equalsUnversioned($businessObject.inCurrent());
+}
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">TRUE</code></p>
+<p>A business object in CURRENT is compared with revision 42 of this business object. These are equal.</p>
+<h3>Example 2</h3>
+<pre>	<code>{
+$businessObject = ... ;
+$r42 = revisionOfCommit(42);
+$r666 = revisionOfCommit(666);
+$businessObject.inRevision($r666).equalsUnversioned($businessObject.inRevision($r42));
+}
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">TRUE</code></p>
+<p>Here the same business object is compared in different historical states. These are equal.</p>
+<p></p>
+<p></p>

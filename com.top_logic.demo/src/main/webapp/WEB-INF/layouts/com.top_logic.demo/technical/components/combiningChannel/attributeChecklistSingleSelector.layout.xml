@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments
+		multiple="false"
+		presentation="drop-down"
+		types=""
+	>
+		<titleKey key="dynamic.6b2402b5-f8d3-4f7a-a05b-96fff8490cb0">
+			<en>Attribute checklistSingle</en>
+			<de>Attribut checklistSingle</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="all(`tl5.enum:demo.classification.single`)"
+			modelForElement="null"
+			supportsElement="x -> $x.instanceOf(`tl5.enum:demo.classification.single`)"
+			supportsModel="true"
+		/>
+	</arguments>
+</config:template-call>

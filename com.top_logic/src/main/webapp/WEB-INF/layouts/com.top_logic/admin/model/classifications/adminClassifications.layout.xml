@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="adminClassifications"
+	helpIDLegacy="tl.admin.classification.tabber"
+	titleKey="tl.admin.classification.tabber"
+>
+	<tabInfo label="tl.admin.classification.tabber"/>
+	<components>
+		<include name="com.top_logic/admin/model/classifications/classification.xml"/>
+	</components>
+</securityLayout>

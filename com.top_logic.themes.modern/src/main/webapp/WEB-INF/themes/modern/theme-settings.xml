@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<string name="com.top_logic.layout.layoutRenderer.Icons.MAINLAYOUT_CSS_CLASS"
+		value="OuterContainer"
+	/>
+	<icon name="EDIT_SECURITY_PROFILES_IMPORT_ICON"
+		value="css:fas fa-file-import"
+	/>
+	<icon name="EDIT_SECURITY_PROFILES_IMPORT_ICON_DISABLED"
+		expr="%EDIT_SECURITY_PROFILES_IMPORT_ICON%"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_COLUMNS"
+		value="colored:tl-icon columns"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_COLUMNS_HOVER"
+		value="colored:tl-icon columns"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_EMPTY_CELL"
+		value="colored:tl-icon square-dashed"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_EMPTY_CELL_HOVER"
+		value="colored:tl-icon square-dashed"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_FRAME"
+		value="colored:tl-icon window-maximize"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_FRAME_HOVER"
+		value="colored:tl-icon window-maximize"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_GROUP"
+		value="colored:tl-icon fieldset"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_GROUP_HOVER"
+		value="colored:tl-icon fieldset"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_SEPARATOR"
+		value="colored:tl-icon separator"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_SEPARATOR_HOVER"
+		value="colored:tl-icon separator"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_TABLE"
+		value="colored:tl-icon table"
+	/>
+	<icon name="FORM_EDITOR_BUTTON_TABLE_HOVER"
+		value="colored:tl-icon table"
+	/>
+	<boolean name="QUICK_SEARCH_ENABLED"
+		value="true"
+	/>
+	<int name="QUICK_SEARCH_MAX_RESULTS"
+		value="40"
+	/>
+	<icon name="RESET_LAYOUT_CONFIGURATION_ICON"
+		value="css:fas fa-undo"
+	/>
+	<icon name="SWITCH_MAIN_LAYOUT_ICON"
+		value="css:fab fa-windows"
+	/>
+	<icon name="SWITCH_MAIN_LAYOUT_ICON_DISABLED"
+		expr="%SWITCH_MAIN_LAYOUT_ICON%"
+	/>
+	<string name="THEME_NAME"
+		value="Modern"
+	/>
+	<icon name="TILES_ADD_GROUP_ICON"
+		value="css:far fa-object-group"
+	/>
+	<icon name="TILES_ADD_VIEW_ICON"
+		value="css:fas fa-plus"
+	/>
+	<icon name="TILES_CONFIGURE_GROUP_ICON"
+		value="css:fas fa-cog"
+	/>
+	<icon name="TILES_STEP_INTO_CONTEXT_ICON"
+		value="css:fas fa-share"
+	/>
+	<icon name="TILES_STEP_OUT_TILE_ICON"
+		value="css:fas fa-backward"
+	/>
+	<type name="VERSION_RENDERER_CLASS"
+		interface="com.top_logic.layout.Renderer"
+		value="com.top_logic.themes.modern.layout.DefaultVersionRenderer"
+	/>
+	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.BURGER_COMMANDS_ICONS"
+		value="css:fas fa-bars"
+	/>
+	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.EDIT_TILE_PREVIEW_ICON"
+		value="css:far fa-edit"
+	/>
+	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.HIDE_TILE_COMMAND"
+		value="css:far fa-eye-slash"
+	/>
+	<icon name="layouts.themes.default.toolrow.designModeButton.ToggleDesignModeCommand"
+		value="css:fas fa-palette"
+	/>
+	<icon name="layouts.themes.default.toolrow.ExportLayout"
+		value="css:fas fa-file-export"
+	/>
+	<icon name="layouts.themes.default.toolrow.designModeButton.ReleaseLayout"
+		value="css:fas fa-check"
+	/>
+	<icon name="layouts.themes.default.toolrow.designModeButton.ToggleDesignModeCommand@active"
+		expr="%layouts.themes.default.toolrow.designModeButton.ToggleDesignModeCommand%"
+	/>
+	<icon name="com.top_logic.layout.Icons.ADD_COMPONENT_COMMAND"
+		value="css:fas fa-plus"
+	/>
+	<color name="ICON_COLOR_HIGHLIGHT"
+		expr="%ICON_COLOR_BASIC%"
+	/>
+	<string name="ICON_COLOR_HIGHLIGHT_BG"
+		expr="%ICON_COLOR_TRANSPARENT%"
+	/>	
+	<color name="ICON_COLOR_GREY"
+		value="#C8C8C8"
+	/>
+	<color name="ICON_COLOR_RED"
+		value="#D40000"
+	/>
+	<color name="ICON_COLOR_BUTTON_BASIC"
+		expr="%ICON_COLOR_DARK_CONTEXT_BASIC%"
+	/>
+	<color name="ICON_COLOR_BUTTON_DISABLED_BASIC"
+		expr="%ICON_COLOR_DARK_CONTEXT_DISABLED_BASIC%"
+	/>
+	<color name="ICON_COLOR_BUTTON_DISABLED_HIGHLIGHT"
+		expr="%ICON_COLOR_DARK_CONTEXT_DISABLED_HIGHLIGHT%"
+	/>
+	<color name="ICON_COLOR_BUTTON_HIGHLIGHT"
+		expr="%ICON_COLOR_DARK_CONTEXT_HIGHLIGHT%"
+	/>
+	<color name="ICON_COLOR_BUTTON_TOOLBAR_BASIC"
+		expr="%ICON_COLOR_DARK_CONTEXT_BASIC%"
+	/>
+	<color name="ICON_COLOR_BUTTON_TOOLBAR_HIGHLIGHT"
+		expr="%ICON_COLOR_DARK_CONTEXT_HIGHLIGHT%"
+	/>
+	<color name="ICON_COLOR_BUTTON_TOOLBAR_DISABLED_BASIC"
+		expr="%ICON_COLOR_DARK_CONTEXT_DISABLED_BASIC%"
+	/>
+	<color name="ICON_COLOR_BUTTON_TOOLBAR_DISABLED_HIGHLIGHT"
+		expr="%ICON_COLOR_DARK_CONTEXT_DISABLED_HIGHLIGHT%"
+	/>
+	<string name="ICON_COLOR_OVERLAY_DARK_CONTEXT_HIGHLIGHT_BG"
+		value="#7695C3"
+	/>
+	<icon name="ICONS_BUTTON_EDIT"
+		value="css:fas fa-pencil-alt"
+	/>
+	<icon name="ICONS_BUTTON_EDIT_DISABLED"
+		value="css:fas fa-pencil-alt"
+	/>
+	<icon name="ICONS_BUTTON_SAVE"
+		value="css:fas fa-save"
+	/>
+	<icon name="ICONS_BUTTON_SAVE_DISABLED"
+		value="css:fas fa-save"
+	/>
+	<icon name="ICONS_SAVE_BUTTON_ICON"
+		value="css:fas fa-save"
+	/>
+	<icon name="ICONS_SAVE_BUTTON_ICON_DISABLED"
+		value="css:fas fa-save"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON"
+		value="css:fas fa-save"
+	/>
+	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON_DISABLED"
+		value="css:fas fa-save"
+	/>
+	<icon name="com.top_logic.themes.modern.layout.renderer.Icons.PERSON"
+		expr="%USER_MENU_ICON%"
+	/>
+	<icon name="ICONS_BUTTON_OK"
+		value="css:fas fa-check"
+	/>
+	<icon name="ICONS_BUTTON_OK_DISABLED"
+		value="css:fas fa-check"
+	/>
+	<icon name="ICONS_CANCEL_BUTTON"
+		value="css:fas fa-ban"
+	/>
+	<icon name="ICONS_CANCEL_BUTTON_DISABLED"
+		value="css:fas fa-ban"
+	/>
+	<icon name="ICONS_GRID_CANCEL"
+		value="css:fas fa-undo"
+	/>
+	<icon name="ICONS_GRID_CANCEL_DISABLED"
+		value="css:fas fa-undo"
+	/>
+	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
+		value="24"
+	/>
+</settings>

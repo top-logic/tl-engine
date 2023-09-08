@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Static CSS Test</title>
+
+    <link type="text/css" rel="stylesheet" href="test-css.css"/>
+</head>
+<body>
+
+<h1>Static CSS Test</h1>
+
+<p>
+This test checks the browser conformance regarding multiple and nested CSS classes and 
+the child and descendant selectors.
+</p>
+
+<h2>Tests with the div element</h2>
+	<div>Black text.</div>
+	<div class="A">Red text.</div> 
+	<div class="B">Blue text.</div> 
+	<div class="A B">Green text.</div>
+	<div class="B A">Green text.</div>
+	<div class="A"><div class="B">Yellow text.</div></div>
+	<div class="A"><div><div class="B">Gray text.</div></div></div>
+
+<h2>Tests with the span element</h2>
+
+<p>
+	<span>Black text.</span>
+</p>
+<p>
+	<span class="A">Red text.</span> 
+</p>
+<p>
+	<span class="B">Blue text.</span> 
+</p>
+<p>
+	<span class="A B">Green text.</span>
+</p>
+<p>
+	<span class="B A">Green text.</span>
+</p>
+<p>
+	<span class="A"><span class="B">Yellow text.</span></span>
+</p>
+<p>
+	<span class="A"><span><span class="B">Gray text.</span></span></span>
+</p>
+
+</body>
+</html>  	

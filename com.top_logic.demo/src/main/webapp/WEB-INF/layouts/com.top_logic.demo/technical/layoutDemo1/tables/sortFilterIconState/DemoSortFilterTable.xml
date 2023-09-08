@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="templates/contentTab.xml"
+	z_legacy_componentName="demoSortFilterTable"
+	z_legacy_tabLabel="demo.sortFilterIconState.tabber"
+>
+	<components>
+		<layout>
+			<components>
+				<tableView name="table"
+					modelBuilder="com.top_logic.demo.layout.demo.table.DemoTableModellBuilder"
+					resPrefix="layouts.layoutdemo.table.DemoSortFilterTable."
+				>
+					<table name="sortFilter"
+						defaultColumns="editBoolean,contact,marital,gender,birthdate,responsability,tooltip_surname,givenName"
+						defaultSortOrder="marital, gender: descending, tooltip_surname, givenName: descending"
+					>
+						<column-default
+							accessor="com.top_logic.demo.layout.demo.table.DemoTableAccessor"
+							filterProvider="com.top_logic.demo.layout.demo.table.DemoTableFilterProvider"
+						/>
+
+						<columns>
+							<!-- Filterable. Not sortable -->
+							<column name="birthdate"
+								sortable="false"
+							/>
+							<!-- Not filterable. Sortable -->
+							<column name="contact"
+								filterProvider=""
+							/>
+							<!-- Not filterable. Sortable -->
+							<column name="marital"
+								filterProvider=""
+							/>
+							<!-- Not filterable. Sortable -->
+							<column name="gender"
+								filterProvider=""
+							/>
+							<!-- Not filterable. Not sortable -->
+							<column name="editBoolean"
+								controlProvider="com.top_logic.layout.form.template.DefaultFormFieldControlProvider"
+								fieldProvider="com.top_logic.layout.table.component.FalseMarkerFieldProvider"
+								filterProvider=""
+								sortable="false"
+							/>
+						</columns>
+					</table>
+				</tableView>
+			</components>
+		</layout>
+	</components>
+</include>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- BoundLayout showing the milestones of a project -->
+<include name="journal/showFullHistory_aliased.xml"
+	namePrefix="Element"
+	resPrefix="element."
+/>

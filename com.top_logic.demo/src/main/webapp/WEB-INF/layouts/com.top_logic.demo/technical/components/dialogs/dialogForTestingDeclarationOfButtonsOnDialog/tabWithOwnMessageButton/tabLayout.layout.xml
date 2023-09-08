@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_5270cf67_dc68_446f_b1f7_30c9639f9542">
+		<tabLabel key="dynamic.37efc289-b0c1-4b06-a7e2-a9afc3f7f372">
+			<en>Tab with own message button</en>
+			<de>Tab mit eigenem Message-Button</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/dialogs/dialogForTestingDeclarationOfButtonsOnDialog/tabWithOwnMessageButton/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

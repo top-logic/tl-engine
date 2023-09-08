@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="structure"/>
+		<param name="elements"/>
+		<param name="model"/>
+		<param name="modelBuilder">
+			<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
+		</param>
+		<param name="openInEdit"
+			value="false"
+		/>
+		<param name="resPrefix"
+			value="layouts.demo.grid.Grid."
+		/>
+		<param name="titleKey"
+			optional="true"
+		/>
+		<param name="buttons">
+			<!-- None by default. -->
+		</param>
+		<param name="dialogs">
+			<!-- None by default. -->
+		</param>
+		<param name="multiSelection"
+			value="true"
+		/>
+	</params>
+
+	<layout>
+		<components>
+			<grid name="${namePrefix}Grid"
+				defaultSelection="false"
+				elementTypes="${elements}"
+				isSecurityMaster="true"
+				model="${model}"
+				modelBuilder="${modelBuilder}"
+				modifier="com.top_logic.demo.edit.DemoAddColumnModificator"
+				openInEdit="${openInEdit}"
+				page=""
+				resPrefix="${resPrefix}"
+				structureName="${structure}"
+				titleKey="${titleKey}"
+			>
+				<selectionModelFactory multiple="${multiSelection}"/>
+				<dialogs>${dialogs}</dialogs>
+				<buttons>
+					<button id="exportExcelGrid"
+						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+						exportNameKey="/sTypes_Demo.xlsx"
+					/>
+					${buttons}
+				</buttons>
+
+				<tables>
+					<table
+						defaultColumns="name,computedCntStructure,boolean,date,float,long,string,structure"
+						fixedColumns="2"
+						supportMultipleSettings="true"
+					>
+						<column-default
+							accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+							columnWidth="200px"
+						/>
+						<columns>
+							<column name="technical"
+								columnWidth="100px"
+							/>
+							<column name="float"
+								columnWidth="80px"
+								cssClass="tblRight"
+							/>
+							<column name="floatPercent"
+								columnWidth="80px"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.NumberTableFilterProvider"
+									format-ref="percent"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="long"
+								columnWidth="80px"
+								cssClass="tblRight"
+							/>
+							<column name="computedCntStructure"
+								filterProvider="com.top_logic.layout.table.filter.SimpleComparableFilterProvider"
+							>
+								<accessor class="com.top_logic.model.search.providers.AccessorByExpression"
+									getter="row->$row.get(`DemoTypes:DemoTypes.A#structure`).size()"
+								/>
+							</column>
+
+							<!-- Test case for Ticket #5768. -->
+							<column name="booleanMandatory"
+								sortable="false"
+							/>
+
+							<!-- Test case for Ticket #21605. -->
+							<column name="customStringFieldColumn"/>
+						</columns>
+					</table>
+				</tables>
+			</grid>
+		</components>
+	</layout>
+</template>

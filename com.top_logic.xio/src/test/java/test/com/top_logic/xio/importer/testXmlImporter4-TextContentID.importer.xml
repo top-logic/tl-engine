@@ -1,0 +1,33 @@
+<handler>
+	<tag name="r">
+		<object model-type="test.com.top_logic.xio.importer.test3:R">
+			<dispatch>
+				<tag name="a">
+					<object model-type="test.com.top_logic.xio.importer.test3:A">
+						<linking>
+							<list-linking name="test.com.top_logic.xio.importer.test3:R#all"/>
+						</linking>
+						
+						<dispatch>
+							<tag name="id">
+								<text-content name="name" assign-id="true"/>
+							</tag>
+							
+							<tag name="others">
+								<dispatch>
+									<tag name="id">
+										<object-ref id-attribute="text()">
+											<linking>
+												<list-linking name="test.com.top_logic.xio.importer.test3:A#others"/>
+											</linking>
+										</object-ref>
+									</tag>
+								</dispatch>
+							</tag>
+						</dispatch>
+					</object>
+				</tag>
+			</dispatch>
+		</object>
+	</tag>
+</handler>

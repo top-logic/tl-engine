@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestListStorage">
+			<types>
+				<class name="Parent">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<attributes>
+						<reference name="children"
+							kind="forwards"
+							multiple="true"
+							ordered="true"
+							type="Child"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+				<class name="Child">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

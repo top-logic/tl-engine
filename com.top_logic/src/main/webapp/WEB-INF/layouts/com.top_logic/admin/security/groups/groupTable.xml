@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"/>
+		<param name="columns"
+			value="name"
+		/>
+		<param name="defaultSortOrder"
+			value="name"
+		/>
+		<param name="fixedColumns"
+			value="0"
+		/>
+		<param name="columnWidth"
+			value="372px"
+		/>
+		<param name="sortKeyProvider"
+			value="com.top_logic.layout.LabelMapping"
+		/>
+		<param name="exportButtonComponent"
+			value=""
+		/>
+		<param name="securityProviderClass"
+			value="securityRoot"
+		/>
+		<param name="isSecurityMaster"
+			value="false"
+		/>
+	</params>
+
+	<component class="com.top_logic.layout.table.component.TableComponent"
+		buttonComponent="${exportButtonComponent}"
+		isSecurityMaster="${isSecurityMaster}"
+		modelBuilder="com.top_logic.layout.admin.component.GroupListBuilder"
+		name="${namePrefix}_Table"
+		objectType="tl.accounts:Group"
+		partnerGroup="GroupTableGroup"
+		resPrefix="admin.group.table."
+		securityProviderClass="${securityProviderClass}"
+		selectable="true"
+		useChangeHandling="false"
+	>
+		<table
+			defaultColumns="${columns}"
+			defaultSortOrder="${defaultSortOrder}"
+			fixedColumns="${fixedColumns}"
+			rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
+			showTitle="true"
+		>
+			<column-default
+				accessor="com.top_logic.knowledge.wrap.WrapperAccessor"
+				columnWidth="${columnWidth}"
+				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+			/>
+			<columns>
+				<column name="name"
+					accessor="com.top_logic.layout.IdentityAccessor"
+					labelProvider="com.top_logic.layout.provider.MetaLabelProvider"
+					sortKeyProvider="${sortKeyProvider}"
+				/>
+			</columns>
+		</table>
+	</component>
+</template>

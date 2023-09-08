@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<root>
+	<alias>
+        <entry name="%JNDI_NAME%" value="${env:jndi_dbname:java:/comp/env/jdbc/toplogic}" />
+	</alias>
+</root>

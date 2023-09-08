@@ -1,0 +1,64 @@
+<h2>Syntax</h2> 
+<pre>	<code>count($start, $stop)
+
+count($start, $stop, $step)
+</code>
+</pre> 
+<h2>Description</h2> 
+<p>Generates a list of numbers from <code class="hljs inlineCode">start</code> (inclusive) to <code class="hljs inlineCode">stop</code> (exclusive). If the optional argument <code class="hljs inlineCode">step</code> is specified, this determines the increment between the numbers in the list.</p> 
+<h2>Parameters</h2> 
+<table class="tlDocTable"> 
+ <thead> 
+  <tr> 
+   <th>Name</th> 
+   <th>Type</th> 
+   <th>Description</th> 
+   <th>Mandatory</th> 
+   <th>Default</th> 
+  </tr> 
+ </thead> 
+ <tbody> 
+  <tr> 
+   <td>start</td> 
+   <td>Number</td> 
+   <td>The start value of the count. The number is included in the list.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>stop</td> 
+   <td>Number</td> 
+   <td>The final value of the count. The number will not be included in the list.</td> 
+   <td>yes</td> 
+   <td> </td> 
+  </tr> 
+  <tr> 
+   <td>step</td> 
+   <td>Number</td> 
+   <td>The increment with which to increment. Only integers are allowed, and these can also be negative.</td> 
+   <td>no</td> 
+   <td>1</td> 
+  </tr> 
+ </tbody> 
+</table> 
+<h2>Return value</h2> 
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p> 
+<p>A list containing all numbers in the count.</p> 
+<h2>Examples</h2> 
+<h3>Count without increment</h3> 
+<pre>	<code>count(0, 10)
+</code>
+</pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span> A list with the elements [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].</p> 
+<h3>Count with increment</h3> 
+<pre><code>count(0, 10, 2)
+</code></pre> 
+<p><strong><span style="color:#3498db">Output:</span> </strong> A list with the elements [0, 2, 4, 6, 8].</p> 
+<h3>Count with negative increment</h3> 
+<pre><code>count(10, 0, -2)
+</code></pre> 
+<p><strong><span style="color:#3498db">Output:</span> </strong> A list with the elements [10, 8, 6, 4, 2].</p> 
+<h3>Invalid count</h3> 
+<pre><code>count(10, 0)
+</code></pre> 
+<p><span style="color:#3498db"><strong>Output: </strong></span>Creates an empty list.</p>

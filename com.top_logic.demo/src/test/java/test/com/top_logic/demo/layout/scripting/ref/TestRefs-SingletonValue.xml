@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.expressions.SingletonValue">
+				<collection config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+					<list/>
+				</collection>
+			</actual-value>
+			<constraints>
+				<constraint class="com.top_logic.layout.scripting.check.NullCheck"
+					null="true"
+				/>
+			</constraints>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.expressions.SingletonValue">
+				<collection config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+					<list>
+						<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
+					</list>
+				</collection>
+			</actual-value>
+			<constraints>
+				<constraint class="com.top_logic.layout.scripting.check.NullCheck"
+					null="true"
+				/>
+			</constraints>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp">
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.expressions.SingletonValue">
+				<collection config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+					<list>
+						<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+							int="2"
+						/>
+					</list>
+				</collection>
+			</actual-value>
+			<constraints>
+				<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="2"
+					/>
+				</constraint>
+			</constraints>
+		</action>
+	</actions>
+</action>

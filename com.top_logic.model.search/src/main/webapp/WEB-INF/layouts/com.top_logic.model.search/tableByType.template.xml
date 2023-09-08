@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="com.top_logic/table.template.xml"
+	groups="commons"
+>
+	<properties extends="com.top_logic.layout.editor.config.TypeTemplateParameters">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="name"/>
+					<property name="type"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		<property name="defaultColumns"
+			element-type="String"
+			type="List"
+		>
+			<hidden/>
+			<derived fun="com.top_logic.layout.editor.DefaultColumnsProvider">
+				<args>
+					<ref value="type"/>
+				</args>
+			</derived>
+			<format value="com.top_logic.basic.config.CommaSeparatedStrings"/>
+		</property>
+	</properties>
+
+	<config name="${name}"
+		defaultColumns="${defaultColumns}"
+		type="${type}"
+	>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`${type}`)"
+			supportsElement="element->$element.instanceOf(`${type}`)"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+		</buttons>
+	</config>
+</config:template>

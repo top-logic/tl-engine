@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.demo.layout.form.demo.TestBoxesComponentReactive"
+	name="TestBoxesReactive"
+	page="/jsp/test/boxes/TestBoxesReactive.jsp"
+	resPrefix="layouts.layoutdemo.boxes.demoInput.TestBoxesReactive."
+	securityProviderClass="securityRoot"
+/>

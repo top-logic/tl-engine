@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.history">
+		<enum name="State">
+			<classifier name="PLANED"/>
+			<classifier name="STARTED"/>
+			<classifier name="IMPLEMENTING"/>
+			<classifier name="TESTING"/>
+			<classifier name="COMPLETED"/>
+		</enum>
+		<class name="Milestone">
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="name"/>
+						<field attribute="date"/>
+						<field attribute="status"/>
+						<field attribute="completed"/>
+						<field attribute="dependsOn"/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="date"
+					type="tl.core:Date"
+				/>
+				<property name="completed"
+					mandatory="true"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[x -> switch ($x.get(`test.history:Milestone#status`)) {
+  `test.history:State#PLANED`: 0.0;
+  `test.history:State#STARTED`: 10.0;
+  `test.history:State#IMPLEMENTING`: 50.0;
+  `test.history:State#TESTING`: 70.0;
+  `test.history:State#COMPLETED`: 100.0;
+}]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<reference name="status"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="State"
+				>
+					<annotations>
+						<default-value>
+							<classifier value="PLANED"/>
+						</default-value>
+					</annotations>
+				</reference>
+				<reference name="dependsOn"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Milestone"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="m -> $m.container().get(`test.history:Project#milestones`)"/>
+						</options>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[ms -> m -> 
+  $ms.recursion(m -> $m.get(`test.history:Milestone#dependsOn`), 0)
+  .containsElement($m)
+  .ifElse(#("No recursive dependencies allowed"@en, "Keine Rekursive Abhängigkeit erlaubt"@de))]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</reference>
+				<property name="openDependencies"
+					multiple="true"
+					type="Milestone"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[m -> 
+  $m.recursion(x -> $x.get(`test.history:Milestone#dependsOn`), 1)
+  .filter(x -> $x.get(`test.history:Milestone#status`) != `test.history:State#COMPLETED`)]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Project">
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="name"/>
+						<field attribute="lead"/>
+						<field attribute="staff"/>
+						<field
+							attribute="milestones"
+							visibility="read-only"
+						/>
+						<field attribute="progress"/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="lead"
+					kind="forwards"
+					navigate="true"
+					type="Contacts:PersonContact"
+				/>
+				<reference name="staff"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Contacts:PersonContact"
+				/>
+				<reference name="milestones"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Milestone"
+				/>
+				<reference name="reports"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Report"
+				/>
+				<property name="progress"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[project ->
+  $project.get(`test.history:Project#milestones`)
+   .map(m -> $m.get(`test.history:Milestone#completed`))
+   .average()]]></expr>
+							</query>
+						</storage-algorithm>
+						<format format="0"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Report">
+			<annotations>
+				<table name="test.history.Report"/>
+			</annotations>
+			<attributes>
+				<property name="description"
+					type="tl.core:Text"
+				/>
+				<reference name="version"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Project"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="version"
+								storage-type="test.history.Report"
+							/>
+						</storage-algorithm>
+						<default-value>
+							<default-by-expression
+								in-transaction="true"
+								value="context -> $context"
+							/>
+						</default-value>
+						<create-visibility value="hidden"/>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<property name="id"
+					mandatory="true"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<default-value>
+							<default-by-expression in-transaction="true">
+								<value>ctx -&gt; nextId($ctx, "reportId")</value>
+							</default-by-expression>
+						</default-value>
+						<visibility value="read-only"/>
+						<create-visibility value="hidden"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<!-- Actually mandatory. Must be filled using overlay xml -->
+		<param name="metaElement"
+			value=""
+		/>
+		<param name="namePrefix"
+			value="Search"
+		/>
+		<param name="modelBuilder">
+			<!-- Actually mandatory. Must be filled using overlay xml -->
+		</param>
+		<param name="searchResultComponent"
+			value="${namePrefix}AttributedSearchResultTable"
+		/>
+		<param name="columns"
+			value="name"
+		/>
+		<param name="newQueryComponent"
+			value="com.top_logic.element.layout.meta.search.PublishableNewQueryComponent"
+		/>
+		<param name="resourcePrefix"
+			value="element.search."
+		/>
+		<param name="querySupport"
+			value="true"
+		/>
+		<param name="inputSupport"
+			value="true"
+		/>
+		<param name="jSPPage"
+			value="/jsp/element/search/SearchInput.jsp"
+		/>
+		<param name="componentClass"
+			value="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
+		/>
+		<param name="derivedAttributeDescriptionProviderClass"
+			value=""
+		/>
+		<param name="additionalResultColumnOptions"
+			value=""
+		/>
+		<param name="securityProvider"
+			value="searchSecurityObjectProvider"
+		/>
+		<param name="securityProviderCreate"
+			value="searchSecurityObjectProvider"
+		/>
+		<param name="fulltextIsAnd"
+			value="true"
+		/>
+		<param name="fulltextExactMatch"
+			value="true"
+		/>
+		<param name="searchFilterSupportClass"
+			optional="true"
+		/>
+	</params>
+
+	<layout name="${namePrefix}SearchInputAttributes">
+		<components>
+			<component class="${componentClass}"
+				additionalResultColumnOptions="${additionalResultColumnOptions}"
+				buttonComponent="${namePrefix}AttributeSearchButtons"
+				columns="columns(${searchResultComponent})"
+				derivedAttributeDescriptionProviderClass="${derivedAttributeDescriptionProviderClass}"
+				fulltextExactMatch="${fulltextExactMatch}"
+				fulltextIsAnd="${fulltextIsAnd}"
+				inputSupport="${inputSupport}"
+				metaElement="${metaElement}"
+				modelBuilder="${modelBuilder}"
+				name="${namePrefix}AttributedSearchInput"
+				page="${jSPPage}"
+				querySupport="${querySupport}"
+				resPrefix="${resourcePrefix}"
+				resultColumns="${columns}"
+				search-result-component="${searchResultComponent}"
+				searchFilterSupportClass="${searchFilterSupportClass}"
+				securityProviderClass="${securityProvider}"
+			>
+				<dialogs>
+					<layout name="${namePrefix}NewStoredQueryDialog">
+						<dialogInfo
+							defaultI18n="element.search.displayDialog_NewStoredQueryDialog"
+							height="300"
+							image="theme:ICONS_BUTTON_SAVE"
+							openButtonSecComp="${namePrefix}AttributedSearchInput"
+							openHandlerClass="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							openerClique="create"
+							openerCommandGroup="Create"
+							width="420"
+						/>
+
+						<components>
+							<component class="${newQueryComponent}"
+								buttonComponent="${namePrefix}NewStoredQueryButtons"
+								name="${namePrefix}NewStoredQuery"
+								page="/jsp/element/metaattributes/PublishableNewStoredQuery.jsp"
+								resPrefix="element.meta.search.create."
+								securityProviderClass="${securityProviderCreate}"
+							/>
+							<buttonbar name="${namePrefix}NewStoredQueryButtons"/>
+						</components>
+					</layout>
+				</dialogs>
+			</component>
+			<buttonbar name="${namePrefix}AttributeSearchButtons"/>
+		</components>
+	</layout>
+</template>

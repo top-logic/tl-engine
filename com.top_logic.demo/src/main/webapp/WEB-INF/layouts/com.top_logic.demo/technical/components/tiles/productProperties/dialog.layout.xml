@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		closableUsingX="true"
+		createOpenerButtons="true"
+		height="500px"
+		helpID="ID_f5489786_1315_490d_acdf_f7ed701ac721"
+		openMaximized="false"
+		resizable="true"
+		width="800px"
+	>
+		<open-handler id="ID_ad3f71d3_a19b_4928_b3be_100ce1315fef"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			clique=""
+			confirm="false"
+			disabledImage=""
+			group=""
+			image="css:fas fa-cog"
+			securityObject=""
+			target="selection(com.top_logic.demo/technical/components/tiles/productsTileLayout.layout.xml#List)"
+			targetComponent="com.top_logic.demo/technical/components/tiles/productProperties/dialog.layout.xml#Dialog"
+		>
+			<resourceKey key="dynamic.2aafa43d-0a79-4f19-8bb7-dc12ae24a206">
+				<en>Edit product properties</en>
+				<de>Produkteigenschaften bearbeiten</de>
+			</resourceKey>
+		</open-handler>
+		<title>
+			<title key="dynamic.2aafa43d-0a79-4f19-8bb7-dc12ae24a206">
+				<en>Product properties</en>
+				<de>Produkteigenschaften</de>
+			</title>
+		</title>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tiles/productProperties/innerLayout.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

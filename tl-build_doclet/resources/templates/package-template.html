@@ -1,0 +1,70 @@
+<div class="root">
+{% import "common-template.html" as common %}
+
+<div class="javadoc">
+{% include "search-template.html" %}
+
+<div class="header">
+<a href="#package-list"><img alt="TopLogic" src="toplogic.svg" height="50px"/></a>
+Documentation
+</div>
+
+{% macro printPackage(pkg) -%}
+	{%- if pkg | basePackage -%}
+		{{ printPackage(pkg | basePackage) }}.
+	{%- endif -%}
+	{{ pkg | pkgRef(index) }}
+{%- endmacro %}
+
+<h1>Package {{ printPackage(name | basePackage) }}.{{ name | typeName }}</h1>
+
+<p>{{ title | doc(name) }}</p>
+{{ doc | doc(name) }}
+
+{{ common.printSees(sees, null) }}
+
+{% if (name | getPackageNode(index)).packages %}
+	<h2>Packages</h2>
+	<ul>
+	{% for sub in (name | getPackageNode(index)).packages %}
+		<li>
+			{{ sub.name | pkgRef(index) }}
+		</li>
+	{% endfor %}
+	</ul>
+{% endif %}
+
+{% macro section(title, list) %}
+	{% if list.length > 0 %}
+	<h2>{{ title }}</h2>
+	<ul>
+		{% for member in list %}
+		<li>
+		{% if member.abstract %}
+			<i>
+				{{ member.id | localTypeRef(name) }}
+			</i>
+		{% else %}
+			{{ member.id | localTypeRef(name) }}
+		{% endif %}
+		</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+{% endmacro %}
+
+{{ section("Enums", enums) }}
+{{ section("Annotations", annotations) }}
+{{ section("Configs", configs) }}
+{{ section("Instances", instances) }}
+{{ section("Interfaces", interfaces) }}
+{{ section("Abstract Classes", classes | onlyAbstract ) }}
+{{ section("Classes", classes | nonAbstract ) }}
+{{ section("Exceptions", exceptions) }}
+{{ section("Errors", errors) }}
+</div>
+
+<div class="footer">
+TopLogic API and implementations © Copyright by Business Operation Systems GmbH
+</div>
+</div>

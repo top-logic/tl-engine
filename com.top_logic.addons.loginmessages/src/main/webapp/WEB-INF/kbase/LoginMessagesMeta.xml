@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<objectlist>
+	<metaobjects>
+		<metaobject object_type="MOKnowledgeObject" object_name="LoginMessage" super_class="TLObject">
+			<attributes>
+				<mo_attribute att_name="name"             att_type="String"   mandatory="true" db_size="40" />
+				<mo_attribute att_name="active"           att_type="Boolean"  mandatory="false" />
+				<mo_attribute att_name="startDate"        att_type="Date"     mandatory="false" />
+				<mo_attribute att_name="endDate"          att_type="Date"     mandatory="false" />
+				<mo_attribute att_name="confirmDuration"  att_type="Integer"  mandatory="false" />
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

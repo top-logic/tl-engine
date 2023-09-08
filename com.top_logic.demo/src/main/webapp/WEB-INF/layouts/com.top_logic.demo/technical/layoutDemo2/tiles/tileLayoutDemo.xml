@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.mig.html.layout.tiles.component.TileContainerComponent"
+	name="TilesContainer"
+	resPrefix="layouts.layoutdemo.tileLayoutDemo.TilesContainer."
+>
+	<breadcrumb class="com.top_logic.mig.html.layout.tiles.breadcrumb.TileBreadcrumbControlProvider">
+		<renderer class="com.top_logic.layout.tree.breadcrumb.DefaultBreadcrumbRenderer">
+			<contentRenderer class="com.top_logic.layout.tree.breadcrumb.BreadcrumbContentRenderer"
+				resource-provider="com.top_logic.mig.html.NoImageResourceProvider"
+				root-icon="theme:ICON_HOME"
+				root-label="class.com.top_logic.layout.tree.breadcrumb.I18NConstants.ROOT_LABEL"
+				separator-icon="theme:com.top_logic.knowledge.gui.layout.tree.Icons.PL"
+				separator-label="%BREADCRUMB_SEPARATOR_LABEL%"
+			/>
+		</renderer>
+	</breadcrumb>
+	<component-resolvers>
+		<component-resolver class="com.top_logic.mig.html.layout.tiles.component.UnselectSelectable"/>
+	</component-resolvers>
+	<default-layout>
+		<root>
+			<tile-group label="/sGroup1">
+				<tile name="tileTestControlsForm"/>
+			</tile-group>
+			<tile-group label="/sGroup2">
+				<tile name="tiledemoTypeOverview">
+					<content>
+						<tile name="tiledemoTypeComment"/>
+						<tile name="tileeditDemoType"/>
+					</content>
+				</tile>
+			</tile-group>
+			<tile-group label="/sGroup3">
+				<tile name="inlinedtiledemoTypeOverviewAsTile">
+					<content>
+						<tile name="inlinedtiledemoTypeMail"/>
+						<tile name="inlinedtiledemoTypeDocuments"/>
+					</content>
+				</tile>
+			</tile-group>
+			<tile name="tiledemoTypeOverviewAsTile">
+				<content>
+					<tile name="tiledemoTypeMail"/>
+					<tile name="tiledemoTypeDocuments"/>
+				</content>
+			</tile>
+		</root>
+	</default-layout>
+	<include name="com.top_logic.demo/technical/layoutDemo2/tiles/demoTiles_shared.xml"
+		namePrefix="tile"
+		resPrefix="layouts.layoutdemo.tileLayoutDemo.TilesContainer."
+	/>
+</component>

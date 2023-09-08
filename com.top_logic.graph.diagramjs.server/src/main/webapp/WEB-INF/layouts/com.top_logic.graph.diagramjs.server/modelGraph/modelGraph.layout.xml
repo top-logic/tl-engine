@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<securityLayout name="GraphSecurity"
+	horizontal="true"
+	titleKey="model.graph.tabber"
+>
+	<tabInfo label="model.graph.ModelGraphTab"/>
+
+	<components>
+		<component class="com.top_logic.graph.diagramjs.server.DiagramJSGraphComponent"
+			createEnumerationDialogName="CreateEnumerationDialog"
+			createEnumerationFormName="CreateEnumerationForm"
+			createTypeDialogName="CreateTypeDialog"
+			createTypeFormName="CreateTypeForm"
+			createTypePartDialogName="ModelCreateAttributeDialog"
+			createTypePartFormName="ModelCreateAttributeForm"
+			graphDrop="com.top_logic.graph.diagramjs.server.TLTypeDrop"
+			isSecurityMaster="true"
+			name="Viewer"
+			securityProviderClass="securityRoot"
+			showMinimize="false"
+			titleKey="model.graph.viewer.title"
+			toolbar="true"
+			useIncrementalUpdates="true"
+		>
+			<selection class="com.top_logic.graph.diagramjs.server.GraphSelectionTransformLinking"
+				input="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
+			/>
+
+			<dialogs>
+				<include name="com.top_logic.element/admin/model/modelEditor/createMetaAttr.xml"
+					namePrefix="ModelCreateAttribute"
+					ownerModel="null()"
+					resPrefix="model.graph.attribute"
+					target=""
+				>
+					<postCreateActions>
+						<postCreateAction class="com.top_logic.graph.diagramjs.server.PostGraphPartCreationAction"/>
+					</postCreateActions>
+
+					<inject>
+						<dialogInfo
+							createOpenerButtons="false"
+							defaultI18n="element.meta.attribute.edit.displayDialog_createMetaAttr"
+							executability="Always"
+							height="430"
+							openerClique="internal"
+							width="550"
+						/>
+					</inject>
+				</include>
+				<include name="com.top_logic.element/admin/model/modelEditor/createStructuredType.xml"
+					dialogName="CreateTypeDialog"
+					formName="CreateTypeForm"
+					namePrefix="CreateType"
+					ownerModel="null()"
+					target=""
+				>
+					<postCreateActions>
+						<postCreateAction class="com.top_logic.graph.diagramjs.server.PostGraphPartCreationAction"/>
+					</postCreateActions>
+
+					<inject>
+						<dialogInfo
+							createOpenerButtons="false"
+							defaultI18n="element.meta.metaElementTree.newType"
+							executability="Always"
+							height="430"
+							openerClique="internal"
+							width="550"
+						/>
+					</inject>
+				</include>
+				<include name="com.top_logic.element/admin/model/modelEditor/createEnumeration.xml"
+					dialogName="CreateEnumerationDialog"
+					formName="CreateEnumerationForm"
+					namePrefix="CreateEnumeration"
+					ownerModel="null()"
+					target=""
+				>
+					<postCreateActions>
+						<postCreateAction class="com.top_logic.graph.diagramjs.server.PostGraphPartCreationAction"/>
+					</postCreateActions>
+
+					<inject>
+						<dialogInfo
+							createOpenerButtons="false"
+							defaultI18n="element.meta.metaElementTree.newEnumeration"
+							executability="Always"
+							height="430"
+							openerClique="internal"
+							width="550"
+						/>
+					</inject>
+				</include>
+			</dialogs>
+
+			<buttons>
+				<button id="relayoutDiagram"
+					class="com.top_logic.graph.diagramjs.server.commands.RelayoutGraphCommand"
+					image="theme:ICON_SYNC"
+					resourceKey="model.graph.relayout.command"
+				/>
+				<button id="showTechnicalNames"
+					class="com.top_logic.graph.diagramjs.server.handler.ShowTechnicalNamesHandler"
+					clique="settings"
+				/>
+				<button id="showTableInterfaceTypes"
+					class="com.top_logic.graph.diagramjs.server.handler.ShowTableInterfaceTypesHandler"
+					clique="settings"
+				/>
+			</buttons>
+		</component>
+
+		<layout
+			titleKey="model.graph.detail.title"
+			toolbar="true"
+		>
+			<tabbar name="Tab">
+				<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
+				<components>
+					<editor name="TypeEditor"
+						applyCommand="apply"
+						defaultFor="tl.model:TLClass"
+						model="selection(Viewer)"
+						resPrefix="model.graph.type.editor"
+						securityProviderClass="securityRoot"
+						toolbar="false"
+					>
+						<layoutInfo size="300px"/>
+						<tabInfo label="element.meta.ClassTab"/>
+
+						<include name="com.top_logic.element/admin/model/modelEditor/StructuredTypeForm.xml"
+							showNoModel="false"
+						/>
+
+						<buttons>
+							<button id="apply"
+								class="com.top_logic.element.layout.meta.TLStructuredTypeApplyHandler"
+								clique="additional-apply"
+								resourceKey="tl.command.apply"
+							>
+								<executability>
+									<reference rule-id="InEditMode"/>
+								</executability>
+							</button>
+
+							<button id="switchToAJAXEdit"
+								class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+								clique="edit"
+							>
+								<executability>
+									<reference rule-id="InViewMode"/>
+									<reference rule-id="NullModelDisabled"/>
+									<reference rule-id="HistoricModelDisabled"/>
+									<reference rule-id="ComponentIsVisible"/>
+								</executability>
+							</button>
+
+							<button id="deleteDisplayType"
+								class="com.top_logic.tool.boundsec.CommandSequence"
+								clique="delete"
+								confirm="true"
+								group="Delete"
+							>
+								<executability>
+									<reference rule-id="ComponentIsVisible"/>
+								</executability>
+								<commands>
+									<call id="deleteSharedGraphPart"
+										class="com.top_logic.graph.diagramjs.server.handler.DeleteSelectedSharedGraphPartHandler"
+										graph-component-name="Viewer"
+										group="System"
+									/>
+								</commands>
+							</button>
+						</buttons>
+					</editor>
+
+					<editor name="AttributeEditor"
+						applyCommand="applyTLStructuredTypePart"
+						model="selection(Viewer)"
+						resPrefix="model.graph.attribute.editor"
+						securityProviderClass="securityRoot"
+						toolbar="false"
+					>
+						<tabInfo label="element.meta.ReferenceTab"/>
+
+						<include name="com.top_logic.element/admin/model/modelEditor/TypePartForm.xml"
+							create="false"
+							showNoModel="false"
+						/>
+
+						<dialogs>
+							<include name="com.top_logic.element/admin/model/modelEditor/createMetaAttr.xml"
+								createContextType="com.top_logic.element.meta.kbbased.PersistentReference"
+								namePrefix="createBackReferenceTypePart"
+								ownerModel="selection(Viewer)"
+								resPrefix="model.graph.backReference"
+								target="metaAttributeTable"
+								typePartFormBuilder="com.top_logic.element.layout.meta.TLBackReferenceFormBuilder"
+							>
+								<postCreateActions>
+									<postCreateAction class="com.top_logic.graph.diagramjs.server.PostGraphPartCreationAction"/>
+								</postCreateActions>
+
+								<inject>
+									<dialogInfo
+										defaultI18n="model.graph.backReference.create.dialog"
+										height="430"
+										openButtonSecComp="createBackReferenceTypePartForm"
+										openerClique="createMenu"
+										openerCommandGroup="Create"
+										width="550"
+									>
+										<executability>
+											<rule class="com.top_logic.graph.diagramjs.server.util.IsReferenceRule"/>
+										</executability>
+									</dialogInfo>
+								</inject>
+							</include>
+						</dialogs>
+
+						<buttons>
+							<button id="switchToAJAXEdit"
+								class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+								clique="edit"
+							>
+								<executability>
+									<reference rule-id="InViewMode"/>
+									<reference rule-id="NullModelDisabled"/>
+									<reference rule-id="HistoricModelDisabled"/>
+									<reference rule-id="ComponentIsVisible"/>
+								</executability>
+							</button>
+
+							<button id="deleteAttribute"
+								class="com.top_logic.tool.boundsec.CommandSequence"
+								clique="delete"
+								confirm="true"
+								group="Delete"
+								resourceKey="element.meta.attribute.edit.attRemove"
+							>
+								<executability>
+									<reference rule-id="ComponentIsVisible"/>
+								</executability>
+								<commands>
+									<call id="deleteSharedGraphPart"
+										class="com.top_logic.graph.diagramjs.server.handler.DeleteSelectedSharedGraphPartHandler"
+										graph-component-name="Viewer"
+										group="System"
+									/>
+								</commands>
+							</button>
+						</buttons>
+					</editor>
+
+					<editor name="ModuleEditor"
+						applyCommand="applyTLModule"
+						model="selection(Viewer)"
+						resPrefix="model.graph.module.editor"
+						securityProviderClass="securityRoot"
+						toolbar="false"
+					>
+						<tabInfo label="element.meta.ModuleTab"/>
+
+						<include name="com.top_logic.element/admin/model/modelEditor/ModuleForm.xml"
+							showNoModel="false"
+						/>
+
+						<buttons>
+							<button id="switchToAJAXEdit"
+								class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+								clique="edit"
+							>
+								<executability>
+									<reference rule-id="InViewMode"/>
+									<reference rule-id="NullModelDisabled"/>
+									<reference rule-id="HistoricModelDisabled"/>
+									<reference rule-id="ComponentIsVisible"/>
+								</executability>
+							</button>
+
+							<button id="deleteModule"
+								class="com.top_logic.tool.boundsec.CommandSequence"
+								clique="delete"
+								confirm="true"
+								group="Delete"
+							>
+								<executability>
+									<reference rule-id="ComponentIsVisible"/>
+								</executability>
+								<commands>
+									<reference command-id="deleteServerGraphPart"/>
+								</commands>
+							</button>
+						</buttons>
+					</editor>
+
+					<editor name="EnumerationEditor"
+						applyCommand="applyTLEnumeration"
+						model="selection(Viewer)"
+						resPrefix="model.graph.enumeration.editor"
+						securityProviderClass="securityRoot"
+						toolbar="false"
+					>
+						<tabInfo label="element.meta.EnumerationTab"/>
+
+						<include name="com.top_logic.element/admin/model/modelEditor/EnumerationForm.xml"
+							showNoModel="false"
+						/>
+
+						<buttons>
+							<button id="switchToAJAXEdit"
+								class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+								clique="edit"
+							>
+								<executability>
+									<reference rule-id="InViewMode"/>
+									<reference rule-id="NullModelDisabled"/>
+									<reference rule-id="HistoricModelDisabled"/>
+									<reference rule-id="ComponentIsVisible"/>
+								</executability>
+							</button>
+
+							<button id="deleteEnumeration"
+								class="com.top_logic.tool.boundsec.CommandSequence"
+								clique="delete"
+								confirm="true"
+								group="Delete"
+							>
+								<executability>
+									<reference rule-id="ComponentIsVisible"/>
+								</executability>
+								<commands>
+									<call id="deleteSharedGraphPart"
+										class="com.top_logic.graph.diagramjs.server.handler.DeleteSelectedSharedGraphPartHandler"
+										graph-component-name="Viewer"
+										group="System"
+									/>
+								</commands>
+							</button>
+						</buttons>
+					</editor>
+
+					<editor name="InheritanceEditor"
+						model="selection(Viewer)"
+						resPrefix="model.graph.inheritance.editor"
+						securityProviderClass="securityRoot"
+						toolbar="false"
+					>
+						<tabInfo label="element.meta.InheritanceTab"/>
+
+						<modelBuilder class="com.top_logic.graph.diagramjs.server.util.model.TLInheritanceFormBuilder"
+							showNoModel="false"
+						/>
+
+						<buttons>
+							<button id="deleteInheritance"
+								class="com.top_logic.tool.boundsec.CommandSequence"
+								clique="delete"
+								confirm="true"
+								group="Delete"
+							>
+								<executability>
+									<reference rule-id="ComponentIsVisible"/>
+								</executability>
+								<commands>
+									<call id="deleteInheritancePersistence"
+										class="com.top_logic.graph.diagramjs.server.util.model.TLInheritanceDeleteHandler"
+										graph-component-name="Viewer"
+										group="System"
+									/>
+								</commands>
+							</button>
+						</buttons>
+					</editor>
+				</components>
+			</tabbar>
+		</layout>
+	</components>
+</securityLayout>

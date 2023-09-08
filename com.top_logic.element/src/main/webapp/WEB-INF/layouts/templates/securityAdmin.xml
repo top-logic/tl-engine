@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="componentName"
+			value="view"
+		/>
+		<param name="resPrefix"/>
+		<param name="useDefaultChecker"
+			value="false"
+		/>
+		<param name="tabBarName"
+			value="${componentName}_tabBar"
+		/>
+		<param name="components"/>
+	</params>
+
+	<securityLayout name="${componentName}"
+		helpIDLegacy="${resPrefix}tabber"
+		horizontal="true"
+		titleKey="${resPrefix}tabber"
+		useDefaultChecker="${useDefaultChecker}"
+	>
+		<components>
+			<layout
+				resizable="false"
+				titleKey="admin.roles.filter.title"
+			>
+				<components>
+					<layoutControl componentName="${tabBarName}">
+						<layoutInfo
+							scrolleable="false"
+							size="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%"
+						/>
+						<componentControlProvider class="com.top_logic.layout.tabbar.TabBarControlProvider"/>
+					</layoutControl>
+
+					<include name="com.top_logic.element/admin/security/securityStructure.xml"
+						toolbar="false"
+					/>
+
+					<tabbar name="${tabBarName}">
+						<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
+						<components>${components}</components>
+					</tabbar>
+				</components>
+			</layout>
+		</components>
+	</securityLayout>
+</template>

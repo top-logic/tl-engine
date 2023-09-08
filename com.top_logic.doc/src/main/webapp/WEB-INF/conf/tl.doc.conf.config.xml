@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+ 		<config service-class="com.top_logic.tool.boundsec.commandhandlers.BookmarkService">
+			<instance>
+				<bookmark-handlers>
+					<bookmark-handler type="tl.doc:Page" impl="com.top_logic.doc.PageBookmarkHandler"/>
+				</bookmark-handlers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.doc.ImportDocumentationModule$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.basic.translation.TranslationService">
+			<instance class="com.top_logic.basic.translation.DeepLTranslationService"
+				ignore-tags="code"
+				max-accumulated-translation-size="0"
+			/>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.SecurityObjectProviderManager">
+			<instance>
+				<providers>
+					<provider name="documentationRoot">
+						<impl class="com.top_logic.model.search.providers.SecurityObjectByExpression"
+							function="`tl.doc#ROOT`"
+						/>
+					</provider>
+				</providers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="tl.doc.messages"/>
+					<bundle name="model.tl.doc.messages"/>
+				</bundles>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService">
+			<instance>
+				<meta-objects>
+					<meta-object value="tl.doc.Page"/>
+				</meta-objects>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.layout.provider.LabelProviderService">
+			<instance>
+				<resource-providers>
+					<provider
+						implementation="com.top_logic.doc.misc.PageResourceProvider"
+						kind="MODEL"
+						type="tl.doc:Page"
+					/>
+				</resource-providers>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<handlers>
+					<handler id="generateDocumentation"
+						class="com.top_logic.doc.command.GenerateDocumentationCommand"
+						image="theme:IMAGE_BUTTONS_GENERATE_DOC_PAGES"
+					/>
+					<handler id="gotoHelpLayout"
+						class="com.top_logic.doc.component.DisplayComponentCommand"
+						clique="additional"
+						image="theme:IMAGE_BUTTONS_GOTO_HELP_COMPONENT"
+					/>
+				</handlers>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/tl.doc.model.xml"/>
+				</declarations>
+				<settings>
+					<module name="tl.doc"/>
+				</settings>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/tl.doc.meta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+
+		<config config:interface="com.top_logic.doc.command.validation.PageValidators">
+			<validator class="com.top_logic.doc.command.validation.PageLinksValidator"/>
+		</config>
+
+		<config config:interface="com.top_logic.layout.structure.LayoutControlFactory$GlobalConfig">
+			<dialogEnhancers>
+				<dialogEnhancer class="com.top_logic.doc.component.DialogDocumentationEnhancer"
+					template="com.top_logic.doc/tl.doc.window.xml"
+				/>
+			</dialogEnhancers>
+		</config>
+		<config config:interface="com.top_logic.element.layout.meta.search.quick.QuickSearchCommand$Config">
+			<search-attributes>
+				<search-attribute type="tl.doc:Page" attributes="name, title"/>
+			</search-attributes>
+		</config>
+	</configs>
+
+	<defaults/>
+</application>

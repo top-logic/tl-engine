@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+	<icon name="com.top_logic.doc.app.Icons.IMPORT_ERROR_ICON"
+		value="css:fas fa-exclamation-triangle"
+	/>
+	<icon name="com.top_logic.doc.app.Icons.EXTERNAL_LINK_ICON"
+		value="css:fas fa-external-link-alt"
+	/>
+</settings>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		defaultSelection="false"
+		showDetailOpener="true"
+		type="DemoTypes:DemoTypes.A,DemoTypes:DemoTypes.All"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/createDemoobject/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.2fbd878b-3f26-430b-9737-50d88a882129">
+			<en>Demodata</en>
+			<de>Demodaten</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`DemoTypes:DemoTypes.All`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_7eab9501_9ac6_414f_9192_fcad860801c2"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				image="/icons/deleteMenu.png"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.4161328a-e159-450f-ab60-8b3baa2bad1e">
+					<en>Delete</en>
+					<de>Löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

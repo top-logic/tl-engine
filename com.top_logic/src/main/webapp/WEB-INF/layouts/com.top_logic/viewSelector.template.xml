@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="commons"
+>
+	<properties extends="com.top_logic.mig.html.layout.SubComponentConfig">
+		<property name="components"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<available-templates value="viewSelector"/>
+			<options
+				fun="com.top_logic.layout.editor.DynamicComponentOptions"
+				mapping="com.top_logic.layout.editor.DynamicComponentOptionMapping"
+			/>
+			<option-labels value="com.top_logic.layout.editor.DynamicComponentDefinition$Labels"/>
+			<dynamic-mode fun="com.top_logic.layout.form.values.edit.mode.CustomMode"/>
+		</property>
+	</properties>
+
+	<tabbar name="Tabbar"
+		components="${components}"
+		onChangeSelectFirstTab="true"
+	>
+		<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
+	</tabbar>
+</config:template>

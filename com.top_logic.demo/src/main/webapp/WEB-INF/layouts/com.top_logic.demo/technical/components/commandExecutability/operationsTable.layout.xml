@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,state"
+		isSecurityMaster="false"
+		type="test.commandApproval:StatefulElement"
+	>
+		<name key="dynamic.d208f782-533e-44ad-8f5e-abb3c287855f">
+			<en>Operations</en>
+			<de>Vorgänge</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.commandApproval:StatefulElement`)"
+			modelForElement="null"
+			supportsElement="element->$element.instanceOf(`test.commandApproval:StatefulElement`)"
+			supportsModel="true"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_fba654c5_ff92_4d3d_9cf2_329ca3b8f33c"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				clique=""
+				close-dialog="false"
+				confirm="false"
+				disabledImage=""
+				group="Write"
+				image="css:fas fa-play"
+				operation="x -> $x.set(`test.commandApproval:StatefulElement#state`, `test.commandApproval:OperationState#ACTIVE`)"
+				securityObject="model"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.3bd3ca39-ffbf-4399-b271-5076b16bfc13">
+					<en>Start operation</en>
+					<de>Vorgang starten</de>
+				</resourceKey>
+				<executability>
+					<reference rule-id="test_commandApproval_onlyNew"/>
+				</executability>
+			</button>
+			<button id="ID_7f0cb9bd_9be8_464b_aee9_7e2e05da9f6a"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				clique=""
+				close-dialog="false"
+				confirm="false"
+				disabledImage=""
+				group="Write"
+				image="css:fas fa-stop"
+				operation="x -> $x.set(`test.commandApproval:StatefulElement#state`, `test.commandApproval:OperationState#CLOSED`)"
+				securityObject="model"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.91656b3a-4e09-4c9c-9c19-66fdc754d13a">
+					<en>Finish operation</en>
+					<de>Vorgang abschließen</de>
+				</resourceKey>
+				<executability>
+					<reference rule-id="test_commandApproval_onlyActive"/>
+				</executability>
+			</button>
+			<button id="ID_dbbe5215_b15a_42ae_b71f_1d049b9043f0"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				clique="delete"
+				confirm="false"
+				disabledImage=""
+				group="Delete"
+				image=""
+				securityObject="model"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.9664d403-5cc1-4454-9cee-dff4e923abff">
+					<en>Delete operation</en>
+					<de>Vorgang löschen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/commandExecutability/newElement/dialog.layout.xml"/>
+		</dialogs>
+	</arguments>
+</config:template-call>

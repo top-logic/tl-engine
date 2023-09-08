@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="model"/>
+		<param name="namePrefix"/>
+		<param name="resPrefix"
+			optional="true"
+		/>
+		<param name="defaultSettingsWidth"
+			optional="true"
+		/>
+		<param name="configOptions"
+			optional="true"
+		/>
+		<param name="maximizeRoot"
+			optional="true"
+		/>
+		<param name="showMaximize"
+			optional="true"
+		/>
+	</params>
+
+	<include name="reporting/flex/search/searchReportWithoutSave.xml"
+		defaultSettingsWidth="${defaultSettingsWidth}"
+		maximizeRoot="${maximizeRoot}"
+		model="${model}"
+		namePrefix="${namePrefix}"
+		resPrefix="${resPrefix}"
+		showMaximize="${showMaximize}"
+	>
+		<configOptions>
+			${configOptions}
+			<dialogs>
+				<layout name="${namePrefix}SaveDialog">
+					<dialogInfo
+						defaultI18n="reporting.flex.chart.displayDialog_NewStoredReportDialog"
+						disabledImage="icons/buttonSaveDisabled.png"
+						executability="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent$CanSaveSettings"
+						height="220"
+						image="icons/buttonSave.png"
+						openButtonSecComp="${namePrefix}Configurator"
+						openHandlerClass="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent$SaveAs"
+						openerClique="save"
+						openerCommandGroup="Create"
+						width="400"
+					/>
+
+					<components>
+						<component class="com.top_logic.reporting.flex.search.NewStoredConfigChartReportComponent"
+							buttonComponent="${namePrefix}CreateReportButtons"
+							name="${namePrefix}CreateReport"
+							page="/jsp/model/search/SaveSearchAs.jsp"
+							resPrefix="reporting.flex.chart.create."
+							securityProviderClass="securityRoot"
+						/>
+						<buttonbar name="${namePrefix}CreateReportButtons"/>
+					</components>
+				</layout>
+			</dialogs>
+		</configOptions>
+	</include>
+</template>

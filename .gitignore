@@ -1,0 +1,13 @@
+/*/.apt_generated
+/*/build
+/*/dist
+/*/target
+/*/tmp
+/*/war
+**/webapp/script/top-logic.js
+**/webapp/style/_*.css
+**/webapp/WEB-INF/classes
+/.metadata/
+**/*~
+/tl-doc/
+/.project

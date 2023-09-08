@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.dnd">
+		<annotations>
+			<singletons>
+				<singleton type="Root"/>
+				<singleton name="LIBRARY"
+					type="Library"
+				/>
+			</singletons>
+			<package-binding
+				implementation-package="com.top_logic.demo.model.dnd.wrap"
+				interface-package="com.top_logic.demo.model.dnd"
+			/>
+		</annotations>
+		<class name="Library">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<delete-constraints>
+					<delete-constraint>
+						<expr>#("Die Bibliothek kann nicht gelöscht werden."@de, "The library cannot be deleted."@en)</expr>
+					</delete-constraint>
+				</delete-constraints>
+			</annotations>
+			<attributes>
+				<reference name="elements"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="NamedPlanElement"
+				/>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr>toString(#("Alle Bibliothekselemente"@de, "All library elements"@en))</expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<interface name="NamedPlanElement">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</interface>
+		<class name="Entry">
+			<generalizations>
+				<generalization type="NamedPlanElement"/>
+			</generalizations>
+		</class>
+		<class name="Factory">
+			<generalizations>
+				<generalization type="NamedPlanElement"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="name"/>
+					</form>
+				</form-definition>
+				<instance-presentation icon="css:fas fa-industry"/>
+			</annotations>
+			<attributes>
+				<reference name="floors"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Floor"
+				/>
+			</attributes>
+		</class>
+		<class name="Floor">
+			<generalizations>
+				<generalization type="NamedPlanElement"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field attribute="name"/>
+					</form>
+				</form-definition>
+				<instance-presentation icon="css:fas fa-layer-group"/>
+			</annotations>
+			<attributes>
+				<reference name="locations"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Location"
+				/>
+			</attributes>
+		</class>
+		<class name="Location">
+			<generalizations>
+				<generalization type="NamedPlanElement"/>
+			</generalizations>
+			<annotations>
+				<instance-presentation icon="css:fas fa-laptop"/>
+				<form-definition>
+					<form>
+						<field attribute="name"/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<reference name="entry"
+					composite="true"
+					kind="forwards"
+					navigate="true"
+					type="Entry"
+				/>
+			</attributes>
+		</class>
+		<class name="Machine">
+			<generalizations>
+				<generalization type="NamedPlanElement"/>
+			</generalizations>
+			<attributes>
+				<reference name="location"
+					kind="forwards"
+					mandatory="true"
+					type="Location"
+				/>
+			</attributes>
+		</class>
+		<class name="Root">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<delete-constraints>
+					<delete-constraint>
+						<expr>#("Der Gesamtplant kann nicht gelöscht werden."@de, "The plan cannot be deleted."@en)</expr>
+					</delete-constraint>
+				</delete-constraints>
+			</annotations>
+			<attributes>
+				<reference name="factories"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Factory"
+				/>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr>toString(#("Alle Fabrikelemente"@de, "All factory elements"@en))</expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<!-- Configuration using an alternative database location for migration tests. -->
+<!-- To be used in combination with test.com.top_logic.AppMigrationTestSetup.  -->
+<root>
+	<alias>
+        <entry name="%H2_SCHEMA%" value="./target/test-run/h2" />
+        <entry name="%H2_SCHEMA_TEST_UNIT%" value="${env:h2_schema_testUnit:mem:testUnit;DB_CLOSE_DELAY=-1}" />
+        <entry name="%H2_SCHEMA_TEST_MIGRATION%" value="${env:h2_schema_testMigration:mem:testMigration;DB_CLOSE_DELAY=-1}" />
+        <entry name="%H2_USER%" value="${env:h2_user:user}"/>
+        <entry name="%H2_PASSWD%" value="${env:h2_passwd:unencrypted:password}"/>
+        
+        <entry name="%STORAGE_PATH%" value="./target/test-run/app-data" />
+        <entry name="%IMAP_ACTIVE%"  value="false" />
+        <entry name="%SMTP_ACTIVE%"  value="false"/>
+	</alias>
+</root>

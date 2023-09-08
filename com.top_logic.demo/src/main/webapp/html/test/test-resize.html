@@ -1,0 +1,141 @@
+<html>
+
+<head>
+	<title>JavaScript Resize Test</title>
+	
+	<style type="text/css">
+		button {
+			margin-right: 2ex;
+		}
+		
+		.highlight {
+			background-color: #FFDDDD;
+		}
+	</style>
+
+	<!--
+		Choose browser abstraction layer of target browser. 
+
+		Automatic detection is not supported on static pages. 		
+	 -->
+	<script src="../../script/tl/bal.js" type="text/javascript"></script>
+	<!-- 
+	<script src="../../script/tl/bal-op.js" type="text/javascript"></script>
+	<script src="../../script/tl/bal-ie.js" type="text/javascript"></script>
+	 -->
+	<script src="../../script/tl/bal-ff.js" type="text/javascript"></script>
+
+	<script type="text/javascript">
+		function Layout() {
+			this.parent = arguments[0] != null ? document.getElementById(arguments[0]) : null;
+			this.container = document.getElementById(arguments[1]);
+			
+			this.elements = new Array(arguments.length - 2);
+			for (var n = 2; n < arguments.length; n++) {
+				this.elements[n - 2] = document.getElementById(arguments[n]);
+			}
+		}
+		
+		function LayoutClass() {}
+		LayoutClass.prototype = {
+			getElementSize: undefined,
+			setElementSize: undefined,
+			
+			layout: function() {
+				
+				var parentSize = this.parent != null ? this.getElementSize(this.parent) : BAL.getViewportHeight();
+				var containerSize = this.getElementSize(this.container);
+				log("Parent size: " + parentSize);
+				log("Container size: " + containerSize);
+				
+				// Compute the size of the layouted elements that has been assigned by 
+				// the regular browser layout algorithm.
+				var usedSize = 0;
+				for (var n = 0; n < this.elements.length; n++) {
+					usedSize += this.getElementSize(this.elements[n]);
+				}
+				
+				var managedSize = parentSize - (containerSize - usedSize);
+				log("Managed size: " + managedSize);
+				
+				
+				// Distibute the managed with over the layouted elements.
+				for (var n = 0; n < this.elements.length; n++) {
+					var newSize = managedSize / (this.elements.length - n);
+					this.setElementSize(this.elements[n], newSize);
+					managedSize -= newSize;
+				}
+			}
+		}
+		Layout.prototype = new LayoutClass();
+
+		function HorizontalLayout() {
+			Layout.apply(this, arguments);
+		}
+		
+		function HorizontalLayoutClass() {}
+		HorizontalLayoutClass.prototype = new LayoutClass();
+		HorizontalLayoutClass.prototype.getElementSize = BAL.getElementWidth;
+		HorizontalLayoutClass.prototype.setElementSize = BAL.setElementWidth;
+		HorizontalLayout.prototype = new HorizontalLayoutClass()
+
+		function VerticalLayout() {
+			Layout.apply(this, arguments);
+		}
+		
+		function VerticalLayoutClass() {}
+		VerticalLayoutClass.prototype = new LayoutClass();
+		VerticalLayoutClass.prototype.getElementSize = BAL.getElementHeight;
+		VerticalLayoutClass.prototype.setElementSize = BAL.setElementHeight;
+		VerticalLayout.prototype = new VerticalLayoutClass()
+
+
+
+		function handleOnLoad() {
+			log('Test page ready.');
+			var layout1 = new HorizontalLayout("root", "parent", "c1", "c2");
+			var layout2 = new VerticalLayout(null, "root", "c1", "c3");
+			window.onresize = function() {
+				layout1.layout();
+				layout2.layout();
+			}
+			layout1.layout();
+			layout2.layout();
+		}
+	
+		function log(message) {
+			document.getElementById("console").appendChild(document.createTextNode(new Date() + ": " + message + "\r\n"));
+		}
+
+		function clearConsole() {
+			var c = document.getElementById("console");
+			while (c.lastChild != null) {
+				c.removeChild(c.lastChild);
+			}
+			log("Console cleared.");
+			return false;
+		}
+	</script>
+</head>
+<body id="root" onload="handleOnLoad();">
+
+	<h2>JavaScript Resize Test</h2>
+
+	<table id="parent">
+		<tbody>
+			<tr>
+				<td id="c1" class="highlight">a</td>
+				<td id="c2" class="highlight">b</td>
+			</tr>	
+			<tr>
+				<td id="c3" colspan="2" class="highlight">c</td>
+			</tr>	
+		</tbody>
+	</table>
+
+
+	<h2>Console output</h2>
+	<button onclick="return clearConsole();">Clear</button>
+	<pre id="console" style="border-style: solid; border-width: 1px; border-color: red;"></pre>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="namePrefix"
+			value="sysSchemaMonitor"
+		/>
+	</params>
+
+	<layout name="${namePrefix}Layout"
+		horizontal="true"
+	>
+		<components>
+			<tableView name="${namePrefix}Types"
+				isSecurityMaster="true"
+				modelBuilder="com.top_logic.monitoring.schema.StaticTypesBuilder"
+				resPrefix="layouts.monitoring.schema.schemaMonitor.types."
+				securityProviderClass="securityRoot"
+				selectable="true"
+				showMaximize="true"
+			>
+				<layoutInfo size="290px"/>
+				<table
+					defaultColumns="dbName"
+					defaultSortOrder="dbName"
+					fixedColumns="0"
+					rowClassProvider="com.top_logic.monitoring.schema.StaticTypesBuilder$TypeClasses"
+				>
+					<columns>
+						<column name="internalName">
+							<accessor class="com.top_logic.monitoring.schema.StaticTypesBuilder$Name"/>
+						</column>
+						<column name="dbName"
+							columnWidth="250px"
+						>
+							<accessor class="com.top_logic.monitoring.schema.StaticTypesBuilder$DbName"/>
+						</column>
+						<column name="abstract">
+							<accessor class="com.top_logic.monitoring.schema.StaticTypesBuilder$IsAbstract"/>
+							<labelProvider class="com.top_logic.layout.provider.BooleanLabelProvider"/>
+						</column>
+						<column name="super">
+							<accessor class="com.top_logic.monitoring.schema.StaticTypesBuilder$SuperType"/>
+							<resourceProvider class="com.top_logic.monitoring.schema.StaticAttribtesBuilder$TypeResources"
+								targetComponent="${namePrefix}Types"
+							/>
+						</column>
+					</columns>
+				</table>
+				<buttons>
+					<button id="exportExcel"
+						class="com.top_logic.layout.table.export.ExcelExportHandler"
+						downloadNameKey="/stables.xls"
+					/>
+				</buttons>
+			</tableView>
+			<tableView name="${namePrefix}Attributes"
+				model="selection(${namePrefix}Types)"
+				modelBuilder="com.top_logic.monitoring.schema.StaticAttribtesBuilder"
+				resPrefix="layouts.monitoring.schema.schemaMonitor.attributes."
+				securityProviderClass="securityRoot"
+				selectable="false"
+			>
+				<table
+					defaultColumns="dbName,dbType,dbSize,targetType,index"
+					defaultSortOrder="index"
+					fixedColumns="0"
+				>
+					<columns>
+						<column name="internalName">
+							<accessor class="com.top_logic.monitoring.schema.StaticAttribtesBuilder$AttributeName"/>
+						</column>
+						<column name="dbName">
+							<accessor class="com.top_logic.monitoring.schema.StaticAttribtesBuilder$DbName"/>
+						</column>
+						<column name="index">
+							<accessor class="com.top_logic.monitoring.schema.StaticAttribtesBuilder$Index"/>
+						</column>
+						<column name="dbType">
+							<accessor class="com.top_logic.monitoring.schema.StaticAttribtesBuilder$DbType"/>
+						</column>
+						<column name="dbSize">
+							<accessor class="com.top_logic.monitoring.schema.StaticAttribtesBuilder$DbSize"/>
+						</column>
+						<column name="dbPrecision">
+							<accessor class="com.top_logic.monitoring.schema.StaticAttribtesBuilder$DbPrecision"/>
+						</column>
+						<column name="targetType">
+							<accessor class="com.top_logic.monitoring.schema.StaticAttribtesBuilder$TargetType"/>
+							<filterProvider class="com.top_logic.layout.table.filter.SelectableOptionFilterProvider"
+								multiple-values="true"
+								use-raw-options="true"
+							/>
+							<resourceProvider class="com.top_logic.monitoring.schema.StaticAttribtesBuilder$TypeResources"
+								targetComponent="${namePrefix}Types"
+							/>
+						</column>
+					</columns>
+				</table>
+				<buttons>
+					<button id="exportExcel"
+						class="com.top_logic.layout.table.export.ExcelExportHandler"
+						downloadNameKey="/scolumns.xls"
+					/>
+				</buttons>
+			</tableView>
+		</components>
+	</layout>
+</template>

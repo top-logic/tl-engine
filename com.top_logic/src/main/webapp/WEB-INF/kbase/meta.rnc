@@ -1,0 +1,233 @@
+default namespace = "http://www.top-logic.com/ns/meta/5.8"
+
+##
+## RelaxNG schema for the definition of KnowledgeBase types.
+##
+##
+
+start =
+	defDefinitions
+	
+defDefinitions = 
+	## List of types to be known by the KnowledgeBase.
+	element objectlist {
+		defObjectDefinitionList?
+	}
+
+defObjectDefinitionList = 
+	## Definition of all types in the knowledge base.
+	element metaobjects {
+		(defObjectDefinition | defAlternativeDefinition)+
+	}
+
+defAlternativeDefinition =
+	## Definition of an alternative type in the knowledge base.
+	element alternative {
+		## Name of the type.
+		attribute object_name { xsd:string },
+		element specialisations {
+			element specialisation {
+				## Name of the specialised type.
+				attribute name { xsd:string }
+			}+
+		}		
+	}
+	 
+defObjectDefinition = 
+	## Definition of a type in the knowledge base. Each type has a corresponding database table containing the data.
+	element metaobject|association {
+		## Name of the type.
+		attribute object_name { xsd:string },
+		## Kind of the type.
+		attribute object_type { defKind }?,
+		## Is the type versioned?
+		attribute versioned { xsd:boolean }?,
+		## Use full-load by default for search results?
+		attribute full-load { xsd:boolean }?,
+
+		## Name of the supertype. All attributes are inherited from that type
+		attribute super_class { xsd:string }?,
+		## If true this type can not be instantiated. No database table is created.
+		attribute abstract { xsd:boolean }?,
+
+		## Specifies the name of the table in the database. If none is given the table name is computed from the type name.
+		attribute db_name { xsd:string }?,
+		## If set and possible the data will be stored along the primary key.
+		attribute db_PKeyStorage { xsd:string }?,
+		## If set and supported by the database compress the first part of the primary key.
+		attribute db_compress { xsd:int }?,
+
+		defImplementationFactory?,
+		defAttributes?,
+		defIndexes?
+	}
+
+defKind = 
+	(
+		token "MOKnowledgeObject" 
+	)
+
+defImplementationFactory = 
+	element implementation-factory {
+		attribute class { xsd:string }
+	}
+	
+defAttributes = 
+	element attributes {
+		(defReference | defReferenceAssoc | defProperty)*
+	}
+
+defReference = 
+	## Definition of a to-one reference to another object
+	element reference {
+		## Name of the attribute.
+		attribute att_name { xsd:string },
+		defReferenceAttr
+	}
+
+defReferenceAssoc = 
+	## Definition of the canonical references of an association.
+	element source|destination {
+		defReferenceAttr
+	}
+
+defReferenceAttr = 
+		## Name of the type the other end of the reference had, e.g. if target-type is FOO, the value of this reference is an object of type FOO. 
+		attribute target-type { xsd:string }?,
+		## Decides whether the whole object must be hold in attribute cache or just the ID of it.
+		attribute by-value { xsd:boolean }?,
+
+		## Whether it is necessary to set a non null value to be able to store this attribute.
+		attribute mandatory { xsd:boolean }?,
+		## Whether the value of this attribute can not be changed.
+		attribute immutable { xsd:boolean }?,
+		## Whether the value of this attribute must be set during creation.
+		attribute initial { xsd:boolean }?,
+		## Whether the reference must install its default index.
+		attribute use-default-index { xsd:boolean }?,
+	
+		## If true the attribute can reference to objects that live in a different branch.
+		attribute branch-global { xsd:boolean }?,
+		## If true the object is a container for the referenced object, i.e. if this object is deleted, the reference will alos be deleted.
+		attribute is-container { xsd:boolean }?,
+		## If true the value of this attribute must exactly have the type given in target-type. If false, also sub types are allowed.
+		attribute monomorphic { xsd:boolean }?,
+		## Defines in which time slot the referenced object can live.
+		attribute history-type { historyType }?,
+		## Defines what happened with the object if the referenced value is deleted.
+		attribute deletion-policy { deletionPolicy }?,
+
+		## Overrides the reference with same name of the super association.
+		attribute override { xsd:boolean }?
+		
+defProperty = 
+	element mo_attribute {
+		## Name of the attribute.
+		attribute att_name { xsd:string },
+		## Type of the value of the attribute.
+		attribute att_type { xsd:string }?,
+	
+		## Whether it is necessary to set a non null value to be able to store this attribute.
+		attribute mandatory { xsd:boolean }?,
+		## Whether the value of this attribute can not be changed.
+		attribute immutable { xsd:boolean }?,
+		## Whether the value of this attribute must be set during creation.
+		attribute initial { xsd:boolean }?,
+		
+		## Overrides the reference with same name of the super association.
+		attribute override { xsd:boolean }?,
+		
+		defDBAttribute*
+	}
+	
+defDBAttribute =
+		## The database name of the attribute column.
+		attribute db_name { xsd:string } |
+		attribute db_prec { xsd:int } |
+		## The database type of the of the attribute column.
+		attribute db_type { defDBType } |
+		## The database size of the of the attribute column.
+		attribute db_size { xsd:int } |
+		attribute db_compress { xsd:int } |
+		## Whether the column should be binary.
+		attribute binary { xsd:boolean } 
+	
+defIndexes = 
+	element index {
+		defIndex*
+	}
+	
+defIndex = 
+	element mo_index {
+		## Name of the index.
+		attribute name { xsd:string },
+		## Whether the index should not be used in the database.
+		attribute inMemory { xsd:boolean }?,
+		## Whether the index is unique.
+		attribute unique { xsd:boolean }?,
+		## Whether technical columns should not automatically be added to the index.
+		attribute custom { xsd:boolean }?,
+		
+		element index-parts {
+			## Definition of the parts of the index.
+			element index_part {
+				## Name of the attribute.
+				attribute name { xsd:string },
+				## If the attribute is a reference, this attribute defines which part of the reference should be included in the index. 
+				attribute part { defReferenceType }?
+			}+
+		}?,
+		defDBAttribute*
+	}
+
+defReferenceType =
+	(
+		token "name" | 
+		token "revision" |
+		token "branch" | 
+		token "type" 
+	)
+	 
+defDBType = 
+	(
+	    token "bigint"   |
+        token "boolean"  |
+        token "char"     |
+        token "clob"     |
+        token "date"     |
+        token "decimal"  |
+        token "double"   |
+        token "float"    |
+        token "integer"  |
+        token "longvarchar"|
+        token "numeric"  |
+        token "real"     |
+        token "smallint" |
+        token "time"     |
+        token "timestamp"|
+        token "tinyint"  |
+        token "varchar" 
+	)
+
+
+deletionPolicy = 
+	(
+		## The value of the attribute is set to null.
+		token "clear-reference" |
+		## The referer will also be deleted. 
+		token "delete-referer" |
+		## It is not possible to delete the referenced object.
+		token "veto" |
+		## If the value not historic, the value is replaced a historic version of the referenced object directly before the deletion.
+		token "stabilise-reference"
+	)
+
+historyType = 
+	(
+		## Object must be a current object.
+		token "current" |
+		## Object must be an object in a stable history context.
+		token "historic" |
+		## Object can either be a current or an historic object.
+		token "mixed"
+	)

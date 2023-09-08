@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_26529_Transfer_dynamic_resources_to_new_storage"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_26699_Update_layout_configuration"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.layout.migration.Ticket26529TransferVariantsToDynamicStorage"/>
+	</processors>
+</migration>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="tl-service-openapi-client.messages"/>
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.service.openapi.client.registry.ServiceMethodRegistry$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance>
+				<method-resolvers>
+					<method-resolver class="com.top_logic.service.openapi.client.registry.ServiceMethodRegistry$ServiceMethodResolver"/>
+				</method-resolvers>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.layout.admin.component.TLServicesCommandProvider$Config">
+			<commands-by-service-class service-class="com.top_logic.service.openapi.client.registry.ServiceMethodRegistry">
+				<command id="importOpenAPIClient"
+					class="com.top_logic.service.openapi.client.layout.ImportOpenAPIClient"
+					image="theme:ICON_IMPORT_OPEN_API_CONFIGURATION"
+				>
+					<executability>
+						<reference rule-id="InEditMode"/>
+					</executability>
+				</command>
+			</commands-by-service-class>
+		</config>
+	</configs>
+</application>

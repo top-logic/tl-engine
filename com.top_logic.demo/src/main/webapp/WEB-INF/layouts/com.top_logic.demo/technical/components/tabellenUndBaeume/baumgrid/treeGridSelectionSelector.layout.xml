@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="false"
+	template="com.top_logic/selector.template.xml"
+>
+	<arguments
+		defaultSelection="false"
+		partnerGroup="TreeGridPartner"
+	>
+		<titleKey key="dynamic.daf7b581-c962-4de2-bb84-8135e90465c8">
+			<en>TreeGrid Selection</en>
+			<de>Baumgrid Auswahl</de>
+		</titleKey>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="all(`DemoTypes:DemoTypes.All`)"
+		/>
+	</arguments>
+</config:template-call>

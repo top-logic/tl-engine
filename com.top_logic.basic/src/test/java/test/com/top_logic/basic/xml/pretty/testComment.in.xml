@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Single line comment -->
+<a><!--Multi
+line
+comment
+--><b><!--Single line comment--><!--     Single line comment      --><c><!-- Single line comment --></c>
+<c>
+<!-- 
+Multi
+line
+comment
+-->
+</c></b><!-- 
+Multi
+line
+comment
+--><!-- 
+Multi
+line
+comment
+--></a>

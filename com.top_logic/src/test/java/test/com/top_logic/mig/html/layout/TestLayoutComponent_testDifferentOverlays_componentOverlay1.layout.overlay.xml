@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<components>
+	<component name="Tabbar">
+		<components>
+			<layout-reference resource="componentOverlay1.layout.overlay.xml"/>
+		</components>
+	</component>
+</components>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<modules>
+		<module name="tl.element">
+			<types>
+				
+				<interface name="Attributed">
+					<annotations>
+						<implementation-binding
+							interface-name="com.top_logic.model.TLObject"
+							class-name="com.top_logic.element.meta.kbbased.AttributedWrapper"
+						/>
+					</annotations>
+				</interface>
+				
+				<interface name="StructuredElement">
+					<annotations>
+						<implementation-binding
+							interface-name="com.top_logic.element.structured.StructuredElement"
+							class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"
+						/>
+					</annotations>
+					<attributes>
+						<reference
+							name="parent"
+							type="StructuredElementContainer"
+							kind="backwards"
+							inverse-reference="children"
+							multiple="false"
+						>
+							<annotations>
+								<annotation
+									config:interface="com.top_logic.model.annotate.TLVisibility"
+									value="hidden"
+								/>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="Attributed" />
+					</generalizations>
+				</interface>
+				
+				<interface name="StructuredElementContainer">
+					<!-- The differentiation between StructuredElement and StructuredElementContainer
+					     is necessary to support the pre TL 5.8 feature of declaring a
+					     StructureElement-type that cannot have children. -->
+					<annotations>
+						<implementation-binding
+							interface-name="com.top_logic.element.structured.StructuredElement"
+							class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"
+						/>
+					</annotations>
+					<attributes>
+						<reference
+							name="children"
+							type="StructuredElement"
+							multiple="true"
+							composite="true"
+							ordered="true"
+							kind="forwards"
+						>
+							<annotations>
+								<annotation
+									config:interface="com.top_logic.model.annotate.TLVisibility"
+									value="hidden"
+								/>
+							</annotations>
+						</reference>
+					</attributes>
+					<generalizations>
+						<generalization type="StructuredElement" />
+					</generalizations>
+				</interface>
+				
+			</types>
+		</module>
+	</modules>
+</model>

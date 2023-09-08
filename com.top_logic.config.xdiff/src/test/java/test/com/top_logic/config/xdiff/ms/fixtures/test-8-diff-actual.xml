@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="customconfig.xsd">
+    <components>
+        <ConfigCustomizations>
+            <Settings>
+                <NodeDelete Component="test-8" XPath="/r[1]/a[1]/v[2]"/>
+            </Settings>
+        </ConfigCustomizations>
+    </components>
+</configuration>

@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<t:template xmlns:t="http://www.top-logic.com/ns/template/1.0">
+	<t:head>
+		<t:settings output-format="text" />
+		<t:types>
+			
+			<t:type name="Inner_Structure">
+				<t:attributes>
+					<t:attribute name="Left_Inner_Attribute" type="string" />
+					<t:attribute name="Right_Inner_Attribute" type="string" />
+				</t:attributes>
+			</t:type>
+			
+			<t:type name="Outer_Structure">
+				<t:attributes>
+					<t:attribute name="Left_Outer_Attribute" type="Inner_Structure" />
+					<t:attribute name="Right_Outer_Attribute" type="Inner_Structure" />
+				</t:attributes>
+			</t:type>
+			
+		</t:types>
+		<t:parameters>
+			
+			<t:parameter name="Example_Parameter" type="Outer_Structure">
+				<t:default>
+					<t:attribute name="Left_Outer_Attribute">
+						<t:attribute name="Left_Inner_Attribute" value="Left Outer Left Inner Value" />
+						<t:attribute name="Right_Inner_Attribute" value="Left Outer Right Inner Value" />
+					</t:attribute>
+					<t:attribute name="Right_Outer_Attribute">
+						<t:attribute name="Left_Inner_Attribute" value="Right Outer Left Inner Value" />
+						<t:attribute name="Right_Inner_Attribute" value="Right Outer Right Inner Value" />
+					</t:attribute>
+				</t:default>
+			</t:parameter>
+			
+		</t:parameters>
+	</t:head>
+	<t:body>
+		
+		<t:value expr="$Example_Parameter.Left_Outer_Attribute.Left_Inner_Attribute" />
+		<t:value expr="$Example_Parameter.Left_Outer_Attribute.Right_Inner_Attribute" />
+		<t:value expr="$Example_Parameter.Right_Outer_Attribute.Left_Inner_Attribute" />
+		<t:value expr="$Example_Parameter.Right_Outer_Attribute.Right_Inner_Attribute" />
+		
+	</t:body>
+</t:template>

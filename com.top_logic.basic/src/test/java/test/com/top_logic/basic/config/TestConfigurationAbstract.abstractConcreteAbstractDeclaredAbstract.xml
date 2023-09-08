@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<abstract-test
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	config:abstract="true"
+	class="test.com.top_logic.basic.config.TestConfigurationAbstract$ExampleAbstractConcreteAbstractClass"
+	int-value-five="540"
+	/>

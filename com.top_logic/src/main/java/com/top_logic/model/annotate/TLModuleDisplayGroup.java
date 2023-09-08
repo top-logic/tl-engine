@@ -8,7 +8,24 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.config.TLModuleAnnotation;
 
 /**
- * {@link TLModuleAnnotation} to set an object name to group the underlying module in.
+ * <p>
+ * {@link TLAnnotation} to define where this module should be grouped in the type tree of the model
+ * editor, which resembles the view of a package explorer of the commonly used code editors.
+ * </p>
+ * 
+ * <p>
+ * The value of this field is a path with <code>.</code> as separators.
+ * </p>
+ * 
+ * <p>
+ * For example, <code>com.foo.bar</code> specifies that this module is added as a child of the
+ * <code>com.foo.bar</code> group.
+ * </p>
+ * 
+ * <p>
+ * By default, if the module is not annotated, the grouping of the module is determined by its
+ * technical name.
+ * </p>
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */

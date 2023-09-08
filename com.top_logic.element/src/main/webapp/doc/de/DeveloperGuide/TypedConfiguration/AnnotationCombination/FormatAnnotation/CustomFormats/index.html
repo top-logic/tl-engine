@@ -1,0 +1,55 @@
+<p>Um ein Format zu definieren, wird eine TL-&nbsp;Schnittstelle <a href="http://tl/svn/top-logic/trunk/TL/tl-doc/javadoc/index.html#com.top_logic.basic.config.ConfigurationValueProvider" target="_blank" title="com.top_logic.basic.config.ConfigurationValueProvider in tl">​ConfigurationValueProvider</a>&nbsp;implementiert, da Implementierungen der&nbsp;Java-Standard-Klasse&nbsp;<code class="hljs inlineCode">java.text.Format</code>&nbsp;nicht thread-sicher sind. Pro Parse-Vorgang müsste daher eine eigene Instanz von <code class="hljs inlineCode">Format</code> angelegt werden. Dies hätte zur Folge, dass statt eines Formates, ein Format-Provider annotiert werden müsste.</p>
+<p>Eigene Formate für eigene Typen können also am einfachsten als Ableitung von <a href="http://tl/svn/top-logic/trunk/TL/tl-doc/javadoc/index.html#com.top_logic.basic.config.AbstractConfigurationValueProvider" target="_blank" title="com.top_logic.basic.config.AbstractConfigurationValueProvider in tl">​AbstractConfigurationValueProvider</a> erstellt und entweder an ein konkretes Property oder an den selbstdefinierten Werte-Typ annotiert werden.</p>
+<h2>Komma-separierte Enum-Liste</h2>
+<p>Um eine Liste von <code class="hljs inlineCode">java.lang.Enum</code> zu konfigurieren, kann man eine der bereits existierenden Ableitungen von&nbsp;<code class="hljs inlineCode">CommaSeparatedEnum</code> benutzen, z.B. <code class="hljs inlineCode">CommaSeparatedMonths</code>, oder eine eigene folgendermaßen definieren:</p>
+<pre><code class="language-java">@Format(CommaSeparatedMyEnums.class)
+List&lt;MyEnum&gt; getMyEnums();
+
+public static class CommaSeparatedMyEnums extends CommaSeparatedEnum&lt;MyEnum&gt; {
+
+	public static final CommaSeparatedMyEnums INSTANCE = new CommaSeparatedMyEnums();
+
+	private CommaSeparatedMyEnums() {
+		super(MyEnum.class);
+	}
+}</code></pre>
+<h2>Shortcut-Format für Subkomponenten (Unterkonfigurationen)</h2>
+<p>Für Unterkonfigurationen kann ebenfalls ein <code class="hljs inlineCode">@Format</code> angegeben&nbsp;werden, um zu erlauben, dass eine Unterkonfiguration (z.B. in häufig vorkommenden einfachen Fällen) direkt als Attribut statt über ein Sub-Tag konfiguriert werden kann (vgl. <a class="tlObject" data-custom="true" href="?page=XMLBinding&amp;uuid=4269c26d-3e60-4ca8-8883-1a5afd894fed">XML-Binding</a>).</p>
+<p>Das Format wird nur verwendet, wenn der Wert in einem Attribut angegeben ist, oder das Konfigurationelement Non-White-Space-Content als Inhalt hat.</p>
+<p>Eine Konfiguration für den Typ <code class="hljs inlineCode">MainConfig</code>, der wie folgt definiert ist</p>
+<pre><code class="language-java">interface MainConfig extends ConfigurationItem {
+   SubConfig getSubConfig();
+}
+
+interface SubConfig extends ConfigurationItem {
+   int getX();
+   int getY();
+}
+</code></pre>
+<p>wird in XML standardmäßig wie folgt geschrieben werden:</p>
+<pre><code class="language-xml">&lt;main-config&gt;
+   &lt;sub-config x="13" y="42"/&gt;
+&lt;/main-config&gt;
+</code></pre>
+<p>Für die Unterkonfiguration <code class="hljs inlineCode">SubConfig</code> kann aber ein Format angegeben werden, das eine kürzere Konfiguration erlaubt:</p>
+<pre><code class="language-java">@Format(PointFormat.class)
+interface SubConfig {
+  int getX();
+  int getY();
+}
+</code></pre>
+<p>bzw. an der Eigenschaft</p>
+<pre><code class="language-java">interface MainConfig extends ConfigurationItem {
+   @Format(PointFormat.class)
+   SubConfig getSubConfig();
+}
+</code></pre>
+<p>Wenn das Format <code class="hljs inlineCode">PointFormat</code>&nbsp;(als Unterklasse von <code class="hljs inlineCode">AbstractConfigurationValueProvider</code>) einen String der Bauart <code class="hljs inlineCode">"13,42"</code>&nbsp;in eine Instanz von <code class="hljs inlineCode">SubConfig</code> mit entsprechenden Properties übersetzt, lässt sich obige Konfiguration kürzer schreiben, z.B.:</p>
+<pre><code class="language-xml">&lt;main-config sub-config="13,42"/&gt;
+</code></pre>
+<p>oder</p>
+<pre><code class="language-xml">&lt;main-config&gt;
+   &lt;sub-config&gt;13,42&lt;/sub-config&gt;
+&lt;/main-config&gt;
+</code></pre>
+<p>Insbesondere bei komplexen Ausdrücken, für die eine "echte",&nbsp;eigens definierte&nbsp;Domain-Specific-Language (DSL)&nbsp;definiert ist, eignet sich die letzte Form der Eingabe.</p>

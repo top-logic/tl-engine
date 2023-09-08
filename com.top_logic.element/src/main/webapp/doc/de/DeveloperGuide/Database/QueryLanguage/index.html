@@ -1,0 +1,194 @@
+<p>Die Top-Logic Query-Language ist eine Mengenalgebra, über die intern Suchanfragen an das abstrakte Datenbankschema gestellt werden. Diese Art der Abfrage steht nur für Code-Plugins zur Verfügung. In Konfigurationen und bei der In-App-Entwicklung wird ausschließlich &nbsp;<a class="tlObject" data-custom="false" href="?page=TLScript&amp;uuid=d1172c3d-4596-48b0-837a-42349d1e3227">TL-Script</a> verwendet.</p>
+<p>Ein Ausdruck in der Query-Language beschreibt eine Menge von Objekten über Initialmengen, Mengenoperationen, Kreuzprodukt, Filter, Projektion und Partitionierung.</p>
+<h3>Mengen-Ausdrücke</h3>
+<p>Ein Mengen-Ausdruck wird ohne Kontext ausgewertet und liefert eine Menge von Werten.</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">all(T)</code></th>
+   <td>Die Menge aller Objekte, die genau dem Objekttyp <code class="hljs inlineCode">T</code> entsprechen.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">any(T)</code></th>
+   <td>Die Menge aller Objekte, die zuweisungskompatibel mit dem gegebenen Objekttyp <code class="hljs inlineCode">T</code> sind.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">none()</code></th>
+   <td>Die leere Menge.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">setLiteral(Collection)</code></th>
+   <td>Die Menge der Elemente in der gegebenen Collection.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">filter(set, expr)</code></th>
+   <td>Die Elemente der Menge <code class="hljs inlineCode">set</code>, für die sich der boolsche Ausdruck <code class="hljs inlineCode">expr</code> zu <code class="hljs inlineCode">true</code> auswertet.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">map(set, expr)</code></th>
+   <td>Die Menge der Ergebniss der Auswertung des Ausdrucks <code class="hljs inlineCode">expr</code> auf allen Elementen von <code class="hljs inlineCode">set</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">union(set_1, set_2)</code></th>
+   <td>Die Vereinigung der Mengen <code class="hljs inlineCode">set_1</code> und <code class="hljs inlineCode">set_2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">intersection(set_1, set_2)</code></th>
+   <td>Der Schnitt der Mengen <code class="hljs inlineCode">set_1</code> und <code class="hljs inlineCode">set_2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">substraction(set_1, set_2)</code></th>
+   <td>Die Elemente der Menge <code class="hljs inlineCode">set_1</code>, die nicht in <code class="hljs inlineCode">set_2</code> enthalten sind.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">crossproduct(a1: set_1, a2: set_2, ..., an: set_n)</code></th>
+   <td>Das Kreutzprodukt der Mengen <code class="hljs inlineCode">set_1</code>, <code class="hljs inlineCode">set_2</code>,… <code class="hljs inlineCode">set_n</code>. Ein Eintrag der Resultatmenge ist ein N-Tupel, mit Namen der Einträge (a1, a2, …, an).</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">partition(set, expr, fun)</code></th>
+   <td>Die Menge der Repräsentanten einer Äquivalenz auf der Menge <code class="hljs inlineCode">set</code>. Dabei sind Elemente <code class="hljs inlineCode">a</code> und <code class="hljs inlineCode">b</code> aus <code class="hljs inlineCode">set</code> äquivalent, wenn sich <code class="hljs inlineCode">expr</code> in Kontext von <code class="hljs inlineCode">a</code> und <code class="hljs inlineCode">b</code> zu demselben Wert auswertet. Die Funktion <code class="hljs inlineCode">fun</code> liefert den Repräsentanten der Äquivalenzklasse, indem sie im Kontext der Menge aller zu einer Äquivalenzklasse gehörenden Elemente von <code class="hljs inlineCode">set</code> ausgewertet wird.</td>
+  </tr>
+ </tbody>
+</table>
+<p>Die Menge aller Objekte ist <code class="hljs inlineCode">all(KnowledgeObject)</code>. Die Menge aller Assoziationslinks ist <code class="hljs inlineCode">all(KnowledgeAssociation)</code>. Die Menge aller Eingräge der Knowledge-Base ist <code class="hljs inlineCode">all(KnowledgeItem)</code>.</p>
+<h3>Wert-Ausdrücke</h3>
+<p>Ein Ausdruck wird im Kontext eines Einzelwertes ausgewertet und liefert wieder einen Einzelwert (keine Menge).</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">literal(value)</code></th>
+   <td>Der gegebene literale Wert. Der Typ des Literals ist durch den Typ des Wertes gegeben.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">attribute(attr)</code></th>
+   <td>Wert des primitiven Zeilen-Attributs <code class="hljs inlineCode">attr</code> des Kontextobjektes.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">reference(name)</code></th>
+   <td>Zugriff auf die Referenz der Kontext-Assoziation mit gegebenem Namen (einzige z.Zt unterstützte Namen sind <code class="hljs inlineCode">source</code> und <code class="hljs inlineCode">destination</code>).</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">flex(name)</code></th>
+   <td>Wert des flexiblen Attributes mit Namen <code class="hljs inlineCode">name</code> des Kontextobjekts.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">get(index)</code></th>
+   <td>Zugriff auf den Wert mit gegebenem Index des Kontext-Tupels.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">eqBinary(expr_1, expr_2)</code></th>
+   <td>Vergleich der Ergebnisse der Auswertungen der Ausdrücke <code class="hljs inlineCode">expr_1</code> und <code class="hljs inlineCode">expr_2</code> auf Gleichheit.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">eqCi(expr_1, expr_2)</code></th>
+   <td>Vergleich der Ergebnisse der Auswertungen der Ausdrücke <code class="hljs inlineCode">expr_1</code> und <code class="hljs inlineCode">expr_2</code> auf String-Gleichheit ohne Berücksichtigung von Groß- und Kleinschreibung.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">matches(regex, expr)</code></th>
+   <td>Test, ob das Ergebnis der Auswerung von <code class="hljs inlineCode">expr_1</code> zu dem gegebenen regulären Ausdruck <code class="hljs inlineCode">regex</code> passt.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">le(expr_1, expr_2)</code></th>
+   <td>Vergleich der Ergebnisse <code class="hljs inlineCode">v1</code> und <code class="hljs inlineCode">v2</code> der Auswertungen der Ausdrücke <code class="hljs inlineCode">expr_1</code> und <code class="hljs inlineCode">expr_2</code> auf <code class="hljs inlineCode">v1</code> kleiner oder gleich <code class="hljs inlineCode">v2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">lt(expr_1, expr_2)</code></th>
+   <td>Vergleich der Ergebnisse <code class="hljs inlineCode">v1</code> und <code class="hljs inlineCode">v2</code> der Auswertungen der Ausdrücke <code class="hljs inlineCode">expr_1</code> und <code class="hljs inlineCode">expr_2</code> auf <code class="hljs inlineCode">v1</code> echt kleiner <code class="hljs inlineCode">v2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">ge(expr_1, expr_2)</code></th>
+   <td>Vergleich der Ergebnisse <code class="hljs inlineCode">v1</code> und <code class="hljs inlineCode">v2</code> der Auswertungen der Ausdrücke <code class="hljs inlineCode">expr_1</code> und <code class="hljs inlineCode">expr_2</code> auf <code class="hljs inlineCode">v1</code> größer oder gleich <code class="hljs inlineCode">v2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">gt(expr_1, expr_2)</code></th>
+   <td>Vergleich der Ergebnisse <code class="hljs inlineCode">v1</code> und <code class="hljs inlineCode">v2</code> der Auswertungen der Ausdrücke <code class="hljs inlineCode">expr_1</code> und <code class="hljs inlineCode">expr_2</code> auf <code class="hljs inlineCode">v1</code> echt größer <code class="hljs inlineCode">v2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">inSet(set)</code></th>
+   <td>Test, ob das Kontextobjekt in der Menge <code class="hljs inlineCode">set</code> enhalten ist.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">hasType(T)</code></th>
+   <td>Test, ob das Kontextobjekt genau vom Typ <code class="hljs inlineCode">T</code> ist.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">instanceof(T)</code></th>
+   <td>Test, ob das Kontextobjekt zuweisungskompatibel mit dem Typ <code class="hljs inlineCode">T</code> ist.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">and(expr_1, expr_2)</code></th>
+   <td>Boolsche Und-Verknüpfung der Ergebnisse der Auswertungen der Ausdrücke <code class="hljs inlineCode">expr_1</code> und <code class="hljs inlineCode">expr_2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">or(expr_1, expr_2)</code></th>
+   <td>Boolsche Oder-Verknüpfung der Ergebnisse der Auswertungen der Ausdrücke <code class="hljs inlineCode">expr_1</code> und <code class="hljs inlineCode">expr_2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">not(expr)</code></th>
+   <td>Boolsche Nicht-Verknüpfung des Ergebnisses der Auswertung des Ausdrücks <code class="hljs inlineCode">expr</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">eval(expr_1, expr_2)</code></th>
+   <td>Auswertung von <code class="hljs inlineCode">expr_2</code> im Kontext des Ergebnisses von <code class="hljs inlineCode">expr_1</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">tuple(expr_1, ..., expr_n)</code></th>
+   <td>Das Tuple aus den Werten von <code class="hljs inlineCode">expr_1</code> bis <code class="hljs inlineCode">expr_n</code>.</td>
+  </tr>
+ </tbody>
+</table>
+<h3>Funktionen</h3>
+<p>Eine Funktion bildet eine Menge von Werten auf einen Einzelwert ab.</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">count()</code></th>
+   <td>Anzahl der Elemente in der Kontextmenge.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">sum(expr)</code></th>
+   <td>Summe der Auswertungsergebnisse von <code class="hljs inlineCode">expr</code> auf allen Elementen der Kontextmenge.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">min(expr)</code></th>
+   <td>Minimum der Auswertungsergebnisse von <code class="hljs inlineCode">expr</code> auf allen Elementen der Kontextmenge.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">max(expr)</code></th>
+   <td>Maximum der Auswertungsergebnisse von <code class="hljs inlineCode">expr</code> auf allen Elementen der Kontextmenge.</td>
+  </tr>
+ </tbody>
+</table>
+<h3>Ordnung des Ergebnisses</h3>
+<p>Die Ergebnismenge kann in einer speziellen Ordnung geliefert werden. Die Ordnung wird spezifiziert über ein Tupel aus Ordnungsangaben.</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">order(descending, expr)</code></th>
+   <td>Primitive Ordnungsangabe. Das Ergebnis wird sortiert, indem die Ergebnisse der Auswertung von <code class="hljs inlineCode">expr</code> im Kontext jedes Ergebnisses aufsteigend (<code class="hljs inlineCode">descending</code> = <code class="hljs inlineCode">false</code>) oder absteigend (<code class="hljs inlineCode">descending</code> = <code class="hljs inlineCode">true</code>) sortiert werden.</td>
+  </tr>
+ </tbody>
+</table>
+<p>&nbsp;</p>
+<h3>Äquivalenzen</h3>
+<p></p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">filter(filter(set, expr_1), expr_2)</code></th>
+   <td><code class="hljs inlineCode">filter(set, and(expr_1, expr_2))</code></td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">map(map(set, expr_1), expr_2)</code></th>
+   <td><code class="hljs inlineCode">map(set, eval(expr_1, expr_2))</code></td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">inSet(all(T))</code></th>
+   <td><code class="hljs inlineCode">hasType(T)</code></td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">inSet(any(T))</code></th>
+   <td><code class="hljs inlineCode">instanceOf(T)</code></td>
+  </tr>
+ </tbody>
+</table>

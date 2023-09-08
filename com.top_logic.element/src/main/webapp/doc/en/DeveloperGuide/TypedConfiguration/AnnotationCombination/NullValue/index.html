@@ -1,0 +1,9 @@
+<p></p>
+<h1 id="nullalsKonfigurationswert"><code class="hljs inlineCode">null</code> als Konfigurationswert</h1>
+<p>Die Annotation <code class="hljs inlineCode">Nullable</code> und <code class="hljs inlineCode">NonNullable</code> definieren, ob der Wert <code class="hljs inlineCode">null</code> als Propertywert erlaubt ist:</p>
+<ul>
+ <li>Ohne Annotation: Bei Strings, Listen und Maps ist <code class="hljs inlineCode">null</code> nicht erlaubt. Bei <code class="hljs inlineCode">ConfigItems</code>, <code class="hljs inlineCode">ConfiguredInstances</code> usw. ist es erlaubt.</li>
+ <li><code class="hljs inlineCode">Nullable</code>: <code class="hljs inlineCode">null</code> ist erlaubt. Kann nicht an primitiven Typen (int, boolean, …), sondern nur an den entsprechenden Objekt-Typen verwendet werden (Integer, Boolean, …).</li>
+ <li><code class="hljs inlineCode">NonNullable</code>: <code class="hljs inlineCode">null</code> ist nicht erlaubt.</li>
+</ul>
+<p>Der Default-Wert richtet sich dannach ob <code class="hljs inlineCode">null</code> erlaubt ist. Ist es erlaubt und kein anderer Default gesetzt, ist <code class="hljs inlineCode">null</code> der Defaultwert. Ist <code class="hljs inlineCode">null</code> nicht erlaubt, ist der Defaultwert z.B. der leere String, die leere Liste, <code class="hljs inlineCode">false</code> bei Booleans, 0 bei Zahlen, ein leeres <code class="hljs inlineCode">ConfigItem</code> usw.</p>

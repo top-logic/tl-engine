@@ -1,0 +1,43 @@
+<h3>Zweck</h3>
+<ul>
+ <li>Der <a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> &nbsp;dient der Inspektion der GUI ohne den HTML-Code der Seite analysieren zu müssen.</li>
+ <li>Außerdem wird er verwendet um Assertions für <a class="tlObject" data-custom="true" href="?page=ApplicationTests&amp;uuid=a3a70149-48c2-4e16-8eda-6a37d44ba778">Automatische Anwendungstests</a> aufzuzeichnen.</li>
+</ul>
+<h3>Verwendung</h3>
+<ul>
+ <li><a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> &nbsp;in der persönlichen Konfiguration aktivieren:</li>
+ <li>
+  <pre><code>&lt;section name="Debugging" comment="Contains switches for debugging"&gt;
+        &lt;entry name="inspectEnabled" value="true"
+                comment="Enables the gui inspection features. They are also used to record assertions for automated application tests. Therefore, they are also enabled if the ScriptingRecorder is enabled. See section 'ScriptingRecorder', entry 'enabled'." /&gt;
+&lt;/section&gt;
+</code></pre></li>
+ <li>Der <a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> &nbsp;wird außerdem aktiviert, wenn der ScriptingRecorder aktiviert wird.</li>
+ <li>Anwendung starten</li>
+ <li>Der <a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> &nbsp;wird mittels eines Buttons in der Main-Tabbar oder der Titelzeile eines Dialogs aufgerufen</li>
+ <li>Der Mauszeiger wird zu einem Zeiger mit Fragezeichen - Hilfecursor (mehr passiert nicht)</li>
+ <li>Auf das zu untersuchende Element klicken</li>
+ <li>Der <a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> öffnet sich und zeigt Informationen über das zu untersuchende Element an. 
+  <ul>
+   <li>Falls nicht, wurde das Element nicht erkannt. Einen Monat Warten und erneut versuchen.</li>
+  </ul></li>
+ <li>Beim Aufzeichnen von Anwendungstests: 
+  <ul>
+   <li>Die gewünschten Assertions auswählen und auf "Assertions aufzeichnen" klicken</li>
+   <li>Der <a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> verschwindet wieder</li>
+  </ul></li>
+</ul>
+<h3>Tipps</h3>
+<ul>
+ <li>Wenn der <a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> Probleme hat ein Field direkt zu inspizieren, kann es helfen statt dessen das Label des Field zu inspizieren. Dadurch wird das Field selber inspiziert.</li>
+ <li>Bei Tabellen die ein Label haben kann man zum Teil das Label inspizieren und dadurch das Field inspizieren, das durch die Tabelle repräsentiert wird.</li>
+</ul>
+<h3>Unterstützung der UI-Komponenten</h3>
+<ul>
+ <li>Field</li>
+ <li>Labels von Fields (Es werden die Informationen zum Field angezeigt)</li>
+ <li>Werte in Tabellen (Auch <a class="tlObject" data-custom="false" href="?page=GridComponent&amp;uuid=cac83987-104b-4154-821c-7c3e623041c8">Grid</a> &nbsp;&amp; FrozenTable) 
+  <ul>
+   <li>Bei TableFields mit einem Label zu der Tabelle kann man</li>
+  </ul></li>
+</ul>

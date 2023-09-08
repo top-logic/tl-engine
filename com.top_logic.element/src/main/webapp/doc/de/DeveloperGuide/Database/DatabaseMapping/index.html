@@ -1,0 +1,68 @@
+<p>Reicht die &nbsp;<a class="tlObject" data-custom="false" href="?page=GenericDataBaseMapping&amp;uuid=9f541afb-032d-4522-82a4-db6e4adb3c90">Generische Speicherung</a> nicht aus, lassen sich Modellelemente flexibel auf applikationsdefinierte Tabellen in Datenbank abbilden, vgl. <a class="tlObject" data-custom="false" href="?page=DatabaseDefinition&amp;uuid=f4596594-a751-4804-a110-40729c46d415">Schema-Deklaration</a>.</p>
+<h2>Klassen</h2>
+<p>Konkrete Klassen (<code class="hljs inlineCode">TLClass</code>) können über die Annotation <code class="hljs inlineCode">&lt;table name="..."/&gt;</code> auf Datenbanktabellen abgebildet werden:</p>
+<pre><code>&lt;class name="MyClass"&gt;
+   &lt;annotations&gt;
+      &lt;table name="MyTable"/&gt;
+   &lt;/annotations&gt;
+   &lt;attributes&gt;
+      ...
+   &lt;/attributes&gt;
+&lt;/class&gt;
+</code></pre>
+<p>In obigem Beispiel werden alle Instanzen der Klasse <code class="hljs inlineCode">MyClass</code> in der Datenbanktabelle <code class="hljs inlineCode">MyTable</code> gespeichert.</p>
+<p>Wird eine Klasse <code class="hljs inlineCode">A</code> in einer Tabelle <code class="hljs inlineCode">T</code> gespeichert, so werden automatisch alle primitiven Eigenschaften von <code class="hljs inlineCode">A</code> zu denen es Spalten mit demselben Namen in der Tabelle <code class="hljs inlineCode">T</code> gibt, in der entsprechenden Spalte von <code class="hljs inlineCode">T</code> gespeichert. Alle anderen Attribute verwenden weiterhin eine generische interne Tabelle für die Speicherung, siehe <a class="tlObject" data-custom="false" href="?page=GenericDataBaseMapping&amp;uuid=9f541afb-032d-4522-82a4-db6e4adb3c90">Generische Speicherung</a>. Dies stellt sicher, dass das Modell zur Laufzeit erweitert werden kann, ohne die Tabellendefinition anpassen zu müssen.</p>
+<h2>Referenzen</h2>
+<p>Bei einer Referenz entscheidet die Speicherabbildung über die verwendete Tabelle. Wenn bei der Referenz nichts spezielles angegeben wird, verwendet die Engine eine generische Tabelle für die Speicherung der Referenz:</p>
+<pre><code>&lt;class name="A"&gt;
+   &lt;attributes&gt;
+      &lt;reference name="bs" type="B" /&gt;
+   &lt;/attributes&gt;
+&lt;/class&gt;
+
+&lt;class name="B"&gt;
+   &lt;attributes&gt;
+      ...
+   &lt;/attributes&gt;
+&lt;/class&gt;
+</code></pre>
+<p>Möchte man die Datenbankabbildung selbst bestimmen, hat man bei "zu eins" Referenzen (solche, die auf höchstens ein anderes Objekt zeigen, und somit nicht als <code class="hljs inlineCode">multiple</code> ausgezeichnet sind) zwei Möglichkeiten: Speicherung in einer separaten Link-Tabelle (<code class="hljs inlineCode">singleton-link-storage</code>) oder Speicherung als Fremdschlüssel (<code class="hljs inlineCode">foreign-key-storage</code>). Bei "zu-n" Referenzen (solche, die als "multiple" ausgezeichnet sind) wird immer eine Link-Tabelle benötigt (<code class="hljs inlineCode">list-storage</code> oder <code class="hljs inlineCode">set-storage</code>).</p>
+<h2>Link Tabelle</h2>
+<p>Eine Link-Tabelle kann man bei den Speicherabbildungen <code class="hljs inlineCode">list-storage</code> und <code class="hljs inlineCode">set-storage</code> angeben (jeweils für geordnete oder ungeordnete Referenzen):</p>
+<p>Z.B. legt die folgende Definition die Links <code class="hljs inlineCode">bs</code> von <code class="hljs inlineCode">A</code> nach <code class="hljs inlineCode">B</code> in die spezielle Link-Tabelle <code class="hljs inlineCode">AB</code>:</p>
+<pre><code>&lt;class name="A"&gt;
+   &lt;attributes&gt;
+      &lt;reference name="bs" type="B"&gt;
+         &lt;annotations&gt;
+            &lt;storage-algorithm&gt;
+               &lt;set-storage table="AB"/&gt;
+            &lt;/storage-algorithm&gt;
+         &lt;/annotations&gt;
+      &lt;/reference&gt;
+   &lt;/attributes&gt;
+&lt;/class&gt;
+</code></pre>
+<h2>Referenzen über Fremdschlüssel</h2>
+<p>"Zu-eins" Referenzen kann man auch "inline" als Fremdschlüssel in die Tabelle desjenigen Typs ablegen, der die Referenz enthält. In diesem Fall muss die Tabelle des Typs eine entsprechende Fremdschlüsselspalte definieren, vgl. <a class="tlObject" data-custom="false" href="?page=DatabaseDefinition&amp;uuid=f4596594-a751-4804-a110-40729c46d415">Schema-Deklaration</a>. Die Referenz muss den <code class="hljs inlineCode">foreign-key-storage</code> verwenden und darin angeben, in welche Fremdschlüsselspalte gespeichert werden soll. In diesem Fall gibt es keinen Defaultwert für den Spaltennamen, sondern dieser muss immer explizit angegeben werden. Aus technischen Gründen muss auch der Name der Tabelle, in der der Typ selbst gespeichert wird, in dem Fremdschlüsselattribut nochmals wiederholt werden:</p>
+<pre><code>&lt;class name="A"&gt;
+   &lt;annotations&gt;
+      &lt;table name="ATable"/&gt;
+   &lt;/annotations&gt;
+
+   &lt;attributes&gt;
+      &lt;reference name="bs" type="B"&gt;
+         &lt;annotations&gt;
+            &lt;storage-algorithm&gt;
+               &lt;foreign-key-storage
+                  storage-attribute="bsKey"
+                  storage-type="ATable"
+               /&gt;
+            &lt;/storage-algorithm&gt;
+         &lt;/annotations&gt;
+      &lt;/reference&gt;
+   &lt;/attributes&gt;
+&lt;/class&gt;
+</code></pre>
+<p>Obige Deklaration gibt an, dass Instanzen von <code class="hljs inlineCode">A</code> in der Tabelle <code class="hljs inlineCode">ATable</code> gespeichert werden sollen. Die "zu-eins" Referenz <code class="hljs inlineCode">bs</code> soll in der Fremdschlüsselspalte <code class="hljs inlineCode">bsKey</code> gespeichert werden.</p>
+<p>Gibt man bei Referenzen keinen <code class="hljs inlineCode">storage-algorithm</code> an, wählt die Engine aufgrund der Referenzauszeichnung (<code class="hljs inlineCode">multiple</code>, <code class="hljs inlineCode">ordered</code>) eine passende Implementierung mit einer generischen Tabelle für die Speicherung.</p>
+<p>Für die Definition von Datenbanktabellen und Fremdschlüsselspalten siehe <a class="tlObject" data-custom="false" href="?page=DatabaseDefinition&amp;uuid=f4596594-a751-4804-a110-40729c46d415">Schema-Deklaration</a>.</p>

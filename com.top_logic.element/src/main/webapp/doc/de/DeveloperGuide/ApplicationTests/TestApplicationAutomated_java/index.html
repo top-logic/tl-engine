@@ -1,0 +1,25 @@
+<pre><code>/*
+ * @(#) TestApplicationAutomated.java
+ * 
+ * Copyright (c) 2010 - 2011 Business Operation Systems AG. All Rights Reserved.
+ */
+package test.com.top_logic.your.application;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
+import test.com.top_logic.layout.scripting.XmlScriptedTestUtil;
+
+/**
+ * @history    07.02.2011    Jan Stolzenburg    created
+ * @author     &lt;a href="mailto:Jan.Stolzenburg@top-logic.com"&gt;Jan Stolzenburg&lt;/a&gt;
+ * @version    $Revision: $  $Author: Jan Stolzenburg $  $Date: $
+ */
+public class TestApplicationAutomated {
+
+        public static Test suite() {
+                TestSuite testSuite = XmlScriptedTestUtil.suite(TestApplicationAutomated.class, "FirstTest", "SecondTest", "ThirdOne");
+                return YourApplicationSetup.createYourApplicationSetup(testSuite);
+        }
+
+}
+</code></pre>

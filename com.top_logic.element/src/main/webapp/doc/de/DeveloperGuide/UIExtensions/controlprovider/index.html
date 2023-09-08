@@ -1,0 +1,26 @@
+<p>Um das Feld letztlich auf die Anwendung zu bringen, müssen wir es in die jeweilige jsp Datei einbinden, in welches das Element ausgestrahlt werden soll. Dafür gibt es die <code class="hljs inlineCode">ControlProvider</code> Schnittstelle, was als Bindeglieg zwischen der Kontroll Klasse und der jsp Datei agiert. Die Klasse sieht in der Regel so aus:</p>
+<pre><code class="language-java">public static class CP implements ControlProvider {
+
+	public static final CP INSTANCE = new CP();
+
+	/**
+	 * Singleton constructor.
+	 */
+	public CP() {
+	}
+
+	@Override
+	public Control createControl(Object model, String style) {
+		return new ButtonDyerControl((StringField) model);
+	}
+}</code></pre>
+<p>Da der Modell Parameter ein Objekt ist, darf die Konvertierung in das gewünschte Feldobjekt nicht fehlen. Die CP Instanz muss nun in die jsp Datei eingefügt werden, auf der Seite, auf welches das Modell angezeigt werden soll. Am Besten kopiert man sich den qualifizierten Namen der Instanz, um keine Flüchtigkeitsfehler zu begehen.</p>
+<p><img src="ref:image_22222.png" style="height:207px; opacity:1; width:527px"></p>
+<p>Der qualifizierte Name kann dann dem <code class="hljs inlineCode">controlProvider</code> Attribut zugewiesen werden.</p>
+<pre><code>&lt;form:label name="buttonDyer" /&gt;
+&lt;form:custom name="buttonDyer"
+controlProvider="&lt;%= Qualified name of instance %&gt;"
+/&gt;</code></pre>
+<p>​Es gibt auch noch einen anderen Weg, wie man dem Feld einen <code class="hljs inlineCode">ControlProvider</code> zuweisen kann. Das Feld hat eine Methode, welche als Argument die CP Instanz benötigt.</p>
+<pre><code class="language-java">buttonString.setControlProvider(Qualified name of instance);</code></pre>
+<p></p>

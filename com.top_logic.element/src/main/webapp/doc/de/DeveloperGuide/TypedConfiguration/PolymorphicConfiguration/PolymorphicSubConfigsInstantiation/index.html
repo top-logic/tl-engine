@@ -1,0 +1,16 @@
+<p>Benötigt eine Komponente <code class="hljs inlineCode">A</code> eine Liste von Subkomponenten <code class="hljs inlineCode">B</code>, so wird einfach eine typisiert Get-Methode <code class="hljs inlineCode">List&lt;B.Config&gt; getBConfigs</code> definiert. Die Annotation <code class="hljs inlineCode">com.top_logic.basic.config.annotation.EntryTag</code> gibt an wie das Tag der einzelnen Listeneinträge heißt.</p>
+<pre><code class="language-java">public class A {
+   public interface Config extends PolymorphicConfiguration&lt;A&gt; {
+
+      @EntryTag("bConfig")
+      List&lt;B.Config&gt;getBConfigs();
+   }
+
+   List&lt;B&gt; bs;
+
+   public A(InstantiationContext context, A.Config config) {
+      this.bs = TypedConfiguration.getInstanceList(context, config.getBConfigs());
+   }
+}
+</code></pre>
+<p>Bei der Instanziierung von <code class="hljs inlineCode">A</code> wird die Liste von <code class="hljs inlineCode">B.Config</code> Elementen zu einer Liste von Komponenten <code class="hljs inlineCode">B</code> aufgelöst.</p>

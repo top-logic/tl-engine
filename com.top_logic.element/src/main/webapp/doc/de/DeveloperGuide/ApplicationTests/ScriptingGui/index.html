@@ -1,0 +1,46 @@
+<h3>Zweck</h3>
+<ul>
+ <li>Aufzeichnen von neuen Testfällen</li>
+ <li>Wartung von bestehenden Testfällen</li>
+</ul>
+<h3>Installation</h3>
+<ul>
+ <li>Die <a class="tlObject" data-custom="false" href="?page=ScriptingGui&amp;uuid=60242912-b6b8-420a-bbef-ed37857dcfb5">Scripting Gui</a>&nbsp;ist standardmäßig nur im Entwickler-Modus aktiv. (Siehe: <code class="hljs inlineCode">enable-debug.xml</code>) 
+  <ul>
+   <li>Sie ist nicht für Kunden geeignet, da das Scripting-Framework weder von der Usability noch von der Qualität Kunden zugemutet werden kann.</li>
+  </ul></li>
+</ul>
+<h3>Aufbau</h3>
+<ul>
+ <li>Ganz oben gibt es eine Liste mit der man Skripte vom Client oder Server laden kann. Skripte vom Server können nach dem Editieren gespeichert werden.</li>
+ <li>Links befindet sich der Baum der aufgezeichneten Actions</li>
+ <li>In der Mitte befindet sich das XML der im Baum ausgewählten Action</li>
+</ul>
+<h3>Funktionen</h3>
+<ul>
+ <li>Aufzeichnen von Aktionen 
+  <ul>
+   <li>Nach dem Klick auf "Start" werden Aktionen in der Anwendung aufgezeichnet. 
+    <ul>
+     <li>Aktionen in der <a class="tlObject" data-custom="false" href="?page=ScriptingGui&amp;uuid=60242912-b6b8-420a-bbef-ed37857dcfb5">Scripting Gui</a> selber natürlich nicht.</li>
+    </ul></li>
+   <li>Durch den Klick auf "Aktionen hinzufügen" werden diese aufgezeichneten Aktionen in der Gui in den Baum hinzugefügt. 
+    <ul>
+     <li>Vorher sieht der Benutzer nichts von den aufgezeichneten Aktionen.</li>
+    </ul></li>
+  </ul></li>
+ <li>Ausführen von Aktionen: Eine Action im Baum auswählen, "Skript ausführen" klicken ⇒ Die Action wird mitsamt ihrer Kinder ausgeführt.</li>
+ <li>Lesbare Darstellung von Actions: Rechts oben wird die aktuelle Action inklusive ihrer Kinder in menschenlesbarer Form angezeigt.</li>
+ <li>Editieren von Actions: Wenn eine Action im Baum selektiert ist, erscheint rechts das XML dieser Action. 
+  <ul>
+   <li>Bei Actions mit Kindern enthält das XML auch diese.</li>
+   <li>Ändert man das XML, wird auch die Action entsprechend geändert.</li>
+   <li>Dadurch kann man Actions umsortieren, indem man deren gemeinsamen Elternknoten editiert.</li>
+   <li>Wird ungültiges XML eingegeben, wird dieses ignoriert. ( Die Action wird nicht verändert.) 
+    <ul>
+     <li>Daher müssen Sonderzeichen XML-Konform encodiert werden. Zum Beispiel <code class="hljs inlineCode">&amp;</code>, <code class="hljs inlineCode">&lt;</code> und <code class="hljs inlineCode">&gt;</code>.</li>
+    </ul></li>
+  </ul></li>
+ <li>Namen für Actions: Fügt man einer Action ein <code class="hljs inlineCode">comment</code>-Attribut hinzu, wird dessen Wert im Baum als Name für die Action verwendet.</li>
+ <li>Actions Debuggen: Wird eine Action mit Kindern ausgeführt und eine der Actions schlägt fehl, wird die fehlgeschlagene Action im Baum selektiert.</li>
+</ul>

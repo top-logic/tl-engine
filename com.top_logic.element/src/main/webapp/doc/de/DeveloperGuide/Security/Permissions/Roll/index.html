@@ -1,0 +1,20 @@
+<p>Rollen können sowohl für einzelne Benutzer, als auch für Gruppen vergeben werden. Bei einer Rollenvergabe auf Gruppenebene, gilt die Rollenzuweisung für alle Mitglieder der Gruppe.</p>
+<p>Rollen können systemintern durch Konfiguration oder in Bezug auf "konkrete Fachobjekte durch Nutzerzuweisung" vergeben werden. Somit wird der Geltungsbereich einer Rollenzuweisung definiert. Hierbei können Rollen durch einmalige Nutzerzuweisung auf komplexe Objektnetze innerhalb des fachlichen Datenmodells der Anwendung vergeben werden. Um dies zu ermöglichen, wird die Rollenvergabe durch ein regelbasiertes System unterstützt.</p>
+<p><strong><em>Rollenvergabe auf Fachobjekte durch Nutzerzuweisung</em></strong></p>
+<p>An einem Fachobjekt „Projekt“ werden zwei <strong>Attribute </strong>definiert:</p>
+<ul>
+ <li>„Verantwortlich“</li>
+ <li>"Informationsberechtigt"</li>
+</ul>
+<p>Desweiteren werden zwei <strong>Rollen</strong> definiert:</p>
+<ul>
+ <li>„Projektleiter“ (ermöglicht die Bearbeitung der Projektdaten)</li>
+ <li>„Information“ (sieht nur die Ansicht, aber nicht die Bearbeitung der Projektdaten vor)</li>
+</ul>
+<p>Durch eine Regel in der Anwendungskonfiguration wird nun festgelegt, dass Benutzer, die dem Attribut „Verantwortlich“ zugewiesen werden, die Rolle „Projektleiter“ auf ihrem Projekt erhalten, während Benutzer, die dem Attribut „Informationsberechtigt“ zugewiesen werden, die Rolle „Information“ auf diesem Projekt erhalten. D.h. die Berechtigungen aller Projektleiter und aller Informationsberechtigter werden durch das Berechtigungsprofil der beiden Rollen „Projektleiter“ und „Information“ zentral festgelegt und der Geltungsbereich dieser Berechtigungen durch die projektbezogene Rollenvergabe bestimmt: Die zugewiesenen Benutzer sehen jeweils nur die eigenen Projekte. Ebenso können diese Regeln zur Rollenvergabe sicherstellen, dass die Rolle „Projektleiter“ nicht nur auf dem konkreten Projekt, sondern auch auf mit dem Projekt zusammenhängenden Elementen wie z.B. Teilprojekten und Arbeitspaketen vergeben wird und damit den Projektleitern auch die Einsicht oder Bearbeitung dieser Elemente ermöglicht würde.</p>
+<p><em>D.h. die tatsächliche Nutzerinteraktion zur Vergabe der Berechtigungen eines Projektleiters besteht lediglich in der fachlichen Zuweisung eines Benutzers als „Verantwortlich“ bzw. "Informatiionsberechtigt" zu einem Projekt.</em></p>
+<p><br><strong><em>Rollenvergabe durch Gruppenzuordnung</em></strong></p>
+<p>Es wird eine Rolle „Projektadministrator“ konfiguriert, deren Berechtigungsprofil die Bearbeitung von Projektdaten erlaubt. Weiterhin wird eine korrespondierende Gruppe „Projektadministratoren“<br>
+  konfiguriert, und durch eine Regel in der Systemkonfiguration einmalig definiert, dass die Rolle „Projektadministrator“ für die Gruppe „Projektadministratoren“ (und damit für alle Gruppenmitglieder) auf allen Projekten vergeben wird.<br>
+  Im Ergebnis erhält jedes Mitglied dieser Gruppe die Rolle „Projektadministrator“ auf allen Projekten. Umgekehrt verliert ein Benutzer diese Berechtigung automatisch, wenn er die Mitgliedschaft dieser Gruppe verliert.</p>
+<p><em>D.h. die tatsächliche Nutzerinteraktion zur Vergabe der Berechtigungen eines Projektadministrators besteht lediglich in der Zuweisung eines Benutzers zur Gruppe „Projektadministratoren“.</em></p>

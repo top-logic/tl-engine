@@ -1,0 +1,111 @@
+<h2>Templates benutzen</h2>
+<p>Der HTML-Editor bietet mit dem Templates Plugin vorgefertigte HTML Snippets an, die einfach eingefügt werden können. Um diese einzufügen klickt man auf den Button für Templates und wählt ein entsprechendes Template aus. Optional kann auch die Checkbox "Aktuelle Inhalte ersetzen" gewählt werden, um den gesamten Editor Inhalt durch das Template zu ersetzen:</p>
+<p><img src="ref:image_29446.png" style="opacity:1"></p>
+<p><img src="ref:image_68715.png" style="opacity:1"></p>
+<h2>Templates erstellen</h2>
+<p>Templates werden in JavaScript Templatedateien dokumentiert. Mehrere Templates werden dabei zusammengefasst und einer Templatedefinition hinzugefügt. In einer Templatedatei können mehrere Templatedefinitionen stehen. Welche Definitionen im Editor zur Verfügung gestellt werden sollen, können dann in einer Konfiguration bzw. Annotation definiert werden.</p>
+<p>Templates können in mehreren Sprachen angegeben werden. Um welche Sprache es sich handelt, muss im Templatedateinamen, bzw. im Namen der Templatedefinition wie folgt angegeben werden: <code class="hljs inlineCode">[language]_[name].js</code> bzw. <code class="hljs inlineCode">[language]_[name]</code></p>
+<p>So beinhaltet beispielsweise die Datei <code class="hljs inlineCode">de_default.js</code> die default Templates mit der Templatedefinition <span style="color:#695d69; font-family:monospace"><span style="background-color:#f7f3f7">de_default</span></span>. Die englischen Übersetzungen dieser Templates befinden sich in <code class="hljs inlineCode">en_default.js</code> unter <code class="hljs inlineCode">en_default</code>.<span style="color:#695d69; font-family:monospace"><span style="background-color:#f7f3f7"></span></span></p>
+<h3>Templatedefinition erstellen</h3>
+<p>Eine Templatedefinition benötigt die Angabe des <code class="hljs inlineCode">imagesPath</code>, um den Pfad der Bilder anzugeben.</p>
+<p>Pro Template wiederum werden folgende Informationen benötigt:</p>
+<table border="1" cellpadding="1" cellspacing="1" class="tlDocTable">
+ <thead>
+  <tr>
+   <th scope="col">Attribut</th>
+   <th scope="col">Beschreibung</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>title</td>
+   <td>Titel des HTML Snippets</td>
+  </tr>
+  <tr>
+   <td>image</td>
+   <td>Der Name des Bildes. Der Pfad zu diesem Bild wird durch <code class="hljs inlineCode">imagesPath</code> definiert.</td>
+  </tr>
+  <tr>
+   <td>description</td>
+   <td>Eine Beschreibung des Snippets.</td>
+  </tr>
+  <tr>
+   <td>html</td>
+   <td>Das HTML Snippet selbst. (Alternative zu <code class="hljs inlineCode">htmlFile</code>)</td>
+  </tr>
+  <tr>
+   <td>htmlFile</td>
+   <td>
+    <p>Pfad zu einer HTML Datei, in der das HTML Snippet enthalten ist. (Alternative zu <code class="hljs inlineCode">html</code>)</p>
+    <p><span style="color:#c0392b"><strong>Wichtig:</strong> </span>Die HTML Datei muss in UTF-8 encodiert sein. Andernfalls gibt es Probleme mit Umlauten!</p></td>
+  </tr>
+ </tbody>
+</table>
+<p>Es ist darauf zu achten, dass Namen von Templatedefinitionen nicht mehrfach verwendet werden, da diese sonst nicht eindeutig zugeordnet werden können. Der Name <code class="hljs inlineCode">en_default</code> darf beispielsweise nicht verwendet werden, da eine solche Definition bereits existiert und in allen HTML Editoren zur Verfügung gestellt wird.</p>
+<pre><code>// Register a templates definition named "default".
+CKEDITOR.addTemplates( 'en_default', {
+        // The name of sub folder which hold the shortcut preview images of the templates.
+        imagesPath: [image path],
+
+        // The templates.
+        templates: [ {
+                title: 'Title and text',
+                image: 'titleAndText.gif',
+                description: 'A title with a text',
+                htmlFile: [HTML file path]
+        },
+        {
+                title: 'A title',
+                image: 'title.gif',
+                description: 'A title.',
+                html: '&lt;h3&gt;Some title&lt;/h3&gt;
+        }]
+});
+
+// Register a templates definition named "anotherDefinition".
+CKEDITOR.addTemplates( 'anotherDefinition', {
+        // The name of sub folder which hold the shortcut preview images of the templates.
+        imagesPath: [image path],
+
+        // The templates.
+        templates: [ {
+                title: 'Title and text',
+                image: 'titleAndText.gif',
+                description: 'A title with a text',
+                htmlFile: [HTML file path]
+        }]
+});</code></pre>
+<h2>Verwendete Templates konfigurieren</h2>
+<p>Welche Templates zur Verfügung gestellt werden sollen, kann konfiguriert bzw. annotiert werden. <code class="hljs inlineCode">template_files</code>, also die Pfade zu den Templatedefinitionen, werden dabei in einer Liste angegeben. Die Namen der verwendeten Templatedefinitionen hingegen werden als String kommasepariert in <code class="hljs inlineCode">templates</code> angegeben. Sowohl für <code class="hljs inlineCode">template_files</code>, als auch für <code class="hljs inlineCode">templates</code> müssen nur die einfachen Namen angegeben werden. Es ist nicht notwendig, pro Sprache alle Namen anzugeben. So reicht zum Beispiel die Konfiguration</p>
+<pre><code class="language-xml">&lt;property key="templates_files"&gt;
+   &lt;list&gt;
+       &lt;string value="[path/to/template/default.js]"/&gt;
+   &lt;/list&gt;
+&lt;/property&gt;</code></pre>
+<p>um alle Sprachen von <code class="hljs inlineCode">default.js</code> wie <code class="hljs inlineCode">en_default.js</code> und <code class="hljs inlineCode">de_default.js</code> verwenden zu können.</p>
+<h3>Konfiguration</h3>
+<pre><code class="language-xml">&lt;config service-class="com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService"&gt;
+   &lt;instance class="com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService"&gt;
+      ...
+      &lt;property key="templates_files"&gt;
+         &lt;list&gt;
+            &lt;string value="[path/to/template/default.js]"/&gt;
+         &lt;/list&gt;
+      &lt;/property&gt;
+      &lt;property key="templates"&gt;
+         &lt;string value="default,anotherDefinition"/&gt;
+      &lt;/property&gt;
+      ...
+   &lt;/instance&gt;
+&lt;/config&gt;
+</code></pre>
+<h3>Annotiation</h3>
+<pre><code class="language-xml">&lt;annotations&gt;
+   &lt;wysiwyg templates="default, anotherDefinition"&gt;
+      &lt;template-files&gt;
+         &lt;template-file value="[path/to/template/default.js]"/&gt;
+         &lt;template-file value="[path/to/template/anotherDefinition.js]"/&gt;
+      &lt;/template-files&gt;
+   &lt;/wysiwyg&gt;
+&lt;/annotations&gt;</code></pre>
+<p></p>

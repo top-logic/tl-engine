@@ -1,0 +1,15 @@
+<p>Es gibt viele vordefinierte Formate für Java-Standard-Typen wie z.B.</p>
+<ul>
+ <li>das Format <a href="http://tl/svn/top-logic/trunk/TL/tl-doc/javadoc/index.html#com.top_logic.reporting.flex.chart.config.color.HexEncodedPaint" target="_blank" title="com.top_logic.reporting.flex.chart.config.color.HexEncodedPaint in tl">​HexEncodedPaint</a>&nbsp;für <code class="hljs inlineCode">Color</code>;</li>
+ <li><a href="http://tl/svn/top-logic/trunk/TL/tl-doc/javadoc/index.html#com.top_logic.basic.config.format.MillisFormat" target="_blank" title="com.top_logic.basic.config.format.MillisFormat in tl">​MillisFormat</a>, um eine Angabe "<code class="hljs inlineCode">5min 30s</code>" in einen <code class="hljs inlineCode">long</code>-Wert in Millisekunden einzulesen.</li>
+ <li>das Format <a href="http://tl/svn/top-logic/trunk/TL/tl-doc/javadoc/index.html#com.top_logic.basic.config.CommaSeparatedStrings" target="_blank" title="com.top_logic.basic.config.CommaSeparatedStrings in tl">CommaSeparatedStrings</a>, um eine komma-separierte String-Liste 
+  <pre><code class="language-java">public interface Config extends ConfigurationItem {
+  @Format(CommaSeparatedStrings.class)
+  List&lt;String&gt; getMyListValues();
+}
+</code></pre>
+  <p>aus</p>
+  <pre><code class="language-xml">&lt;config my-list-values="bli,bla,blub" /&gt;
+</code></pre>
+  <p>einzulesen. Ähnlich liefert <code class="hljs inlineCode">CommaSeparatedStringSet</code> &nbsp;ein <code class="hljs inlineCode">Set</code> statt einer <code class="hljs inlineCode">List</code>. Dafür muss natürlich auch die Eigenschaft als <code class="hljs inlineCode">Set&lt;String&gt;</code> deklariert sein.</p></li>
+</ul>

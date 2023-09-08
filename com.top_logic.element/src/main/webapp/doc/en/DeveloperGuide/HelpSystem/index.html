@@ -1,0 +1,36 @@
+<p>Das Einrichten einer Anwendungshilfe benötigt die folgenden Schritte:</p>
+<h3>Hile in JamWiki erstellen</h3>
+<ul>
+ <li>Einrichten eines Virtual-Wikis in JamWiki (<a href="https://www.top-logic.com/jamwiki/" target="_blank">​https://www.top-logic.com/jamwiki/</a>)</li>
+ <li>Eintragen dieses Wikis in der Anwendungskonfiguration: 
+  <pre><code>&lt;section name="JamWikiImporter"	comment="JamWikiImporter exports a JamWiki-DB into a Top-Logic project"&gt;
+   &lt;entry name="virtualWikis" value="top-logic"/&gt;
+   &lt;entry name="defaultWiki" value="top-logic"/&gt;
+&lt;/section&gt;
+</code></pre></li>
+ <li>Exportieren der Anwendungsstruktur in eine JamWiki-Indexseite 
+  <ul>
+   <li>In <code class="hljs inlineCode">Administration : Tech. Administration : Onlinehilfe</code></li>
+   <li>"Empfohlene "de/layoutIndex" in JamWiki" und</li>
+   <li>"Empfohlene "en/layoutIndex" in JamWiki" auf die JamWiki-Seiten <code class="hljs inlineCode">de/layoutIndex</code> und <code class="hljs inlineCode">en/layoutIndex</code> kopieren. <img src="ref:export-wiki-index.png.png" style="width:600px"></li>
+  </ul></li>
+ <li>Füllen der aus dem Index verlinkten Seiten</li>
+</ul>
+<h3>Hilfe in die Anwendung importieren</h3>
+<ul>
+ <li>Über die Wartungsseite <code class="hljs inlineCode">ExportHelp.jsp</code> unter <code class="hljs inlineCode">Administration : Tech. Administration : Wartung</code> die Hilfe importieren.</li>
+ <li>Die importierten Seiten werden unterhalb von <code class="hljs inlineCode">/help</code> im Web-Verzeichnis der Anwendung abgelegt.</li>
+ <li>Während des Imports muss eine Datenbankverbindung zum JamWiki-Datenbankserver und Zugriff auf die Dateiablage des JamWiki-Systems bestehen.</li>
+ <li>Die entsprechende Konfiguration muss ebenfalls in der Sektion eingetragen sein: 
+  <pre><code>&lt;section name="JamWikiImporter"	comment="JamWikiImporter exports a JamWiki-DB into a Top-Logic project"&gt;
+   &lt;entry name="dataSource" value="com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource" /&gt;
+   &lt;entry name="URL" value="jdbc:mysql://10.49.56.12:3306/jamwiki" /&gt;
+   &lt;entry name="databaseName" value="jamwiki" /&gt;
+   &lt;entry name="user" value="sa" /&gt;
+   &lt;entry name="password" value="bup" /&gt;
+
+   &lt;entry name="jamWikiImageBasePath" value="file:////nas/jamwiki" /&gt;
+&lt;/section&gt;
+</code></pre></li>
+ <li>Die Hinweise für Autoren sind zu beachten: <a href="https://www.top-logic.com/jamwiki/help/guideline_for_authors" target="_blank">​https://www.top-logic.com/jamwiki/help/guideline_for_authors</a></li>
+</ul>

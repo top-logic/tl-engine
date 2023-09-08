@@ -1,0 +1,149 @@
+<p>To optimize the database schema for model elements, specialized database tables can be defined. A specialized database mapping can then be performed instead of the automatic generic <a class="tlObject" data-custom="true" href="?page=DatabaseMapping&amp;uuid=26047ae6-dc6e-4a5b-93a9-86752fb22572">database mapping</a>. Without a custom schema configuration, Top-Logic uses <a class="tlObject" data-custom="true" href="?page=GenericDataBaseMapping&amp;uuid=9f541afb-032d-4522-82a4-db6e4adb3c90">generic storage</a> for application data.</p>
+<h2>Schema configuration</h2>
+<p>The database schema can either be done directly via XML configuration files in a TL-Studio environment, or created in the application itself in the <a class="tlObject" data-custom="true" href="?page=SchemaEditor&amp;uuid=ID_8c756299_3df9_475b_a01c_0203c83ae5d3">schema editor</a>. This section covers the underlying XML declarations. If a table is created interactively in the schema editor, the files described here are generated automatically.</p>
+<p>A schema configuration is created in the folder <code class="hljs inlineCode">WEB-INF/kbase</code> and has the name schema <code class="hljs inlineCode">&lt;MySchema&gt;Meta.xml</code>, for example, <code class="hljs inlineCode">com.top_logic.demo/webapp/WEB-INF/kbase/DemoTypesMeta.xml</code>.</p>
+<p>The configuration of the database schema of the finished application is modular. That is, the finished schema is composed of many individual files located in different modules. Top-Logic already provides a number of such schema definitions, which can be inherited from the concrete application and enriched with your own declarations. Each individual schema definition file must therefore be included in the application configuration.</p>
+<p>For example, the above mentioned configuration<code class="hljs inlineCode">DemoTypesMeta.xml</code> from the demo application is referenced in the following way from the application configuration of the demo application, see <code class="hljs inlineCode">com.top_logic.demo/webapp/WEB-INF/conf/DemoConf.config.xml</code>:</p>
+<pre><code class="language-xml">&lt;application xmlns:config="http://www.top-logic.com/ns/config/6.0"&gt;
+   &lt;configs&gt;
+      &lt;config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes"&gt;
+         &lt;type-systems&gt;
+            &lt;type-system name="Default"&gt;
+               &lt;declarations&gt;
+                  &lt;declaration resource="webinf://kbase/DemoTypesMeta.xml" /&gt;
+               &lt;/declarations&gt;
+            &lt;/type-system&gt;
+         &lt;/type-systems&gt;
+      &lt;/config&gt;
+   &lt;/configs&gt;
+&lt;/application&gt;</code></pre>
+<h2>Table definition</h2>
+<p>A normal object table is defined using the tag <code class="hljs inlineCode">metaobject</code>. The table name is specified using <code class="hljs inlineCode">object_name</code>.</p>
+<pre><code>&lt;objectlist xmlns="http://www.top-logic.com/ns/meta/5.8"&gt;
+  &lt;metaobjects&gt;
+
+    &lt;metaobject abstract="false" object_name="MyTable" super_class="TLObject"&gt;
+      &lt;attributes&gt;
+        ...
+      &lt;/attributes&gt;
+    &lt;/metaobject&gt;
+
+  &lt;/metaobjects&gt;
+&lt;/objectlist&gt;
+</code></pre>
+<p>Table definitions in Top-Logic can be "abstract". An abstract table is not created in the database, but only serves as a template for other tables. A table <code class="hljs inlineCode">T</code> can use another table <code class="hljs inlineCode">S</code> as a template by referencing it via <code class="hljs inlineCode">super_class="S"</code>. In this case, the table <code class="hljs inlineCode">T</code> receives all columns from <code class="hljs inlineCode">S</code> as preceding columns and additionally its own columns (defined in <code class="hljs inlineCode">T</code> ) added at the end.</p>
+<p>It is important to note that the name specified in <code class="hljs inlineCode">object_name</code> is only the so-called platform-independent table name. From the platform-independent table name used for internal referencing of the table, the database abstraction layer automatically generates a concrete table name that is used in SQL statements. The SQL table name is usually written in uppercase letters and uses underscores as word separators. Depending on the database, the name can also be shortened to meet special restrictions of the database system. The concrete table <code class="hljs inlineCode">MY_TABLE</code> is created in the database from the table <code class="hljs inlineCode">MyTable</code> defined above. In continuous text, this documentation always uses the platform-independent table name as found in the corresponding schema declaration files. Only when SQL statements are given as examples, the SQL name of the table is used.</p>
+<h2>Column definition</h2>
+<p>A value column (with primitive type) is defined using the <code class="hljs inlineCode">mo_attribute</code> tag. With <code class="hljs inlineCode">mandatory</code> one specifies whether it should be excluded on database level that the empty value can be stored (<code class="hljs inlineCode">NOT NULL</code> in SQL). For string columns, <code class="hljs inlineCode">db_size</code> specifies the maximum number of characters that the column can hold.</p>
+<pre><code>&lt;mo_attribute att_name="myColumn" att_type="String" mandatory="false" db_size="256"/&gt;
+</code></pre>
+<p>A platform-independent description also exists for the value types of table columns. The platform-independent column type is then converted into a concrete SQL type depending on the database system used. This ensures that an application with the same schema definition can run on all database systems supported by Top-Logic.</p>
+<p>Possible value types for primitive columns are:</p>
+<ul>
+ <li><code class="hljs inlineCode">String</code></li>
+ <li><code class="hljs inlineCode">Boolean</code></li>
+ <li><code class="hljs inlineCode">Integer</code></li>
+ <li><code class="hljs inlineCode">Long</code></li>
+ <li><code class="hljs inlineCode">Byte</code></li>
+ <li><code class="hljs inlineCode">Short</code></li>
+ <li><code class="hljs inlineCode">Character</code></li>
+ <li><code class="hljs inlineCode">Float</code></li>
+ <li><code class="hljs inlineCode">Double</code></li>
+ <li><code class="hljs inlineCode">Date</code></li>
+ <li><code class="hljs inlineCode">Time</code></li>
+ <li><code class="hljs inlineCode">Timestamp</code></li>
+ <li><code class="hljs inlineCode">Clob</code></li>
+ <li><code class="hljs inlineCode">Blob</code></li>
+</ul>
+<h2>Foreign key columns</h2>
+<p>A foreign key column (a column whose value is a reference to another object) is defined using the <code class="hljs inlineCode">reference</code> tag. The target type is specified via <code class="hljs inlineCode">target-type</code>. The foreign key defined in this way can be used to reference all objects stored in the table specified in <code class="hljs inlineCode">target-type</code>. It is permitted that an abstract table is specified as the target type. In this case, all those objects can be referenced that are stored in tables that use the specified abstract table as a template (either directly or as a template of the template, etc.).</p>
+<p>The following definition creates a foreign key column <code class="hljs inlineCode">keyCol</code>, which can be used to reference objects stored in the table <code class="hljs inlineCode">OtherTable</code>:</p>
+<pre><code>&lt;reference 
+   att_name="keyCol"
+   target-type="OtherTable"
+   mandatory="false" 
+   monomorphic="true" 
+   deletion-policy="clear-reference" 
+   is-container="false" 
+   history-type="current" 
+   branch-global="false" 
+   initial="false"
+   by-value="false"
+/&gt;
+</code></pre>
+<p>Since the reference is not <code class="hljs inlineCode">mandatory</code>, the reference can be empty (point to no other object).</p>
+<p>With <code class="hljs inlineCode">monomorphic='true'</code>, it is specified that all objects that are referenced are in the same table (exactly the specified table <code class="hljs inlineCode">OtherTable</code>), even if the specified table was used as a template for other tables. For <code class="hljs inlineCode">monomorphic='false'</code>, a referenced object can also be in a table that uses <code class="hljs inlineCode">target-type</code> (here <code class="hljs inlineCode">OtherTable</code>) as a template.</p>
+<p>Declaring a reference in a table type creates one or more columns in concrete SQL schema, depending on how the reference is parameterized. In any case, a column is created that can contain the technical identifier of the referenced object, vlg. <a class="tlObject" data-custom="true" href="?page=TechnicalColumns&amp;uuid=bfb011d4-1fd6-4b63-9e0f-b54e895a12fd">Technical Columns</a>. The name of this ID column is formed from the specified name of the reference with the suffix <code class="hljs inlineCode">_ID</code>.</p>
+<h3>Deletion strategies</h3>
+<p>You use <code class="hljs inlineCode">deletion-policy</code> to determine what should happen when the referenced target object is deleted. Possible values are</p>
+<ul>
+ <li><code class="hljs inlineCode">clear-reference</code>: The reference is set to "empty" (deleted).</li>
+ <li><code class="hljs inlineCode">delete-referer</code>: The referencing source object is also deleted.</li>
+ <li><code class="hljs inlineCode">stabilise-reference</code>: The reference is retained and points to the last valid version of the referenced target object. For this, <code class="hljs inlineCode">history-type</code> must be set to <code class="hljs inlineCode">mixed</code>.</li>
+ <li><code class="hljs inlineCode">veto</code>: Deletion of the referenced target object is prevented.</li>
+</ul>
+<p>With <code class="hljs inlineCode">is-container</code> one can determine that the referenced target object is "part of" the referencing source object and therefore should be deleted together with the referencing source object. Thus, a deletion continues through a <code class="hljs inlineCode">is-container</code> reference to the target object. This strategy currently only works with <code class="hljs inlineCode">history-type</code>=<code class="hljs inlineCode">current</code> on the referenced target object.</p>
+<h3>Scope of the Reference</h3>
+<p>Whether a reference can point to historical versions of an object is specified via <code class="hljs inlineCode">history-type</code>, see <a class="tlObject" data-custom="true" href="?page=Versioning&amp;uuid=9320ab94-eb74-4ee2-ba9f-3a223e25570d">Versioning</a>. Possible values are:</p>
+<ul>
+ <li><code class="hljs inlineCode">current</code>: The reference can only point to current versions of objects. If the referenced object is deleted, <code class="hljs inlineCode">deletion-policy</code> is taken into account.</li>
+ <li><code class="hljs inlineCode">historic</code>: The reference only points to stable versions of objects. If it is filled with a current object, after the commit it points to the version of the referenced object that is valid in that commit (the reference is "stabilized").</li>
+ <li><code class="hljs inlineCode">mixed</code>: Both current states and stable versions of objects can be referenced in such a reference. In such a reference, <code class="hljs inlineCode">stabilise-reference</code> can be used as <code class="hljs inlineCode">deletion-policy</code>, see above.</li>
+</ul>
+<h2>Association tables</h2>
+<p>There is a shorthand notation for typical association tables with only two foreign keys (source and target).</p>
+<p>The following definition creates a link table named <code class="hljs inlineCode">myLinkTable</code>, which can be used to store a set or list reference in the model. The template <code class="hljs inlineCode">hasWrapperAttValueBaseAssociation</code> must be used for this purpose.</p>
+<pre><code>&lt;association super_class="hasWrapperAttValueBaseAssociation" object_name="myLinkTable" /&gt;
+</code></pre>
+<p>The table thus defined has two foreign keys <code class="hljs inlineCode">source</code> and <code class="hljs inlineCode">dest</code>. If the type of reference or the options like <code class="hljs inlineCode">mandatory</code> etc. are to be customized, then these special foreign keys can also be declared using <code class="hljs inlineCode">&lt;source/&gt;</code> and <code class="hljs inlineCode">&lt;dest/&gt;</code>:</p>
+<pre><code>&lt;association super_class="hasWrapperAttValueBaseAssociation" object_name="myLinkTable"&gt;
+   &lt;attributes&gt;
+      &lt;source
+         override="true"
+         target-type="SpecialSourceTable"
+      /&gt;
+      &lt;destination
+         override="true"
+         target-type="SpecialDestTable"
+      /&gt;
+   &lt;/attributes&gt;
+&lt;/association&gt;
+</code></pre>
+<p>So the above definition is equivalent to:</p>
+<pre><code>&lt;association super_class="hasWrapperAttValueBaseAssociation" object_name="myLinkTable"&gt;
+   &lt;attributes&gt;
+      &lt;reference 
+         att_name="source"
+         override="true"
+         target-type="SpecialSourceTable"
+      /&gt;
+      &lt;reference 
+         att_name="dest"
+         override="true"
+         target-type="SpecialDestTable"
+      /&gt;
+   &lt;/attributes&gt;
+&lt;/association&gt;
+</code></pre>
+<h2>Indexes</h2>
+<p>User-defined indexes for object tables can be defined using the <code class="hljs inlineCode">mo_index</code> tag. The list <code class="hljs inlineCode">index_parts</code> enumerates the attributes and references over which the index is to be created:</p>
+<pre><code class="language-xml">&lt;metaobject abstract="false" object_name="MyTable" super_class="TLObject"&gt;
+    &lt;attributes&gt;
+        ...
+    &lt;/attributes&gt;
+
+    &lt;index&gt;
+        &lt;mo_index name="myIndex" unique="false"&gt;
+            &lt;index-parts&gt;
+	        &lt;index_part name="myAttr1"/&gt;
+	        &lt;index_part name="myAttr2"/&gt;
+            &lt;/index-parts&gt;
+        &lt;/mo_index&gt;
+    &lt;/index&gt;
+&lt;/metaobject&gt;
+</code></pre>
+<p>The attribute <code class="hljs inlineCode">unique</code> controls whether the database should enforce uniqueness of index entries.</p>
+<p></p>
+<h2>Branches</h2>
+<p>Top-Logic is in principle multi-client capable (see also <a class="tlObject" data-custom="true" href="?page=Branches&amp;uuid=9f31c13b-7a63-41cd-b1b1-422e28c3de13">Multi-client capability</a>). For this purpose, an additional column "BRANCH" is created in the database in each compartment table. If an application does not require this, it can be switched off. Depending on the data volume, the database can be optimized in this way.</p>
+<p>To switch off the multi-client capability and to prevent the unnecessary "BRANCH" column in the database, the configuration file <code class="hljs inlineCode">top-logic.singleBranch.config.xml</code> can be integrated into the application.</p>

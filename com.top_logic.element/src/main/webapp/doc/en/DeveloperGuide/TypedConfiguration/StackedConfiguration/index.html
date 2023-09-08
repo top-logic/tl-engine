@@ -1,0 +1,43 @@
+<p></p>
+<h1 id="Überschreiberegeln">Überschreiberegeln</h1>
+<p>Im Folgenden soll <code class="hljs inlineCode">x:</code> der Prefix für den Namensraum <code class="hljs inlineCode">http://www.top-logic.com/ns/config/6.0</code> sein.</p>
+<p>Eine allgemeine Konfiguration kann durch eine spezielle Konfiguration überschrieben werden. Dabei gibt es folgende Möglichkeiten:</p>
+<h2 id="BenannteKomponenten">Benannte Komponenten</h2>
+<p>Eine Komponente sei durch das Tag <code class="hljs inlineCode">&lt;aConfig /&gt;</code> beschrieben. Das Konfigurationstag <code class="hljs inlineCode">aConfig</code> bekommt ein neues boolean-wertiges Attribute <code class="hljs inlineCode">x:override</code> (default <code class="hljs inlineCode">false</code>).</p>
+<ul>
+ <li>Im Fall <code class="hljs inlineCode">x:override="true"</code> wird eine komplette Neukonfiguration vorgenommen. Die allgemeine Konfiguration wird ignoriert.</li>
+ <li>Im Fall <code class="hljs inlineCode">x:override="false"</code> wird die allgemeine Konfiguration durch die spezielle Konfiguration modifiziert. 
+  <ul>
+   <li>Es werden alle Attribute gesetzt die in der allgemeinen Konfiguration oder der speziellen Konfiguration angegeben werden. Wird ein Attribut in beiden Konfigurationen angegeben, wird der Konfigurationswert der speziellen Konfiguration benutzt.</li>
+   <li>Wird eine Eigenschaft der Komponente durch ein Subtag beschrieben und ist diese entweder in der allgemeinen Konfiguration oder der speziellen Konfiguration gegeben, so wird diese Eigenschaft gesetzt. Ist diese Eigenschaft in beiden Konfigurationen gegeben, so wird abhängig von dem Type der Eigenschaft verfahren.</li>
+  </ul></li>
+</ul>
+<h2 id="Subkomponentenlisten">Subkomponentenlisten</h2>
+<p>Habe die Komponente eine listenwertige Subkomponenten Eigenschaft wobei es noch einen indizierenden Key gebe, z.B. laute ein Konfiguration:</p>
+<pre><code>  &lt;aConfig&gt;
+   &lt;bConfigs&gt;
+      &lt;bConfig name="component-1" /&gt;
+      &lt;bConfig name="component-2" /&gt;
+      &lt;bConfig name="component-3" /&gt;
+   &lt;bConfigs&gt;
+ &lt;aConfig&gt;
+</code></pre>
+<p>wobei <code class="hljs inlineCode">name</code> der indizierender Key in der Liste der <code class="hljs inlineCode">bConfig</code> sei.</p>
+<p>Das Listenwertige Tag <code class="hljs inlineCode">bConfigs</code> bekommt ein neues boolean-wertiges Attribute <code class="hljs inlineCode">x:override</code> (default <code class="hljs inlineCode">false</code>).</p>
+<ul>
+ <li>Im Fall <code class="hljs inlineCode">x:override="true"</code> wird die komplette Liste redeklariert. Die in der allgemeinen Konfiguration angegebene Liste wird ignoriert.</li>
+ <li>Im Fall <code class="hljs inlineCode">x:override="false"</code> wird die in der allgemeine Konfiguration angegebene Liste modifiziert. Die Untertags <code class="hljs inlineCode">bConfig</code> erhalten zusätzliche Attribute 
+  <ul>
+   <li><code class="hljs inlineCode">x:operation</code> mit möglichen Werten: 
+    <ul>
+     <li><code class="hljs inlineCode">add</code> (default): Dieser Listeneintrag wird an das Ende der Liste angehängt.</li>
+     <li><code class="hljs inlineCode">remove</code>: Der Listeneintrag mit dem selben Key wird entfernt .</li>
+     <li><code class="hljs inlineCode">update</code>: Der Listeneintrag mit dem selben Key wird bearbeitet. Dies geschieht wie in den <a href="BenannteKomponenten">Überschreiberegeln für Komponenten</a> beschrieben.</li>
+    </ul></li>
+   <li><code class="hljs inlineCode">x:position</code> mit den Werten <code class="hljs inlineCode">begin</code>, <code class="hljs inlineCode">end</code>, <code class="hljs inlineCode">before</code> und <code class="hljs inlineCode">after</code>. Im Fall, dass die Operation <code class="hljs inlineCode">add</code> und <code class="hljs inlineCode">update</code> ist bestimmt das <code class="hljs inlineCode">position</code> Attribut die Stelle an der der Eintag eingefügt wird, bzw. beim <code class="hljs inlineCode">update</code> wohin der Eintrag verschoben wird. Im Fall <code class="hljs inlineCode">before</code> und <code class="hljs inlineCode">after</code> muss noch eine Reference zu einem anderen Listeneintrag über <code class="hljs inlineCode">x:reference=key</code> gegeben werden um die relative Position zu bestimmen.</li>
+  </ul></li>
+</ul>
+<h2 id="IndizierteSubkomponenten">Indizierte Subkomponenten</h2>
+<p>Geschieht ählich wie bei den <a href="Subkomponentenlisten">Subkomponentenlisten</a>. Im Fall dass die indizierten Subkomponenten inkrementell verändert werden (<code class="hljs inlineCode">bConfigs</code> hat das Attribut <code class="hljs inlineCode">x:override="false"</code>) hat das Attribut <code class="hljs inlineCode">x:operation</code> nur einen eingeschränkten Wertebereich: Die Werte <code class="hljs inlineCode">prepend</code>, <code class="hljs inlineCode">after</code> und <code class="hljs inlineCode">before</code> entfallen ersatzlos.</p>
+<h2 id="StrukturierteWerte">Strukturierte Werte</h2>
+<p>Die allgemeine Konfiguration wird ignoriert. Es gibt keine Möglichkeit die Konfiguration inkrementell zu verändern.</p>

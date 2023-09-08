@@ -1,0 +1,23 @@
+<p></p>
+<h1 id="AnnotierteKonfigurationsnamen">Annotierte Konfigurationsnamen</h1>
+<p>Eine konfigurierbare Eigenschaft kann auch über einen anderen Namen als den vom Getter-Namen abgeleiteten konfiguriert werden. Dazu muss die entsprechende konfigurierbare Eigenschaft eine Annotation bekommen die den externen Namen dieser Eigenschaft angibt. Dies erfolgt über die <code class="hljs inlineCode">com.top_logic.basic.config.annotation.Name</code>-Annotation.</p>
+<p>Beispiel:</p>
+<pre><code>public class Component {
+   public interface Config extends PolymorphicConfiguration&lt;Component&gt; {
+
+      @Name("optionIndex")
+      int getOption();
+   }
+
+   private Config config;
+
+   Component(InstantiationContext context, Config config) {
+      this.config = config;
+   }
+}
+</code></pre>
+<p>Bei Verwendung des [XMLBinding XML-Bindings] kann dann eine Komponente über folgendes XML-Dokument konfiguriert werden:</p>
+<pre><code>&lt;component
+   optionIndex="42"
+/&gt;
+</code></pre>

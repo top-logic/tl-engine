@@ -1,0 +1,42 @@
+<p><code class="hljs inlineCode">TemplateExpression</code>s define the rendering for model objects. The template syntax is defined as follows:</p>
+<h2>Literal text</h2>
+<p>All text is interpreted as literal (internationalized) text, except for embedded template expressions, see blow.</p>
+<h2>Template expression</h2>
+<p>A template expression is surrounded with braces <code class="hljs inlineCode">{ [expr] }</code>.</p>
+<h2>Literal XML/HTML</h2>
+<p>XML/HTML structure can be output literally with embedded expressions in attribute values and tag content: <code class="hljs inlineCode">&lt;div class="myclass {$other}"&gt;Some {$value}.&lt;/div&gt;</code>.</p>
+<h2>Template reference</h2>
+<p>In a template expression, another template can be referenced by its name <code class="hljs inlineCode">{-&gt; [other-template]}</code>. In the output, a template reference is replaced by the expansion of the referenced template based on the same configuration instance.</p>
+<h2>Conditional evaluation</h2>
+<p>A template expression can consist of a conditional evaluation operator <code class="hljs inlineCode">{ [test] ? [if] : [else] }</code>. When evaluated, the conditional expression evaluates to the expansion of the <code class="hljs inlineCode">[if]</code> expression, if the expression <code class="hljs inlineCode">[test]</code> evaluates to a non-<code class="hljs inlineCode">null</code>, non-zero, or non-empty value. Otherwise, the <code class="hljs inlineCode">[else]</code> expression is evaluated.</p>
+<h2>Alternative evaluation</h2>
+<p>To create an alternative representation for an otherwise empty value, a short-cut form for <code class="hljs inlineCode">{ [alternative1] ? [alternative1] : [alternative2] }</code> is possible through an alternative expression <code class="hljs inlineCode">{ [alternative1] | [alternative2] }</code>.</p>
+<h2>Embedded template text</h2>
+<p>Within a template expression, the parser mode can be switched back to literal text (with potentially embedded template expressions) by surrounding the literal text again with braces <code class="hljs inlineCode">{ [test] ? {some literal text} : {some other literal text} }</code></p>
+<h2>Property access</h2>
+<p>Access to the value of a model property of the underlying model object is done by using the property name <code class="hljs inlineCode">{my-property}</code>.</p>
+<p>Accessing a property that is not defined by the underlying model results in an error.</p>
+<p>By default, properties of <code class="hljs inlineCode">ConfigurationItem</code> models can be accessed using their property name. When using a <code class="hljs inlineCode">com.top_logic.layout.template.TLModelAccess</code> for evaluation, persistent objects (<code class="hljs inlineCode">com.top_logic.model.TLObject</code>) and arbitrary objects implementing the <code class="hljs inlineCode">com.top_logic.layout.template.WithProperties</code> interface can also be accessed.</p>
+<h2>Variable access</h2>
+<p>In the actual evaluation context, a set of variables may be defined (as key value mapping). Such variable can be accessed by its name by prepending a <code class="hljs inlineCode">$</code> sign. A variable with name <code class="hljs inlineCode">my-var</code> may be accessed with <code class="hljs inlineCode">$my-var</code>.</p>
+<h2>Function call</h2>
+<p>Globally defined functions can be invoked from template expressions. A function is referenced through a <code class="hljs inlineCode">#</code> prefix to its name. The function <code class="hljs inlineCode">sublist</code> is e.g. invoked through the expression <code class="hljs inlineCode">#sublist($l, 2)</code>, where the first argument is expected to reference a list value and the second gives the start offset as integer value. For all defined functions, see the configuration of <code class="hljs inlineCode">GlobalConfig#getFunctions()</code>.</p>
+<h2>Iteration</h2>
+<p>If an accessed value is list-valued, all values may be iterated with e.g. <code class="hljs inlineCode">{foreach(x : $my-var, '; ', {"{$x}"})}</code>. This binds each value of the list value <code class="hljs inlineCode">$my-var</code> to the locally-defined variable <code class="hljs inlineCode">$x</code> and evaluates the template <code class="hljs inlineCode">"{$x}"</code> for each list element (effectively dumping each element surrounded by double quotes). Between two evaluations, the separator expression <code class="hljs inlineCode">'; '</code> expands to a semicolon followed by a space. If the value of <code class="hljs inlineCode">$my-var</code> is the list of numbers <code class="hljs inlineCode">1, 2, 3</code>, the final evaluation result would be <code class="hljs inlineCode">"1"; "2"; "3"</code>.</p>
+<h2>Indexed access</h2>
+<p>If an accessed value is list-valued, an element at some index may be accessed with <code class="hljs inlineCode">$my-var[42]</code>.</p>
+<p>Accessing an out-of range index results in a <code class="hljs inlineCode">null</code> value. This allows e.g. for testing, whether a collection contains a certain number of entries through <code class="hljs inlineCode">{list[1] ? ...}</code>.</p>
+<p>Accessing with a negative index has the semantics of accessing with an index relative to the end of the list. For a list with size <code class="hljs inlineCode">5</code>, the expression <code class="hljs inlineCode">{list[-2]}</code> evaluates to the element at index <code class="hljs inlineCode">3</code>.</p>
+<h2>Map access</h2>
+<p>If an accessed value is map-valued with string keys, an element with some key may be accessed with <code class="hljs inlineCode">$my-var['some-key']</code>.</p>
+<h2>Reference access</h2>
+<p>If an accessed value is a configuration value itself, a specific property may be accessed using a dot-separated path expression <code class="hljs inlineCode">{$my-var.some-property}</code>.</p>
+<h2>Literal string</h2>
+<p>A literal string (without the possibility of embedding further expressions) is written as <code class="hljs inlineCode">'some text'</code>, or <code class="hljs inlineCode">"some text"</code>.</p>
+<h2>Literal numbers</h2>
+<p>A literal integral value is simply written as number <code class="hljs inlineCode">42</code>.</p>
+<h2>Access to the underlying model object</h2>
+<p>The underlying model as whole can be referenced by the keyword <code class="hljs inlineCode">this</code>.</p>
+<h2>HTML output</h2>
+<p>When output is generated through a <code class="hljs inlineCode">com.top_logic.layout.template.TemplateWriter</code>, the template can contain embedded HTML syntax. The HTML may contain embedded expressions within attribute or element content:</p>
+<p><code class="hljs inlineCode">&lt;div class="{my-class}"&gt;{my-text}&lt;/div&gt;</code></p>

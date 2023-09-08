@@ -1,0 +1,10 @@
+<p>Vordefinierte und unstrukturierte Werte werden in einem XML-Attribut gespeichert. ​Der Attribut-Wert entspricht der textuellen Repräsentation des Konfigurationswertes, die über das vordefinierte oder annotierte Format (@Format) gelesen und geschrieben werden.</p>
+<p>Alle primitiven Java-Typen&nbsp;nebst ihren Objekt-Entsprechungen&nbsp;werden direkt als Werte von Eigenschaften&nbsp;unterstützt. Ihre Werte werden über die bekannten Java-Literale konfiguriert: <code class="hljs inlineCode">true</code>, <code class="hljs inlineCode">false</code>, <code class="hljs inlineCode">42</code>, <code class="hljs inlineCode">42.13</code>.</p>
+<p>Eigenschaften können auch Werte enthalten, die selbst Instanzen einfacher Java-Klassen sind. Diese Blätter des Konfigurationsbaums können entweder aus einem Satz vordefinierter Typen stammen, für die es&nbsp;Default-Mappings gibt:</p>
+<ul>
+ <li><code class="hljs inlineCode">java.lang.String</code>: Der Stringinhalt wird direkt als Attributwert angegeben.</li>
+ <li><code class="hljs inlineCode">java.lang.Class</code>: Der vollqualifizierte Klassenname wird als Attributwert angegeben.</li>
+ <li><code class="hljs inlineCode">java.lang.Enum</code>: Der Name des Enum-Eintrags wird als Attributwert angegeben.</li>
+ <li><code class="hljs inlineCode">java.util.Date</code>: Kodierung nach&nbsp;<a href="http://www.w3.org/TR/xmlschema-2/#dateTime" target="_blank">W3C</a></li>
+</ul>
+<p>oder sie können durch Annotation eines <a class="tlObject" data-custom="false" href="?page=FormatAnnotation&amp;uuid=6d91f715-9a35-4317-99cf-c8e672d28622">Format</a>s oder <a class="tlObject" data-custom="true" href="?page=StructuredValueBinding&amp;uuid=be7c15df-2e88-4a31-8e45-90d62b47d743">Binding</a>s an die Eigenschaft gemappt werden.</p>

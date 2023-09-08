@@ -1,0 +1,124 @@
+<p>Top-Logic bietet die Möglichkeit Daten zwischen verschiedenen TL-Systemen zu synchronisieren. Hierfür werden Daten von dem Quellsystem an das externe Bus-System <a href="https://kafka.apache.org/" target="_blank">​Kafka</a> gegeben. Dieses verteilt dann die Daten an die Zielsysteme. Eine gute Einführung zu Kafka findet man in <a href="https://hackernoon.com/thorough-introduction-to-apache-kafka-6fbf2989bbc1" target="_blank">​Kafka Tutorial</a>. Mittels des <a href="http://kafkatool.com/download.html" target="_blank">​Kafka Tools</a> kann man Kafka-Instanzen untersuchen.</p>
+<p>Der Ablauf bei der Synchronisation ist folgender:</p>
+<ul>
+ <li>Im Quellsystem TL1 werden Änderungen vorgenommen.</li>
+ <li>Diese Änderungen werden von der KnowledgeBase an einen Kakfa-Listener innerhalb TL1 geschickt.</li>
+ <li>Innerhalb des Kafka-Listener werden diese Änderungen gefiltert und aufbereitet, so dass nur die zu exportierenden Informationen enthalten sind. Weiterhin werden technische Daten hinzugefügt, die keinerlei fachliche Relevanz haben.</li>
+ <li>Das Event wird an das vorhandene Kafka-System gegeben.</li>
+ <li>Das Zielsystem TL2 empfängt als Listener an Kafka die Änderungen.</li>
+ <li>TL analysiert den Event um nur die relevanten Informationen zu importieren.</li>
+ <li>Die Änderungen werden eingespielt.</li>
+</ul>
+<h2>Technische Vorraussetzung</h2>
+<ul>
+ <li>Das exportierende TL-System muß das Module <code class="hljs inlineCode">com.top_logic.kafka</code> nutzen.</li>
+ <li>Das importierende TL-System muß das Module <code class="hljs inlineCode">com.top_logic.kafka</code> nutzen.</li>
+ <li>Es muß ein laufendes Kafka vorhanden sein. Das Modul <code class="hljs inlineCode">com.top_logic.kafka.server</code> enthält einen Kafka-Server und Launchkonfigurationen um Kafka zu starten.</li>
+ <li>Der Alias %KAFKA_SERVER% muß korrekt auf die URL des Kafka-Server gesetzt sein.</li>
+ <li>Der Alias %DATA_CHANGE_CONSUMER_GROUP_NAME% sollte gesetzt sein. Hintergrund ist, dass alle TL-Systeme mit dem selben Wert dieser Variable als eine Gruppe angesehen werden, d.h. wenn ein importierendes TL-System die Änderungen bekommt, bekommen alle anderen Systeme diese Änderungen nicht mehr. Falls verschiedene System von einer gemeinsamen Quelle importieren, müssen diese Systeme also in verschienden Gruppen sein.</li>
+</ul>
+<h2>Exportierte Informationen</h2>
+<p>Welche Informationen aus dem Quellsystem TL1 exportiert werden, wird in der Modellkonfiguration festgelegt.</p>
+<ul>
+ <li>Wird an einem Typ die Annotation "TLExported" oder als shortcut <code class="hljs inlineCode">&lt;exported /&gt;</code> gesetzt, so werden alle Instanzen dieses Types (und aller Subtypen <a href="http://tl/trac/ticket/22251" target="_blank" title="#22251: task: Offene Punkte in TLSync (new)">#22251</a>) exportiert. 
+  <ul>
+   <li>Standardmäßig werden das Objekt selber und alle Werte exportiert.</li>
+   <li>Soll eine Eigenschaft nicht exportiert werden, kann an dem Property die Annotation <code class="hljs inlineCode">&lt;exported value="false"/&gt;</code> gesetzt werden.</li>
+  </ul></li>
+ <li>Diese Konfigurationen können auch in der GUI vorgenommen werden.</li>
+</ul>
+<p>Bsp.:</p>
+<pre><code class="language-xml">&lt;model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"&gt;
+  &lt;modules&gt;
+    &lt;module name="tl1_module"&gt;
+      &lt;types&gt;
+        &lt;class name="tl1_type"&gt;
+          &lt;annotations&gt;
+            &lt;exported /&gt; &lt;!-- Sorgt dafür das tl1_type exportiert wird --&gt;
+          &lt;/annotations&gt;
+          &lt;attributes&gt;
+            &lt;property name="prop1" /&gt;  &lt;!-- Wird exportiert da tl1_type exportiert wird --&gt;
+            &lt;property name="prop2" &gt;
+              &lt;annotations&gt;
+                &lt;exported value="false"/&gt; &lt;!-- Sorgt dafür das prop2 nicht exportiert wird --&gt;
+              &lt;/annotations&gt;
+            &lt;/property&gt;
+        ....
+          &lt;/attributes&gt;
+        &lt;/class&gt;
+      &lt;/types&gt;
+    &lt;/module&gt;
+  &lt;/modules&gt;
+&lt;/model&gt;</code></pre>
+<h2>Importierte Informationen</h2>
+<p>Welche Informationen in das Quellsystem TL2 importiert werden, wird in der Modellkonfiguration festgelegt.</p>
+<ul>
+ <li>Wird an einem Typ ("tl2_module:tl2_type") die Annotation "TLImported" (oder als shortcut <code class="hljs inlineCode">&lt;imported /&gt;</code>) gesetzt, so werden Objekte dieses Types durch Importe angelegt, geändert und gelöscht. 
+  <ul>
+   <li>Welcher der Quelltyp in Quellsystem ist wird durch <code class="hljs inlineCode">&lt;imported source="tl1_module:tl1_type" /&gt;</code> gesetzt. Kommt von dem Quellsystem ein Objekt mit dem Type "tl1_module:tl1_type" (im Quellsystem), so werden diese Änderung zu dem Zieltyp "tl2_module:tl2_type" umgeschlüsselt.</li>
+   <li>Wird in der <code class="hljs inlineCode">&lt;imported /&gt;</code> Annotation kein <code class="hljs inlineCode">source</code> angegeben, wird als Quelltyp ein Typ mit dem selben Modul- und Typnamen, wie im Zieltyp erwartet, d.h für einen Typ <code class="hljs inlineCode">tl2_module:tl2_class</code> wäre die Annotation <code class="hljs inlineCode">&lt;imported /&gt;</code> gleichbedeutend mit <code class="hljs inlineCode">&lt;imported source="tl2_module:tl2_class"/&gt;</code>.</li>
+   <li>Eigenschaften des Objektes "tl2_module:tl2_type" werden mit den entsprechenden Eigenschaften von "tl1_module:tl1_type" identifiziert.</li>
+   <li>Soll die Eigenschaft "tl2_module:tl2_type#foo" mit der Eigenschaft "tl1_module:tl1_type#bar" identifiziert werden, so muß bei der Definition "tl2_module:tl2_type#foo" die Annotation <code class="hljs inlineCode">&lt;imported source="bar"/&gt;</code> benutzt werden.</li>
+  </ul></li>
+ <li>Diese Konfigurationen können auch in der GUI vorgenommen werden.</li>
+</ul>
+<p>Bsp.:</p>
+<pre><code class="language-xml">&lt;model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"&gt;
+  &lt;modules&gt;
+    &lt;module name="tl2_module"&gt;
+      &lt;types&gt;
+        &lt;class name="tl2_type"&gt;
+          &lt;annotations&gt;
+            &lt;imported source="tl1_module:tl1_class" /&gt; &lt;!-- Objekte vom Typ "tl1_module:tl1_class" werden auf "tl2_module:tl2_class" gemappt--&gt;
+          &lt;/annotations&gt;
+          &lt;attributes&gt;
+            &lt;property name="prop1" /&gt;  &lt;!-- Wird mit dem Attribut "tl1_module:tl1_class#prop1" identifiziert --&gt;
+            &lt;property name="myFunnyProp2" &gt;
+              &lt;annotations&gt;
+                &lt;imported source="prop2"/&gt; &lt;!-- Sorgt dafür das "tl2_module:tl2_class#myFunnyProp2" mit "tl1_module:tl1_class#prop2" identifiziert --&gt;
+              &lt;/annotations&gt;
+            &lt;/property&gt;
+        ....
+          &lt;/attributes&gt;
+        &lt;/class&gt;
+      &lt;/types&gt;
+    &lt;/module&gt;
+  &lt;/modules&gt;
+&lt;/model&gt;</code></pre>
+<h2>Nachrichten über 1 MB</h2>
+<p>In der Standardkonfiguration überträgt Kafka nur Nachrichten bis 1 MB Größe. Dieses Limit kann zum Beispiel bei Gallery-Attributen oder anderen Datei-Uploads schnell erreicht werden. Sobald in der Standardkonfiguration eine Nachricht größer 1 MB übertragen werden soll, bricht die TL-Sync-Übertragung dauerhaft zusammen. Es gibt zwei Wege, dies zu vermeiden</p>
+<h3>Anpassung der Kafka-Konfiguration</h3>
+<p>Um größere Nachrichten zu übertragen, müssen folgende Konfigurationen geändert werden:</p>
+<ul>
+ <li>Nachrichten größer als 1 MB und kleiner als 32 MB: 
+  <ul>
+   <li>Kafka-Server Konfiguration: <code class="hljs inlineCode">message.max.bytes</code></li>
+   <li>In TL ist das die Datei: <code class="hljs inlineCode">com.top_logic.kafka.server/webapp/WEB-INF/conf/kafka/server.properties</code></li>
+   <li>Das muss der Kunde bei sich umkonfigurieren, da er den Kafka-Server bereitstellt, nicht wir. Die obige Datei ist der Server für den Eclipse-Workspace und für das (nächtliche) Build, nicht für den Kunden.</li>
+   <li>Fehlermeldung, falls diese Grenze überschritten wird: 
+    <ul>
+     <li><code class="hljs inlineCode">RecordTooLargeException</code>: The request included a message larger than the max message size the server will accept.</li>
+    </ul></li>
+  </ul></li>
+ <li>Nachrichten größer als 32 MB: 
+  <ul>
+   <li>Basis-Änderung notwendig: <code class="hljs inlineCode">TLKafkaProducer.getProperties(Config&lt;K, V&gt;)</code></li>
+   <li>Es muss folgende Zeile hinzugefügt werden: <code class="hljs inlineCode">props.put("buffer.memory", 200 * 1024 * 1024);</code>
+    <ul>
+     <li>Die 200 MB sind nur ein Beispiel.</li>
+    </ul></li>
+   <li>Fehlermeldung, falls diese Grenze überschritten wird: 
+    <ul>
+     <li>The message is 80895596 bytes when serialized which is larger than the total memory buffer you have configured with the buffer.memory configuration.</li>
+    </ul></li>
+   <li>Darauf hat der Kunde keinen Einfluss, das müssen wir erledigen.</li>
+  </ul></li>
+ <li>Eventuell müssen weitere Einstellungen vorgenommen werden. Das muss vorher entsprechend getestet werden. Mögliche weitere Einstellungen, die eventuell geändert werden müssen: 
+  <ul>
+   <li>In der Datei <code class="hljs inlineCode">ext.org.apache.kafka/config/server.properties</code> die Einstellung: <code class="hljs inlineCode">socket.request.max.bytes</code></li>
+   <li>In der Datei <code class="hljs inlineCode">com.top_logic.kafka.server/webapp/WEB-INF/conf/kafka/server.properties</code> die Einstellungen: <code class="hljs inlineCode">socket.request.max.bytes</code> und <code class="hljs inlineCode">replica.fetch.max.bytes</code></li>
+   <li>Es gibt eventuell noch mehr Einstellungen.</li>
+  </ul></li>
+</ul>
+<h3>Einschränkung der maximalen Größe eines Commits</h3>
+<p>Mittels Constraints muss die maximale Datenmenge an potentiell großen Attributen beschränkt werden. Dabei ist zu beachten, dass Dateien bei der Übertragung etwa die 1,4-fache Menge an Bytes benötigen. Ein Bild das 59 MB groß war, hat eine Kafka-Message der Größe 81 MB erzeugt. Das muss man bei den Constraints entsprechend beachten.</p>

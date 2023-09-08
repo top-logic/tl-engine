@@ -1,0 +1,146 @@
+<p>Es besteht die Möglichkeit, einen Default Wert für eine Property anzugeben. Dafür muss man an das entsprechende Property eine Konstante annotieren.</p>
+<pre><code class="language-java">public interface Config extends ConfigurationItem {
+  @IntDefault(17)
+  int getOption();
+}</code></pre>
+<p>Wenn dann aus einer unausgefüllten XML-Datei​</p>
+<pre><code class="language-xml">&lt;config option=""/&gt;</code></pre>
+<p>​eine neue Instanz der Konfiguration&nbsp;<code class="hljs inlineCode">Config</code>&nbsp;erstellt wird, liefert der Aufruf von <code class="hljs inlineCode">getOption()</code> den Wert <code class="hljs inlineCode">17</code> zurück.</p>
+<p>Je nach Typ (primitiv oder&nbsp;Objekttyp), gibt es verschiedene Annotationen für die Eigenschaft:</p>
+<table border="1" cellpadding="1" cellspacing="1" style="width:100%">
+ <thead>
+  <tr>
+   <th scope="row">Primitiv</th>
+   <th scope="row">Objekttyp</th>
+   <th scope="row">Default-Wert<br>
+     (siehe <a class="tlObject" href="?page=NullValue&amp;uuid=b2706480-3341-475e-9c76-493380afa52a">Nullable-Annotationen</a>)</th>
+   <th colspan="4" scope="col"><a class="tlObject" href="?page=DefaultValues&amp;uuid=21331497-0577-440f-be16-f42a2e67de67">Default-Annotationen</a></th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td><code class="hljs inlineCode">boolean</code></td>
+   <td><code class="hljs inlineCode">Boolean</code></td>
+   <td><code class="hljs inlineCode">false</code></td>
+   <td colspan="4"><code class="hljs inlineCode">@BooleanDefault</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">char</code></td>
+   <td><code class="hljs inlineCode">Character</code></td>
+   <td>&nbsp;</td>
+   <td colspan="4"><code class="hljs inlineCode">@CharDefault</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">byte</code></td>
+   <td><code class="hljs inlineCode">Byte</code></td>
+   <td><code class="hljs inlineCode">0</code></td>
+   <td colspan="4"><code class="hljs inlineCode">@ByteDefault</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">short</code></td>
+   <td><code class="hljs inlineCode">Short</code></td>
+   <td><code class="hljs inlineCode">0</code></td>
+   <td colspan="4"><code class="hljs inlineCode">@ShortDefault</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">int</code></td>
+   <td><code class="hljs inlineCode">Integer</code></td>
+   <td><code class="hljs inlineCode">0</code></td>
+   <td colspan="4"><code class="hljs inlineCode">@IntDefault</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">long</code></td>
+   <td><code class="hljs inlineCode">Long</code></td>
+   <td><code class="hljs inlineCode">0</code></td>
+   <td colspan="4"><code class="hljs inlineCode">@LongDefault</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">float</code></td>
+   <td><code class="hljs inlineCode">Float</code></td>
+   <td><code class="hljs inlineCode">0.0</code></td>
+   <td colspan="4"><code class="hljs inlineCode">@FloatDefault</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">double</code></td>
+   <td><code class="hljs inlineCode">Double</code></td>
+   <td><code class="hljs inlineCode">0.0</code></td>
+   <td colspan="4"><code class="hljs inlineCode">@DoubleDefault</code></td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td><code class="hljs inlineCode">String</code></td>
+   <td><code class="hljs inlineCode">""</code></td>
+   <td colspan="4"><code class="hljs inlineCode">@StringDefault</code></td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td><code class="hljs inlineCode">Class</code></td>
+   <td>&nbsp;</td>
+   <td colspan="4"><code class="hljs inlineCode">@ClassDefault</code></td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td><code class="hljs inlineCode">Enum</code></td>
+   <td>erster Eintrag</td>
+   <td colspan="4"><a class="tlObject" href="?page=ComplexDefault&amp;uuid=740f3d77-f3ff-4439-b172-c2af5a9ad951">@ComplexDefault</a></td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>Klasse</td>
+   <td><code class="hljs inlineCode">null</code></td>
+   <td colspan="4"><a class="tlObject" href="?page=ComplexDefault&amp;uuid=740f3d77-f3ff-4439-b172-c2af5a9ad951">@ComplexDefault</a>,<br><code class="hljs inlineCode">@InstanceDefault</code>,<br><code class="hljs inlineCode">@FormattedDefault</code>,<br><code class="hljs inlineCode">@ItemDefault</code></td>
+  </tr>
+  <tr>
+   <td colspan="1" rowspan="2">Konfiguration</td>
+   <td><code class="hljs inlineCode">ConfigurationItem</code></td>
+   <td><code class="hljs inlineCode">null</code></td>
+   <td>&nbsp;</td>
+   <td colspan="4" rowspan="2"><code class="hljs inlineCode">@FormattedDefault</code>,<br><code class="hljs inlineCode">@ItemDefault</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">PolymorphicConfiguration</code></td>
+   <td>&nbsp;</td>
+   <td><code class="hljs inlineCode">@ImplementationClassDefault</code></td>
+  </tr>
+ </tbody>
+</table>
+<p>Für weiterführende Informationen siehe Links in der&nbsp;Tabelle oben und die Abschnitte unten.</p>
+<h2>Default Werte für Unterkonfigurationen</h2>
+<p>Der Default <code class="hljs inlineCode">@ItemDefault</code> kann für Properties genutzt werden, die eine Unterkonfiguration beschreiben. Statt dem <code class="hljs inlineCode">null</code> Default erhält das Property eine Instanz seines Konfigurationtyps oder des in der Annotation angegebenen Konfigurationstyps, der ein Untertyp des Konfigurationstyps des Properties sein muss.&nbsp;</p>
+<ul>
+ <li><code class="hljs inlineCode">@ItemDefault</code>: Der Default ist eine Instanz des deklarierten Konfigurationsinterface Typs.</li>
+ <li><code class="hljs inlineCode">@ItemDefault(MyConfig.class)</code> und <code class="hljs inlineCode">MyConfig</code> ist ein Konfigurationsinterface: Der Default ist eine Instanz von <code class="hljs inlineCode">MyConfig</code>.</li>
+ <li><code class="hljs inlineCode">@ItemDefault(MyImpl.class)</code> und <code class="hljs inlineCode">MyImpl</code> ist kein Konfigurationsinterface: Der Default ist eine <code class="hljs inlineCode">PolymorphicConfiguration</code> mit <code class="hljs inlineCode">MyImpl.class</code> als Implementierungsklasse (siehe auch <s><a href="http://tl/trac/ticket/22219" target="_blank" title="#22219: enhancement: Angabe der Implementierungsklasse bei ItemDefault (closed: fixed)">#22219</a></s>).</li>
+</ul>
+<h2>Weitere Annotationen</h2>
+<p>Der Default-Wert einer Property kann entsprechend des Typs des Properties über eine der folgenden Annotationen bestimmt werden:</p>
+<ul>
+ <li><code class="hljs inlineCode">@NullDefault</code>: Der Default-Wert ist <code class="hljs inlineCode">null</code> und das Property wird implizit mit&nbsp;<a class="tlObject" href="?page=NullValue&amp;uuid=b2706480-3341-475e-9c76-493380afa52a">@Nullable</a>&nbsp;annotiert.</li>
+ <li><code class="hljs inlineCode">@ClassDefault</code>: Das Property muss vom Typ <code class="hljs inlineCode">Class</code> sein und bekommt die annotierte Klasse als Default.</li>
+ <li><code class="hljs inlineCode">@InstanceDefault</code>: Die annotierte Klasse wird instanziert. Eventuell muss man dafür auch&nbsp;<code class="hljs inlineCode">InstanceFormat</code>&nbsp;annotieren (siehe&nbsp;<a class="tlObject" href="?page=InstanceFormat&amp;uuid=9f2696fa-238a-4fc3-a3b1-3961b78d3942">Instanzen als Konfigurationswerte</a>).</li>
+ <li><code class="hljs inlineCode">@FormattedDefault</code>: Ist an der Property ein Format annotiert, wird der Default-Wert in der Annotation als String-Wert im gleichen&nbsp;Format&nbsp;angegeben. 
+  <pre><code class="language-java">@Format(CommaSeparatedStrings.class)
+@FormattedDefault("orange,apple,banana")
+List&lt;String&gt; getFruits();</code></pre>
+  <p>&nbsp;</p></li>
+ <li><code class="hljs inlineCode">@ItemDefault</code>: Das Property hat selbst einen Konfigurationstyp. Statt dem <code class="hljs inlineCode">null</code> Default erhält das Property eine Instanz seines Konfigurationtyps oder des in der Annotation angegebenen Konfigurationstyps, der ein Untertyp des Konfigurationstyps des Properties sein muss.&nbsp;</li>
+ <li><code class="hljs inlineCode">@ImplementationClassDefault</code>: Für Properties vom Typ <code class="hljs inlineCode">PolymorphicConfiguration</code>. Setzt für das Property <code class="hljs inlineCode">PolymorphicConfiguration.getImplementationClass()</code> die gegebene Klasse als Default. Wenn es ohne <code class="hljs inlineCode">ItemDefault</code> verwendet wird, ist die <code class="hljs inlineCode">PolymorphicConfiguration</code> aber per Default trotzdem <code class="hljs inlineCode">null</code>. Nur wenn das Property in der Konfiguration erwähnt wird, hat <code class="hljs inlineCode">ImplementationClassDefault</code> einen Effekt. Daher wird <code class="hljs inlineCode">ImplementationClassDefault</code> häufig zusammen mit <code class="hljs inlineCode">ItemDefault</code> verwendet.​​ 
+  <pre><code class="language-java">@ItemDefault
+@ImplementationClassDefault(SportCar.class)
+PolymorphicConfiguration&lt;? extends Car&lt;?&gt;&gt; getCar();</code></pre> ​</li>
+</ul>
+<h2>Spezialfall: Implementierungsklasse einer PolymorphicConfiguration</h2>
+<p>Der Default-Wert für das spezielle Konfigurationsproperty <code class="hljs inlineCode">class</code> in <code class="hljs inlineCode">PolymorphicConfiguration</code> wird neben der Methode über <code class="hljs inlineCode">@ClassDefault</code> (siehe oben) über den Typ-Parameter <code class="hljs inlineCode">T</code> des Konfigurationsinterfaces <code class="hljs inlineCode">PolymorphicConfiguration&lt;T&gt;</code> angegeben. Dieser Typ-Parameter bezeichnet den statischen Typ der Implementierungsklasse, welche bei der Instanziierung der Konfiguration erzeugt werden soll.</p>
+<p>Die Default-Implementierungsklasse der folgenden Konfiguration ist die Klasse <code class="hljs inlineCode">A</code>, ohne dies explizit an das (geerbte) Konfigurationsproperty <code class="hljs inlineCode">class</code> zu annotieren.</p>
+<pre><code class="language-java">public interface Config extends PolymorphicConfiguration&lt;A&gt; {
+   ...
+}
+</code></pre>
+<p>Diese Deklaration ist äquivalent mit:</p>
+<pre><code class="language-java">public interface Config extends PolymorphicConfiguration&lt;Object&gt; {
+   @Override
+   @ClassDefault(A.class)
+   Class&lt;? extends A&gt; getImplementationClass();
+}
+</code></pre>
+<p>&nbsp;</p>

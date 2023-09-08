@@ -1,0 +1,233 @@
+<h2>Top-Logic Berechtigungskonzept</h2>
+<ul>
+ <li>Zwei Seiten 
+  <ul>
+   <li>Rollen vergeben</li>
+   <li>Rollen prüfen</li>
+  </ul></li>
+</ul>
+<p><img alt="source:/top-logic/trunk/TL/com.top_logic/src/com/top_logic/tool/boundsec/doc-files/bound-security.jpg" src="ref:bound-security.jpg.png" title="source:/top-logic/trunk/TL/com.top_logic/src/com/top_logic/tool/boundsec/doc-files/bound-security.jpg"></p>
+<h2>Häufige Probleme &amp; Lösungen</h2>
+<ul>
+ <li>Problem: Sicht wird (nicht) angezeigt, obwohl "der Nutzer die Sicht sehen darf". 
+  <ul>
+   <li>Mögliche Ursache: Nutzer werden nicht auf Sichten berechtigt, sondern auf (Sicht, Fachobjekt) Paaren. 
+    <ul>
+     <li>Was ist das Fachobjekt? Hat der Benutzer die Berechtigung dieses Fachobjekt in dieser Sicht zu sehen?</li>
+     <li>Ist das Fachobjekt ein <code class="hljs inlineCode">BoundChecker</code>? Falls nicht, gibt es eventuell keine Berechtigung für dieses und es wird ein "Ersatzobjekt" für die Security-Berechung ermittelt.</li>
+    </ul></li>
+   <li>Mögliche Ursache: Gibt es eine Komponente in der Gegend, die nicht <code class="hljs inlineCode">BoundChecker</code> / <code class="hljs inlineCode">BoundCheckerComponent</code> implementiert? Nur <code class="hljs inlineCode">BoundChecker</code> können Berechtigt werden. Für alle anderen wird als Antwort auf <code class="hljs inlineCode">allow(...)</code> <code class="hljs inlineCode">true</code> impliziert.</li>
+   <li>Mögliche Ursache: Gibt es einen <code class="hljs inlineCode">SecurityParent</code>, der die Entscheidung für alle seine Geschwister trifft? Dann ist es egal, was diese antworten würden.</li>
+   <li>Mögliche Ursache: Sind die richtigen Fachobjekte in den betroffenen Sichten betroffen? Bei "Security Problemen" sind oft unerwartete Fachobjekte gesetzt, weil zB. das Event-Handling unerwartet verlief.</li>
+  </ul></li>
+</ul>
+<h2>Dateien</h2>
+<ul>
+ <li><code class="hljs inlineCode">InitialRoleRules.xml</code>
+  <ul>
+   <li>Regeln zur Vergabe von Rollen an Gruppen 
+    <ul>
+     <li>Bedeutung</li>
+     <li>Ist <code class="hljs inlineCode">baseObject</code> nicht gesetzt, wird das <code class="hljs inlineCode">metaObject</code> auch als <code class="hljs inlineCode">baseObject</code> verwendet.</li>
+    </ul></li>
+   <li>Problem: Wenn die Benutzer in keiner Beziehung zu dem Objekt stehen, auf dem die Rolle vergeben werden soll, ist das mit den <code class="hljs inlineCode">InitialRoleRules</code> nicht möglich. 
+    <ul>
+     <li>Workaround A: Selber eine persistente <code class="hljs inlineCode">HasRole</code> Assoziation für jeden Nutzer zu der Rolle und dem Objekt anlegen. Problem: Immer wenn ein Benutzer angelegt wird, muss das für diesen gemacht werden.</li>
+     <li>Workaround B: Eine Gruppe anlegen. Für diese Gruppe eine Assoziation zu dieser Rolle und dem Objekt anlegen. Alle Nutzer in diese Gruppe stecken. Die Gruppe als "Default Gruppe" für neue Nutzer markieren. 
+      <ul>
+       <li>Die Standardgruppe wird in der alten Properties Konfiguration unter <code class="hljs inlineCode"> &lt;root&gt;&lt;security&gt;&lt;groups&gt;&lt;defaults name=""&gt; </code> gesetzt. Es darf nicht mehrere geben.</li>
+      </ul></li>
+    </ul></li>
+   <li>Beispiele 
+    <ul>
+     <li><code class="hljs inlineCode">&lt;rule metaObject="Person" role="SecurityStructure.contact" /&gt; </code>
+      <ul>
+       <li>Jeder Benutzer bekommt auf sich selbst die Rolle <code class="hljs inlineCode">SecurityStructure.contact</code>.</li>
+       <li><code class="hljs inlineCode">Person</code> ist drei Sachen auf einmal: Sowohl Ursprung (<code class="hljs inlineCode">base</code>), als auch Ziel der Navigation, sowie das Objekt, dass die Rolle bekommt.</li>
+      </ul></li>
+    </ul></li>
+   <li><code class="hljs inlineCode">RoleRule</code></li>
+  </ul></li>
+ <li><code class="hljs inlineCode">layout.csv</code> <u>TODO:</u> Was genau darin ist für die Security relevant? 
+  <ul>
+   <li><code class="hljs inlineCode">SecurityDomain</code>: Jeder Sicht kann eine <code class="hljs inlineCode">SecurityDomain</code> zugeordnet werden. Die Berechtigung erfolgt dann nur über die Rollen dieser <code class="hljs inlineCode">SecurityDomain</code>. Diese Einschränkung wird beim Vergeben der Berechtigungen der Rollen angewendet, also in der Sicht "Rollenprofile zuweisen". Nur die Sichten, die die im oberen <code class="hljs inlineCode">SelectField</code> ausgewählte <code class="hljs inlineCode">SecurityDomain</code> verwenden, werden angezeigt. Damit können nur diejenigen Rollen auf einer Sicht Berechtigungen vergeben, die zu der <code class="hljs inlineCode">SecurityDomain</code> der Sicht gehören.</li>
+  </ul></li>
+</ul>
+<h3><a class="tlObject" data-custom="true" href="?page=TypedConfiguration&amp;uuid=5122a416-bd1c-445b-83a9-8c88e26004dc">Typisierte Konfiguration</a></h3>
+<ul>
+ <li><code class="hljs inlineCode">InitialGroupManager</code></li>
+ <li><code class="hljs inlineCode">ExecutabilityRuleManager</code></li>
+ <li><code class="hljs inlineCode">DynamicModelService</code> Abschnitt <code class="hljs inlineCode">instance/settings/module/roles</code></li>
+</ul>
+<h3>Komponenten</h3>
+<ul>
+ <li><code class="hljs inlineCode">BoundLayout</code>
+  <ul>
+   <li>Erste Implementierung von <code class="hljs inlineCode">BoundChecker</code></li>
+  </ul></li>
+ <li><code class="hljs inlineCode">BoundComponent</code>
+  <ul>
+   <li><code class="hljs inlineCode">handles</code>
+    <ul>
+     <li>Die Typen, die von der BoundComponent "gehandelt" werden.</li>
+     <li><u>TODO: Genauer beschreiben mithilfe der Aufrufer von: BoundComponent.handles(String)</u></li>
+    </ul></li>
+   <li><code class="hljs inlineCode">useSecurityOfDialogParent</code>
+    <ul>
+     <li>Der Dialog soll die <code class="hljs inlineCode">NeedsRoles</code> des DialogParent benutzen.</li>
+     <li><u>TODO:</u> Genauer erklären was das bedeutet. Insbesondere in Bezug auf die Häckchen Sicht.</li>
+    </ul></li>
+   <li><code class="hljs inlineCode">useDefaultChecker</code></li>
+   <li><code class="hljs inlineCode">isSecurityMaster</code></li>
+   <li><code class="hljs inlineCode">securityProviderClass</code></li>
+   <li><code class="hljs inlineCode">commandGroups</code></li>
+  </ul></li>
+ <li><code class="hljs inlineCode">DialogeInfo</code>
+  <ul>
+   <li><code class="hljs inlineCode">openerCommandGroup</code></li>
+   <li><code class="hljs inlineCode">openButtonSecComp</code></li>
+   <li><code class="hljs inlineCode">executabilityRule</code></li>
+  </ul></li>
+ <li><code class="hljs inlineCode">CompoundSecurityProjectLayout</code>
+  <ul>
+   <li><code class="hljs inlineCode">primaryChecker</code></li>
+  </ul></li>
+ <li><code class="hljs inlineCode">secondaryChecker</code></li>
+</ul>
+<ul>
+ <li><code class="hljs inlineCode">CompoundSecurityLayout</code></li>
+</ul>
+<p><u>TODO:</u> Komponenten in Top-Logic die zur Arbeit mit Berechtigungen relevant sind, inklusive Erklärung was genau dort damit in Bezug auf die Security gemacht werden kann. (Bsp: <code class="hljs inlineCode">CompoundSecurityProjectLayout</code>)</p>
+<h3>Sichten</h3>
+<ul>
+ <li>"Rollenprofile zuweisen" 
+  <ul>
+   <li>Wenn als Name des Layouts im Baum ein I18N auftaucht, muss fehlt ein <code class="hljs inlineCode">resPrefix</code> am <code class="hljs inlineCode">BoundLayout</code>.</li>
+  </ul></li>
+</ul>
+<p><u>TODO:</u> Sichten in Top-Logic die zur Verwaltung von Berechtigungen relevant sind, inklusive Erklärung was genau dort mit Bezug auf die Security gemacht werden kann. (Bsp: <code class="hljs inlineCode">Rollen prüfen</code>)</p>
+<ul>
+ <li>Globale Dialoge müssen in einem <code class="hljs inlineCode">BoundLayout</code> liegen, sind aber normale Teile des Layouts in Bezug auf die Security.</li>
+</ul>
+<h3>Klassen</h3>
+<ul>
+ <li><code class="hljs inlineCode">BoundHelper</code>
+  <ul>
+   <li>Enthält zwei Caches <u>TODO:</u> Erklären: Erst der untere Cache (<code class="hljs inlineCode">boundCheckerCache</code>), da die Komponenten <code class="hljs inlineCode">allow()</code> überschrieben haben können. Nur als Fallback den oberen Cache (<code class="hljs inlineCode">defaultPersBoundCheckers</code>), da hier die Häckchen gefragt werden, ohne das <code class="hljs inlineCode">allow</code> der Komponenten zu beachten. (Oder so ähnlich.)</li>
+  </ul></li>
+ <li><code class="hljs inlineCode">SimpleBoundCommandGroup</code>
+  <ul>
+   <li>Cacht ihre Instanzen per Name.</li>
+   <li>Wenn es Konflikte gibt (neue Instanz unter vergebenem Namen), wird eine Exception geworfen.</li>
+   <li><u>TODO:</u> Als <code class="hljs inlineCode">JavaDoc</code> in die Klasse selber schreiben. Hier nur kurz zusammenfassen.</li>
+  </ul></li>
+ <li><code class="hljs inlineCode">AccessManager</code> Hierarchie 
+  <ul>
+   <li><code class="hljs inlineCode">AccessManager</code>
+    <ul>
+     <li>Minimalistische Implementierung</li>
+     <li>Wird bei jedem Commit informiert, macht aber nichts.</li>
+    </ul></li>
+   <li><code class="hljs inlineCode">ElementAccessManager</code>
+    <ul>
+     <li>Erweitert <code class="hljs inlineCode">AccessManager</code></li>
+     <li>Berechnet alles on the fly.</li>
+     <li>Wird bei jedem Commit informiert und fragt seine <code class="hljs inlineCode">SecurityStorageCommitObserver</code> ob es zusätzlich zu den direkt geänderten Objekten weitere Objekte beim Security Update berücksichtigt werden müssen.</li>
+    </ul></li>
+   <li><code class="hljs inlineCode">StorageAccessManager</code>
+    <ul>
+     <li>Erweitert <code class="hljs inlineCode">ElementAccessManager</code></li>
+     <li>Cacht im <code class="hljs inlineCode">SecurityStorage</code> Tripletts aus Fachobjekt, Benutzer und Rolle.</li>
+     <li>Wird bei jedem Commit informiert und aktualisiert den <code class="hljs inlineCode">SecurityStorage</code>.</li>
+    </ul></li>
+  </ul></li>
+ <li><code class="hljs inlineCode">CompoundSecurityLayout</code>
+  <ul>
+   <li><code class="hljs inlineCode">getSecurityDomain()</code> Liefert nur die direkt am Objekt selber definierte <code class="hljs inlineCode">SecurityDomain</code>. Wenn dort keine definiert ist, werden die Parents nicht gefragt. Um die Parents zu berücksichtigen, muss der <code class="hljs inlineCode">StructureDomainMapper</code> verwendet werden.</li>
+  </ul></li>
+ <li><code class="hljs inlineCode">SecurityMasterBoundChecker</code></li>
+</ul>
+<h4>Associationen</h4>
+<table border="1" cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><strong>Assoziation</strong></th>
+   <th><strong>SOURCE_TYPE</strong></th>
+   <th><strong>DEST_TYPE</strong></th>
+   <th><strong>Bedeutung</strong></th>
+  </tr>
+  <tr>
+   <td>CLASSIFIED_BY</td>
+   <td>MetaAttribute</td>
+   <td>FastListElt</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>DEFINES_GROUP</td>
+   <td>Person</td>
+   <td>Group</td>
+   <td>Repräsentative Gruppe einer Person</td>
+  </tr>
+  <tr>
+   <td>DEFINES_ROLE</td>
+   <td>? implements StructuredElement</td>
+   <td>BoundedRole</td>
+   <td>Rollen die an Objekte gebunden werden.</td>
+  </tr>
+  <tr>
+   <td>HAS_GLOBAL_ROLE</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>HAS_GROUP</td>
+   <td>Person | Group</td>
+   <td>Group</td>
+   <td>"Source" ist Mitglied der "Dest"-Gruppe.</td>
+  </tr>
+  <tr>
+   <td>HAS_ROLE</td>
+   <td>? implements Wrapper</td>
+   <td>BoundedRole</td>
+   <td>Mit Group "owner": Die Gruppe "owner" hat die Rolle "Dest" auf Fachobjekt "Source".</td>
+  </tr>
+  <tr>
+   <td>NEEDS_ROLE</td>
+   <td>PersBoundComp | MetaAttribute | FastListElement</td>
+   <td>BoundedRole</td>
+   <td>Mit "commandGroup": In Sicht "Source" benötigt der Nutzer die Rolle "Dest" um Kommandos der Kommandogruppe "commandGroup" auszuführen. Die Quelle kann auch ein <code class="hljs inlineCode">MetaAttribute</code> für die Attribut basierte Security sein.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Glossar</h2>
+<ul>
+ <li><code class="hljs inlineCode">CompoundSecurityProjectLayout</code> (<code class="hljs inlineCode">CSPL</code>)</li>
+ <li><code class="hljs inlineCode">DelegateStructureHtmlTree</code> (<code class="hljs inlineCode">DSHL</code>)</li>
+ <li><code class="hljs inlineCode">PersBoundComp</code>
+  <ul>
+   <li>Datenbank Tabelle: Alle Komponenten die sich von <code class="hljs inlineCode">BoundComponent</code> ableiten.</li>
+  </ul></li>
+ <li><code class="hljs inlineCode">NeedsRole</code></li>
+ <li><code class="hljs inlineCode">HasRole</code></li>
+ <li><code class="hljs inlineCode">BoundedRole</code></li>
+ <li><code class="hljs inlineCode">BoundCommand</code>
+  <ul>
+   <li>Hat eine <code class="hljs inlineCode">BoundCommandGroup</code>.</li>
+   <li>Nur die <code class="hljs inlineCode">BoundCommandGroup</code> wird berechtigt, nie das <code class="hljs inlineCode">BoundCommand</code> selber.</li>
+  </ul></li>
+ <li><code class="hljs inlineCode">BoundCommandGroup</code> haben keine eigene Tabelle, sind nur Strings in der <code class="hljs inlineCode">NeedsRole</code> Assoziation. 
+  <ul>
+   <li>Neue <code class="hljs inlineCode">BoundCommandGroup</code> erfordert neue <code class="hljs inlineCode">SimpleBoundCommandGroup</code> Instanz.</li>
+   <li>Sind gruppiert nach Typen: <code class="hljs inlineCode">READ</code>, <code class="hljs inlineCode">WRITE</code>, <code class="hljs inlineCode">DELETE</code>, <code class="hljs inlineCode">SYSTEM</code> (Stehen in <code class="hljs inlineCode">BoundCommandGroup</code>)</li>
+   <li>Gruppierung wird (fast) nie ausgewertet. 
+    <ul>
+     <li>Nur <code class="hljs inlineCode">READ</code> und <code class="hljs inlineCode">SYSTEM</code> ist auf historischen Objekten erlaubt, da <code class="hljs inlineCode">WRITE</code> und <code class="hljs inlineCode">DELETE</code> von historischen Objekten keinen Sinn macht. (<code class="hljs inlineCode">BoundComponent.checkAccess</code>)</li>
+     <li><code class="hljs inlineCode">SYSTEM</code> ist immer erlaubt. (Filter anzeigen, Tabellen umsortieren, <code class="hljs inlineCode">ScriptingGui</code>, …)</li>
+     <li>Es gibt nur eine <code class="hljs inlineCode">SYSTEM</code> <code class="hljs inlineCode">BoundCommandGroup</code>.</li>
+    </ul></li>
+  </ul></li>
+ <li><code class="hljs inlineCode">BoundChecker</code></li>
+ <li><code class="hljs inlineCode">BoundObject</code></li>
+ <li><code class="hljs inlineCode">SecurityStorage</code></li>
+</ul>

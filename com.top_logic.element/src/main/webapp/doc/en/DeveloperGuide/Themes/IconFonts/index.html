@@ -1,0 +1,55 @@
+<p>Top-Logic unterstützt Symbolschriften, die für Schaltflächen-, Menü- und Objektsymbole verwendet werden können. Um Ihre eigene Symbolschriftart einzubinden, müssen Sie die folgenden Schritte ausführen. Das Modul <code class="hljs inlineCode">ext.com.fontawesome</code> bietet die kostenlose Variante der Symbolschrift "FontAwesome" (<a href="https://fontawesome.com/" target="_blank">​https://fontawesome.com/</a>). Dieses Modul dient als detailliertes Beispiel, wie Sie Ihrer Anwendung eine eigene benutzerdefinierte Symbolschrift hinzufügen können.</p>
+<h2>Fontressourcen der Anwendung zur Verfügung stellen</h2>
+<p>Legen Sie Ihre Schriftartendateien (<code class="hljs inlineCode">*.eot</code>, <code class="hljs inlineCode">*.svg</code>, <code class="hljs inlineCode">*.ttf</code>, <code class="hljs inlineCode">*.woff</code>, <code class="hljs inlineCode">*.woff2</code>) in den Webapp-Ordner der Anwendung. So ist beispielsweise die Symbolschrift "FontAwesome" in der Distribution unter <code class="hljs inlineCode">/ext.com.fontawesome/webapp/webfonts/...</code> enthalten.</p>
+<h2>Begleitendes CSS einbinden</h2>
+<p>Legen Sie die CSS-Datei (<code class="hljs inlineCode">*.css</code>) der Schriftart in den Webapp-Ordner der Anwendung. Die CSS-Datei für "FontAwesome" befindet sich als Beispiel unter <code class="hljs inlineCode">/ext.com.fontawesome/webapp/style/fontawesome/all.min.css</code>.</p>
+<p>Hinweis: Da die CSS-Datei der Schriftart auf die Fontressourcen verweist, stellen Sie sicher, dass beide Dateien (die CSS- und die Fontdateien) an einem Ort gespeichert sind, an dem die internen Verweise im CSS gültig sind. Z.B. "FontAwesome" hat die folgende Stilregel:</p>
+<pre><code>@font-face {
+  font-family: 'Font Awesome 5 Free';
+  font-style: normal;
+  font-weight: 900;
+  src: url("../webfonts/fa-solid-900.eot");
+}
+</code></pre>
+<p>Daher müssen die Fontressourcen (z.B. <code class="hljs inlineCode">fa-solid-900.eot</code>) in einem Verzeichnis mit dem Namen <code class="hljs inlineCode">../webfonts</code> relativ zum Style-Ordner der Anwendung (<code class="hljs inlineCode">webapp/style</code>) vorhanden sein. Alle CSS werden zur Laufzeit in eine einzige Ressource eingebunden, die dem Client über die URL <code class="hljs inlineCode">https://your.server/your-app/style/top-logic.css</code> angeboten wird, unabhängig davon, wo die tatsächlichen CSS-Dateien, die dem Thema hinzugefügt wurden, in der Anwendung gespeichert sind. Daher müssen die Referenzen im CSS relativ zu dieser URL sein.</p>
+<h2>CSS in das Standard-Thema einfügen</h2>
+<p>Fügen Sie einen Konfigurationseintrag hinzu, der die CSS-Datei der Schriftart in das <code class="hljs inlineCode">default</code>-Thema einfügt (oder Ihr benutzerdefiniertes Design, wenn Sie die Schriftart nur in einem einzigen Design verwenden möchten):</p>
+<pre><code>&lt;application xmlns:config="http://www.top-logic.com/ns/config/6.0"&gt;
+  &lt;services&gt;
+    &lt;config service-class="com.top_logic.gui.ThemeFactory"&gt;
+      &lt;instance&gt;
+        &lt;themes&gt;
+          &lt;theme id="default"&gt;
+            &lt;styles&gt;
+              &lt;style name="/style/fontawesome/all.css"/&gt;
+            &lt;/styles&gt;
+          &lt;/theme&gt;
+        &lt;/themes&gt;
+      &lt;/instance&gt;
+    &lt;/config&gt;
+  &lt;/services&gt;
+&lt;/application&gt;
+</code></pre>
+<p>Hinweis: Die CSS-Datei wird mit einem Namen in Bezug auf den Stammordner der Webapplikationsressource referenziert.</p>
+<h2>Verwendung von CSS-Symbolreferenzen</h2>
+<p>Eine Symbolschrift kühlt Symbole mit CSS-Klassen, die zu einem Inline-HTML-Element hinzugefügt wurden. Z.B. "FontAwesome" verweist auf das Symbol "Ambulanz" mit den CSS-Klassen <code class="hljs inlineCode">&lt;i class="fas fa-ambulance"&gt;&lt;/i&gt;</code> (siehe <a href="https://fontawesome.com/icons/ambulance?style=solid" target="_blank">​https://fontawesome.com/icons/ambulance?style=solid</a>).</p>
+<p>In Top-Logic können Sie in allen Konfigurationseigenschaften vom Typ <code class="hljs inlineCode">ThemeImage</code> mit dem Präfix <code class="hljs inlineCode">css:</code> mit den CSS-Klassen, die durch Ihre angehängte Symbolschrift definiert sind, auf Symbolfontsymbole verweisen. Sie können z.B. das Symbol "Krankenwagen" von "FontAwesome" mit dem Symbolbezug "css:fas fa-ambulance" referenzieren.</p>
+<h2>Beispiele</h2>
+<h3>Symbolreferenzen im Layout</h3>
+<p>Sie können eine Schaltfläche mit einer solchen Symbolschriftreferenz definieren (z.B. <code class="hljs inlineCode">/com.top_logic.demo/webapp/WEB-INF/layouts/demo/table/tree_grid.xml</code>):</p>
+<pre><code>&lt;button id="..."
+  class="..."
+  image="css:fas fa-globe"
+  resourceKey="..."
+/&gt;
+</code></pre>
+<h3>Symbolreferenzen im Modell</h3>
+<p>Icon-Fontreferenzen können verwendet werden, um Icons zu solchen Modellelementen zu kommentieren (z.B. <code class="hljs inlineCode">/com.top_logic.demo/webapp/WEB-INF/model/DemoTypes.model.xml</code>):</p>
+<pre><code>&lt;interface name="DemoTypes.X"&gt;
+  &lt;annotations&gt;
+    &lt;instance-presentation icon="css:fas fa-handshake demo-blue"/&gt;
+  &lt;/annotations&gt;
+  ...
+&lt;/interface&gt;
+</code></pre>
+<p>Im obigen Beispiel sehen Sie, dass Sie unsere eigenen benutzerdefinierten CSS-Klassen zu denjenigen hinzufügen können, die durch Ihre Symbolschrift definiert sind, um die Anzeige des Symbols an dieser konkreten Stelle anzupassen. Im obigen Beispiel färbt die CSS-Klasse <code class="hljs inlineCode">demo-blue</code> das Symbol blau.</p>

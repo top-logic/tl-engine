@@ -1,0 +1,14 @@
+<p>An application is able to access an LDAP so that the users existing in the LDAP are mirrored into the application. For this, the corresponding LDAP configurations must be included.</p>
+<h1>General configuration</h1>
+<p>The general configuration of the LDAP is defined in Top-Logic in <code class="hljs inlineCode">com.top_logic/webapp/WEB-INF/conf/ldapConf.xml</code>. To be able to use it, the name of the file without path must be entered in the <code class="hljs inlineCode">metaConf.txt</code> in <code class="hljs inlineCode">webapp/WEB-INF/conf</code> of the application that should be able to use the LDAP.&nbsp;</p>
+<h1>Specific LDAP configuration</h1>
+<p>A specific LDAP configuration contains all information about the LDAP which should be connected. This includes the LDAP domain, the LDAP URL and LDAP groups. As a template for the configuration <code class="hljs inlineCode">ldapConf.xml</code> can be used. If it is an LDAP of the BOS, the configuration file name must end on <code class="hljs inlineCode">.bos.xml</code>.</p>
+<p>Configurations &nbsp;that are not to be delivered with Top-Logic must be stored under <code class="hljs inlineCode">deploy/private/webapp/WEB-INF/conf</code>.</p>
+<p>The name of the specific configuration must be entered in the <code class="hljs inlineCode">metaConf.txt</code> in <code class="hljs inlineCode">webapp/WEB-INF/conf</code> &nbsp;of the application that will use the LDAP.</p>
+<p><strong>Note:</strong> An LDAP connection is only possible with a license. The demo license is not sufficient, because it allows only one user.</p>
+<h1>Example</h1>
+<p>The <code class="hljs inlineCode">metaConf.txt</code> of an application can look like this:</p>
+<pre><code>...
+ldapConf.xml
+ldapConf.bos.xml</code></pre>
+<p>&nbsp;</p>

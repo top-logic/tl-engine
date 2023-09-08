@@ -1,0 +1,44 @@
+<p></p>
+<h1 id="RegelbasierteBerechtigung">Regelbasierte Berechtigung</h1>
+<h2 id="Überblick">Überblick</h2>
+<p>Die Berechtigungen in Top-Logic basieren darauf, dass Nutzer Rollen auf Fachobjekten haben. Ein Nutzer darf dann eine Funktion ausführen, wenn eine seiner Rollen, die er auf dem Berechtigungsobjekt der Funktion hat, die Berechtigung besitzt, die Kommandogruppe der Funktion in der Sicht auszuführen, in welcher die Funktion definiert ist.</p>
+<h2 id="Nutzer">Nutzer</h2>
+<p>Eine Session ist verknüpft mit einem Nutzer repräsentiert als Fachobjekt des Typs <code class="hljs inlineCode">Person</code> (vgl. <code class="hljs inlineCode">PersonMeta.xml</code>). Der Nutzer wird einer Session beim Login zugewiesen und ist über <code class="hljs inlineCode">com.top_logic.util.TLContext.getPerson()</code> verfügbar.</p>
+<h2 id="Funktion">Funktion</h2>
+<p>Funktionen im System sind repräsentiert über sog. <code class="hljs inlineCode">CommandHandler</code>, die an Komponenten registriert sind und deren zusätzliche Eigenschaften (neben der eigentlichen Ausführungslogik) konfigurierbar sind (vgl. <code class="hljs inlineCode">com.top_logic.tool.boundsec.CommandHandler.Config</code>).</p>
+<h2 id="KommandogruppeeinerFunktion">Kommandogruppe einer Funktion</h2>
+<p>Die Kommandogruppe einer Funktion wird bei der Funktion konfiguriert (<code class="hljs inlineCode">com.top_logic.tool.boundsec.CommandHandler.Config.getGroup()</code>). Eine Kommandogruppe ist ein Name, unter dem gleichartige Funktionen berechtigungstechnisch zusammengefasst werden. Häufig verwendete Kommandogruppen sind <code class="hljs inlineCode">Read</code>, <code class="hljs inlineCode">Write</code>, <code class="hljs inlineCode">Create</code>, <code class="hljs inlineCode">Delete</code>.</p>
+<h2 id="BerechtigungsobjekteinerFunktion">Berechtigungsobjekt einer Funktion</h2>
+<p>Das Berechtigungsobjekt einer Funktion wird bestimmt über die Methode <code class="hljs inlineCode">com.top_logic.tool.boundsec.CommandHandler.getBoundObject(LayoutComponent, Map&lt;String, Object&gt;)</code> der Funktion. Diese fällt i.d.R. zurück auf <code class="hljs inlineCode">com.top_logic.tool.boundsec.BoundChecker.getCurrentObject(BoundCommandGroup)</code> der Komponente, an der die Funktion aufgerufen wird.</p>
+<h2 id="Rollen-Definition">Rollen-Definition</h2>
+<p>Rollen werden in einem Modul (<code class="hljs inlineCode">TLModule</code>) definiert (vgl. Konfigurationssektion <code class="hljs inlineCode">com.top_logic.element.config.ModuleConfig.getRoles()</code>). Hier werden die Rollen(-namen) aufgezählt, die für dieses Modul verwendet werden können.</p>
+<h2 id="Rollen-Berechtigungen">Rollen-Berechtigungen</h2>
+<p>Das Recht einer Rolle, in einer gewissen Sicht eine Funktion mit einer gewissen Kommandogruppe ausführen zu dürfen, wird in der Administration "Rollenprofile" festgelegt. Hierbei werden Tripel (Rolle, Berechtigungskomponente, Kommandogruppe) in der Datenbank abgelegt, wenn eine Rolle in einer Sicht unterhalb einer Berechtigungskomponente Funktionen mit einer gewissen Kommandogruppe ausführen darf.</p>
+<h2 id="Rollen-Regeln">Rollen-Regeln</h2>
+<p>Um Rollen auf Fachobjekten zu vergeben, werden Regeln definiert, welche Rollen aus Attributbelegungen von Fachobjekten ableiten (Nutzer- und Gruppenzuweisungen in nutzer- und gruppenwertigen Attributen). Diese Regeln werden in der Konfigurationssektion <code class="hljs inlineCode">com.top_logic.element.boundsec.manager.ElementAccessManager.Config.getRoleRules()</code> definiert.</p>
+<ul>
+ <li>Eine Regel bezieht sich immer auf einen bestimmten Objekttyp (Metaelement oder Metaobjekt).</li>
+ <li>Eine Regel vergibt genau eine Rolle auf Objekten dieses Typs.</li>
+ <li>Eine Regel definiert über einen Pfad eine Menge anderer Objekte, aufgrund derer die Gruppen und Nutzer bestimmt werden, welche die Rolle auf dem <strong>Ausgangsobjekt</strong> erhalten. Diese Menge wird im Folgenden <strong>Bestimmungsmenge</strong> genannt. 
+  <ul>
+   <li>Ein Pfad besteht aus einzelnen Pfadelementen und benennt eine Assoziation oder ein Attribut.</li>
+   <li>Der Pfad ist gerichtet und beginnt mit dem ersten Pfadelement.</li>
+   <li>Jedes Pfadelement bestimmt ausgehend von den bisher gefundenen Objekten eine neue Menge von Objekten.</li>
+   <li>Bei der Anwendung einer Regel auf ein gegebenes Objekt bildet dieses auch die Anfangsmenge, auf die das erste Pfadelement angewendet wird.</li>
+   <li>Das Ergebnis des letzten Pfadelements bildet die <strong>Bestimmungsmenge</strong>.</li>
+   <li>Ist kein Pfadelement angegeben, so entspricht die <strong>Bestimmungsmenge</strong> dem <strong>Ausgangsobjekt</strong>. 
+    <ul>
+     <li>Für Assoziationen: 
+      <ul>
+       <li>Ausgehend von den über den bisherigen Pfad erhaltenen Menge werden in der neue Menge genau alle über die gegebene Assoziation erreichbaren Objekte übernommen.</li>
+       <li>Ist das Pfadelement als invers markiert, so wird die Assoziation rückwärts gegangen, ansonsten vorwärts.</li>
+      </ul></li>
+     <li>Für Attribute: 
+      <ul>
+       <li>Die Bestimmungsmenge ergibt sich aus der Vereinigung aller Attributwerte des angegebenen Attributs auf Objekten der Ausgangsmenge.</li>
+      </ul></li>
+    </ul></li>
+  </ul></li>
+</ul>
+<h2 id="ExpliziteRollenzuweisung">Explizite Rollenzuweisung</h2>
+<p>Zusätzlich zu den Rollen-Regeln können Nutzer und Gruppen explizit Rollen an Fachobjekten zugewiesen werden. Diese explizite Rollenzuweisung geschieht in der Adminstration in der Sicht "Benutzerrechte". Hier wird einem Nutzer explizit eine Rolle auf einem konkreten Objekt zugewiesen.</p>

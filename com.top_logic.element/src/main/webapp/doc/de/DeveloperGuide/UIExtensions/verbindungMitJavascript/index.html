@@ -1,0 +1,56 @@
+<p>Alle Methoden werden in der <code class="hljs inlineCode">ajax-form.js</code> Datei implementiert. Darin befinden sich JSON Objekte. JSON ist eine Art Daten zu speichern, so wie es XML auch macht. Im vorherigen Kapitel wurde dem Button ein klick Attribut übergeben, welches eine JavaScript Methode ausführt. <code class="hljs inlineCode">ButtonyDyerControl</code> und <code class="hljs inlineCode">handleButtonClick</code> wurden überreicht. Ersteres ist ein Objekt und Letzteres eine Variable, die eine Methode beinhaltet und die ist es, die beim Anklicken aufgerufen wird.</p>
+<p>Die Methode macht nicht viel, ausser die <code class="hljs inlineCode">execute</code> Methode aufzurufen, die zum Ziel hat, dass in Java auf der Server Seite Veränderungen vorgenommen werden können. Theoretisch könnte man die Farbe des Buttons hier ändern - den Algorithmus hier schreiben. Das ist aber nicht im Sinne des MVC Konzeptes. Wenn man es hier ändern würde, würde das Kontroll die Informationen des Modells nicht aktualisieren können. Es sind die Informationen im Modell, die letztendlich ausgestrahlt werden sollen.</p>
+<pre><code class="language-javascript">ButtonDyerControl: {
+	
+	handleButtonClick: function(optionElement, controlID, showWait) {
+		services.ajax.execute("dispatchControlCommand", {
+			controlCommand : "changeColor",
+			controlID : controlID
+		}, true);
+	}
+		
+}</code></pre>
+<p></p>
+<p>Damit das Programm von JavaScript auch wieder zurück zum Server findet, wird eine Klasse benötigt, die von <code class="hljs inlineCode">ControlCommand</code> erbt. Die Klasse hat einen <code class="hljs inlineCode">COMMAND_ID</code> String, die identisch mit dem Parameter in der<code class="hljs inlineCode">execute</code> Methode ist.</p>
+<p>In der <code class="hljs inlineCode">HandlerResult execute</code> Methode können nun Aufgaben vorgenommen werden. Wir haben die boolean Variable <code class="hljs inlineCode">isDark</code> in der Kontroll Klasse definiert und dort wird sie auch verwendet, um zu entscheiden, ob der Button ein helles oder dunkles Design bekommt. Deshalb erstellen wir ein <code class="hljs inlineCode">ButtonDyerControl</code> Objekt und rufen die Methode <code class="hljs inlineCode">changeColor</code> darauf auf. Es wäre auch ohne die Instanziierung des Objektes möglich, die Methode aufzurufen und dort <code class="hljs inlineCode">isDark</code> auf falsch setzen, aber dann müsste es <code class="hljs inlineCode">static</code> sein. Das wäre unpraktisch, weil im Falle, dass mehrere Buttons auf der Seite angezeigt werden, würde sich das Design aller Buttons verändern.</p>
+<pre><code class="language-java">public static class ChangeColorCommand extends ControlCommand {
+
+	public static final String COMMAND_ID = "changeColor";
+
+	public static final ChangeColorCommand INSTANCE = new ChangeColorCommand(COMMAND_ID);
+
+	public ChangeColorCommand(String aCommand) {
+		super(aCommand);
+	}
+
+	// Called from file: ajax-form.js - ButtonDyerControl: handleButtonClick
+	@Override
+	protected HandlerResult execute(DisplayContext commandContext, Control control, Map&lt;String, Object&gt; arguments) {
+		ButtonDyerControl buttonDyer = (ButtonDyerControl) control;
+		buttonDyer.changeColor(commandContext);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	@Override
+	public ResKey getI18NKey() {
+		return YourResKey;
+	}
+}</code></pre>
+<p>Jedes Kommando hat einen <code class="hljs inlineCode">ResKey</code> und jedes Packet im Java Projekt kann eine <code class="hljs inlineCode">I18NConstants.java</code> Datei enthalten. In dieser werden die <code class="hljs inlineCode">ResKeys</code> definiert. Die Top-Logic Anwendung gibt es auch auf Englisch. Um beide Sprachen abzudecken werden <code class="hljs inlineCode">ResKeys</code> erstellt, die sowohl die Englische als auch Deutsche Bezeichnung speichert. Dank der Hilfe von der DeepL API, kann man die Englische Bezeichnung im Kommentar definieren. DeepL übersetzt das dann auf Deutsch und weist beide Sprachen dem Objekt zu. Ohne den Kommentar Trick, würde man das manuell in beiden Text Dateien definieren müssen.</p>
+<pre><code class="language-java">/**
+ * @en Changes the design of the button.
+ */
+public static ResKey YourResKey;</code></pre>
+<p></p>
+<p>Zu guter Letzt wird nun die <code class="hljs inlineCode">changeColor</code> Methode aufgerufen, welches in der Kontroll Klasse definiert wrude.</p>
+<pre><code class="language-java">public void changeColor(DisplayContext commandContext) {
+	if (isDark) {
+		isDark = false;
+	} else {
+		isDark = true;
+	}
+	requestRepaint();
+}</code></pre>
+<p></p>
+<p>Noch ist der Button in der Anwendung nicht sichtbar, was mit dem <a class="tlObject" data-custom="false" href="?page=controlprovider&amp;uuid=9d35d4da-81d8-49a5-b923-79cf9402daf5">Erzeugung von Control-Instanzen</a> möglich gemacht wird.</p>
+<p></p>

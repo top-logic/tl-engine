@@ -1,0 +1,33 @@
+<p>Im Beispiel</p>
+<pre><code class="language-java">interface Config extends ConfigurationItem {
+   List&lt;A&gt; getListA();
+
+   interface A extends ConfigurationItem {
+      ...
+   }
+}
+</code></pre>
+<p>wird die Subkomponentenliste <code class="hljs inlineCode">getListA()</code> in einem XML-Element <code class="hljs inlineCode">list-a</code> gespeichert. Der (lokale) Name dieses Elements entspricht dem Konfigurationsnamen der listenwertigen Eigenschaft. Jeder Listeneintrag wird durch ein innerers XML-Element des Listen-Elements gespeichert. Ist nichts angegeben, wird <code class="hljs inlineCode">entry</code> als Tag-Name für die Listeneinträge verwendet:</p>
+<pre><code class="language-xml">&lt;config&gt;
+   &lt;list-a&gt;
+      &lt;entry .../&gt;
+      &lt;entry .../&gt;
+      &lt;entry .../&gt;
+   &lt;/list-a&gt;
+&lt;/config&gt;
+</code></pre>
+<p>Der Tag-Name der Listenelemente kann über die Annotation <code class="hljs inlineCode">@EntryTag</code> bestimt werden:</p>
+<pre><code class="language-java">interface Config extends ConfigurationItem {
+   @EntryTag("a")
+   List&lt;A&gt; getListA();
+}
+</code></pre>
+<p>In obigem Beispiel wird die Liste dann folgendermaßen konfiguriert:</p>
+<pre><code class="language-xml">&lt;config&gt;
+   &lt;list-a&gt;
+      &lt;a .../&gt;
+      &lt;a .../&gt;
+      &lt;a .../&gt;
+   &lt;/list-a&gt;
+&lt;/config&gt;
+</code></pre>

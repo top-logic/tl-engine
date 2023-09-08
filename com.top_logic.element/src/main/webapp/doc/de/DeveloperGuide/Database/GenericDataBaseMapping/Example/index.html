@@ -1,0 +1,212 @@
+<p>Das folgende einfache Modell enthält zwei Klassen <code class="hljs inlineCode">A</code> und <code class="hljs inlineCode">B</code>, die beide einige primitive Eigenschaften haben. Außerdem verweist <code class="hljs inlineCode">A</code> auf eine Liste von <code class="hljs inlineCode">B</code>s über die Referenz <code class="hljs inlineCode">bs</code>:</p>
+<p><img src="ref:grafik.png" style="opacity:1"></p>
+<p>Legt man von A und B die folgenden 3 Instanzen an:</p>
+<p><img src="ref:grafik_1.png" style="opacity:1"></p>
+<p><img src="ref:grafik_2.png" style="opacity:1"></p>
+<h2>Objekttabelle</h2>
+<p>Dann finden sich in der Tabelle <code class="hljs inlineCode">GenericObject</code> z.B. die folgenden drei Zeilen:</p>
+<pre><code class="language-sql">SELECT * FROM GENERIC_OBJECT;</code></pre>
+<table border="1" cellpadding="0" cellspacing="0" style="height:102px; white-space:nowrap; width:490px">
+ <tbody>
+  <tr>
+   <th><code>BRANCH</code></th>
+   <th><code>IDENTIFIER</code></th>
+   <th><code>REV_MAX</code></th>
+   <th><code>REV_MIN</code></th>
+   <th><code>REV_CREATE</code></th>
+   <th><code>T_TYPE_ID</code></th>
+  </tr>
+  <tr>
+   <td><code>1</code></td>
+   <td><code>6013</code></td>
+   <td><code>9223372036854775807</code></td>
+   <td><code>103</code></td>
+   <td><code>103</code></td>
+   <td><code>6003</code></td>
+  </tr>
+  <tr>
+   <td><code>1</code></td>
+   <td><code>6014</code></td>
+   <td><code>9223372036854775807</code></td>
+   <td><code>104</code></td>
+   <td><code>104</code></td>
+   <td><code>6004</code></td>
+  </tr>
+  <tr>
+   <td><code>1</code></td>
+   <td><code>6015</code></td>
+   <td><code>9223372036854775807</code></td>
+   <td><code>105</code></td>
+   <td><code>105</code></td>
+   <td><code>6004</code></td>
+  </tr>
+ </tbody>
+</table>
+<p>Die Objekttabelle enthält nur technische Information zur Identifikation, Gültigkeit und dem konkreten Typ des Objektes.</p>
+<h2>Eigenschaften</h2>
+<p>Die Werte der Eigenschaften und Referenzen sind in eigenen Tabellen gespeichert:</p>
+<pre><code class="language-sql">SELECT * FROM FLEX_DATA WHERE BRANCH=1 AND IDENTIFIER=6013;</code></pre>
+<table border="1" cellpadding="0" cellspacing="0" style="white-space:nowrap">
+ <tbody>
+  <tr>
+   <th><code>BRANCH</code></th>
+   <th><code>TYPE</code></th>
+   <th><code>IDENTIFIER</code></th>
+   <th><code>REV_MAX</code></th>
+   <th><code>ATTR</code></th>
+   <th><code>REV_MIN</code></th>
+   <th><code>DATA_TYPE</code></th>
+   <th><code>LONG_DATA</code></th>
+   <th><code>DOUBLE_DATA</code></th>
+   <th><code>VARCHAR_DATA</code></th>
+   <th><code>CLOB_DATA</code></th>
+   <th><code>BLOB_DATA</code></th>
+  </tr>
+  <tr>
+   <td><code>1</code></td>
+   <td><code>GenericObject</code></td>
+   <td><code>6013</code></td>
+   <td><code>9223372036854775807</code></td>
+   <td><code>name</code></td>
+   <td><code>103</code></td>
+   <td><code>30</code></td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+   <td><code>A1</code></td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td><code>1</code></td>
+   <td><code>GenericObject</code></td>
+   <td><code>6013</code></td>
+   <td><code>9223372036854775807</code></td>
+   <td><code>x</code></td>
+   <td><code>103</code></td>
+   <td><code>11</code></td>
+   <td><code>13</code></td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+ </tbody>
+</table>
+<p>Die Werte der Eigenschaften <code class="hljs inlineCode">name</code> und <code class="hljs inlineCode">x</code> finden sich in der Tabelle <code class="hljs inlineCode">FlexData</code>.</p>
+<h2>Referenzen</h2>
+<p>Die Links zu den beiden <code class="hljs inlineCode">B</code>-Objekten befindet sich in der Tabelle <code class="hljs inlineCode">hasWrapperAttValue</code>.&nbsp;</p>
+<pre><code class="language-sql">SELECT * FROM HAS_WRAPPER_ATT_VALUE WHERE BRANCH=1 AND SOURCE_ID=6013;</code></pre>
+<table border="1" cellpadding="0" cellspacing="0" style="white-space:nowrap">
+ <tbody>
+  <tr>
+   <th><code>BRANCH</code></th>
+   <th><code>IDENTIFIER</code></th>
+   <th><code>REV_MAX</code></th>
+   <th><code>REV_MIN</code></th>
+   <th><code>REV_CREATE</code></th>
+   <th><code>SOURCE_TYPE</code></th>
+   <th><code>SOURCE_ID</code></th>
+   <th><code>DEST_TYPE</code></th>
+   <th><code>DEST_ID</code></th>
+   <th><code>META_ATTRIBUTE_ID</code></th>
+   <th><code>SORT_ORDER</code></th>
+  </tr>
+  <tr>
+   <td><code>1</code></td>
+   <td><code>6016</code></td>
+   <td><code>9223372036854775807</code></td>
+   <td><code>106</code></td>
+   <td><code>106</code></td>
+   <td><code>GenericObject</code></td>
+   <td><code>6013</code></td>
+   <td><code>GenericObject</code></td>
+   <td><code>6015</code></td>
+   <td><code>6012</code></td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td><code>1</code></td>
+   <td><code>6017</code></td>
+   <td><code>9223372036854775807</code></td>
+   <td><code>106</code></td>
+   <td><code>106</code></td>
+   <td><code>GenericObject</code></td>
+   <td><code>6013</code></td>
+   <td><code>GenericObject</code></td>
+   <td><code>6014</code></td>
+   <td><code>6012</code></td>
+   <td>&nbsp;</td>
+  </tr>
+ </tbody>
+</table>
+<p>Hier sieht man in der Spalte destId die beiden Fremdschlüssel <code class="hljs inlineCode">6014</code> und <code class="hljs inlineCode">6015</code>, welche in die Tabelle <code class="hljs inlineCode">GenericObject</code> zeigen und dort die beiden <code class="hljs inlineCode">B</code>-Objekte referenzieren. Der Name der Modell-Referenz ist nicht direkt in der Tabelle ersichtlich. Stattdessen befindet sich in der Spalte <code class="hljs inlineCode">metaAttributeId</code> ein weiterer Fremdschlüssel <code class="hljs inlineCode">6012</code>, welche in die Modell-Tabelle <code class="hljs inlineCode">MetaAttribute</code> zeigt.</p>
+<pre><code class="language-sql">SELECT * FROM META_ATTRIBUTE WHERE BRANCH=1 AND IDENTIFIER=6012;</code></pre>
+<table border="1" cellpadding="0" cellspacing="0" style="white-space:nowrap">
+ <tbody>
+  <tr>
+   <th><code>BRANCH</code></th>
+   <th><code>IDENTIFIER</code></th>
+   <th><code>REV_MAX</code></th>
+   <th><code>REV_MIN</code></th>
+   <th><code>REV_CREATE</code></th>
+   <th><code>NAME</code></th>
+   <th><code>IMPL</code></th>
+   <th><code>OWNER_ID</code></th>
+   <th><code>OWNER_ORDER</code></th>
+   <th><code>TYPE_TYPE</code></th>
+   <th><code>TYPE_ID</code></th>
+   <th><code>END_ID</code></th>
+   <th><code>DEFINITION_ID</code></th>
+  </tr>
+  <tr>
+   <td><code>1</code></td>
+   <td><code>6012</code></td>
+   <td><code>9223372036854775807</code></td>
+   <td><code>102</code></td>
+   <td><code>102</code></td>
+   <td><code>bs</code></td>
+   <td><code>reference</code></td>
+   <td><code>6003</code></td>
+   <td><code>3072</code></td>
+   <td>&nbsp;</td>
+   <td><code>0</code></td>
+   <td><code>6011</code></td>
+   <td><code>6012</code></td>
+  </tr>
+ </tbody>
+</table>
+<p>Die so referenzierte Zeile repräsentiert die Modell-Referenz <code class="hljs inlineCode">bs</code> des Typs <code class="hljs inlineCode">A</code>. Der Modell-Typ <code class="hljs inlineCode">A</code> selbst wird über den Fremdschlüssel 6003 in der Spalte <code class="hljs inlineCode">ownerId</code> referenziert:</p>
+<pre><code class="language-sql">SELECT * FROM META_ELEMENT WHERE BRANCH=1 AND IDENTIFIER=6003;</code></pre>
+<table border="1" cellpadding="0" cellspacing="0" style="white-space:nowrap">
+ <tbody>
+  <tr>
+   <th><code>BRANCH</code></th>
+   <th><code>IDENTIFIER</code></th>
+   <th><code>REV_MAX</code></th>
+   <th><code>REV_MIN</code></th>
+   <th><code>REV_CREATE</code></th>
+   <th><code>NAME</code></th>
+   <th><code>SCOPE_TYPE</code></th>
+   <th><code>SCOPE_ID</code></th>
+   <th><code>MODULE_ID</code></th>
+   <th><code>IMPL</code></th>
+   <th><code>ABSTRACT</code></th>
+   <th><code>FINAL</code></th>
+  </tr>
+  <tr>
+   <td><code>1</code></td>
+   <td><code>6003</code></td>
+   <td><code>9223372036854775807</code></td>
+   <td><code>96</code></td>
+   <td><code>96</code></td>
+   <td><code>A</code></td>
+   <td><code>TLModule</code></td>
+   <td><code>6002</code></td>
+   <td><code>6002</code></td>
+   <td><code>class</code></td>
+   <td><code>false</code></td>
+   <td><code>false</code></td>
+  </tr>
+ </tbody>
+</table>
+<p>&nbsp;</p>

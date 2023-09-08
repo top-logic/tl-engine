@@ -1,0 +1,30 @@
+<p>Als Konfigurationswert kann direkt die Instanz einer Klasse verwendet werden, wenn diese Klasse das Singleton-Pattern implementiert. In diesem Fall muss die Konfigurationseigenschaft mit <code class="hljs inlineCode">@InstanceFormat</code> annotiert werden. In der Konfiguration kann dann über den Klassennamen ein zum Typ der Eigenschaft passende Singleton ausgewählt werden.</p>
+<p>Beispielsweise erlaubt die folgende Konfiguration die Auswahl eines <code class="hljs inlineCode">Renderer</code>s:</p>
+<pre><code class="language-java">public interface MyConfig extends ConfigurationItem {
+
+   @InstanceFormat
+   Renderer getRenderer();
+
+}</code></pre>
+<p><code class="hljs inlineCode">Renderer</code> ist hierbei ein Interface für eine Implementierung, die ein übergebenes Objekt z.B. nach HTML ausgibt. Wenn die Anwendung mehrere <code class="hljs inlineCode">Renderer</code>-Implementierungen hat, kann die Konfiguration einen der Renderer über seinen Klassennamen auswählen:</p>
+<pre><code class="language-xml">&lt;config
+  renderer="my.app.MyRenderer"
+&gt;
+
+&lt;/config&gt;</code></pre>
+<p>Hierfür muss die Klasse <code class="hljs inlineCode">MyRenderer</code> lediglich das Singleton-Pattern implementieren:</p>
+<pre><code class="language-java">public class MyRenderer implements Renderer {
+
+  /** Singleton {@link MyRenderer}. */
+  public MyRenderer INSTANCE = new MyRenderer();
+
+  private MyRenderer() {}
+
+  @Override
+  public void render(...) {
+    // Do what a Renderer has to do.
+  }
+
+}</code></pre>
+<p>Das <code class="hljs inlineCode">Renderer</code>-Singleton <code class="hljs inlineCode">MyRenderer</code> muss eine <code class="hljs inlineCode">public static final</code> Konstante <code class="hljs inlineCode">INSTANCE</code> definieren, die einen <code class="hljs inlineCode">Renderer</code> enthält. Dann kann in der Konfiguration auf die Singleton-Instanz über den Klassennamen der Singleton-Klasse verwiesen werden.</p>
+<p></p>

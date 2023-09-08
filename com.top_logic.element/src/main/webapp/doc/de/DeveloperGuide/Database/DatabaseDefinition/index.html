@@ -1,0 +1,148 @@
+<p>Zur Optimierung des Datenbankschemas für Modellelemente, können spezialisierte Datenbanktabellen definiert werden. Statt der automatisch generischen Datenbankabbildung kann dann eine spezialisierte <a class="tlObject" data-custom="true" href="?page=DatabaseMapping&amp;uuid=26047ae6-dc6e-4a5b-93a9-86752fb22572">Datenbankabbildung</a> durchgeführt werden. Ohne eine eigene Schema-Konfiguration, verwendet Top-Logic eine <a class="tlObject" data-custom="true" href="?page=GenericDataBaseMapping&amp;uuid=9f541afb-032d-4522-82a4-db6e4adb3c90">generische Speicherung</a> für Anwendungsdaten.</p>
+<h2>Schema-Konfiguration</h2>
+<p>Das Datenbankschema kann entweder direkt über XML-Konfigurationsdateien in einer TL-Studio Umgebung erfolgen, oder in der Applikation selbst im <a class="tlObject" data-custom="true" href="?page=SchemaEditor&amp;uuid=15bdf782-0bd0-4fb1-b3ad-f8afb48fc982">Schema-Editor</a> &nbsp; erstellt werden. Dieser Abschnitt behandelt die zugrundeliegenden XML-Deklarationen. Wird eine Tabelle interaktiv im Schema-Editor erstellt, werden die hier beschriebenen Dateien automatisch generiert.</p>
+<p>Eine Schema-Konfiguration wird im Ordner <code class="hljs inlineCode">WEB-INF/kbase</code> angelegt und hat das Namens-Schema <code class="hljs inlineCode">&lt;MySchema&gt;Meta.xml</code>, z.B. <code class="hljs inlineCode">com.top_logic.demo/webapp/WEB-INF/kbase/DemoTypesMeta.xml</code>.</p>
+<p>Die Konfiguration des Datenbankschemas der fertigen Anwendung ist modular. D.h. das fertige Schema setzt sich aus vielen einzelnen Dateien zusammen, die sich in unterschiedlichen Modulen befinden. Top-Logic liefert eine Reihe von solchen Schema-Definitionen bereits mit, die von der konkreten Anwendung geerbt und um eigene Deklarationen angereichert werden können. Jede einzelne Schema-Definitionsdatei muss daher in die Anwendungskonfiguration eingebunden werden.&nbsp;</p>
+<p>Die oben erwähnte Konfiguration &nbsp;<code class="hljs inlineCode">DemoTypesMeta.xml</code> aus der Demo-Anwendung ist z.B. auf die folgende Art aus der Anwendungskonfiguration der Demo-Anwendung referenziert, siehe <code class="hljs inlineCode">com.top_logic.demo/webapp/WEB-INF/conf/DemoConf.config.xml</code>:</p>
+<pre><code class="language-xml">&lt;application xmlns:config="http://www.top-logic.com/ns/config/6.0"&gt;
+   &lt;configs&gt;
+      &lt;config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes"&gt;
+         &lt;type-systems&gt;
+            &lt;type-system name="Default"&gt;
+               &lt;declarations&gt;
+                  &lt;declaration resource="webinf://kbase/DemoTypesMeta.xml" /&gt;
+               &lt;/declarations&gt;
+            &lt;/type-system&gt;
+         &lt;/type-systems&gt;
+      &lt;/config&gt;
+   &lt;/configs&gt;
+&lt;/application&gt;</code></pre>
+<h2>Tabellendefinition</h2>
+<p>Eine normale Objekttabelle wird über das Tag <code class="hljs inlineCode">metaobject</code> definiert. Der Tabellenname wird über <code class="hljs inlineCode">object_name</code> angegeben.</p>
+<pre><code>&lt;objectlist xmlns="http://www.top-logic.com/ns/meta/5.8"&gt;
+  &lt;metaobjects&gt;
+
+    &lt;metaobject abstract="false" object_name="MyTable" super_class="TLObject"&gt;
+      &lt;attributes&gt;
+        ...
+      &lt;/attributes&gt;
+    &lt;/metaobject&gt;
+
+  &lt;/metaobjects&gt;
+&lt;/objectlist&gt;
+</code></pre>
+<p>Tabellendefinitionen in Top-Logic können "abstrakt" sein. Eine abstrakte Tabelle wird in der Datenbank nicht angelegt, sondern dient nur als Vorlage für andere Tabellen. Eine Tabelle <code class="hljs inlineCode">T</code> kann eine andere Tabelle <code class="hljs inlineCode">S</code> als Vorlage verwenden, indem sie diese über <code class="hljs inlineCode">super_class="S"</code> referenziert. In diesem Fall erhält die Tabelle <code class="hljs inlineCode">T</code> alle Spalten von <code class="hljs inlineCode">S</code> als vorangestellte Spalten und zusätzlich die eigenen (in <code class="hljs inlineCode">T</code> definierten) Spalten hinten angefügt.</p>
+<p>Wichtig ist, das der in <code class="hljs inlineCode">object_name</code> angegebene Name nur der sog. plattformunabhängige Tabellenname ist. Aus dem plattformunabhängigen Tabellennamen, der für die interne Referenzierung der Tabelle verwendet wird, generiert die Datenbankabstraktionsschicht automatisch einen konkreten Tabellennamen, der in SQL-Statements verwendet wird. Der SQL-Tabellenname ist i.d.R. in Großbuchstaben geschrieben und verwendet Unterstriche als Worttrenner. Zusatzlich kann je nach Datenbank eine Kürzung vorgenommen werden, um spezielle Einschränkungen des Datenbanksystems zu entsprechen. Aus der oben definierten Tabelle <code class="hljs inlineCode">MyTable</code> wird in der Datenbank die konkrete Tabelle <code class="hljs inlineCode">MY_TABLE</code>. In Fließtext verwendet diese Dokumentation immer den plattformunabhängigen Tabellennamen, wie der in den entsprechenden Schema-Deklarationsdateien zu finden ist. Nur wenn SQL-Statements als Beispiel gegeben werden, wird der SQL-Name der Tabelle verwendet.</p>
+<h2>Spaltendefinition</h2>
+<p>Eine Wertespalte (mit primitiven Typ) wird über das Tag <code class="hljs inlineCode">mo_attribute</code> definiert. Mit <code class="hljs inlineCode">mandatory</code> gibt man an, ob auf Datenbank-Ebene ausgeschlossen werden soll, dass der leere Wert gespeichert werden kann (<code class="hljs inlineCode">NOT NULL</code> in SQL). Über <code class="hljs inlineCode">db_size</code> wird für String-Spalten angegeben, wieviele Zeichen die Spalte maximal aufnehmen kann.</p>
+<pre><code>&lt;mo_attribute att_name="myColumn" att_type="String" mandatory="false" db_size="256"/&gt;
+</code></pre>
+<p>Auch für die Werte-Typen von Tabellenspalten existiert eine plattformunabhängige Beschreibung. Der plattformunabhängige Spaltentyp wird dann je nach verwendetem Datenbanksystem in einen konkreten SQL-Typ umgerechnet. Hierüber wird erreicht, dass eine Anwendung mit derselben Schemadefinition auf allen von Top-Logic unterstützten Datenbanksystemen lauffähig ist.</p>
+<p>Mögliche Werte-Typen für primitive Spalten sind:</p>
+<ul>
+ <li><code class="hljs inlineCode">String</code></li>
+ <li><code class="hljs inlineCode">Boolean</code></li>
+ <li><code class="hljs inlineCode">Integer</code></li>
+ <li><code class="hljs inlineCode">Long</code></li>
+ <li><code class="hljs inlineCode">Byte</code></li>
+ <li><code class="hljs inlineCode">Short</code></li>
+ <li><code class="hljs inlineCode">Character</code></li>
+ <li><code class="hljs inlineCode">Float</code></li>
+ <li><code class="hljs inlineCode">Double</code></li>
+ <li><code class="hljs inlineCode">Date</code></li>
+ <li><code class="hljs inlineCode">Time</code></li>
+ <li><code class="hljs inlineCode">Timestamp</code></li>
+ <li><code class="hljs inlineCode">Clob</code></li>
+ <li><code class="hljs inlineCode">Blob</code></li>
+</ul>
+<h2>Fremdschlüsselspalten</h2>
+<p>Eine Fremdschlüsselspalte (eine Spalte deren Wert eine Referenz auf ein anderes Objekt darstellt) wird über das Tag <code class="hljs inlineCode">reference</code> definiert. Der Ziel-Typ wird über <code class="hljs inlineCode">target-type</code> angegeben. Über den so definierten Fremdschlüssel können alle Objekte referenziert werden, welche in der in <code class="hljs inlineCode">target-type</code> angegebenen Tabelle gespeichert sind. Dabei ist es erlaubt, dass eine abstrakte Tabelle als Ziel-Typ angegeben wird. In diesem Fall können all diejenigen Objekte referenziert werden, die in Tabellen gespeichert sind, welche die angegebene abstrakte Tabelle als Vorlage nutzen (entweder direkt oder als Vorlage der Vorlage, usw.).</p>
+<p>Die folgende Definition erzeugt eine Fremdschlüsselspalte <code class="hljs inlineCode">keyCol</code>, mit der Objekte referenziert werden können, die in der Tabelle <code class="hljs inlineCode">OtherTable</code> abgelegt sind:</p>
+<pre><code>&lt;reference 
+   att_name="keyCol"
+   target-type="OtherTable"
+   mandatory="false" 
+   monomorphic="true" 
+   deletion-policy="clear-reference" 
+   is-container="false" 
+   history-type="current" 
+   branch-global="false" 
+   initial="false"
+   by-value="false"
+/&gt;
+</code></pre>
+<p>Da die Referenz nicht <code class="hljs inlineCode">mandatory</code> ist, kann die Referenz auch leer sein (auf kein anderes Objekt zeigen).</p>
+<p>Mit <code class="hljs inlineCode">monomorphic='true'</code> wird angegeben, dass alle Objekte die referenziert werden, in derselben Tabelle (genau der angegebenen Tabelle <code class="hljs inlineCode">OtherTable</code>) liegen, auch dann, wenn die angegebene Tabelle als Vorlage für andere Tabellen genutzt wurde. Bei <code class="hljs inlineCode">monomorphic='false'</code> kann ein referenziertes Objekt auch in einer Tabelle liegen die den <code class="hljs inlineCode">target-type</code> (hier <code class="hljs inlineCode">OtherTable</code>) als Vorlage nutzen.</p>
+<p>Die Deklaration einer Referenz in einem Tabellentyp erzeugt in konkreten SQL-Schema eine oder mehrere Spalten, je nachdem, wie die Referenz parametrisiert ist. Auf alle Fälle wird aber eine Spalte erzeugt, welche den technischen Identifier des referenzierten Objektes aufnehmen kann, vlg. <a class="tlObject" data-custom="false" href="?page=TechnicalColumns&amp;uuid=bfb011d4-1fd6-4b63-9e0f-b54e895a12fd">Technische Spalten</a>. Der Namen dieser ID-Spalte wird aus dem angegebenen Namen der Referenz mit dem Suffix <code class="hljs inlineCode">_ID</code> gebildet.</p>
+<h3>Lösch-Strategien</h3>
+<p>Über die <code class="hljs inlineCode">deletion-policy</code> bestimmt man, was passieren soll, wenn das referenzierte Ziel-Objekt gelöscht wird. Mögliche Werte sind</p>
+<ul>
+ <li><code class="hljs inlineCode">clear-reference</code>: Die Referenz wird auf "leer" gesetzt (gelöscht).</li>
+ <li><code class="hljs inlineCode">delete-referer</code>: Das referenzierende Quell-Objekt wird ebenfalls gelöscht.</li>
+ <li><code class="hljs inlineCode">stabilise-reference</code>: Die Referenz bleibt erhalten und zeigt auf die letzte gültige Version der referenzierten Ziel-Objektes. Hierfür muss <code class="hljs inlineCode">history-type</code> auf <code class="hljs inlineCode">mixed</code> gesetzt werden.</li>
+ <li><code class="hljs inlineCode">veto</code>: Die Löschung des referenzierten Ziel-Objekts wird verhindert.</li>
+</ul>
+<p>Mit <code class="hljs inlineCode">is-container</code> kann man bestimmen, dass das referenzierte Ziel-Objekt "Teil" des referenzierenden Quell-Objektes ist und daher zusammen mit dem referenzierenden Quell-Objekt gelöscht werden soll. Eine Löschung setzt sich also über eine <code class="hljs inlineCode">is-container</code> Referenz auf das Ziel-Objekt fort. Diese Strategie funktioniert aktuell nur mit <code class="hljs inlineCode">history-type</code>=<code class="hljs inlineCode">current</code> auf dem referenzierten Zielobjekt.</p>
+<h3>Scope der Referenz</h3>
+<p>Ob eine Referenz auf historische Versionen eines Objektes zeigen kann wird über <code class="hljs inlineCode">history-type</code> angegeben, vgl. <a class="tlObject" data-custom="true" href="?page=Versioning&amp;uuid=9320ab94-eb74-4ee2-ba9f-3a223e25570d">Datenversionierung</a>. Mögliche Werte sind:</p>
+<ul>
+ <li><code class="hljs inlineCode">current</code>: Die Referenz kann nur auf aktuelle Versionen von Objekten zeigen. Wird das referenzierte Objekt gelöscht, wird <code class="hljs inlineCode">deletion-policy</code> beachtet.</li>
+ <li><code class="hljs inlineCode">historic</code>: Die Referenz zeigt ausschließlich auf stabile Versionen von Objekten. Wird sie mit einem aktuellen Objekt gefüllt, verweist sie nach dem Commit auf die in diesem Commit gültige Version des referenzierten Objektes (die Referenz wird "stabilisiert").</li>
+ <li><code class="hljs inlineCode">mixed</code>: In einer solchen Referenz können sowohl aktuelle Stände als auch stabile Versionen von Objekten referenziert werden. Bei einer solchen Referenz kann <code class="hljs inlineCode">stabilise-reference</code> als <code class="hljs inlineCode">deletion-policy</code> verwendet werden, siehe oben.</li>
+</ul>
+<h2>Assoziationstabellen</h2>
+<p>Für typische Assoziationstabellen mit lediglich zwei Fremdschlüsseln (Quelle und Ziel) gibt es eine Kurzschreibweise.</p>
+<p>Die folgende Definition erzeugt eine Link-Tabelle mit Namen <code class="hljs inlineCode">myLinkTable</code>, mit der eine Set- oder List-Referenz im Modell gespeichert werden kann. Hierfür muss die Vorlage <code class="hljs inlineCode">hasWrapperAttValueBaseAssociation</code> verwendet werden.</p>
+<pre><code>&lt;association super_class="hasWrapperAttValueBaseAssociation" object_name="myLinkTable" /&gt;
+</code></pre>
+<p>Die so definierte Tabelle hat die beiden Fremdschlüssel <code class="hljs inlineCode">source</code> und <code class="hljs inlineCode">dest</code>. Wenn der Typ der Referenz oder die Optionen wie <code class="hljs inlineCode">mandatory</code> etc. angepasst werden sollen, dann können diese speziellen Fremdschlüssel auch über <code class="hljs inlineCode">&lt;source/&gt;</code> und <code class="hljs inlineCode">&lt;dest/&gt;</code> deklariert werden:</p>
+<pre><code>&lt;association super_class="hasWrapperAttValueBaseAssociation" object_name="myLinkTable"&gt;
+   &lt;attributes&gt;
+      &lt;source
+         override="true"
+         target-type="SpecialSourceTable"
+      /&gt;
+      &lt;destination
+         override="true"
+         target-type="SpecialDestTable"
+      /&gt;
+   &lt;/attributes&gt;
+&lt;/association&gt;
+</code></pre>
+<p>Die obige Definition ist also gleichbedeutend mit:</p>
+<pre><code>&lt;association super_class="hasWrapperAttValueBaseAssociation" object_name="myLinkTable"&gt;
+   &lt;attributes&gt;
+      &lt;reference 
+         att_name="source"
+         override="true"
+         target-type="SpecialSourceTable"
+      /&gt;
+      &lt;reference 
+         att_name="dest"
+         override="true"
+         target-type="SpecialDestTable"
+      /&gt;
+   &lt;/attributes&gt;
+&lt;/association&gt;
+</code></pre>
+<h2>Indizes</h2>
+<p>Über das Tag <code class="hljs inlineCode">mo_index</code> können benutzerdefinierte Indices für Objekttabellen definiert werden. In der Liste <code class="hljs inlineCode">index_parts</code> werden die Attribute und Referenzen aufgezählt, über die der Index erstellt werden soll:</p>
+<pre><code class="language-xml">&lt;metaobject abstract="false" object_name="MyTable" super_class="TLObject"&gt;
+    &lt;attributes&gt;
+        ...
+    &lt;/attributes&gt;
+
+    &lt;index&gt;
+        &lt;mo_index name="myIndex" unique="false"&gt;
+            &lt;index-parts&gt;
+	        &lt;index_part name="myAttr1"/&gt;
+	        &lt;index_part name="myAttr2"/&gt;
+            &lt;/index-parts&gt;
+        &lt;/mo_index&gt;
+    &lt;/index&gt;
+&lt;/metaobject&gt;
+</code></pre>
+<p>Das Attribut <code class="hljs inlineCode">unique</code> steuert, ob die Datenbank die Eindeutigkeit von Indexeinträgen erzwingen soll.</p>
+<h2>Branches</h2>
+<p>Top-Logic ist prinzipiell mandantenfähig (siehe auch <a class="tlObject" data-custom="false" href="?page=Branches&amp;uuid=9f31c13b-7a63-41cd-b1b1-422e28c3de13">Mandantenfähigkeit</a>). Hierfür wird in der Datenbank in jeder Fachtabelle eine zusätzliche Spalte "BRANCH" angelegt. Wenn eine Anwendung dies nicht benötigt, kann dies abgeschaltet werden. Je nach Datenvolumen kann so die Datenbank optimiert werden.</p>
+<p>Um in die Mandantenfähigkeit abzuschalten und die unnötige "BRANCH" Spalte in der Datenbank zu verhindern kann die Konfigurations-Datei <code class="hljs inlineCode">top-logic.singleBranch.config.xml</code> in die Anwendung integriert werden.</p>

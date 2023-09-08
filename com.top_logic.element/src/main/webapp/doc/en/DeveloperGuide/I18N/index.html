@@ -1,0 +1,138 @@
+<p>Alle textuellen Ausgaben einer Anwendung müssen prinzipiell mehrsprachig erfolgen können. Hierfür wird Internationalisierung über Resource-Keys mit korrespondierenden Übersetzungen in Messages-Properties-Dateien eingesetzt.</p>
+<h2>Deklaration von Resource-Keys</h2>
+<p>Ein Resource-Key wird im Code in einer <code class="hljs inlineCode">I18NConstants</code>-Klasse (pro Paket) definiert. Ein Template für eine solche <code class="hljs inlineCode">I18NConstants</code>-Dateil sieht folgendermaßen aus:</p>
+<pre><code>/*
+ * @(#) I18NConstants.java
+ *
+ * Copyright (c) 2016 Business Operation Systems AG. All Rights Reserved.
+ */
+package your.package;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.I18NConstantsBase;
+import com.top_logic.layout.ResPrefix;
+
+/**
+ * Internationalization constants for this package.
+ *
+ * @see ResPrefix
+ * @see ResKey
+ *
+ * @version $Revision: $ $Author: $
+ */
+@SuppressWarnings("javadoc")
+public class I18NConstants extends I18NConstantsBase {
+
+        // Define your keys here...
+        public static ResKey MY_KEY;
+
+        static {
+                initConstants(I18NConstants.class);
+        }
+}
+</code></pre>
+<p>Die Keys werden als Pseudo-Konstanten vom Typ <code class="hljs inlineCode">ResKey</code> (ohne den <code class="hljs inlineCode">final</code>-Modifier) deklariert. Die Initialisierung erfolgt über die Magie <code class="hljs inlineCode">initConstants(...)</code> zum Ladezeitpunkt der Klasse.</p>
+<h2>Deklaration von Übersetzungen</h2>
+<p>Übersetzungen für Keys werden in Resource-Bundles, die Übersetzungen für jede unterstützte Sprache enthalten, hinterlegt. Jedes Modul deklariert die von ihm hinzugefügten Bundles über eine Konfigurations-Sektion:</p>
+<pre><code>&lt;config service-class="com.top_logic.basic.util.ResourcesModule"&gt;
+        &lt;instance error-on-missing-key="true"&gt;
+                &lt;static-bundles&gt;
+                        &lt;bundles&gt;
+                                &lt;bundle name="MyMessages" /&gt;
+                        &lt;/bundles&gt;
+                &lt;/static-bundles&gt;
+        &lt;/instance&gt;
+&lt;/config&gt;
+</code></pre>
+<p>Im Verzeichnis <code class="hljs inlineCode">/webapp/WEB-INF/conf/resources/</code> des entsprechenden Module werden dann für jede Sprache (z.B. <code class="hljs inlineCode">de</code> und <code class="hljs inlineCode">en</code>) Übersetzungsdateien hinterlegt:</p>
+<pre><code>my.module/webapp/WEB-INF/conf/resources:
+   MyMessages_de.properties
+   MyMessages_en.properties
+</code></pre>
+<p>Für den oben deklarierten Key werden dann in</p>
+<p><code class="hljs inlineCode">my.module/webapp/WEB-INF/conf/resources/MyMessages_de.properties</code>:</p>
+<pre><code>class.your.package.I18NConstants.MY_KEY = Eine deutsche Übersetzung.
+</code></pre>
+<p>eine deutsche und in</p>
+<p><code class="hljs inlineCode">my.module/webapp/WEB-INF/conf/resources/MyMessages_en.properties</code>:</p>
+<pre><code>class.your.package.I18NConstants.MY_KEY = An Englisch translation.
+</code></pre>
+<p>eine englische Übersetzung hinterlegt.</p>
+<p>Aus einer Key-Konstanten <code class="hljs inlineCode">MY_KEY</code> mit vollqualifiziertem Namen <code class="hljs inlineCode">your.package.I18NConstants.MY_KEY</code> wird durch Voranstellen von <code class="hljs inlineCode">class.</code> der Schlüssel <code class="hljs inlineCode">class.your.package.I18NConstants.MY_KEY</code> zu dem eine entsprechende Übersetzung hinterlegt werden kann. Der vollqualifizierte Name einer Konstanten kann in Eclipse durch Öffnen des Kontext-Menüs über der Deklaration und wählen des Menüpunkts "<em>Copy qualified name</em>" besonders einfach kopiert und in die entsprechende Internationalisierungsdatei übertragen werden.</p>
+<h2>Zugriff auf Übersetzungen im Code</h2>
+<p>Die Klasse <code class="hljs inlineCode">Resources</code> stellt den Zugriff auf Übersetzungen her. Im Rendering sind die passenden <code class="hljs inlineCode">Resources</code> für den aktuellen Nutzer über <code class="hljs inlineCode">DisplayContext.getResources()</code> erreichbar. An Stellen, an denen kein <code class="hljs inlineCode">DisplayContext</code> verfügbar ist, kann über <code class="hljs inlineCode">Resources.getInstance()</code> auf die passenden Ressourcen zugegriffen werden.</p>
+<p>Das Nachschlagen einer Übersetzung geschieht über die API <code class="hljs inlineCode">getString(ResKey)</code>:</p>
+<pre><code>void render(DisplayContext context, TagWriter out) {
+  ResKey key = I18NConstants.MY_KEY;
+  String text = context.getResources.getString(key);
+  out.writeText(text);
+}
+</code></pre>
+<p>Obiges Beispiel druckt "Eine deutsche Übersetzung." für einen deutschen Nutzer und "An Englisch translation." für einen englischen.</p>
+<h2>Übersetzungen mit dynamischen Argumenten</h2>
+<p>Häufig kann es vorkommen, dass in den darzustellenden Text dynamische Inhalten (Zahlen, Datumsangaben, o.ä.) eingebettet werden müssen.</p>
+<p>Die hinterlegte Übersetzund darf daher Platzhalter nach der Spezifikation von <code class="hljs inlineCode">java.text.MessageFormat</code> enthalten. Die Dynamischen Inhalten können dann zusammen mit einem Basis-Resource-Key zu einem Message-Key kombiniert und an jede API weitergereicht werden, die mit <code class="hljs inlineCode">ResKey</code> umgehen kann:</p>
+<pre><code>ResKey titleKey = ResKey.message(I18NConstants.MY_MESSAGE__DATE, new Date());
+
+new MyDisplayControl(titleKey).write(...);
+</code></pre>
+<p>Wenn die Übersetzung direkt an der Stelle durchgeführt wird, an der die Argumente verfügbar sind, können diese auch direkt an die <code class="hljs inlineCode">Resources</code> weitergereicht werden:</p>
+<pre><code>void render(DisplayContext context, TagWriter out) {
+  out.writeText(context.getResources.getMessage(I18NConstants.MY_MESSAGE__DATE, new Date()));
+}
+</code></pre>
+<p>Ist gleichbedeutend mit:</p>
+<pre><code>void render(DisplayContext context, TagWriter out) {
+  out.writeText(context.getResources.getString(ResKey.message(I18NConstants.MY_MESSAGE__DATE, new Date())));
+}
+</code></pre>
+<h3>Format von Übersetzungen mit Argumenten</h3>
+<p>In der Übersetzung wird der dynamische Wert (hier das aktuelle Datum) an Stelle des Plazhalters <code class="hljs inlineCode">{0}</code> in die Übersetzung eingebettet:</p>
+<p><code class="hljs inlineCode">my.module/webapp/WEB-INF/conf/resources/MyMessages_de.properties</code>:</p>
+<pre><code>class.your.package.I18NConstants.MY_MESSAGE__DATE = Version vom {0}.
+</code></pre>
+<p>Details, wie Formattierungen in diese Platzhalter eingebettet werden können finden sich in der API-Dokumentation zu <a href="https://docs.oracle.com/javase/7/docs/api/java/text/MessageFormat.html" target="_blank">​MessageFormat</a>. Hierüber lassen sich auch komplexe Formattierungen erreichen, die bei Zahlenausgabe eine korrekte Singular/Plural-Form von sich auf die Zahl beziehenden Wörtern erreichen.</p>
+<h3>Konvention für Resource-Keys mit Argumenten</h3>
+<p>Konstantennamen für Übersetzungsschlüssel, welche dynamische Anteile enthalten, müssen die Argumente nach einem doppelten Unterstrich aufzählen (für jedes Argument ein einzelnes Wort, mehrere Argumente jeweils durch Unterstrich getrennt).</p>
+<p>Keys mit drei Argumenten könnten beispielsweise folgendermaßen heißen:</p>
+<pre><code>   public static ResKey MY_KEY__ARG1_ARG2_ARG3;
+   public static ResKey ERROR_MESSAGE__CODE_DATE_SEVERITY;
+</code></pre>
+<h2>Übersetzungen mit eingebautem Fallback</h2>
+<p>Bei einer Übersetzung kann es sinnvoll sein, einen generischen Text zu hinterlegen, der in manchen Anwendungsfällen spezialisiert werden kann. Beispielsweise könnte für eine Anlage-Komponente generisch ein Titel "Neues Element anlegen" hinterlegt sein, so dass beim Einbinden der Komponente eine nette Default-Ansicht erreicht wird. Für konkrete Anwendungsfälle soll sich diese Übersetzung aber zu "Neues Projekt anlegen" oder "Meilenstein hinzufügen" spezialisieren lassen.</p>
+<p>Hierfür lassen sich Resource-Keys zu Fallback-Chains zusammenfügen:</p>
+<pre><code>ResKey defaultKey = I18NConstants.CREATE_ELEMENT_TITLE;
+ResKey specializedKey = component.getResPrefix().key("title");
+
+ResKey titleKey = ResKey.fallback(specializedKey, defaultKey);
+
+new MyDisplayControl(titleKey).write(...);
+</code></pre>
+<p>Theoretisch lassen sich so mehrstufige Fallback-Keys konstruieren, die dann an jede API weitergereicht werden können, die mit <code class="hljs inlineCode">ResKey</code> umgehen kann.</p>
+<h2>Generierter Text anstatt von Übersetzungen</h2>
+<p>Ist eine API auf Internationalisierung vorbereitet z.B.</p>
+<pre><code>class MyDisplay {
+  void setLabel(ResKey labelKey) {...}
+}
+</code></pre>
+<p>kann <code class="hljs inlineCode">MyDisplay</code> einfach mit Resource-Keys verwendet werden:</p>
+<pre><code>display.setLabel(I18NConstants.WINDOW_TITLE);
+</code></pre>
+<p>Allerdings kann es unter Umständen auch notwendig sein, eine solche API mit einem fertigen Text (der beispielsweise aus einer Nutzereingabe stammt) zu bedienen. Auch dies ist möglich, indem der literale Text in einen <code class="hljs inlineCode">ResKey</code> verpackt wird. Ein solcher spezieller Key wird bei der Auflösung wieder zu dem Text, mit dem er generiert wurde:</p>
+<pre><code>String userInput = ...;
+
+display.setLabel(ResKey.text(userInput));
+</code></pre>
+<h2>Resource Prefixe von Komponenten</h2>
+<p>Komponenten die eine Toolbar haben, müssen einen Resource Prefix in ihrer XML-Datei definieren. (Siehe: <code class="hljs inlineCode">LayoutComponent.Config.getResPrefix()</code>) Dieser soll dem in <s><a href="http://tl/trac/ticket/18227" target="_blank" title="#18227: enhancement: Tooling für Resource-Prefix und Resource-Key-Normalisierung (closed: fixed)">#18227</a></s> definiertem Schema entsprechen:</p>
+<ul>
+ <li>mit dem Prefix <code class="hljs inlineCode">layouts.</code> beginnen</li>
+ <li>nach dem konstanten Prefix aus einem Punkt-getrennten Pfad zu der Layout-XML-Datei bestehen, in der der Key definiert ist.</li>
+ <li>als letzten Teil den lokalen Namen der Komponente haben, an der der Key definiert ist: 
+  <pre><code>&lt;component class="..."
+   name="MyForm"
+   page="/jsp/....jsp"
+   resPrefix="layouts.demo.form.SomeFormDemo.MyForm."
+/&gt;
+</code></pre></li>
+</ul>

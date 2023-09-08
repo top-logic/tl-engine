@@ -1,0 +1,194 @@
+<p>The top-logic query language is a set algebra used internally to issue search queries to the abstract database schema. This type of query is only available for code plugins. In configurations and in-app development, onlyTL script is used.</p>
+<p>An expression in the query language describes a set of objects via initial sets, set operations, cross product, filter, projection, and partitioning.</p>
+<h3>Set expressions</h3>
+<p>A set expression is evaluated without context and returns a set of values.</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">all(T)</code></th>
+   <td>The set of all objects that exactly match the object type <code class="hljs inlineCode">T</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">any(T)</code></th>
+   <td>The set of all objects that are assignment compatible with the given object type <code class="hljs inlineCode">T</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">none()</code></th>
+   <td>The empty set.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">setLiteral(Collection)</code></th>
+   <td>The set of elements in the given collection.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">filter(set, expr)</code></th>
+   <td>The elements of the set <code class="hljs inlineCode">set</code>, for which the boolean expression <code class="hljs inlineCode">expr</code> evaluates to <code class="hljs inlineCode">true</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">map(set, expr)</code></th>
+   <td>The set of results of evaluating the expression <code class="hljs inlineCode">expr</code> on all elements of <code class="hljs inlineCode">set</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">union(set_1, set_2)</code></th>
+   <td>The union of the sets <code class="hljs inlineCode">set_1</code> and <code class="hljs inlineCode">set_2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">intersection(set_1, set_2)</code></th>
+   <td>The intersection of the sets <code class="hljs inlineCode">set_1</code> and <code class="hljs inlineCode">set_2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">substraction(set_1, set_2)</code></th>
+   <td>The elements of the set <code class="hljs inlineCode">set_1</code>, which are not contained in <code class="hljs inlineCode">set_2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">crossproduct(a1: set_1, a2: set_2, ..., an: set_n)</code></th>
+   <td>The cross product of the sets <code class="hljs inlineCode">set_1</code>, <code class="hljs inlineCode">set_2</code>,... <code class="hljs inlineCode">set_n</code>. An entry of the result set is an N-tuple, with names of the entries (a1, a2, ..., an).</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">partition(set, expr, fun)</code></th>
+   <td>The set of representatives of an equivalence on the set <code class="hljs inlineCode">set</code>. Here, elements <code class="hljs inlineCode">a</code> and <code class="hljs inlineCode">b</code> from <code class="hljs inlineCode">set</code> are equivalent if <code class="hljs inlineCode">expr</code> evaluates to the same value in the context of <code class="hljs inlineCode">a</code> and <code class="hljs inlineCode">b</code>. The function <code class="hljs inlineCode">fun</code> returns the representative of the equivalence class by evaluating in the context of the set of all elements of <code class="hljs inlineCode">set</code> belonging to an equivalence class.</td>
+  </tr>
+ </tbody>
+</table>
+<p>The set of all objects is <code class="hljs inlineCode">all(KnowledgeObject)</code>. The set of all association links is <code class="hljs inlineCode">all(KnowledgeAssociation)</code>. The set of all knowledge base entries is <code class="hljs inlineCode">all(KnowledgeItem)</code>.</p>
+<h3>Value Expressions</h3>
+<p>An expression is evaluated in the context of a scalar value and again returns a scalar value (not a set).</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">literal(value)</code></th>
+   <td>The given literal value. The type of the literal is given by the type of the value.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">attribute(attr)</code></th>
+   <td>Value of the primitive row attribute <code class="hljs inlineCode">attr</code> of the context object.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">reference(name)</code></th>
+   <td>Access to the reference of the context association with given name (only currently supported names are <code class="hljs inlineCode">source</code> and <code class="hljs inlineCode">destination</code>).</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">flex(name)</code></th>
+   <td>Value of the flexible attribute with name <code class="hljs inlineCode">name</code> of the context object.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">get(index)</code></th>
+   <td>Access to the value with given index of the context tuple.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">eqBinary(expr_1, expr_2)</code></th>
+   <td>Comparison of results of evaluations of expressions <code class="hljs inlineCode">expr_1</code> and <code class="hljs inlineCode">expr_2</code> for equality.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">eqCi(expr_1, expr_2)</code></th>
+   <td>Comparison of the results of the evaluations of the expressions <code class="hljs inlineCode">expr_1</code> and <code class="hljs inlineCode">expr_2</code> for string equality without consideration of upper and lower case.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">matches(regex, expr)</code></th>
+   <td>Test whether the result of evaluating <code class="hljs inlineCode">expr_1</code> matches the given regular expression <code class="hljs inlineCode">regex</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">le(expr_1, expr_2)</code></th>
+   <td>Comparison of the results <code class="hljs inlineCode">v1</code> and <code class="hljs inlineCode">v2</code> of the evaluations of the expressions <code class="hljs inlineCode">expr_1</code> and <code class="hljs inlineCode">expr_2</code> for <code class="hljs inlineCode">v1</code> less than or equal to <code class="hljs inlineCode">v2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">lt(expr_1, expr_2)</code></th>
+   <td>Comparison of the results <code class="hljs inlineCode">v1</code> and <code class="hljs inlineCode">v2</code> of the evaluations of the expressions <code class="hljs inlineCode">expr_1</code> and <code class="hljs inlineCode">expr_2</code> on <code class="hljs inlineCode">v1</code> true less than <code class="hljs inlineCode">v2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">ge(expr_1, expr_2)</code></th>
+   <td>Comparison of the results <code class="hljs inlineCode">v1</code> and <code class="hljs inlineCode">v2</code> of the evaluations of the expressions <code class="hljs inlineCode">expr_1</code> and <code class="hljs inlineCode">expr_2</code> on <code class="hljs inlineCode">v1</code> greater than or equal to <code class="hljs inlineCode">v2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">gt(expr_1, expr_2)</code></th>
+   <td>Comparison of the results <code class="hljs inlineCode">v1</code> and <code class="hljs inlineCode">v2</code> of the evaluations of the expressions <code class="hljs inlineCode">expr_1</code> and <code class="hljs inlineCode">expr_2</code> on <code class="hljs inlineCode">v1</code> genuinely greater than <code class="hljs inlineCode">v2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">inSet(set)</code></th>
+   <td>Test whether the context object is contained in the set <code class="hljs inlineCode">set</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">hasType(T)</code></th>
+   <td>Test whether the context object is exactly of type <code class="hljs inlineCode">T</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">instanceof(T)</code></th>
+   <td>Test whether the context object is assignment compatible with the type <code class="hljs inlineCode">T</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">and(expr_1, expr_2)</code></th>
+   <td>Boolean AND operation on the results of the evaluations of the expressions <code class="hljs inlineCode">expr_1</code> and <code class="hljs inlineCode">expr_2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">or(expr_1, expr_2)</code></th>
+   <td>Boolean OR operation on the results of the evaluations of the expressions <code class="hljs inlineCode">expr_1</code> and <code class="hljs inlineCode">expr_2</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">not(expr)</code></th>
+   <td>Boolean non-linking of the result of the evaluation of the expression <code class="hljs inlineCode">expr</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">eval(expr_1, expr_2)</code></th>
+   <td>Evaluation of <code class="hljs inlineCode">expr_2</code> in the context of the result of <code class="hljs inlineCode">expr_1</code>.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">tuple(expr_1, ..., expr_n)</code></th>
+   <td>The tuple of values from <code class="hljs inlineCode">expr_1</code> to <code class="hljs inlineCode">expr_n</code>.</td>
+  </tr>
+ </tbody>
+</table>
+<h3>Functions</h3>
+<p>A function maps a set of values to a scalar value.</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">count()</code></th>
+   <td>Number of elements in the context set.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">sum(expr)</code></th>
+   <td>Sum of the evaluation results of <code class="hljs inlineCode">expr</code> on all elements in the context set.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">min(expr)</code></th>
+   <td>Minimum of the evaluation results of <code class="hljs inlineCode">expr</code> on all elements of the context set.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">max(expr)</code></th>
+   <td>Maximum of the evaluation results of <code class="hljs inlineCode">expr</code> on all elements of the context set.</td>
+  </tr>
+ </tbody>
+</table>
+<h3>Order of the result</h3>
+<p>The result set can be delivered in a specific order. The order is specified by a tuple of order specifications.</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">order(descending, expr)</code></th>
+   <td>Primitive order specification. The result is sorted by sorting the results of the evaluation of <code class="hljs inlineCode">expr</code> in the context of each result in ascending (<code class="hljs inlineCode">descending</code> = <code class="hljs inlineCode">false</code>) or descending (<code class="hljs inlineCode">descending</code> = <code class="hljs inlineCode">true</code>) order.</td>
+  </tr>
+ </tbody>
+</table>
+<p></p>
+<h3>Equivalences</h3>
+<p></p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">filter(filter(set, expr_1), expr_2)</code></th>
+   <td><code class="hljs inlineCode">filter(set, and(expr_1, expr_2))</code></td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">map(map(set, expr_1), expr_2)</code></th>
+   <td><code class="hljs inlineCode">map(set, eval(expr_1, expr_2))</code></td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">inSet(all(T))</code></th>
+   <td><code class="hljs inlineCode">hasType(T)</code></td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">inSet(any(T))</code></th>
+   <td><code class="hljs inlineCode">instanceOf(T)</code></td>
+  </tr>
+ </tbody>
+</table>

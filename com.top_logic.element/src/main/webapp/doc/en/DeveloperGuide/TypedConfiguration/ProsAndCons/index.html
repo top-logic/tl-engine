@@ -1,0 +1,27 @@
+<p></p>
+<h1 id="VorteiletypisierterKonfiguration">Vorteile typisierter Konfiguration</h1>
+<p>Typisierte Konfiguration hat die folgenden Vorteile:</p>
+<ul>
+ <li>Zugänglichkeit für Tooling.</li>
+ <li>Automatische Parser- und Serialisierer.</li>
+ <li>Validierung unabhängig von Komponenteninstanziierung</li>
+ <li>Effizientere Anwendungen</li>
+ <li>Wartbarer Code</li>
+</ul>
+<h2 id="Tooling">Tooling</h2>
+<p>Verfügbare Konfigurationsoptionen sind zugänglich für Tooling (über Reflection)</p>
+<h2 id="ParsingundSerialisierung">Parsing und Serialisierung</h2>
+<p>Es müssen keine Parser- und Serialisierer-Implementierung geschrieben werden, weil diese generisch durch das Framework zur Verfügung gestellt werden. Das XML-Schema für eine Konfiguration leitet sich dabei über ein</p>
+<h2 id="Validierung">Validierung</h2>
+<ul>
+ <li>Prüfung auch auf nicht unterstützte Optionen möglich.</li>
+</ul>
+<h2 id="Effizienz">Effizienz</h2>
+<ul>
+ <li>Erhöhte Speichereffizienz, da (read-only) Konfiguration session-übergreifend von mehreren Komponenten benutzt werden kann.</li>
+ <li>Bessere Performance, da Konfiguration nur einmal gelesen werden muss.</li>
+</ul>
+<h2 id="Wartbarkeit">Wartbarkeit</h2>
+<p>Keine Type-Casts beim Zugriff auf die Konfiguration.</p>
+<h1 id="NachteiletypisierterKonfiguration">Nachteile typisierter Konfiguration</h1>
+<p>Keine bekannt.</p>

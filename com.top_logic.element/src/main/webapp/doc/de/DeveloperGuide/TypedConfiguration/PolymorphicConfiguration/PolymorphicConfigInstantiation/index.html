@@ -1,0 +1,49 @@
+<p>Damit eine Komponente <code class="hljs inlineCode">Component</code> vom Framework instanziiert werden kann, benötigt sie einen Konstruktor mit der Signatur <code class="hljs inlineCode">Component(InstantiationContext, Component.Config)</code>. Die Aufgabe des Komponentenkonstruktors ist es, die Konfiguration in der Komponente zu speichern und eventuell Subkomponenten zu instanziieren. Die Konfiguration wird mit dem für die Komponente speziellen Konfigurationsinterface <code class="hljs inlineCode">Component.Config</code> (nicht mit dem Wurzelinterface <code class="hljs inlineCode">ConfigurationItem</code>) deklariert. Über die Signatur des Komponentenkonstruktors ist es über Reflection möglich, für eine gegebene Komponentenklasse auf das für sie spezielle Konfigurationsinterface und damit auf die für sie zulässigen Konfigurationseigenschaften zu schließen.</p>
+<p>Eine konfigurierbare Klasse:</p>
+<pre><code class="language-java">public class Foo&lt;C extends Foo.Config&lt;?&gt;&gt; implements ConfiguredInstance&lt;C&gt; {
+
+  public interface Config&lt;I extends Foo&lt;?&gt;&gt; extends PolymorphicConfiguration&lt;I&gt; {
+    ...
+  }
+
+  private final C _config;
+
+  public Foo(InstantiationContext context, C config) {
+    _config = config;
+   ...
+  }
+
+  @Override
+  public C getConfig() {
+    return _config;
+  }
+
+}
+</code></pre>
+<ul>
+ <li>*Wichtig:<strong> Damit die Instanziierung nicht scheitert, muss folgendes beachtet werden: </strong></li>
+ <li>Die Klasse muss <code class="hljs inlineCode">public</code> deklariert sein.</li>
+ <li>Das Config-Interface muss <code class="hljs inlineCode">public</code> sein.</li>
+ <li>Der Config-Konstruktor muss <code class="hljs inlineCode">public</code> sein.</li>
+ <li>Das Config-Interface muss von <code class="hljs inlineCode">PolymorphicConfiguration</code> erben.</li>
+ <li>Die Klasse sollte <code class="hljs inlineCode">ConfiguredInstance</code> implementieren. Das ist für verschiedene weitergehende Features notwendig, für die Instanziierung an sich aber nicht. Statt <code class="hljs inlineCode">ConfiguredInstance</code> direkt zu implementieren, kann als Basisklasse <code class="hljs inlineCode">AbstractConfiguredInstance</code> verwendet werden.</li>
+</ul>
+<p>Eine Ableitung einer solchen Klasse muss folgendermaßen aussehen:</p>
+<pre><code class="language-java">public class Bar&lt;C extends Bar.Config&lt;?&gt;&gt; extends Foo&lt;C&gt; {
+
+  public interface Config&lt;I extends Bar&lt;?&gt;&gt; extends Foo.Config&lt;I&gt; {
+    ...
+  }
+
+  public Bar(InstantiationContext context, C config) {
+    super(context, config);
+   ...
+  }
+
+}
+</code></pre>
+<p><strong>Wichtig:</strong> Der Config-Constructor darf nicht direkt aufgerufen werden. Er darf ausschließlich vom <code class="hljs inlineCode">InstantiationContext</code> aufgerufen werden:</p>
+<pre><code class="language-java">PolymorphicConfiguration&lt;Foo&gt; myConfig = ...;
+InstantiationContext context = new DefaultInstantiationContext(...);
+Foo myInstance = context.getInstance(myConfig);
+</code></pre>

@@ -1,0 +1,286 @@
+<h2>Aufzeichnen der Skripte</h2>
+<p><strong>Hinweis:</strong> Vor dem Aufzeichnen eines neuen Testfalles/zwischen den einzelnen Testfällen muss sich aus- und neu einloggen. (Warum: Dadurch wird der Zustand der Anwendung zurückgesetzt, der sonst zu Problemen führen kann. Gemeint sind insbesondere: zuletzt besuchte Unterreiter sowie ausgewählte Elemente. Wenn man dorthin zurückkehrt ohne sich zwischendurch auszuloggen, wird die Auswahl beibehalten, ohne das dazu Aktionen aufgezeichnet werden. Die Tests wissen aber nichts von den vorher ausgewählten Elementen/Unterreitern und befinden sich daher in einem anderem Zustand, was die Tests fehlschlagen lassen kann.)</p>
+<ul>
+ <li>Aufzeichnen der Skripte in der persönlichen Konfiguration aktivieren: 
+  <pre><code>&lt;section name="ScriptingRecorder"&gt;
+        &lt;entry name="enabled" value="true"
+                comment="Enabled the scripting recorder. As the gui inspection features are used to record assertions, they are enabled by this setting, too. See section 'Debugging', entry 'inspectEnabled'."/&gt;
+&lt;/section&gt;
+</code></pre></li>
+ <li>Anwendung starten &amp; Testfall aufzeichnen (Anwendung normal benutzen und die aufzuzeichnenden Aktionen tätigen)</li>
+ <li>Assertions 
+  <ul>
+   <li>Mittels SHIFT + PAUSE den <a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> aufrufen</li>
+   <li><em>Hinweis:</em> Hierfür muss die Basis auf Head ausgecheckt werden, da der &nbsp;<a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> &nbsp;gerade erst im Entstehen ist.</li>
+   <li>Der Mauszeiger wird zur Sanduhr (mehr passiert nicht)</li>
+   <li>Auf das zu untersuchende Element klicken (zur Zeit unterstützt: Fields, ihre Labels und Werte in Tabellen)</li>
+   <li>Der <a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> &nbsp;öffnet sich und zeigt Informationen über das zu untersuchende Element an. 
+    <ul>
+     <li>Falls nicht, wurde das Element nicht erkannt. Einen Monat Warten und erneut versuchen.</li>
+    </ul></li>
+   <li>Die gewünschten Assertions auswählen und auf "Assertions aufzeichnen" klicken</li>
+   <li>Der <a class="tlObject" data-custom="false" href="?page=GuiInspector&amp;uuid=6ae75b89-2f97-47f5-8ce0-a3fdb5b96999">Gui Inspector</a> &nbsp;verschwindet wieder</li>
+  </ul></li>
+ <li>Aktionen &amp; Assertions werden als XML-Schnipsel auf die Standardausgabe geschrieben</li>
+ <li>Beispiele für Aktionen als Skript: &nbsp;<a class="tlObject" data-custom="false" href="?page=BeispielSkript&amp;uuid=5418edfb-adf8-4dab-a443-1587f85103b5">Beispiel Skript</a></li>
+ <li>Testfälle sollten nicht zu groß werden. 
+  <ul>
+   <li>Kleine Testfälle erleichtern die Fehlerdiagnose sowie Aufzeichnen und Warten der Tests</li>
+   <li>Empfehlung für Unterteilung: 
+    <ul>
+     <li>"Projekt anlegen"</li>
+     <li>"Personal zuordnen"</li>
+     <li>"Risiko zu dem Projekt anlegen"</li>
+     <li>"Noch ein Risiko anlegen"</li>
+     <li>"Maßnahme zum ersten Risiko anlegen"</li>
+     <li>…</li>
+    </ul></li>
+  </ul></li>
+ <li>XML-Schnipsel der Testfälle an markierte Stelle der Vorlage kopieren</li>
+ <li>Dateiorganisation 
+  <ul>
+   <li>Vorlage für Testklasse: &nbsp;<a class="tlObject" data-custom="false" href="?page=TestApplicationAutomated_java&amp;uuid=e8ce72d9-911e-4017-9cc0-db4afb28d581">Test Application Automated.java</a></li>
+   <li>Testfälle müssen im gleichen Verzeichnis wie die Testklasse gespeichert werden.</li>
+   <li>Vorlage für Testfälle: &nbsp;<a class="tlObject" data-custom="false" href="?page=SkriptVorlage&amp;uuid=b3be5e48-b988-4eeb-9cc1-6b31bc48683d">Skript Vorlage</a></li>
+   <li>Eine Datei pro Testfall</li>
+   <li>Zwingendes Namensschema: <code class="hljs inlineCode">NameOfYourTestClass-XXX.xml</code>
+    <ul>
+     <li><code class="hljs inlineCode">XXX</code> durch einen möglichst aussagekräftigen Namen ersetzen</li>
+     <li>Beispiel: 
+      <ul>
+       <li>Name der Testklasse: <code class="hljs inlineCode">TestApplicationAutomated.java</code></li>
+       <li>Name der Testfälle: 
+        <ul>
+         <li><code class="hljs inlineCode">TestApplicationAutomated-createFirstProject.xml</code></li>
+         <li><code class="hljs inlineCode">TestApplicationAutomated-assignStaff.xml</code></li>
+         <li><code class="hljs inlineCode">TestApplicationAutomated-createRisk.xml</code></li>
+         <li>…</li>
+        </ul></li>
+      </ul></li>
+     <li>Anderes Beispiel: 
+      <ul>
+       <li>Name der Testklasse: <code class="hljs inlineCode">TestAA.java</code></li>
+       <li>Name der Testfälle: 
+        <ul>
+         <li><code class="hljs inlineCode">TestAA-createFirstProject.xml</code></li>
+         <li><code class="hljs inlineCode">TestAA-assignStaff.xml</code></li>
+         <li><code class="hljs inlineCode">TestAA-createRisk.xml</code></li>
+         <li>…</li>
+        </ul></li>
+      </ul></li>
+    </ul></li>
+  </ul></li>
+ <li>Benutzer 
+  <ul>
+   <li>Die Testskripte speichern, welcher Benutzer sie aufgezeichnet hat. 
+    <ul>
+     <li>Dies geschieht in den einzelnen Actions über das <code class="hljs inlineCode">user-id</code> Attribut.</li>
+     <li>Alte Testskripte, die noch keinen Benutzer spezifizieren, können Problemlos weiterverwendet werden.</li>
+     <li>Wenn kein Benutzer spezifiziert ist, wird Root verwendet.</li>
+     <li><code class="hljs inlineCode">ActionChains</code> vererben ihren Benutzer (noch) <em>nicht</em> an ihre Unteractions.</li>
+    </ul></li>
+   <li>Wenn in den Actions eines Testskriptes kein Benutzer spezifiziert ist, kann für das gesamte Testskript beim Aufruf von <code class="hljs inlineCode">XmlScriptedTestUtil.suite</code> ein Benutzer über die <code class="hljs inlineCode">ScriptedTestParameters</code> angegeben werden. 
+    <ul>
+     <li>Bei diesem kann man außerdem die zu verwendende Sprache angeben.</li>
+    </ul></li>
+   <li>Wenn sowohl via <code class="hljs inlineCode">XmlScriptedTestUtil.suite</code> als auch in den einzelnen Actions ein Benutzer spezifiziert ist, muss dieser übereinstimmen. Wenn das nicht der Fall ist, wird eine Warnung geloggt, und die Person genommen, die in der Action spezifiziert ist.</li>
+  </ul></li>
+</ul>
+<p>&nbsp;</p>
+<h1>Abspielen der Skripte</h1>
+<ul>
+ <li>Die erstellte Testklasse als JUnit-Test ausführen.</li>
+ <li>Optional: Damit die persönliche Konfiguration berücksichtigt wird, muss in der Run-/Debug-Configuration ihr Pfad angegeben werden. Dazu wird im Reiter "Arguments" als "VM Argument" die entsprechende Property gesetzt. 
+  <ul>
+   <li>Beispiel für "Demo": <code class="hljs inlineCode">-DDemo.top-logic.configFile=${workspace_loc:com.top_logic.demo}/bin/launch/conf/config-${project.developer}.xml</code></li>
+   <li>Dies kann aus der Run-/Debug-Configuration der entsprechenden Anwendung kopiert werden.</li>
+  </ul></li>
+</ul>
+<p>&nbsp;</p>
+<h1>Name und Beschreibung einer <code class="hljs inlineCode">ApplicationAction</code></h1>
+<p>Über das Attribut <code class="hljs inlineCode">comment</code> kann für jede <code class="hljs inlineCode">ApplicationAction</code> ein Name oder eine Beschreibung gesetzt werden. Beispiel: <code class="hljs inlineCode"> &lt;action comment="Setup: Create Test Data" ... </code> Diese Beschreibungen werden zum Beispiel in der &nbsp;<a class="tlObject" data-custom="false" href="?page=ScriptingGui&amp;uuid=60242912-b6b8-420a-bbef-ed37857dcfb5">Scripting Gui</a> &nbsp;verwendet. Außerdem werden sie in Tests in die Fehlermeldung geschrieben, wenn eine <code class="hljs inlineCode">ApplicationAction</code> fehlschlägt. Hierbei werden auch die Beschreibungen aller äußeren <code class="hljs inlineCode">ApplicationActions</code> verwendet.</p>
+<h1>Fachliche Fehlermeldungen</h1>
+<p>Schlägt ein geskripteter Test fehl, wird normalerweise eine sehr technische Fehlermeldung ausgegeben. Es ist aber möglich eine eigene Fehlermeldung zu spezifizieren. Dazu muss das Attribut <code class="hljs inlineCode">failure-message</code> für die fehlschlagende <code class="hljs inlineCode">ApplicationAction</code> gesetzt werden. Alternativ kann <code class="hljs inlineCode">failure-message</code> auch für eine beliebige äußere <code class="hljs inlineCode">ApplicationAction</code> gesetzt werden. Denn im Falle eines Fehlers werden stets auch die <code class="hljs inlineCode">failure-messages</code> aller äußeren <code class="hljs inlineCode">ApplicationAction</code> mit ausgegeben.</p>
+<p>Schlägt ein Test fehl, weil ein Error geloggt wurde, wird stets nur die <code class="hljs inlineCode">failure-message</code> der äußersten <code class="hljs inlineCode">ApplicationAction</code> verwendet.</p>
+<p>Zusätzlich zu den <code class="hljs inlineCode">failure-messages</code>, werden auch die Werte der <code class="hljs inlineCode">comment</code> Attribute im Fehlerfall ausgegeben. Diese sind allerdings nicht dafür da die Fehler zu beschreiben, sondern kurz zusammenzufassen, was die entsprechende <code class="hljs inlineCode">ApplicationAction</code> macht.</p>
+<h1>Noch nicht unterstütze UI-Komponenten</h1>
+<ul>
+ <li>Tabellen &amp; Bäume 
+  <ul>
+   <li>Spaltenauswahldialog</li>
+   <li>Spaltenreihenfolge</li>
+   <li>Sortierreihenfolge</li>
+  </ul></li>
+ <li>Dialog "Änderungen Übernehmen / Verwerfen / Abbrechen?"</li>
+</ul>
+<p>&nbsp;</p>
+<h1>Anforderungen an die Anwendung</h1>
+<ul>
+ <li>Eindeutige Komponentennamen: 
+  <ul>
+   <li><code class="hljs inlineCode">LayoutCheck</code> ausführen (Ant-Target <code class="hljs inlineCode">layout_check</code>)</li>
+   <li>Alle Fehler und Warnungen beheben. Insbesondere alle "Unnamed component" Warnungen</li>
+   <li>Hintergrund: Das Testframework findet diese Komponenten sonst beim Abspielen der Tests nicht wieder, da solche Komponenten sonst automatisch generierte Namen(IDs) bekommen, die bei jeder Ausführung verschieden sein können.</li>
+  </ul></li>
+ <li>Alle Fachobjekte sollten Wrapper sein. Andernfalls müssen <a class="tlObject" data-custom="true" href="?page=ModelNamingScheme&amp;uuid=812dcd34-0fcc-4bdb-898c-a03e767a7c7d">Model Naming Schemes</a> oder, falls das nicht möglich ist, <a class="tlObject" data-custom="true" href="?page=ModelNamingScheme&amp;uuid=812dcd34-0fcc-4bdb-898c-a03e767a7c7d">Value Naming Schemes</a> &nbsp;für die Fachobjekte erstellt werden. 
+  <ul>
+   <li>Hintergrund: "Normale" Java-Objekte kann das Testframework beim Abspielen nicht wiederfinden. Für jeden Fall, in dem kein Wrapper als Modell benutzt wird, ist eine handgeschriebene Sonderbehandlung notwendig. (Außnahmen: <code class="hljs inlineCode">Null</code>, <code class="hljs inlineCode">Boolean</code>, <code class="hljs inlineCode">Integer</code>, <code class="hljs inlineCode">Long</code>, <code class="hljs inlineCode">Float</code>, <code class="hljs inlineCode">Double</code>, <code class="hljs inlineCode">String</code>, <code class="hljs inlineCode">Date</code>, <code class="hljs inlineCode">CDDataType</code> sowie Listen von referenzierbaren Werten.)</li>
+  </ul></li>
+ <li><code class="hljs inlineCode">FullTextProvider</code> für Tabellenspalten (siehe: <code class="hljs inlineCode">ColumnConfiguration.getFullTextProvider()</code>) 
+  <ul>
+   <li>Hintergrund: Für Assertions auf Tabellenzellen müssen alle Spalten einen passenden <code class="hljs inlineCode">FullTextProvider</code> haben. Dadurch können alle Spalten unabhängig von ihren Datentypen in &nbsp;<a class="tlObject" data-custom="false" href="?page=ExcelTests&amp;uuid=5d24dde6-deb7-4538-808c-bf85d813592a">Excel Tests</a> &nbsp;gleich behandelt werden. Ohne <code class="hljs inlineCode">FullTextProvider</code> müssen Assertions das Zellenobjekt prüfen, wodurch zB. String- und Integer-Spalten unterschiedlich behandelt werden müssen, da der String <code class="hljs inlineCode">"123"</code> ungleich dem Integer <code class="hljs inlineCode">123</code> ist.</li>
+  </ul></li>
+ <li>Es muss möglich sein die KnowledgeBase mehrmals in derselben VM hoch- und runterzufahren. Dafür muss unter anderem folgendes erfüllt sein: 
+  <ul>
+   <li>Persistente Objekte (<code class="hljs inlineCode">Wrapper</code>) dürfen nicht in statischen Konstanten gespeichert werden.</li>
+   <li>Wenn persistente Objekte (statisch) gecacht werden, muss dieser Cache automatisch gelehrt werden, wenn die KnowledgeBase neugestartet wird.</li>
+  </ul></li>
+</ul>
+<p>&nbsp;</p>
+<h1>Einschränkungen</h1>
+<ul>
+ <li>Eindeutigkeit von Wrappern-Attributen: 
+  <ul>
+   <li>Vor- und Nachname von Kontakten (<code class="hljs inlineCode">Contact</code>) müssen zusammen eindeutig sein.</li>
+   <li>Das Attribut <code class="hljs inlineCode">name</code> muss für folgende Wrapper-Typen eindeutig sein: <code class="hljs inlineCode">Risk</code>, <code class="hljs inlineCode">Activity</code>, <code class="hljs inlineCode">BusinessProgram</code>, <code class="hljs inlineCode">OperativeProgram</code>, <code class="hljs inlineCode">Milestone</code>, <code class="hljs inlineCode">Risk</code>, <code class="hljs inlineCode">Activity</code></li>
+   <li>Andernfalls die Konfiguration anpassen. Beispielsweise in <code class="hljs inlineCode">contactConf.xml</code> in der <code class="hljs inlineCode">Section</code> der <code class="hljs inlineCode">ReferenceFactory</code> für <code class="hljs inlineCode">Contact</code> die Menge der Schlüssel-definierenden Attribute ändern.</li>
+  </ul></li>
+</ul>
+<p>&nbsp;</p>
+<h1>Häufige Probleme und Lösungen</h1>
+<h2>Kommandoname zum Dialog öffnen ist instabil</h2>
+<p>Wird das Öffnen eines Kommandos aufgezeichnet, kann der Kommando-Name generiert erscheinen, z.B. <code class="hljs inlineCode">displayDialog____5a4a0c2_15571d4ae9b__7d5d</code>. Dies kann vermieden werden indem der äußersten Komponente im Dialog ein Name gegeben wird, z.B. mit dem Namen <code class="hljs inlineCode">editXXX</code> wird das Kommando <code class="hljs inlineCode">displayDialog_editXXX</code>.</p>
+<h2>Dialog "Sie haben Änderungen vorgenommen"</h2>
+<p>Dieser Dialog kann nicht aufgezeichnet werden. Es ist aber möglich, von Hand das XML so anzupassen, dass es funktioniert:</p>
+<ul>
+ <li>Die Aktion aufzeichnen, die den Dialog auslöst. (Tabwechsel, Dialog schließen, …)</li>
+ <li>Eine passende <code class="hljs inlineCode">LabeledButtonAction</code> als nächste Aktion einfügen: 
+  <pre><code>&lt;action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp" component-name="masterFrame" label="Änderungen übernehmen" /&gt;
+&lt;action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp" component-name="masterFrame" label="Änderungen verwerfen" /&gt;
+&lt;action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp" component-name="masterFrame" label="Abbrechen" /&gt;
+</code></pre></li>
+</ul>
+<h2>Wrapper ohne eindeutigen und stabilen Schlüssel</h2>
+<ul>
+ <li>Typische Fehlermeldung beim Aufzeichnen: 
+  <ul>
+   <li><code class="hljs inlineCode">java.lang.AssertionError: Unable to produce stable reference for value '...someWrapper...' in context [...]</code></li>
+   <li>Lösung: In der Konfiguration des <code class="hljs inlineCode">IndexedObjectNaming</code> für den Typ die Attribute angeben, die als Schlüssel verwendet werden sollen. (Das sind diejenigen, die einen solches Objekt eindeutig identifizieren.) Dass geschieht in der Konfiguration des Projektes, in dem der betroffene Typ eingeführt wird. Würde beispielsweise das Aufzeichnen des Typs <code class="hljs inlineCode">Contact</code> fehlschlagen, müsste im Projekt <code class="hljs inlineCode">com.top_logic.contact</code> in der <code class="hljs inlineCode">contactConf.config.xml</code> folgendes eingetragen werden: 
+    <pre><code>&lt;application&gt;
+        &lt;configs&gt;
+                &lt;config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig"&gt;
+                        &lt;types&gt;
+                                &lt;type name="Contacts:Contact.Person" attributes="name,firstname"/&gt;
+                        &lt;/types&gt;
+                &lt;/config&gt;
+        &lt;/configs&gt;
+&lt;/application&gt;
+</code></pre>
+    <ul>
+     <li>Der angegebene Schlüssel muss nur für die Tests eindeutig sein.</li>
+     <li>Falls das nicht möglich ist: Ein &nbsp; <a class="tlObject" data-custom="false" href="?page=ModelNamingScheme&amp;uuid=812dcd34-0fcc-4bdb-898c-a03e767a7c7d">Model Naming Scheme</a> &nbsp;erstellen.</li>
+     <li>Falls auch das nicht möglich ist: Ein, <a class="tlObject" data-custom="true" href="?page=ModelNamingScheme&amp;uuid=812dcd34-0fcc-4bdb-898c-a03e767a7c7d">Value Naming Scheme</a> &nbsp;erstellen.</li>
+    </ul></li>
+  </ul></li>
+</ul>
+<h2>Nicht-Wrapper-Objekte als Modell</h2>
+<ul>
+ <li>Typische Fehlermeldung beim Aufzeichnen: 
+  <ul>
+   <li><code class="hljs inlineCode">java.lang.AssertionError: Unable to produce stable reference for value '...FunnyLitteValue...' in context [...]</code></li>
+  </ul></li>
+ <li>Lösung: Ein &nbsp;<a class="tlObject" data-custom="false" href="?page=ModelNamingScheme&amp;uuid=812dcd34-0fcc-4bdb-898c-a03e767a7c7d">Model Naming Scheme</a> &nbsp;erstellen. 
+  <ul>
+   <li>Falls das nicht möglich ist: Ein &nbsp;<a class="tlObject" data-custom="true" href="?page=ModelNamingScheme&amp;uuid=812dcd34-0fcc-4bdb-898c-a03e767a7c7d">Value Naming Scheme</a> erstellen.</li>
+  </ul></li>
+</ul>
+<h2>JSPs im Verzeichnis <code class="hljs inlineCode"> C:\Users\[Benutzername]\AppData\Local\Temp\org\ </code> löschen</h2>
+<ul>
+ <li>Hintergrund: Während der Scripted Tests werden die JSPs dorthin compiliert. Allerdings werden sie nicht immer neu compiliert, wenn es erforderlich wäre. Daher kann es zu seltsammen Fehlern mit JSPs kommen. In diesem Fall einfach den oben angegebenen Pfad löschen. Dabei kann nichts kaputt gehen, der Ordner wird automatisch neu angelegt und die JSPs neu compiliert und dort abgelegt. Der Ordner ist also nur ein Cache für die compilierten JSPs.</li>
+</ul>
+<h2>Baumknoten identifizieren</h2>
+<h3><code class="hljs inlineCode">NodeRef</code></h3>
+<p>Wird aufgezeichnet, wenn ein <code class="hljs inlineCode">StructuredElement</code> identifiziert werden soll. Beispiel:</p>
+<pre><code>&lt;foo config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef" structure-name="organizationStructure"&gt;
+  &lt;structure-path&gt;
+    &lt;node name="Firma"/&gt;
+    &lt;node name="Abteilung"/&gt;
+    &lt;node name="Team XYZ"/&gt;
+  &lt;/structure-path&gt;
+&lt;/foo&gt;
+</code></pre>
+<h3><code class="hljs inlineCode">ChildNamingScheme</code></h3>
+<p>Wird nicht aufgezeichnet. Identifiziert ein <code class="hljs inlineCode">StructuredElement</code> mittels einer Referenz auf das Elternelement und den Namen des Kindes. Das ist vor allem dann hilfreich, wenn es eine Scripting-Variable für das Elternelement gibt. Beispiel:</p>
+<pre><code>&lt;foo config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef"&gt;
+  &lt;model-name config:interface="com.top_logic.element.layout.scripting.ChildNamingScheme$ChildName"
+    name="Team XYZ"&gt;
+    &lt;parent config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableRef"
+      name="Abteilung" /&gt;
+  &lt;/model-name&gt;
+&lt;/foo&gt;
+</code></pre>
+<h3><code class="hljs inlineCode">StructurePathNamingScheme</code></h3>
+<p>Wird nicht aufgezeichnet. Identifiziert ein <code class="hljs inlineCode">StructuredElement</code> mittels eines Label-Pfads:</p>
+<pre><code>&lt;foo config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef"&gt;
+  &lt;model-name config:interface="com.top_logic.element.layout.scripting.StructurePathNamingScheme$StructurePathName"
+    structure-name="organizationStructure"
+    label-path="Firma &gt; Abteilung &gt; Team XYZ" /&gt;
+&lt;/foo&gt;
+</code></pre>
+<h3><code class="hljs inlineCode">ValuePath</code> und <code class="hljs inlineCode">CompactLabelPath</code></h3>
+<p>Je nach Situation können auch <code class="hljs inlineCode">ValuePath</code> und <code class="hljs inlineCode">CompactLabelPath</code> aufgezeichnet und verwendet werden. Das passiert zum Beispiel bei Selektionen in der <code class="hljs inlineCode">TreeComponent</code>:</p>
+<pre><code>&lt;foo config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+  label-path="Firma &gt; Abteilung &gt; Team XYZ" /&gt;
+</code></pre>
+<h3><code class="hljs inlineCode">LabelPath</code></h3>
+<p><code class="hljs inlineCode">LabelPath</code> sind deprecated und werden nicht mehr aufgezeichnet. Sie können aber noch in alten Testskripten auftauchen.</p>
+<h2>Aufzeichnen von <code class="hljs inlineCode">FormMember</code>n</h2>
+<h3>Name</h3>
+<p><code class="hljs inlineCode">NamedFieldRef</code> verwenden <code class="hljs inlineCode">FormMember.getName()</code> um ein <code class="hljs inlineCode">FormMember</code> zu identifizieren. Der Name muss nur innerhalb der Geschwister eindeutig sein.</p>
+<h3>Label</h3>
+<p><code class="hljs inlineCode">LabeledFieldRef</code> verwendet <code class="hljs inlineCode">FormMember.getLabel()</code> um ein <code class="hljs inlineCode">FormMember</code> zu identifizieren. Das Label muss innerhalb des durchsuchten Teilbaums eindeutig sein.</p>
+<h3><code class="hljs inlineCode">MetaAttribut</code></h3>
+<p><code class="hljs inlineCode">AttributeFieldRef</code> verwendet <code class="hljs inlineCode">FormMember.getName()</code> um daraus das <code class="hljs inlineCode">MetaAttribute</code> zu dekodieren, das dieses <code class="hljs inlineCode">FormMember</code> repräsentiert. Das Attribut muss nur innerhalb der Geschwister eindeutig sein.</p>
+<h3>Fachobjekt</h3>
+<p><code class="hljs inlineCode">BusinessObjectFieldRef</code> verwendet <code class="hljs inlineCode">FormMember.getStableIdSpecialCaseMarker()</code> ein <code class="hljs inlineCode">FormMember</code> zu identifizieren. Dieses Objekt muss nur innerhalb der Geschwister eindeutig sein. Ein üblicher Anwendungsfall ist zB. eine <code class="hljs inlineCode">FormGroup</code> die eine Tabellenzeile repräsentiert, aber nicht ohne weiteres aufgezeichnet werden kann. Dadurch können auch die <code class="hljs inlineCode">FormFields</code> in ihr nicht aufgezeichnet werden. Repräsentiert die Tabellenzeile ein Fachobjekt, kann dieses mittels <code class="hljs inlineCode">FormMember.setStableIdSpecialCaseMarker(Object)</code> an die <code class="hljs inlineCode">FormGroup</code> annotiert werden. Der <code class="hljs inlineCode">ScriptRecorder</code> fragt diese Annotation ab und verwendet dann das Fachobjekt, um diese <code class="hljs inlineCode">FormGroup</code> zu identifizieren. Das Fachobjekt selber muss nur selber aufgezeichnet werden können, es gibt keine Typeinschränkungen. Es ist also zB. auch möglich einen String der diese Zeile eindeutig und stabil identifiert als "Fachobjekt" zu annotieren. Üblicherweise werden aber <code class="hljs inlineCode">Wrapper</code> verwendet.</p>
+<h3>Tabelle</h3>
+<p>TODO JST <code class="hljs inlineCode">TableFieldRef</code></p>
+<h3>Baum</h3>
+<p>TODO JST <code class="hljs inlineCode">TreeFieldRef</code></p>
+<h2>Ausgewählte Kommandos nicht aufzeichnen</h2>
+<ul>
+ <li>Ein ausgewähltes Kommando nie oder nur manchmal aufzeichnen: 
+  <ul>
+   <li><code class="hljs inlineCode">AbstractCommandHandler.mustNotRecord(...)</code> in der konkreten Ableitung passend überschreiben.</li>
+  </ul></li>
+ <li>Ein Kommando in einer XML-Datei von der Auszeichnung ausnehmen: 
+  <ul>
+   <li>Das Argument <code class="hljs inlineCode">___doNotRecord</code> auf <code class="hljs inlineCode">true</code> setzen.</li>
+   <li>Gemeint ist das Property <code class="hljs inlineCode">AbstractCommandModelConfiguration.Config.getArguments()</code>. Dieses muss einen Eintrag <code class="hljs inlineCode">___doNotRecord</code> mit dem Wert <code class="hljs inlineCode">true</code> (Boolean oder String) haben.</li>
+   <li>Beispiel: 
+    <pre><code>&lt;!-- Aus ToolRowView.xml --&gt;
+&lt;commandConfiguration class="com.top_logic.foo.Fubar"
+	command="fubar"
+	image="..."
+	notExecutableReason="..."
+	...
+&gt;
+	&lt;commandArguments&gt;
+		&lt;argument key="___doNotRecord" value="true" /&gt;
+	&lt;/commandArguments&gt;
+&lt;/commandConfiguration&gt;
+</code></pre></li>
+  </ul></li>
+</ul>
+<h2>Teile der Oberfläche von der Aufzeichnung ausnehmen</h2>
+<ul>
+ <li>Den <code class="hljs inlineCode">FormContext</code>, die <code class="hljs inlineCode">FormGroup</code> oder das <code class="hljs inlineCode">FormMember</code> mittels <code class="hljs inlineCode">ScriptingRecorder.annotateAsDontRecord(Annotatable)</code> auszeichnen.</li>
+ <li>Das funktioniert für viele <code class="hljs inlineCode">Annotatable</code>, nicht nur für <code class="hljs inlineCode">FormMember</code>: 
+  <ul>
+   <li><code class="hljs inlineCode">TableData</code></li>
+   <li><code class="hljs inlineCode">TreeData</code></li>
+   <li><code class="hljs inlineCode">LayoutComponent</code></li>
+   <li><code class="hljs inlineCode">ButtonControl</code></li>
+   <li>Bei Baumstrukturen (<code class="hljs inlineCode">FormMember</code>, <code class="hljs inlineCode">LayoutComponent</code>) wird diese Eigenschaft nach unten vererbt: Auch alle Kinder des ausgezeichneten Elements werden nicht aufgezeichnet.</li>
+  </ul></li>
+</ul>

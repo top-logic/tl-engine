@@ -1,0 +1,111 @@
+<p>The TopLogic engine consists of a large number of services that are integrated and parameterized via the application configuration. A service is a singleton object (an object of a class of which there is only one instance) in the system. Such a service instance has a specific life cycle. It is created and initialized when the system is booted. During the runtime of the system, the service instance provides services or manages resources of the system. When the system is shut down, the service instance is also informed and can perform cleanup operations.</p>
+<h2>Service class</h2>
+<p>A service is a derivative of the class <code class="hljs inlineCode">com.top_logic.basic.module.ManagedClass</code>. It can override the <code class="hljs inlineCode">startUp()</code> and <code class="hljs inlineCode">shutDown()</code> methods to perform initialization and cleanup tasks when booting and shutting down the system. In addition, a service class also needs a descriptor class, which is used to register it in the configuration. The descriptor class is typically an inner class of the service named <code class="hljs inlineCode">Module</code> derived from <code class="hljs inlineCode">TypedRuntimeModule</code>. The descriptor class must implement the singleton pattern (cf. <a class="tlObject" data-custom="true" href="?page=singleton-referenz&amp;uuid=980dba7f-078f-4eac-a9d4-f5b4031229fc">singleton reference</a>) in order to be referenceable from the configuration.</p>
+<h2>Service configuration</h2>
+<p>A service can be parameterized by configuration options. Typically, the basic configuration in the application configuration is in the module that defines the service. In the concrete application the parameters can be overwritten. The service can also be displayed in the service editor at application runtime and its configuration settings can be edited.</p>
+<p>The configuration options that can be set for a service are defined by the service in its configuration interface. The configuration interface follows the rules of <a class="tlObject" data-custom="true" href="?page=TypedConfiguration&amp;uuid=5122a416-bd1c-445b-83a9-8c88e26004dc">typed configuration</a>. For each configuration property, the configuration interface defines a Get method that returns the value. The name of the method determines the name of the configuration property (or it is explicitly specified via the annotation <code class="hljs inlineCode">@Name(...)</code> at the Get method). The configuration interface is linked to the service via the service constructor. The service constructor must have the signature <code class="hljs inlineCode">public MyService(InstantiationContext, Config)</code> for this. Here <code class="hljs inlineCode">Config</code> is the configuration interface of the service, which in turn must be an extension of <code class="hljs inlineCode">ServiceConfiguration</code>.</p>
+<h2>Minimal service class</h2>
+<p>A minimal service (with configuration options) consists of the following classes:</p>
+<pre><code class="language-java">import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.TypedRuntimeModule;
+
+/**
+ * Custom service.
+ */
+public class MinimalService extends ConfiguredManagedClass&lt;MinimalService.Config&lt;?&gt;&gt; {
+
+	/**
+	 * Configuration options for {@link MinimalService}.
+	 */
+	public interface Config&lt;I extends MinimalService&gt; extends ConfiguredManagedClass.Config&lt;I&gt; {
+
+		/**
+		 * Example for an int-valued configuration option.
+		 */
+		@Name("my-option")
+		int getMyOption();
+
+	}
+
+	/**
+	 * Creates a {@link MinimalService} from configuration.
+	 */
+	public MinimalService(InstantiationContext context, Config&lt;?&gt; config) {
+		super(context, config);
+
+		// TODO: Do something with the options in config.
+	}
+
+	@Override
+	protected void startUp() {
+		super.startUp();
+
+		// TODO: Some startup task.
+	}
+
+	@Override
+	protected void shutDown() {
+		// TODO: Some cleanup work.
+
+		super.shutDown();
+	}
+
+	/**
+	 * Service descriptor for {@link MinimalService}
+	 */
+	public static class Module extends TypedRuntimeModule&lt;MinimalService&gt; {
+
+		/**
+		 * Singleton {@link Module} instance for reference in the configuration.
+		 */
+		public static final Module INSTANCE = new Module();
+
+		private Module() {
+			// Singleton constructor.
+		}
+
+		@Override
+		public Class&lt;MinimalService&gt; getImplementation() {
+			return MinimalService.class;
+		}
+
+	}
+
+}
+</code></pre>
+<p>Instead of deriving <code class="hljs inlineCode">ManagedClass</code> directly, <code class="hljs inlineCode">ConfiguredManagedClass</code> is used here to parameterize the service via configuration options. In this case, the confiugration interface of the service must extend <code class="hljs inlineCode">ConfiguredManagedClass.Config</code> accordingly.</p>
+<h2>Activating the service</h2>
+<p>The service descriptor must now be included in the application configuration and the service activated there:</p>
+<pre><code class="language-xml">&lt;application xmlns:config="http://www.top-logic.com/ns/config/6.0"&gt;
+	&lt;services&gt;
+		&lt;config service-class="com.top_logic.basic.module.ModuleSystem"&gt;
+			&lt;instance&gt;
+				&lt;modules&gt;
+
+					&lt;!-- Register and activate service here. --&gt;
+					&lt;module key="my.package.MinimalService$Module" value="true"/&gt;
+
+				&lt;/modules&gt;
+			&lt;/instance&gt;
+		&lt;/config&gt;
+	&lt;/services&gt;
+&lt;/application&gt;</code></pre>
+<h2>Service basic configuration</h2>
+<p>The basic service configuration is also stored in the application configuration. Here, at least the service class (here <code class="hljs inlineCode">MinimalService</code>) and its service implementation (here also <code class="hljs inlineCode">MinimalService</code>) must be specified. Furthermore, values can be stored for configuration parameters that were defined in the configuration interface of the service:</p>
+<pre><code class="language-xml">&lt;application xmlns:config="http://www.top-logic.com/ns/config/6.0"&gt;
+	&lt;services&gt;
+
+		&lt;!-- Core configuration with example option. --&gt;
+		&lt;config service-class="com.top_logic.base.MinimalService"&gt;
+			&lt;instance class="com.top_logic.base.MinimalService"
+				my-option="42"
+			&gt;
+			&lt;/instance&gt;
+		&lt;/config&gt;
+
+	&lt;/services&gt;
+&lt;/application&gt;
+</code></pre>
+<p></p>

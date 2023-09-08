@@ -1,0 +1,255 @@
+<p>Dieser Abschnitt listet die empfohlenen Einstellungen für die Verwendung von Oracle-Datenbanken.</p>
+<table border="1" cellpadding="1" cellspacing="0">
+ <tbody>
+  <tr>
+   <th>Kategorie</th>
+   <th>Merkmal</th>
+   <th>Default</th>
+   <th>Vorgabe der Applikation</th>
+   <th>Anmerkung</th>
+  </tr>
+  <tr>
+   <td>Grundlegendes</td>
+   <td>db_block_size</td>
+   <td>8192</td>
+   <td>&nbsp;</td>
+   <td>wichtiger Parameter für die Performance</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>Zeichensatz</td>
+   <td>AL32UTF8</td>
+   <td>&nbsp;</td>
+   <td>Achtung: Statischer Parameter, kann nur durch einen Neuaufbau der DB geändert werden</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>Archivelog-Modus</td>
+   <td>archivelog</td>
+   <td>&nbsp;</td>
+   <td>Bei noarchivelog kann die DB nicht online gesichert werden</td>
+  </tr>
+  <tr>
+   <td>init.ora-Parameter</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+   <td>Sehr viele init.ora-Parameter sind statisch, d. h. die DB muss für eine Änderung durchgestartet werden</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>db_block_size</td>
+   <td>8192</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>memory_target</td>
+   <td>900M</td>
+   <td>&nbsp;</td>
+   <td>SGA: 2GB</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>processes</td>
+   <td>150</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>open_cursors</td>
+   <td>300</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>undo_management</td>
+   <td>auto</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>undo_retention</td>
+   <td>900</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>max_dump_file_size</td>
+   <td>10M</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>remote_login_passwordfile</td>
+   <td>EXCLUSIVE</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>filesystemio_options</td>
+   <td>SetAll</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>shared_pool_size</td>
+   <td>0</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>large_pool_size</td>
+   <td>0</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>java_pool_size</td>
+   <td>0</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>db_cache_size</td>
+   <td>0</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>nls_language</td>
+   <td>AMERICAN</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>nls_territory</td>
+   <td>AMERICA</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>nls_date_format</td>
+   <td>DD-MON-YYYY</td>
+   <td>DD-MON-RR</td>
+   <td>Date format.</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>nls_time_format</td>
+   <td>&nbsp;</td>
+   <td>HH.MI.SSXFF AM</td>
+   <td>Time format.</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>nls_timestamp_format</td>
+   <td>&nbsp;</td>
+   <td>DD-MON-RR HH.MI.SSXFF AM</td>
+   <td>Time stamp format.</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>nls_time_tz_format</td>
+   <td>&nbsp;</td>
+   <td>HH.MI.SSXFF AM TZR</td>
+   <td>Time with timezone format.</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>nls_timestamp_tz_format</td>
+   <td>&nbsp;</td>
+   <td>DD-MON-RR HH.MI.SSXFF AM TZR</td>
+   <td>Timestamp with timezone format.</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>NLS_NCHAR_CHARACTERSET</td>
+   <td>AL16UTF16</td>
+   <td>UTF8</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>Redolog</td>
+   <td>Anzahl Redolog-Gruppen</td>
+   <td>5</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>Anzahl Redolog-Member</td>
+   <td>2</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>Größe einer Redolog-Datei</td>
+   <td>50M</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>Menge Redolog pro Tag</td>
+   <td>2500M</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>Tablespaces</td>
+   <td>SYSAUX</td>
+   <td>500M</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>SYSTEM</td>
+   <td>500M</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>TEMP</td>
+   <td>500M</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>UNDOTBS01</td>
+   <td>300M</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+  <tr>
+   <td>&nbsp;</td>
+   <td>USERS</td>
+   <td>5M</td>
+   <td>&nbsp;</td>
+   <td>&nbsp;</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Encoding</h2>
+<p>Oracle hat mehrere Encodings, unterschiedlich nach Datentyp.</p>
+<p>Das Standardencoding ist <code class="hljs inlineCode">NLS_CHARACTERSET</code> und sollte <code class="hljs inlineCode">AL16UTF16</code> oder <code class="hljs inlineCode">AL32UTF8</code> sein.</p>
+<p>Für lange String-Typen (<code class="hljs inlineCode">CLOB</code>) wird das Encoding <code class="hljs inlineCode">NLS_NCHAR_CHARACTERSET</code> benutzt.</p>
+<p>Als Endoding wird <code class="hljs inlineCode">AL32UTF8</code> empfohlen. Mit <code class="hljs inlineCode">AL16UTF16</code> werden unnötig viele <code class="hljs inlineCode">CLOB</code>-Spalten angelegt.</p>

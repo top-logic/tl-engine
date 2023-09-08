@@ -1,0 +1,20 @@
+<p>Werte, die aus einer einfachen Zeichenkette gelesen werden können, werden über eine <code class="hljs inlineCode">@Format</code>-Annotation&nbsp;an der Eigenschaft deklariert:</p>
+<pre><code class="language-java">public class A {
+  public interface Config extends ConfigurationItem {
+    @Format(HexEncodedColor.class)
+    Color getBackgroundColor();
+  }
+  ...
+}</code></pre>
+<p>Da der Wertetyp&nbsp;<code class="hljs inlineCode">Color</code> keine Unterkonfiguration&nbsp;ist, kennt das XML-Binding&nbsp;keinen Standardweg, um eine Instanz von <code class="hljs inlineCode">Color</code> aus der Konfiguration zu lesen. Aus diesem Grund wird die Eigenschaft <code class="hljs inlineCode">background-color</code> mit der&nbsp;<code class="hljs inlineCode">@Format</code>-Annotation versehen. Diese ist dafür verantwortlich, den Konfigurationswert aus seiner textuellen Repräsentation in seinen Objektwert zu parsen und entsprechend umgekehrt eine textuelle Repräsentation für ein Objekt zu erzeugen. Dann ist es möglich, beim Default-XML-Binding zu bleiben und über folgendes XML-Document zu konfigurieren:</p>
+<pre><code class="language-xml">&lt;a-config background-color="#ff0000"/&gt;</code></pre>
+<p>Stammt der&nbsp;Wertetyp nicht aus einer Bibliothek, sondern wird ebenfalls durch die Anwendung definiert, kann die <code class="hljs inlineCode">@Format</code>-Annotation auch direkt an die Wert-Klasse geschrieben werden. Dann kann sie an den Verwendungen entfallen. Alle Properties, die diesen Typ benutzen verwenden dann konsistent dasselbe Format:</p>
+<pre><code class="language-java">@Format(MyHexEncodedColor.class)
+public class MyColor {
+   ...
+}
+
+public interface Config extends ConfigurationItem {
+   MyColor getBackgroundColor();
+}</code></pre>
+<p>&nbsp;</p>

@@ -1,0 +1,257 @@
+<p>With the help of automatic data migration, compartment data is automatically adapted to a new application version when the system is booted, if this is necessary. For example, new attributes are automatically created for the tray object types. In some cases, however, it is desirable to migrate the model in such a way that it looks to the application as if it has always been that way. For example, if an attribute should also exist in the historical context, it cannot be created automatically by "booting up" the system, since the attribute obviously did not exist before that point in time.</p>
+<p>For this purpose, there are <code class="hljs inlineCode">MigrationProcessor</code> with which common cases are covered. These can be used database-independently in SQL <a class="tlObject" data-custom="true" href="?page=AutomaticDataMigration&amp;uuid=282cf4bf-f5a7-420e-b19c-6c008009e227">migration</a> as described in <a class="tlObject" data-custom="true" href="?page=AutomaticDataMigration&amp;uuid=282cf4bf-f5a7-420e-b19c-6c008009e227">Automatic Data Migration</a>.</p>
+<h2>Creating a new module</h2>
+<p>If a new module is to be created, this can be done with <code class="hljs inlineCode">&lt;create-module .../&gt;</code>, e.g.</p>
+<pre><code>&lt;create-module name="test.module"&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-module&gt;
+</code></pre>
+<div>
+ The same syntax can be used in the annotations as in the model files.
+</div>
+<div>
+</div>
+<h2>Deleting a module</h2>
+<p>If you want to delete a module including its singletons, types and their attributes, you can do this with <code class="hljs inlineCode">&lt;delete-module .../&gt;</code>, e.g:</p>
+<pre><code>&lt;delete-module name="test.module" /&gt;</code></pre>
+<p><strong>Attention</strong>: instances of the single types will not be removed. It is recommended to delete the subject object types individually (&lt;delete-class ...\&gt;) before deleting the module to ensure that instances of the type are deleted.</p>
+<h2>Creating a subject object type</h2>
+<p>If a new subject object type is to be created, this can be done using <code class="hljs inlineCode">&lt;create-class ... /&gt;</code>, for example:</p>
+<pre><code>&lt;create-class name="test.module:TestType"
+	abstract="false"
+	final="true"
+	primary-generalization="test.module:TypeGeneralization"
+&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-class&gt;</code></pre>
+<p>The name of the type must be specified fully qualified. The same syntax can be used in the annotations as in the model files. It is not possible to specify attributes inline. A separate migration entry must be created for each attribute.</p>
+<p><strong>Attention:</strong> Each subject object type needs as (inherited) generalization the type <code class="hljs inlineCode">tl.model:TLObject</code>. If a new subject object type is created via the application, this is ensured programmatically. During migration, the developer must do this by specifying a generalization in the <code class="hljs inlineCode">primary-generalization</code> attribute. If there is no domain-oriented generalization, <code class="hljs inlineCode">tl.model:TLObject</code> <strong>must be</strong> used.</p>
+<h2>Deleting a Specialized Object Type</h2>
+<p>If a special-purpose object type including its attributes is to be deleted, this can be done with <code class="hljs inlineCode">&lt;delete-class .../&gt;</code>, e.g:</p>
+<pre><code>&lt;delete-class name="test.module:TestType"
+	type-table="MyTable"
+/&gt;</code></pre>
+<p>The name of the type must be specified fully qualified.</p>
+<p><code class="hljs inlineCode">type-table</code> is the name of the table in which instances of the subject object type are stored. All instances of the type are deleted from the table. If no type is specified (e.g. because the type is abstract) nothing is deleted.</p>
+<p><strong>Attention:</strong> The references to other objects and the flex data are not deleted. It is recommended to delete the reference attributes and primitive properties of the subject object type first (<code class="hljs inlineCode">&lt;delete-reference .../&gt;</code> or <code class="hljs inlineCode">&lt;delete-property .../&gt;</code>).</p>
+<h2>Creating a data type</h2>
+<p>If a new data type is to be created, this can be done with <code class="hljs inlineCode">&lt;create-datatype .../&gt;</code>, e.g:</p>
+<pre><code>&lt;create-datatype name="test.module:TestType"
+	db_type="clob"
+	kind="Custom"
+&gt;
+	&lt;storage-mapping ... /&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-datatype&gt;
+</code></pre>
+<p>The name of the datatype must be specified fully qualified. The same syntax can be used in the annotations as in the model files.</p>
+<h2>Creating an enumeration</h2>
+<p>If a new enumeration is to be created, this can be done with <code class="hljs inlineCode">&lt;create-enumeration .../&gt;</code>, e.g.:</p>
+<pre><code>&lt;create-enumeration name="test.module:MyEnum"&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-enumeration&gt;</code></pre>
+<p>The name of the enumeration must be qualified. The same syntax can be used in the annotations as in the model files. It is not possible to specify classifiers inline. A separate migration entry must be created for each classifier.</p>
+<h2>Adding a Classifier</h2>
+<p>If a new Classifier is to be added, this can be done at <code class="hljs inlineCode">&lt;create-classifier .../&gt;</code>, for example:</p>
+<pre><code>&lt;create-classifier name="test.module:MyEnum#classifier1"/&gt;</code></pre>
+<p>The name of the classifier must be specified in a qualified manner.</p>
+<h2>Adding a primitive property</h2>
+<p>If a <code class="hljs inlineCode">TLProperty</code>, i.e. the reference to a data type is to be created, this can be done with <code class="hljs inlineCode">&lt;create-property .../&gt;</code>, e.g.:</p>
+<pre><code>&lt;create-property name="test.module:TestType#property1"
+	bag="false"
+	mandatory="false"
+	multiple="true"
+	ordered="true"
+	type="target.module:TargetType"
+&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-property&gt;</code></pre>
+<p>The name of the property must be specified fully qualified. The same syntax can be used in the annotations as in the model files.</p>
+<h2>Deleting a property</h2>
+<p>If a <code class="hljs inlineCode">TLProperty</code> is to be deleted, this can be done with <code class="hljs inlineCode">&lt;delete-property .../&gt;</code>, e.g.:</p>
+<pre><code>&lt;delete-property name="test.module:TestType#prop1"
+	type-tables="MyTable1, MyTable2,..."
+/&gt;</code></pre>
+<p>The name of the property must be specified fully qualified.</p>
+<p><code class="hljs inlineCode">type-tables</code> are the tables in which the type <code class="hljs inlineCode">test.module:TestType</code> and its specializations store their data. If these tables are specified, the Flex data belonging to these tables and the attribute <code class="hljs inlineCode">prop1</code> are also deleted. <strong>Attention:</strong> It must be ensured that there is no other type with an attribute of the same name that stores in one of the specified tables.</p>
+<h2>Adding a reference to a subject object type</h2>
+<p>If a <code class="hljs inlineCode">TLReference</code>, i.e. the reference to a subject object type is to be created, this can be done <code class="hljs inlineCode">&lt;create-reference ... /&gt;</code>, e.g.:</p>
+<pre><code>&lt;create-reference name="test.module:TestType#ref1"
+	aggregate="false"
+	composite="false"
+	mandatory="false"
+	multiple="true"
+	ordered="true"
+	type="target.module:TargetType"
+&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-reference&gt;
+</code></pre>
+<p>The name of the reference must be specified fully qualified. The same syntax can be used in the annotations as in the model files.</p>
+<h2>Deleting a reference</h2>
+<p>If a <code class="hljs inlineCode">TLReference</code> is to be deleted, this can be done with <code class="hljs inlineCode">&lt;delete-reference .../&gt;</code>, e.g.:</p>
+<pre><code>&lt;delete-reference name="test.module:MyType#ref1"/&gt;
+</code></pre>
+<p>The name of the reference must be specified fully qualified. The reference and the associated data are deleted from the table <code class="hljs inlineCode">hasWrapperAttValue</code>. If the data is stored in a special<code class="hljs inlineCode">hasWrapperAttValueBaseAssociation-</code>table (e.g. <code class="hljs inlineCode">hasMilestones</code>), this can be specified as an attribute: <code class="hljs inlineCode">association-table="hasMIlestones"</code>.</p>
+<h2>Adding a backward reference to an existing reference</h2>
+<p>If a backward reference is to be added to a forward reference, this can be done using <code class="hljs inlineCode">&lt;create-inverse-reference .../&gt;</code>, e.g.</p>
+<pre><code>&lt;create-inverse-reference name="test.module:TestType#backRef"
+	aggregate="false"
+	composite="false"
+	mandatory="false"
+	multiple="true"
+	ordered="true"
+	inverse-reference="test.module:TestType#ref1"
+&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-inverse-reference&gt;
+</code></pre>
+<p>The syntax is basically the same as for a <code class="hljs inlineCode">TLReference</code>, except that the qualified name of the reference must be specified instead of the qualified name of the target type.</p>
+<h2>Deleting a backward reference</h2>
+<p>If a backward reference is to be deleted, this can be done with <code class="hljs inlineCode">&lt;delete-inverse-reference .../&gt;</code>, e.g.:</p>
+<pre><code>&lt;delete-inverse-reference name="test.module:MyType#invRef"/&gt;</code></pre>
+<p>The reference name must be specified fully qualified.</p>
+<h2>Marking an attribute as an override</h2>
+<p>If an override of an attribute or reference is to be created, this cannot <strong>be </strong>done with the keyword <code class="hljs inlineCode">override="true" </code>. The new attribute or reference must be created normally and then the new attribute defined as an override.</p>
+<p>This can be done with <code class="hljs inlineCode">&lt;mark-override .../&gt;</code>, for example:</p>
+<pre><code>&lt;mark-override name="test.module:TestType2#part"
+	definition="test.module:TestType1#part"
+/&gt;
+</code></pre>
+<p>Here the attribute <code class="hljs inlineCode">test.module:TestType2#part</code> is defined as an override of <code class="hljs inlineCode">test.module:TestType1#part</code> (here it is assumed that <code class="hljs inlineCode">test.module:TestType2</code> is a subclass of <code class="hljs inlineCode">test.module:TestType1</code> ). <strong>Attention:</strong> If another override of <code class="hljs inlineCode">test.module:TestType2#part</code> is to be created, e.g. <code class="hljs inlineCode">test.module:TestType3#part</code>, then again<code class="hljs inlineCode">test.module:TestType3#part</code> must be created first and in the processor <code class="hljs inlineCode">&lt;mark-override .../&gt;</code> for<code class="hljs inlineCode"> test.module:TestType3#part</code>, as <code class="hljs inlineCode">definition</code> also <code class="hljs inlineCode">test.module:TestType1#part</code> must be specified.</p>
+<h2>Adding a generalization of a subject object type</h2>
+<p>If a subject object type is to be added as a generalization of another subject object type, this can be done with <code class="hljs inlineCode">&lt;add-class-generalizations ... /&gt;</code>, e.g.:</p>
+<pre><code>&lt;add-class-generalizations name="test.module:TestType"&gt;
+	&lt;generalizations&gt;
+		&lt;generalization type="module1:Generalization1"/&gt;
+		&lt;generalization type="module2:Generalization2"/&gt;
+		...
+	&lt;/generalizations&gt;
+&lt;/add-class-generalizations&gt;
+</code></pre>
+<p>Here the generalizations <code class="hljs inlineCode">module1:Generalization1</code> and <code class="hljs inlineCode">module2:Generalization2</code> are added to the type <code class="hljs inlineCode">test.module:TestType</code>. All type names must be specified in a qualified manner.</p>
+<h2>Removing a generalization of a subject object type</h2>
+<p>If a subject object type is no longer to extend another type, this can be done with &lt;remove-class-generalization .../&gt;, e.g.:</p>
+<pre><code>&lt;remove-class-generalizations name="test.module:TestType"&gt;
+	&lt;generalizations&gt;
+		&lt;generalization type="module1:Generalization1"/&gt;
+		&lt;generalization type="module2:Generalization2"/&gt;
+		...
+	&lt;/generalizations&gt;
+&lt;/remove-class-generalizations&gt;</code></pre>
+<p>Here, the generalizations <code class="hljs inlineCode">module1:Generalization1</code> and <code class="hljs inlineCode">module2:Generalization2</code> are removed from the type <code class="hljs inlineCode">test.module:TestType</code>. All type names must be specified in a qualified manner.</p>
+<p><strong>Attention:</strong> It must be ensured that the type has at least (inherited) <code class="hljs inlineCode">tl.model:TLObject</code> as generalization. In case of emergency, this must be ensured using <code class="hljs inlineCode">&lt;add-class-generalizations ... /&gt;</code>.</p>
+<h2>Updating the annotations of a model element</h2>
+<p>If the annotations of a model element, i.e. a <code class="hljs inlineCode">TLModule</code>, a <code class="hljs inlineCode">TLType</code> or a <code class="hljs inlineCode">TLTypePart</code>, are to be changed, this can be done with <code class="hljs inlineCode">&lt;update-tl-annotations ... /&gt;</code>, e.g.:</p>
+<pre><code>&lt;update-annotations name="test.module:TestType#part1"&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/update-annotations&gt;</code></pre>
+<p>Here the name of the model element must be specified in a qualified way.</p>
+<h2>Changing the target type of attributes</h2>
+<p>If the target type is to be changed in a special attribute, or in all attributes, this can be done with <code class="hljs inlineCode">&lt;change-part-type ... /&gt;</code>, e.g. with</p>
+<pre><code>&lt;change-part-type
+	source="module1:TestType1"
+	target="module2:TestType2"
+/&gt;</code></pre>
+<p>sets the type <code class="hljs inlineCode">module2:TestType2</code> in all attributes that have the type <code class="hljs inlineCode">module1:TestType1</code>. If this is only to be done in a special attribute, use</p>
+<pre><code>&lt;change-part-type
+	part="test.module:TestType#part"
+	target="module2:TestType2"
+/&gt;</code></pre>
+<p>is used. Here the attribute <code class="hljs inlineCode">test.module:TestType#part</code> is set to the type <code class="hljs inlineCode">module2:TestType2</code>.</p>
+<p><strong>Attention:</strong> If you want to change the type of an attribute <code class="hljs inlineCode">TLReference</code>, you have to change the type of the attribute <code class="hljs inlineCode">TLAssociationEnd</code>.</p>
+<pre><code>&lt;change-reference-type
+	reference="test.module:TestType#ref"
+	target="module2:TestType2"
+/&gt;
+</code></pre>
+<p>must be used.</p>
+<h2>Creating subject objects</h2>
+<p>If a new subject object is to be created this can be done with <code class="hljs inlineCode">&lt;create-object .../&gt;</code>, e.g.:</p>
+<pre><code>&lt;create-object
+	table="StructuredElement"
+	type="test.module:MyType"
+&gt;
+	&lt;values&gt;
+		&lt;value
+			column="NAME"
+			column-type="string"
+			value="ROOT"
+		/&gt;
+	&lt;/values&gt;
+&lt;/create-object&gt;</code></pre>
+<p><strong>Attention:</strong> in the values the values for the columns are given, in <code class="hljs inlineCode">column</code> the name of the column is given as it is called in the database, i.e. mostly in capital letters and separated by underscores. <code class="hljs inlineCode">table</code> on the other hand contains the name of the <code class="hljs inlineCode">MetaObject</code> belonging to the table.</p>
+<h2>Creating Singletons</h2>
+<p>If a new singleton is to be created for a module, this can be done with <code class="hljs inlineCode">&lt;create-singleton .../&gt;</code>, e.g.:</p>
+<pre><code>&lt;create-singleton name="ROOT"
+	module="test.module"
+&gt;
+	&lt;singleton
+		table="DemoTypes"
+		type="test.module:RootType"
+	&gt;
+		&lt;values&gt;
+			&lt;value
+				column="NAME"
+				column-type="string"
+				value="ROOT"
+			/&gt;
+	&lt;/singleton&gt;
+&lt;/create-singleton&gt;</code></pre>
+<p>Here, a singleton named ROOT is added to the module <code class="hljs inlineCode">test.module</code>,. The syntax in the tag <code class="hljs inlineCode">singleton</code> corresponds to that of the processor <code class="hljs inlineCode">&lt;create-object .../&gt;</code>.</p>
+<h2>Setting a Classifier as "default</h2>
+<p>If a classifier is to be set as "default" in an enumeration, this can be done with <code class="hljs inlineCode">&lt;set-default-classifier .../&gt;</code>, e.g.:</p>
+<pre><code>&lt;set-default-classifier
+	enumeration="test.module:enum1"
+	default-classifier="classifier2"
+/&gt;</code></pre>
+<p>Here, the classifier <code class="hljs inlineCode">classifier2</code> is set as "default" in the enumeration <code class="hljs inlineCode">test.module:enum1</code>. If no classifier is to be "default", <code class="hljs inlineCode">default-classifier=""</code> can be set.</p>
+<h2>Updating a primitive property</h2>
+<p>If a <code class="hljs inlineCode">TLProperty</code> is to be updated, this can be done with <code class="hljs inlineCode">&lt;update-property .../&gt;</code>, e.g.:</p>
+<pre><code>&lt;update-property name="test.module:TestType#prop1"
+	mandatory="true"
+	new-name="test.module:OtherTestType#newProp1"
+	new-type="tl.core:Long"
+/&gt;</code></pre>
+<p>Here <code class="hljs inlineCode">new-name</code> is the qualified new name. So here not only a rename is encoded, but also a reassign to a different type. In the example, the <code class="hljs inlineCode">TLProperty</code> would be renamed from <code class="hljs inlineCode">prop1</code> to <code class="hljs inlineCode">newProp1</code> and moved from <code class="hljs inlineCode">test.module:TestType</code> to <code class="hljs inlineCode">test.module:OtherTestType</code>.</p>
+<h2>Updating a reference</h2>
+<p>If a <code class="hljs inlineCode">TLReference</code> is to be updated, this can be done with <code class="hljs inlineCode">&lt;update-reference .../&gt;</code>, for example:</p>
+<pre><code>&lt;update-reference name="test.module:TestType#ref1"
+	aggregate="false"
+	composite="false"
+	mandatory="false"
+	multiple="true"
+	ordered="true"
+	new-name="test.module:OtherTestType#ref2"
+	new-type="test.module2:TargetType"
+/&gt;</code></pre>
+<p>Here <code class="hljs inlineCode">new-name</code> is the qualified new name. So not only a rename is coded here, but also a reassign to a different type. In the example, the <code class="hljs inlineCode">TLReference</code> would be renamed from <code class="hljs inlineCode">ref1</code> to <code class="hljs inlineCode">ref2</code> and moved from <code class="hljs inlineCode">test.module:TestType</code> to <code class="hljs inlineCode">test.module:OtherTestType</code>.</p>
+<p><strong>Note:</strong> Backward references must be updated with <code class="hljs inlineCode">&lt;update-inverse-reference .../&gt;</code>.</p>
+<h2>Updating a backward reference</h2>
+<p>If a back reference is to be updated, this can be done with <code class="hljs inlineCode">&lt;update-inverse-reference .../&gt;</code>, e.g.:</p>
+<pre><code>&lt;update-reference name="test.module:TestType#ref1"
+	aggregate="false"
+	composite="false"
+	mandatory="false"
+	multiple="true"
+	ordered="true"
+	new-name="test.module:TestType#ref2"
+/&gt;</code></pre>
+<p>Here <code class="hljs inlineCode">new-name</code> is the qualified new name. Here the owner of the reference must not change. If it does, the new owner will be ignored. Likewise, no new target type can be set here.</p>
+<p>In principle, the target type of a back reference and the owner of the corresponding forward reference are identical, as are the owner of the back reference and the target type of the corresponding forward reference. Thus, the target type or the owner of a back reference can be adjusted by adjusting the owner or the target type of the corresponding forward reference.</p>

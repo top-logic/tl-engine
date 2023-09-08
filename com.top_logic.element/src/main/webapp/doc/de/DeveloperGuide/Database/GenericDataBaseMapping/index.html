@@ -1,0 +1,89 @@
+<p>Top-Logic leitet aus der &nbsp;<a class="tlObject" data-custom="true" href="?page=Modelling&amp;uuid=e4a13f9f-df2e-4dbf-979d-d2bcb0f7a81d">Daten-Modellierung</a> eine generische Speicherabbildung für die Datenbank ab. Die generische Form der Speicherung ist während der Entwicklung und für kleine Anwendungen vollkommen ausreichend. Stellt sich im Laufe der Entwicklung heraus, dass eine Optimierung der Speicherabbildung notwendig ist, kann dies über eine explizite Definition von Datenbanktabellen (<a class="tlObject" data-custom="false" href="?page=DatabaseDefinition&amp;uuid=f4596594-a751-4804-a110-40729c46d415">Schema-Deklaration</a>) und eine Abbildung von Modellelementen auf diese Tabellen (<a class="tlObject" data-custom="false" href="?page=DatabaseMapping&amp;uuid=26047ae6-dc6e-4a5b-93a9-86752fb22572">Datenbankabbildung</a>) erfolgen. Die folgenden Abschnitte beschreiben die generische Datenbank-Abbildung.</p>
+<h2>Objekte</h2>
+<p>Standardmäßig werden Objekte von benutzerdefinierten Klassen in der Tabelle <code class="hljs inlineCode">GenericObject</code> gespeichert. Diese Tabelle enthält neben den <a class="tlObject" data-custom="true" href="?page=TechnicalColumns&amp;uuid=bfb011d4-1fd6-4b63-9e0f-b54e895a12fd">technischen Spalten</a> &nbsp; lediglich einen Fremdschlüssel <code class="hljs inlineCode">tType</code> auf die konkrete Klasse des in der Zeile gespeicherten Objekts.</p>
+<h2>Attribute</h2>
+<p>Bei der generischen Speicherung werden alle Werte von benutzerdefinierten Attributen in einzelnen Zeilen der Tabelle <code class="hljs inlineCode">FlexData</code> abgelegt. Über die Kombination der Spalten <code class="hljs inlineCode">type</code>, <code class="hljs inlineCode">branch</code> und <code class="hljs inlineCode">identifier</code> wird das Objekt identifiziert, für welches ein Wert gespeichert wird. Dabei enthält die Spalte <code class="hljs inlineCode">type</code> den plattformunabhängigen Tabellennamen der Objekttabelle, in der das Objekt gespeichert ist. Die Kombination der Werte in den Spalten &nbsp; &nbsp;<code class="hljs inlineCode">branch</code> und <code class="hljs inlineCode">identifier</code> identifizieren das Objekt über seinen Mandanten und seine technische ID. Schließlich geben die Werte in den <a class="tlObject" data-custom="true" href="?page=TechnicalColumns&amp;uuid=bfb011d4-1fd6-4b63-9e0f-b54e895a12fd">technischen Spalten</a> &nbsp; <code class="hljs inlineCode">revMin</code> und <code class="hljs inlineCode">revMax</code> die Gültigkeit der Wertzuordnung an.</p>
+<p>Je nach Datentyp des zu speichernden Attributs, wird der eigentliche Wert in einer der Spalten <code class="hljs inlineCode">longData</code>, <code class="hljs inlineCode">doubleData</code>, <code class="hljs inlineCode">varcharData</code>, <code class="hljs inlineCode">clobData</code>, oder <code class="hljs inlineCode">blobData</code> abgelegt. Der Datentyp des Attributs wird in der Spalte <code class="hljs inlineCode">dataType</code> kodiert. Mögliche Werte sind:</p>
+<table border="1" cellpadding="1" cellspacing="0" style="width:500px">
+ <thead>
+  <tr>
+   <th scope="col">Wert</th>
+   <th scope="col">Datentyp</th>
+   <th scope="col">Beschreibung</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>1</td>
+   <td>Boolean</td>
+   <td>Der Wert <code class="hljs inlineCode">true</code>.</td>
+  </tr>
+  <tr>
+   <td>2</td>
+   <td>Boolean</td>
+   <td>Der Wert <code class="hljs inlineCode">false</code>.</td>
+  </tr>
+  <tr>
+   <td>10</td>
+   <td>Long</td>
+   <td>Der Wert befindet sich in der Spalte <code class="hljs inlineCode">longData</code>.</td>
+  </tr>
+  <tr>
+   <td>11</td>
+   <td>Integer</td>
+   <td>Der Wert befindet sich in der Spalte <code class="hljs inlineCode">longData</code>. Der Wert darf sich nur im Bereich -2<sup>31</sup> bis 2<sup>31</sup>-1 bewegen.</td>
+  </tr>
+  <tr>
+   <td>12</td>
+   <td>Date</td>
+   <td>Der Wert befindet sich in der Spalte <code class="hljs inlineCode">longData</code>. Er gibt die Millisekunden an, die seit dem 1. Januar 1970 um 00:00 Uhr vergangen sind.</td>
+  </tr>
+  <tr>
+   <td>20</td>
+   <td>Double</td>
+   <td>Der Wert befindet sich in der Spalte <code class="hljs inlineCode">doubleData</code>.</td>
+  </tr>
+  <tr>
+   <td>21</td>
+   <td>Float</td>
+   <td>Der Wert befindet sich in der Spalte <code class="hljs inlineCode">doubleData</code>. Beim Einlesen wird die Genauigkeit auf einen Java float-Wert reduziert.</td>
+  </tr>
+  <tr>
+   <td>30</td>
+   <td>String</td>
+   <td>Benutzt für kurze String-Werte. Der Wert befindet sich in der Spalte <code class="hljs inlineCode">varcharData</code>.</td>
+  </tr>
+  <tr>
+   <td>31</td>
+   <td>String</td>
+   <td>Der leere String.</td>
+  </tr>
+  <tr>
+   <td>40</td>
+   <td>String</td>
+   <td>Benutzt für lange String-Werte. Der Wert befindet sich in der Spalte <code class="hljs inlineCode">clobData</code>.</td>
+  </tr>
+  <tr>
+   <td>50</td>
+   <td>BinaryData</td>
+   <td>Der Wert befindet sich in der Spalte <code class="hljs inlineCode">blobData</code>.</td>
+  </tr>
+  <tr>
+   <td>60</td>
+   <td>TLID</td>
+   <td>Ein Objekt-Identifier. Der Wert befindet sich in der Spalte <code class="hljs inlineCode">longData</code>.</td>
+  </tr>
+  <tr>
+   <td>70</td>
+   <td>ExtIdD</td>
+   <td>Eine Fremdsystem-Referenz. Der Wert befindet sich in den Spalten <code class="hljs inlineCode">longData</code> (der System-Identifier) und <code class="hljs inlineCode">varcharData</code> (der Objekt-Identifier).</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Referenzen</h2>
+<p>Referenzen im Modell werden bei der generischen Speicherung immer über Assoziationstabellen abgebildet. Dabei wird zwischen normalen Referenzen und Kompositionen unterschieden.</p>
+<p>Normale Referenzen werden über die Assoziationstabelle <code class="hljs inlineCode">hasWrapperAttValue</code> abgebildet. Kompositionsreferenzen werden in der Tabelle <code class="hljs inlineCode">hasStructureChild</code> gespeichert. Alle Assoziationstabellen sind gleichartig aufgebaut. Sie haben dieselben &nbsp;<a class="tlObject" data-custom="true" href="?page=TechnicalColumns&amp;uuid=bfb011d4-1fd6-4b63-9e0f-b54e895a12fd">technischen Spalten</a> wie die Objekttabellen. Jedes Link-Objekt in einer Assoziationstabelle gehört zu einem Mandanten (<code class="hljs inlineCode">branch</code>) und hat eine eigene Identität (<code class="hljs inlineCode">identifier</code>). Ebenso ist es über die Spalten <code class="hljs inlineCode">revMin</code>, <code class="hljs inlineCode">revMax</code> und <code class="hljs inlineCode">revCreate</code> unabhängig versioniert.</p>
+<p>Das Quellobjekt, für welches ein Referenzwert gespeichert wird, wird über die Spalten <code class="hljs inlineCode">sourceType</code> und <code class="hljs inlineCode">sourceId</code> identifiziert. Der Wert in <code class="hljs inlineCode">sourceType</code> enthält wieder den plattformunabhängigen Tabellennamen der Objekttabelle und <code class="hljs inlineCode">sourceId</code> die Objekt-Identität.</p>
+<p>Die Referenz, für welche ein Wert gespeichert wird, wird über den Fremdschlüssel in der Spalte <code class="hljs inlineCode">metaAttributeId</code> referenziert. Dieser Fremdschlüssel zeigt in die Modell-Tabelle <code class="hljs inlineCode">MetaAttribute</code> welche alle Eigenschaften und Referenzen von Klassen des Anwendungsmodells enthält.</p>
+<p>Der eigentliche Referenzwert wird über die Spalten <code class="hljs inlineCode">destType</code> und <code class="hljs inlineCode">destId</code> referenziert. Die Semantik ist äquivalent zu <code class="hljs inlineCode">sourceType</code> und <code class="hljs inlineCode">sourceId</code>.</p>
+<p>&nbsp;</p>

@@ -1,0 +1,18 @@
+<p>Bei der Verwendung von MySQL, muss im MySQL-Server die Unterstützung für Zeitzonen eingerichtet sein.</p>
+<h3>Linux</h3>
+<p>Import der System-Zeitzonen:</p>
+<pre><code>mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u root mysql
+</code></pre>
+<p><a href="https://dev.mysql.com/doc/refman/8.0/en/mysql-tzinfo-to-sql.html" target="_blank">Siehe ​https://dev.mysql.com/doc/refman/8.0/en/mysql-tzinfo-to-sql.html</a></p>
+<p>Die Default-Server-Zeitzone muss im Abschnitt <code class="hljs inlineCode">[mysqld]</code> von <code class="hljs inlineCode">/etc/mysql/my.cnf</code> (oder <code class="hljs inlineCode">/etc/mysql/mysql.conf.d/mysqld.cnf</code>) gesetzt werden, z.B.:</p>
+<pre><code>default_time_zone = Europe/Berlin
+</code></pre>
+<p>Anschließend muss der Server neu gestartet werden:</p>
+<pre><code>service mysql restart
+</code></pre>
+<h3>Windows</h3>
+<p>In Windows gibt es keine benamten Zeitzonen. Dort muß die Zeitzone in der Form "+01:00" eingegeben werden.</p>
+<p>Setze die Standard Zeitzone im [mysqld] Abschnitt der my.ini. Diese ist zu finden unter C:\Program Data\MySQL\&lt;MySQL-Server-version&gt;\my.ini. Z.B:</p>
+<pre><code>default-time-zone = +01:00
+</code></pre>
+<p>Auch hier muß MySQL anschließend neu gestartet werden.</p>

@@ -1,0 +1,13 @@
+<p>Jedes Modul kann Übersetzungen und Dokumentation für Konfigurationsparameter in <code class="hljs inlineCode">META-INF/messages_en.properties</code> (entsprechend für andere Sprachen mit der Endung <code class="hljs inlineCode">_de.properties</code>, <code class="hljs inlineCode">_es.properties</code>, ...) enthalten. Diese Dateien werden mit in das <code class="hljs inlineCode">JAR</code> des Moduls gepackt und stehen zur Laufzeit über die allgemeine API für Resourcen zur Verfügung (vgl. <a class="tlObject" data-custom="false" href="?page=I18N&amp;uuid=a060e9bc-e5be-4eed-9bce-dab7db44cbc1">Internationalisierung</a>).</p>
+<h2>Automatische Generierung über JavaDoc</h2>
+<p>Die passenden Keys mit ihrer englischen Übersetzung (die Datei <code class="hljs inlineCode">messages_en.properties</code>) werden dabei automatisch durch den JavaDoc-Prozess erzeugt. Hierbei wird aus dem Namen eines Konfigurationsproperties eine englische Übersetzung für das Property erzeugt und aus dem JavaDoc-Kommentar für das Property ein entsprechender Tool-Tip für das Property, der weitere Dokumentation enthält.</p>
+<h2>Automatische Übersetzung mit DeepL</h2>
+<p>Liegt ein API-Key für den DeepL-Übersetzer vor, können ausgehend aus der Code-Dokumentation auch automatische Übersetzungen in anderen Sprachen erzeugt werden. Hierfür muss in den Maven-Settings eine Konfiguration für die Server-ID <code class="hljs inlineCode">deepl</code> hinterlegt werden:</p>
+<p>In <code class="hljs inlineCode">~/.m2/settings.xml</code>:</p>
+<pre><code class="language-xml">&lt;server&gt;
+  &lt;id&gt;deepl&lt;/id&gt;
+  &lt;passphrase&gt;[your-deepl-api-key]&lt;/passphrase&gt;
+&lt;/server&gt;
+</code></pre>
+<p>In diesem Fall erstellt der der JavaDoc-Prozess Übersetzungen in allen in dem Build-Property <code class="hljs inlineCode">tl.javadoc.targetLanguages</code> angegebenen Sprachen (sofern diese von <a href="https://www.deepl.com/" target="_blank">DeepL</a> unterstützt werden). Es wird empfohlen, diese Build-Ergebnisse mit in die Source-Code-Verwaltung zu übernehmen, da die automatischen Übersetzungen manuell überprüft und gegebenenfalls angepasst werden müssen. Auch verursacht die automatische Übersetzung Kosten, so dass diese nicht in jedem Build-Lauf der Anwendung durchgeführt werden sollte.</p>
+<p></p>

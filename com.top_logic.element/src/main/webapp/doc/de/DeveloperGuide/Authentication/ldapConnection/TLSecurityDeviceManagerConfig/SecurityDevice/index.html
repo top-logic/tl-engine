@@ -1,0 +1,42 @@
+<p>Ein &nbsp;<code class="hljs inlineCode">com.top_logic.base.security.device.interfaces.SecurityDevice</code> &nbsp;ist ein System zu Authentifizierung von Benutzern gegenüber dem LDAP oder zur Bereitstellung von Benutzerdaten aus dem LDAP. Ein &nbsp;<code class="hljs inlineCode">SecurityDevice</code> &nbsp;kann auch für beide Fälle verwendet werden. Die Art des Devices wird durch den Parameter &nbsp;<code class="hljs inlineCode">type</code> &nbsp;definiert.</p>
+<h1>Notwendige Konfiguration</h1>
+<h2>id</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">String</code></p>
+<p>Die eindeutige ID des konfigurierten &nbsp;<code class="hljs inlineCode">SecurityDevice</code>s.</p>
+<h2>class</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">String</code></p>
+<p>Die entsprechende Klasse des zu konfigurierenden &nbsp;<code class="hljs inlineCode">SecurityDevice</code>s. Hierfür steht die Klasse &nbsp;<code class="hljs inlineCode">com.top_logic.base.security.device.ldap.LDAPAuthenticationAccessDevice</code> &nbsp;zur Verfügung. Diese kann &nbsp;sowohl &nbsp;zur Authentifizierung eines Benutzer gegen das LDAP, als auch &nbsp;zum Zugriff auf Benutzerdaten basierend auf Personenattributen genutzt werden. Die Art des &nbsp;<code class="hljs inlineCode">SecurityDevice</code>s wird durch den Parameter &nbsp;<code class="hljs inlineCode">type</code> &nbsp;definiert.</p>
+<h2>type</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">com.top_logic.base.security.device.interfaces.SecurityDevice.DeviceType</code></p>
+<p>Der &nbsp;<code class="hljs inlineCode">DeviceType</code> &nbsp;eines &nbsp;<code class="hljs inlineCode">SecurityDevice</code>, der beschreibt, wofür das <code class="hljs inlineCode">SecurityDevice</code> &nbsp;verwendet wird. Der &nbsp;<code class="hljs inlineCode">DeviceType</code> ist eine Enumeration besteht aus folgenden vier Werten:</p>
+<ol>
+ <li><strong>auth</strong> Ein &nbsp;<code class="hljs inlineCode">com.top_logic.base.security.device.interfaces.AuthenticationDevice</code> &nbsp;ausschließlich für die Authentifizierung eines Benutzers gegenüber LDAP.</li>
+ <li><strong>data</strong> EIn &nbsp;<code class="hljs inlineCode">com.top_logic.base.security.device.interfaces.PersonDataAccessDevice</code> &nbsp;zur Bereitstellung von Benutzerdaten aus dem LDAP Verzeichnis.</li>
+ <li><strong>auth-with-data</strong> Ein &nbsp;<code class="hljs inlineCode">SecurityDevice</code> &nbsp;zur Authentifikation und Bereitstellung von Benutzerdaten.</li>
+ <li><strong>disabled </strong>Ein inaktives &nbsp;<code class="hljs inlineCode">SecurityDevice</code>.</li>
+</ol>
+<h2>mappings</h2>
+<p><strong>Typ:</strong> &nbsp;<code class="hljs inlineCode">Map&lt;String, String&gt;</code></p>
+<p>Ein <code class="hljs inlineCode">mapping</code> ist eine Abbildung von LDAP Objektklassen Properties auf Top-Logic Properties, sodass beim Importieren von Benutzern diese auch auf entsprechende Anwendungsattribute geladen werden können. Die Properties werden in einer &nbsp;<code class="hljs inlineCode">.properties</code> &nbsp;angegeben und können dann als mapping in der Konfiguration referenziert werden. Man kann für jede Objektklasse (z.B. &nbsp;<code class="hljs inlineCode">person</code> &nbsp;oder &nbsp;<code class="hljs inlineCode">group</code>) eine &nbsp;<code class="hljs inlineCode">.properties</code> &nbsp;angeben. Für den Fall, dass kein passendes Mapping für eine Objektklasse existiert, muss als Fallback &nbsp;<code class="hljs inlineCode">genericMapping.properties</code> &nbsp;vorliegen. Darin muss mindestens ein Mapping für das Attribut &nbsp;<code class="hljs inlineCode">objectClass</code> &nbsp;vorliegen. Dieses Mapping wird verwendet, falls die Klasse eine Objekts unbekannt ist und abgefragt werden muss.</p>
+<h2>access-service</h2>
+<p><strong>Typ:</strong> &nbsp;<code class="hljs inlineCode">com.top_logic.base.dsa.ldap.PersonLDAPAccessService</code></p>
+<p>Der &nbsp;<code class="hljs inlineCode">access-service</code> &nbsp;übernimmt die Authentifizierungsprüfung. Die entsprechende Konfiguration wird in &nbsp;<a class="tlObject" data-custom="false" href="?page=LDAPAccessService&amp;uuid=4de02a00-8364-4be1-89aa-5e8da431ec4d">LDAPAccessService</a> &nbsp;beschrieben</p>
+<h1>Zusätzliche Konfiguration</h1>
+<h2>domain</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">String</code><br><strong>Default: </strong><code class="hljs inlineCode">null</code></p>
+<p>Die Domäne des LDAPs, die dazu verwendet wird bei einer externen Authentifizierung Benutzer eindeutig einer Domäne zuzuordnen. Da die meisten Systeme allerdings in einem Request nur die UserID und nicht die Domäne mitsenden, ist diese Methode veraltet und domain ist &nbsp;<code class="hljs inlineCode">@Nullable</code>.<strong> &nbsp;</strong></p>
+<p><strong>TODO: Thema noch mal genau klären</strong></p>
+<p><strong>Hinweis: </strong>Es handelt sich hier um eine Top-Logic Konfiguration, nicht um die tatsächliche Domaine, die für die Verbindung zum LDAP verwendet wird. Diese wird aus der Provider-URL eines &nbsp;<a class="tlObject" data-custom="false" href="?page=LDAPAccessService&amp;uuid=4de02a00-8364-4be1-89aa-5e8da431ec4d">LDAPAccessService</a> &nbsp;erschlossen.</p>
+<h2>allow-pwd-change</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">boolean</code><br><strong>Default:</strong> <code class="hljs inlineCode">false</code></p>
+<p>Definiert ob Benutzer in die Anwendung ihr Passwort ändern können. Falls nicht wird die Option entsprechend in der Anwendung nicht angeboten. <strong>TODO: Default wirklich false?</strong></p>
+<h2>allow-ext-authentication</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">boolean</code><br><strong>Default:</strong> <code class="hljs inlineCode">false</code></p>
+<p>Definiert ob eine Verbindung zum LDAP durch ein externes Authentifizierungssystem (z.B. Servlet Container) erlaubt ist. <strong>TODO: Mehr Input besorgen</strong></p>
+<h2>read-only</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">boolean</code><br><strong>Default:</strong> <code class="hljs inlineCode">false</code></p>
+<p>Definiert ob das &nbsp;<code class="hljs inlineCode">SecurityDevice</code> read only ist. Wenn das der Fall ist, kann ein Benutzer seine Benutzerdaten (z.B. Name, Telefonnummer etc.) nicht anpassen. Diese Konfiguration wird dazu verwendet, die entsprechenden Felder im Bearbeitungsmodus eines importierten Benutzers nicht editierbar zu machen.&nbsp;</p>
+<h2>disabled</h2>
+<p><strong>Typ:</strong> &nbsp;b<code class="hljs inlineCode">oolean</code><br><strong>Default:</strong> <code class="hljs inlineCode">false</code></p>
+<p>Gibt an, ob der &nbsp;<code class="hljs inlineCode">SecurityService</code> &nbsp;inaktiv ist.</p>
+<h2>&nbsp;</h2>

@@ -1,0 +1,176 @@
+<p>Top-Logic bietet die Möglichkeit beim Wechsel von Frameworkverionen und beim Einspielen von neuen Anwendungsversionen eine automatische Datenmigration durchzuführen. Beim Wechsel einer Frameworkversion liefert die neue Frameworkversion entsprechende Migrationsbeschreibungen mit. Dieselbe Mechanik kann aber auch bei der Anwendungsentwicklung verwendet werden, um eine Migration von Bestandsdaten beim Einspielen einer neuen Anwendungsversion durchzuführen.</p>
+<p>Eine solche automatische Datenmigration kann aus mehreren aufeinanderfolgenden Schritten bestehen, die auf den verschiedenen Ebenen der Persistenzschicht operieren:</p>
+<ul>
+ <li>SQL direkt auf der Datenbank</li>
+ <li>Replay der Historie</li>
+ <li>versionierte Änderungen auf <code class="hljs inlineCode">KnowledgeBase</code>-Ebene</li>
+ <li>versionierte Modell-Updates</li>
+</ul>
+<h2>Schema-Version</h2>
+<p>Eine Migration wird beim Anwendungsstart automatisch angestoßen, wenn die Schema-Version der deployten Anwendung größer ist als die Schema-Version, die in der Datenbank vorgefunden wird. Die Schema-Version besteht dabei nicht aus einer einfachen Versions-Nummer, sondern aus der Menge von Migrationsbeschreibungen, die bereits in in den Datenbestand der Anwendung eingespielt sind. Über dieses System lässt sich die Schema-Version modular aus einer Framework-Version und einer oder mehreren Applikations-Schema-Versionen zusammensetzen.</p>
+<p>Technisch ist die Schema-Version in der Tabelle TL_PROPERTIES in Schlüssel gespeichert, die mit dem Präfix <code class="hljs inlineCode">databaseVersion.</code> beginnen. Für jedes Framework- bzw. Applikationsmodul ist hier gespeichert, welche Migrationsbeschreibung zuletzt in den Datenstand der Anwendung eingespielt wurde. In einer Anwendung, welche nur aus einem Modul <code class="hljs inlineCode">my-app</code> besteht, für das als letztes eine Migration <code class="hljs inlineCode">my-migration</code> durchgeführt wurde, könnte sich die Schema-Version wie folgt zusammensetzen:</p>
+<p><code>SELECT * FROM TL_PROPERTIES</code></p>
+<table border="1" cellspacing="0" style="white-space:nowrap">
+ <tbody>
+  <tr>
+   <th><code>node</code></th>
+   <th><code>propKey</code></th>
+   <th><code>propValue</code></th>
+  </tr>
+  <tr>
+   <td><code>__global__</code></td>
+   <td><code>databaseVersion.tl-model-search</code></td>
+   <td><code>Upgrade_layout</code></td>
+  </tr>
+  <tr>
+   <td><code>__global__</code></td>
+   <td><code>databaseVersion.tl</code></td>
+   <td><code>Multiple_forms_inapp</code></td>
+  </tr>
+  <tr>
+   <td><code>__global__</code></td>
+   <td><code>databaseVersion.tl-element</code></td>
+   <td><code>Move_Roles_from_Singletons_to_Modules</code></td>
+  </tr>
+  <tr>
+   <td><code>__global__</code></td>
+   <td><code>databaseVersion.my-app</code></td>
+   <td><code>My_migration</code></td>
+  </tr>
+ </tbody>
+</table>
+<p>Jedes Modul einer Anwendung kann seinen Beitrag zur Schema-Version der Anwendung liefert. Die Schema-Version eines Moduls ist dabei gleichbedeutend mit der letzten Migrationsbeschreibung, die für dieses Modul in die Datenbank eingespielt wurde.</p>
+<p>Im obigen Beispiel liegen für die Framework-Module <code class="hljs inlineCode">tl-model-search</code>, <code class="hljs inlineCode">tl</code>, und <code class="hljs inlineCode">tl-element</code> entsprechende Versionen vor, welche mit der Framework-Version mitgeliefert wurden, auf der die Anwendung basiert. Die Anwendung selbst besteht nur aus einem Modul <code class="hljs inlineCode">my-app</code> und hat die Schema-Version <code class="hljs inlineCode">my-migration</code>. In einer initial aufgesetzten Anwendung, für die noch keine Migration durchgeführt wurde, ist kein entsprechender Eintrag in der Schema-Version vorhanden.</p>
+<h2>Migrationsbeschreibung</h2>
+<p>Migrationen werden in XML-Dateien beschrieben. Diese enden mit <code class="hljs inlineCode">.migration.xml</code>. Um ein Migrations-Datei zu erstellen, muss das Ant-Target <code class="hljs inlineCode">create_migration_script_template</code> aus der <code class="hljs inlineCode">build.xml</code> des jeweiligen Moduls für das die Migration ausgeführt werden soll, aufgerufen werden. Das Target verlangt die Eingabe des Names der Migrationsbeschreibung. Das Skript berechnet automatisch die Abhängigkeiten und legt die neue Migrations-Datei im Ordner <code class="hljs inlineCode">WEB-INF/kbase/migration/[module-name]/</code> an. Migrationen können zwar modular definiert werden, ihre Reihenfolge muss aber global definiert sein. Dafür muss jede Migrationsbeschreibung alle ihre Basisversionen enthalten, auf der sie beruht. Bei der Erstellung des Migrationstemplates wird diese Basisversion in die Abhängigkeiten der neuen Migrationsbeschreibung eingetragen.</p>
+<p>Damit ein Anwendungsmodul überhaupt einen Beitrag zur Schema-Version liefern kann, muss dies einmalig in der Anwendungs-Konfiguration bekannt gemacht werden:</p>
+<pre><code>&lt;config service-class="com.top_logic.knowledge.service.migration.MigrationService"&gt;
+   &lt;instance&gt;
+      &lt;modules&gt;
+         &lt;module name="[module-name]&gt;" /&gt;
+      &lt;/modules&gt;
+   &lt;/instance&gt;
+&lt;/config&gt;
+</code></pre>
+<p>Ein entsprechender Eintrag wird beim Aufsetzen einer neuen Anwendung automatisch durch das Anwendungstemplate erzeugt. Mit dieser Einstellung werden beim Anwendungsstart dann Migrationsbeschreibungen im Ordner <code class="hljs inlineCode">WEB-INF/kbase/migration/[module-name]/</code> gesucht und für dieses Modul eingespielt.</p>
+<p>Eine Migrationdatei hat folgende Struktur:</p>
+<pre><code>&lt;migration&gt;
+   &lt;version name="[migration-name]"
+      module="[module-name]"
+   /&gt;
+   &lt;dependencies&gt;
+      &lt;dependency name="[migration-name-of-dependency]"
+         module="[module-name-of-dependency]"
+      /&gt;
+      ...
+   &lt;/dependencies&gt;
+   &lt;processors&gt;
+      ...
+   &lt;/processors&gt;
+   &lt;migration&gt;
+      ...
+   &lt;/migration&gt;
+   &lt;post-processors&gt;
+      ...
+   &lt;/post-processor&gt;
+&lt;/migration&gt;
+</code></pre>
+<p>Die Abschnitte <code class="hljs inlineCode">version</code> und <code class="hljs inlineCode">dependencies</code> &nbsp; werden automatisch bei der Erstellung befüllt und dürfen nicht angepasst werden. Unter <code class="hljs inlineCode">dependencies</code> sind die letzten Versionen der abhängigen Module aufgeführt. Bevor diese Migration ausgeführt werden kann, müssen alle Migrationen der abhängigen Module bis zu der aufgeführten Version durchgeführt worden sein. Die weiteren Abschnitte werden im folgenden erklärt.</p>
+<h2>SQL-Migration</h2>
+<p>Die Prozessoren im Abschnitt <code class="hljs inlineCode">processors</code> werden zu Begin einer Migration ausgeführt.</p>
+<pre><code>&lt;processors&gt;
+   &lt;processor class="[migration-processor-class]"/&gt;
+   ...
+&lt;/processors&gt;
+</code></pre>
+<p>Die <code class="hljs inlineCode">migration-processor-class</code> muss eine Implementierung von &nbsp;<code class="hljs inlineCode">com.top_logic.knowledge.service.migration.MigrationProcessor</code> sein. Der Processor arbeitet in seiner Schnittstelle direkt auf einer Verbindung zur Datenbank und kann darüber beliebige SQL-Befehle ausführen. Damit ist es möglich, unversionierte Änderungen an den Anwendungsdaten vorzunehmen. Werden mehrere Migrationen auf einmal ausgeführt, so werden erst alle Prozessoren ausgeführt, bevor die Replay-Migration beginnt.</p>
+<p>Es gibt eine Reihe von vordefinierten Prozessoren, die über eigene Tag-Namen definiert werden. Beispiele hierfür sind:</p>
+<ul>
+ <li>Aktualisieren der Tabellen-Definition. Wird eine Datenbank-Tabelle manuell angelegt oder gelöscht, so kann mit 
+  <pre><code>&lt;store-type-configuration /&gt;
+</code></pre> diese neue Konfiguration der Anwendung bekannt gemacht werden.</li>
+ <li>Soll nur ein SQL-Skript ausgeführt werden, so kann dies mit dem SQL-Prozessor geschehen. Hierfür wird ein Skript im Dialekt der Datenbank erwartet. Mit dem Prozessor 
+  <pre><code>&lt;sql file-name-prefix="webinf://kbase/migration/scripts/migration4711" /&gt;
+</code></pre> wird z.B. im Ordner "WEB-INF/kbase/migration/scripts" das auszuführende SQL-Skript erwartet. Ist die Ziel-Datenbank z.B. "Oracle" so wird die Datei "migration4711.oracle.sql" ausgeführt, auf einer "MySQL" die Datei "migration4711.mysql.sql" und auf einer "MSSQL"-Datenbank "migration4711.mssql.sql".</li>
+ <li>
+  <p>Für unversionierte Modelländerungen (z.B. Anlegen eines Fachobjektes oder einer Eigenschaft eines Fachobjektes, so als ob sie schon immer existieren würde), gibt es eine Menge vorgefertigter Prozessoren die unter <a class="tlObject" data-custom="true" href="?page=unversionedModelMigration&amp;uuid=6c92e89e-a445-4d9b-af6b-9dac960c86bc">Unversionierte Modellanpassung</a> beschrieben sind. Der Vorteil an diesen Prozessoren ist, dass der Entwickler sie Datenbank-unabhängig einsetzen kann.</p></li>
+</ul>
+<h2>Replay</h2>
+<p>Ist der Unter-Abschnitt <code class="hljs inlineCode">migration</code> gefüllt, wird ein Replay der Anwendungshistorie durchgeführt. Hierbei werden aus der Persistenz-Schicht die Änderungen in Change-Set's extrahiert, umgeschrieben und wieder eingespielt.</p>
+<pre><code class="language-xml">&lt;migration&gt;
+   &lt;steps&gt;
+      &lt;step name="[name-of-migration-step]"&gt;
+         &lt;rewriter class="[rewriter-class]"/&gt;
+         ...
+      &lt;/step&gt;
+  &lt;/steps&gt;		
+&lt;/migration&gt;
+</code></pre>
+<p>Die Replay-Migration besteht aus potentiell mehreren Gruppen von benannten Migrationsschritten (<code class="hljs inlineCode">steps</code>). Ein Migrationsschritt besteht aus der Ausführung einer Reihe von Change-Set-Umschreibungen (<code class="hljs inlineCode">rewriter</code>). Die rewriter-class muss die Schnittstelle &nbsp;<code class="hljs inlineCode">com.top_logic.knowledge.event.convert.EventRewriter</code> implementieren. Ein Rewriter bekommen ein <code class="hljs inlineCode">ChangeSet</code>, das aus der Persistenz-Schicht extrahiert wurde, übergeben. Dieses kann modifiziert oder entfernt werden. Weiterhin können auch neue <code class="hljs inlineCode">ChangeSet</code>s erstellt werden. Diese modifizierten oder neu erstellten <code class="hljs inlineCode">ChangeSet</code>s werden dann in die Ziel-Datenbank eingespielt.</p>
+<p>Es existieren eine Reihe von vordefinierten Rewritern, die über eigene Tag-Namen definiert werden können. Beispiele hierfür sind:</p>
+<ul>
+ <li>Ändern der Annotationen eines <code class="hljs inlineCode">TLModelPart</code>: Hierbei werden die Annotationen eines <code class="hljs inlineCode">TLModelPart</code> in der Datenbank durch den konfigurierten Wert ersetzt. Z.B im Module <code class="hljs inlineCode">DemoTypes</code> im Typ <code class="hljs inlineCode">DemoTypes.A</code> das Attribute <code class="hljs inlineCode">date2</code>: 
+  <pre><code>&lt;set-part-annotation  module="DemoTypes" type="DemoTypes.A" attribute="date2"&gt;
+ &lt;annotations&gt;
+
+&lt;!-- Annotation des Attributes wie es z.B. in der Datenbank oder einer `*.model.xml` steht. --&gt;
+  &lt;annotations&gt;
+   &lt;format format="d. MMMMM y"/&gt;
+  &lt;/annotations&gt;
+
+ &lt;/annotations&gt;
+&lt;/set-part-annotation&gt;
+</code></pre> Man beachte hierbei das zusätzliche <code class="hljs inlineCode">annotations</code>-Tag</li>
+</ul>
+<ul>
+ <li>Ändern von Teilen der Konfiguration eines <code class="hljs inlineCode">TLModelPart</code>: Hierbei wird nicht die gesamte Annotation ersetzt sondern nur spezielle Teile. Z.B. in allen Konfigurationen <code class="hljs inlineCode">&lt;table name="OldTable"/&gt;</code> durch <code class="hljs inlineCode">&lt;table name="NewTable"/&gt;</code> ersetzen: 
+  <pre><code>&lt;attribute-value-rewrite
+ types="MetaElement"
+ source-attribute="annotations"
+ target-attribute="annotations"
+&gt;
+ &lt;config-as-string&gt;
+  &lt;regex-replace&gt;
+   &lt;pattern&gt;&lt;![CDATA[&lt;table name="OldTable"/&gt;]]&gt;&lt;/pattern&gt;
+   &lt;replacement&gt;&lt;![CDATA[&lt;table name="NewTable"/&gt;]]&gt;&lt;/replacement&gt;
+  &lt;/regex-replace&gt;
+ &lt;/config-as-string&gt;
+&lt;/attribute-value-rewrite&gt;
+</code></pre></li>
+ <li>Transformation eines <code class="hljs inlineCode">String</code>- oder <code class="hljs inlineCode">ConfigurationItem</code>-wertigen Attributes: Ist der Wert eines Datenbank-Attributes XML-wertig, so kann dieser mithilfe eines XSL Transformation geändert werden. Z.B. im Datenbank-Type "A" das Attribut "attr" Mithilfe des XSLT-Script "xslt-script.xls": 
+  <pre><code>&lt;rewriter class="com.top_logic.knowledge.service.db2.migration.rewriters.AttributeRewriter"
+ types="A"
+&gt;
+ &lt;algorithm class="com.top_logic.knowledge.service.db2.migration.rewriters.XsltValueTransform"
+  attribute="attr"
+  transform="WEB-INF/.../xslt-script.xls"
+ /&gt;
+&lt;/rewriter&gt;
+</code></pre></li>
+</ul>
+<ul>
+ <li>Entfernen der Werte der Attribute: Hier können Datenbank-Attribute, deren Namen einem gegebenen Regulären Ausdruck genügen, entfernt werden. Dies ist z.B. hilfreich um die Daten zu entfernten Attributen ebenfalls zu entfernen. Z.B. im Datenbank Typ "A" die Werte der Attribute deren Namen mit "Legacy" enden: 
+  <pre><code>&lt;rewriter class="com.top_logic.knowledge.service.db2.migration.rewriters.AttributeRewriter"
+ types="A"
+&gt;
+ &lt;algorithm class="com.top_logic.knowledge.service.db2.migration.rewriters.AttributeNameFilter"
+  exclude-pattern=".*Legacy"
+ /&gt;
+&lt;/rewriter&gt;
+</code></pre></li>
+</ul>
+<ul>
+ <li>Umbenennen von Datenbank-Typen. Z.B. den Datenbank Typ "A" in "B" umbenennen: 
+  <pre><code>&lt;type-renaming types="A" target-type="B"/&gt;
+</code></pre></li>
+</ul>
+<h2>Versionierte Änderungen</h2>
+<p>Nach einer potentiellen Replay-Migration können versionierte Änderungen auf dem Datenstand direkt auf Ebene der Persistenz-Schicht durchgeführt werden. Solche Änderungen passieren noch bevor die Anwendung und damit das dynamische Typsystem startet. Daher stehen für diesen Teil einer Migration keine Anwendungsfunktionalitäten außer dem Zugriff auf die versionierende Persistenzschicht (Knowledge-Base) zur Verfügung.</p>
+<p>Entsprechende Prozessoren werden in der Sektion <code class="hljs inlineCode">post-processors</code> konfiguriert. Eine <code class="hljs inlineCode">post-processor-class</code> muss die Schnittstelle &nbsp;<code class="hljs inlineCode">com.top_logic.knowledge.service.migration.MigrationPostProcessor</code> implementieren.</p>
+<pre><code class="language-xml">&lt;post-processors&gt;
+   &lt;post-processor class="[post-procesor-class]"/&gt;
+&lt;/post-processors&gt;
+</code></pre>
+<p>Ein solcher Post-Processor kann direkt Operationen auf der <code class="hljs inlineCode">KnowledgeBase</code> durchführen. Dabei kann anders als bei der SQL-Migration oder dem Rewrite keine Änderung der Anwendungshistorie vorgenommen werden. Stattdessen können einmalig versionierte Änderungen am Anwendungsdatenbestand durchgeführt werden.</p>
+<ul>
+</ul>

@@ -1,0 +1,17 @@
+<p>Wird die Anwendung erstmalig gegen eine leere Datenbank gestartet, so wird die Datenbank automatisch initialisiert. Dabei besteht die Möglichkeit, bei dieser Initialisierung eine zuvor beschriebene Menge von Benutzerkonten anzulegen.</p>
+<p>In der Regel sind im Auslieferungsumfang initiale Administratoren und/oder Test-Konten enthalten, so dass diese Konfiguration keiner Anpassung bedarf.</p>
+<p>Die Menge der initial anzulegenden Benutzerkonten wird in folgenden Konfigurationsdateien definiert:</p>
+<ul>
+ <li>InitialTestUsers.xml</li>
+ <li>KBDataInitialTestUsers.xml</li>
+</ul>
+<p>Die in diesen beiden Dateien spezifizierten Benutzerkonten werden beim ersten Start der Applikation automatisch angelegt.</p>
+<p><strong><u>InitialTestUsers.xml</u></strong></p>
+<p>Je Benutzerkonto ist ein Abschnitt „<strong>&lt;sectionname=</strong>“ (gelb hinterlegt) anzulegen:</p>
+<p><img src="ref:image.png" style="opacity:1"></p>
+<p><span style="font-size:10px"><span style="color:#7f8c8d"><strong>Abbildung 1: Datei „InitialTestUsers.xml“</strong></span></span></p>
+<p>&nbsp;</p>
+<p><strong><u>KBDataInitialTestUsers.xml</u></strong></p>
+<p>Für jedes Benutzerkonto ist folgender Abschnitt (gelb hinterlegt) einzufügen:</p>
+<p><img src="ref:image_1.png" style="height:376px; opacity:1; width:545px"></p>
+<p><span style="color:#7f8c8d"><span style="font-size:10px"><strong>Abbildung 2: Datei „KBDataInitialTestUsers.xml“</strong></span></span></p>

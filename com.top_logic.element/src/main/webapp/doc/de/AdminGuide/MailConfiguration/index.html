@@ -1,0 +1,123 @@
+<p>In einer Anwendung kann die Verbindung zu einem SMTP- bzw. IMAP-Server konfiguriert werden, wenn die Anwendung Mails senden bzw. empfangen kann.</p>
+<h2>SMTP-Konfiguration</h2>
+<p>Der Mail-Versand aus einer Anwendung kann über die folgenden Einstellungen gesteuert werden. Hierfür werden entweder beim Start des Web-Containers die entsprechenden System-Properties mit <code class="hljs inlineCode">-Dproperty_name=property_value</code> gesetzt, oder die angegebenen Konfigurationsvariablen werden in einer separaten Konfigurations-Datei mit Werten für das jeweilige Deployment belegt.</p>
+<table border="0" class="tlDocTable" style="height:106px; width:100%">
+ <thead>
+  <tr>
+   <th scope="col">System-Property</th>
+   <th scope="col">Konfigurationsvariable</th>
+   <th scope="col">Beschreibung</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>smtp_active</td>
+   <td>%SMTP_ACTIVE%</td>
+   <td>Ob der Mail-Versand aktiviert ist.</td>
+  </tr>
+  <tr>
+   <td>smtp_server</td>
+   <td>%SMTP_SERVER%</td>
+   <td>Der Host-Name des zu verwendenden SMTP-Servers</td>
+  </tr>
+  <tr>
+   <td>smtp_protocol</td>
+   <td>%SMTP_PROTOCOL%</td>
+   <td>Das SMTP-Protokoll ("<code class="hljs inlineCode">smtps</code>" für verschlüsselte und "<code class="hljs inlineCode">smtp</code>" für unverschlüsselte Kommunikation)</td>
+  </tr>
+  <tr>
+   <td>smtp_starttls</td>
+   <td>%SMTP_STARTTLS%</td>
+   <td>Ob bei unverschlüsselter Kommunikation versucht werden soll, auf verschlüsselte Kommunikation zu wechseln.</td>
+  </tr>
+  <tr>
+   <td>smtp_port</td>
+   <td>%SMTP_PORT%</td>
+   <td>Der zu verwendende Port für die SMTP-Kommunikation (<code class="hljs inlineCode">-1</code> bedeutet der Standardport für das gewählte Protokoll)</td>
+  </tr>
+  <tr>
+   <td>smtp_lookup_mx</td>
+   <td>%SMTP_LOOKUP_MX%</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>smtp_user</td>
+   <td>%SMTP_USER%</td>
+   <td>Der Nutzername, mit dem sich die Anwendung bei dem SMTP-Server anmeldet</td>
+  </tr>
+  <tr>
+   <td>smtp_pass</td>
+   <td>%SMTP_PASS%</td>
+   <td>Das Passwort, dass die Anwendung für die Anmeldung beim SMTP-Server verwendet. Der Wert muss verschlüsselt angegeben werden. Zu Test-Zwecken kann der unverschlüsselte Wert mit dem Prefix <code class="hljs inlineCode">unencrypted:</code> angegeben werden.</td>
+  </tr>
+  <tr>
+   <td>smtp_timeout</td>
+   <td>%SMTP_TIMEOUT%</td>
+   <td>Maximale Wartezeit für die SMTP-Kommunikation.</td>
+  </tr>
+  <tr>
+   <td>smtp_connection_timeout</td>
+   <td>%SMTP_CONNECTION_TIMEOUT%</td>
+   <td>Maximale Wartezeit für den SMTP-Verbindungsaufbau</td>
+  </tr>
+  <tr>
+   <td>mail_domain</td>
+   <td>%MAIL_DOMAIN%</td>
+   <td>Domain-Name des Systems. Wird verwendet, um aus Account-Namen von Nutzern des Systems E-Mail-Addressen abzuleiten, indem der Nutzer-Login mit <code class="hljs inlineCode">@</code> und dem konfigurierten Wert verlängert wird.</td>
+  </tr>
+  <tr>
+   <td>mail_sender</td>
+   <td>%MAIL_SENDER%</td>
+   <td>Die E-Mail-Addresse, die bei von der Anwendung versendeten Nachrichten als Absender angegeben wird.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>IMAP-Konfiguration</h2>
+<p>Unterstützt die Anwendung Mail-Empfang, so kann dieser über die folgenden Einstellungen gesteuert werden.</p>
+<table border="0" class="tlDocTable" style="width:100%">
+ <thead>
+  <tr>
+   <th scope="col">System-Property</th>
+   <th scope="col">Konfigurationsvariable</th>
+   <th scope="col">Beschreibung</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>imap_active</td>
+   <td>%IMAP_ACTIVE%</td>
+   <td>Ob der Mail-Empfang aktiviert ist</td>
+  </tr>
+  <tr>
+   <td>imap_server</td>
+   <td>%IMAP_SERVER%</td>
+   <td>Der Host-Name des zu verwendenden IMAP-Servers</td>
+  </tr>
+  <tr>
+   <td>imap_protocol</td>
+   <td>%IMAP_PROTOCOL%</td>
+   <td>Das IMAP-Protokoll ("<code class="hljs inlineCode">imaps</code>" für verschlüsselte und "<code class="hljs inlineCode">imap</code>" für unverschlüsselte Kommunikation)</td>
+  </tr>
+  <tr>
+   <td>imap_starttls</td>
+   <td>%IMAP_STARTTLS%</td>
+   <td>Ob bei unverschlüsselter Kommunikation versucht werden soll, auf verschlüsselte Kommunikation zu wechseln.</td>
+  </tr>
+  <tr>
+   <td>imap_port</td>
+   <td>%IMAP_PORT%</td>
+   <td>Der zu verwendende Port für die IMAP-Kommunikation (<code class="hljs inlineCode">-1</code> bedeutet der Standardport für das gewählte Protokoll)</td>
+  </tr>
+  <tr>
+   <td>imap_user</td>
+   <td>%IMAP_USER%</td>
+   <td>Der Nutzername, mit dem sich die Anwendung bei dem IMAP-Server anmeldet</td>
+  </tr>
+  <tr>
+   <td>imap_pass</td>
+   <td>%IMAP_PASS%</td>
+   <td>Das Passwort, dass die Anwendung für die Anmeldung beim IMAP-Server verwendet. Der Wert muss verschlüsselt angegeben werden. Zu Test-Zwecken kann der unverschlüsselte Wert mit dem Prefix <code class="hljs inlineCode">unencrypted:</code> angegeben werden.</td>
+  </tr>
+ </tbody>
+</table>
+<p></p>

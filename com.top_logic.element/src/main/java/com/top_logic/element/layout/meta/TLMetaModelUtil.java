@@ -68,18 +68,8 @@ public class TLMetaModelUtil {
 		storeInternationalized(i18n, key, name, tx, CodeUtil::englishLabel, autoTranslate);
 	}
 
-	/**
-	 * Like {@link #saveI18NForPart(TLNamedPart, Internationalized, ResourceTransaction)} but uses
-	 * the technical name directly as label, if no translation is given.
-	 */
-	public static void saveI18NForPartNoLabelHeuristic(TLNamedPart part, Internationalized i18n,
-			ResourceTransaction tx) {
-		storeInternationalized(i18n, getResKey(part), part.getName(), tx, name -> name, false);
-	}
-
 	private static void storeInternationalized(Internationalized i18n, ResKey key, String technicalName,
 			ResourceTransaction tx, Function<String, String> labelHeuristic, boolean autoTranslate) {
-
 		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
 			Resources bundle = Resources.getInstance(locale);
 
@@ -111,12 +101,14 @@ public class TLMetaModelUtil {
 		if (autoTranslate) {
 			Translator service = TranslationService.getInstance();
 			if (service.isSupported(locale)) {
-				for (Locale other : ResourcesModule.getInstance().getSupportedLocales()) {
-					if (service.isSupported(other)) {
-						String otherLabel =
-							StringServices.nonEmpty(Resources.getInstance(other).getString(labelKey, null));
-						if (otherLabel != null) {
-							return service.translate(otherLabel, other, locale);
+				if (labelKey != null && labelKey instanceof LiteralKey) {
+					for (Locale other : ResourcesModule.getInstance().getSupportedLocales()) {
+						if (service.isSupported(other)) {
+							if (((LiteralKey) labelKey).getTranslations().containsKey(other)) {
+								String originLabel = Resources.getInstance(other).getString(labelKey);
+
+								return service.translate(originLabel, other, locale);
+							}
 						}
 					}
 				}
@@ -125,10 +117,14 @@ public class TLMetaModelUtil {
 					return service.translate(labelHeuristic.apply(technicalName), Locale.ENGLISH, locale);
 				}
 			}
-		}
+		} else {
+			if (labelKey != null) {
+				return Resources.getInstance().getString(labelKey);
+			}
 
-		if (technicalName != null) {
-			return labelHeuristic.apply(technicalName);
+			if (technicalName != null) {
+				return labelHeuristic.apply(technicalName);
+			}
 		}
 
 		return null;

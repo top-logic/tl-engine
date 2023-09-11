@@ -2200,9 +2200,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			out.writeText(
 				Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START, (Object[]) tableInfo));
 			out.writeText(HTMLConstants.NBSP);
-			Control thePageInput = view.getPageInputControl();
-			if (thePageInput != null) {
-				thePageInput.write(context, out);
+			Control pageInput = view.getPageInputControl();
+			if (pageInput != null) {
+				pageInput.write(context, out);
 			} else {
 				out.writeText(String.valueOf(view.getCurrentPage()));
 			}
@@ -2294,9 +2294,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
             TableControl view, int currentPage, Integer[] theNumbers) throws IOException {
 		out.writeContent(Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START, (Object[]) theNumbers));
         out.writeText(HTMLConstants.NBSP);
-        Control thePageInput = view.getPageInputControl();
-        if (thePageInput != null) {
-            thePageInput.write(context, out);
+        Control pageInput = view.getPageInputControl();
+        if (pageInput != null) {
+            pageInput.write(context, out);
         }
         else {
             out.writeText(String.valueOf(currentPage));

@@ -55,6 +55,7 @@ import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.DefaultCellRenderer;
+import com.top_logic.layout.table.RowClassProvider;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableRenderer;
@@ -1066,13 +1067,26 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			rowProperties.put("id", getRenderer().getRowID(getView(), rowIndex));
 			rowProperties.put("isSelected", isSelected);
 			rowProperties.put("selectedClass", "tblSelected");
-			rowProperties.put("defaultClasses", DefaultTableRenderer.TABLE_ROW_CSS_CLASS);
+			rowProperties.put("defaultClasses", getTableBodyRowClasses(rowIndex));
 			rowProperties.put("body_row_cells", createBodyRowCellsFragment(rowIndex, isSelected));
 			rowProperties.put("rowHeight", getBodyRowHeight(getModel()));
 
 			appendDragProperties(rowProperties, rowIndex);
 
 			Icons.TABLE_BODY_ROW_TEMPLATE.get().write(context, out, rowProperties);
+		}
+
+		private String getTableBodyRowClasses(int rowIndex) {
+			RowClassProvider rowClassProvider = getModel().getTableConfiguration().getRowClassProvider();
+			
+			int options = getRowOptions(rowIndex);
+			int pageRowIndex = getRowIndexOnCurrentPage(rowIndex);
+
+			return rowClassProvider.getTRClass(_view, options, pageRowIndex, rowIndex);
+		}
+
+		private int getRowIndexOnCurrentPage(int rowIndex) {
+			return rowIndex - getView().getPagingModel().getFirstRowOnCurrentPage();
 		}
 
 		private boolean isRowSelected(int rowIndex) {

@@ -435,23 +435,6 @@ th.tblCounterNoBorder {
 	background-color:var(--TABLE_HEADER);
 }
 
-.tl-table__footer-pager {
-	font-family:var(--TEXT_FAMILY);
-	font-size:12px;
-	font-weight:normal;
-	padding-top: 0px;
-	padding-left:2px;
-	padding-right:2px;
-	padding-bottom: 0px;
-	border-top-color:gray;
-	border-top-style:solid;
-	border-top-width:1px;
-	color:black;
-	text-align: left;
-    white-space:nowrap;
-	background-color:var(--TABLE_HEADER);
-}
-
 th.tl-table__cell, th.cal_th {
     color:               #333333;
     background: var(--TABLE_HEADER_BACKGROUND);
@@ -7678,6 +7661,24 @@ div.dirtyHandlingDialog .changes {
 .tl-table-overlay__scroller-icon {
 	font-size: 25px;
 	color: #bbbaba;
+}
+
+.tl-table__footer-pager {
+	padding-top: 0px;
+	padding-left:2px;
+	padding-right:2px;
+	padding-bottom: 0px;
+	border-top-color:gray;
+	border-top-style:solid;
+	border-top-width:1px;
+	text-align: left;
+    white-space:nowrap;
+	background-color:var(--TABLE_HEADER);
+}
+
+.tl-table__footer-pager-item {
+	padding-left: 2px;
+	padding-right: 2px;
 }
 
 .tl-flex--fill {

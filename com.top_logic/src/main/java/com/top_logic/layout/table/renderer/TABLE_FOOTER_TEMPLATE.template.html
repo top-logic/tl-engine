@@ -2,15 +2,25 @@
 	<tl:choose>
 		<tl:when test="isPagination">
 			<div class="tl-table__footer-pager" style="{styles}" align="left">
-				{firstPageButton}
-				{previousPageButton}
-				{currentPage}
-				{nextPageButton}
-				{lastPageButton}
-				<span>
+				<span class="tl-table__footer-pager-item">
+					{firstPageButton}
+				</span>
+				<span class="tl-table__footer-pager-item">
+					{previousPageButton}
+				</span>
+				<span class="tl-table__footer-pager-item">
+					{currentPage}
+				</span>
+				<span class="tl-table__footer-pager-item">
+					{nextPageButton}
+				</span>
+				<span class="tl-table__footer-pager-item">
+					{lastPageButton}
+				</span>
+				<span class="tl-table__footer-pager-item">
 					{pageSize}
 				</span>
-				<span>
+				<span class="tl-table__footer-pager-item">
 					{pageInfo}
 				</span>
 			</div>

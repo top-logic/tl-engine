@@ -2199,14 +2199,12 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 			out.writeText(
 				Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START, (Object[]) tableInfo));
-			out.writeText(HTMLConstants.NBSP);
 			Control pageInput = view.getPageInputControl();
 			if (pageInput != null) {
 				pageInput.write(context, out);
 			} else {
 				out.writeText(String.valueOf(view.getCurrentPage()));
 			}
-			out.writeText(HTMLConstants.NBSP);
 			out.writeText(
 				Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_END, (Object[]) tableInfo));
 		};
@@ -2227,9 +2225,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			Control pageSize = view.getPageSizeControl();
 			if (pageSize != null) {
 				out.writeText(Resources.getInstance().getString(I18NConstants.PAGING_OPTIONS_START));
-				out.writeText(HTMLConstants.NBSP);
 				pageSize.write(context, out);
-				out.writeText(HTMLConstants.NBSP);
 				out.writeText(Resources.getInstance().getString(I18NConstants.PAGING_OPTIONS_END));
 			}
 		};
@@ -2293,7 +2289,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
     protected void writeContentBetweenPagingCommands(DisplayContext context, TagWriter out,
             TableControl view, int currentPage, Integer[] theNumbers) throws IOException {
 		out.writeContent(Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START, (Object[]) theNumbers));
-        out.writeText(HTMLConstants.NBSP);
         Control pageInput = view.getPageInputControl();
         if (pageInput != null) {
             pageInput.write(context, out);
@@ -2301,7 +2296,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
         else {
             out.writeText(String.valueOf(currentPage));
         }
-        out.writeText(HTMLConstants.NBSP);
 		out.writeContent(Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_END, (Object[]) theNumbers));
     }
 	
@@ -2331,8 +2325,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			tooltipText = Resources.getInstance().getString(GENERAL_PREFIX.key(key));
 		}
 
-		out.writeText(HTMLConstants.NBSP);
-
 		if (command != null) {
 			out.beginBeginTag(ANCHOR);
 			out.writeAttribute(HREF_ATTR, "#");
@@ -2343,8 +2335,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		} else {
 			image.writeWithCssPlainTooltip(context, out, FormConstants.DISABLED_CSS_CLASS, tooltipText);
 		}
-
-		out.writeText(HTMLConstants.NBSP);
 	}
 
 	private void writeOnClick(TagWriter out, TableControl view, TableCommand command) throws IOException {

@@ -708,17 +708,13 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 
 		private HTMLFragment createGroupCellLabelFragment(Column group, int colspan, int rowIndex) {
-			return new HTMLFragment() {
+			return (context, out) -> {
+				MapWithProperties groupCellLabelProperties = new MapWithProperties();
 
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					MapWithProperties groupCellLabelProperties = new MapWithProperties();
+				groupCellLabelProperties.put("label", createGroupCellContentLabelFragment(group, colspan, rowIndex));
+				groupCellLabelProperties.put("onMousedownHandler", createFragmentToReorderColumn());
 
-					groupCellLabelProperties.put("label", createGroupCellContentLabelFragment(group, colspan, rowIndex));
-					groupCellLabelProperties.put("onMousedownHandler", createFragmentToReorderColumn());
-
-					Icons.TABLE_HEADER_GROUP_CELL_CONTENT_TEMPLATE.get().write(context, out, groupCellLabelProperties);
-				}
+				Icons.TABLE_HEADER_GROUP_CELL_CONTENT_TEMPLATE.get().write(context, out, groupCellLabelProperties);
 			};
 		}
 
@@ -746,58 +742,50 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 
 		private HTMLFragment createFragmentToReorderColumn() {
-			return new HTMLFragment() {
-
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					out.append("TABLE.initColumnReordering(event, ");
-					out.writeJsString(getView().getID());
-					out.append(");");
-				}
+			return (context, out) -> {
+				out.append("TABLE.initColumnReordering(event, ");
+				out.writeJsString(getView().getID());
+				out.append(");");
 			};
 		}
 
 		private HTMLFragment createHeaderRowCellsFragment(int rowIndex) {
 			int fixedColumns = getModel().getFixedColumnCount();
 
-			return new HTMLFragment() {
+			return (context, out) -> {
+				int fixedColumnWidth = 0;
 
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					int fixedColumnWidth = 0;
-
-					for (int columnIndex = 0; columnIndex < getModel().getColumnCount(); columnIndex++) {
-						if (isFixedColumn(columnIndex)) {
-							writeSeparatorElement(out, HTMLConstants.TH, fixedColumnWidth);
-						}
-
-						MapWithProperties headerCellProperties = new MapWithProperties();
-
-						headerCellProperties.put("styles", createHeaderCellStylesFragment(columnIndex));
-						headerCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
-						appendFixedColumnProperties(headerCellProperties, columnIndex, fixedColumnWidth, fixedColumns);
-
-						if (fixedColumns > 0) {
-							fixedColumnWidth += getColumnWidth(DefaultRenderState.this, columnIndex);
-						}
-
-						headerCellProperties.put("classes", getTHClass(columnIndex));
-						headerCellProperties.put("colspan", 1);
-						headerCellProperties.put("isRowHeader", false);
-						headerCellProperties.put("label", createHeaderCellLabelFragment(rowIndex, columnIndex));
-						headerCellProperties.put("firstColumnIndex",
-							TableUtil.getClientColumnIndex(_model, columnIndex));
-						headerCellProperties.put("lastColumnIndex",
-							TableUtil.getClientColumnIndex(_model, columnIndex));
-						headerCellProperties.put("isFixedTable", hasFixedColumns());
-						headerCellProperties.put("rowHeight", getHeaderRowHeight(_model));
-
-						Icons.TABLE_HEADER_CELL_TEMPLATE.get().write(context, out, headerCellProperties);
-					}
-
-					if (hasOnlyFixedColumns()) {
+				for (int columnIndex = 0; columnIndex < getModel().getColumnCount(); columnIndex++) {
+					if (isFixedColumn(columnIndex)) {
 						writeSeparatorElement(out, HTMLConstants.TH, fixedColumnWidth);
 					}
+
+					MapWithProperties headerCellProperties = new MapWithProperties();
+
+					headerCellProperties.put("styles", createHeaderCellStylesFragment(columnIndex));
+					headerCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
+					appendFixedColumnProperties(headerCellProperties, columnIndex, fixedColumnWidth, fixedColumns);
+
+					if (fixedColumns > 0) {
+						fixedColumnWidth += getColumnWidth(DefaultRenderState.this, columnIndex);
+					}
+
+					headerCellProperties.put("classes", getTHClass(columnIndex));
+					headerCellProperties.put("colspan", 1);
+					headerCellProperties.put("isRowHeader", false);
+					headerCellProperties.put("label", createHeaderCellLabelFragment(rowIndex, columnIndex));
+					headerCellProperties.put("firstColumnIndex",
+						TableUtil.getClientColumnIndex(_model, columnIndex));
+					headerCellProperties.put("lastColumnIndex",
+						TableUtil.getClientColumnIndex(_model, columnIndex));
+					headerCellProperties.put("isFixedTable", hasFixedColumns());
+					headerCellProperties.put("rowHeight", getHeaderRowHeight(_model));
+
+					Icons.TABLE_HEADER_CELL_TEMPLATE.get().write(context, out, headerCellProperties);
+				}
+
+				if (hasOnlyFixedColumns()) {
+					writeSeparatorElement(out, HTMLConstants.TH, fixedColumnWidth);
 				}
 			};
 		}
@@ -811,36 +799,21 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 
 		private HTMLFragment createFragmentToResizeColumn() {
-			return new HTMLFragment() {
-
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					out.append("TABLE.initColumnResizing(event, ");
-					out.writeJsString(getView().getID());
-					out.append(");");
-				}
+			return (context, out) -> {
+				out.append("TABLE.initColumnResizing(event, ");
+				out.writeJsString(getView().getID());
+				out.append(");");
 			};
 		}
 
 		private HTMLFragment createHeaderCellStylesFragment(int columnIndex) {
-			return new HTMLFragment() {
-
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					CssUtil.appendStyleOptional(out, getModel().getColumnDescription(columnIndex).getHeadStyle());
-				}
-			};
+			return (context, out) -> CssUtil.appendStyleOptional(out,
+				getModel().getColumnDescription(columnIndex).getHeadStyle());
 		}
 
 		private HTMLFragment createHeaderCellLabelFragment(int rowIndex, int columnIndex) {
-			return new HTMLFragment() {
-
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					getRenderer().writeColumnHeader(context, out, DefaultRenderState.this, rowIndex, columnIndex);
-				}
-
-			};
+			return (context, out) -> getRenderer().writeColumnHeader(context, out, DefaultRenderState.this, rowIndex,
+				columnIndex);
 		}
 
 		/**
@@ -1118,50 +1091,42 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 
 		private HTMLFragment createDragImageFragment(Object rowObject, TableConfiguration tableConfig) {
-			return new HTMLFragment() {
+			return (context, out) -> {
+				ResourceProvider rowObjectResourceProvider = tableConfig.getRowObjectResourceProvider();
 
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					ResourceProvider rowObjectResourceProvider = tableConfig.getRowObjectResourceProvider();
-
-					if (rowObjectResourceProvider != null) {
-						HTMLUtil.writeDragImageContent(context, out, rowObjectResourceProvider, rowObject);
-					} else {
-						HTMLUtil.writeDragImageContent(context, out, MetaResourceProvider.INSTANCE, rowObject);
-					}
-
+				if (rowObjectResourceProvider != null) {
+					HTMLUtil.writeDragImageContent(context, out, rowObjectResourceProvider, rowObject);
+				} else {
+					HTMLUtil.writeDragImageContent(context, out, MetaResourceProvider.INSTANCE, rowObject);
 				}
+
 			};
 		}
 
 		private HTMLFragment createBodyRowCellsFragment(int rowIndex, boolean isSelected) {
 			int fixedColumns = getModel().getFixedColumnCount();
 
-			return new HTMLFragment() {
+			return (context, out) -> {
+				DefaultRenderState state = DefaultRenderState.this;
+				TableRenderer<?> renderer = state.getRenderer();
 
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					DefaultRenderState state = DefaultRenderState.this;
-					TableRenderer<?> renderer = state.getRenderer();
+				int fixedColumnWidth = 0;
 
-					int fixedColumnWidth = 0;
-
-					for (int columnIndex = 0; columnIndex < getModel().getColumnCount(); columnIndex++) {
-						if (isFixedColumn(columnIndex)) {
-							writeSeparatorElement(out, HTMLConstants.TD, fixedColumnWidth);
-						}
-
-						renderer.writeColumn(out, context, state, isSelected, columnIndex, rowIndex, rowIndex,
-							fixedColumnWidth);
-
-						if (fixedColumns > 0) {
-							fixedColumnWidth += getColumnWidth(DefaultRenderState.this, columnIndex);
-						}
-					}
-
-					if (hasOnlyFixedColumns()) {
+				for (int columnIndex = 0; columnIndex < getModel().getColumnCount(); columnIndex++) {
+					if (isFixedColumn(columnIndex)) {
 						writeSeparatorElement(out, HTMLConstants.TD, fixedColumnWidth);
 					}
+
+					renderer.writeColumn(out, context, state, isSelected, columnIndex, rowIndex, rowIndex,
+						fixedColumnWidth);
+
+					if (fixedColumns > 0) {
+						fixedColumnWidth += getColumnWidth(DefaultRenderState.this, columnIndex);
+					}
+				}
+
+				if (hasOnlyFixedColumns()) {
+					writeSeparatorElement(out, HTMLConstants.TD, fixedColumnWidth);
 				}
 			};
 		}
@@ -1739,61 +1704,46 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		boolean sortable = state.getModel().isSortable(column);
 		
 		MapWithProperties headerColumnFilterProperties = new MapWithProperties();
-		headerColumnFilterProperties.put("label", new HTMLFragment() {
+		headerColumnFilterProperties.put("label", (HTMLFragment) (context1, out1) -> {
+			Control control = (Control) DefaultTableRenderer.createColumnControl(state, column,
+				ColumnConfiguration.COLUMN_CONTROL_TYPE_HEADER);
 
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				Control control = (Control) DefaultTableRenderer.createColumnControl(state, column,
-					ColumnConfiguration.COLUMN_CONTROL_TYPE_HEADER);
-
-				if (control != null) {
-					control.write(context, out);
-				} else {
-					out.beginBeginTag(SPAN);
-					if (customColumnOrder || sortable) {
-						CssUtil.writeCombinedCssClasses(out, ADJUSTABLE_COLUMN_CLASS, UNSELECTABLE_CONTENT_CLASS);
-						out.writeAttribute(ONSELECTSTART_ATTR, "return false;");
-						// writeOnMouseDownMakeDragable(out, state.getView(), column,
-						// customColumnOrder, sortable);
-					}
-					String tooltip = getTooltip(state, column);
-					String tooltipCaption = getTooltipCaption(state.getView(), column);
-
-					out.endBeginTag();
-					{
-						if (tooltip != null) {
-							out.beginBeginTag(SPAN);
-							OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,
-								tooltipCaption);
-							out.endBeginTag();
-						}
-						writeHeaderContent(state, out, column);
-
-						if (tooltip != null) {
-							out.endTag(SPAN);
-						}
-					}
-					out.endTag(SPAN);
+			if (control != null) {
+				control.write(context1, out1);
+			} else {
+				out1.beginBeginTag(SPAN);
+				if (customColumnOrder || sortable) {
+					CssUtil.writeCombinedCssClasses(out1, ADJUSTABLE_COLUMN_CLASS, UNSELECTABLE_CONTENT_CLASS);
+					out1.writeAttribute(ONSELECTSTART_ATTR, "return false;");
+					// writeOnMouseDownMakeDragable(out, state.getView(), column,
+					// customColumnOrder, sortable);
 				}
-			}
+				String tooltip = getTooltip(state, column);
+				String tooltipCaption = getTooltipCaption(state.getView(), column);
 
+				out1.endBeginTag();
+				{
+					if (tooltip != null) {
+						out1.beginBeginTag(SPAN);
+						OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context1, out1, tooltip,
+							tooltipCaption);
+						out1.endBeginTag();
+					}
+					writeHeaderContent(state, out1, column);
+
+					if (tooltip != null) {
+						out1.endTag(SPAN);
+					}
+				}
+				out1.endTag(SPAN);
+			}
 		});
-		headerColumnFilterProperties.put("filterSortButtons", new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				writeFilterSortTag(context, out, state, column);
-			}
-
-		});
-		headerColumnFilterProperties.put("onMousedownHandler", new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				out.append("TABLE.initColumnReordering(event, ");
-				out.writeJsString(state.getView().getID());
-				out.append(");");
-			}
+		headerColumnFilterProperties.put("filterSortButtons",
+			(HTMLFragment) (context1, out1) -> writeFilterSortTag(context1, out1, state, column));
+		headerColumnFilterProperties.put("onMousedownHandler", (HTMLFragment) (context1, out1) -> {
+			out1.append("TABLE.initColumnReordering(event, ");
+			out1.writeJsString(state.getView().getID());
+			out1.append(");");
 		});
 
 		Icons.TABLE_HEADER_CELL_CONTENT_TEMPLATE.get().write(context, out, headerColumnFilterProperties);
@@ -2244,118 +2194,91 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	}
 
 	private Object createCurrentPageFragment(TableControl view) {
-		return new HTMLFragment() {
+		return (HTMLFragment) (context, out) -> {
+			Integer[] tableInfo = view.computeTableInfo();
 
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				Integer[] tableInfo = view.computeTableInfo();
-
-				out.writeText(
-					Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START, (Object[]) tableInfo));
-				out.writeText(HTMLConstants.NBSP);
-				Control thePageInput = view.getPageInputControl();
-				if (thePageInput != null) {
-					thePageInput.write(context, out);
-				} else {
-					out.writeText(String.valueOf(view.getCurrentPage()));
-				}
-				out.writeText(HTMLConstants.NBSP);
-				out.writeText(
-					Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_END, (Object[]) tableInfo));
+			out.writeText(
+				Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START, (Object[]) tableInfo));
+			out.writeText(HTMLConstants.NBSP);
+			Control thePageInput = view.getPageInputControl();
+			if (thePageInput != null) {
+				thePageInput.write(context, out);
+			} else {
+				out.writeText(String.valueOf(view.getCurrentPage()));
 			}
+			out.writeText(HTMLConstants.NBSP);
+			out.writeText(
+				Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_END, (Object[]) tableInfo));
 		};
 	}
 
 	private Object createPageInfoFragment(TableControl view) {
-		return new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				if (useFullFooter) {
-					out.writeText(
-						Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START_FULL, (Object[]) view.computeTableInfo()));
-				}
+		return (HTMLFragment) (context, out) -> {
+			if (useFullFooter) {
+				out.writeText(
+					Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START_FULL,
+						(Object[]) view.computeTableInfo()));
 			}
 		};
 	}
 
 	private HTMLFragment createPageSizeFragment(TableControl view) {
-		return new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				Control pageSize = view.getPageSizeControl();
-				if (pageSize != null) {
-					out.writeText(Resources.getInstance().getString(I18NConstants.PAGING_OPTIONS_START));
-					out.writeText(HTMLConstants.NBSP);
-					pageSize.write(context, out);
-					out.writeText(HTMLConstants.NBSP);
-					out.writeText(Resources.getInstance().getString(I18NConstants.PAGING_OPTIONS_END));
-				}
+		return (context, out) -> {
+			Control pageSize = view.getPageSizeControl();
+			if (pageSize != null) {
+				out.writeText(Resources.getInstance().getString(I18NConstants.PAGING_OPTIONS_START));
+				out.writeText(HTMLConstants.NBSP);
+				pageSize.write(context, out);
+				out.writeText(HTMLConstants.NBSP);
+				out.writeText(Resources.getInstance().getString(I18NConstants.PAGING_OPTIONS_END));
 			}
 		};
 	}
 
 	private HTMLFragment createFirstPageButtonFragment(TableControl view, boolean hasPreviousPage) {
-		return new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				if (hasPreviousPage) {
-					writePagingCommand(context, out, view, TABLE_FIRST_PAGE_ICON_NAME, Icons.TBL_FIRST,
-						view.getFirstPageCommand());
-				} else {
-					writePagingCommand(context, out, view, TABLE_DISABLED_FIRST_PAGE_ICON_NAME,
-						Icons.TBL_FIRST_DISABLED, null);
-				}
+		return (context, out) -> {
+			if (hasPreviousPage) {
+				writePagingCommand(context, out, view, TABLE_FIRST_PAGE_ICON_NAME, Icons.TBL_FIRST,
+					view.getFirstPageCommand());
+			} else {
+				writePagingCommand(context, out, view, TABLE_DISABLED_FIRST_PAGE_ICON_NAME,
+					Icons.TBL_FIRST_DISABLED, null);
 			}
 		};
 	}
 
 	private HTMLFragment createPreviousPageButtonFragment(TableControl view, boolean hasPreviousPage) {
-		return new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				if (hasPreviousPage) {
-					writePagingCommand(context, out, view, TABLE_PREVIOUS_PAGE_ICON_NAME, Icons.TBL_PREV,
-						view.getPreviousPageCommand());
-				} else {
-					writePagingCommand(context, out, view, TABLE_DISABLED_PREVIOUS_PAGE_ICON_NAME,
-						Icons.TBL_PREV_DISABLED, null);
-				}
+		return (context, out) -> {
+			if (hasPreviousPage) {
+				writePagingCommand(context, out, view, TABLE_PREVIOUS_PAGE_ICON_NAME, Icons.TBL_PREV,
+					view.getPreviousPageCommand());
+			} else {
+				writePagingCommand(context, out, view, TABLE_DISABLED_PREVIOUS_PAGE_ICON_NAME,
+					Icons.TBL_PREV_DISABLED, null);
 			}
 		};
 	}
 
 	private HTMLFragment createNextPageButtonFragment(TableControl view, boolean hasNextPage) {
-		return new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				if (hasNextPage) {
-					writePagingCommand(context, out, view, TABLE_NEXT_PAGE_ICON_NAME, Icons.TBL_NEXT,
-						view.getNextPageCommand());
-				} else {
-					writePagingCommand(context, out, view, TABLE_DISABLED_NEXT_PAGE_ICON_NAME,
-						Icons.TBL_NEXT_DISABLED, null);
-				}
+		return (context, out) -> {
+			if (hasNextPage) {
+				writePagingCommand(context, out, view, TABLE_NEXT_PAGE_ICON_NAME, Icons.TBL_NEXT,
+					view.getNextPageCommand());
+			} else {
+				writePagingCommand(context, out, view, TABLE_DISABLED_NEXT_PAGE_ICON_NAME,
+					Icons.TBL_NEXT_DISABLED, null);
 			}
 		};
 	}
 
 	private HTMLFragment createLastPageButtonFragment(TableControl view, boolean hasNextPage) {
-		return new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				if (hasNextPage) {
-					writePagingCommand(context, out, view, TABLE_LAST_PAGE_ICON_NAME, Icons.TBL_LAST,
-						view.getLastPageCommand());
-				} else {
-					writePagingCommand(context, out, view, TABLE_DISABLED_LAST_PAGE_ICON_NAME,
-						Icons.TBL_LAST_DISABLED, null);
-				}
+		return (context, out) -> {
+			if (hasNextPage) {
+				writePagingCommand(context, out, view, TABLE_LAST_PAGE_ICON_NAME, Icons.TBL_LAST,
+					view.getLastPageCommand());
+			} else {
+				writePagingCommand(context, out, view, TABLE_DISABLED_LAST_PAGE_ICON_NAME,
+					Icons.TBL_LAST_DISABLED, null);
 			}
 		};
 	}
@@ -2532,13 +2455,8 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	}
 
 	private Object writeBodyCellStyles(RenderState state, int displayedRowIndex, int columnIndex) {
-		return new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				writeColumnStyleCustom(out, state, columnIndex, displayedRowIndex, getColumnConfiguration(state, columnIndex));
-			}
-		};
+		return (HTMLFragment) (context, out) -> writeColumnStyleCustom(out, state, columnIndex, displayedRowIndex,
+			getColumnConfiguration(state, columnIndex));
 	}
 
 	/**
@@ -2570,16 +2488,13 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 	private HTMLFragment writeBodyCellClasses(RenderState state, int rowIndex, boolean isSelected,
 			final int columnIndex) {
-		return new HTMLFragment() {
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				ColumnConfiguration columnConfiguration = state.getColumn(columnIndex).getConfig();
+		return (context, out) -> {
+			ColumnConfiguration columnConfiguration = state.getColumn(columnIndex).getConfig();
 
-				out.append(state.getTDClass(columnIndex, isSelected));
-				out.append(getCellSelectableClass(state, rowIndex, columnConfiguration));
-				out.append(
-					columnConfiguration.getCssClassProvider().getCellClass(state.getCell(rowIndex, columnIndex)));
-			}
+			out.append(state.getTDClass(columnIndex, isSelected));
+			out.append(getCellSelectableClass(state, rowIndex, columnConfiguration));
+			out.append(
+				columnConfiguration.getCssClassProvider().getCellClass(state.getCell(rowIndex, columnIndex)));
 		};
 	}
 
@@ -2592,13 +2507,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * Creates the {@link HTMLFragment} that display the table cells content.
 	 */
 	public HTMLFragment createBodyCellLabelFragment(RenderState state, int rowIndex, final int columnIndex) {
-		return new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				writeCellContent(context, out, state, false, columnIndex, rowIndex);
-			}
-		};
+		return (context, out) -> writeCellContent(context, out, state, false, columnIndex, rowIndex);
 	}
 
 	private void writeContentWidthStyle(TagWriter out, RenderState state, int column, ColumnConfiguration theCD)

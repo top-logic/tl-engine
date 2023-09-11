@@ -64,7 +64,7 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
 									tab-path=""
 								/>
 								<path>
@@ -84,7 +84,7 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
 									tab-path=""
 								/>
 								<path>

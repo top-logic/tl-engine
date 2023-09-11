@@ -5,13 +5,13 @@ $set.max()</code>
 </pre>
 <h2>Description</h2>
 <p>Calculates the maximum of the given numbers. The function can be called either with multiple arguments or with a set or list of numbers as arguments. <code class="hljs inlineCode">null</code> values are filtered out and have no influence on the result.</p>
-<p>The maximum with respect to a user-defined comparison function can be calculated via <a class="tlObject" data-custom="true" href="?page=reduce&amp;uuid=aca63b04-383d-4c50-a37b-313c8567b99d">Reduction</a>:</p>
+<p>The maximum with respect to a user-defined comparison function can be calculated via <a class="tlObject" data-custom="false" href="?page=reduce&amp;uuid=aca63b04-383d-4c50-a37b-313c8567b99d">Reduction</a>:</p>
 <pre><code>cmp -&gt; list -&gt; 
   $list.reduce(null, 
     x -&gt; y -&gt; 
       if ($x == null, $y, 
         if ($cmp($x, $y) &lt; 0, $y, $x)))</code></pre>
-<p>The function defined in this way expects a <a class="tlObject" data-custom="true" href="?page=comparator&amp;uuid=5835844a-f9cb-4317-b881-972ada6aa453">Comparison function</a> as first argument and a list as second argument. It reduces the list to the single element which is larger than any other element compared by the comparator function.</p>
+<p>The function defined in this way expects a <a class="tlObject" data-custom="false" href="?page=comparator&amp;uuid=5835844a-f9cb-4317-b881-972ada6aa453">Comparison function</a> as first argument and a list as second argument. It reduces the list to the single element which is larger than any other element compared by the comparator function.</p>
 <h2>Parameters</h2>
 <table class="tlDocTable">
  <thead>

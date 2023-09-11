@@ -2,11 +2,11 @@
 <p>Eine Funktion besteht aus der Deklaration eines Parameters, welcher die erwartete Eingabe benennt und einem Ausdruck, der sich auf diesen Parameter bezieht:</p>
 <pre><code>x -&gt; someExpression($x)
 </code></pre>
-<p>Das obige Script definiert eine Funktion, die ein Argument <code class="hljs inlineCode">x</code> erwartet und einen Wert durch Auswertung des Ausdrucks <code class="hljs inlineCode">someExpression($x)</code> erzeugt. Dabei steht <code class="hljs inlineCode">someExpression($x)</code> stellvertretend für einen beliebigen TL-Script-Ausdruck, der die Variable <code class="hljs inlineCode">x</code> verwendet. In diesem Ausdruck kann auf den Wert des Funktionsarguments mit der Syntax <code class="hljs inlineCode">$x</code> zugegriffen werden (siehe <a class="tlObject" data-custom="false" href="?page=VariableDefinitions&amp;uuid=a353401f-3718-4a8f-b37d-8b8448518215">Variablen</a>).</p>
+<p>Das obige Script definiert eine Funktion, die ein Argument <code class="hljs inlineCode">x</code> erwartet und einen Wert durch Auswertung des Ausdrucks <code class="hljs inlineCode">someExpression($x)</code> erzeugt. Dabei steht <code class="hljs inlineCode">someExpression($x)</code> stellvertretend für einen beliebigen TL-Script-Ausdruck, der die Variable <code class="hljs inlineCode">x</code> verwendet. In diesem Ausdruck kann auf den Wert des Funktionsarguments mit der Syntax <code class="hljs inlineCode">$x</code> zugegriffen werden (siehe <a class="tlObject" data-custom="true" href="?page=VariableDefinitions&amp;uuid=a353401f-3718-4a8f-b37d-8b8448518215">Variablen</a>).</p>
 <p>Eine Funktion, die mehrere Argumente erwartet, wird folgendermaßen geschrieben:</p>
 <pre><code>x -&gt; y -&gt; someExpression($x, $y)</code></pre>
 <p>Oben wird eine Funktion mit zwei Parametern <code class="hljs inlineCode">x</code> und <code class="hljs inlineCode">y</code> definiert.</p>
-<p>Funktionen können außerdem in einer Variablen abgespeichert werden, um diese zu einem späteren Zeitpunkt aufzurufen (siehe <a class="tlObject" data-custom="false" href="?page=apply&amp;uuid=470cd987-afc0-4dc3-b093-a016c8d37d58">Funktionenanwendung</a>).</p>
+<p>Funktionen können außerdem in einer Variablen abgespeichert werden, um diese zu einem späteren Zeitpunkt aufzurufen (siehe <a class="tlObject" data-custom="true" href="?page=apply&amp;uuid=470cd987-afc0-4dc3-b093-a016c8d37d58">Funktionenanwendung</a>).</p>
 <pre><code>{
    myFunc = x -&gt; $x * 5;
 
@@ -14,7 +14,7 @@
 }</code></pre>
 <p>Obiges Script definiert eine Funktion, die ihr Argument mit <code class="hljs inlineCode">5</code> multipliziert und weist diese Funktion der Variablen <code class="hljs inlineCode">myFunc</code> zu. Anschließend wird diese Funktion mit dem Wert <code class="hljs inlineCode">10</code> aufgerufen und liefert folglich den Wert <code class="hljs inlineCode">50</code> zurück.</p>
 <h2>Beispiele</h2>
-<p>Für Informationen zum Aufruf von Funktionen siehe <a class="tlObject" data-custom="false" href="?page=apply&amp;uuid=470cd987-afc0-4dc3-b093-a016c8d37d58">Funktionenanwendung</a>.</p>
+<p>Für Informationen zum Aufruf von Funktionen siehe <a class="tlObject" data-custom="true" href="?page=apply&amp;uuid=470cd987-afc0-4dc3-b093-a016c8d37d58">Funktionenanwendung</a>.</p>
 <h3>Funktion mit einem Parameter</h3>
 <pre>	<code>x -&gt; 5 * $x</code>
 </pre>

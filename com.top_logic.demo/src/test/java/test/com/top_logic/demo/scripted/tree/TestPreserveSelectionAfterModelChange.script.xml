@@ -35,37 +35,21 @@
 					comment="Anlegen von Modul 'TestSelectionAfterModelChange'"
 				>
 					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-							command-label="Neues Modul..."
-							command-name="displayDialog_CreateModuleLayout"
-							component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
-							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Model/Create-Module.xml"
+							template-name-comment="Create Module"
 						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op">
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
-									tab-path=""
+							<parameters>
+								<parameter name="name"
+									value="TestSelectionAfterModelChange"
 								/>
-								<path>
-									<labeled-member label="Name"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="TestSelectionAfterModelChange"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.element.layout.meta.TLModuleCreateHandler"
-							command-label="Anlegen"
-							command-name="createModule"
-							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
-							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
-						>
-							<arguments/>
+								<parameter name="de"
+									value="TestSelectionAfterModelChange"
+								/>
+								<parameter name="en"
+									value="TestSelectionAfterModelChange"
+								/>
+							</parameters>
 						</action>
 					</actions>
 				</action>

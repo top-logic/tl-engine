@@ -22,40 +22,21 @@
 						tab-path="Administration > Development"
 					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-					command-label="Neues Modul..."
-					command-name="displayDialog_CreateModuleLayout"
-					component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
-					component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Model/Create-Module.xml"
+					template-name-comment="Create Module"
 				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Name"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
-							tab-path=""
+					<parameters>
+						<parameter name="name"
+							value="test.dateTimeMandatory"
 						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="test.dateTimeMandatory"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.element.layout.meta.TLModuleCreateHandler"
-					command-label="Anlegen"
-					command-name="createModule"
-					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
-					component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
-					user-id="root"
-				>
-					<arguments/>
+						<parameter name="de"
+							value="test.dateTimeMandatory"
+						/>
+						<parameter name="en"
+							value="test.dateTimeMandatory"
+						/>
+					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"

@@ -12,6 +12,12 @@
 				<parameter name="name"
 					value="test.singleton"
 				/>
+				<parameter name="de"
+					value="test.singleton"
+				/>
+				<parameter name="en"
+					value="test.singleton"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"

@@ -58,6 +58,12 @@
 						<parameter name="name"
 							value="test.composition"
 						/>
+						<parameter name="de"
+							value="test.composition"
+						/>
+						<parameter name="en"
+							value="test.composition"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"

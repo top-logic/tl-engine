@@ -2184,12 +2184,24 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		footerProperties.put("lastPageButton", createLastPageButtonFragment(view, hasNextPage));
 		footerProperties.put("pageSize", createPageSizeFragment(view));
 		footerProperties.put("pageInfo", createPageInfoFragment(view));
-		footerProperties.put("numberOfRowsText", getNumberOfRowsText(numberOfRenderedRows));
+		footerProperties.put("text", getFooterText(view));
 
 		Icons.TABLE_FOOTER_TEMPLATE.get().write(context, out, footerProperties);
 	}
 
-	private String getNumberOfRowsText(int numberOfRenderedRows) {
+	/**
+	 * Hook to customize the footer text.
+	 * 
+	 * <p>
+	 * By default the number of rows is displayed.
+	 * </p>
+	 * 
+	 * @param view
+	 *        Underlying control that display the {@link TableModel}..
+	 */
+	protected String getFooterText(TableControl view) {
+		int numberOfRenderedRows = view.getPagingModel().getCurrentPageSize();
+
 		return Resources.getInstance().getString(I18NConstants.NUMBER_OF_ROWS_TEXT__ROWS.fill(numberOfRenderedRows));
 	}
 

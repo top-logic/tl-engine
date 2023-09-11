@@ -34,7 +34,7 @@ import com.top_logic.mig.html.HTMLConstants;
 public class StructuredTextUtil {
 
 	/**
-	 * Returns the source code of the given {@link StructuredText} where its images are 64base
+	 * Returns the source code of the given {@link StructuredText} where its images are Base64
 	 * encoded.
 	 */
 	public static String getCodeWithInlinedImages(StructuredText text) throws IOError {

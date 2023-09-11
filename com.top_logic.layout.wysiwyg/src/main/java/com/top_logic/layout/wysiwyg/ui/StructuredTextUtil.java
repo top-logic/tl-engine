@@ -6,7 +6,6 @@
 package com.top_logic.layout.wysiwyg.ui;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -37,7 +36,7 @@ public class StructuredTextUtil {
 	 * Returns the source code of the given {@link StructuredText} where its images are Base64
 	 * encoded.
 	 */
-	public static String getCodeWithInlinedImages(StructuredText text) throws IOError {
+	public static String getCodeWithInlinedImages(StructuredText text) throws IOException {
 		String sourceCode = text.getSourceCode();
 		Map<String, BinaryData> images = text.getImages();
 		org.jsoup.nodes.Document document = Jsoup.parse(sourceCode, "", Parser.xmlParser());
@@ -70,8 +69,6 @@ public class StructuredTextUtil {
 					StreamUtilities.copyStreamContents(in, Base64.getEncoder().wrap(srcBuilder));
 				}
 				newSrc = srcBuilder.toString(charset.name());
-			} catch (IOException exception) {
-				throw new IOError(exception);
 			}
 			I18NStructuredTextUtil.setSrcValue(localImg, newSrc);
 		}

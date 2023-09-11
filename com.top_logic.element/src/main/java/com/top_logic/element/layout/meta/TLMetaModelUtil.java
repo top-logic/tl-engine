@@ -118,7 +118,7 @@ public class TLMetaModelUtil {
 				}
 			}
 		} else {
-			if (labelKey != null) {
+			if (labelKey != null && Resources.getInstance().existsResource(labelKey.getKey())) {
 				return Resources.getInstance().getString(labelKey);
 			}
 

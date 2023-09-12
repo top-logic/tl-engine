@@ -40,7 +40,7 @@
 		>
 			<selection>
 				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-					path="Test > test.inheritance"
+					path="Test > inheritance"
 				/>
 				<selection-state boolean="true"/>
 			</selection>
@@ -56,7 +56,7 @@
 		>
 			<selection>
 				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-					path="Test > test.inheritance > test.inheritance.parent"
+					path="Test > inheritance > Parent"
 				/>
 				<selection-state boolean="true"/>
 			</selection>
@@ -72,7 +72,7 @@
 		>
 			<selection>
 				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-					path="Test > test.inheritance > test.inheritance.parent > Item"
+					path="Test > inheritance > Parent > Item"
 				/>
 				<selection-state boolean="true"/>
 			</selection>
@@ -95,7 +95,7 @@
 		>
 			<selection>
 				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-					path="Test > test.inheritance > test.inheritance.parent > Base class"
+					path="Test > inheritance > Parent > Base class"
 				/>
 				<selection-state boolean="true"/>
 			</selection>
@@ -201,7 +201,7 @@
 		>
 			<selection>
 				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-					path="Test > test.inheritance > test.inheritance.child"
+					path="Test > inheritance > Child"
 				/>
 				<selection-state boolean="true"/>
 			</selection>
@@ -217,7 +217,7 @@
 		>
 			<selection>
 				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-					path="Test > test.inheritance > test.inheritance.child > Child class"
+					path="Test > inheritance > Child > Child class"
 				/>
 				<selection-state boolean="true"/>
 			</selection>

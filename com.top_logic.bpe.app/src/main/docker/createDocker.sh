@@ -9,9 +9,13 @@ docker --help >/dev/null 2>&1
 error_param(){
 echo -e "Usage:\tcreateDocker.sh [OPTION]...
 Parameter:
-\t-n [AppContextName]
+\t-n [app name]
+\t-x [context name]\tDefault: [app name], use "ROOT" to deploy to the root context ("/").
 \t-d [DatabaseType]\tOptions: h2 (default), mysql, postgre, mssql, oracle
 \t-c \t\t\tDry-run: Only create docker configuration and exit.
+
+File storage:
+\t-f [path]\t\t Path to data folder. Default: volume "[app name]"
 
 Optional additional database parameter:
 \t-l [JDBC URL]\t\tURL format dependent on the choosen database. Please refer to the specific documentations. Overrides hostname, port and scheme.
@@ -29,10 +33,12 @@ exit 0;
 
 DATABASE="config_h2"
 
-while getopts n:d:l:h:o:s:u:p:w:rc opt
+while getopts n:x:f:d:l:h:o:s:u:p:w:rc opt
 do
    case $opt in
        n) CONTEXT="$OPTARG";;
+       x) ROOT="$OPTARG";;
+       f) FILES="$OPTARG";;
        d) case $OPTARG in
               h2) DATABASE="config_h2";;
               mysql) DATABASE="config_mysql";;
@@ -60,12 +66,20 @@ if [ "$CONTEXT" == "" ] ; then
   exit 1
 fi
 
+if [ "$ROOT" == "" ] ; then
+  ROOT="$CONTEXT"
+fi
+
+if [ "$FILES" == "" ] ; then
+  FILES="$CONTEXT"
+fi
+
 config_h2(){
   echo "Configuring H2 database"
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
-  [ -z "$DB_URL" ] && DB_URL="\/var\/lib\/tomcat9\/work\/$DB_SCHEME" || DB_URL="$(sed 's/\//\\\//g' <<<$DB_URL)"
+  [ -z "$DB_URL" ] && DB_URL="\/var\/lib\/tomcat9\/work\/$CONTEXT\/h2" || DB_URL="$(sed 's/\//\\\//g' <<<$DB_URL)"
   sed -i -e "s/{dbLibrary}/RUN apt install libh2-java/g" $BUILD_PATH/Dockerfile
   sed -i -e 's/{dbDriver}/org.h2.Driver/g' $BUILD_PATH/context.xml
   sed -i -e "s/{dbURL}/jdbc:h2:$DB_URL/g" $BUILD_PATH/context.xml
@@ -147,7 +161,7 @@ mkdir -p "$BUILD_PATH"
 echo
 echo "=== Building application WAR ==="
 ( cd "$ROOT_PATH" ; mvn package -Dtl.deb.skip=true )
-cp -f "$TARGET_PATH"/*app.war "$BUILD_PATH/$CONTEXT.war"
+cp -f "$TARGET_PATH"/*app.war "$BUILD_PATH/$ROOT.war"
 cp -f "$ROOT_PATH/src/main/deb/data/tomcat/context.xml" "$BUILD_PATH/"
 
 echo
@@ -160,7 +174,7 @@ echo "=== Configuring database ==="
 $DATABASE
 sed -i -e "s/{dbUser}/$DB_USER/g" "$BUILD_PATH/context.xml"
 sed -i -e "s/{dbPasswd}/$DB_PASSWD/g" "$BUILD_PATH/context.xml"
-sed -i -e "s/{contextName}/$CONTEXT/g" "$BUILD_PATH/context.xml"
+sed -i -e "s/{contextName}/$ROOT/g" "$BUILD_PATH/context.xml"
 sed -i -e "s/{timeZone}/$(sed 's/\//\\\//g' <<<$(cat /etc/timezone))/g" "$BUILD_PATH/Dockerfile"
 
 DRY_RUN=""
@@ -205,16 +219,29 @@ $DRY_RUN sleep 5
 
 # Open browser to log-in to started app.
 (
+  if [[ "$ROOT" == "ROOT" ]]; then
+	  contextPath="/"
+  else
+	  contextPath="/$ROOT"
+  fi
+
   echo
   echo "=== Opening browser ==="
 
   # Wait until container startup is at least in progress
   $DRY_RUN sleep 10
-  $DRY_RUN xdg-open "http://localhost:$HTTP_PORT/$CONTEXT/"
+  $DRY_RUN xdg-open "http://localhost:${HTTP_PORT}${contextPath}"
 ) &
 
+mkdir -p "${FILES}"
+
 # Start docker container
-$DRY_RUN sudo docker run -tdi -p $HTTP_PORT:8080 --restart=unless-stopped --name="$CONTEXT" --hostname="$CONTEXT" "$CONTEXT" && $DRY_RUN sudo docker logs -f "$CONTEXT"
+$DRY_RUN sudo docker run \
+  -tdi -p $HTTP_PORT:8080 \
+  -v "$FILES":"/var/lib/tomcat9/work/${CONTEXT}" \
+  --restart=unless-stopped \
+  --name="$CONTEXT" \
+  --hostname="$CONTEXT" "$CONTEXT" && $DRY_RUN sudo docker logs -f "$CONTEXT"
 
 # When the control flow reaches this point, the user has pressed Ctrl-C, stop the contaner.
 

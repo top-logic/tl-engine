@@ -49,6 +49,11 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 	public static final String TREE_NODE_SELECTED_CSS_CLASS = "treeSelected";
 	
 	/**
+	 * CSS class to position Tooltips horizontally in trees.
+	 */
+	public static final String TOOLTIP_HORIZONTAL_CSS_CLASS = "tooltipHorizontal";
+
+	/**
 	 * CSS class of the container element containing all children of a certain node.
 	 */
 	public static final String TREE_CHILDREN_CSS_CLASS = "treeChildren";
@@ -131,6 +136,7 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 		HTMLUtil.appendCSSClass(out, TREE_CONTROL_CSS_CLASS);
 		HTMLUtil.appendCSSClass(out, AbstractControlBase.IS_CONTROL_CSS_CLASS);
 		HTMLUtil.appendCSSClass(out, AbstractControlBase.CAN_INSPECT_CSS_CLASS);
+		HTMLUtil.appendCSSClass(out, TOOLTIP_HORIZONTAL_CSS_CLASS);
 	}
     
     @Override

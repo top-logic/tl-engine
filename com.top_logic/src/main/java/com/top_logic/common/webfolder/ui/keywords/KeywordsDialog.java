@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.CommandModel;
@@ -21,17 +20,12 @@ import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.messagebox.AbstractFormPageDialog;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
-import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.TableModel;
-import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.ArrayTableModel;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnCustomization;
 import com.top_logic.layout.table.model.Enabled;
 import com.top_logic.layout.table.model.TableConfiguration;
-import com.top_logic.layout.table.renderer.DefaultTableRenderer;
-import com.top_logic.layout.table.renderer.TableRendererProxy;
-import com.top_logic.mig.html.HTMLConstants;
 
 /**
  * The {@link KeywordsDialog} shows some keywords
@@ -115,23 +109,7 @@ public class KeywordsDialog extends AbstractFormPageDialog {
 		final TableModel model = new ArrayTableModel<>(columns, tableRows, tableConfiguration);
 
 		final TableField tableField = FormFactory.newTableField(TABLE_NAME, model);
-		tableField.setControlProvider(new DefaultFormFieldControlProvider() {
-
-			@Override
-			public Control visitTableField(TableField aMember, Void arg) {
-				final TableControl result = (TableControl) super.visitTableField(aMember, arg);
-
-				ITableRenderer renderer = result.getRenderer();
-				/* Search actual implementation */
-				while (renderer instanceof TableRendererProxy) {
-					renderer = ((TableRendererProxy<?>) renderer).getImplementation();
-				}
-				if (renderer instanceof DefaultTableRenderer) {
-					((DefaultTableRenderer) renderer).setFooterText(HTMLConstants.SUM + " " + size);
-				}
-				return result;
-			}
-		});
+		tableField.setControlProvider(DefaultFormFieldControlProvider.INSTANCE);
 		context.addMember(tableField);
 	}
 

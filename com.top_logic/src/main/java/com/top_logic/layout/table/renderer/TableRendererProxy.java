@@ -106,18 +106,8 @@ public abstract class TableRendererProxy<C extends TableRendererProxy.Config<?>>
 	}
 
 	@Override
-	public void writeEmptyFooter(TagWriter out, RenderState state, boolean usePagingFooter) throws IOException {
-		implementation.writeEmptyFooter(out, state, usePagingFooter);
-	}
-
-	@Override
 	public void writeFooter(DisplayContext context, TagWriter out, RenderState state, int aNumber) throws IOException {
 		implementation.writeFooter(context, out, state, aNumber);
-	}
-
-	@Override
-	public void writePagingFooter(DisplayContext context, TagWriter out, RenderState state, boolean usePagingFooter) throws IOException {
-		implementation.writePagingFooter(context, out, state, usePagingFooter);
 	}
 
 	@Override

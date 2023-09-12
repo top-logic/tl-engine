@@ -39,7 +39,6 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.TextView;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.View;
-import com.top_logic.layout.basic.DebuggingConfig;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.TemplateVariable;
@@ -90,7 +89,6 @@ import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.util.Resources;
-import com.top_logic.util.Utils;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -710,17 +708,13 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 
 		private HTMLFragment createGroupCellLabelFragment(Column group, int colspan, int rowIndex) {
-			return new HTMLFragment() {
+			return (context, out) -> {
+				MapWithProperties groupCellLabelProperties = new MapWithProperties();
 
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					MapWithProperties groupCellLabelProperties = new MapWithProperties();
+				groupCellLabelProperties.put("label", createGroupCellContentLabelFragment(group, colspan, rowIndex));
+				groupCellLabelProperties.put("onMousedownHandler", createFragmentToReorderColumn());
 
-					groupCellLabelProperties.put("label", createGroupCellContentLabelFragment(group, colspan, rowIndex));
-					groupCellLabelProperties.put("onMousedownHandler", createFragmentToReorderColumn());
-
-					Icons.TABLE_HEADER_GROUP_CELL_CONTENT_TEMPLATE.get().write(context, out, groupCellLabelProperties);
-				}
+				Icons.TABLE_HEADER_GROUP_CELL_CONTENT_TEMPLATE.get().write(context, out, groupCellLabelProperties);
 			};
 		}
 
@@ -748,58 +742,50 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 
 		private HTMLFragment createFragmentToReorderColumn() {
-			return new HTMLFragment() {
-
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					out.append("TABLE.initColumnReordering(event, ");
-					out.writeJsString(getView().getID());
-					out.append(");");
-				}
+			return (context, out) -> {
+				out.append("TABLE.initColumnReordering(event, ");
+				out.writeJsString(getView().getID());
+				out.append(");");
 			};
 		}
 
 		private HTMLFragment createHeaderRowCellsFragment(int rowIndex) {
 			int fixedColumns = getModel().getFixedColumnCount();
 
-			return new HTMLFragment() {
+			return (context, out) -> {
+				int fixedColumnWidth = 0;
 
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					int fixedColumnWidth = 0;
-
-					for (int columnIndex = 0; columnIndex < getModel().getColumnCount(); columnIndex++) {
-						if (isFixedColumn(columnIndex)) {
-							writeSeparatorElement(out, HTMLConstants.TH, fixedColumnWidth);
-						}
-
-						MapWithProperties headerCellProperties = new MapWithProperties();
-
-						headerCellProperties.put("styles", createHeaderCellStylesFragment(columnIndex));
-						headerCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
-						appendFixedColumnProperties(headerCellProperties, columnIndex, fixedColumnWidth, fixedColumns);
-
-						if (fixedColumns > 0) {
-							fixedColumnWidth += getColumnWidth(DefaultRenderState.this, columnIndex);
-						}
-
-						headerCellProperties.put("classes", getTHClass(columnIndex));
-						headerCellProperties.put("colspan", 1);
-						headerCellProperties.put("isRowHeader", false);
-						headerCellProperties.put("label", createHeaderCellLabelFragment(rowIndex, columnIndex));
-						headerCellProperties.put("firstColumnIndex",
-							TableUtil.getClientColumnIndex(_model, columnIndex));
-						headerCellProperties.put("lastColumnIndex",
-							TableUtil.getClientColumnIndex(_model, columnIndex));
-						headerCellProperties.put("isFixedTable", hasFixedColumns());
-						headerCellProperties.put("rowHeight", getHeaderRowHeight(_model));
-
-						Icons.TABLE_HEADER_CELL_TEMPLATE.get().write(context, out, headerCellProperties);
-					}
-
-					if (hasOnlyFixedColumns()) {
+				for (int columnIndex = 0; columnIndex < getModel().getColumnCount(); columnIndex++) {
+					if (isFixedColumn(columnIndex)) {
 						writeSeparatorElement(out, HTMLConstants.TH, fixedColumnWidth);
 					}
+
+					MapWithProperties headerCellProperties = new MapWithProperties();
+
+					headerCellProperties.put("styles", createHeaderCellStylesFragment(columnIndex));
+					headerCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
+					appendFixedColumnProperties(headerCellProperties, columnIndex, fixedColumnWidth, fixedColumns);
+
+					if (fixedColumns > 0) {
+						fixedColumnWidth += getColumnWidth(DefaultRenderState.this, columnIndex);
+					}
+
+					headerCellProperties.put("classes", getTHClass(columnIndex));
+					headerCellProperties.put("colspan", 1);
+					headerCellProperties.put("isRowHeader", false);
+					headerCellProperties.put("label", createHeaderCellLabelFragment(rowIndex, columnIndex));
+					headerCellProperties.put("firstColumnIndex",
+						TableUtil.getClientColumnIndex(_model, columnIndex));
+					headerCellProperties.put("lastColumnIndex",
+						TableUtil.getClientColumnIndex(_model, columnIndex));
+					headerCellProperties.put("isFixedTable", hasFixedColumns());
+					headerCellProperties.put("rowHeight", getHeaderRowHeight(_model));
+
+					Icons.TABLE_HEADER_CELL_TEMPLATE.get().write(context, out, headerCellProperties);
+				}
+
+				if (hasOnlyFixedColumns()) {
+					writeSeparatorElement(out, HTMLConstants.TH, fixedColumnWidth);
 				}
 			};
 		}
@@ -813,36 +799,21 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 
 		private HTMLFragment createFragmentToResizeColumn() {
-			return new HTMLFragment() {
-
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					out.append("TABLE.initColumnResizing(event, ");
-					out.writeJsString(getView().getID());
-					out.append(");");
-				}
+			return (context, out) -> {
+				out.append("TABLE.initColumnResizing(event, ");
+				out.writeJsString(getView().getID());
+				out.append(");");
 			};
 		}
 
 		private HTMLFragment createHeaderCellStylesFragment(int columnIndex) {
-			return new HTMLFragment() {
-
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					CssUtil.appendStyleOptional(out, getModel().getColumnDescription(columnIndex).getHeadStyle());
-				}
-			};
+			return (context, out) -> CssUtil.appendStyleOptional(out,
+				getModel().getColumnDescription(columnIndex).getHeadStyle());
 		}
 
 		private HTMLFragment createHeaderCellLabelFragment(int rowIndex, int columnIndex) {
-			return new HTMLFragment() {
-
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					getRenderer().writeColumnHeader(context, out, DefaultRenderState.this, rowIndex, columnIndex);
-				}
-
-			};
+			return (context, out) -> getRenderer().writeColumnHeader(context, out, DefaultRenderState.this, rowIndex,
+				columnIndex);
 		}
 
 		/**
@@ -1120,50 +1091,42 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 
 		private HTMLFragment createDragImageFragment(Object rowObject, TableConfiguration tableConfig) {
-			return new HTMLFragment() {
+			return (context, out) -> {
+				ResourceProvider rowObjectResourceProvider = tableConfig.getRowObjectResourceProvider();
 
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					ResourceProvider rowObjectResourceProvider = tableConfig.getRowObjectResourceProvider();
-
-					if (rowObjectResourceProvider != null) {
-						HTMLUtil.writeDragImageContent(context, out, rowObjectResourceProvider, rowObject);
-					} else {
-						HTMLUtil.writeDragImageContent(context, out, MetaResourceProvider.INSTANCE, rowObject);
-					}
-
+				if (rowObjectResourceProvider != null) {
+					HTMLUtil.writeDragImageContent(context, out, rowObjectResourceProvider, rowObject);
+				} else {
+					HTMLUtil.writeDragImageContent(context, out, MetaResourceProvider.INSTANCE, rowObject);
 				}
+
 			};
 		}
 
 		private HTMLFragment createBodyRowCellsFragment(int rowIndex, boolean isSelected) {
 			int fixedColumns = getModel().getFixedColumnCount();
 
-			return new HTMLFragment() {
+			return (context, out) -> {
+				DefaultRenderState state = DefaultRenderState.this;
+				TableRenderer<?> renderer = state.getRenderer();
 
-				@Override
-				public void write(DisplayContext context, TagWriter out) throws IOException {
-					DefaultRenderState state = DefaultRenderState.this;
-					TableRenderer<?> renderer = state.getRenderer();
+				int fixedColumnWidth = 0;
 
-					int fixedColumnWidth = 0;
-
-					for (int columnIndex = 0; columnIndex < getModel().getColumnCount(); columnIndex++) {
-						if (isFixedColumn(columnIndex)) {
-							writeSeparatorElement(out, HTMLConstants.TD, fixedColumnWidth);
-						}
-
-						renderer.writeColumn(out, context, state, isSelected, columnIndex, rowIndex, rowIndex,
-							fixedColumnWidth);
-
-						if (fixedColumns > 0) {
-							fixedColumnWidth += getColumnWidth(DefaultRenderState.this, columnIndex);
-						}
-					}
-
-					if (hasOnlyFixedColumns()) {
+				for (int columnIndex = 0; columnIndex < getModel().getColumnCount(); columnIndex++) {
+					if (isFixedColumn(columnIndex)) {
 						writeSeparatorElement(out, HTMLConstants.TD, fixedColumnWidth);
 					}
+
+					renderer.writeColumn(out, context, state, isSelected, columnIndex, rowIndex, rowIndex,
+						fixedColumnWidth);
+
+					if (fixedColumns > 0) {
+						fixedColumnWidth += getColumnWidth(DefaultRenderState.this, columnIndex);
+					}
+				}
+
+				if (hasOnlyFixedColumns()) {
+					writeSeparatorElement(out, HTMLConstants.TD, fixedColumnWidth);
 				}
 			};
 		}
@@ -1173,7 +1136,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		 */
 		@TemplateVariable("footer")
 		public void writeFooter(DisplayContext context, TagWriter out) throws IOException {
-			_renderer.writeFooter(context, out, this, _model.getPagingModel().getCurrentPageSize());
+			if (_view.getViewModel().getTableConfiguration().getShowFooter()) {
+				_renderer.writeFooter(context, out, this, _model.getPagingModel().getCurrentPageSize());
+			}
 		}
 
 		/**
@@ -1282,12 +1247,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	/** Reference key for {@link #USE_FULL_FOOTER_DEFAULT} */
 	private static final String GLOBAL_FULLFOOTER_PROPERTY_KEY = "fullFooter";
 
-	/**
-	 * Flag indicating that the debugFooter should be appended to the output
-	 * {@link #writeDebugFooter(TagWriter, Integer[])}
-	 */
-	private static Boolean debugFooterEnabled;
-
 	/** The summary name of this table. */
 	protected String summary;
 
@@ -1322,9 +1281,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
     /** The header alignment map. */
     protected String defaultHeaderAlignment;
 
-    /** Holds the footer text. */
-    protected String footerText = null;
-
 	private int _numberHeaderRows = 1;
 
 	static {
@@ -1358,10 +1314,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		return this._numberHeaderRows;
 	}
 
-	protected final boolean shouldWriteFooter(TableControl view) {
-		return view.getViewModel().getTableConfiguration().getShowFooter();
-	}
-	
 	/**
 	 * Writes the table.
 	 */
@@ -1566,27 +1518,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
         return StringServices.isEmpty(theAlign) ? defaultHeaderAlignment : theAlign;
     }
 
-    /**
-     * Sets the text which shall appear in the footer of the table.
-     *
-     * @param aFooterText
-     *        The footer text to set as HTML-CODE;
-     *        <code>null</code> means default footer (amount of lines)
-     *        empty string means not footer text
-     */
-    public void setFooterText(String aFooterText) {
-        this.footerText = aFooterText;
-    }
-
-    /**
-     * Gets the footer text if it was set before.
-     * 
-     * @return the footer text or <code>null</code> if no footer text was set.
-     */
-    public String getFooterText() {
-        return this.footerText;
-    }
-
 	/**
 	 * The initial sorting will be ascending when this function returns true.
 	 *
@@ -1773,61 +1704,46 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		boolean sortable = state.getModel().isSortable(column);
 		
 		MapWithProperties headerColumnFilterProperties = new MapWithProperties();
-		headerColumnFilterProperties.put("label", new HTMLFragment() {
+		headerColumnFilterProperties.put("label", (HTMLFragment) (context1, out1) -> {
+			Control control = (Control) DefaultTableRenderer.createColumnControl(state, column,
+				ColumnConfiguration.COLUMN_CONTROL_TYPE_HEADER);
 
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				Control control = (Control) DefaultTableRenderer.createColumnControl(state, column,
-					ColumnConfiguration.COLUMN_CONTROL_TYPE_HEADER);
-
-				if (control != null) {
-					control.write(context, out);
-				} else {
-					out.beginBeginTag(SPAN);
-					if (customColumnOrder || sortable) {
-						CssUtil.writeCombinedCssClasses(out, ADJUSTABLE_COLUMN_CLASS, UNSELECTABLE_CONTENT_CLASS);
-						out.writeAttribute(ONSELECTSTART_ATTR, "return false;");
-						// writeOnMouseDownMakeDragable(out, state.getView(), column,
-						// customColumnOrder, sortable);
-					}
-					String tooltip = getTooltip(state, column);
-					String tooltipCaption = getTooltipCaption(state.getView(), column);
-
-					out.endBeginTag();
-					{
-						if (tooltip != null) {
-							out.beginBeginTag(SPAN);
-							OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,
-								tooltipCaption);
-							out.endBeginTag();
-						}
-						writeHeaderContent(state, out, column);
-
-						if (tooltip != null) {
-							out.endTag(SPAN);
-						}
-					}
-					out.endTag(SPAN);
+			if (control != null) {
+				control.write(context1, out1);
+			} else {
+				out1.beginBeginTag(SPAN);
+				if (customColumnOrder || sortable) {
+					CssUtil.writeCombinedCssClasses(out1, ADJUSTABLE_COLUMN_CLASS, UNSELECTABLE_CONTENT_CLASS);
+					out1.writeAttribute(ONSELECTSTART_ATTR, "return false;");
+					// writeOnMouseDownMakeDragable(out, state.getView(), column,
+					// customColumnOrder, sortable);
 				}
-			}
+				String tooltip = getTooltip(state, column);
+				String tooltipCaption = getTooltipCaption(state.getView(), column);
 
+				out1.endBeginTag();
+				{
+					if (tooltip != null) {
+						out1.beginBeginTag(SPAN);
+						OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context1, out1, tooltip,
+							tooltipCaption);
+						out1.endBeginTag();
+					}
+					writeHeaderContent(state, out1, column);
+
+					if (tooltip != null) {
+						out1.endTag(SPAN);
+					}
+				}
+				out1.endTag(SPAN);
+			}
 		});
-		headerColumnFilterProperties.put("filterSortButtons", new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				writeFilterSortTag(context, out, state, column);
-			}
-
-		});
-		headerColumnFilterProperties.put("onMousedownHandler", new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				out.append("TABLE.initColumnReordering(event, ");
-				out.writeJsString(state.getView().getID());
-				out.append(");");
-			}
+		headerColumnFilterProperties.put("filterSortButtons",
+			(HTMLFragment) (context1, out1) -> writeFilterSortTag(context1, out1, state, column));
+		headerColumnFilterProperties.put("onMousedownHandler", (HTMLFragment) (context1, out1) -> {
+			out1.append("TABLE.initColumnReordering(event, ");
+			out1.writeJsString(state.getView().getID());
+			out1.append(");");
 		});
 
 		Icons.TABLE_HEADER_CELL_CONTENT_TEMPLATE.get().write(context, out, headerColumnFilterProperties);
@@ -2242,130 +2158,141 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	}
 
 	/**
-	 * Write the footer area of the table. The optionally displayed size can be
-	 * set manually (e.g. fetched from return value of
-	 * AbstractTable#writeContent(...), see AbstractTable#write(...) ).
+	 * Write the footer area of the table. The optionally displayed size can be set manually (e.g.
+	 * fetched from return value of AbstractTable#writeContent(...), see AbstractTable#write(...) ).
 	 *
-	 * @param aNumber
-	 *            The number of written elements.
+	 * @param numberOfRenderedRows
+	 *        The number of written elements.
 	 */
 	@Override
-	public void writeFooter(DisplayContext context, TagWriter out,
-			RenderState state, int aNumber) throws IOException {
-	    // paging footer is to be written if the number of rows in the model is greater than the written number or if a PageSizeControl is defined.
-		boolean usePagingFooter =
-			(state.getModel().getRowCount() > aNumber) || state.getView().getPageSizeControl() != null;
-
-		if (usePagingFooter) {
-			state.getRenderer().writePagingFooter(context, out, state, usePagingFooter);
-		} else {
-			int theSize = aNumber;
-			String theFooter = this.getFooterText(state.getView());
-
-			if (theFooter != null) {
-				try {
-					theFooter = Utils.format(theFooter, Integer.valueOf(theSize));
-				} catch (IllegalArgumentException ex) {
-					theFooter = theFooter + ":" + ex.toString();
-				}
-				writeTheFooter(out, state, theFooter, state.getRenderer(), usePagingFooter);
-			} else if (theSize == 0) {
-				writeEmptyFooter(out, state, usePagingFooter);
-			}
-		}
-
-		writeDebugFooter(out, state.getView().computeTableInfo());
-	}
-
-	/**
-	 * The text to be used in the footer, if not <code>null</code>,
-	 *         the footer will be written (HTML-code).
-	 */
-	protected String getFooterText(TableControl view) {
-	    if (footerText != null) return footerText;
-		return view.getResources().getStringResource(RES_FOOTER, HTMLConstants.SUM + " {0}");
-	}
-
-	/**
-	 * Writes the given (already translated) Footer with the given size.
-	 */
-	protected void writeTheFooter(TagWriter out, RenderState state, String theFooter, TableRenderer<?> self, boolean aUsePagingFooter) throws IOException {
-		if (StringServices.isEmpty(theFooter)) {
-			theFooter = NBSP;
-		}
-
-		out.beginBeginTag(DIV);
-		writeCounterClasses(out, aUsePagingFooter);
-		writeFooterStyleAttribute(out, state.getView());
-		out.endBeginTag();
-		out.writeContent(theFooter);
-
-		out.endTag(DIV);
-	}
-
-	protected final void writeFooterStyleAttribute(TagWriter out, TableControl view) throws IOException {
-		String footerStyle = view.getViewModel().getTableConfiguration().getFooterStyle();
-		if (!StringServices.isEmpty(footerStyle)) {
-			out.writeAttribute(STYLE_ATTR, footerStyle);
-		}
-	}
-
-	/**
-	 * Write a footer for switching through the table content.
-	 *
-	 * This method will be used by the
-	 * {@link #writeFooter(DisplayContext, TagWriter, RenderState, int)},
-	 * when the overall page size is larger than 1.
-	 */
-	@Override
-	public void writePagingFooter(DisplayContext context, TagWriter out, RenderState state, boolean usePagingFooter) throws IOException {
+	public void writeFooter(DisplayContext context, TagWriter out, RenderState state, int numberOfRenderedRows)
+			throws IOException {
 		TableControl view = state.getView();
 		int currentPage = view.getCurrentPage();
-		boolean hasPrev = currentPage > 0;
-		boolean hasNext = currentPage < view.getPagingModel().getPageCount() - 1;
 
-		Integer[] theNumbers = view.computeTableInfo();
+		boolean hasPreviousPage = currentPage > 0;
+		boolean hasNextPage = currentPage < view.getPagingModel().getPageCount() - 1;
 
-		out.beginBeginTag(DIV);
-		writeCounterClasses(out, true);
-		writeFooterStyleAttribute(out, view);
-		out.writeAttribute(ALIGN_ATTR, "left");
-		out.endBeginTag();
-		{
-			this.writePagingCommand(context, out, view, hasPrev ? TABLE_FIRST_PAGE_ICON_NAME : TABLE_DISABLED_FIRST_PAGE_ICON_NAME,
-				hasPrev ? Icons.TBL_FIRST : Icons.TBL_FIRST_DISABLED, hasPrev ? view.getFirstPageCommand() : null, false);
-			this.writePagingCommand(context, out, view,
-				hasPrev ? TABLE_PREVIOUS_PAGE_ICON_NAME : TABLE_DISABLED_PREVIOUS_PAGE_ICON_NAME,
-				hasPrev ? Icons.TBL_PREV : Icons.TBL_PREV_DISABLED,
-				hasPrev ? view.getPreviousPageCommand() : null, false);
-			
-			writeContentBetweenPagingCommands(context, out, view, currentPage, theNumbers);
-			
-			this.writePagingCommand(context, out, view,
-				hasNext ? TABLE_NEXT_PAGE_ICON_NAME : TABLE_DISABLED_NEXT_PAGE_ICON_NAME,
-				hasNext ? Icons.TBL_NEXT : Icons.TBL_NEXT_DISABLED,
-				hasNext ? view.getNextPageCommand() : null, false);
-			this.writePagingCommand(context, out, view,
-				hasNext ? TABLE_LAST_PAGE_ICON_NAME : TABLE_DISABLED_LAST_PAGE_ICON_NAME,
-				hasNext ? Icons.TBL_LAST : Icons.TBL_LAST_DISABLED,
-				hasNext ? view.getLastPageCommand() : null, false);
+		MapWithProperties footerProperties = new MapWithProperties();
 
-			out.writeText(HTMLConstants.NBSP);
+		footerProperties.put("isPagination", hasPaginationFooter(state, numberOfRenderedRows));
+		footerProperties.put("styles", view.getViewModel().getTableConfiguration().getFooterStyle());
+		footerProperties.put("firstPageButton", createFirstPageButtonFragment(view, hasPreviousPage));
+		footerProperties.put("previousPageButton", createPreviousPageButtonFragment(view, hasPreviousPage));
+		footerProperties.put("currentPage", createCurrentPageFragment(view));
+		footerProperties.put("nextPageButton", createNextPageButtonFragment(view, hasNextPage));
+		footerProperties.put("lastPageButton", createLastPageButtonFragment(view, hasNextPage));
+		footerProperties.put("pageSize", createPageSizeFragment(view));
+		footerProperties.put("pageInfo", createPageInfoFragment(view));
+		footerProperties.put("text", getFooterText(view));
 
-			Control theSelect = view.getPageSizeControl();
-			if (theSelect != null) {
-				out.writeContent(Resources.getInstance().getString(I18NConstants.PAGING_OPTIONS_START));
-				out.writeText(HTMLConstants.NBSP);
-				theSelect.write(context, out);
-				out.writeText(HTMLConstants.NBSP);
-				out.writeContent(Resources.getInstance().getString(I18NConstants.PAGING_OPTIONS_END));
+		Icons.TABLE_FOOTER_TEMPLATE.get().write(context, out, footerProperties);
+	}
+
+	/**
+	 * Hook to customize the footer text.
+	 * 
+	 * <p>
+	 * By default the number of rows is displayed.
+	 * </p>
+	 * 
+	 * @param view
+	 *        Underlying control that display the {@link TableModel}..
+	 */
+	protected String getFooterText(TableControl view) {
+		int numberOfRenderedRows = view.getPagingModel().getCurrentPageSize();
+
+		return Resources.getInstance().getString(I18NConstants.NUMBER_OF_ROWS_TEXT__ROWS.fill(numberOfRenderedRows));
+	}
+
+	private Object createCurrentPageFragment(TableControl view) {
+		return (HTMLFragment) (context, out) -> {
+			Integer[] tableInfo = view.computeTableInfo();
+
+			out.writeText(
+				Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START, (Object[]) tableInfo));
+			Control pageInput = view.getPageInputControl();
+			if (pageInput != null) {
+				pageInput.write(context, out);
+			} else {
+				out.writeText(String.valueOf(view.getCurrentPage()));
 			}
-			if (this.useFullFooter) {
-				out.writeText(HTMLConstants.NBSP);
-				out.writeContent(Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START_FULL, (Object[]) theNumbers));
+			out.writeText(
+				Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_END, (Object[]) tableInfo));
+		};
+	}
+
+	private Object createPageInfoFragment(TableControl view) {
+		return (HTMLFragment) (context, out) -> {
+			if (useFullFooter) {
+				out.writeText(
+					Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START_FULL,
+						(Object[]) view.computeTableInfo()));
 			}
-		}
-		out.endTag(DIV);
+		};
+	}
+
+	private HTMLFragment createPageSizeFragment(TableControl view) {
+		return (context, out) -> {
+			Control pageSize = view.getPageSizeControl();
+			if (pageSize != null) {
+				out.writeText(Resources.getInstance().getString(I18NConstants.PAGING_OPTIONS_START));
+				pageSize.write(context, out);
+				out.writeText(Resources.getInstance().getString(I18NConstants.PAGING_OPTIONS_END));
+			}
+		};
+	}
+
+	private HTMLFragment createFirstPageButtonFragment(TableControl view, boolean hasPreviousPage) {
+		return (context, out) -> {
+			if (hasPreviousPage) {
+				writePagingCommand(context, out, view, TABLE_FIRST_PAGE_ICON_NAME, Icons.TBL_FIRST,
+					view.getFirstPageCommand());
+			} else {
+				writePagingCommand(context, out, view, TABLE_DISABLED_FIRST_PAGE_ICON_NAME,
+					Icons.TBL_FIRST_DISABLED, null);
+			}
+		};
+	}
+
+	private HTMLFragment createPreviousPageButtonFragment(TableControl view, boolean hasPreviousPage) {
+		return (context, out) -> {
+			if (hasPreviousPage) {
+				writePagingCommand(context, out, view, TABLE_PREVIOUS_PAGE_ICON_NAME, Icons.TBL_PREV,
+					view.getPreviousPageCommand());
+			} else {
+				writePagingCommand(context, out, view, TABLE_DISABLED_PREVIOUS_PAGE_ICON_NAME,
+					Icons.TBL_PREV_DISABLED, null);
+			}
+		};
+	}
+
+	private HTMLFragment createNextPageButtonFragment(TableControl view, boolean hasNextPage) {
+		return (context, out) -> {
+			if (hasNextPage) {
+				writePagingCommand(context, out, view, TABLE_NEXT_PAGE_ICON_NAME, Icons.TBL_NEXT,
+					view.getNextPageCommand());
+			} else {
+				writePagingCommand(context, out, view, TABLE_DISABLED_NEXT_PAGE_ICON_NAME,
+					Icons.TBL_NEXT_DISABLED, null);
+			}
+		};
+	}
+
+	private HTMLFragment createLastPageButtonFragment(TableControl view, boolean hasNextPage) {
+		return (context, out) -> {
+			if (hasNextPage) {
+				writePagingCommand(context, out, view, TABLE_LAST_PAGE_ICON_NAME, Icons.TBL_LAST,
+					view.getLastPageCommand());
+			} else {
+				writePagingCommand(context, out, view, TABLE_DISABLED_LAST_PAGE_ICON_NAME,
+					Icons.TBL_LAST_DISABLED, null);
+			}
+		};
+	}
+
+	private boolean hasPaginationFooter(RenderState state, int numberOfRenderedRows) {
+		return (state.getModel().getRowCount() > numberOfRenderedRows) || state.getView().getPageSizeControl() != null;
 	}
 
     /** 
@@ -2374,15 +2301,13 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
     protected void writeContentBetweenPagingCommands(DisplayContext context, TagWriter out,
             TableControl view, int currentPage, Integer[] theNumbers) throws IOException {
 		out.writeContent(Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_START, (Object[]) theNumbers));
-        out.writeText(HTMLConstants.NBSP);
-        Control thePageInput = view.getPageInputControl();
-        if (thePageInput != null) {
-            thePageInput.write(context, out);
+        Control pageInput = view.getPageInputControl();
+        if (pageInput != null) {
+            pageInput.write(context, out);
         }
         else {
             out.writeText(String.valueOf(currentPage));
         }
-        out.writeText(HTMLConstants.NBSP);
 		out.writeContent(Resources.getInstance().getMessage(I18NConstants.PAGING_MESSAGE_END, (Object[]) theNumbers));
     }
 	
@@ -2390,54 +2315,38 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	/**
 	 * Write the given paging command to the given writer.
 	 *
-	 * This method is used by the
-	 * {@link #writePagingFooter(DisplayContext, TagWriter, RenderState, boolean)} to switch through
-	 * the table content.
-	 *
+	 * This method is used by the {@link #writeFooter(DisplayContext, TagWriter, RenderState, int)}
+	 * to switch through the table content.
+	 * 
 	 * @param out
 	 *        The writer to write the command.
 	 * @param key
 	 *        The name of the image (without page and extension).
 	 * @param command
 	 *        The command to execute.
+	 *
 	 * @throws IOException
 	 *         If writing fails.
 	 */
 	protected void writePagingCommand(DisplayContext context, TagWriter out,
-			TableControl view, String key, ThemeImage image, TableCommand command, boolean useText)
+			TableControl view, String key, ThemeImage image, TableCommand command)
 			throws IOException {
-		String altText = view.getResources().getStringResource(key, null);
-		if (altText == null) {
+		String tooltipText = view.getResources().getStringResource(key, null);
+		if (tooltipText == null) {
 			// Fallback, use default fallback resources.
-			altText = Resources.getInstance().getString(GENERAL_PREFIX.key(key));
+			tooltipText = Resources.getInstance().getString(GENERAL_PREFIX.key(key));
 		}
 
-		boolean hasLink = command != null;
-
-		out.writeText(HTMLConstants.NBSP);
-
-		if (hasLink) {
+		if (command != null) {
 			out.beginBeginTag(ANCHOR);
 			out.writeAttribute(HREF_ATTR, "#");
 			writeOnClick(out, view, command);
 			out.endBeginTag();
-		}
-
-		if (useText) {
-		    out.writeText(altText);
-		} else {
-			if (hasLink) {
-				image.writeWithCssPlainTooltip(context, out, null, altText);
-			} else {
-				image.writeWithCssPlainTooltip(context, out, FormConstants.DISABLED_CSS_CLASS, altText);
-			}
-		}
-
-		if (hasLink) {
+			image.writeWithCssPlainTooltip(context, out, null, tooltipText);
 			out.endTag(ANCHOR);
+		} else {
+			image.writeWithCssPlainTooltip(context, out, FormConstants.DISABLED_CSS_CLASS, tooltipText);
 		}
-
-		out.writeText(HTMLConstants.NBSP);
 	}
 
 	private void writeOnClick(TagWriter out, TableControl view, TableCommand command) throws IOException {
@@ -2445,78 +2354,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		out.append("return ");
 		command.writeInvokeExpression(out, view);
 		out.append(";");
-		out.endAttribute();
-	}
-
-	/**
-	 * Writes the table info
-	 * ({@link com.top_logic.layout.table.control.TableControl#computeTableInfo()}}) as a html
-	 * comment. Currently used for testing.
-	 *
-	 * The output format of the debug footer is:
-	 * <p>
-	 * <!-- DebugFooter='first,last,overall,pageFirst,pageLast' -->
-	 * </p>
-	 *
-	 * <em>where</em>
-	 * <dl>
-	 * <dt>first</dt>
-	 * <dd>is the index of the first item</dd>
-	 * <dt>last</dt>
-	 * <dd>is the index of the last item</dd>
-	 * <dt>overall</dt>
-	 * <dd>is the overall count of items</dd>
-	 * <dt>pageFirst</dt>
-	 * <dd>is the current page</dd>
-	 * <dt>pageLast</dt>
-	 * <dd>is the last page</dd>
-	 * </dl>
-	 *
-	 * You can enable/disable this feature by setting
-	 *
-	 * @param out
-	 *        the writer
-	 * @param aNumbers
-	 *        the table info
-	 *        {@link com.top_logic.layout.table.control.TableControl#computeTableInfo()}
-	 */
-	private void writeDebugFooter(TagWriter out, Integer[] aNumbers)
-			throws IOException {
-		if (!isDebugFootersEnabled()) {
-			return;
-		}
-
-		out.beginComment();
-		out.writeText("DebugFooter='" + StringServices.join(aNumbers, ',')
-				+ "'");
-		out.endComment();
-
-	}
-
-	private boolean isDebugFootersEnabled() {
-		if (debugFooterEnabled == null) {
-			debugFooterEnabled = Boolean.valueOf(DebuggingConfig.configuredInstance().getDebugFooterEnabled());
-		}
-
-		return debugFooterEnabled.booleanValue();
-	}
-
-	/**
-	 * Write a default footer for empty Lists, in case none is configured.
-	 */
-	@Override
-	public void writeEmptyFooter(TagWriter out, RenderState state, boolean usePagingFooter) throws IOException {
-		out.beginBeginTag(DIV);
-		writeCounterClasses(out, usePagingFooter);
-		writeFooterStyleAttribute(out, state.getView());
-		out.endBeginTag();
-		out.writeContent(state.getView().getResources().getStringResource(RES_EMPTY));
-		out.endTag(DIV);
-	}
-
-	private void writeCounterClasses(TagWriter out, boolean usePagingFooter) throws IOException {
-		out.beginAttribute(CLASS_ATTR);
-		this.writeCounterClassesContent(out, usePagingFooter);
 		out.endAttribute();
 	}
 
@@ -2620,13 +2457,8 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	}
 
 	private Object writeBodyCellStyles(RenderState state, int displayedRowIndex, int columnIndex) {
-		return new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				writeColumnStyleCustom(out, state, columnIndex, displayedRowIndex, getColumnConfiguration(state, columnIndex));
-			}
-		};
+		return (HTMLFragment) (context, out) -> writeColumnStyleCustom(out, state, columnIndex, displayedRowIndex,
+			getColumnConfiguration(state, columnIndex));
 	}
 
 	/**
@@ -2658,16 +2490,13 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 	private HTMLFragment writeBodyCellClasses(RenderState state, int rowIndex, boolean isSelected,
 			final int columnIndex) {
-		return new HTMLFragment() {
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				ColumnConfiguration columnConfiguration = state.getColumn(columnIndex).getConfig();
+		return (context, out) -> {
+			ColumnConfiguration columnConfiguration = state.getColumn(columnIndex).getConfig();
 
-				out.append(state.getTDClass(columnIndex, isSelected));
-				out.append(getCellSelectableClass(state, rowIndex, columnConfiguration));
-				out.append(
-					columnConfiguration.getCssClassProvider().getCellClass(state.getCell(rowIndex, columnIndex)));
-			}
+			out.append(state.getTDClass(columnIndex, isSelected));
+			out.append(getCellSelectableClass(state, rowIndex, columnConfiguration));
+			out.append(
+				columnConfiguration.getCssClassProvider().getCellClass(state.getCell(rowIndex, columnIndex)));
 		};
 	}
 
@@ -2680,13 +2509,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * Creates the {@link HTMLFragment} that display the table cells content.
 	 */
 	public HTMLFragment createBodyCellLabelFragment(RenderState state, int rowIndex, final int columnIndex) {
-		return new HTMLFragment() {
-
-			@Override
-			public void write(DisplayContext context, TagWriter out) throws IOException {
-				writeCellContent(context, out, state, false, columnIndex, rowIndex);
-			}
-		};
+		return (context, out) -> writeCellContent(context, out, state, false, columnIndex, rowIndex);
 	}
 
 	private void writeContentWidthStyle(TagWriter out, RenderState state, int column, ColumnConfiguration theCD)

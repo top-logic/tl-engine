@@ -6,6 +6,7 @@
 package com.top_logic.layout.table.renderer;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 
@@ -76,6 +77,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/** {@link ResKey Error key} when no named table settings are available. */
 	public static ResKey NO_NAMED_TABLE_SETTINGS_AVAILABLE;
+
+	/**
+	 * Text informs the user about the amount of rendered rows in the underlying table.
+	 */
+	public static ResKey1 NUMBER_OF_ROWS_TEXT__ROWS;
 
 	static {
 		/** @see I18NConstantsBase */

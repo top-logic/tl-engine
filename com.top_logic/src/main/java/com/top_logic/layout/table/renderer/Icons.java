@@ -156,6 +156,12 @@ public class Icons extends IconsBase {
 	public static ThemeVar<HTMLTemplateFragment> TABLE_HEADER_GROUP_CELL_CONTENT_TEMPLATE;
 
 	/**
+	 * Template defining the table footer.
+	 */
+	@TemplateType(DefaultRenderState.class)
+	public static ThemeVar<HTMLTemplateFragment> TABLE_FOOTER_TEMPLATE;
+
+	/**
 	 * Color of the grabber inside a table header cell to resize a table column.
 	 */
 	@DefaultValue("#FFFFFF")

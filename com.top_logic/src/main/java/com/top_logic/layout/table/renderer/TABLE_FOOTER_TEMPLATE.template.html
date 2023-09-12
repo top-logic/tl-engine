@@ -1,0 +1,32 @@
+<div class="tl-table__footer">
+	<tl:choose>
+		<tl:when test="isPagination">
+			<div class="tl-table__footer-pager" style="{styles}" align="left">
+				<span class="tl-table__footer-pager-item">
+					{firstPageButton}
+				</span>
+				<span class="tl-table__footer-pager-item">
+					{previousPageButton}
+				</span>
+				<span class="tl-table__footer-pager-item">
+					{currentPage}
+				</span>
+				<span class="tl-table__footer-pager-item">
+					{nextPageButton}
+				</span>
+				<span class="tl-table__footer-pager-item">
+					{lastPageButton}
+				</span>
+				<span class="tl-table__footer-pager-item">
+					{pageSize}
+				</span>
+				<span class="tl-table__footer-pager-item">
+					{pageInfo}
+				</span>
+			</div>
+		</tl:when>
+		<tl:otherwise>
+			<div class="tl-table__footer-counter" style="{styles}">{text}</div>
+		</tl:otherwise>
+	</tl:choose>
+</div>

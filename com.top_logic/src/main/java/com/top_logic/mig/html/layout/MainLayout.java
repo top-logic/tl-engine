@@ -243,6 +243,11 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		 */
 		String LAYOUT_FACTORY = "layoutFactory";
 
+		/**
+		 * See {@link #closeDialogOnBackgroundClick()}
+		 */
+		String CLOSE_DIALOG_ON_BACKGROUND_CLICK = "closeDialogOnBackgroundClick";
+
 		@Name("shortcutIcon")
 		String getShortcutIcon();
 
@@ -262,6 +267,12 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		@ItemDefault
 		@ImplementationClassDefault(LayoutControlFactory.class)
 		PolymorphicConfiguration<LayoutFactory> getLayoutFactory();
+
+		/**
+		 * Whether a dialog with a close button could be closed by a background click.
+		 */
+		@Name(CLOSE_DIALOG_ON_BACKGROUND_CLICK)
+		boolean closeDialogOnBackgroundClick();
 
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {
@@ -388,23 +399,26 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 	private final Map<String, ComponentChannel> _partnerChannels = new HashMap<>();
 
+	private final boolean _closeDialogOnBackgroundClick;
+
     /** Create a MainLayout when importing from a XML-File 
      * Attributes supported here are:<ul>
      *   <li>framed               , default true </li>
      *   <li>title                , mandatory </li>
      *   <li>headerIncludeFilePath, optional </li>
      * </ul>
-     * @param  atts Attributes as extracted from the XML-Tag.
+     * @param  config Attributes as extracted from the XML-Tag.
      */
-    public MainLayout(InstantiationContext context, Config atts) throws ConfigurationException  {
-        super(context, atts);
+    public MainLayout(InstantiationContext context, Config config) throws ConfigurationException  {
+        super(context, config);
         
-		_layoutFactory = context.getInstance(atts.getLayoutFactory());
-        shortcutIcon           = StringServices.nonEmpty(atts.getShortcutIcon());
-        icon                   = StringServices.nonEmpty(atts.getIcon());
-        headerIncludeFilePath  = StringServices.nonEmpty(atts.getHeaderIncludeFilePath());
-        postProcessorClassName = StringServices.nonEmpty(atts.getPostProcessorClassName());
+		_layoutFactory = context.getInstance(config.getLayoutFactory());
+        shortcutIcon           = StringServices.nonEmpty(config.getShortcutIcon());
+        icon                   = StringServices.nonEmpty(config.getIcon());
+        headerIncludeFilePath  = StringServices.nonEmpty(config.getHeaderIncludeFilePath());
+        postProcessorClassName = StringServices.nonEmpty(config.getPostProcessorClassName());
 		_modelEventForwarder = context.getInstance(getGlobalConfig().getEventForwarder());
+		_closeDialogOnBackgroundClick = config.closeDialogOnBackgroundClick();
     }
     
 	@Override
@@ -1817,6 +1831,13 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	 */
 	public static GlobalConfig getGlobalConfig() {
 		return ApplicationConfig.getInstance().getConfig(GlobalConfig.class);
+	}
+
+	/**
+	 * Whether a dialog with a close button could be closed by a background click.
+	 */
+	public boolean closeDialogOnBackgroundClick() {
+		return _closeDialogOnBackgroundClick;
 	}
 
 	/** Getter for {@link DocType}. */

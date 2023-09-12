@@ -34,6 +34,7 @@ import com.top_logic.layout.layoutRenderer.DialogRenderer;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolbarControl;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
+import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
@@ -174,6 +175,16 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 	 */
 	public final DialogModel getDialogModel() {
 		return (DialogModel) getWindowModel();
+	}
+
+	/**
+	 * Writes the handler to close the underlying dialog when the user clicks on the background.
+	 */
+	@TemplateVariable("closeDialogOnBackgroundClick")
+	public void closeDialogOnBackgroundClick(DisplayContext context, TagWriter out) throws IOException {
+		if (MainLayout.getMainLayout(context).closeDialogOnBackgroundClick() && getDialogModel().hasCloseButton()) {
+			CloseDialogCommand.INSTANCE.writeInvokeExpression(out, this, new JSObject());
+		}
 	}
 
 	/**

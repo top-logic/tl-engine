@@ -10,6 +10,7 @@
 
   <artifactId>tl-basic</artifactId>
   <description>Collection of utilities.</description>
+	<url>${tl.repository.url}</url>
 
 	<properties>
 		<skipNormalizeLayouts>true</skipNormalizeLayouts>

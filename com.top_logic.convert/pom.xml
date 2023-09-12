@@ -10,6 +10,7 @@
 
   <artifactId>tl-convert</artifactId>
   <description>Utilities for format conversion.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

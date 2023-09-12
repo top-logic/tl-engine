@@ -10,6 +10,7 @@
 
   <artifactId>tl-xio</artifactId>
   <description>Library for configurable XML import.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

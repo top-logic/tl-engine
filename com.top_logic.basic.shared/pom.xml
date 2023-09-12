@@ -11,6 +11,7 @@
 
   <artifactId>tl-basic-shared</artifactId>
   <description>Utilities shared between server and GWT-based client code.</description>
+	<url>${tl.repository.url}</url>
 
   <properties>
 		<!-- gwt does not full understand Java 11 syntax. -->		

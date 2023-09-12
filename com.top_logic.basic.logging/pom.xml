@@ -10,6 +10,7 @@
 
   <artifactId>tl-basic-logging</artifactId>
   <description>The TopLogic logging abstraction layer.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies/>
 </project>

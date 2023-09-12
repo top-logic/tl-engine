@@ -10,6 +10,7 @@
 
   <artifactId>tl-layout-wysiwyg-highlighter</artifactId>
   <description>Plugin for code syntax highlighning in the in-app HTML editor.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

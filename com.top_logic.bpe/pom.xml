@@ -10,6 +10,7 @@
 
   <artifactId>tl-bpe</artifactId>
   <description>Business process engine.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

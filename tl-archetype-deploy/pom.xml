@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>tl-archetype-deploy</artifactId>
+	<url>${tl.repository.url}</url>
 
 	<organization>
 		<name>Business Operation Systems GmbH</name>

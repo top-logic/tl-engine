@@ -10,6 +10,7 @@
 
   <artifactId>tl-ajax-client</artifactId>
   <description>Base classes for realizing GWT-based client code.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

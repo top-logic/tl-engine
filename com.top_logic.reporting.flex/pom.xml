@@ -10,6 +10,7 @@
 
   <artifactId>tl-reporting-flex</artifactId>
   <description>TopLogic office reporting.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

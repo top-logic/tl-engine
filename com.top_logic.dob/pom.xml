@@ -10,6 +10,7 @@
 
   <artifactId>tl-dob</artifactId>
   <description>Library for modeling database schemas.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

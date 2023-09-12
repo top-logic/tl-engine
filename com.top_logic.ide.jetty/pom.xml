@@ -11,6 +11,7 @@
 
   <artifactId>tl-ide-jetty</artifactId>
   <description>Services for starting a TopLogic application in the development environment.</description>
+	<url>${tl.repository.url}</url>
 
 	<properties>
 		<dependency-check.skip>true</dependency-check.skip>

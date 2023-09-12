@@ -10,6 +10,7 @@
 
   <artifactId>tl-graph-diagramjs-client</artifactId>
   <description>GWT-based client library for displaying the TopLogic model as UML.</description>
+	<url>${tl.repository.url}</url>
   
   <properties>
 	<gwt.module>com.top_logic.graph.diagramjs.client.TLGraphClientDiagramJS</gwt.module>  	

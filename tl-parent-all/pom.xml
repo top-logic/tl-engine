@@ -10,7 +10,7 @@
 
 	<name>${artifactId}</name>
 	<description>Aggregator module that builds the complete TopLogic application engine.</description>
-	<url>https://top-logic.com/</url>
+	<url>${tl.repository.url}</url>
 
 	<organization>
 		<name>Business Operation Systems GmbH</name>
@@ -22,7 +22,7 @@
     <licenses>
         <license>
             <name>BOS-TopLogic-1.0</name>
-            <url>https://github.com/top-logic/tl-engine/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+            <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
         </license>
         <license>
             <name>AGPL-3.0-only</name>
@@ -31,6 +31,7 @@
     </licenses>
 
 	<properties>
+		<tl.repository.url>https://github.com/top-logic/tl-engine/</tl.repository.url>
 		<tl.version>7.6.0-SNAPSHOT</tl.version>
 		<jetty.version>9.4.51.v20230217</jetty.version>
 		<poi.version>5.2.3</poi.version>

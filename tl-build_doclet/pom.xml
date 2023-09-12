@@ -9,6 +9,7 @@
   </parent>
 
   <artifactId>tl-build-doclet</artifactId>
+  <url>${tl.repository.url}</url>
 
   <properties>
 	<dependency-check.skip>true</dependency-check.skip>

@@ -10,6 +10,7 @@
 
   <artifactId>tl-common-json</artifactId>
   <description>Port of the gstream JSON library to GWT.</description>
+	<url>${tl.repository.url}</url>
 
 	<properties>
 		<!-- For framework modules, combine all JavaDoc to its deploy location. -->

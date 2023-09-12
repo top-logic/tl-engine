@@ -10,6 +10,7 @@
 
   <artifactId>tl-kafka</artifactId>
   <description>Apache Kafka bus connectivity.</description>
+	<url>${tl.repository.url}</url>
 
 	<properties>
 		<dependency-check.skip>true</dependency-check.skip>

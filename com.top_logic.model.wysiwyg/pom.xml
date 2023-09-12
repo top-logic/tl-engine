@@ -10,6 +10,7 @@
 
   <artifactId>tl-model-wysiwyg</artifactId>
   <description>HTML typed model attributes.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

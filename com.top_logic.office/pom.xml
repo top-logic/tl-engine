@@ -10,6 +10,7 @@
 
   <artifactId>tl-office</artifactId>
   <description>Interfaces for office formats.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

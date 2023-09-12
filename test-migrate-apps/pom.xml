@@ -12,6 +12,7 @@
 		<relativePath>../tl-parent-app</relativePath>
 	</parent>
 	<artifactId>test-migrate-apps</artifactId>
+	<url>${tl.repository.url}</url>
 	<packaging>pom</packaging>
 
 	<modules>

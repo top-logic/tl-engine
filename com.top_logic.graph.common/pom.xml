@@ -10,6 +10,7 @@
 
   <artifactId>tl-graph-common</artifactId>
   <description>Code shared between server and GWT-based client libraries for displaying graphs such as the UML model.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

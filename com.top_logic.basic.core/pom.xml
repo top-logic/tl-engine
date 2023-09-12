@@ -10,6 +10,7 @@
 
   <artifactId>tl-basic-core</artifactId>
   <description>Collection of utilities shared between build plugins and runtime.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
   	<dependency>

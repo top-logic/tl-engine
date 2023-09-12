@@ -10,6 +10,7 @@
 
   <artifactId>tl-reporting</artifactId>
   <description>Legacy module for report generation.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

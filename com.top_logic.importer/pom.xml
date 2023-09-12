@@ -10,6 +10,7 @@
 
   <artifactId>tl-importer</artifactId>
   <description>Excel import functionality.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

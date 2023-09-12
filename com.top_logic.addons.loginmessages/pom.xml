@@ -10,7 +10,8 @@
 
   <artifactId>tl-addons-loginmessages</artifactId>
   <description>TopLogic module providing funtionality to configure message being displayed upon user login.</description>
-  
+ 	<url>${tl.repository.url}</url>
+ 
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>

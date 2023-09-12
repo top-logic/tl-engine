@@ -8,6 +8,7 @@
     <version>7.6.0-SNAPSHOT</version>
   </parent>
   <artifactId>tl-service-openapi-server</artifactId>
+	<url>${tl.repository.url}</url>
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>

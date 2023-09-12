@@ -10,6 +10,7 @@
 
   <artifactId>tl-basic-db-schema</artifactId>
   <description>Base classes for TopLogic database schema configurations.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

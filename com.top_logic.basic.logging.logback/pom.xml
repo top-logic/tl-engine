@@ -10,6 +10,7 @@
 
   <artifactId>tl-basic-logging-logback</artifactId>
   <description>Adapter to logback for the TopLogic logging abstraction layer.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

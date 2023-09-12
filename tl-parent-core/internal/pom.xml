@@ -11,6 +11,7 @@
 	</parent>
 
 	<artifactId>tl-parent-core-internal</artifactId>
+	<url>${tl.repository.url}</url>
 
 	<description>
 		Parent module for TopLogic framework modules. 

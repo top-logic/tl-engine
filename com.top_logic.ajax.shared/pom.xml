@@ -10,6 +10,7 @@
 
   <artifactId>tl-ajax-shared</artifactId>
   <description>Interface to server-side functionality for GWT-based client code.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

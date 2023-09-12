@@ -10,6 +10,7 @@
 
   <artifactId>tl-umljs</artifactId>
   <description>JavaSCript library for UML diagram rendering.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

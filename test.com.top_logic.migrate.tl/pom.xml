@@ -8,6 +8,7 @@
     <version>7.6.0-SNAPSHOT</version>
   </parent>
   <artifactId>test-tl-migrate-tl</artifactId>
+	<url>${tl.repository.url}</url>
 	<properties>
 		<javadocOutput>${project.build.directory}/javadoc</javadocOutput>
 	</properties>

@@ -10,6 +10,7 @@
 
   <artifactId>tl-search-base</artifactId>
   <description>Base functionality for full-text search.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

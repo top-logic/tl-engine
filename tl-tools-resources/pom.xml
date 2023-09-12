@@ -11,6 +11,7 @@
 	</parent>
 	
 	<artifactId>tl-tools-resources</artifactId>
+	<url>${tl.repository.url}</url>
 	
 	<properties>
 	<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>

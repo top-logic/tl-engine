@@ -10,6 +10,7 @@
 
   <artifactId>tl-layout-formeditor</artifactId>
   <description>In-app editor for formulars.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

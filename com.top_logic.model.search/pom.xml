@@ -10,6 +10,7 @@
 
   <artifactId>tl-model-search</artifactId>
   <description>TL-Script engine.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

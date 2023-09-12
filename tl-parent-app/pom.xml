@@ -20,6 +20,7 @@
 		<name>Business Operation Systems GmbH</name>
 		<url>https://www.top-logic.com</url>
 	</organization>
+	<url>${tl.repository.url}</url>
 
 	<packaging>pom</packaging>
 	

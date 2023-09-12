@@ -10,7 +10,8 @@
 
   <artifactId>tl-common-remote</artifactId>
   <description>Shared library between server and GWT-based client code realizing collectively shared objects.</description>
-  
+  <url>${tl.repository.url}</url>
+
   <properties>
 		<!-- gwt does not full understand Java 11 syntax. -->		
 		<maven.compiler.source>1.8</maven.compiler.source>

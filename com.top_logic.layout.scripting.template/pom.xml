@@ -10,6 +10,7 @@
 
   <artifactId>tl-layout-scripting-template</artifactId>
   <description>Templating engine for application testing/scripting.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

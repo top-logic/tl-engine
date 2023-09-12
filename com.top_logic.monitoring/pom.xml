@@ -10,6 +10,7 @@
 
   <artifactId>tl-monitoring</artifactId>
   <description>TopLogic monitoring components.</description>
+	<url>${tl.repository.url}</url>
 
   <dependencies>
     <dependency>

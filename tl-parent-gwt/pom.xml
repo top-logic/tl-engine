@@ -17,6 +17,7 @@
 	<description>
 		Parent module for TopLogic GWT modules. 
 	</description>
+	<url>${tl.repository.url}</url>
 
 	<organization>
 		<name>Business Operation Systems GmbH</name>

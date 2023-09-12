@@ -1,0 +1,85 @@
+<h2>Syntax</h2>
+<pre>	<code>dateTime($year, $month, $day, $hour, $minute, $second, $millisecond)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Konstruiert einen Datumswert, der einen Zeitpunkt repräsentiert (im Benutzerkalender). Kompatibel mit <code class="hljs inlineCode">tl.core:DateTime</code> Werten.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>year</td>
+   <td>Zahl</td>
+   <td>Jahr des Datums</td>
+   <td>ja</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>month</td>
+   <td>Zahl</td>
+   <td>Monat des Datums. Die Zählung beginnt bei 0 (Januar = 0, Februar = 1 etc.)</td>
+   <td>ja</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>day</td>
+   <td>Zahl</td>
+   <td>Tag des Datums. Die Zählung beginnt bei 1 (1 = erster Tag des Monats)</td>
+   <td>ja</td>
+   <td>-/-</td>
+  </tr>
+  <tr>
+   <td>hour</td>
+   <td>Zahl</td>
+   <td>Stunde des Datums</td>
+   <td>nein</td>
+   <td>0</td>
+  </tr>
+  <tr>
+   <td>minute</td>
+   <td>Zahl</td>
+   <td>Minute des Datums</td>
+   <td>nein</td>
+   <td>0</td>
+  </tr>
+  <tr>
+   <td>second</td>
+   <td>Zahl</td>
+   <td>Sekunde des Datums</td>
+   <td>nein</td>
+   <td>0</td>
+  </tr>
+  <tr>
+   <td>millisecond</td>
+   <td>Zahl</td>
+   <td>Millisekunde des Datums</td>
+   <td>nein</td>
+   <td>0</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Fachobjekt</p>
+<p>Ein Datumswert für den angegebenen Tag des Jahres inklusive Uhrzeit im Benutzerkalender.</p>
+<h2>Beispiele</h2>
+<p><strong>Hinweis: </strong>Die Ausgabe kann abhängig von der Zeitzone des Kalenders abweichen.</p>
+<h3>Unformatiertes Datum</h3>
+<pre>	<code>dateTime(2021, 11, 31, 23, 59, 59, 999)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 31.12.2021</p>
+<h3>Formtiertes Datum</h3>
+<pre>	<code>dateFormat("dd-MM-yy hh:mm:ss").format(dateTime(2021, 11, 31, 23, 59, 59, 999))</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 31-12-21 11:59:59</p>
+<h3>Unvollständiges Datum</h3>
+<pre><code>dateFormat("dd-MM-yy hh:mm:ss").format(dateTime(2021, 11, 31))</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 31-12-21 12:00:00</p>
+<p></p>

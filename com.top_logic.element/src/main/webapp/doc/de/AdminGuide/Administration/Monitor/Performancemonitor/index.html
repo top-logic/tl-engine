@@ -1,0 +1,32 @@
+<p>Der Performancemonitor ist ein Anwendungsmodul, welches der statistischen Erfassung von Ausführungszeitdauern der durch den Nutzer veranlassten Anwendungsoperationen dient. Hierfür werden der kontinuierliche Zeitverlauf in Zeitscheiben untergliedert und die verschiedenen Operationen anhand ihres Ausführungszeitpunkts den einzelnen Zeitscheiben zugeordnet. Der Monitor speichert eine bestimmte Anzahl von Zeitscheiben. Bei Überschreitung dieses Wertes werden ältere Zeitscheiben in der Ansicht durch jüngere verdrängt (FIFO).</p>
+<h1>Konfiguration</h1>
+<p>Der Performance-Monitor wird wie alle Anwendungsmodule in der XML-Anwendungskonfiguration eingetragen und konfiguriert. Zu diesem Zweck wird der Monitor zum einen der Modulsektion der Anwendungskonfiguration hinzugefügt und zum zweiten eine separate Sektion PerformanceMonitor in den Properties, welche die Performance-Monitorkonfiguration enthält, erstellt.</p>
+<pre><code class="language-xml">&lt;root&gt;
+   &lt;properties&gt;
+      ...
+      &lt;section name="ModuleSystem" comment="Contains all services which are needed by the application"&gt;
+         ...
+         &lt;entry name="com.top_logic.layout.admin.component.PerformanceMonitor$Module" value="enabled" /&gt;
+      &lt;/section&gt;
+      ...
+      &lt;section name="PerformanceMonitor"&gt;
+         &lt;entry name="maxCacheIntervals" value="1440"/&gt;
+         &lt;entry name="cacheDetails" value="false"/&gt;
+         &lt;entry name="intervalMillis" value="60000"/&gt;
+      &lt;/section&gt;
+      ...
+   &lt;/properties&gt;
+&lt;/root&gt;</code></pre>
+<p>Die Aufzeichung der Ausführungszeitdauern kann über die drei Optionen maxCacheIntervals, cacheDetails und intervalMillis gesteuert werden.</p>
+<p><strong>intervalMillis</strong><br>
+  Breite einer Zeitscheibe in Millisekunden</p>
+<p><strong>maxCacheIntervals</strong><br>
+  Anzahl der zu speichernden Zeitscheiben, bevor jüngere Zeitscheiben ältere verdrängen</p>
+<p><strong>cacheDetails</strong><br>
+  Flag, ob die Zeitdauern gleicher Operationen innerhalb einer Zeitscheibe aggregiert (false) oder nicht aggregiert (true) werden sollen</p>
+<p>Der Performance-Monitor ist standardmäßig aktiviert. Sofern für die Optionen keine konfigurativen Werte angegeben werden, gelten die oben genannten Werte als programmatischer Default - dies bedeutet, daß eine Zeitscheibe eine Minute beträgt, die Zeitscheiben der letzten 24h gespeichert und die Ausführungsdauern gleicher Operationen in einer Zeitscheibe aggregiert werden.</p>
+<h1>Darstellung / Auswertung</h1>
+<p>Im Reiter <strong>Administration <em>:</em> Monitor: Performancemonitor</strong> befindet sich eine tabellarische Auswertung des Performancemonitors.</p>
+<p>Die Performancemonitor-Sicht bietet eine tabellarische Darstellung der gemessenen Ausführungszeiten. In den Zeilen werden die einzelnen durchgeführten Operationen gezeigt und in den Spalten die Ausführungszeiten in den jeweiligen Zeitscheiben. Die aktuellste Zeitscheibe befindet sich in der Spalte "0".</p>
+<p>Im Reiter <strong>Administration <em>:</em> Monitor: Performancetrend</strong> befindet sich eine graphische Auswertung des Performancemonitors.</p>
+<p>Der linke Teil innerhalb der Performancetrend-Sicht bietet eine baumartige Sicht auf den Komponentenbaum an. Bei Auswahl eines Komponentenknotens werden in dem rechten Teil die Ausführungszeiten der im Kontext dieser Komponente ausgeführten Operationen über die verschiedenen Zeitscheiben hinweg graphisch dargestellt. Das Komponentenknoten-Label enthält zusätzlich Informationen über die größte Ausführungszeit einer Operation im Kontext dieser Komponente, die größte Ausführungszeit einer Operation im darunter liegenden Komponententeilbaum und die Summe der Ausführungszeiten aller ausgeführten Operationen.</p>

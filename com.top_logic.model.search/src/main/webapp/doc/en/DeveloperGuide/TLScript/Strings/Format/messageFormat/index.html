@@ -1,0 +1,46 @@
+<h2>Syntax</h2>
+<pre>	<code>messageFormat($pattern)</code>
+</pre>
+<h2>Description</h2>
+<p>Constructs a message format with the given pattern for either <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> or <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> calls.</p>
+<p>See <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html">MessageFormat</a>.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>pattern</td>
+   <td>String</td>
+   <td>
+    <p>The pattern in which to format. Placeholders can be defined (<code class="hljs inlineCode">{0}</code>, <code class="hljs inlineCode">{1}</code> etc.), which are subsequently filled by parameters during formatting. These placeholders can additionally define format types and subformat types to additionally format the parameters (<code class="hljs inlineCode">{0, number, integer}</code>, <code class="hljs inlineCode">{1, date</code><code class="hljs inlineCode">}</code> etc.). For more information on possible patterns, see <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html">MessageFormat</a>.</p></td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p>
+<p>A message format that can now be used for <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> or <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> calls.</p>
+<h2>Examples</h2>
+<h3>Simple formatting</h3>
+<pre>	<code>messageFormat("Good {0}, {1}! Today we have {2} degrees.").format("Morning", "Sir", 19)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> Good Morning Sir! Today we have 19 degrees.</p>
+<h3>Format with format type</h3>
+<pre>	<code>messageFormat("At {1,time} on {1,date}, there was {2} on planet {0,number,integer}.").format(7, now(), "a disturbance in the Force")</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> At 15:36:40 on 11.10.2021, there was a disturbance in the Force on planet 7.</p>
+<p>The date is used multiple times in this message and formatted accordingly using time and date.</p>
+<h3>Parse</h3>
+<pre>	<code>messageFormat("Good {0}!").parse("Good Morning!")</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong> </span>Message object</p>
+<p></p>

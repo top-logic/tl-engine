@@ -1,0 +1,48 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.set(`$attribute`, value)
+</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Aktualisiert den Wert des Attributs <code class="hljs inlineCode">attribute</code> des Objektes <code class="hljs inlineCode">object</code> zu <code class="hljs inlineCode">value</code>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Fachobjekt</td>
+   <td>Ein Objekt, dessen Attributwert gesetzt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>attribute</td>
+   <td>Zeichenkette</td>
+   <td>Ein Attribute-Literal, welches das zu setzenden Attribut definiert.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>value</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+   <td>Der neue Wert des Attributs.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Beispiele</h2>
+<pre>	<code>{
+   a = new(`my.module:MyClass`);
+   $a.set(`my.module:MyClass#name`, "newName");
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Erzeugt ein neues Objekt und ändert den Wert des Attribute <code class="hljs inlineCode">name</code> auf "newName".</p>

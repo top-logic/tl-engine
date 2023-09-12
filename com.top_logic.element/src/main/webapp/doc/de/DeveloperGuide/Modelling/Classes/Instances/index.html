@@ -1,0 +1,12 @@
+<p>Klassen beschreiben die Eigenschaften von Objekten. Objekte einer Klasse heißen die Instanzen der Klasse. Von einer Klasse können beliebig viele Objekte angelegt werden. Alle diese Instanzen der Klasse haben dieselben Eigenschaften und unterscheiden sich nur in den Werten der Eigenschaften.</p>
+<h2>Instanz-Administration</h2>
+<p>Der Modell-Editor von TopLogic bietet die Möglichkeit, Klassen auch direkt zu instanziieren, das heißt, Objekte von diesen Klassen anzulegen, ohne dass man vorher eine spezialisierte Benutzeroberfläche definiert. Dieser eingebaute Instanzen-Editor kann für einfache Anwendungsfälle eingesetzt werden, wenn von einer Klasse nur administrativ und nicht durch den Endbenutzer der Anwendung Instanzen angelegt werden können.</p>
+<h2>Generische Anlagemöglichkeit</h2>
+<p>Nehmen wir an, dass in dem Beispiel von <code class="hljs inlineCode">RobotSystem</code> und <code class="hljs inlineCode">Manufacturer</code> aus dem Abschnitt&nbsp;<a class="tlObject" data-custom="false" href="?page=References&amp;uuid=24f0521d-7151-428c-9619-cc92816b60be">Referenzen</a> die Hersteller, die für einen Roboter ausgewählt werden dürfen, nur administrativ angelegt werden sollen. Dann kann man den Instanzen-Editor verwenden, um direkt Hersteller im System anzulegen.</p>
+<p><img src="ref:image_1.png" style="height:318px; opacity:1; width:603px"></p>
+<p>In diesem trivialen Modell hat der Hersteller nur ein einziges Attribut den Namen. Genau deses Attribut wird hier als Spalte angeboten. Bei der Bearbeitung erhält man ein Textfeld, in dem der Name des so angelegten Herstellers eingegeben werden kann.</p>
+<p><img src="ref:image.png" style="height:285px; opacity:1; width:599px"></p>
+<h2>Automatische Wahl des Eingabefeldes</h2>
+<p>Bei der Anlage eines Roboters sieht das schon etwas anders aus. Ein Roboter hatte zwei Attribute, einen Namen (Text / <code class="hljs inlineCode">String</code>), ein Gewicht (Fließkommazahl / <code class="hljs inlineCode">Double</code>) und eine Referenz "Hersteller" vom Typ "<code class="hljs inlineCode">Manufacturer</code>".</p>
+<p><img src="ref:image_2.png" style="height:254px; opacity:1; width:599px"></p>
+<p>Hier folgt die Oberfläche dem Modell und bietet für den Namen ein Textfeld, für das Gewicht ein Eingabefeld, das nur Zahlen akzeptiert und für den Hersteller ein Auswahlfeld, in dem einer der drei oben administrierten Hersteller ausgewählt werden kann. Verletzt man mit der Eingabe den Wertebereich der Typen, werden entsprechende Fehlermeldungen angezeigt.</p>

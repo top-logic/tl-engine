@@ -1,0 +1,34 @@
+<h2>Syntax</h2>
+<pre>	<code>$calendar.dayOfWeekInMonth()</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Der Tag der Woche im Monat im gegebenen Kalender. Damit wird angegeben, der wievielte entsprechende Wochentag des Monats es ist, also zum Beispiel der weivielte Donnerstag.<span style="background-color:rgba(255, 255, 255, 0); font-size:16pt"></span><span style="background-color:rgba(255, 255, 255, 0); font-size:16pt"></span></p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>calendar</td>
+   <td>Fachobjekt</td>
+   <td>Der Kalender, dessen Tag der Woche im Monat ermittelt werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2><span style="background-color:rgba(255, 255, 255, 0); font-size:16pt">Rückgabewert</span></h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl</p>
+<p>Eine Zahl, die den Tag der Woche im Monat des gegebenen Kalenders repräsentiert.</p>
+<h2>Beispiele</h2>
+<pre>	<code>date(2021, 9, 12).toSystemCalendar().dayOfWeekInMonth()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 2</p>
+<p>Es ist der zweite Dienstag des Monats. Der erste war am 05.10.2021.</p>

@@ -1,0 +1,17 @@
+<p>Da die Konfigurationen hierarchisch strukturiert werden können, entsteht manchmal der Bedarf, sich von einem Knoten in dieser Hierarchie auf den Vaterknoten zu beziehen. Dazu muss&nbsp;man nur den Knoten von&nbsp;<code class="hljs inlineCode">ConfigPart</code>&nbsp;ableiten, dann bedeutet die&nbsp;Annotation&nbsp;<code class="hljs inlineCode">@Container</code>&nbsp;an einem der Getter, dass er den Vaterknoten liefern soll:</p>
+<pre><code class="language-java">public interface Latter extends ConfigurationItem {
+
+	List&lt;Step&gt; getSteps();
+
+	public interface Step extends ConfigPart {
+
+		public static final String LATTER = "latter";
+
+		/** The container. */
+		@Name(LATTER)
+		@Hidden
+		@Container
+		Latter getLatter();
+	}
+}</code></pre>
+<p>&nbsp;</p>

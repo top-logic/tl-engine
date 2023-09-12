@@ -1,0 +1,30 @@
+<p>The instance of a class can be used directly as a configuration value if this class implements the singleton pattern. In this case, the configuration property must be annotated with <code class="hljs inlineCode">@InstanceFormat</code>. In the configuration, a singleton matching the type of the property can then be selected via the class name.</p>
+<p>For example, the following configuration allows the selection of a <code class="hljs inlineCode">Renderer</code>s:</p>
+<pre><code class="language-java">public interface MyConfig extends ConfigurationItem {
+
+   @InstanceFormat
+   Renderer getRenderer();
+
+}</code></pre>
+<p><code class="hljs inlineCode">Renderer</code> here is an interface for an implementation that outputs a passed object to HTML, for example. If the application has multiple <code class="hljs inlineCode">Renderer</code> implementations, the configuration can select one of the renderers by its class name:</p>
+<pre><code class="language-xml">&lt;config
+  renderer="my.app.MyRenderer"
+&gt;
+
+&lt;/config&gt;</code></pre>
+<p>For this, the <code class="hljs inlineCode">MyRenderer</code> class only needs to implement the singleton pattern:</p>
+<pre><code class="language-java">public class MyRenderer implements Renderer {
+
+  /** Singleton {@link MyRenderer}. */
+  public MyRenderer INSTANCE = new MyRenderer();
+
+  private MyRenderer() {}
+
+  @Override
+  public void render(...) {
+    // Do what a Renderer has to do.
+  }
+
+}</code></pre>
+<p>The <code class="hljs inlineCode">Renderer</code>-singleton <code class="hljs inlineCode">MyRenderer</code> must define a <code class="hljs inlineCode">public static final</code> constant <code class="hljs inlineCode">INSTANCE</code> that contains a <code class="hljs inlineCode">Renderer</code>. Then the singleton instance can be referenced in the configuration via the class name of the singleton class.</p>
+<p></p>

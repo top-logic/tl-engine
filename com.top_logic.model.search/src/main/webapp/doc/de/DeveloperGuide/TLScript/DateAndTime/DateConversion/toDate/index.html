@@ -1,0 +1,46 @@
+<h2>Syntax</h2>
+<pre>	<code>toDate($calendar)
+
+toDate($number)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Wandelt den gegebenen Parameter in einen Datumswert um.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>calendar</td>
+   <td>Fachobjekt</td>
+   <td>Ein Kalender mit einem Datumswert. Abhängig vom Kalender (Systemkalender oder Benutzerkalender) ist der Wert kompatibel zu <code class="hljs inlineCode">tl.core:Date</code> oder <code class="hljs inlineCode">tl.core:DateTime</code>.</td>
+   <td colspan="1" rowspan="2">Einer von beiden muss definiert sein.</td>
+   <td colspan="1" rowspan="2"></td>
+  </tr>
+  <tr>
+   <td>number</td>
+   <td>Zahl</td>
+   <td>Millisekunden seit 1970-01-01:00:00:00.000. Die Umkehrfunktion davon ist <a class="tlObject" data-custom="true" href="?page=toMillis&amp;uuid=11ace3b7-6de1-45b1-9878-c5d7ed24280a">toMillis()</a>.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Ein Datumswert, der den Tag des Kalenders oder den Tag der Millisekunden repräsentiert.</p>
+<h2>Beispiele</h2>
+<p><strong>Hinweis: </strong>Die Ausgabe kann abhängig von der Zeitzone des Kalenders abweichen.</p>
+<h3>Kalender als Parameter</h3>
+<pre>	<code>toDate(date(2012, 5, 5))</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 05.06.2012</p>
+<h3>Zahl als Parameter</h3>
+<pre>	<code>toDate(1338822000000)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 05.06.2012</p>

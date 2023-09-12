@@ -1,0 +1,69 @@
+<p>Referenzen zwischen konfigurierten Instanzen können in der Konfiguration über ID- und Referenzproperties ausgedrückt werden. Beim Instanziieren einer typisierten Konfiguration können Referenzen (Querverweise) in ähnlicher Weise aufgelöst werden, wie auch Teilkonfigurationen instanziiert werden können.</p>
+<h2>ID-Property</h2>
+<p>Das Ziel der Referenz (die referenzierbare Instanz) muss hierfür ein Property deklarieren, das mit <code class="hljs inlineCode">@Id</code> markiert ist:</p>
+<pre><code>public class A {
+   public interface Config extends PolymorphicConfiguration&lt;A&gt; {
+      @Id(A.class)
+      String getName();
+   }
+
+   public A(InstantiationContext context, Config config) {
+      ...
+   }
+}
+</code></pre>
+<h2>Referenz-Property</h2>
+<p>Eine Referenz auf eine Instanz von <code class="hljs inlineCode">A</code> kann dann über ein beliebiges anderes Property vom selben Typ wie das ID-Property realisiert werden:</p>
+<pre><code>public class B {
+   public interface Config extends PolymorphicConfiguration&lt;B&gt; {
+      String getRef();
+   }
+}
+</code></pre>
+<h2>Referenz-Auflösung</h2>
+<p>Die Auflösung der so deklarierten Referenz muss im Config-Konstruktor von <code class="hljs inlineCode">B</code> erfolgen:</p>
+<pre><code>public class B {
+
+   A _ref;
+
+   public B(InstantiationContext context, Config config) {
+      context.resolveReference(config.getRef(), A.class, 
+         new ReferenceResolver&lt;A&gt;() {
+            @Override
+            public void setReference(A value) {
+               _ref = value;
+            }
+      });
+   }
+</code></pre>
+<p>Hierfür wird der Wert des Referenz-Properties zusammen mit einem Callback an den Instanziierungskontext übergeben. Sobald das Ziel der Referenz instanziiert wurde, wird dieses an den Callback übergeben und kann so in der Quelle die aufgelöste Referenz bekanntgeben.</p>
+<p>Damit die Referenzauflösung funktionieren kann, müssen beide Beteiligte (die referenzierende Konfiguration und die referenzierte Konfiguration) in demselben Instanziierungskontext angelegt werden. Beispielsweise darf die Instanz von <code class="hljs inlineCode">B</code> selbst kein (oder Teil von einem) Instance-Format-Property sein. Ansonsten würde <code class="hljs inlineCode">B</code> instanziiert, wenn die Konfiguration gelesen wird. Zu diesem Zeitpunkt existiert aber die Instanz des referenzierten <code class="hljs inlineCode">A</code> noch nicht.</p>
+<p><strong>Wichtig:</strong> Es muss genau der Typ angegeben werden, in dessen <code class="hljs inlineCode">ConfigItem</code> die Annotation <code class="hljs inlineCode">@Id(...)</code> steht. Subklassen können NICHT verwendet werden. Folgendes funktioniert also zum Beispiel NICHT:</p>
+<pre><code>context.resolveReference(InstantiationContext.OUTER, FormComponent.class, ...);
+</code></pre>
+<p>Statt dessen muss bei Komponenten immer <code class="hljs inlineCode">LayoutComponent</code> angegeben werden:</p>
+<pre><code>context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, ...);
+</code></pre>
+<h2>Umschließende Instanz</h2>
+<p>Eine Referenz auf die umgebende Instanz kann über die spezielle ID <code class="hljs inlineCode">InstantiationContext.OUTER</code> aufgelöst werden:</p>
+<pre><code>public class B {
+
+   A _outer;
+
+   public B(InstantiationContext context, Config config) {
+      context.resolveReference(InstantiationContext.OUTER, A.class, 
+         new ReferenceResolver&lt;A&gt;() {
+            @Override
+            public void setReference(A value) {
+               _outer = value;
+            }
+      });
+   }
+</code></pre>
+<p>In diesem Fall muss keine Referenz explizit konfiguriert werden. Allerdings muss die aufzulösende äußere Instanz ein ID-Property in ihrer Konfiguration deklarieren. Der Wert dieses ID-Properties spielt bei der Auflösung der <code class="hljs inlineCode">OUTER</code>-Referenz aber keine Rolle.</p>
+<p>Mit diesem Mechanismus kann keine Referenz auf die Parent-Instanz desselben Typs aufgelöst werden. Wenn in <code class="hljs inlineCode">A</code> eine <code class="hljs inlineCode">OUTER</code>-Referenz auf den Typ <code class="hljs inlineCode">A</code> aufgelöst wird, wird eine Referenz auf die Instanz selbst (<code class="hljs inlineCode">this</code>) geliefert.</p>
+<h2>Siehe auch</h2>
+<ul>
+ <li><a class="tlObject" data-custom="true" href="?page=TypedConfiguration&amp;uuid=5122a416-bd1c-445b-83a9-8c88e26004dc">Typisierte Konfiguration</a></li>
+ <li><code class="hljs inlineCode">test.com.top_logic.basic.config.TestTypedConfigurationReferences</code>.</li>
+</ul>

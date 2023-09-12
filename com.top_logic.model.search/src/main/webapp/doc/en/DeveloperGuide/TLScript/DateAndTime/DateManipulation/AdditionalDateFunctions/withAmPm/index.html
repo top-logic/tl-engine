@@ -1,0 +1,46 @@
+<h2>Syntax</h2>
+<pre>	<code>$calendar.withAmPm($value)</code>
+</pre>
+<h2>Description</h2>
+<p>Creates a new calendar from the given calendar, setting the time of day (a.m. or p.m.) to <code class="hljs inlineCode">amPm</code>. Changing the time of day can also change other values such as the <a class="tlObject" data-custom="false" href="?page=hour&amp;uuid=7035566c-b509-4dcd-b3b1-c5d9aeaea837">hour</a>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>calendar</td>
+   <td>Business object</td>
+   <td>The calendar whose time of day is to be changed. It can be a <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">system</a> or <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">user calendar</a>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>amPm</td>
+   <td>Number</td>
+   <td>Value for the morning a.m. (0) and the afternoon p.m. (1).</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p>
+<p>A calendar with the modified value for the time of day.</p>
+<h2>Examples</h2>
+<h3>Change amPm</h3>
+<pre>	<code>dateTime(2012, 8, 10, 7, 55, 24, 13).toUserCalendar().withAmPm(1).amPm()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 1</p>
+<h3>Adjusting the hour after amPm Adjustment</h3>
+<pre>	<code>dateTime(2012, 8, 10, 7, 55, 24, 13).toUserCalendar().withAmPm(1).hour()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 19</p>
+<p>By changing to p.m., 7 now stands for 19 hours.</p>

@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+<pre>	<code>round($number)
+
+round($number, $digits)
+</code>
+</pre>
+<h2>Description</h2>
+<p>Rounds the floating point number <code class="hljs inlineCode">number</code> to the given number of digits.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td style="height:0px">number</td>
+   <td style="height:0px">Number</td>
+   <td style="height:0px">A floating point number for rounding.</td>
+   <td style="height:0px">yes</td>
+   <td style="height:0px"></td>
+  </tr>
+  <tr>
+   <td style="height:0px">digits</td>
+   <td style="height:0px">Number</td>
+   <td style="height:0px">Specifies the number of digits after the decimal point.</td>
+   <td style="height:0px">no</td>
+   <td style="height:0px">0 (no decimal places)</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Number</p>
+<p>The rounded number with <code class="hljs inlineCode">digits</code> decimal places. An integer if <code class="hljs inlineCode">digits = 0</code>.</p>
+<h2>Examples</h2>
+<h3>Round</h3>
+<pre>	<code>round(3.141)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 3</p>
+<h3>Round up</h3>
+<pre>	<code>round(8.5)
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 9</p>
+<h3>Specification of digits</h3>
+<pre>	<code>round(4.1234, 2)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 4.12</p>
+<h3>More digits than places</h3>
+<pre>	<code>round(4.12, 5)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 4.12</p>
+<p></p>

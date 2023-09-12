@@ -1,0 +1,42 @@
+<h2>Syntax</h2>
+<pre>	<code>$calendar.withEraAdded($value)</code>
+</pre>
+<h2>Description</h2>
+<p>Creates a new calendar from the given calendar, increasing the <a class="tlObject" data-custom="true" href="?page=era&amp;uuid=248faaa1-b7ee-4f62-944d-a64ef8b94653">epoch </a>by <code class="hljs inlineCode">value</code>. The addition of the value can affect other values, for example the result of <a class="tlObject" data-custom="false" href="?page=toMillis&amp;uuid=11ace3b7-6de1-45b1-9878-c5d7ed24280a">toMillis</a>.</p>
+<p>If the new epoch number exceeds the total number of possible epochs (in case of <a href="https://docs.oracle.com/javase/7/docs/api/java/util/GregorianCalendar.html">GregorianCalendar</a> there are 2 epochs: BC and AD), then the epoch is set to the highest value. It will not start counting from the beginning as for example in <a class="tlObject" data-custom="false" href="?page=withDayAdded&amp;uuid=482c142c-bda0-4c70-80bd-6d3fccc21206">withDayAdded</a>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>calendar</td>
+   <td>Business object</td>
+   <td>The calendar whose epoch is to be changed. It can be a <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">system</a> or <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">user calendar</a>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>value</td>
+   <td>Number</td>
+   <td>Value by which the epoch should be increased.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p>
+<p>A calendar with the changed value for the epoch.</p>
+<h2>Examples</h2>
+<pre>	<code>dateTime(2012, 8, 14, 7, 55, 24, 13).toUserCalendar().withEraAdded(1).era()</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span></strong> 1</p>
+<p>The epoch of the date is already equal to 1 and cannot take a higher value because there are only 2 epochs in the Gregorian calendar. Therefore the epoch remains unchanged.</p>

@@ -1,0 +1,258 @@
+<p>Mit Hilfe der automatischen Datenmigration werden Fach-Daten beim Booten des System automatisch an eine neue Anwendungsversion angepasst, wenn dies nötig ist. Z.B. werden automatisch neue Attribute für Fachobjekt-Typen angelegt. In manchen Fällen ist es jedoch wünschenswert, dass das Modell so migriert wird, das es für die Anwendung so aussieht, als wäre der Zustand schon immer so gewesen. Z.B. wenn ein Attribut auch im historischen Kontext vorhanden sein soll, kann es nicht automatisch durch "Hochfahren" des Systems angelegt werden, da das Attribut vor diesem Zeitpunkt natürlich nicht existiert.</p>
+<p>Für diesen Zweck gibt es <code class="hljs inlineCode">MigrationProcessor</code> mit denen häufige Fälle abgedeckt sind. Diese können wie in <a class="tlObject" data-custom="false" href="?page=AutomaticDataMigration&amp;uuid=282cf4bf-f5a7-420e-b19c-6c008009e227">Automatische Datenmigration</a> beschrieben Datenbank-unabhängig in der SQL-Migration eingesetzt werden.</p>
+<h2>Anlegen eines neuen Moduls</h2>
+<p>Soll ein neues Modul&nbsp; angelegt werden, kann dies mit&nbsp; <code class="hljs inlineCode">&lt;create-module .../&gt;</code> geschehen, z.B.</p>
+<pre><code>&lt;create-module name="test.module"&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-module&gt;
+</code></pre>
+<div>
+ In den Annotationen kann die selbe Syntax verwendet werden wie in den Modell-Dateien.
+</div>
+<div>
+ &nbsp;
+</div>
+<h2>Löschen eines Moduls</h2>
+<p>Soll ein Modul inklusive seinen Singletons, Typen und deren Attributen gelöscht werden, kann dies mit <code class="hljs inlineCode">&lt;delete-module .../&gt;</code> geschehen, z.B:</p>
+<pre><code>&lt;delete-module name="test.module" /&gt;</code></pre>
+<p><strong>Achtung</strong>: Instanzen der einzelnen Typen werden nicht entfernt. Es wird empfohlen vor dem Löschen des Moduls die Fachobjekt-Typen einzeln zu löschen (&lt;delete-class ...\&gt;) um sicherzustellen, dass Instanzen des Types gelöscht werden.</p>
+<h2>Erstellen eines Fachobjekt-Typs</h2>
+<p>Soll ein neuer Fachobjekt-Typ angelegt werden, kann dies mit <code class="hljs inlineCode">&lt;create-class ... /&gt;</code> geschehen, z.B:</p>
+<pre><code>&lt;create-class name="test.module:TestType"
+	abstract="false"
+	final="true"
+	primary-generalization="test.module:TypeGeneralization"
+&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-class&gt;</code></pre>
+<p>Der Name des Types muß voll qualifiziert angegeben werden. In den Annotationen kann die selbe Syntax verwendet werden wie in den Modell-Dateien. Es ist nicht möglich Attribute inline anzugeben. Für jedes Attribut muss ein separater Migrationseintrag erstellt werden.</p>
+<p><strong>Achtung:</strong> Jeder Fachobjekt-Typ benötigt als (geerbte) Generalisierung den Typ <code class="hljs inlineCode">tl.model:TLObject</code>. Wird ein neuer Fachobjekt-Typ über die Anwendung angelegt, so wird dies programmatisch sichergestellt. Während der Migration muss dies der Entwickler tun, indem er im Attribut <code class="hljs inlineCode">primary-generalization</code> eine Generalisierung angibt. Gibt keine fachliche Generalisierung, <strong>muss</strong> <code class="hljs inlineCode">tl.model:TLObject</code> benutzt werden.</p>
+<h2>Löschen eines Fachobjekt-Typs</h2>
+<p>Soll ein Fachobjekt-Typ inklusive seinen Attributen gelöscht werden, kann dies mit <code class="hljs inlineCode">&lt;delete-class .../&gt;</code> geschehen, z.B:</p>
+<pre><code>&lt;delete-class name="test.module:TestType"
+	type-table="MyTable"
+/&gt;</code></pre>
+<p>Der Name des Types muß voll qualifiziert angegeben werden.</p>
+<p><code class="hljs inlineCode">type-table</code> ist der Name der Tabellen in der Instanzen des Fachobjekt-Typs gespeichert werden. Alle Instanzen des Typs werden aus der Tabelle gelöscht. Ist kein Typ angegegben (z.B. weil der Typ abstrakt ist) wird nichts gelöscht.</p>
+<p><strong>Achtung:</strong> Die Referenzen zu anderen Objekten und die Flex-Daten&nbsp; werden nicht mitgelöscht. Es wird empfohlen zuerst die Referenz-Attribute und primitiven Eigenschaften des Fachobjekt-Typ's zu löschen (<code class="hljs inlineCode">&lt;delete-reference .../&gt;</code> bzw. <code class="hljs inlineCode">&lt;delete-property .../&gt;</code>).</p>
+<h2>Erstellen eines Datentyps</h2>
+<p>Soll ein neuer Datentyp angelegt werden, kann dies mit <code class="hljs inlineCode">&lt;create-datatype .../&gt;</code> geschehen, z.B:</p>
+<pre><code>&lt;create-datatype name="test.module:TestType"
+	db_type="clob"
+	kind="Custom"
+&gt;
+	&lt;storage-mapping ... /&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-datatype&gt;
+</code></pre>
+<p>Der Name der Datentyps muß voll qualifiziert angegeben werden. In den Annotationen kann die selbe Syntax verwendet werden wie in den Modell-Dateien.</p>
+<h2>Erstellen einer Aufzählung</h2>
+<p>Soll eine neue Aufzählung angelege werden, kann dies mit <code class="hljs inlineCode">&lt;create-enumeration .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;create-enumeration name="test.module:MyEnum"&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-enumeration&gt;</code></pre>
+<p>Der Name der Aufzählung muss qualifiziert angegeben werden. In den Annotationen kann die selbe Syntax verwendet werden wie in den Modell-Dateien. Es ist nicht möglich Classifier inline anzugeben. Für jeden Classifier muss ein separater Migrationseintrag erstellt werden.</p>
+<h2>Hinzufügen eines Classifiers</h2>
+<p>Soll ein neuer Classifier hinzugefügt werden, kann dies <code class="hljs inlineCode">&lt;create-classifier .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;create-classifier name="test.module:MyEnum#classifier1"/&gt;</code></pre>
+<p>Der Name des Classifiers muß qualifiziert angegeben werden.</p>
+<h2>Hinzufügen einer primitiven Eigenschaft</h2>
+<p>Soll eine <code class="hljs inlineCode">TLProperty</code>, also der Verweis auf einen Datentyp erstellt werden, kann dies mit <code class="hljs inlineCode">&lt;create-property .../&gt;</code> geschehen, z.B:</p>
+<pre><code>&lt;create-property name="test.module:TestType#property1"
+	bag="false"
+	mandatory="false"
+	multiple="true"
+	ordered="true"
+	type="target.module:TargetType"
+&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-property&gt;</code></pre>
+<p>Der Name der Eigenschaft muß voll qualifiziert angegeben werden. In den Annotationen kann die selbe Syntax verwendet werden wie in den Modell-Dateien.</p>
+<h2>Löschen einer Eigenschaft</h2>
+<p>Soll eine <code class="hljs inlineCode">TLProperty</code> gelöscht werden, kann dies mit <code class="hljs inlineCode">&lt;delete-property .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;delete-property name="test.module:TestType#prop1"
+	type-tables="MyTable1, MyTable2,..."
+/&gt;</code></pre>
+<p>Der Name der Eigenschaft muß voll qualifiziert angegeben werden.</p>
+<p><code class="hljs inlineCode">type-tables</code> sind die Tabellen in die der Type <code class="hljs inlineCode">test.module:TestType</code> und seine Spezialisierungen ihre Daten ablegen. Sind diese Tabellen angegeben, werden die Flex-Daten die zu diesem Tabellen und dem Attribut <code class="hljs inlineCode">prop1</code> gehören mitgelöscht. <strong>Achtung:</strong> Es muß sichergestellt sein, dass es keinen anderen Typ mit einem gleichnamigen Attribut gibt der in eine der angegeben Tabellen speichert.</p>
+<h2>Hinzufügen einer Referenz auf einen Fachobjekt-Typ</h2>
+<p>Soll eine <code class="hljs inlineCode">TLReference</code>, also der Verweis auf einen Fachobjekt-Typ erstellt werden, kann dies <code class="hljs inlineCode">&lt;create-reference ... /&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;create-reference name="test.module:TestType#ref1"
+	aggregate="false"
+	composite="false"
+	mandatory="false"
+	multiple="true"
+	ordered="true"
+	type="target.module:TargetType"
+&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-reference&gt;
+</code></pre>
+<p>Der Name der Referenz muß voll qualifiziert angegeben werden. In den Annotationen kann die selbe Syntax verwendet werden wie in den Modell-Dateien.</p>
+<h2>Löschen einer Referenz</h2>
+<p>Soll eine <code class="hljs inlineCode">TLReference</code> gelöscht werden, kann dies mit <code class="hljs inlineCode">&lt;delete-reference .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;delete-reference name="test.module:MyType#ref1"/&gt;
+</code></pre>
+<p>Der Name der Referenz muß voll qualifiziert angegeben werden. Es werden die Referenz und die zugehörigen Daten aus der Tabelle <code class="hljs inlineCode">hasWrapperAttValue</code> gelöscht. Werden die Daten in einer speziellen&nbsp;<code class="hljs inlineCode">hasWrapperAttValueBaseAssociation-</code>Tabelle&nbsp; gespeichert (z.B. <code class="hljs inlineCode">hasMilestones</code>), so kann diese als Attribut angegeben werden: <code class="hljs inlineCode">association-table="hasMIlestones"</code>.</p>
+<h2>Hinzufügen einer Rückwärts-Referenz zu einer bestehenden Referenz</h2>
+<p>Soll zu einer Vorwärts-Referenz eine zugehörige Rückwärts-Referenz angelegt werden, kann dies mit <code class="hljs inlineCode">&lt;create-inverse-reference .../&gt;</code>, z.B.</p>
+<pre><code>&lt;create-inverse-reference name="test.module:TestType#backRef"
+	aggregate="false"
+	composite="false"
+	mandatory="false"
+	multiple="true"
+	ordered="true"
+	inverse-reference="test.module:TestType#ref1"
+&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/create-inverse-reference&gt;
+</code></pre>
+<p>Die Syntax ist im wedentlichen dieselbe wie bei einer <code class="hljs inlineCode">TLReference</code>, nur dass anstelle des qualifizierten Namen des Ziel-Typ's der qualifizierte Name der Referenz angegeben werden muß.</p>
+<h2>Löschen einer Rückwärts-Referenz</h2>
+<p>Soll eine Rückwärts-Referenz gelöscht werden, kann dies mit <code class="hljs inlineCode">&lt;delete-inverse-reference .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;delete-inverse-reference name="test.module:MyType#invRef"/&gt;</code></pre>
+<p>Der Name der Referenz muß voll qualifiziert angegeben werden.</p>
+<h2>Markieren eines Attributes als Überschreibung</h2>
+<p>Soll eine Überschreibung eines Attributes oder einer Referenz angelegt werden, so kann dies <strong>nicht </strong>mit dem Schlüsselwort <code class="hljs inlineCode">override="true" </code>geschehen. Das neue Attribut oder die neue Referenz muß normal angelegt werden und daraufhin das neue Attribut als Überschreibung definiert werden.</p>
+<p>Dies kann mit&nbsp; <code class="hljs inlineCode">&lt;mark-override .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;mark-override name="test.module:TestType2#part"
+	definition="test.module:TestType1#part"
+/&gt;
+</code></pre>
+<p>Hier wird das Attribut <code class="hljs inlineCode">test.module:TestType2#part</code> als override von <code class="hljs inlineCode">test.module:TestType1#part</code> definiert (hier wird angenommen, dass <code class="hljs inlineCode">test.module:TestType2</code> eine Subklasse von <code class="hljs inlineCode">test.module:TestType1</code> ist). <strong>Achtung:</strong> Soll eine weitere Überschreibung von <code class="hljs inlineCode">test.module:TestType2#part</code> erstellt werden, z.B. <code class="hljs inlineCode">test.module:TestType3#part</code>, so muss wieder erst&nbsp;<code class="hljs inlineCode">test.module:TestType3#part</code> angelegt werden und&nbsp; in dem Prozessor <code class="hljs inlineCode">&lt;mark-override .../&gt;</code> für<code class="hljs inlineCode"> test.module:TestType3#part</code>, als <code class="hljs inlineCode">definition</code> ebenfalls <code class="hljs inlineCode">test.module:TestType1#part</code> angegeben werden.</p>
+<h2>Hinzufügen einer Generalisierung eines Fachobjekt-Typ</h2>
+<p>Soll ein Fachobjekt-Typ als Generalisierung eines anderen Fachobjekt-Typs hinzugefügt werden, so kann das mit <code class="hljs inlineCode">&lt;add-class-generalizations ... /&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;add-class-generalizations name="test.module:TestType"&gt;
+	&lt;generalizations&gt;
+		&lt;generalization type="module1:Generalization1"/&gt;
+		&lt;generalization type="module2:Generalization2"/&gt;
+		...
+	&lt;/generalizations&gt;
+&lt;/add-class-generalizations&gt;
+</code></pre>
+<p>Hier werden dem Typ <code class="hljs inlineCode">test.module:TestType</code> die Generalisierungen <code class="hljs inlineCode">module1:Generalization1</code> und <code class="hljs inlineCode">module2:Generalization2</code> hinzugefügt. Alle Typ-Namen sind qualifiziert anzugeben.</p>
+<h2>Entfernen einen Generalisierung eines Fachobjekt-Typ</h2>
+<p>Soll ein Fachobjekt-Typ einen anderen Typ nicht mehr erweitern, sol kann dies mit &lt;remove-class-generalization .../&gt; geschehen, z.B.:</p>
+<pre><code>&lt;remove-class-generalizations name="test.module:TestType"&gt;
+	&lt;generalizations&gt;
+		&lt;generalization type="module1:Generalization1"/&gt;
+		&lt;generalization type="module2:Generalization2"/&gt;
+		...
+	&lt;/generalizations&gt;
+&lt;/remove-class-generalizations&gt;</code></pre>
+<p>Hier werden dem Typ <code class="hljs inlineCode">test.module:TestType</code> die Generalisierungen <code class="hljs inlineCode">module1:Generalization1</code> und <code class="hljs inlineCode">module2:Generalization2</code> entfernt. Alle Typ-Namen sind qualifiziert anzugeben.</p>
+<p><strong>Achtung:</strong> Es muss sichergestellt sein, dass der Typ mindestens (geerbt) <code class="hljs inlineCode">tl.model:TLObject</code> als Generalisierung besitzt. Im Notfall muss dies mittels <code class="hljs inlineCode">&lt;add-class-generalizations ... /&gt;</code> sichergestellt werden.</p>
+<h2>Aktualisierung der Annotationen eines Modellelementes</h2>
+<p>Soll bei einem Modell-Element, also einem <code class="hljs inlineCode">TLModule</code>, einem <code class="hljs inlineCode">TLType</code> oder einem <code class="hljs inlineCode">TLTypePart</code>, die Annotationen geändert werden, kann dies mit <code class="hljs inlineCode">&lt;update-tl-annotations ... /&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;update-annotations name="test.module:TestType#part1"&gt;
+	&lt;annotations&gt;
+		...
+	&lt;/annotations&gt;
+&lt;/update-annotations&gt;</code></pre>
+<p>Hier muss der Name des Modellelementes qualifiziert angegeben werden.</p>
+<h2>Ändern des Zieltyps von Attributen</h2>
+<p>Soll in einem speziellen Attribute der Zieltyp geändert werden, oder in allen Attributen, so kann dies mit <code class="hljs inlineCode">&lt;change-part-type ... /&gt;</code> geschehen, z.B. wird mit</p>
+<pre><code>&lt;change-part-type
+	source="module1:TestType1"
+	target="module2:TestType2"
+/&gt;</code></pre>
+<p>in allen Attributen die den Typ <code class="hljs inlineCode">module1:TestType1</code> haben, der Typ <code class="hljs inlineCode">module2:TestType2</code> gesetzt. Soll dies nur in einem speziellen Attribut geschehen&nbsp; wird</p>
+<pre><code>&lt;change-part-type
+	part="test.module:TestType#part"
+	target="module2:TestType2"
+/&gt;</code></pre>
+<p>benutzt. Hier wird dem Attribut <code class="hljs inlineCode">test.module:TestType#part</code> der Typ <code class="hljs inlineCode">module2:TestType2</code> gesetzt.</p>
+<p><strong>Achtung:</strong> Soll bei einer <code class="hljs inlineCode">TLReference</code> der Typ geändert werden, muss dies entweder an dem zugehörigen <code class="hljs inlineCode">TLAssociationEnd</code> gemacht werden bzw.</p>
+<pre><code>&lt;change-reference-type
+	reference="test.module:TestType#ref"
+	target="module2:TestType2"
+/&gt;
+</code></pre>
+<p>benutzt werden.</p>
+<h2>Anlegen von Fachobjekten</h2>
+<p>Soll ein neues Fachobjekt angelegt werden kann dies mit <code class="hljs inlineCode">&lt;create-object .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;create-object
+	table="StructuredElement"
+	type="test.module:MyType"
+&gt;
+	&lt;values&gt;
+		&lt;value
+			column="NAME"
+			column-type="string"
+			value="ROOT"
+		/&gt;
+	&lt;/values&gt;
+&lt;/create-object&gt;</code></pre>
+<p><strong>Achtung:</strong> In den values werden die Werte für die Spalten angegeben, in <code class="hljs inlineCode">column</code> steht der Name der Spalte wie sie in der Datenbank heißt, also meistens in Großbuchstaben und mit Unterstrichen getrennt. <code class="hljs inlineCode">table</code> hingegen enthält den Namen des zu der Tabelle gehörenden <code class="hljs inlineCode">MetaObject</code>.</p>
+<h2>Anlegen von Singletons</h2>
+<p>Soll ein neues Singleton zu einem Modul angelegt werden, kann dies mit <code class="hljs inlineCode">&lt;create-singleton .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;create-singleton name="ROOT"
+	module="test.module"
+&gt;
+	&lt;singleton
+		table="DemoTypes"
+		type="test.module:RootType"
+	&gt;
+		&lt;values&gt;
+			&lt;value
+				column="NAME"
+				column-type="string"
+				value="ROOT"
+			/&gt;
+	&lt;/singleton&gt;
+&lt;/create-singleton&gt;</code></pre>
+<p>Hier wird dem Modul <code class="hljs inlineCode">test.module</code>, ein Singleton namens ROOT hinzugefügt. Die Syntax im Tag <code class="hljs inlineCode">singleton</code> entspricht der des Prozessors <code class="hljs inlineCode">&lt;create-object .../&gt;</code>.</p>
+<h2>Einen Classifier als "default" setzen</h2>
+<p>Soll in einer Aufzählung ein Classifier als "default" gesetzt werden, so kann dies mit <code class="hljs inlineCode">&lt;set-default-classifier .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;set-default-classifier
+	enumeration="test.module:enum1"
+	default-classifier="classifier2"
+/&gt;</code></pre>
+<p>Hier wird in der Aufzählung <code class="hljs inlineCode">test.module:enum1</code> der Classifier <code class="hljs inlineCode">classifier2</code> als "default" gesetzt. Soll kein Classifier "default" sein kann <code class="hljs inlineCode">default-classifier=""</code> gesetzt werden.</p>
+<h2>Aktualisieren einer primitiven Eigenschaft</h2>
+<p>Soll eine <code class="hljs inlineCode">TLProperty</code> aktualisiert werden, kann dies mit <code class="hljs inlineCode">&lt;update-property .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;update-property name="test.module:TestType#prop1"
+	mandatory="true"
+	new-name="test.module:OtherTestType#newProp1"
+	new-type="tl.core:Long"
+/&gt;</code></pre>
+<p>Hier ist <code class="hljs inlineCode">new-name</code> der qualifizierte neue Name. Hier wird also nicht nur ein Umbenennen, sondern auch ein Umhängen an einen anderen Typ kodiert. Im Beispiel würde das <code class="hljs inlineCode">TLProperty</code> umbenannt werden von <code class="hljs inlineCode">prop1</code> nach <code class="hljs inlineCode">newProp1</code> und verschoben werden von <code class="hljs inlineCode">test.module:TestType</code> nach <code class="hljs inlineCode">test.module:OtherTestType</code>.</p>
+<h2>Aktualisieren einer Referenz</h2>
+<p>Soll eine <code class="hljs inlineCode">TLReference</code> aktualisiert werden, kann dies mit <code class="hljs inlineCode">&lt;update-reference .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;update-reference name="test.module:TestType#ref1"
+	aggregate="false"
+	composite="false"
+	mandatory="false"
+	multiple="true"
+	ordered="true"
+	new-name="test.module:OtherTestType#ref2"
+	new-type="test.module2:TargetType"
+/&gt;</code></pre>
+<p>Hier ist <code class="hljs inlineCode">new-name</code> der qualifizierte neue Name. Hier wird also nicht nur ein Umbenennen, sondern auch ein Umhängen an einen anderen Typ kodiert. Im Beispiel würde die <code class="hljs inlineCode">TLReference</code> umbenannt werden von <code class="hljs inlineCode">ref1</code> nach <code class="hljs inlineCode">ref2</code> und verschoben werden von <code class="hljs inlineCode">test.module:TestType</code> nach <code class="hljs inlineCode">test.module:OtherTestType</code>.</p>
+<p><strong>Achtung:</strong> Rückwärts-Referenzen müssen mit <code class="hljs inlineCode">&lt;update-inverse-reference .../&gt;</code> aktualisiert werden.</p>
+<h2>Aktualisieren einer Rückwärts-Referenz</h2>
+<p>Soll eine Rückreferenz aktualisiert werden, kann dies mit <code class="hljs inlineCode">&lt;update-inverse-reference .../&gt;</code> geschehen, z.B.:</p>
+<pre><code>&lt;update-reference name="test.module:TestType#ref1"
+	aggregate="false"
+	composite="false"
+	mandatory="false"
+	multiple="true"
+	ordered="true"
+	new-name="test.module:TestType#ref2"
+/&gt;</code></pre>
+<p>Hier ist <code class="hljs inlineCode">new-name</code> der qualifizierte neue Name. Hier darf sich der Owner der Referenz nicht ändern. Sollte dies doch der Fall sein wird der neue Owner ignoriert. Ebenso kann hier kein neuer Zieltyp gesetzt werden.</p>
+<p>Prinzipiell sind der Zieltyp einer Rückreferenz und der Owner der zugehörigen Hin-Referenz identisch, ebenso sind der Owner der Rückreferenz und der Zieltyp der entsprechenden Hin-Referenz identisch. Somit kann der Zieltyp, bzw. der Owner einer Rückreferenz angepasst werden, indem der Owner, bzw. der Zieltyp der zugehörigen Hinreferenz angepasst wird.</p>

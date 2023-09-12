@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.get(`$attr-literal`)
+
+$object.get($part-expr)</code>
+</pre>
+<h2>Description</h2>
+<p>Returns the value of the specified attribute from the <code class="hljs inlineCode">object</code>. The attribute can either be specified by an attribute literal (the normal case), or calculated dynamically by an expression.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Business object</td>
+   <td>An object whose attribute is to be determined.</td>
+   <td colspan="1">yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>attr-literal</td>
+   <td>String</td>
+   <td>Attribute literal representing the attribute being searched for.</td>
+   <td colspan="1" rowspan="2">One of the two is required.</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>part-expr</td>
+   <td>Number/string/boolean/buisness object/set/function</td>
+   <td>Dynamically calculated attribute.</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Number/string/boolean/business object, set</p>
+<p>The value of the attribute of the given object.</p>
+<h2>Examples</h2>
+<h3>Single read of an attribute</h3>
+<pre>	<code>{
+   element = new(`my.module:MyType`);
+   $element.set(`my.module:MyType#myAttr`, "test");
+   $element.get(`my.module:MyType#myAttr`);
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> test</p>
+<h3>Searching for specific objects</h3>
+<pre>	<code>all(`my.module:MyType`).filter(element -&gt; $element.get(`my.module:MyType#myAttr`).isStringEqual("test"))</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> Objects with the attribute value <code class="hljs inlineCode">test</code> for <code class="hljs inlineCode">myAttr</code>.</p>
+<p></p>

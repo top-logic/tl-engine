@@ -1,0 +1,115 @@
+<p>Technisch gesehen bietet der Layout-Editor solche Komponenten an, für die Templates zur Verfügung stehen. Ein solches Layout-Template ist eine Datei <code class="hljs inlineCode">*.template.xml</code> im Ordner <code class="hljs inlineCode">WEB-INF/layouts</code> der laufenden Applikation. Ein Template kann entweder von der Applikation selbst, oder von einem TopLogic-Modul zur Verfügung gestellt sein.</p>
+<h2>Aufbau eines Layout-Templates</h2>
+<p>Ein Layout-Template ist eine XML-Datei im Namensraum <code class="hljs inlineCode">http://www.top-logic.com/ns/config/6.0</code> mit dem Root-Tag <code class="hljs inlineCode">template</code>:</p>
+<pre><code class="language-xml">&lt;config:template
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  groups="..."
+&gt;
+  &lt;properties extends="..."&gt;
+    &lt;property name="myProp"
+      type="..."
+    &gt;
+      ...
+    &lt;/property&gt;
+
+    ...
+  &lt;/properties&gt;
+
+  &lt;component name="..." 
+    class="..."
+    option="${myProp}"
+  &gt;
+    ...
+  &lt;/component&gt;
+&lt;/config:template&gt;</code></pre>
+<div>
+ <div>
+  Die Datei besteht aus zwei Abschnitten. Im <code class="hljs inlineCode">properties</code> Header werden die vom Layout-Editor angebotenen Optionen definiert (<code class="hljs inlineCode">property</code>). Das nächste (und einzige) Element nach dem Abschnitt <code class="hljs inlineCode">properties</code> ist die Komponentenkonfiguration, die duch das Template erzeugt werden soll. Die Konfigurationsoptionen der konfigurierten Komponente können über <code class="hljs inlineCode">${myProp}</code> Bezug nehmen auf den Wert des Property mit Namen <code class="hljs inlineCode">myProp</code>.
+ </div>
+</div>
+<p>Ein Property eines Layout-Templates verhält sich wie ein Property der <a class="tlObject" data-custom="true" href="?page=TypedConfiguration&amp;uuid=5122a416-bd1c-445b-83a9-8c88e26004dc">Typisierten Konfiguration</a>, das anstatt über den Getter eines Java-Interfaces in XML definiert ist. Der Name des Property wird im Attribut <code class="hljs inlineCode">name</code> gegeben. Der Typ des Property wird entweder direkt im Attribut <code class="hljs inlineCode">type</code> als vollqualifizierter Klassenname angegeben, wenn es sich um ein primitives Property handelt. Bei einem listenwertigen Property ist der <code class="hljs inlineCode">type</code> gleich <code class="hljs inlineCode">List</code> und der Wertetyp der Liste in <code class="hljs inlineCode">element-type</code> gegeben. Handelt es sich um eine Instanz-Unterkonfiguration, so ist der <code class="hljs inlineCode">type</code> oder <code class="hljs inlineCode">element-type</code> gleich <code class="hljs inlineCode">PolymorphicConfiguration</code> und der Typ der konfigurierten Instanz über <code class="hljs inlineCode">instance-type</code> gegeben. Beispiele für Properties sind:</p>
+<p>Ein einfaches Boolean-Property "<code class="hljs inlineCode">tabVisible</code>" (der Default-Wert kann über das Attribut <code class="hljs inlineCode">default</code> angegeben werden):</p>
+<pre><code class="language-xml">&lt;property name="tabVisible"
+  default="true"
+  type="boolean"
+/&gt;
+</code></pre>
+<p>Eine Instanz-Konfiguration eines Model-Builders (Annotationen an das Property können im Inhaltsbereich des Properties gegeben werden):</p>
+<pre><code class="language-xml">&lt;property name="modelBuilder"
+  instance-type="com.top_logic.mig.html.ListModelBuilder"
+  type="PolymorphicConfiguration"
+&gt;
+  &lt;mandatory/&gt;
+  &lt;options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/&gt;
+&lt;/property&gt;
+</code></pre>
+<p>Eine Liste von Button-Instanzkonfigurationen:</p>
+<pre><code class="language-xml">&lt;property name="buttons"
+  element-type="com.top_logic.basic.config.PolymorphicConfiguration"
+  instance-type="com.top_logic.tool.boundsec.CommandHandler"
+  type="List"
+&gt;
+  &lt;acceptable-classifiers value="commons, dialog"/&gt;
+&lt;/property&gt;
+</code></pre>
+<h2>Assistenten-Templates</h2>
+<p>Normale Templates erwarten für die Erstellung einer neuen Komponente dieselbe Menge an Optionen wie bei der nachträglichen Bearbeitung einer bereits erstellten Komponente. Manchmal ist es aber sinnvoll bei der Neuanlage nur eine kleine Menge an Initialwerten abzufragen und diese zu verwenden, um die Parameter des eigentlichen Templates mit sinnvollen Default-Werten zu füllen. So kann aus der Eingabe eines Typs eine gute Vorbelegung für diverse Lookup- und Test-Funktionen eines Model-Builders erzeugt werden.</p>
+<p>Um die Komponentenerzeugung so zu vereinfachen, gibt es Assistenten-Templates, welche mit wenigen initial zu füllenden Parametern ein anderes Template aufrufen und die "echten" Parameter aus den eingegebenen Werten belegen. Wird eine über ein Assistenten-Template angelegte Komponente später editiert, werden dann die vollständigen Parameter des eigentlichen Templates zur Bearbeitung angeboten. Das folgende Template ist ein Assistent für das eigentliche Template <code class="hljs inlineCode">my-real-component.template.xml</code>, das in dem Attribut <code class="hljs inlineCode">assistant-for</code> angegeben wird. Im Inhaltsbereich eines Assistententemplates wird keine Komponentenkonfiguration erstellt, sondern die Konfiguration der Parameter des Ziel-Templates (<code class="hljs inlineCode">config</code>):</p>
+<pre><code class="language-xml">&lt;config:template
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  assistant-for="my-real-component.template.xml"
+&gt;
+  &lt;properties&gt;
+    &lt;property name="initProp" type="String"&gt;
+    ...
+  &lt;/properties&gt;
+
+  &lt;config&gt;
+    &lt;realProp&gt;${initProp}&lt;/realProp&gt;
+  &lt;/config&gt;
+&lt;/config:template&gt;</code></pre>
+<div>
+ <div>
+  <h2>Sichten-Templates</h2>
+  <p>Ein Template kann nicht nur eine einzelne Komponente erzeugen, sondern eine ganze Sicht bestehend aus mehreren gleichzeitig angezeigten Komponenten, Dialogen und Buttons. Hierfür kann ein Template andere Templates über <code class="hljs inlineCode">temlate-call</code> aufrufen. Einem <code class="hljs inlineCode">template-call</code> übergibt man das zu instanziierende Template mit dem <code class="hljs inlineCode">template</code>-Attribut und im Inhaltsbereich die Argumente für die Parameter dieses Templates mit dem <code class="hljs inlineCode">arguments</code>-Element. Macht man ein Sichten-Template zu einem Assistenten-Template (siehe oben), dann hat das den positiven Nebeneffekt, dass aus dem Template-Aufrufen eigenständig konfigurierbare Komponenten werden. D.h. nach Erstellung einer Sicht mit einem Sichten-Assistenten, entstehen mehrere unabhängig voneinander weiterbearbeitbare Komponenten. Von jeder dieser Komponenten lassen ich anschließend im Layout-Editor die Eigenschaften anpassen.</p>
+  <p>Folgender Sichten-Assistent erstellt drei Komponenten: Eine Tabelle neben einem Formular und einen Create-Dialog an der Tabelle:</p>
+  <pre><code class="language-xml">&lt;config:template
+  xmlns:config="http://www.top-logic.com/ns/config/6.0"
+  assistant-for="com.top_logic/layout.template.xml"
+&gt;
+  &lt;properties extends="com.top_logic.layout.editor.config.TypeTemplateParameters"&gt;
+    ...
+  &lt;/properties&gt;
+
+  &lt;config&gt;
+    &lt;components&gt;
+      &lt;config:template-call
+        layout-scope="__tableTemplateScope__"
+        template="com.top_logic/table.template.xml"
+      &gt;
+        &lt;arguments name="..."
+          type="..."
+        &gt;
+          &lt;dialogs&gt;
+            &lt;config:template-call template=".../genericCreateDialog.template.xml"&gt;
+              &lt;arguments&gt;
+                ...
+              &lt;/arguments&gt;
+            &lt;/config:template-call&gt;
+          &lt;/dialogs&gt;
+        &lt;/arguments&gt;
+      &lt;/config:template-call&gt;
+
+      &lt;config:template-call template=".../form.template.xml"&gt;
+        &lt;arguments 
+          model="selection(__tableTemplateScope__#Table)"
+        /&gt;
+      &lt;/config:template-call&gt;
+    &lt;/components&gt;
+  &lt;/config&gt;
+&lt;/config:template&gt;</code></pre>
+  <p>Eine Besonderheit ist hier, dass gleichzeitig eine Verknüpfung zwischen der Selektion der Tabelle und dem Modell des Formulars hergestellt wird. Da Tabelle und Formular nach Expansion des Templates durch zwei unterschiedliche Templates erzeugt werden und eine Komponenten-Referenz sich immer auf die Datei bezieht, in der die Komponente definiert ist, kann diese Beziehung eigentlich vor Expansion des Templates noch gar nicht formuliert werden, weil die beiden Zieldateien, in die die Templates for Tabelle und Formular expandiert werden noch nicht existieren.</p>
+  <p>Um dies dennoch zu realisieren, kann bei einem Template-Aufruf eine Variable für die Zieldatei ("Layout-Scope") angegeben werden. Mit der Deklaration <code class="hljs inlineCode">layout-scope="__tableTemplateScope__"</code> am Template-Aufruf für die Tabelle wird gesagt, dass die Zieldatei, in die dieses Template expandiert wird, <code class="hljs inlineCode">__tableTemplateScope__</code> heißen soll. Diese Variable kann anschließend verwendet werden, um in der Modell-Definition des Formulars, auf die Tabellenkomponente Bezug zu nehmen: <code class="hljs inlineCode">selection(__tableTemplateScope__#Table)</code></p>
+  <p>Die Scope-Variable <code class="hljs inlineCode">__tableTemplateScope__</code> kann wie ein Dateiname verwendet werden, um eine Komponenten-Referenz zu bauen. Mit Expansion des Sichten-Assistenten wird diese Variabel konsistent durch die Dateinamen ersetzt, in die die Templates expandiert werden.</p>
+ </div>
+</div>

@@ -1,0 +1,35 @@
+<p>Mithilfe eines Import-Dialogs kann man Dateien im&nbsp;Excel- oder CSV-Format importieren. Genauer, wenn die Import-Datei eine Tabelle enthält, deren Zeilen Fachobjekte beschreiben,&nbsp; die in der TL-App modelliert sind, so legt der Import-Dialog entsprechende Fachobjekte&nbsp;an,&nbsp;wobei die Spaltennamen als Attributnamen und Spaltenwerte als Attributwerte dienen.</p>
+<h2>Konfiguration</h2>
+<h3>Reihenfolge</h3>
+<p>Um einen Import-Dialog zu konfigurieren, muss man auf die Reihenfolge achten:</p>
+<ol>
+ <li>Im Abschnitt <strong>"Einlesen der Excel-Datei"</strong>&nbsp;muss man eine Beispieldatei hochladen, um beim Ausfüllen der Konfigurationseigenschaften einfach aus den vorhandenen Spaltennamen auszuwählen. Selbst wenn die&nbsp;eigentliche&nbsp;Import-Datei mehrere Blätter und Tabellen mit Daten enthält, wurde sie&nbsp;eventuell vom Kunden noch nicht zur Verfügung gestellt&nbsp;oder sie ist zu groß um als Beispiel zu dienen. Deshalb muss die Beispieldatei nur das zu importierende Blatt mit dem&nbsp;Tabellenkopf enthalten.</li>
+ <li>Im Abschnitt <strong>"Import-Konfiguration"</strong>: 
+  <ol>
+   <li><strong>"Umrechnungen"</strong>: Manche Spaltenwerte muss man eventuell umrechnen,&nbsp;bevor man sie als Schlüssel in einem&nbsp;Objekt-Verzeichnis (s.u.) verwenden kann.</li>
+   <li><strong>"Objekt-Verzeichnisse"</strong>: Man muss für jeden relevanten Typ&nbsp;ein Objekt-Verzeichnis (s.u.) anlegen, bevor man mit den Objekten arbeiten kann.</li>
+   <li><strong>"Importschritte"</strong>: Eine grobe Richtlinie für die Reihenfolge wäre: 
+    <ol>
+     <li>Als erstes sollte man Objekte erstellen.</li>
+     <li>Dann Objekte nachschlagen oder&nbsp;Referenzen&nbsp;zwischen Objekten erstellen.</li>
+    </ol></li>
+  </ol></li>
+</ol>
+<p>Generell, da viele Konfigurationsoptionen&nbsp;nur aus den bereits ausgefüllten Konfigurationseigenschaften&nbsp;automatisch berechnet werden, funktionieren manche optionale bzw. polymorphe Eigenschaften erst nach erneutem Einfügen bzw. Auswahl. Deswegen wäre es&nbsp;zum Beispiel nicht ratsam, zuerst die Importschritte nicht ausgefüllt als reine Platzhalter in richtiger Reihenfolge zusammenzubauen.</p>
+<h3>Objekt-Verzeichnisse</h3>
+<p>Jedes&nbsp;Objekt-Verzeichnis spielt die Rolle einer transienten Teildatenbank, die automatisch mit den Objekten des konfigurierten Typs&nbsp;befüllt wird. Der (eventuell&nbsp;zusammengesetzte) Schlüssel wird gemäß gegebener Konfiguration bestimmt:</p>
+<ul>
+ <li>für die bereits vorhandenen (persistenten) Objekte - aus den Attributen;</li>
+ <li>für die neu importierten Objekte - aus den Spaltenwerten.</li>
+</ul>
+<h3>Argumente</h3>
+<p>Viele Ausdrücke im Import werden (statt üblicher, fest vorgegebener Argumente) auf&nbsp;Gruppe <strong>"Argumente"</strong> angewandt, wo man Argumente folgender Typen selbst konfigurieren kann:</p>
+<ul>
+ <li>Modell - repräsentiert das Import-Modell.</li>
+ <li>Spalte - repräsentiert den Wert einer Spalte aus der Import-Datei.</li>
+ <li>Objekt(e) - repräsentiert ein oder mehrere Objekte, die unter&nbsp;<strong>"Importschritte"</strong>&nbsp;erstellt oder nachgeschlagen wurden und als Objekt-Argument einen Namen bekamen.</li>
+</ul>
+<h2>Beispiel</h2>
+<p>Im TL-Demo unter</p>
+<p>Administration &gt; Fach. Administration &gt; Personen &gt; Importieren...</p>
+<p>befindet sich ein Import-Dialog, dessen Konfiguration im Designmodus eingesehen werden kann.</p>

@@ -1,0 +1,44 @@
+<h2>Syntax</h2>
+<pre>	<code>$expr.singleton()</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Packt das Ergebnis von <code class="hljs inlineCode">expr</code> in eine einelementige Menge ein. Ein nicht <code class="hljs inlineCode">null</code>-Wert resultiert in einer Menge der Größe eins mit diesem Wert als einzigem Element, auch wenn es sich bei <code class="hljs inlineCode">expr</code> selbst um eine Menge handelt. Ein <code class="hljs inlineCode">null</code> Wert resultiert in der leeren Menge.</p>
+<p>Siehe auch <a class="tlObject" data-custom="false" href="?page=singleElement&amp;uuid=3cecd3c1-7d26-43f2-bd29-40f508b03016">Auspacken</a>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>expr</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+   <td>Ein Ausdruck, dessen Auswertung in eine ein-elementige Menge verpackt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p>
+<p>Eine Menge mit einem Element, das das Ergebnis von <code class="hljs inlineCode">expr</code> repräsentiert. Eine leere Menge, wenn <code class="hljs inlineCode">null</code> für <code class="hljs inlineCode">expr</code> benutzt wird.</p>
+<h2>Beispiele</h2>
+<h3>Einpacken eines Elements</h3>
+<pre>	<code>singleton(5)</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong> Eine Menge mit dem Inhalt [5].</p>
+<h3>Einpacken von null</h3>
+<pre>	<code>singleton(null)</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong> Eine leere Menge.</p>
+<h3>Einpacken einer Liste</h3>
+<pre>	<code>singleton(list(1, 2, 2))</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> Eine Menge mit dem Inhalt [1; 2; 2], wobei es nur ein Element ist.</p>
+<p></p>

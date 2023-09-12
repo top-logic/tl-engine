@@ -1,0 +1,9 @@
+<p>Die Persistenzschicht von Top-Logic bietet Unterstützung für die Realisierung von mandantenfähigen Anwendungen. Hierfür haben alle Objekttabellen als Prefix eine Branch-Spalte, welche Teil des &nbsp; Primärschlüssels ist. Über unterschiedliches Branches lassen sich komplett unabhängige Datenstände (Mandanten) in derselben Anwendung realisieren. Außerdem ermöglicht diese Branch-Spalte einen Datenstand abzuspalten (Erzeugen eines Branches) und auf den abgespaltenen Datenstand Änderungen durchzuführen, die vollkommen unabhängig vom Ausgangsdatenstand sind.</p>
+<p>Dieser Mechanismus kann eingesetzt werden,</p>
+<ul>
+ <li>um Releases von Datenbeständen pflegen zu können, oder</li>
+ <li>um simulativ Änderungen an Datenbeständen vornehmen zu können, die keine Auswirkungen auf den "Hauptdatenbestand" hat, oder</li>
+ <li>um einen persönlichen Workspace pro Benutzer realisieren zu können, in dem dieser Änderungen vornehmen kann, die nicht direkt von anderen Nutzern gesehen werden können, oder</li>
+ <li>um ein mandantenfähiges System zu realisieren, indem unterschiedliche Nutzer komplett voneinander getrennte Datenstände bearbeiten können.</li>
+</ul>
+<p>Jeder Branch in der <a class="tlObject" data-custom="true" href="?page=Versioning&amp;uuid=9320ab94-eb74-4ee2-ba9f-3a223e25570d">Persistenzschicht</a> ist versioniert änderbar. In jedem Branch gibt es eine eigene unabhängige aktuelle Version, in der Änderung an dem Branch vorgenommen werden können. Ein Branch erstreckt sich entweder über alle Objekte des Systems, oder ist ein partieller Branch, der nur isolierte Änderungen an einer Teilmenge der Tabellen des Systems zulässt.</p>

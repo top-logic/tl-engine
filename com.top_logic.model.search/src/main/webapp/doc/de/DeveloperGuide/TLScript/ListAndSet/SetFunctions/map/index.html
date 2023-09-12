@@ -1,0 +1,44 @@
+<h2>Syntax</h2>
+<pre>	<code>$set.map($func)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Wendet die Funktion <code class="hljs inlineCode">func</code> auf jedes Element der Menge <code class="hljs inlineCode">set</code> an und gibt die Menge der Auswertungsergebnisse zurück.</p>
+<p>Wird dann verwendet, wenn das Ergebnis der Abbildung relevant ist. Soll stattdessen der Seiteneffekt (siehe <a class="tlObject" data-custom="false" href="?page=Transactions&amp;uuid=c965c93c-6140-4f81-93ec-85bc9f5610e4">Transaktionen</a>) der Funktion <code class="hljs inlineCode">func</code> betrachtet werden, dann wird alternativ <a class="tlObject" data-custom="true" href="?page=foreach&amp;uuid=5c0582a6-75c9-4683-9c25-0442737f7d08">foreach()</a> verwendet.</p>
+<p>Wenn das Ergebnis der Funktion eine Menge ist, dann muss anschließend die Ergebnismenge <a class="tlObject" data-custom="true" href="?page=flatten&amp;uuid=d19612c5-6070-403f-b332-7cd7a50f7e6f">geglättet</a> werden, da Mengen von Mengen als Endergebnis von Ausdrücken nicht unterstützt werden</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>set</td>
+   <td>Menge</td>
+   <td>Eine Menge, auf deren Elemente <code class="hljs inlineCode">func</code> angewendet werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>func</td>
+   <td>Funktion</td>
+   <td>Funktion, die auf alle Elemente von <code class="hljs inlineCode">set</code> angewendet werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p>
+<p>Eine Menge, die alle Auswertungsergebnisse der Funktion <code class="hljs inlineCode">func</code> für alle Elemente in <code class="hljs inlineCode">set</code> enthält.</p>
+<h2>Beispiele</h2>
+<h3>Addition</h3>
+<pre>	<code>list(1, 4, 9)
+  .map(x -&gt; $x + 5)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> Eine Menge mit den Elementen [6, 9, 14].</p>

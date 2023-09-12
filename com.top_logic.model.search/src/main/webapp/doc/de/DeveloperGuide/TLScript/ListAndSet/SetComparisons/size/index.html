@@ -1,0 +1,46 @@
+<h3>Syntax</h3>
+<pre>	<code>$expr.size()</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Die Anzahl der Elemente in der Menge/Liste <code class="hljs inlineCode">expr</code> oder die Anzahl von Zuordnungen im Wörterbuch <code class="hljs inlineCode">expr</code>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>expr</td>
+   <td>Fachobjekt/Menge</td>
+   <td>Ein Ausdruck, dessen Größe gemessen werden soll. Kann eine Liste, Menge oder auch ein <a class="tlObject" data-custom="false" href="?page=Dictionaries&amp;uuid=6e9709bc-d8a4-4539-a4e9-cee8ef97dc37">Wörterbücher</a> sein.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2><span style="background-color:rgba(255, 255, 255, 0); font-size:16pt">Rückgabewert</span></h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl</p>
+<p>Die Anzahl der Elemente der gegebenen Menge/Liste <code class="hljs inlineCode">expr</code> oder die Anzahl der Zuordnungen im Wörcterbuch <span style="color:#695d69; font-family:monospace"><span style="background-color:#f7f3f7">expr</span></span>.</p>
+<h2>Beispiele</h2>
+<h3>Menge von Listenelementen</h3>
+<pre>	<code>[1, 2, 3].size()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> 3</p>
+<h3>Menge von Wörterbuchzuordnungen</h3>
+<pre>	<code>{
+  dict = {
+    "all": "alle",
+    "some": "manche",
+    "none": "keine"
+  };
+
+  $dict.size()
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> 3</p>

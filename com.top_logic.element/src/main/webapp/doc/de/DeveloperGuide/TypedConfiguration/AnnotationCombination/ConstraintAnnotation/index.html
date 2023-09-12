@@ -1,0 +1,23 @@
+<p>Man kann den Wert einer Property einschränken, z.B. die folgende Schranke</p>
+<pre><code class="language-java">@Constraint(FileSizeConstraint.class)
+BinaryData getFile();
+
+public final class FileSizeConstraint extends ValueConstraint&lt;BinaryData&gt; {
+
+  public static final FileSizeConstraint INSTANCE = new FileSizeConstraint();
+
+  private ExampleFileSizeConstraint() {
+    super(BinaryData.class);
+  }
+
+  @Override
+  protected void checkValue(PropertyModel&lt;BinaryData&gt; model) {
+    BinaryData data = model.getValue();
+    if (data != null) {
+      if (data.getSize() &gt; 1024*1024) {
+        model.setProblemDescription(I18NConstants.SIZE_1MB_EXCEEDED);
+      }
+    }
+  }
+}</code></pre>
+<p>gibt 1MB als maximale Dateigröße und zeigt dem Nutzer beim Upload einer größeren Datei&nbsp;eine Fehlermeldung mit der obigen Problembeschreibung.</p>

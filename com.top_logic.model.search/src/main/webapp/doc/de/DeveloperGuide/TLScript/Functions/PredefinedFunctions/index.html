@@ -1,0 +1,29 @@
+<p>Eine vordefinierte Funktion in TL-Script hat einen bestimmten Namen, der global in allen Scripten bekannt ist. Eine vordefinierte Funktion wird direkt über ihren Namen aufgerufen, ohne sie vorher einer Variable zuzuweisen. Alle vordefinierten Funktion werden hier ausführlich beschrieben und man erhält Kontexthilfe zu der Funktion beim Tippen in einem Editor für TL-Script-Expressions.</p>
+<p>Die Länge einer Zeichenkette kann beispielsweise über die Funktion <code class="hljs inlineCode">length</code> bestimmt werden (siehe <a class="tlObject" data-custom="false" href="?page=length&amp;uuid=c196210d-a043-4235-a5d8-cf28727c43aa">Länge</a>). Für vordefinierte Funktionen eine Reihe von Sonderregeln, beim Aufruf</p>
+<h3>Normaler Funktionsaufruf</h3>
+<p>Beim normalen Funktionsaufruf werden alle Parameter in der Funktionsklammer angegeben. Wenn es mehrere Parameter gibt, werden die Argumente mit Komma getrennt.</p>
+<pre><code>length("Hello world!")
+subString("Hello world!", 6, 11)</code></pre>
+<h3>Verketteter Funktionsaufruf</h3>
+<p>Funktionsaufrufe lassen sich verketten, ohne dass man die Aufrufe tief ineinanderschachteln muss. Dabei darf das erste Argument vor dem Funktionsnamen stehen. In dieser Schreibweise lässt sich leicht eine Kette von Verarbeitungsschritten aufbauen, bei dem das Ergebnis des letzten Verarbeitungsschrittes als Eingabe für den nächsten Schritt dient.</p>
+<pre><code>"Hello world!".substring(6, 11).length()</code></pre>
+<p>Gerade bei langen Verarbeitungsketten lässt sich so gut der Überblick behalten, wenn jeder Verarbeitungsschritt in eine neue Zeile geschrieben wird:</p>
+<pre><code>"Hello world!"
+    .substring(6, 11)
+    .length()</code></pre>
+<p>Hier wird zuerst von <code class="hljs inlineCode">"Hello world!"</code> die Zeichen zwischen dem <code class="hljs inlineCode">6</code>. und <code class="hljs inlineCode">11</code>. berechnet (<code class="hljs inlineCode">"world"</code>) und von diesem Ergebnis die Länge bestimmt (<code class="hljs inlineCode">5</code>).</p>
+<p>Auch ohne eine Kette zu bilden, darf das erste Argument immer vor dem Funktionsnamen stehen, z.B. in:</p>
+<pre><code>"Hello world!".length()</code></pre>
+<p>Diese Schreibweise ist äquivalent zu:</p>
+<pre><code>length("Hello world!")</code></pre>
+<h3>Aufruf mit benannten Argumenten (ab 7.6.0)</h3>
+<p>Manche Funktionen mit vielen Parametern unterstützen den Aufruf mit benannten Argumenten. Problematisch beim normalen Funktionsaufruf ist, dass man am Aufruf nicht mehr gut sehen kann, was das einzelne Argument bedeutet. So ist in <code class="hljs inlineCode">subString("Hello world!", 6, 11)</code> nicht klar, was genau <code class="hljs inlineCode">6</code> und <code class="hljs inlineCode">11</code> für eine Bedeutung haben. Daher kann man die übergebennen Argumente benennen:</p>
+<pre><code>subString("Hello world!", from: 6, to: 11)</code></pre>
+<p>Bei dieser Aufrufform kann man beliebige optionale Argumente weglassen. Beim normalen Funktionsaufruf darf man immer nur Argumente nach dem letzten angegebenen Argument weglassen.</p>
+<pre><code>subString("Hello world!", from: 6)</code></pre>
+<p>Hier ist nur der Startpunkt angegeben, das Ende ist implizit das Ende der Zeichenkette. Das Ergebnis ist <code class="hljs inlineCode">"world!"</code>.</p>
+<pre><code>subString("Hello world!", to: 11)</code></pre>
+<p>Hier ist der Startpunkt weggelassen, der implizit am Anfang der Zeichenkette liegt. Das Ergebnis ist <code class="hljs inlineCode">"Hello world"</code>.</p>
+<p>Im Gegensatz dazu, können beim normalen Aufruf nur optionale Argumente am Ende weggelassen werden, da ja die Position der Argumente ihre Zuordnung zu den Funktionsparametern definiert. Mit normalem Funktionsaufruf kann man in diesem Fall also nur Ausschnitte ab einem bestimmten Zeichen (<code class="hljs inlineCode">substring("Hello world!", 6)</code>) aber nicht bis zu einem bestimmten Zeichen beschreiben.</p>
+<p>Den Aufrufstil kann man in einem Aufruf mischen. Die ersten Parameter kann man über positionale Argumente und alle weiteren über benannte Argumente angeben. So wird im obigen Beispiel die Zeichenkette, von der der Ausschnitt vorgenommen werden soll, nicht benannt, sondern nur die Argument, die die Schnittpositionen definieren. Wichtig ist, dass nach dem ersten benannten Argument alle weiteren Argumente auch benannt sein müssen. Aus diesem Grund können Funktionen, die eine beliebige Anzahl von Argumenten unterstützen (wie z.B. <a class="tlObject" data-custom="false" href="?page=toString&amp;uuid=9a7817e1-0bc2-44fa-a265-9fef44285edb">In Zeichenkette umwandeln</a>) nicht mit benannten Argumenten aufgerufen werden.</p>
+<p></p>

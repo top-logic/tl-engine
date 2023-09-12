@@ -1,0 +1,31 @@
+<p>Der Attribut-Name (Konfigurationsname der Konfigurationseigenschaft) ist direkt an die Get-Methode über <code class="hljs inlineCode">@Name(...)</code> annotiert, oder leitet sich aus dem Namen der Get-Methode ab (Standardverhalten). Ohne Namensannotation ist der Konfigurationsname der Name der Getter-Methode ohne das Präfix (<code class="hljs inlineCode">get</code>, <code class="hljs inlineCode">is</code>, <code class="hljs inlineCode">has</code>…) zerlegt in die Namensbestandteile, in Kleinbuchstaben und mit "<code class="hljs inlineCode">-</code>" verbunden.</p>
+<p>Die Getter-Methode <code class="hljs inlineCode">getSomeLongName()</code> definiert die Konfigurationseigenschaft <code class="hljs inlineCode">some-long-name</code>, der boolsche Getter <code class="hljs inlineCode">isEverythingOk</code> die Eigenschaft <code class="hljs inlineCode">everything-ok</code> (die Annotation ist hier redundant). Der annotierte Getter <code class="hljs inlineCode">getSomeX()</code> definiert die Konfigurationseigenschaft <code class="hljs inlineCode">x</code>, da hier der Konfigurationsname explizit (und abweichend von der Konvention) angegeben ist.&nbsp;Es ist guter Stil, den Konfigurationsnamen wie im Fall <code class="hljs inlineCode">everything-ok</code> passend zur Konvention immer zu annotieren.</p>
+<pre><code class="language-java">interface Config extends ConfigurationItem {
+   String getSomeLongName();
+
+   String EVERYTHING_OK = "everything-ok";
+   @Name(EVERYTHING_OK)
+   boolean isEverythingOk();
+
+   String X = "x";
+   @Name(X)
+   int getSomeX();
+}</code></pre>
+<p>​Für obiges Konfigurationsinterface, wäre die folgende Konfiguration passend:</p>
+<pre><code class="language-xml">&lt;config
+   some-long-name="Ein langer Name!"
+   everything-ok="true"
+   x="42"
+/&gt;
+</code></pre>
+<p>Eine konfigurierbare Eigenschaft kann über einen anderen Namen als den vom Getter-Namen abgeleiteten konfiguriert werden. Dazu muss die entsprechende Eigenschaft eine <code class="hljs inlineCode">@Name</code>-Annotation bekommen, die den externen Namen dieser Eigenschaft angibt. Zum Beispiel kann</p>
+<pre><code class="language-java">public interface Config extends ConfigurationItem {
+  @Name("optionIndex")
+  int getOption();
+}
+</code></pre>
+<p>über folgendes XML-Dokument konfiguriert werden:</p>
+<pre><code class="language-xml">&lt;config
+   optionIndex="42"
+/&gt;
+</code></pre>

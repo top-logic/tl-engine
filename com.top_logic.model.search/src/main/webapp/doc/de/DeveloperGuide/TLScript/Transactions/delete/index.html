@@ -1,0 +1,36 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.delete()</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Löscht das gegebene Objekt <code class="hljs inlineCode">object</code> bzw. die gegebene Menge von Objekten.</p>
+<p>Es können nur Fachobjekte gelöscht werden. Wird die Löschfunktion auf einem primitiven Wert wie einer Zeichenkette aufgerufen, wird ein Fehler erzeugt. Der Einfachheit halber ist es erlaubt <code class="hljs inlineCode">delete()</code> auf <code class="hljs inlineCode">null</code> aufzurufen. Ein solcher Aufruf hat keinen Effekt.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Fachobjekt/Menge</td>
+   <td>Ein einzelnes oder eine Menge von Objekten, die gelöscht werden sollen.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Beispiele</h2>
+<h3>Löschung einer Menge</h3>
+<pre><code>all(`my.module:MyType`)
+  .filter(x -&gt; $x.get(`my.module:MyType#myProp`) &lt; 5)
+  .delete()</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Keine</p>
+<p>Löscht alle Objekte von <code class="hljs inlineCode">`my.module:MyType`</code>, deren Wert in <code class="hljs inlineCode">myProp</code> kleiner als 5 ist.</p>
+<h3></h3>
+<p></p>

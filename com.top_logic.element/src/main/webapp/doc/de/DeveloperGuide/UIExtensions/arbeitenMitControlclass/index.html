@@ -1,0 +1,103 @@
+<p>In TopLogic existieren abstrakte Klassen, von welcher geerbt werden kann, um eine <code class="hljs inlineCode">Control</code> Klasse zu programmieren. Die zu implementierenden und vorhandenen Methoden sind je nach abstrakter Klasse verschieden. Die Klasse, die zum erben häufig verwendet wird und die im Beispiel eingesetzt wird, ist <code class="hljs inlineCode">AbstractFormFieldControl</code>.</p>
+<p>Der Konstruktor von <code class="hljs inlineCode">ButtonDyerControl</code> wird durch einen <a class="tlObject" data-custom="false" href="?page=controlprovider&amp;uuid=9d35d4da-81d8-49a5-b923-79cf9402daf5">Erzeugung von Control-Instanzen</a> aufgerufen. Das sich der Button verändert, wenn ein Anwendungsnutzer auf diesen klickt, wird mit JavaScript realisiert (<a class="tlObject" data-custom="false" href="?page=verbindungMitJavascript&amp;uuid=1f331cdd-81a9-4b55-89cd-40d7e4d3a374">Verbindung zwischen Client und Server</a>). Damit der Klick wieder auf der Server-Seite bemerkt wird, braucht es ein Verbindungsglied, dass bei uns Kommandos sind. Darauf wird weiter Unten genauer eingegangen.</p>
+<pre><code class="language-java">public class ButtonDyerControl extends AbstractFormFieldControl {
+
+	protected static final Map&lt;String, ControlCommand&gt; COMMANDS = createCommandMap(
+		AbstractFormFieldControlBase.COMMANDS,
+		new ControlCommand[] { ChangeColorCommand.INSTANCE });
+
+	private boolean isDark = true;
+
+	protected ButtonDyerControl(FormField model) {
+		super(model, COMMANDS);
+	}
+
+}</code></pre>
+<p></p>
+<p><code class="hljs inlineCode">AbstractFormFieldControl</code> besitzt 4 abstrakte Methoden, welche in unserem Kontroll implementiert werden müssen. <code class="hljs inlineCode">writeEditable</code> ist das Herzstück der Kontrollklasse. In dieser dürfen wir das Feld so zeichnen, wie wir wollen. Die einzigen Regeln, an die man sich halten muss, sind die HTML Regeln und die Top Logic Syntax. Das Thema wird genauer in <a class="tlObject" data-custom="false" href="?page=erstellenVonHtmlElementen&amp;uuid=575c1f85-cd40-4a10-9693-63ce3422d0d2">Erstellen von HTML Elementen</a> unter die Lupe genommen.</p>
+<pre><code class="language-java">@Override
+protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
+	StringField buttonStringField = (StringField) getModel();
+	out.beginBeginTag(HTMLConstants.SPAN);
+	writeControlAttributes(out);
+	out.endBeginTag();
+	out.beginBeginTag(HTMLConstants.BUTTON);
+	writeInputIdAttr(out);
+	if (isDark) {
+		out.writeAttribute(HTMLConstants.CLASS_ATTR, "darkButtonClass");
+	} else {
+		out.writeAttribute(HTMLConstants.CLASS_ATTR, "lightButtonClass");
+	}
+	if (buttonStringField.isDisabled()) {
+		out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
+	}
+	out.beginAttribute(HTMLConstants.ONCLICK_ATTR);
+	writeJSAction(out, "services.form.ButtonDyerControl", "handleButtonClick", this, null);
+	out.endAttribute();
+	out.endBeginTag();
+	out.writeText("Text");
+	out.endTag(HTMLConstants.BUTTON);
+	out.endTag(HTMLConstants.SPAN);
+}</code></pre>
+<p></p>
+<p>Die <code class="hljs inlineCode">internalHandleValueChanged()</code> Methode sollte <code class="hljs inlineCode">requestRepaint()</code> ausführen, was dafür sorgt, dass das Modell auf der Client Seite neu gezeichnet wird. Nach dem Aufrufen von <code class="hljs inlineCode">requestRepaint()</code> wird <code class="hljs inlineCode">writeEditable()</code> am Ende wieder ausgeführt.</p>
+<pre><code class="language-java">@Override
+protected void internalHandleValueChanged(FormField field, Object oldValue, Object newValue) {
+	requestRepaint();
+}</code></pre>
+<p></p>
+<p>Wenn man möchte, kann man den Button deaktivieren. In Top Logic gibt es Funktionien, welche die Felder auf einer Seite der Anwendung ausschalten.</p>
+<pre><code class="language-java">@Override
+protected void internalHandleDisabledEvent(FormMember sender, Boolean oldValue, Boolean newValue) {
+	addDisabledUpdate(newValue.booleanValue());
+}</code></pre>
+<p></p>
+<p>Nebst dem deaktivieren von Feldern, gibt es noch die Möglichkeit diese obligatorisch oder unveränderlich zu machen. Ein Button kann jedoch nicht obligatorisch sein, weshalb diese Funktion nicht berücksichtigt werden muss. Dennoch fügen wir ein Beispiel dazu unterhalb der <code class="hljs inlineCode">writeImmutable()</code> Methode ein.</p>
+<pre><code class="language-java">@Override
+protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
+	StringField buttonStringField = (StringField) getModel();
+	out.beginBeginTag(SPAN);
+	writeControlAttributes(out);
+	out.endBeginTag();
+	out.beginBeginTag(SPAN);
+	out.writeAttribute(HTMLConstants.CLASS_ATTR, "changeColorImmutable");
+	out.endBeginTag();
+	out.writeText(buttonStringField.toString());
+	out.endTag(SPAN);
+	out.endTag(SPAN);
+}
+
+@Override
+public Bubble handleMandatoryChanged(FormField sender, Boolean oldValue, Boolean newValue) {
+	if (!skipEvent(sender)) {
+		requestRepaint();
+	}
+	return Bubble.BUBBLE;
+}</code></pre>
+<p></p>
+<p>Bei der Implementierung von eigenen <code class="hljs inlineCode">Control</code> Klassen gibt es <strong>wichtiges</strong> zu beachten:</p>
+<ul>
+ <li>Man kann Verschachtlungen vornehmen, sodass beispielsweise ein span in einem anchor Tag liegt. Die Tags müssen genauso geschrieben werden, wie in den Beispielen <a class="tlObject" data-custom="false" href="?page=erstellenVonHtmlElementen&amp;uuid=575c1f85-cd40-4a10-9693-63ce3422d0d2">Erstellen von HTML Elementen</a>.</li>
+ <li>Das wichtigste ist, dass <strong>ein</strong> Element existiert, welches die Kontroll Attribute bekommt. In der HTML Baumstruktur sollte es das oberste Element sein. Das darf nicht vergessen werden, weil ein <code class="hljs inlineCode">Control</code> deutlich gekennzeichnet werden muss, da es für die Weiterverarbeitung benutzt wird. Mit dieser Methode werden dem Element Klassen hinzugefügt, mit der Top-Logic Felder verändern und erkennen kann.</li>
+ <li>Die <code class="hljs inlineCode">writeInputIdAttr()</code> Methode übergibt dem Element eine ID und auch die darf nur <strong>einem</strong> Element zugewiesen werden. Oft wird es dem zweitobersten Element übergeben.</li>
+ <li>Während man in einem Tag am programmieren ist, welches ein Kontroll oder ID Attribut erhalten hat, darf es kein weiteres Element geben, welches die <code class="hljs inlineCode">Control</code> oder das ID Attribute bekommt. Das andere Element würden die gleiche ID erhalten und Funktionen wie z.B. <code class="hljs inlineCode">writeImmutable()</code> würden fehlerhaft ausgeführt werden.</li>
+ <li>Mit der Methode <code class="hljs inlineCode">getID()</code> erhält man die einzigartige ID des Feldes.</li>
+</ul>
+<p></p>
+<p>Wenn man die <code class="hljs inlineCode">writeControl</code> Methode nutzt, werden dem Element bereits Klassen hinzugefügt. Was wenn man dem span Element eine eigene Klasse hinzufügen möchte? Der Versuch, <code class="hljs inlineCode">out.writeAttribute(HTMLConstants.CLASS_ATTR, "test");</code> nach der <code class="hljs inlineCode">writeControl</code> Methode zu benutzen, wird eine Fehlermeldung zurückgeben, weil das Programm dem Element zweimal <code class="hljs inlineCode">class=""</code> Attribute hinzufügen möchte und das ist in HTML/CSS nicht möglich. Der Trick, um eine zusätzliche Klasse neben den Kontroll Klassen hinzuzufügen, ist , die folgende Methode zu implementieren:</p>
+<pre><code class="language-java">@Override
+protected String getTypeCssClass() {
+	return "test";
+}</code></pre>
+<p></p>
+<p>Damit der Button auch das gewünschte Design hat, muss der template.css Datei die CSS Regeln mitgegeben werden. ​</p>
+<pre><code>.darkButtonClass {
+	background-color: darkgrey;
+	color: white;
+}
+
+.lightButtonClass {
+	background-color: white;
+	color: red;
+}</code></pre>
+<p></p>

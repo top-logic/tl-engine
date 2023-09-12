@@ -1,0 +1,45 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.referers(`$attr`)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Ruft die Menge der Objekte ab, die <code class="hljs inlineCode">object</code> im Attribut <code class="hljs inlineCode">attr</code> referenzieren.</p>
+<p>Es entspricht der Umkehrfunktion von <a class="tlObject" data-custom="true" href="?page=get&amp;uuid=b726cba0-21fb-4b2d-b5ad-1c6e87b17077">get()</a>, wenn diese eine Liste von refernzierten Objekten zurückgibt.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Fachobjekt</td>
+   <td>Das Objekt, für das geprüft werden soll, welche anderen Objekte es in <code class="hljs inlineCode">attr</code> referenzieren.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>attr</td>
+   <td>Zeichenkette</td>
+   <td>Das Attribut-Literal, in welchem <code class="hljs inlineCode">object</code> referenziert sein soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p>
+<p>Eine Menge von Objekten, die <code class="hljs inlineCode">object</code> im Attribut <code class="hljs inlineCode">attr</code> referenzieren.</p>
+<h2>Beispiele</h2>
+<pre>	<code>{
+   object = all(`my.module:MyType`).filter(element -&gt; $element.get(`my.module:MyType#myAttr`).isStringEqual("test"));
+   $object.referers(`my.module:MyType#myAttr`);
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit allen Objekten, die das Objekt mit dem Namen "test" im Attribut <code class="hljs inlineCode">myAttr</code> referenzieren.</p>
+<h3></h3>

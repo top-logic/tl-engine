@@ -1,0 +1,25 @@
+<p>Man kann in der&nbsp;Anwendung eigenes Binding definieren und mithilfe an der strukturwertigen Property annotieren:</p>
+<pre><code class="language-java">@Binding(MyDataBinding.class)
+MyData getMyData();
+
+public class MyDataBinding extends AbstractConfigurationValueBinding&lt;MyData&gt; {
+
+  public static final MyDataBinding INSTANCE = new MyDataBinding();
+
+  private MyDataBinding() {
+    // Singleton constructor.
+  }
+
+  @Override
+  public MyData loadConfigItem(XMLStreamReader in, MyData baseValue) throws XMLStreamException, ConfigurationException {
+    MyData data = ...;
+    data.read(in);
+    return data;
+  }
+
+  @Override
+  public void saveConfigItem(XMLStreamWriter out, MyData data) throws XMLStreamException {
+    data.write(out);
+  }
+}</code></pre>
+<p>Beim Implementieren der Methoden zum Parsen/Serialisieren des anwendungsdefinierten Typs (<code class="hljs inlineCode">MyData</code> im Beispiel)&nbsp;sind die statischen Methoden der&nbsp;<code class="hljs inlineCode">XMLStreamUtil</code>&nbsp;sehr hilfreich.</p>

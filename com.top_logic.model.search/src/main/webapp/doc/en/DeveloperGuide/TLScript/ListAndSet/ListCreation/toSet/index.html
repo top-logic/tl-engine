@@ -1,0 +1,49 @@
+<h2>Syntax</h2>
+<pre>	<code>$expr.toSet()</code>
+</pre>
+<h2>Description</h2>
+<p>Converts the result of the evaluation of <code class="hljs inlineCode">expr</code> into a set. The following cases can occur:</p>
+<ol>
+ <li><code class="hljs inlineCode">expr</code> is already a set: <code class="hljs inlineCode">expr</code> is returned</li>
+ <li><code class="hljs inlineCode">expr</code> is any collection (e.g. list): <code class="hljs inlineCode">expr</code> is converted to a set, removing duplicate elements</li>
+ <li><code class="hljs inlineCode">expr</code> is <code class="hljs inlineCode">null</code>: an <a class="tlObject" data-custom="true" href="?page=none&amp;uuid=0f68ed5b-0e34-4c26-aeb5-d6476f610efb">Empty set</a> is returned</li>
+ <li>For all other values a one-element set is created, see <a class="tlObject" data-custom="true" href="?page=singleton&amp;uuid=f636fa87-3aa1-48e0-8c3b-40dbe69bc358">Pack</a></li>
+</ol>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>expr</td>
+   <td>Number/string/boolean/buisness object/set</td>
+   <td>An expression whose evaluation is to be converted into a set.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p>
+<p>A set representing the values from <code class="hljs inlineCode">expr</code>.</p>
+<h2>Examples</h2>
+<h3>Conversion of a list</h3>
+<pre>	<code>list(1, 1, 2, 3, 3).toSet()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span>A set with the elements [1, 2, 3].<span style="color:#3498db"></span></p>
+<p>Duplicate values are removed during conversion, since sets may not contain duplicate values.</p>
+<h3>Conversion of a scalar value</h3>
+<pre>	<code>toSet(1)</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong>A set with the element [1].</p>
+<h3>Conversion of null</h3>
+<pre>	<code>toSet(null)</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong>An empty set</p>

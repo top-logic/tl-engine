@@ -1,0 +1,28 @@
+<p>Die Nutzer-Authentifizierung in einer Top-Logic-Anwendung kann über ein externes System erfolgen. Hierfür muss in der Anwendung Single-Sign-On aktiviert werden.</p>
+<p><a href="http://openid.net/specs/openid-connect-core-1_0.html" target="_blank">​OpenID Connect</a> ist ein offenes Protokoll, mit dem die Nutzer-Authentifizierung in einer Web-Anwendung an einen externen Provider ausgelagert werden kann. Um Login über OpenID Connect zu aktivieren müssen die folgenden Schritte durchgeführt werden.</p>
+<h3>Einbinden des Moduls <code class="hljs inlineCode">com.top_logic.security.auth.pac4j</code></h3>
+<pre><code class="language-xml">&lt;classpath&gt;
+  &lt;classpathentry combineaccessrules="false" kind="src" path="/com.top_logic.security.auth.pac4j"/&gt;
+&lt;/classpath&gt;</code></pre>
+<h3>Konfiguration des OpenID-Providers</h3>
+<p><code class="hljs inlineCode">com.top_logic.security.auth.pac4j</code> bringt für diverse OpenID-Provider vorgefertigte Konfigurationsfragmente mit. Für ein Login über Google, muss beispielsweise das Fragment <code class="hljs inlineCode">pac4j-google.xml</code> eingebunden werden.</p>
+<p><code class="hljs inlineCode">metaConf.txt</code>:</p>
+<pre><code>pac4j-google.config.xml
+</code></pre>
+<p>Die Anwendungskonfiguration muss die dort und in <code class="hljs inlineCode">tlPac4jConf.xml</code> definierten Platzhalter füllen:</p>
+<pre><code class="language-xml">&lt;root&gt;
+  &lt;alias&gt;
+    &lt;entry name="%PAC_DOMAIN%" value="..." /&gt;
+    &lt;entry name="%PAC_CLIENT_ID%" value="..." /&gt;
+    &lt;entry name="%PAC_SECRET%" value="..." /&gt;
+  &lt;/alias&gt;
+&lt;/root&gt;</code></pre>
+<p>Hierbei wird die <code class="hljs inlineCode">PAC_CLIENT_ID</code> und <code class="hljs inlineCode">PAC_SECRET</code> vom OpenID-Provider zur Verfügung gestellt. Die <code class="hljs inlineCode">PAC_DOMAIN</code> muss mit dem Domain-Eintrag des Top-Logic-Sercurity-Devices übereinstimmen, welches die Nutzer enthält, die sich über den Provider einloggen können. Wenn die Nutzer über LDAP in die Anwendung geladen werden, muss diese Domain mit der LDAP-Domain übereinstimmen.</p>
+<p>Wenn der App-Server seinen eigenen Host-Namen nicht auflösen kann, oder dieser hinter einer Fassade steht, kann es notwendig sein, die öffentliche Adresse zu konfigurieren, an die der Nutzer vom OpenID-Provider zurückverwiesen wird:</p>
+<pre><code class="language-xml">&lt;entry name="%PAC_CALLBACK_URL%" value="https://my-host-name/my-app/servlet/callback" /&gt;
+&lt;entry name="%PAC_CALLBACK_ABSOLUTE%" value="true" /&gt;</code></pre>
+<p>Für andere Provider können noch zusätzliche Einstellungen notwendig sein. Die Parameter-Namen sind in den Konfigurationsfragmenten des jeweiligen Providers hinterlegt. Die Parameter-Werte müssen durch den jeweiligen Provider zur Verfügung gestellt werden.</p>
+<h3>Single-Sing-On-URL anspringen</h3>
+<p>Um den Single-Sing-On-Vorgang zu initiieren, muss der Browser des Nutzers auf die Start-URL für Single-Sign-On der Anwendung weitergeleitet werden. Dies kann entweder durch das Protal des Kunden oder durch einen Link auf der Login-Seite "Login mit Google" geschehen. Diese URL lautet <a href="https://my-host-name/my-app/servlet/openid" target="_blank">​https://my-host-name/my-app/servlet/openid</a>.</p>
+<h3>Einschränkungen</h3>
+<p>Über diese einfache Form der Konfiguration lässt sich aktuell nur ein einziger Provider in die Anwendung einbinden.</p>

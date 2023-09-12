@@ -1,0 +1,172 @@
+<p>Ein <code class="hljs inlineCode">LDAPAccessService</code> ist für die Verbindung zum LDAP und die Query zur Abfrage von Daten verantwortlich. Sie beinhaltet die Konfigurationen, die benötigt werden, um sich mit dem LDAP zu verbinden und entsprechende Queries auszuführen. Zum Instanziieren dieses Services wird eine <code class="hljs inlineCode">com.top_logic.base.dsa.ldap.ServiceProviderInfo</code> benötigt, die das Konfigruationsobjekt darstellt und alle benötigten Parameter für die Verbindung zum LDAP Server beinhaltet. Im Falle des <code class="hljs inlineCode">com.top_logic.base.security.device.ldap.LDAPAuthenticationAccessDevice</code>s ist immer <code class="hljs inlineCode">com.top_logic.base.dsa.ldap.PersonLDAPAccessService</code> der entsprechend verwendete <code class="hljs inlineCode">LDAPAccessService</code>, der noch einige weitere Konfigurationen insbesondere zur Filterung von Benutzergruppen, Benutzern und Benutzerattriibuten bietet.</p>
+<h1>Notwendige Konfigurationen</h1>
+<h2>provider-url</h2>
+<p><strong>Typ: </strong><code class="hljs inlineCode">String</code></p>
+<p>Um eine Verbindung zu den LDAP Servern herstellen zu können, wird eine URL des Directory Servers des LDAPs benötigt. Diese beginnt mit <code class="hljs inlineCode">ldap://</code> bei einer ungesichternen Verbindung oder mit <code class="hljs inlineCode">ldaps://</code> bei Verbindung über Secure Sockets Layer (SSL). Anschließend folgen der Hostanme sowie der Port:</p>
+<pre><code>ldap[s]://hostname:port</code></pre>
+<p>Die Domain, die für die LDAP Verbindung benötigt wird, wird aus dem Hostnamen erschlossen und muss daher nicht mehr angegeben werden.</p>
+<h2>master-principal</h2>
+<p><strong>Typ: </strong><code class="hljs inlineCode">String</code></p>
+<p>Der Loginname des Masteraccounts , der zum Herstellen einer Verbindung zwischen der Anwendung und dem LDAP Dienst verwendet wird. Der Name hat folgendes Format:</p>
+<pre><code>Benutzername@LDAPDomain</code></pre>
+<h2>master-credential</h2>
+<p><strong>Typ: </strong><code class="hljs inlineCode">String</code></p>
+<p>Das Passwort des Masteraccounts, das zum Herstellen einer Verbindung zwischen der Anwendung und dem LDAP Dienst verwendet wird. <strong>TODO: Verschlüsselung?</strong></p>
+<h2>base-dn</h2>
+<p><strong>Typ: </strong><code class="hljs inlineCode">String</code></p>
+<p>Der Base DN (Distinguished Name siehe <a class="tlObject" data-custom="false" href="?page=ldapConnection&amp;uuid=59cf989e-fa20-4cc5-a9cb-39b022408cfa">LDAP</a>) ist ein Eintrag im Verzeichnis des LDAPs von dem aus die Suche gestartet werden soll. Alle benötigten Benutzergruppen und Benutzer müssen sich innerhalb dieses Verzeichnisses befinden.</p>
+<p>Bei einem leeren Eintrag startet die Suche bei <code class="hljs inlineCode">ROOT</code>.</p>
+<h1>Zusätzliche Konfigurationen</h1>
+<h2>context-factory</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">String</code><br><strong>Default:</strong> <code class="hljs inlineCode">com.sun.jndi.ldap.LdapCtxFactory</code></p>
+<p>Bevor auf LDAP zugegriffen werden kann, muss ein initialer Kontext definiert werden, der den Einstiegspunkt eines Namespaces definiert. Das liegt daran, dass alle Methoden auf einem Verzeichnisdienst relativ zu einem Kontext ausgeführt werden. Für LDAP kann standardmäßig <code class="hljs inlineCode">LdapCtxFactory</code> verwendet werden.</p>
+<h2>authentication-type</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">String</code><br><strong>Default:</strong> <code class="hljs inlineCode">simple</code></p>
+<p>In LDAP wird die Authendifizierung in der <code class="hljs inlineCode">bind</code> Operation durchgeführt. Es gibt drei Typen der Authentifizierung:</p>
+<ol>
+ <li><strong>anonymous </strong>Es findet keine Authentifizierung statt</li>
+ <li><strong>simple </strong>Zur Authentifizierung wird der Distinguished Name (DN) des benutzers sowies das Passwort im Klartext verwendet. Eine sichere Verbindung zum Beipspiel über SSL wird hierbei empfohlen.</li>
+ <li><strong>SASL </strong>Mit dieser Optionen können durch Leerzeichen separierte SASL (Simple Authentication and Security Layer) Mechanismen verwendet werden. Ein SASL Mechanismus wird durch seinen Internet Assigned Numbers Authority (IANA)-regsirtierten Mechanismennamen angegeben.</li>
+</ol>
+<h2>security-protocol-type</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">String</code></p>
+<p>Der <code class="hljs inlineCode">security-protocol-type</code> definiert, welches Sicherheitsprotokoll für die LDAP Verbindung genutzt werden soll. Um zum Beispiel SSL zu benutzen, muss der Wert <code class="hljs inlineCode">ssl</code> angegeben werden. Falls kein Wert gesetzt wird, wird das Sicherheitsprotoll durch die <code class="hljs inlineCode">provider-url</code> bestimmt. Beinhaltet diese <code class="hljs inlineCode">ldaps://</code>, dann wird SSL verwendet (siehe <code class="hljs inlineCode">provider-url</code>).</p>
+<h2>referral</h2>
+<p><strong>Typ:</strong> String</p>
+<p>Ein Referral ist eine Art Alias mit einem oder mehreren LDAP URLs, die auf Objekte in Verzeichnissen verweisen, die sich unter Umständen auch auf einem anderen Server befinden. Dadurch ist es möglich, ein LDAP Verzeichnis auf mehrere Server zu verteilen oder auch dasselbe Objekt mit unterschiedlichen Namen anzusprechen.</p>
+<p>Ein Referral ist ein Eintrag im LDAP Verzeichnis und besitzt die Objektklasse <code class="hljs inlineCode">referral</code>, sowie mindetens ein Attribut mit dem Namen <code class="hljs inlineCode">ref</code> und einer LDAP URL. Die URLs beinhalten dabei Hostanamen, Port und den DN des Objekts.</p>
+<p><strong>TODO: Was genau wird da jetzt konfiguriert?</strong></p>
+<h2>filter</h2>
+<p><strong>Typ: </strong><code class="hljs inlineCode">String</code></p>
+<p><code class="hljs inlineCode">filter</code> ist eine Konfiguration des <code class="hljs inlineCode">PersonLDAPAccessService</code>s und wird dazu verwendet die zu importierenden Daten zu filtern. Üblicherweise wird er dazu verwendet, um bestimmte Objektklassen (zum Beispiel Benutzer) zu filtern.</p>
+<p>Die Kriterien des Filters können mit Hilfe folgender Operatoren definiert werden:</p>
+<table border="1" cellpadding="10" cellspacing="5" style="width:600px">
+ <thead>
+  <tr>
+   <th scope="col">Regel</th>
+   <th scope="col">Schreibweise</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>Gleichheit</td>
+   <td>(attribute=abc)</td>
+  </tr>
+  <tr>
+   <td>Negierung</td>
+   <td>(!(attribute=abc))</td>
+  </tr>
+  <tr>
+   <td>Existenz</td>
+   <td>(attribute=*)</td>
+  </tr>
+  <tr>
+   <td>Nichtexistenz</td>
+   <td>(!(attribute=*))</td>
+  </tr>
+  <tr>
+   <td>Größer als</td>
+   <td>(attribute&gt;=abc)</td>
+  </tr>
+  <tr>
+   <td>Kleiner als</td>
+   <td>(attribute&lt;=abc)</td>
+  </tr>
+  <tr>
+   <td>Wildcards</td>
+   <td>(attribute=*abc*)</td>
+  </tr>
+  <tr>
+   <td>UND</td>
+   <td>(&amp;(objectCategory=abc)(objectClass=abc)(sAMAccountName=abc))</td>
+  </tr>
+  <tr>
+   <td>ODER</td>
+   <td>(|(objectCategory=abc)(objectClass=abc)(sAMAccountName=abc))</td>
+  </tr>
+ </tbody>
+</table>
+<h3>Sonderzeichen</h3>
+<p>Die Folgenden Sonderzeichen können nicht ohne weiteres für den Filter verwendet werden und müssen entsprechend ersetzt werden:</p>
+<table border="1" cellpadding="10" cellspacing="5" style="width:200px">
+ <thead>
+  <tr>
+   <th scope="col" style="width:100px">Sonderzeichen</th>
+   <th scope="col">Ersatz</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>(</td>
+   <td>\28</td>
+  </tr>
+  <tr>
+   <td>)</td>
+   <td>\29</td>
+  </tr>
+  <tr>
+   <td>&amp;</td>
+   <td>\26</td>
+  </tr>
+  <tr>
+   <td>|</td>
+   <td>\7c</td>
+  </tr>
+  <tr>
+   <td>=</td>
+   <td>\3d</td>
+  </tr>
+  <tr>
+   <td>&gt;</td>
+   <td>\3e</td>
+  </tr>
+  <tr>
+   <td>&lt;</td>
+   <td>\3c</td>
+  </tr>
+  <tr>
+   <td>~</td>
+   <td>\7e</td>
+  </tr>
+  <tr>
+   <td>*</td>
+   <td>\2a</td>
+  </tr>
+  <tr>
+   <td>/</td>
+   <td>\2f</td>
+  </tr>
+  <tr>
+   <td>\</td>
+   <td>\5c</td>
+  </tr>
+ </tbody>
+</table>
+<h3>Weitere Regeln</h3>
+<ol>
+ <li>Es dürfen keine Anführungszeichen verwendet werden</li>
+ <li>Es können ausschließlich Standard Attribute der LDAP Datenbank verwendet werden.</li>
+ <li>Boolean Attribute müssen in Großbuchstaben gesucht werden (<code class="hljs inlineCode">TRUE/FALSE</code>)</li>
+</ol>
+<h3>Beispiele</h3>
+<p>Alle Einträge der Objektklasse <code class="hljs inlineCode">Person</code>, deren Loginname nicht leer ist:</p>
+<pre><code>(&amp;(objectClass=Person)(samAccountName=*))</code></pre>
+<p>Alle Einträge der Objektklasse <code class="hljs inlineCode">Person</code>, deren Loginname nicht leer ist und die zur Benutzergruppe <code class="hljs inlineCode">top-logic</code> gehören (siehe base-dn für die Beschreibung der Abkürzungen):</p>
+<pre><code>(&amp;(objectClass=Person)(samAccountName=*)(memberOf=CN=top-logic,OU=BOS,DC=BOS,DC=local))</code></pre>
+<p><strong>Hinweis: </strong>Es ist üblich, Benutzergruppen mit Hilfe des Filters und des Attributs <code class="hljs inlineCode">memberOf</code> zu filtern. In Top-Logic gibt es jedoch noch die Alternative, <code class="hljs inlineCode">access-groups</code> zu verwenden.</p>
+<h2>access-groups</h2>
+<p><strong>Typ: </strong><code class="hljs inlineCode">List&lt;NamedConfigMandatory&gt;</code></p>
+<p><code class="hljs inlineCode">access-groups</code> sind eine Konfiguration des <code class="hljs inlineCode">PersonLDAPAccessService</code>s und definieren die Benutzergruppen, die zum Importieren von Benutzern in Top-Logic berücksichtigt werden sollen. Sie bilden eine Alternative zu der Option, Benutzergruppen mit <code class="hljs inlineCode">memberOf</code> bereits im Filter abzufragen.</p>
+<p>Wenn keine <code class="hljs inlineCode">access-groups</code> angegeben werden, wird auschschließlich der Filter verwendet, um Benutzereinträge zu ermitteln.</p>
+<p>Es empfiehlt sich pro Benutzergruppe ein <a class="tlObject" data-custom="false" href="?page=SecurityDevice&amp;uuid=47187a0f-0c55-47b2-afbe-a75b9e77440b">SecurityDevice</a> zu konfigurieren. Dadurch können pro Benutzergruppe eigene Konfigurationen vorgenommen und auch nach dem Import in Top-Logic Benutzer den ursprünglichen Benutzergruppen zugeordnet werden.</p>
+<h3>Beispiele</h3>
+<p>Benutzer der Gruppe top-logic:</p>
+<pre><code>CN=top-logic,OU=BOS,DC=BOS,DC=local</code></pre>
+<h2><strong>parse-nested-groups</strong></h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">boolean</code><br><strong>Default: </strong><code class="hljs inlineCode">false</code></p>
+<p><code class="hljs inlineCode">parse-nested-groups</code> ist eine Konfiguration des <code class="hljs inlineCode">PersonLDAPAccessService</code>s und definiert ob die Benutzerdaten von verschachtelte Gruppen, also Gruppen die Mitglieder in anderen Gruppen sind, ebenfalls geparsed werden sollen. <code class="hljs inlineCode">true</code> bedeutet, dass die Gruppen rekursiv aufgelöst werden und nur Obergruppe angegeben werden muss, wenn man auch alle Benutzereinträge der Gruppen unterhalb der Obergruppe erhalten will. Das verhindert Redundanzen, da Gruppen, die gleichzeitig Untergruppen haben mehrfach aufgenommen werden würden.</p>
+<h2>available-attributes</h2>
+<p><strong>Typ:</strong> <code class="hljs inlineCode">String</code><br><strong>Default:</strong> Alle Attribute</p>
+<p><code class="hljs inlineCode">available-attributes</code> ist eine Konfiguration des <code class="hljs inlineCode">PersonLDAPAccessService</code>s und eine Liste von LDAP Attributen, die beim Abfragen der Benutzereinträge beachtet werden sollen. Die Attribute müssen durch Komma separiert werden ohne Leerzeichen.</p>
+<p>Außerdem müssen die Attribute den Attributnamen des Fremdsystems entsprechen<strong>.</strong> Wenn Attribute angegeben werde, werden ausschließlich diese abgefragt. Daher muss die Liste vollständig sein und es dürfen keine technischen Attribute wie beispielsweise <code class="hljs inlineCode">objectClass</code> vergessen werden. Wird hingegen kein Attribut angegeben, dann werden alle Attribute abgefragt.<br>
+  Attribute für spezifische <code class="hljs inlineCode">objectClass</code>es könne nicht angegeben werden. Das bedeutet jedes angegebene Attribut wird für die Abfrage aller Objektklassen verwendet.</p>

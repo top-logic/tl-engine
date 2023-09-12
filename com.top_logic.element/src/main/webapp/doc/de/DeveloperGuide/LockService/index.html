@@ -1,0 +1,111 @@
+<p>Verschiedene Aktionen im System schließen sich gegenseitig aus. Das betrifft beispielsweise die gleichzeitige Arbeit von zwei Nutzern an demselben Objekt. Damit nicht zwei Nutzer dasselbe Objekt gleichzeitig bearbeiten können, fordert ein Editor standardmäßig eine Sperre an, bevor er in den Bearbeiten-Modus schaltet. Hat ein Nutzer erfolgreich eine Sperre auf einem Objekt angefordert, kann ein zweiter Nutzer einen Editor auf demselben Objekt nicht mehr in den Bearbeiten-Modus schalten, da das Anfordern der zugehörigen Sperre solange scheitert, solange der erste Nutzer seine Bearbeitung nicht abgeschlossen hat.</p>
+<p><img src="ref:object-locked.png.png" style="height:428px; width:600px"></p>
+<h2>Sperren</h2>
+<p>Eine logische Sperre besteht aus einer Menge von sog. Tokens. Eine Sperre kann dann erfolgreich gesetzt werden, wenn die Anforderung aller ihrer Tokens möglich ist. Für eine logische Operation werden eine Menge von Tokens bestimmt, die notwendig sind, um diese Operation konfliktfrei durchführen zu können.</p>
+<h3>Token</h3>
+<p>Ein Token beschreibt einen atomar sperrbaren Aspekt eines Objekts. Es besteht aus einem Fachobjekt und einem Aspektnamen, z.B. "Werte" von "Objekt A". Dabei ist "Werte" der zu sperrende Aspekt von dem referenzierten Fachobjekt "Objekt A".</p>
+<h4>Exklusiv und shared</h4>
+<p>Ein Token kann entweder "exklusiv" oder "shared" angefordert werden. Wenn ein exklusives Token angefordert wurde, kann ein zweites Token mit demselben Objekt und Aspekt nicht mehr angefordert werden, bis das ursprüngliche Token wieder freigegeben wurde. Hingegen können mehrere Token für denselben Objekt-Aspekt auch zur selben Zeit "shared" angefordert werden. Allerdings ist es nicht mehr möglich, ein exklusives Token für einen Objekt-Aspekt zu erhalten, wenn es schon "shared" Token für denselben Aspekt gibt. Ein solches exklusives Token kann erst dann wieder angefordert werden, wenn alle shared Token für denselben Aspekt wieder freigegeben sind.</p>
+<h4>Timeout</h4>
+<p>Eine Sperre hat prinzipiell eine begrenzte Laufzeit. Der Timeout für eine Sperre wird bei der Anforderung des Sperre festgelegt. Solange der Timeout einer Sperre noch nicht erreicht ist, kann die Laufzeit einer Sperre jederzeit verlängert werden.</p>
+<pre><code>LockService service = LockService.getInstance();
+Lock lock = service.createLock(operation, object);
+lock.lock(timeout);
+try {
+  ...
+  lock.renew(newTimeout);
+  ...
+} finally {
+  lock.unlock();
+}
+</code></pre>
+<h4>Persistenz</h4>
+<p>In einem Cluster-Deployment einer Anwendungen wird die Synchronisation der Token-Anforderung über die Datenbank realisiert. Für lokale Tests in der Entwicklungsumgebung kann das persistente Token-Handling abgeschaltet werden, damit beim Neustart der Platform keine Tokens übrig bleiben.</p>
+<p>Um das persistente Token-Handling abzuschalten, kann das Konfigurationsfragment <code class="hljs inlineCode">devel-ephemeral-locks.config.xml</code> eingebunden werden.</p>
+<h2>Lock-Service</h2>
+<p>Der Lock-Service ist in der Anwendung dafür verantwortlich, für eine logische Operation auf einem Objekt, die Menge der Token auszurechen, die für die konfliktfreie Durchführung dieser Operation notwendig sind. Der Lock-Service ist konfigurierbar. In seiner Konfiguration werden für einen gegebenen Objekt-Typ und eine logische Operation eine Menge von Lock-Strategien angegeben, die ausgehend von dem Basisobjekt der Operation eine Menge von Token ausrechen.</p>
+<p>Der Lock-Service wird in der Anwendungskonfiguration beschrieben. Der beim Service konfigurierte <code class="hljs inlineCode">lock-timeout</code> ist der Default-Timeout für alle Operationen, wenn dort kein eigener Timeout konfiguriert ist.</p>
+<pre><code>&lt;config service-class="com.top_logic.base.locking.LockService"&gt;
+  &lt;instance lock-timeout="30min"&gt;
+    &lt;!-- Define lock concept for types --&gt;
+  &lt;/instance&gt;
+&lt;/config&gt;
+</code></pre>
+<p>Das Sperrkonzept wird für Objekte basierend auf ihrem Typ beschrieben. Der Lock-Service kann ein Sperrkonzept entweder für Objekte eines Modell-Typs oder eines Java-Implementierungstyps definieren.</p>
+<p>Modell-Typ:</p>
+<pre><code>&lt;model type="tl.element:StructuredElement"&gt;
+  &lt;!-- Define lock strategies for operations --&gt;
+&lt;/model&gt;
+</code></pre>
+<p>Java-Implementierungstyp:</p>
+<pre><code>&lt;java impl="com.top_logic.knowledge.service.db2.PersistentObject"&gt;
+  &lt;!-- Define lock strategies for operations --&gt;
+&lt;/java&gt;
+</code></pre>
+<p>Daneben können auch Lock-Strategien für globale Operationen definiert werden, die sich auf kein Objekt beziehen:</p>
+<pre><code>&lt;global&gt;
+  &lt;!-- Define lock strategies for global operations --&gt;
+&lt;/global&gt;
+</code></pre>
+<p>Innerhalb einer solchen Typ-Sektion werden abstrakte Operationen und die zu ihrer Synchronisation notwendigen Sperren definiert. Eine abstrakte Operation ist in erster Linie ein Name, der auch so z.B. in der Konfiguration einer Edit-Komponente als <code class="hljs inlineCode">lockOperation</code> hinterlegt ist. Die Default-Operation eines Editors ist <code class="hljs inlineCode">editValues</code> (Editieren der direkten Eigenschaften eines Objektes). Die Default-Operation eines Struktur-Editors hingegen ist <code class="hljs inlineCode">editStructure</code> (Editieren der gesamten Unterstruktur eines Teilbaumes).</p>
+<pre><code>&lt;operation name="editValues" lock-timeout="5min"&gt;
+  &lt;!-- Define tokens to acquire for performing this operation on a certain object --&gt;
+&lt;/operation&gt;
+</code></pre>
+<p>Der an einer Operation konfigurierte Lock-Timeout gilt für Locks, die für diese Operation angefordert werden. Wenn kein spezieller Lock-Timeout an einer Operation konfiguriert ist, gilt der globale Timeout der Service-Konfiguration.</p>
+<p>Welche Token für eine bestimte Operation notwendig sind, wird über eine Liste sog. <code class="hljs inlineCode">LockStrategy</code>-Konfigurationen angegeben. Eine <code class="hljs inlineCode">LockStrategy</code> ist im wesentlichen eine Funktion, die das Basisobjekt der Operation auf eine Menge von notwendigen Tokens abbildet.</p>
+<p>Es existieren die folgenden vordefinierten <code class="hljs inlineCode">LockStrategy</code>-Funktionen, die in der Konfiguration für eine abstrakte Operation angegeben werden können:</p>
+<p>Ein Token, das (exclusiv oder shared) genau auf dem Basisobjekt der Operation (z.B. dem Modell des Editors) angefordert wird:</p>
+<pre><code>&lt;local aspect="[aspect-name]" kind="[exclusive|shared]"/&gt;
+</code></pre>
+<p>Ein globales Token, das sich auf kein Objekt bezieht und daher unabhängig von dem Basisobjekt der Operation ist:</p>
+<pre><code>&lt;global aspect="[aspect-name]" kind="[exclusive|shared]"/&gt;
+</code></pre>
+<p>Token auf allen Vorgänger-Objekten des Basisobjektes in seiner Struktur (vorausgesetzt, das Basisobjekt ist ein <code class="hljs inlineCode">StructuredElement</code>-Objekt):</p>
+<pre><code>&lt;ancestors aspect="[aspect-name]" kind="[exclusive|shared]"/&gt;
+</code></pre>
+<p>Token auf dem Basisobjekt selbst und allen seinen Vorgänger-Objekten in seiner Struktur:</p>
+<pre><code>&lt;ancestors-or-self aspect="[aspect-name]" kind="[exclusive|shared]"/&gt;
+</code></pre>
+<p>Token auf einer frei definierbaren Menge von Objekten, die über eine TL-Script-Funktion ausgerechnet werden kann. Die Funktion erhält das Basisobjekt der Operation als einziges Argument:</p>
+<pre><code>&lt;tokens aspect="[aspect-name]" kind="[exclusive|shared]" objects="[function-computing-lock-objects]"/&gt;
+</code></pre>
+<p>Insgesamt könnte eine Lock-Service-Konfiguration wie folgt aussehen:</p>
+<pre><code>&lt;config service-class="com.top_logic.base.locking.LockService"&gt;
+  &lt;instance&gt;
+    &lt;java impl="com.top_logic.knowledge.service.db2.PersistentObject"&gt;
+      &lt;operation name="editValues"&gt;
+        &lt;local aspect="values" kind="exclusive"/&gt;
+      &lt;/operation&gt;
+    &lt;/java&gt;
+
+    &lt;model type="tl.element:StructuredElement"&gt;
+      &lt;operation name="editValues"&gt;
+        &lt;local aspect="values" kind="exclusive"/&gt;
+        &lt;ancestors-or-self aspect="structure" kind="shared" /&gt;
+      &lt;/operation&gt;
+    
+      &lt;operation name="editStructure"&gt;
+        &lt;local aspect="structure" kind="exclusive"/&gt;
+        &lt;ancestors aspect="structure" kind="shared" /&gt;
+      &lt;/operation&gt;
+    &lt;/model&gt;
+    
+    &lt;global&gt;
+      &lt;operation name="startup"&gt;
+        &lt;global aspect="com.top_logic.util.AbstractStartStopListener"/&gt;
+      &lt;/operation&gt;
+    &lt;/global&gt;
+  &lt;/instance&gt;
+&lt;/config&gt;
+</code></pre>
+<p>Diese Konfiguration definiert, dass für die Bearbeitung aller persistenten Objekte jeweils ein exklusives Token für den Sperraspekt <code class="hljs inlineCode">values</code> genau des bearbeiteten Objektes angefordert wird. Damit können verschiedene Objekte gleichzeitig von verschiedenen Nutzern bearbeitet werden, aber ein und dasselbe Objekt kann immer nur von höchstens einem Nutzer geleichzeitig bearbeitet werden.</p>
+<p>Weiter definiert die Konfiguration ein Sperrkonzept für Strukturen. Hier werden für eine einfache Bearbeitung eines Strukturknotens in einem Editor ein exklusives Token für den Sperraspekt <code class="hljs inlineCode">values</code> des bearbeiteten Objektes anfgefordert und gleichzeitig shared Tokens für den Sperraspekt <code class="hljs inlineCode">structure</code> auf allen Struktur-Vorgängern des bearbeiteten Objektes.</p>
+<p>Werden nur Knoten in normalen Editoren mit der Operation <code class="hljs inlineCode">editValues</code> bearbeitet, haben die angeforderten Shared-Token für den Sperraspekt <code class="hljs inlineCode">structure</code> keine Bedeutung, da sie weder einen Konflikt mit anderen Shared-Token erzeugen noch mit dem exklusiven Token für den Sperraspekt <code class="hljs inlineCode">values</code> (da es sich um einen anderen Sperraspekt handelt).</p>
+<p>Die Bedeutung der Shared-Token wird erst deutlich, wenn Strukturknoten in Struktureditoren mit der Operation <code class="hljs inlineCode">editStructure</code> bearbeitet werden. Diese Operation fordert ein exklusives Token für den Sperraspekt <code class="hljs inlineCode">structure</code> auf dem Wurzelobjekt der bearbeiteten Teilstruktur an. Dieses Token steht im Konflikt mit anderen shared Token für denselben Sperraspekt, die in der Operation <code class="hljs inlineCode">editValues</code> angefordert werden. In Kombination können also Knoten eines im Struktureditor bearbeiteten Teilbaumes nicht gleichzeitig in einem normalen Editor bearbeitet werden, weil hierfür shared Token auf allen Objekten auf dem Pfad zur Strukturwurzel für den <code class="hljs inlineCode">structure</code>-Aspekt notwendig wären. Von diesen steht aber eines im Konflikt mit dem exklusiven <code class="hljs inlineCode">structure</code>-Token für die Bearbeitung im Struktureditor.</p>
+<p>Aus entsprechenden Gründen ist es auch nicht mehr möglich, eine Ober- oder Unter-Struktur einer Teilstruktur in einem Struktureditor zu bearbeiten, die schon in einem anderen Struktureditor bearbeitet wird. Genausowenig ist es möglich, eine Teilstruktur in einem Struktureditor zu bearbeiten, wenn bereits ein einzelner Knoten dieser Teilstruktur in einem normalen Editor bearbeitet wird.</p>
+<h2>In-App-Konfiguration</h2>
+<p>Während der Lock-Service globale Defaults für das Sperrkonzept vorgibt, kann ein Sperrkonzept für neue Fachobjekttypen auch direkt am Typ annotiert werden:</p>
+<p><img src="ref:in-app-lock-definition.png.png" style="height:434px; width:600px"></p>
+<h2>Administrative Sicht</h2>
+<p>Die aktuell gesetzten Sperren können in der Sicht &nbsp;<a class="tlObject" data-custom="false" href="?page=Locks&amp;uuid=tl.admin.technical.deleteLocks.helpID">Sperren</a> eingesehen und notfalls manuell freigegeben werden.</p>

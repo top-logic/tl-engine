@@ -1,0 +1,28 @@
+<p>Multilingual texts are addressed via so-called resource keys. A resource key is a technical identifier for which a text in the corresponding language is or can be stored in the application resources for each language of the application.</p>
+<h2>Resource reference</h2>
+<pre><code>#"my.res.key"
+
+#'my.res.key'
+</code></pre>
+<p>Names the application resource with the technical identifier <code class="hljs inlineCode">my.res.key</code>. If an expression provides such a resource key, either an internationalized text must already be stored in the application resources for this technical identifier, or corresponding texts in the languages of the application must be stored separately in the resource administration.</p>
+<h2>Literal texts</h2>
+<p>The effort of defining a multilingual text separately via a resource key can be reduced by specifying the multilingual text in a script expression directly in the expression itself in all languages of the application.</p>
+<pre><code>#("Ein Text"@de, "Some text"@en, "Un texto"@es)
+
+#('Ein Text'@de, 'Some text'@en, 'Un texto'@es)
+</code></pre>
+<p>The multilingual text "Some Text" in the languages of the application (here German, English and Spanish identified via the ISO-639-1 language codes).</p>
+<pre><code>"some string"@de
+
+'some other string'@en
+</code></pre>
+<p>If the application is used only in one language, the "multilingual" text can be entered in a single language in a shorthand notation.</p>
+<h2>Literal texts with tooltip</h2>
+<p>If a tooltip is to be displayed for a literal text, it can be specified within the resource key.</p>
+<pre><code>#("Ein Text"@de, "Some text"@en, "Un texto"@es, tooltip: {"Ein Tooltip"@de, "Some tooltip"@en, "Una información sobre herramientas"@es})
+
+#('Ein Text'@de, 'Some text'@en, 'Un texto'@es, tooltip: {'Ein Tooltip'@de, 'Some tooltip'@en, 'Una información sobre herramientas'@es})
+</code></pre>
+<p></p>
+<p></p>
+<p></p>

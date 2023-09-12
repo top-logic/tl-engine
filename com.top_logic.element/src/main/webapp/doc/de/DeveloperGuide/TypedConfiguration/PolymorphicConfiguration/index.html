@@ -1,0 +1,48 @@
+<p>Neben reinen Konfigurationen gibt es den häufig angewendeten Spezialfall der Instanzkonfiguration. Eine Instanzkonfiguration dient dazu, eine konfigurierbare Komponente zu instanziieren.</p>
+<p>Instanzkonfigurationen werden statt von <code class="hljs inlineCode">ConfigurationItem</code> von <code class="hljs inlineCode">PolymorphicConfiguration</code> abgeleitet. Sie hat ein ausgezeichnetes Konfigurationsproperty <code class="hljs inlineCode">class</code> (vgl. <code class="hljs inlineCode">PolymorphicConfiguration#getImplementationClass()</code>). Dieses spezielle Property hat zwei Funktionen:</p>
+<ul>
+ <li>In der Konfiguration wird darüber die Implementierungsklasse angegeben, welche mit der entsprechenden Konfiguration gebaut werden soll.</li>
+ <li>Die angegebene Implementierungsklasse bestimmt über ihren Konfigurationskonstruktor das konkrete Konfigurations(sub)interface, welches verwendet werden muss. Implizit wählt damit die Implementierungsklasse den Konfigurationstyp, mit dem sie konfiguriert werden kann.</li>
+</ul>
+<p>Im folgenden Beispiel deklariert eine abstrakte konfigurierbare Komponente <code class="hljs inlineCode">Component</code> ein Konfigurationsinterface <code class="hljs inlineCode">Component.Config</code>, und referenziert dieses in ihrem Konfigurationskonstruktor. Für den Komponentennamen und den Namen des Konfigurationsinterfaces gibt es keine Einschränkungen.</p>
+<pre><code class="language-java">public abstract class Component {
+   public interface Config extends PolymorphicConfiguration&lt;Component&gt; {
+      int getOption();
+   }
+
+   /** Konfigurationskonstruktor */
+   Component(InstantiationContext context, Config config) {
+      ...
+   }
+}
+</code></pre>
+<p>Die konkrete Ableitung <code class="hljs inlineCode">MyComponent1</code> verwendet dieselben (geerbten) Konfigurationsoptionen (liefert lediglich einen Implementierungsanteil):</p>
+<pre><code class="language-java">public class MyComponent1 extends Component {
+   MyComponent1(InstantiationContext context, Config config) {
+      ...
+   }
+}
+</code></pre>
+<p>Eine Instanz von <code class="hljs inlineCode">MyComponent1</code> kann durch Angabe der Implementierungsklasse und ihrer Konfigurationoptionen konfiguriert werden:</p>
+<pre><code class="language-xml">&lt;component class="my.package.MyComponent1"
+   option="42"
+/&gt;
+</code></pre>
+<p><code class="hljs inlineCode">MyComponent2</code> deklariert ein spezialisiertes Konfigurationsinterface und erlaubt damit neben der Konfigurationsoption <code class="hljs inlineCode">option</code> aus <code class="hljs inlineCode">Component</code> die zusätzliche Option <code class="hljs inlineCode">other-option</code>:</p>
+<pre><code class="language-java">public class MyComponent2 extends Component {
+   public interface Config extends Component.Config {
+      String getOtherOption();
+   }
+
+   MyComponent2(InstantiationContext context, Config config) {
+      ...
+   }
+}
+</code></pre>
+<p>In der Konfiguration einer Instanz von <code class="hljs inlineCode">MyComponent2</code> ist damit implizit die Angabe eines Wertes für die spezialisierte Konfigurationsoption <code class="hljs inlineCode">other-config</code> möglich:</p>
+<pre><code class="language-xml">&lt;component class="my.package.MyComponent2"
+   option="42"
+   otherOption="Hello World!"
+/&gt;
+</code></pre>
+<p>Die Kombination der Implementierungsklasse <code class="hljs inlineCode">MyComponent1</code> mit der Konfigurationsoption <code class="hljs inlineCode">other-option</code> würde als Konfiguationsfehler erkannt werden.</p>

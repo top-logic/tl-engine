@@ -1,0 +1,24 @@
+<p>Benannte Subkomponenten</p>
+<pre><code class="language-java">public class A {
+   public interface Config extends PolymorphicConfiguration&lt;A&gt; {
+      B.Config getBConfig();
+   }
+
+   B b;
+
+   public A(InstantiationContext context, A.Config config) {
+      this.b = (B) context.getInstance(config.getBConfig());
+   }
+}
+
+public class B {
+   public interface Config extends PolymorphicConfiguration&lt;B&gt; {
+      ...
+   }
+
+   public B(InstantiationContext context, B.Config config) {
+      ...
+   }
+}
+</code></pre>
+<p>In obigem Beispiel enthält die Konfiguration der Komponente <code class="hljs inlineCode">A</code> eine Referenz auf eine Konfiguration für eine Komponente <code class="hljs inlineCode">B</code> (<code class="hljs inlineCode">B.Config</code>). Die Komponente <code class="hljs inlineCode">A</code> selbst benötigt für ihre Instanziierung aber eine Referenz auf eine Subcomponente <code class="hljs inlineCode">B</code>. Die Auflösung von "Konfiguration von <code class="hljs inlineCode">B</code>" (<code class="hljs inlineCode">B.Config</code>) zu einer Referenz auf die konfigurierte Subkomponente <code class="hljs inlineCode">B</code> erfolgt über den Instanziierungskontext <code class="hljs inlineCode">InstantiationContext</code>. Der Instanziierungskontext entscheidet darüber, ob eine neue Instanz von <code class="hljs inlineCode">B</code> angelegt werden muss, oder ob eine bereits erzeugte Instanz von <code class="hljs inlineCode">B</code> mit derselben Konfiguration bereits existiert und wiederverwendet werden kann (siehe <a href="MehrfachverwendungvonKomponenten">Mehrfachverwendung von Komponenten</a>).</p>

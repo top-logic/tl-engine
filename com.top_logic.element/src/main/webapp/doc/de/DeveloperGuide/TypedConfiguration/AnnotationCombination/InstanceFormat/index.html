@@ -1,0 +1,8 @@
+<p>In manchen Fällen kann es sinnvoll sein, dass <a class="tlObject" data-custom="true" href="?page=PolymorphicConfiguration&amp;uuid=21e3f487-4479-4896-860e-828ffd407c06">konfigurierte Instanzen</a> direkt als Werte von Konfigurationsproperties auftreten. In diesem Fall übernimmt das Framework die Instanziierung der Konfiguration. Hierfür muss das Property mit der Annotation <code class="hljs inlineCode">@InstanceFormat</code> ausgezeichnet sein.</p>
+<p>Der Wert eines Properties</p>
+<pre><code>interface Config extends ConfigurationItem {
+  @InstanceFormat
+  MyType getMyInstance();
+}
+</code></pre>
+<p>wird dann wie bei einem Property vom Typ <a class="tlObject" data-custom="true" href="?page=PolymorphicConfiguration&amp;uuid=21e3f487-4479-4896-860e-828ffd407c06">Polymorphic Configuration&lt;My Type&gt;</a> konfiguriert. Der Wert des Properties liefert aber nicht die Konfiguration, sondern die über diese Konfiguration instanziierte Instanz vom Typ <code class="hljs inlineCode">MyType</code> oder einem entsprechenden Untertyp.</p>

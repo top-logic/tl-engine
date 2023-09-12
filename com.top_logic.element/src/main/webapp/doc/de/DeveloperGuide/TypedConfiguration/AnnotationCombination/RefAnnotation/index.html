@@ -1,0 +1,21 @@
+<p>Man kann den Wert einer Property aus den Werten anderer Properties berechnen, z.B.</p>
+<pre><code class="language-java">@Derived(fun = FullName.class, args = { @Ref(FIRST_NAME), @Ref(LAST_NAME) })
+String getFullName();</code></pre>
+<p>wo die Klasse <code class="hljs inlineCode">FullName</code> eine passende Ableitung von <code class="hljs inlineCode">GenericFunction</code> ist, die aus den per <code class="hljs inlineCode">@Ref</code> referenzierten Properties den vollen Namen berechnet, der dann als Rückgabewert der Property dient, z.B.</p>
+<pre><code class="language-java">public class FullName extends Function2&lt;String, String, String&gt; {
+  @Override
+  public String apply(String firstName, String lastName) {
+    return firstName + " " + lastName;
+  }
+}
+</code></pre>
+<p>Die Annotation <code class="hljs inlineCode">@Ref</code> ermöglich auch, die Properties anderer Konfigurationen über Pfade zu referenzieren, z.B.</p>
+<pre><code class="language-java">@Derived(fun = FullName.class, args = { @Ref({ PARENT, Parent.FIRST_NAME }), @Ref({ PARENT, Parent.LAST_NAME })})
+String getParentFullName();</code></pre>
+<p>wo <code class="hljs inlineCode">PARENT</code> der Name der Container-Property ist (siehe <a class="tlObject" href="?page=ContainerAnnotation&amp;uuid=737d9893-0c84-446f-ba16-95b3f3c278a6">Container-Annotation</a>). Zugleich ist diese Art von Referenz dafür zuständig, dass spätestens beim Aufrufen des Getters der aktuelle Wert der referenzierten Property geholt wird. Der Pfad besteht aus einer Liste der Konfigurationen, über die zu der Property navigiert wird. Dabei muss man beachten:</p>
+<ul>
+ <li>Die Konfiguration-wertige Properties müssen <strong>genau</strong> den Typ haben, der die im Pfad nachfolgende Property deklariert.</li>
+ <li>Es ist <strong>nicht</strong> möglich über den Pfad auf die eigene Konfiguration zu referenzieren.</li>
+ <li>Referenziert man eine ganze Konfiguration, so wird der Wert des Getters bei einer Änderung deren Properties <strong>nicht</strong> aktualisiert, sondern erst wenn die gesamte referenzierte Konfiguration ausgetauscht wird.</li>
+</ul>
+<p></p>

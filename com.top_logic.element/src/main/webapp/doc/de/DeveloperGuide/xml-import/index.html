@@ -1,0 +1,60 @@
+<p>Das Modul <code class="hljs inlineCode">tl-xio</code> liefert einen konfigurierbaren XML-Import. Über eine XML-Deklaration lässt sich eine Übersetzung einer XML-Datei in ein TopLogic-Modell konfigurieren. Die Import-Definition ist dabei eine typisierte Konfiguration für Implementierungen des Interface <code class="hljs inlineCode">com.top_logic.xio.importer.handlers.Handler</code>. Ein solcher Handler ließt einen XML-Strom aus einem <code class="hljs inlineCode">XMLStreamReader</code> und erzeugt dabei Objekte in einem TopLogic Modell und verknüpft sie untereinander. Für verschiedene Bereiche der XML-Importdatei sind unterschiedliche Handler-Implementierungen zuständig. Ihre Interaktion wird duch die Import-Definitionsdatei gesteuert.</p>
+<h2>Dispatch</h2>
+<p>Die zentrale Steuerung übernimmt der <code class="hljs inlineCode">&lt;dispatch&gt;</code>-Handler. Er enthält eine Unterkonfiguration für jedes im aktuellen Kontext zu erwartende Tag. Je nachdem welches Tag er im Eingabestrom sieht, leitet er an den im Kontext dieses Tags definierten Handler weiter.</p>
+<p>Der folgende Handler kann zwischen den Tags <code class="hljs inlineCode">&lt;foo&gt;</code> und <code class="hljs inlineCode">&lt;bar&gt;</code> unterscheiden. Der Inhalt eines <code class="hljs inlineCode">&lt;foo&gt;</code> Tags würde von dem Hander verarbeitet, der im Inhalt von <code class="hljs inlineCode">&lt;tag name="foo"&gt;</code> definiert wäre. Entsprechend würde der Inhalt eines &lt;bar&gt; Tags von dem Handler verarbeitet werden, der im Inhalt von <code class="hljs inlineCode">&lt;tag name="bar"&gt;</code> definiert wäre.</p>
+<pre><code class="language-xml">&lt;dispatch&gt;
+  &lt;tag name="foo"&gt;
+    ...
+  &lt;/tag&gt;
+  &lt;tag name="bar"&gt;
+    ...
+  &lt;/tag&gt;
+&lt;/dispatch&gt;
+</code></pre>
+<h2>Objekt-Anlage</h2>
+<p>Es gibt Handler für die Anlage von Fachobjekten. Diese greifen nicht auf die XML-Eingabe zu, sondern werden im Kontext von anderen Handlern (z.B. dem Dispatch) aufgerufen.</p>
+<p>Der <code class="hljs inlineCode">&lt;object&gt;</code>-Handler legt ein Fachobjekt von einem bestimmter Modell-Typ an. Das Füllen von Eigenschaften und die Verknüpfung mit anderen Fachobjekten übernehmen Handler, die im Kontext des <code class="hljs inlineCode">&lt;object&gt;</code>-Handlers definiert sind.</p>
+<pre><code class="language-xml">&lt;object model-type="my.module:MyType"&gt;
+   ...
+&lt;/object&gt;</code></pre>
+<p>Das neu angelegte Objekt wird dabei auf einen Stack gelegt und steht allen Handlern, die im Kontext des <code class="hljs inlineCode">&lt;object&gt;</code>-Handlers definiert sind, als Kontext-Objekt zur Verfügung.</p>
+<p>Siehe: <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.xio.importer.handlers.ObjectCreate$Config" target="_blank">Konfiguration</a>.</p>
+<h2>Zuweisen von Werten</h2>
+<p>Ein eigener Handler übernimmt die Übersetzung von XML-Inhalt in Attributwerte eines angelegeten Objekts. Mit dem <code class="hljs inlineCode">&lt;property&gt;</code>-Handler lässt sich ein XML-Attribut in eine Objekt-Eigneschaft des Kontext-Objektes zuweisen. Wenn die Objekt-Eigenschaft nicht string-wertig ist, kann optional ein Format angegeben werden, das die Umrechnung des XML-Attributs in den Fachobjektwert übernimmt.</p>
+<pre><code class="language-xml">&lt;property name="myProp" xml-attribute="my-attr" /&gt;</code></pre>
+<p>Siehe: <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.xio.importer.handlers.PropertyImport$Config" target="_blank">Konfiguration</a>.</p>
+<p>Ganz ähnlich funktioniert der <code class="hljs inlineCode">&lt;text-content&gt;</code>-Handler. Statt den Wert aus einem XML-Attribut zu nehmen, ließt dieser Handler den textuellen Inhalt des aktuellen XML-Tags und weißt diesen der Objekteigenschaft zu. Auch hier kann optional ein Format angegeben werden</p>
+<pre><code class="language-xml">&lt;text-content name="myProp"/&gt;</code></pre>
+<p>In beiden Fällen können keine Handler im Kontext der Zusweisungshandler spezifiziert werden.</p>
+<p>Siehe: <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.xio.importer.handlers.TextContentImport$Config" target="_blank">Konfiguration</a>.</p>
+<h2>Verknüpfung von Objekten</h2>
+<p>Objekte, die während des Imports angelegt werden, können gesteuert durch die XML-Eingabe untereinander verknüpft werden. Hierdurch werden Referenzen, die in der XML-Eingabe durch Identifier realisiert sind, in echte Modell-Verknüpfungen übersetzt.</p>
+<pre><code class="language-xml">&lt;linking&gt;
+  &lt;list-linking name="my.module:MyType#myListRef"/&gt;
+&lt;/linking&gt;
+</code></pre>
+<p>Die Objekt-Verknüpfung realisiert der <code class="hljs inlineCode">&lt;linking&gt;</code>-Handler. Standardmäßig verknüpft er die zwei obersten Objekte im Kontext-Stack. Wie die Verknüpfung konkret ausgeführt wird, bestimmen sog. Linkings, die in seinem Kontext definiert werden können. Sind mehrere Linkings definiert, wird das erste Linking ausgeführt, das zu den zu verknüpfenden Objekten passt. Das <code class="hljs inlineCode">&lt;list-linking&gt;</code> fügt das Kontext-Objekt zu der angegebenen Multi-Referenz seines Kontext-Objektes hinzu. Das Linking wird nur ausgeführt, wenn das Objekt, dessen Referenz modifiziert oder gesetzt werden soll von einem zu der spezifizierten Referenz passenden Typ ist. Eine Alternative zum <code class="hljs inlineCode">&lt;list-linking&gt;</code> ist das <code class="hljs inlineCode">&lt;ref-linking&gt;</code> für die Zuweisung von Zu-Eins-Referenzen.</p>
+<p>Siehe: <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.xio.importer.handlers.Linker$Config" target="_blank">Konfiguration</a> und <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.xio.importer.linkings.package-info" target="_blank">Linkings</a>.</p>
+<h2>Rekursion</h2>
+<p>Rekursive Strukturen können über den Aufruf von im Kontext definierten Handlern realisiert werden. Hierbei wird der Handler, der z.B. im Kontext eines gelesenen Tags ausgeführt werden soll nicht explizit in der Import-Definition hingeschrieben, sondern referenziert. Wenn hierbei ein Handler referenziert wird, der selbst im Kontext definiert ist, findet eine Rekursion statt und es können beliebig tiefe Strukturen verarbeitet werden.</p>
+<pre><code class="language-xml">&lt;dispatch id="tree"&gt;
+  &lt;tag name="node"&gt;
+    &lt;object model-type="test.tree:Node"&gt;
+      &lt;property name="name" xml-attribute="name"/&gt;
+      &lt;linking&gt;
+        &lt;list-linking name="test.tree:Node#children"/&gt;
+      &lt;/linking&gt;
+      &lt;ref handler-id="tree"/&gt;
+    &lt;/object&gt;
+  &lt;/tag&gt;
+&lt;/dispatch&gt;</code></pre>
+<p>In obiger Definition ist dem äußersten Handler die ID <code class="hljs inlineCode">tree</code> zugewiesen. Der innerste Handler ruft diesen Handler wieder auf und kann so dieselbe Struktur im Kontext des gelesenen Objektes wieder einlesen. Auf diese Art kann der so konfigurierte Importer Strukturen wie die folgende in einen Baum von Objekten übersetzen:</p>
+<pre><code>&lt;node name="A"&gt;
+  &lt;node name="A.1"/&gt;
+  &lt;node name="A.2"&gt;
+    &lt;node name="A.2.1"/&gt;
+  &lt;/node&gt;
+&lt;/node&gt;</code></pre>
+<p>Siehe: <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.xio.importer.handlers.HandlerRef$Config" target="_blank">Konfiguration</a>.</p>
+<h2>Weitere Handler</h2>
+<p>Weitere Handler und deren Konfiguration findet man in der <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.xio.importer.handlers.package-info" target="_blank">API-Dokumentation</a>.</p>

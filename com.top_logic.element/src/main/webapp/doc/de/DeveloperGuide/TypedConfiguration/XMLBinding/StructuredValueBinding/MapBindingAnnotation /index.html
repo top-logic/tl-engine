@@ -1,0 +1,52 @@
+<p>Map mit primitivem Key und Wert</p>
+<pre><code class="language-java">public interface Config extends ConfigurationItem {
+  @MapBinding()
+  Map&lt;String, String&gt; getAdditionalNamespaces();
+}
+</code></pre>
+<p>lässt sich konfigurieren als:</p>
+<pre><code class="language-xml">&lt;foo&gt;
+  &lt;additional-namespaces&gt;
+    &lt;additional-namespace key="config" value="http://www.top-logic.com/ns/config/6.0"/&gt;
+    &lt;additional-namespace key="annotation" value="http://www.top-logic.com/ns/layout/annotation/1.0"/&gt;
+    &lt;additional-namespace key="fubar" value="http://example.com/NS/fubar"/&gt;
+  &lt;/additional-namespaces&gt;
+&lt;/foo&gt;
+</code></pre>
+<p>Die Tag- und Attribut-Namen können als optionale Parameter am <code class="hljs inlineCode">@MapBinding</code> spezifiziert werden:</p>
+<pre><code class="language-java">public interface Config extends ConfigurationItem {
+  @MapBinding(tag = "namespace", key = "prefix", attribute = "uri")
+  Map&lt;String, String&gt; getAdditionalNamespaces();
+}
+</code></pre>
+<p>In diesem Fall muss die Konfiguration folgendermaßen lauten:</p>
+<pre><code class="language-xml">&lt;foo&gt;
+  &lt;additional-namespaces&gt;
+    &lt;namespace prefix="config" uri="http://www.top-logic.com/ns/config/6.0"/&gt;
+    &lt;namespace prefix="annotation" uri="http://www.top-logic.com/ns/layout/annotation/1.0"/&gt;
+    &lt;namespace prefix="fubar" uri="http://example.com/NS/fubar"/&gt;
+  &lt;/additional-namespaces&gt;
+&lt;/foo&gt;
+</code></pre>
+<p>Für andere Typen als Strings kann jeweils ein <code class="hljs inlineCode">ConfigurationValueProvider</code> für den Key und den Value angegeben werden:</p>
+<pre><code class="language-java">public interface Config extends ConfigurationItem {
+  @MapBinding(keyFormat = ClassReferenceResolver.class, valueFormat = HexEncodedColor.class)
+  Map&lt;Class, Color&gt; getAdditionalNamespaces();
+}
+</code></pre>
+<p>Im folgenden Beispiel wird eine Abbildung <code class="hljs inlineCode">Map&lt;String, Color&gt; getColors()</code> von Namen auf Farbwerte definiert:</p>
+<pre><code class="language-java">public interface Config extends ConfigurationItem {
+  @MapBinding(key = "name", valueFormat = HexEncodedColor.class, attribute = "value", tag = "color")
+  Map&lt;String, Color&gt; getColors();
+}
+</code></pre>
+<p>Dies kann über folgendes XML-Document konfiguriert werden:​</p>
+<pre><code class="language-xml">&lt;config&gt;
+   &lt;colors&gt;
+      &lt;color name="red" value="#ff0000"/&gt;
+      &lt;color name="green" value="#00ff00"/&gt;
+      &lt;color name="blue" value="#0000ff"/&gt;
+   &lt;/colors&gt;
+&lt;/config&gt;
+</code></pre>
+<p>​Der Default-Wert ist eine leere, modifizierbare Map, nicht <code class="hljs inlineCode">null</code>.</p>

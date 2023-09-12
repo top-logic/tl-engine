@@ -1,0 +1,57 @@
+<h2>Syntax</h2>
+<pre>	<code>$set.subList($startIndex)
+
+$set.subList($startIndex, $stopIndex)
+</code>
+</pre>
+<h2>Description</h2>
+<p>Returns a part of the given list specified by the indices.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>set</td>
+   <td>set</td>
+   <td>A list from which a partial list is to be taken.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>startIndex</td>
+   <td>Number</td>
+   <td>The index of <code class="hljs inlineCode">set</code> where the sublist is to start (inclusive). The first element of <code class="hljs inlineCode">set</code> is 0. The element with the specified <code class="hljs inlineCode">startIndex</code> is included in the sublist.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>stopIndex</td>
+   <td>Number</td>
+   <td>The index of <code class="hljs inlineCode">set</code> where the sublist should end (exclusive). The first element of <code class="hljs inlineCode">set</code> is 0. The element with the specified <code class="hljs inlineCode">stopIndex</code> is not included in the sublist.</td>
+   <td>no</td>
+   <td>The sublist contains all elements from <code class="hljs inlineCode">startIndex</code> to the end of <code class="hljs inlineCode">list</code>. Equivalent to <code class="hljs inlineCode">$set.subList($startIndex, $set.size()).</code></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p>
+<p>A sublist of the specified set <code class="hljs inlineCode">set</code>.</p>
+<h2>Examples</h2>
+<h3>Sublist without stopIndex</h3>
+<pre>	<code>list(1, 2, 3, 4, 5).subList(2)</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong> A set with the elements [3, 4, 5].</p>
+<p>At index 2 is the number 3. From there all elements are included in the sublist.</p>
+<h3>Sublist with stopIndex</h3>
+<pre>	<code>list(1, 2, 3, 4, 5).subList(2, 4)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span> A set with the elements [3, 4].</p>
+<p>At index 2 is the number 3 and index 4 is the number 5. The <code class="hljs inlineCode">stopIndex</code> is not included in the sublist.</p>

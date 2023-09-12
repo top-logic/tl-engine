@@ -1,0 +1,50 @@
+<h2>Syntax</h2>
+<pre>	<code>$expr.toList()</code>
+</pre>
+<h2>Description</h2>
+<p>Converts the result of evaluating <code class="hljs inlineCode">expr</code> into a list. The following cases can occur:</p>
+<ol>
+ <li><code class="hljs inlineCode">expr</code> is already a list: <code class="hljs inlineCode">expr</code> is returned</li>
+ <li><code class="hljs inlineCode">expr</code> is any collection (e.g. set): <code class="hljs inlineCode">expr</code> is converted to a list.</li>
+ <li><code class="hljs inlineCode">expr</code> is <code class="hljs inlineCode">null</code>: An <a class="tlObject" data-custom="true" href="?page=none&amp;uuid=0f68ed5b-0e34-4c26-aeb5-d6476f610efb">Empty set</a> is returned.</li>
+ <li>For all other values a one-element set is created, see <a class="tlObject" data-custom="true" href="?page=singleton&amp;uuid=f636fa87-3aa1-48e0-8c3b-40dbe69bc358">Wrapping up</a>.</li>
+</ol>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>expr</td>
+   <td>Number/string/boolean/business object/set</td>
+   <td>An expression whose evaluation is to be converted into a list.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"></span></p>
+<p><span style="color:#3498db"><strong>Type:</strong> </span>Set</p>
+<p>A list representing the values from <code class="hljs inlineCode">expr</code>.</p>
+<h2>Examples</h2>
+<h3>Converting a list</h3>
+<pre>	<code>list(1, 1, 2, 3, 3).toList()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span>A list with the elements [1, 1, 2, 3, 3].</p>
+<p>Since this is already a list, it is simply returned.</p>
+<h3>Conversion of a scalar value</h3>
+<pre>	<code>toList(1)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span>A list with the element [1].</p>
+<h3>Conversion of null</h3>
+<pre>	<code>toList(null)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span>An empty list</p>

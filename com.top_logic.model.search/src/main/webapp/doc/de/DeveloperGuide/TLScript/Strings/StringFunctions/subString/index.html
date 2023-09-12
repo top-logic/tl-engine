@@ -1,0 +1,66 @@
+<h2>Syntax</h2>
+<pre>	<code>$string.subString($from)
+
+$string.subString($from, $to)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Schneidet einen Bereich aus der Zeichenkette <code class="hljs inlineCode">string</code> aus.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>string</td>
+   <td>Zeichenkette</td>
+   <td>Die Zeichenkette, aus der ein Bereich ausgeschnitten werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>from</td>
+   <td>Zahl</td>
+   <td>Der Index des ersten auszuschneidenden Buchstabens (inklusiv). Der erste Buchstaben hat den Index <code class="hljs inlineCode">0</code>. Eine negative Zahl wird vom Ende der Zeichenkette aus gerechnet.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>to</td>
+   <td>Zahl</td>
+   <td>Der Index des Buchstabens, der direkt auf den letzten auszuschneidenden Buchstaben folgt (exklusiv). Eine negative Zahl wird vom Ende der Zeichenkette aus gerechnet.</td>
+   <td>nein</td>
+   <td>Es wird vom Index <code class="hljs inlineCode">from</code> bis zum Ende der Zeichenkette ausgeschnitten.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p>
+<p>Der Bereich der Zeichenkette <code class="hljs inlineCode">string</code>, der durch <code class="hljs inlineCode">from</code> und <code class="hljs inlineCode">to</code> begrenzt wird.</p>
+<h2>Beispiele</h2>
+<h3>Ausschneiden ohne to</h3>
+<pre>	<code>subString("Hello world!", 6)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> world!</p>
+<p>Der Index des Buchstabens "w" ist 6. Es wird von da aus bis zum Ende ausgeschnitten.</p>
+<h3>Ausschneiden mit to</h3>
+<pre>	<code>subString("Hello world!", 6, 11)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> world</p>
+<p>Der Index des Buchstabens "w" ist 6, der des Ausrufezeichens ist 11.</p>
+<h3>Ausschneiden von hinten ohne to</h3>
+<pre>	<code>subString("123456789", -3)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 789</p>
+<p>Es wird von hinten aus der dritte Index gewählt, also 7.</p>
+<h3>Ausschneiden von hinten mit to</h3>
+<pre>	<code>subString("123456789", -4, -1)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 678</p>
+<p>Es wird von hinten der vierte Index 6 gewählt und bis zum letzten Index 8 ausgeschnitten.</p>

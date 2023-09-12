@@ -1,0 +1,49 @@
+<h2>Syntax</h2>
+<pre>	<code>$fun.comparator()
+</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Konstruiert eine Vergleichsfunktion für <a class="tlObject" data-custom="true" href="?page=sort&amp;uuid=30b1f03d-7f93-4a98-a879-b523480ac72e">sort()</a> von einer Zugriffsfunktion, die einen Vergleichsschlüssel aus einem Listenelement berechnet. Das Sortieren einer Liste mit einem solchen Vergleicher stellt eine Reihenfolge der von der Zugriffsfunktion gelieferten Werte her.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>fun</td>
+   <td>Funktion</td>
+   <td>Eine Zugriffsfunktion, die Vergleichsschlüssel aus den gegebenen Listenelementen Vergleichsschlüssel berechnet, die zum Vergleichen verwendet werden können.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Funktion</p>
+<p>Eine Vergleichsfunktion, die für die <a class="tlObject" data-custom="true" href="?page=sort&amp;uuid=30b1f03d-7f93-4a98-a879-b523480ac72e">Sortierung</a> von Mengen und Listen verwendet werden kann.</p>
+<h2>Beispiele</h2>
+<h3>Vergleichsfunktion aus einer Zugriffsfunktion</h3>
+<pre>	<code>all(`my.module:MyType`)
+  .sort(comparator(x -&gt; $x.get(`my.module:MyType#name`)))</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Liste aller Instanzen des Typs <code class="hljs inlineCode">my.module:MyType</code> sortiert nach den Werten des Attributs <code class="hljs inlineCode">name</code>.</p>
+<p>Die <code class="hljs inlineCode">comparator()</code>-Funktion macht hier aus der Zugriffsfunktion <code class="hljs inlineCode">x -&gt; $x.get(`my.module:MyType#name`</code>, die für ein LIstenelement den Wert der Eigenschaft <code class="hljs inlineCode">name</code> liefert, eine Vergleichsfunktion.</p>
+<h3>Äquivalent zum vorherigen Beispiel ohne comparator</h3>
+<pre>	<code>all(`my.module:MyType`)
+  .sort(x -&gt; y -&gt; {
+    name1 = $x.get(`my.module:MyType#name`);
+    name2 = $y.get(`my.module:MyType#name`);
+    if ($name1 &lt; $name2, 
+      -1, 
+      if ($name1 &gt; $name2, 1, 0));
+  })</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Liste aller Instanzen des Typs <code class="hljs inlineCode">my.module:MyType</code> sortiert nach den Werten des Attributs <code class="hljs inlineCode">name</code>.</p>
+<p>Im obigen Beispiel wird die Vergleichsfunktion direkt angegeben. Hier muss zweimal auf die name-Eigenschaft zugegriffen werden und die (-1, 1, 0)-Logik einer Vergleichsfunktion ist explizit ausformuliert. Dies könnte auch über die Verwendung der <a class="tlObject" data-custom="false" href="?page=compare&amp;uuid=9b99eaf6-0a4d-4f83-a4b0-c22005a44494">Vergleichswert</a>-Funktion vereinfacht werden.</p>

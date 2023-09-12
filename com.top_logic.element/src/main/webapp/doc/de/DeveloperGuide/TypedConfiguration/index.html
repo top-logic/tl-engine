@@ -1,0 +1,35 @@
+<p>Die typisierte Konfiguration als Konzept erleichtert dem Entwickler, die anwendungsdefinierten Klassen (z.B. Layout-Komponenten) konfigurierbar zu machen. Eine <em>Konfiguration</em> wird direkt in der Klasse als inneres Interface hinterlegt, welches von <a href="http://tl/svn/top-logic/trunk/TL/tl-doc/javadoc/index.html#com.top_logic.basic.config.ConfigurationItem" target="_blank" title="com.top_logic.basic.config.ConfigurationItem in tl">​ConfigurationItem</a> ableitet und der Java-Beans-Konvention folgt. Jeder Getter in so einem Interface definiert eine <em>Eigenschaft</em>, liefert den konfigurierten <em>Wert</em> als Ergebnis und kann überall in der Klasse aufgerufen werden.</p>
+<pre><code class="language-java">/** The class that need configuration. */
+public class Car {
+
+  /** The configuration interface that defines the configuration. */
+  public interface Config extends ConfigurationItem {
+    int getHorsePower();
+    String getColor();
+  }
+
+  ...
+
+  public void decide(...) {
+    ...
+    // Access to the configuration value.
+    if (getConfig().getHorsePower() &lt; 100) {...}
+    ...
+  }
+}
+</code></pre>
+<p>Die obige Beispiel-Konfiguration kann dann über folgendes XML-Document konfiguriert werden:</p>
+<pre><code class="language-xml">&lt;config
+   horse-power="120"
+   color="red"
+/&gt;
+</code></pre>
+<p>Das Framework übernimmt die Aufgaben:</p>
+<ul>
+ <li>Instanziierung der Konfiguration über Reflection.</li>
+ <li>Serialisierung der Konfiguration in eine XML​-Datei (z.B. eine <code class="hljs inlineCode">*.layout.xml</code>) und Parsen der XML-Datei in eine mit Werten befüllte Konfiguration (anpassbar durch <a class="tlObject" href="?page=StructuredValueBinding&amp;uuid=be7c15df-2e88-4a31-8e45-90d62b47d743">@Binding-Annotations</a>).</li>
+ <li>Mapping zwischen dem Namen des Getters <code class="hljs inlineCode">getHorsePower()</code> und Namen der Eigenschaft <code class="hljs inlineCode">horse-power</code> in der XML-Datei (anpassbar durch <a class="tlObject" href="?page=NameAnnotation&amp;uuid=0bde25a3-c416-48ef-9e8a-909bca386a8d">@Name-Annotation</a>).</li>
+ <li>Konsistenz zwischen dem Rückgabetyp des Getters und dem Wertetyp der Eigenschaft in der XML-Datei (anpassbar durch <a class="tlObject" href="?page=FormatAnnotation&amp;uuid=6d91f715-9a35-4317-99cf-c8e672d28622">@Format-Annotation</a>).</li>
+</ul>
+<p>Entsprechende Setter kann man auch in der Konfiguration aufführen, falls man vorhat die aus der XML-Datei eingelesene Werte zu ändern.</p>
+<p>Der Wert einer Eigenschaft kann selbst eine Konfiguration sein - dadurch entsteht ein ganzer <em>Konfigurationsbaum</em>.</p>

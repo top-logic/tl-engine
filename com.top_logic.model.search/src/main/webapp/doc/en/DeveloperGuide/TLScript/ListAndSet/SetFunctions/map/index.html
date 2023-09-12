@@ -1,0 +1,44 @@
+<h2>Syntax</h2>
+<pre>	<code>$set.map($func)</code>
+</pre>
+<h2>Description</h2>
+<p>Applies the function <code class="hljs inlineCode">func</code> to each element of the <code class="hljs inlineCode">set</code> and returns the set of evaluation results.</p>
+<p>Used when the result of the mapping is relevant. If the side effect (see <a class="tlObject" data-custom="true" href="?page=Transactions&amp;uuid=c965c93c-6140-4f81-93ec-85bc9f5610e4">Transactions</a>) of the function <code class="hljs inlineCode">func</code> is to be considered instead, then <a class="tlObject" data-custom="true" href="?page=foreach&amp;uuid=5c0582a6-75c9-4683-9c25-0442737f7d08">foreach()</a> is used as an alternative.</p>
+<p>If the result of the function is a set, then the result set must be <a class="tlObject" data-custom="true" href="?page=flatten&amp;uuid=d19612c5-6070-403f-b332-7cd7a50f7e6f">flattened</a> afterwards, since sets of sets are not supported as final results of expressions</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>set</td>
+   <td>Set</td>
+   <td>A set to whose elements <code class="hljs inlineCode">func</code> should be applied to.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>func</td>
+   <td>Function</td>
+   <td>Function to be applied to all elements of <code class="hljs inlineCode">set</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set</p>
+<p>A set containing all evaluation results of the function <code class="hljs inlineCode">func</code> for all elements in <code class="hljs inlineCode">set</code>.</p>
+<h2>Examples</h2>
+<h3>Addition</h3>
+<pre>	<code>list(1, 4, 9)
+  .map(x -&gt; $x + 5)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span> A set with the elements [6, 9, 14].</p>

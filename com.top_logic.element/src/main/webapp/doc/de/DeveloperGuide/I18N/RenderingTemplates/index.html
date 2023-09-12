@@ -1,0 +1,42 @@
+<p><code class="hljs inlineCode">TemplateExpression</code>s definieren das Rendering für Modellobjekte. Die Vorlagensyntax ist wie folgt definiert:</p>
+<h2>Literaler Text</h2>
+<p>Der gesamte Text wird als literaler (internationalisierter) Text interpretiert, mit Ausnahme von eingebetteten Vorlagenausdrücken, siehe Schlag.</p>
+<h2>Schablonenausdruck</h2>
+<p>Ein Schablonenausdruck ist von geschweiften Klammern umgeben <code class="hljs inlineCode">{ [expr] }</code>.</p>
+<h2>Literales XML/HTML</h2>
+<p>XML/HTML-Strukturen können mit eingebetteten Ausdrücken in Attributwerten und Tag-Inhalten wörtlich ausgegeben werden: <code class="hljs inlineCode">&lt;div class="myclass {$other}"&gt;Some {$value}.&lt;/div&gt;</code>.</p>
+<h2>Template-Referenz</h2>
+<p>In einem Template-Ausdruck kann ein anderes Template über seinen Namen referenziert werden <code class="hljs inlineCode">{-&gt; [other-template]}</code>. In der Ausgabe wird eine Template-Referenz durch die Erweiterung des referenzierten Templates auf Basis der gleichen Konfigurationsinstanz ersetzt.</p>
+<h2>Bedingte Auswertung</h2>
+<p>Ein Template-Ausdruck kann aus einem bedingten Bewertungsoperator <code class="hljs inlineCode">{ [test] ? [if] : [else] }</code> bestehen. Bei der Auswertung wird der bedingte Ausdruck zur Expansion des <code class="hljs inlineCode">[if]</code> Ausdrucks ausgewertet, wenn der Ausdruck <code class="hljs inlineCode">[test]</code> zu einem Nicht-<code class="hljs inlineCode">null</code>, Nicht-Null- oder Nicht-Leer-Wert ausgewertet wird. Andernfalls wird der Ausdruck <code class="hljs inlineCode">[else]</code> ausgewertet.</p>
+<h2>Alternative Auswertung</h2>
+<p>Um eine alternative Darstellung für einen ansonsten leeren Wert zu erzeugen, ist eine Kurzform für <code class="hljs inlineCode">{ [alternative1] ? [alternative1] : [alternative2] }</code> durch einen alternativen Ausdruck <code class="hljs inlineCode">{ [alternative1] | [alternative2] }</code> möglich.</p>
+<h2>Eingebetteter Vorlagentext</h2>
+<p>Innerhalb eines Schablonenausdrucks kann der Parsermodus wieder auf literalen Text (mit eventuell eingebetteten Schablonenausdrücken) umgeschaltet werden, indem der literalen Text wieder mit geschweiften Klammern umgeben wird <code class="hljs inlineCode">{ [test] ? {some literal text} : {some other literal text} }</code></p>
+<h2>Eigenschaftszugriff</h2>
+<p>Der Zugriff auf den Wert einer Modelleigenschaft des zugrunde liegenden Modellobjekts erfolgt über den Eigenschaftsnamen <code class="hljs inlineCode">{my-property}</code>.</p>
+<p>Der Zugriff auf eine Eigenschaft, die nicht durch das zugrunde liegende Modell definiert ist, führt zu einem Fehler.</p>
+<p>Standardmäßig kann auf Eigenschaften von <code class="hljs inlineCode">ConfigurationItem</code> Modellen über deren Eigenschaftsnamen zugegriffen werden. Bei Verwendung eines <code class="hljs inlineCode">com.top_logic.layout.template.TLModelAccess</code> zur Auswertung kann auch auf persistente Objekte (<code class="hljs inlineCode">com.top_logic.model.TLObject</code>) und beliebige Objekte, die die Schnittstelle <code class="hljs inlineCode">com.top_logic.layout.template.WithProperties</code> implementieren, zugegriffen werden.</p>
+<h2>Variablenzugriff</h2>
+<p>Im eigentlichen Auswertungskontext kann ein Satz von Variablen definiert sein (als Schlüssel-Wert-Mapping). Auf eine solche Variable kann über ihren Namen zugegriffen werden, indem ein <code class="hljs inlineCode">$</code> Zeichen vorangestellt wird. Auf eine Variable mit dem Namen <code class="hljs inlineCode">my-var</code> kann mit <code class="hljs inlineCode">$my-var</code> zugegriffen werden.</p>
+<h2>Funktionsaufruf</h2>
+<p>Global definierte Funktionen können von Template-Ausdrücken aus aufgerufen werden. Eine Funktion wird durch ein <code class="hljs inlineCode">#</code> -Präfix vor ihrem Namen referenziert. Die Funktion <code class="hljs inlineCode">sublist</code> wird z. B. durch den Ausdruck <code class="hljs inlineCode">#sublist($l, 2)</code> aufgerufen, wobei das erste Argument einen Listenwert referenzieren soll und das zweite den Startoffset als Integer-Wert angibt. Für alle definierten Funktionen siehe die Konfiguration von <code class="hljs inlineCode">GlobalConfig#getFunctions()</code>.</p>
+<h2>Iteration</h2>
+<p>Wenn ein zugegriffener Wert listenwertig ist, können alle Werte z. B. mit <code class="hljs inlineCode">{foreach(x : $my-var, '; ', {"{$x}"})}</code> iteriert werden. Dadurch wird jeder Wert des Listenwerts <code class="hljs inlineCode">$my-var</code> an die lokal definierte Variable <code class="hljs inlineCode">$x</code> gebunden und die Schablone <code class="hljs inlineCode">"{$x}"</code> für jedes Listenelement ausgewertet (effektiv wird jedes von Anführungszeichen umgebene Element ausgegeben). Zwischen zwei Auswertungen wird der Trennausdruck <code class="hljs inlineCode">'; '</code> zu einem Semikolon gefolgt von einem Leerzeichen expandiert. Wenn der Wert von <code class="hljs inlineCode">$my-var</code> die Liste der Zahlen <code class="hljs inlineCode">1, 2, 3</code> ist, wäre das endgültige Auswertungsergebnis <code class="hljs inlineCode">"1"; "2"; "3"</code>.</p>
+<h2>Indizierter Zugriff</h2>
+<p>Wenn ein zugegriffener Wert listenwertig ist, kann mit <code class="hljs inlineCode">$my-var[42]</code> auf ein Element an einem bestimmten Index zugegriffen werden.</p>
+<p>Der Zugriff auf einen Index außerhalb des Bereichs ergibt einen <code class="hljs inlineCode">null</code> Wert. Dies ermöglicht z. B. das Testen, ob eine Sammlung eine bestimmte Anzahl von Einträgen enthält durch <code class="hljs inlineCode">{list[1] ? ...}</code>.</p>
+<p>Der Zugriff mit einem negativen Index hat die Semantik eines Zugriffs mit einem Index relativ zum Ende der Liste. Bei einer Liste mit der Größe <code class="hljs inlineCode">5</code> wird der Ausdruck <code class="hljs inlineCode">{list[-2]}</code> auf das Element bei Index <code class="hljs inlineCode">3</code> ausgewertet.</p>
+<h2>Map-Zugriff</h2>
+<p>Wenn ein zugegriffener Wert map-bewertet mit String-Schlüsseln ist, kann mit <code class="hljs inlineCode">$my-var['some-key']</code> auf ein Element mit irgendeinem Schlüssel zugegriffen werden.</p>
+<h2>Referenzzugriff</h2>
+<p>Wenn ein zugegriffener Wert selbst ein Konfigurationswert ist, kann auf eine bestimmte Eigenschaft mit einem durch Punkte getrennten Pfadausdruck <code class="hljs inlineCode">{$my-var.some-property}</code> zugegriffen werden.</p>
+<h2>Literaler String</h2>
+<p>Eine literale Zeichenkette (ohne die Möglichkeit, weitere Ausdrücke einzubetten) wird als <code class="hljs inlineCode">'some text'</code> oder <code class="hljs inlineCode">"some text"</code> geschrieben.</p>
+<h2>Literale Zahlen</h2>
+<p>Ein literaler ganzzahliger Wert wird einfach als Zahl <code class="hljs inlineCode">42</code> geschrieben.</p>
+<h2>Zugriff auf das zugrunde liegende Modellobjekt</h2>
+<p>Das zugrunde liegende Modell als Ganzes kann mit dem Schlüsselwort <code class="hljs inlineCode">this</code> referenziert werden.</p>
+<h2>HTML-Ausgabe</h2>
+<p>Wenn die Ausgabe über eine <code class="hljs inlineCode">com.top_logic.layout.template.TemplateWriter</code> erzeugt wird, kann die Vorlage eingebettete HTML-Syntax enthalten. Das HTML kann eingebettete Ausdrücke innerhalb von Attribut- oder Elementinhalten enthalten:</p>
+<p><code class="hljs inlineCode">&lt;div class="{my-class}"&gt;{my-text}&lt;/div&gt;</code></p>

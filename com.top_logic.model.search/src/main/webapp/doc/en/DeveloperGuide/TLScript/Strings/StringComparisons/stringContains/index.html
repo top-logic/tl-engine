@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+<pre>	<code>$string1.stringContains($string2)
+
+$string1.stringContains($string2, $case-sensitive)</code>
+</pre>
+<h2>Description</h2>
+<p>Checks if <code class="hljs inlineCode">string1</code> contains the string <code class="hljs inlineCode">string2</code>.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>string1</td>
+   <td>String</td>
+   <td>A string for which it should be checked whether it contains <code class="hljs inlineCode">string2</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>string2</td>
+   <td>String</td>
+   <td>A string for which to check whether it is contained in <code class="hljs inlineCode">sting1</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>case-sensitive</td>
+   <td>Boolean</td>
+   <td>Determines whether case sensitivity should also be checked.</td>
+   <td>no</td>
+   <td><code class="hljs inlineCode">false</code> - case sensitivity is not considered.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p>
+<p>Whether <code class="hljs inlineCode">string1</code> contains the string <code class="hljs inlineCode">string2</code>.</p>
+<h2>Examples</h2>
+<h3>Simple comparison</h3>
+<pre>	<code>stringContains("Hello world", "hello")</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">true</code></p>
+<h3>Case sensitive comparison 1</h3>
+<pre>	<code>stringContains("Hello world", "hello", true)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">false</code></p>
+<h3>Case sensitive comparison 2</h3>
+<pre>	<code>stringContains("Hello world", "Hello", true)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">true</code></p>

@@ -1,0 +1,127 @@
+<p>Ein Lightweight Directory Access Protocol (LDAP) ist eine hierarchische Struktur von Benutzern, Gruppen und Organisationseinheiten, welche wiederum Container für Benutzer und Gruppen sind. Jedes Objekt hat einen eindeutigen Pfad im Verzeichnis, der auch als Distinguished Name (DN) bezeichnet wird.</p>
+<h1>Distinguished Name (DN)</h1>
+<p>Ein DN ist ein eindeutiger Pfad eines Objekts des LDAP Verzeichnisses. Es besteht aus einer kommaseparierten Sequenz aus relativen DNs, beginnend mit dem relativen DN der untersten Ebene (Objekt) bis hin zum Ursprung des Verzeichnisses (Domäne). Jeder relative Pfad wiederum wird durch ein Wertepaar mit <code class="hljs inlineCode">Attribut=Wert</code> definiert. Folgende Attribute sind dabei üblich:</p>
+<table border="1" cellpadding="10" cellspacing="5">
+ <thead>
+  <tr>
+   <th>String</th>
+   <th>Bezeichnung</th>
+  </tr>
+  <tr>
+   <td><strong>DC</strong></td>
+   <td>domainComponent</td>
+  </tr>
+  <tr>
+   <td><strong>CN</strong></td>
+   <td>commonName</td>
+  </tr>
+  <tr>
+   <td><strong>OU</strong></td>
+   <td>organizationalUnitName</td>
+  </tr>
+  <tr>
+   <td><strong>O</strong></td>
+   <td>organizationName</td>
+  </tr>
+  <tr>
+   <td><strong>STREET</strong></td>
+   <td>streetAddress</td>
+  </tr>
+  <tr>
+   <td><strong>L</strong></td>
+   <td>localityName</td>
+  </tr>
+  <tr>
+   <td><strong>ST</strong></td>
+   <td>stateOrProvinceName</td>
+  </tr>
+  <tr>
+   <td><strong>C</strong></td>
+   <td>countryName</td>
+  </tr>
+  <tr>
+   <td><strong>UID</strong></td>
+   <td>userid</td>
+  </tr>
+ </thead>
+ <tbody>
+ </tbody>
+</table>
+<p>Es gibt einige Sonderzeichen, die mit einem vorhergehenden Backslash (\) geschrieben oder mit Hex-Werten ersetzt werden müssen:</p>
+<table border="1" cellpadding="10" cellspacing="5">
+ <thead>
+  <tr>
+   <th>Sonderzeichen</th>
+   <th>Beschreibung</th>
+   <th>Ersatz</th>
+  </tr>
+  <tr>
+   <td>,</td>
+   <td>comma</td>
+   <td>0x2C</td>
+  </tr>
+  <tr>
+   <td>+</td>
+   <td>plus sign</td>
+   <td>0x2B</td>
+  </tr>
+  <tr>
+   <td>"</td>
+   <td>double quote</td>
+   <td>0x22</td>
+  </tr>
+  <tr>
+   <td>\</td>
+   <td>backslash</td>
+   <td>0x5C</td>
+  </tr>
+  <tr>
+   <td>&lt;</td>
+   <td>left angle bracket</td>
+   <td>0x3C</td>
+  </tr>
+  <tr>
+   <td>&gt;</td>
+   <td>right angle bracket</td>
+   <td>0x3E</td>
+  </tr>
+  <tr>
+   <td>;</td>
+   <td>semicolon</td>
+   <td>0x3B</td>
+  </tr>
+  <tr>
+   <td>LF</td>
+   <td>line feed</td>
+   <td>0x0A</td>
+  </tr>
+  <tr>
+   <td>CR</td>
+   <td>carriage return</td>
+   <td>0x0D</td>
+  </tr>
+  <tr>
+   <td>=</td>
+   <td>equals sign</td>
+   <td>0x3D</td>
+  </tr>
+  <tr>
+   <td>/</td>
+   <td>forwards slash</td>
+   <td>0x2F</td>
+  </tr>
+ </thead>
+ <tbody>
+ </tbody>
+</table>
+<h2>Beispiele</h2>
+<p>Der Benutzer "Max Mustermann" innerhalb des Containers "Users" in der Domaine "example.local".</p>
+<pre><code>cn=Max Mustermann,ou=Users,dc=example,dc=local
+</code></pre>
+<h1></h1>
+<h1>Anbindung</h1>
+<p>Eine Anwendung ist in der Lage auf ein LDAP zuzugreifen, sodass die im LDAP existierenden Benutzer in die Anwendung importiert werden oder Authentifizierungen durchgeführt werden können. Hierfür müssen die entsprechenden LDAP Konfigurationen eingebunden werden.</p>
+<h2>Aliase</h2>
+<p>Wiederkehrende Konfigurationen, die für mehrere <a class="tlObject" data-custom="true" href="?page=SecurityDevice&amp;uuid=47187a0f-0c55-47b2-afbe-a75b9e77440b">SecurityDevices</a> benötigt werden (z.B. die Provider-URL) , können in der Hauptkonfiguration der Anwendung in <code class="hljs inlineCode">webapp/WEB-INF/conf</code> definiert werden. Der Name dieser Datei (ohne Pfad) muss, wenn das nicht bereits der Fall ist, in der <code class="hljs inlineCode">metaConf.txt</code> in <code class="hljs inlineCode">webapp/WEB-INF/conf</code> der Anwendung eingetragen werden. Dadurch wird automatisch auch die Konfiguration von <code class="hljs inlineCode">[Hauptkonfiguration].config.xml</code> mit eingebunden, in welcher sich die tatsächliche Konfiguration des LDAPs befindet.</p>
+<h2>Konfiguration</h2>
+<p>In <code class="hljs inlineCode">[Hauptkonfiguration].config.xml</code> wird die LDAP Anbindung konfiguriert, wobei auf die Aliase der Hauptkonfiguration zurückgegriffen wird. Wie das funktioniert ist in <a class="tlObject" data-custom="false" href="?page=TLSecurityDeviceManagerConfig&amp;uuid=89a0a924-6e12-4bb7-a40c-e7c917fc2493">TLSecurityDeviceManager</a> beschrieben.</p>

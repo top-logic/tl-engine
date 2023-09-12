@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+<pre>	<code>info($message)
+
+info($message, $detail)</code>
+</pre>
+<h2>Description</h2>
+<p>Creates a message on the user interface without interrupting the script.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>message</td>
+   <td>String/Internationalized text</td>
+   <td>The main message of the message.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>detail</td>
+   <td>String/Internationalized text</td>
+   <td>Details about <code class="hljs inlineCode">message</code>.</td>
+   <td>no</td>
+   <td>No details.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Examples</h2>
+<h3>Message without details (string)</h3>
+<pre>	<code>info('Hello');
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span></p>
+<p><img src="ref:image_49169.png" style="opacity:1"></p>
+<h3>Message with details (string)</h3>
+<pre>	<code>info('Hello', 'How are you?')</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span></p>
+<p><img src="ref:image_22633.png" style="opacity:1"></p>
+<h3>Message with details (internationalized text)</h3>
+<pre><code>{
+   message = #("Hallo"@de, "Hello"@en);
+   details = #("Wie geht es dir?"@de, "How are you?"@en);
+   info($message, $details);
+}</code></pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span></p>
+<p><strong>German: </strong></p>
+<p><img src="ref:image_6779.png" style="opacity:1"></p>
+<p><strong>English: </strong></p>
+<p><img src="ref:image_85621.png" style="opacity:1"></p>

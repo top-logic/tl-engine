@@ -1,0 +1,64 @@
+<h2>Syntax</h2>
+<pre>	<code>$pattern.regexReplace($text, $replacement)
+</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Ersetzt die Vorkommen des gegebenen Pattern im gegebenen Text durch die gegebene Ersetzung. Die Ersetzung kann entweder ein String oder eine Funktion sein.</p>
+<p>Ist die Ersetzung ein String, wird jeder Suchtreffer im gegebenen Text durch den gegebenen Ersetzungsstring ersetzt.</p>
+<p>Enthält der Ersetzungsstring Rückreferenzen (<code class="hljs inlineCode">$1</code>, <code class="hljs inlineCode">$2</code>,…), so werden diese durch den von der referenzierten Gruppe getroffenen Text ersetzt.</p>
+<p>Ist die Ersetzung einen Funktion, so wird diese mit jedem Such-Treffer aufgerufen und erzeugt einen dynamischen Ersetzungstext. Der Rückgabewert der Funktion kann ebenfalls Rückreferenzen enthalten.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>pattern</td>
+   <td>Fachobjekt</td>
+   <td>Das Regex-Pattern, mit dem der zu ersetzende String gesucht werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>text</td>
+   <td>Zeichenkette</td>
+   <td>Der Text, indem nach passenden Suchtreffern für das Pattern gesucht wird, um diese dann zu ersetzen.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>replacement</td>
+   <td>Zeichenkette/Funktion</td>
+   <td>Gibt an, wie die Suchtreffer ersetzt werden sollen.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p>
+<p>Der Text, in dem alle Suchtreffer ersetzt wurden.</p>
+<h2>Beispiele</h2>
+<h3>Einfaches Ersetzen</h3>
+<pre>	<code>regex("a(b+)").regexReplace("XXXabbbYYY", "_")</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> XXX_YYY</p>
+<p>Der einzige Suchtreffer "abbb" wird durch ein "_" ersetzt</p>
+<h3>Ersetzen mit Referenz</h3>
+<pre>	<code>regex("a(b+)").regexReplace("XXXabbbYYY", "_$1_")</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> XXX_bbb_YYY</p>
+<p>Die Referenz $1 bezieht sich auf die erste Gruppe (b+). Ersetzt wird der Suchtreffer "abbb" durch den Inhalt der Gruppe "bbb", der zusätzlich noch von "_" umschlossen wird.</p>
+<h3>Ersetzen mit Funktion</h3>
+<pre>	<code>regex("a(b+)").regexReplace("XXXabbbYYY", m -&gt; $m.regexGroup(1).length())</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> XXX3YYY</p>
+<p>Der Suchtreffer "abbb" wird ersetzt durch die Länge der ersten Gruppe (b+), die 3 entspricht.</p>
+<p></p>

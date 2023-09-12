@@ -1,0 +1,67 @@
+<h1>TL-Sync: Bereits gesendete Daten erneut senden</h1>
+<p><strong>WARNUNG:</strong> Das Versenden von alten Daten kann zu Fehlern bei der Datenübertragung führen, durch die diese vollständig und dauerhaft anhält, bis der Fehler manuell behoben wurde. Das passiert, wenn es im Laufe der Zeit Änderungen am Daten-Modell gab, und die alten Daten aufgrund dessen zum Teil nicht mehr gelesen werden können. Das fällt im normalen Betrieb nicht immer auf, weil nicht von allen Arten von Fachobjekten alte Datenstände angezeigt werden können. Beim erneuten Versenden aller Daten kann das aber auffallen, weil dabei systematisch alten Datenstände gelesen werden. Des weiteren kann es zu Fehlern kommen, wenn eine empfangende Anwendung die Daten nicht mittels TL-Sync verarbeitet, sondern dafür andere Mechanismen nutzt.</p>
+<p><strong>Hinweis:</strong> Vorsichtshalber sollte unbedingt ein Backup aller Anwendungen, sowohl der sendenden als auch aller empfangenden, erstellt werden.</p>
+<ol>
+ <li>
+  <p>Alle Cluster-Knoten der sendenden Anwendung herunterfahren.</p></li>
+ <li>
+  <p>In der Datenbank der sendenden Anwendung folgendes SQL-Statement ausführen:</p>
+  <ol>
+   <li>
+    <p><code class="hljs inlineCode">delete from TL_PROPERTIES where "propKey" like 'TLSync.lastSentRevisionAtDate%';</code></p></li>
+   <li>
+    <p>Dadurch wird gelöscht, welche KnowledgeBase Revision die Anwendung zuletzt per TL-Sync gesendet hat. Sie fängt daher wieder von vorne an.</p></li>
+  </ol></li>
+ <li>
+  <p>Die Anwendung wieder starten.</p></li>
+</ol>
+<p><strong>Hinweis:</strong> Alle Anwendungen, sowohl die sendende als auch alle empfangenden, sollten getestet werden, bevor sie wieder verwendet werden.</p>
+<h1>TL-Sync: Bereits verarbeitete Daten erneut verarbeiten</h1>
+<p><strong>WARNUNG:</strong> Das doppelte Verarbeiten von Daten kann zu schweren Schäden am Datenstand führen, wenn die Anwendung nicht technisch und fachlich dafür geeignet und darauf vorbereitet ist. Insbesondere gilt: Falls ein Objekt vorher schon übertragen aber noch nicht gelöscht wurde, wird es dadurch ein zweites Mal angelegt. Das bereits existierende Objekt wird nicht wiedererkannt und daher auch nicht aktualisiert. Dadurch können IDs, die eindeutig sein müssen, nicht mehr eindeutig sein. Das kann zu schweren technischen Problemen führen.</p>
+<p><strong>Hinweis:</strong> Vorsichtshalber sollte unbedingt ein Backup der Anwendung erstellt werden.</p>
+<ol>
+ <li>
+  <p>Alle Cluster-Knoten der empfangenden Anwendung müssen herunterfahren.</p></li>
+ <li>
+  <p>Das Kafka Topic muss geleert werden. Gemeint ist hier das Kafka Topic, über das die Anwendung mittels TL-Sync Daten empfängt. Alle anderen Topics sind hierfür irrelevant.</p>
+  <ol>
+   <li>
+    <p>Anmerkung: <em>Das leeren des Topics ist vor dem erneuten Senden notwendig, weil sonst die Nachrichten, die sich noch im Kafka befinden, eventuell vor den erneut gesendeten Daten gelesen werden. Das führt erstens zu Daten Chaos. Und zweitens werden dadurch die Datenbank Einträge, die weiter unten gelöscht werden, durch diese Nachrichten wiederhergestellt und die erneut gesendeten Daten dadurch ignoriert.</em></p></li>
+   <li>
+    <p>Anmerkung: <em>Wenn sich noch alle Nachrichten im Topic befänden, könnte das leeren und erneut versenden entfallen. Es ist allerdings sehr unwahrscheinlich, dass der Kafka Server die Nachrichten jahrelang speichert. Daher wird das hier nicht weiter behandelt. Wenn die Anwendung das Chunking von TL-Sync Kafka Nachrichten verwendet, müsste dann in der Datenbank der empfangenden Anwendung in der Tabelle TL_PROPERTIES noch die Last Message ID für die sendende Anwendung zurückgesetzt werden.</em></p></li>
+  </ol></li>
+ <li>
+  <p>Die sendende Anwendung muss alle ihre Daten erneut senden.</p></li>
+ <li>
+  <p>In der Datenbank der sendenden Anwendung folgendes SQL ausführen:</p>
+  <ol>
+   <li>
+    <p><code class="hljs inlineCode">select "propValue" from TL_PROPERTIES where "propKey" = 'system_id';</code></p></li>
+   <li>
+    <p>Das ermittels die "System ID". Diese wird weiter unten benötigt. Es handelt sich um eine lange Zahl, die auch negativ sein kann. Das Vorzeichen ist also relevant.</p></li>
+  </ol></li>
+ <li>
+  <p>In der Datenbank der empfangenden Anwendung folgendes SQL ausführen. Dazu zuerst in der Query <code class="hljs inlineCode">[System ID]</code> durch die oben ermittelte ersetzen. Dabei das Vorzeichen nicht vergessen.</p>
+  <ol>
+   <li>
+    <p>Das Ergebnis sieht zum Beispiel so aus: <code class="hljs inlineCode">TLSync.source90180788049700885.lastProcessedRev</code></p></li>
+   <li>
+    <p>Oder bei einer negativen Zahl entsprechend: <code class="hljs inlineCode">TLSync.source-90180788049700885.lastProcessedRev</code></p></li>
+   <li>
+    <p>Auszuführendes SQL: <code class="hljs inlineCode">delete from TL_PROPERTIES where "propKey" like 'TLSync.source[System ID].lastProcessedRev';</code></p></li>
+   <li>
+    <p>Dadurch wird gelöscht, welche KnowledgeBase Revision die Anwendung zuletzt per TL-Sync von diesem Server verarbeitet hat. Sie fängt daher bei diesem Server wieder von vorne an die Daten zu verarbeiten.</p></li>
+  </ol></li>
+ <li>
+  <p>Die Anwendung wieder starten.</p></li>
+</ol>
+<p><strong>Hinweis:</strong> Die Anwendung sollte getestet werden, bevor sie wieder verwendet wird.</p>
+<h1>TL-Sync: Gesamten Datenstand anfordern</h1>
+<p><strong>Hinweis:</strong> Falls es weitere Anwendungen gibt, die von der sendenden Anwendung Daten empfangen, empfangen diese den Datenstand ebenfalls nochmal.</p>
+<ol>
+ <li>Auf der sendenden Anwendung muss folgende Anleitung befolgt werden: "Bereits gesendete Daten erneut senden" (siehe oben)</li>
+ <li>Falls die empfangende Anwendung die Daten bereits vorher empfangen und verarbeitet hat, muss außerdem folgende Anleitung befolgt werden: "Bereits verarbeitete Daten erneut verarbeiten" 
+  <ol>
+   <li>Andernfalls werden die erneut gesendeten Daten als "bereits verarbeitet" erkannt und ignoriert.</li>
+  </ol></li>
+</ol>

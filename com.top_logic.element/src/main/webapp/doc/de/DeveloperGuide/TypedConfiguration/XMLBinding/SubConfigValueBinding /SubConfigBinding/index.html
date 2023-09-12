@@ -1,0 +1,17 @@
+<p>Die Konfiguration einer benannten Subkomponente wird in einem inneren XML-Element gespeichert. Der (lokale) Name des Elements entspricht dem Konfigurationsnamen der Eigenschaft, welche die benannte Subkomponente referenziert.</p>
+<p>Das Konfigurationsinterface <code class="hljs inlineCode">MainConfig</code> referenziert eine strukturierte Unterkonfiguration vom Typ <code class="hljs inlineCode">SubConfig</code> im Property <code class="hljs inlineCode">sub</code> (definiert durch den Getter <code class="hljs inlineCode">getSubConfig()</code>):</p>
+<pre><code class="language-java">interface MainConfig extends ConfigurationItem {
+   SubConfig getSubConfig();
+}</code></pre>
+<p>Das Konfigurationsinterface <code class="hljs inlineCode">SubConfig</code> selbst besteht aus zwei primitiven Properties <code class="hljs inlineCode">x</code> und <code class="hljs inlineCode">y</code>:</p>
+<pre><code class="language-java">interface SubConfig extends ConfigurationItem {
+   int getX();
+   int getY();
+}
+</code></pre>
+<p>Eine XML-Serialisierung von <code class="hljs inlineCode">MainConfig</code> kann demnach eine Unterkonfiguration als Subtag <code class="hljs inlineCode">sub-config</code>&nbsp;enthalten, dessen Struktur durch das Konfigurationsinterface <code class="hljs inlineCode">SubConfig</code> bestimmt wird:​</p>
+<pre><code class="language-xml">&lt;main-config&gt;
+  &lt;sub-config x="13" y="42"/&gt;
+&lt;/main-config&gt;
+</code></pre>
+<p>​Eine eigene (z.B. kürzere) Serialisierung kann durch ein&nbsp;<a class="tlObject" href="?page=FormatAnnotation&amp;uuid=6d91f715-9a35-4317-99cf-c8e672d28622">Format</a>&nbsp;annotiert werden.</p>

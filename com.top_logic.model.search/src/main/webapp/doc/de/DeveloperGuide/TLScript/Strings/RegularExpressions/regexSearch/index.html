@@ -1,0 +1,41 @@
+<h2>Syntax</h2>
+<pre>	<code>$pattern.regexSearch($text)
+</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Sucht nach Treffern zu dem gegebenen Pattern in dem gegebenen Text. Das Pattern wird über den Ausdruck <a class="tlObject" data-custom="true" href="?page=regex&amp;uuid=216d2e25-de0f-4587-ac22-d3044434f789">regex()</a> aus einer Zeichenkette erzeugt. Das Ergebnis der Suche ist eine Liste von Such-Treffern im gegebenen Text. Auf einen Such-Treffer kann mit den Ausdrücken <a class="tlObject" data-custom="true" href="?page=regexGroup&amp;uuid=92ef290f-e1f5-49c9-9dcf-4e02b52b8735">regexGroup()</a> , <a class="tlObject" data-custom="true" href="?page=regexStart&amp;uuid=f4f2d238-2903-452f-b492-c2a1b3570b9c">regexStart()</a> und <a class="tlObject" data-custom="true" href="?page=regexEnd&amp;uuid=3a8d2f5f-c9ab-4a75-8d92-e0327247d6a6">regexEnd()</a> zugegriffen werden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>pattern</td>
+   <td>Fachobjekt</td>
+   <td>Das Regex Pattern, mit dem die Suche auf <code class="hljs inlineCode">text</code> ausgeführt werden soll. Siehe <a class="tlObject" data-custom="false" href="?page=regex&amp;uuid=216d2e25-de0f-4587-ac22-d3044434f789">Muster erzeugen</a></td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>text</td>
+   <td>Zeichenkette</td>
+   <td>Die Zeichenkette, auf die die Suche mit Hilfe des Regex Patterns angewandt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge</p>
+<p>Eine Menge aller Ergebnisse, die auf das Regex Pattern passen.</p>
+<h2>Beispiele</h2>
+<pre>	<code>regexSearch(regex("[0-9]"), "H3ll0 w0rld!")</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span></strong> Liste mit den Elementen [3, 0, 0]</p>

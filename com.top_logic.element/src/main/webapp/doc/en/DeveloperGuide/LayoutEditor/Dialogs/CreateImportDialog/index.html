@@ -1,0 +1,35 @@
+<p>Using an import dialog you can import files in Excel or CSV format. More precisely, if the import file contains a table whose rows describe subject objects modeled in the TL app, the import dialog creates corresponding subject objects, where column names serve as attribute names and column values serve as attribute values.</p>
+<h2>Configuration</h2>
+<h3>Sequence</h3>
+<p>To configure an import dialog, you have to pay attention to the order:</p>
+<ol>
+ <li>In the <strong>"Import Excel file"</strong> section, one must upload a sample file to simply select from the existing column names when filling in the configuration properties. Even if the actual import file contains several sheets and tables of data, it may not have been provided by the customer yet, or it may be too large to serve as an example. Therefore, the sample file must contain only the sheet to be imported with the table header.</li>
+ <li>In the <strong>"Import Configuration"</strong> section: 
+  <ol>
+   <li><strong>"Conversions"</strong>: Some column values may need to be converted before they can be used as keys in an object dictionary (see below).</li>
+   <li><strong>"Object dictionaries"</strong>: One must create an object dictionary (see below) for each relevant type before one can work with the objects.</li>
+   <li><strong>"Import steps"</strong>: A rough guideline for the order would be: 
+    <ol>
+     <li>First you should create objects.</li>
+     <li>Then look up objects or create references between objects.</li>
+    </ol></li>
+  </ol></li>
+</ol>
+<p>In general, since many configuration options are automatically calculated only from the already filled configuration properties, some optional or polymorphic properties work only after re-inserting or selecting them. Therefore it would not be advisable, for example, to assemble first the import steps not filled in as pure placeholders in correct order.</p>
+<h3>Object dictionaries</h3>
+<p>Each object directory plays the role of a transient partial database, which is automatically filled with the objects of the configured type. The (possibly composite) key is determined according to the given configuration:</p>
+<ul>
+ <li>for the already existing (persistent) objects - from the attributes;</li>
+ <li>for the newly imported objects - from the column values.</li>
+</ul>
+<h3>Arguments</h3>
+<p>Many expressions in import are applied (instead of usual fixed arguments) to <strong>"Arguments"</strong> group, where you can configure arguments of the following types yourself:</p>
+<ul>
+ <li>Model - represents the import model.</li>
+ <li>Column - represents the value of a column from the import file.</li>
+ <li>Object(s) - represents one or more objects created or looked up in <strong>"Import steps"</strong> and given a name as an object argument.</li>
+</ul>
+<h2>Example</h2>
+<p>In the TL demo under</p>
+<p>Administration &gt; Subject. Administration &gt; People &gt; Import...</p>
+<p>there is an import dialog whose configuration can be viewed in design mode.</p>

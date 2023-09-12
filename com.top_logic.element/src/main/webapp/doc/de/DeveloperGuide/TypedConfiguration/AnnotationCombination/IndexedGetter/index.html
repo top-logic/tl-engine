@@ -1,0 +1,36 @@
+<p>Zusätzlich zu einer indizierten Kollektion von Unterkonfigurationen&nbsp;kann ein indizierter Getter definiert werden, der eine über das Key-Property identifizierte Unterkonfiguration&nbsp;aus der Kollektion zurückliefert.&nbsp;Im folgenden Beispiel kann auf Elemente der indizierten Kollektion <code class="hljs inlineCode">sub-configs</code> über <code class="hljs inlineCode">getSubConfig(String name)</code> einzeln zugegriffen werden.</p>
+<pre><code class="language-java">public class MyClass {
+
+  public interface Config extends ConfigurationItem {
+    String SUB_CONFIGS = "sub-configs";
+    @Name(SUB_CONFIGS)
+    @Key(SubConfig.NAME)
+    Collection&lt;SubConfig&gt; getSubConfigs();
+
+    @Indexed(collection = SUB_CONFIGS)
+    SubConfig getSubConfig(String name);
+  }
+
+  public interface SubConfig extends ConfigurationItem {
+    String NAME = "name";
+    @Name(NAME)
+    String getName();
+  }
+}</code></pre>
+<p>Hat man die indizierte Kollektion mit&nbsp;abstrakter&nbsp;(und leerer) Unterkonfiguration&nbsp;als Elementtyp definiert, kann man auf eine einzelne abgeleitete&nbsp;Unterkonfiguration über ihre&nbsp;Klasse zugreifen:</p>
+<pre><code class="language-java">public class MyClass {
+
+  public interface Config extends ConfigurationItem {
+    String SUB_CONFIGS = "sub-configs";
+    @Name(SUB_CONFIGS)
+    @Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
+    Collection&lt;? extends SubConfig&gt; getSubConfigs();
+
+    @Indexed(collection = SUB_CONFIGS)
+    SubConfig getSubConfig(Class&lt;?&gt; subConfigClazz);
+  }
+
+  public interface SubConfig extends ConfigurationItem {
+  }
+}</code></pre>
+<p>&nbsp;</p>

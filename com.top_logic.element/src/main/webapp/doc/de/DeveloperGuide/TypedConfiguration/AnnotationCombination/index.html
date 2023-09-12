@@ -1,0 +1,33 @@
+<p>Man unterscheidet <em>lokale</em> und <em>geerbte</em> Annotationen: leitet z.B. die Konfiguration</p>
+<pre><code class="language-java">public interface CarForSaleConfig extends CarConfig {
+  @Override
+  @Mandatory
+  int getHorsePower();
+
+  @Name("price")
+  @Mandatory
+  double getPrice();
+}</code></pre>
+<p>​von​</p>
+<pre><code class="language-java">public interface CarConfig extends ConfigurationItem {
+  @Name("hp")
+  int getHorsePower();
+
+  @Name("color")
+  String getColor();
+}</code></pre>
+<p>ab, so ist die <code class="hljs inlineCode">@Name</code>-Annotation&nbsp;an der&nbsp;Eigenschaft <code class="hljs inlineCode">price</code> lokal, während die&nbsp;<code class="hljs inlineCode">@Name</code>-Annotation an der&nbsp;Eigenschaft <code class="hljs inlineCode">hp</code> geerbt ist.</p>
+<p>Wie man im obigen Beispiel sieht, darf eine Eigenschaft prinzipiell mehrere Annotationen kombinieren. Die Wertannotationen</p>
+<ol>
+ <li><a class="tlObject" data-custom="true" href="?page=DefaultValues&amp;uuid=21331497-0577-440f-be16-f42a2e67de67">Defaultwert</a></li>
+ <li><a class="tlObject" href="?page=ContainerAnnotation&amp;uuid=737d9893-0c84-446f-ba16-95b3f3c278a6">Container</a></li>
+ <li><a class="tlObject" href="?page=RefAnnotation&amp;uuid=53fd613a-31e1-42c7-94b1-ea70afb2ab72">Derived</a>&nbsp;</li>
+ <li>Mandatory</li>
+ <li>Abstract</li>
+</ol>
+<p>verhalten sich anders:</p>
+<ul>
+ <li>​Jede Property darf nur eine <strong>lokale</strong> Wertannotation haben. Ausnahme: Die Property darf gleichzeitig eine Defaultwert-Annotation und eine Derived-Annotation haben. In diesem Fall wird der Default-Wert genommen, wenn der Derived-Ausdruck <code class="hljs inlineCode">null</code> ergibt. Nur diese beiden Annotationen können gleichzeitig gesetzt sein. Verstößt eine Property gegen diese Regeln, führt die Verwendung des betroffenen <code class="hljs inlineCode">ConfigurationItem</code>s zu einer <code class="hljs inlineCode">Exception</code>. Genauer: Das Erstellen oder Einlesen eines solchen <code class="hljs inlineCode">ConfigurationItem</code>s schlägt fehl. Auch das Bauen des <code class="hljs inlineCode">ConfigurationDescriptor</code>s für diesen Typ schlägt fehl.</li>
+ <li>Jede&nbsp;Property darf beliebig viele Wertannotationen <strong>erben</strong>. Erbt eine Property mehrere Annotationen, wird die obige Priorisierung verwendet. Hierbei kann sich eine Defaultwert-Annotation mit einer Derived-Annotation ergänzen.</li>
+ <li>Wenn eine Property eine oder mehrere Wertannotationen <strong>erbt</strong> und zusätzlich eine <strong>lokale</strong>&nbsp;Wertannotation hat, gewinnt die lokale Wertannotation. Hierbei kann eine lokale Defaultwert-Annotation aber durch eine geerbte Derived-Annotation ergänzt werden und umgekehrt.</li>
+</ul>

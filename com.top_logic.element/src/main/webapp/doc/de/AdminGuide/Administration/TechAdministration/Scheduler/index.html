@@ -1,0 +1,64 @@
+<p>Das Steuerprogramm dient zur Steuerung von zeitgesteuerten/manuell angestossenen Anwendungen auf einem Server. In den einzelnen Fenster werden die Informationen über die Aufgabe und deren Läufe seit Serverstart dargestellt.</p>
+<p></p>
+<h4>Buttons:</h4>
+<p>"Aufgabe ausführen" - mit dieser Funktion wird eine Aufgabe manuell, unabhängig von ihrer Einplanung gestartet.</p>
+<p>"Aufgabe abbrechen" - mit dieser Funktion kann eine laufende Aufgabe kontrolliert abgebrochen werden.</p>
+<p>"Deaktivieren" - mit dieser Funktion wird eine Aufgabe deaktiviert und kann weder eingeplant noch manuell gestartet werden.</p>
+<p>"Reaktivieren" - mit dieser Funktion wird eine deaktivierte Aufgabe aktiviert und kann wieder eingeplant oder manuell gestartet werden.</p>
+<p>"Clusterlock löschen" - mit dieser Funktion werden Locks des gesamten Clusters gelöscht. In der Regel laufen die Aufgaben auf einem Knoten im Cluster, so dass diese Funktion nicht aktiv ist.</p>
+<p>"aktualisieren" - mit dieser Funktion wird die GUI-Anzeige neu aufgebaut und damit die aktuellen Daten angezeigt.</p>
+<p>"Fehlgeschlagene Läufe" - mit dieser Funktion erscheint ein Dialog-Fenster in dem alle fehlgeschlagenen Läufe aller Aufgaben seit Serverstart aufgeführt sind.</p>
+<p></p>
+<h4>Steuerprogramm: Registrierte Aufgaben</h4>
+<p>In diesem Fenster werden in Tabellenform die ein<span style="background-color:#2ecc71"></span>gestellten und registrierten Aufgaben dargestellt.</p>
+<p>"Aufgabe" - ist der Titel der Aufgabe die eingestellt wurde.</p>
+<p>"Bei Systemstart" - wird die Aufgabe bei Systemstart ausgeführt oder/und Zeitintervall abhängig bzw. manuell gestartet.</p>
+<p>"Benötigt Wartungsmodus" - diese Aufgabe muss im Wartungsmodus ausgeführt werden.</p>
+<p>"Cluster Lock" - ?</p>
+<p>"Dauer" - Dauer des letzten Laufes der Aufgabe.</p>
+<p>"Deaktivierbar" - kann diese Aufgabe deaktiviert werden.</p>
+<p>""Deaktiviert" - wurde diese Aufgabe daktiviert (mittels Button "Deaktivieren").</p>
+<p>"Eingeschaltet" - ist die Aufgabe scharf geschaltet.</p>
+<p>"Ende" - Datum/Uhrzeit des Endes des letzten Laufes der Aufgabe.</p>
+<p>"Fehler" - lief die Aufgabe auf einen Fehler.</p>
+<p>"Klassenname" - Bezeichnung der Klasse, in der die Aufgabe abläuft.</p>
+<p>"Letzte Nachricht" - Schlussinformation des letzten Laufes der Aufgabe.</p>
+<p>"Letzter Start" - Datum/Uhrzeit des Startes des letzten Laufes der Aufgabe.</p>
+<p>"Logdatei" - Name der Log-Datei, in der die Nachrichten der Anwendung eingetragen werden.</p>
+<p>"Nächster Start" - Datum/Uhrzeit des Startes des nächsten Laufes der Aufgabe.</p>
+<p>"Persistent" - Veränderte Daten bleiben erhalten, auch nach Serverende/-abbruch.</p>
+<p>"Pro Cluster-Knoten" - ?</p>
+<p>"Start" -</p>
+<p>"Status" - gibt Auskunft, ob Anwendung "OK/nichtOK" bzw. "nicht aktiv" ist</p>
+<p>"Warnungen" - Warnmeldung des letzten Laufes der Aufgabe.</p>
+<p></p>
+<h4>Ausgewählte Aufgabe: Ergebnisse der letzten Läufe</h4>
+<p>Dieses Window stellt die bisherigen Läufe der in "Steuerprogramm: Registrierte Aufgaben" selektierte Aufgabe dar, seit Start des Servers.</p>
+<p>"Aufgabe" - beschreibt die Tätigkeit des Laufes.</p>
+<p>"Cluster Knoten" - Servername auf dem die Anwendung läuft.</p>
+<p>"Dauer" - Zeitdauer des Laufes.</p>
+<p>"Ende" - Uhrzeit Laufende.</p>
+<p>"Ergebnis" - War dieser Lauf der Anwendung "okay"/"notokay".</p>
+<p>"Fehler" - Fehler der zum Ergebnis "notokay" führte.</p>
+<p>"Logdatei" - Name der Logdatei, die beim Lauf der Anwendung geschrieben wurde.</p>
+<p>"Nachricht" - Schlussinformation des Laufes der Aufgabe.</p>
+<p>"Start" - Datum/Uhrzeit des Startes des letzten Laufes der Aufgabe.</p>
+<p>"Warnungen" - Warnmeldung des Laufes der Aufgabe.</p>
+<p></p>
+<h4>Steuerprogramm</h4>
+<p>Hier werden die Parameter des Steuerprogrammes dargestellt.</p>
+<p>"Thread Name" - beschreibt die Tätigkeit des Laufes.</p>
+<p>"Max. Laufzeit eines Jobs" - maximale Laufzeit eines Jobs (Aufgabe), danach wird er mit "timeout" beendet.</p>
+<p>"Maximal gleichzeitig" - Anzahl der Jobs (Aufgaben), die gleichzeitg, vom Steuerprogramm überwacht, aktiv sein dürfen.</p>
+<p>"Wartend" - Anzahl der Jobs (Aufgaben) in bei "Registierten Aufgaben".</p>
+<p>"Aktiv" - Anzahl der Jobs (Aufgaben), die im Augenblick des Aufrufes dieser GUI aktiv waren.</p>
+<p>"Letzter Lauf" - Datum des letzten Laufes einer Aufgabe im Steuerprogramm.</p>
+<p></p>
+<h4>geplante Aufgaben</h4>
+<p>"ausgewählte Aufgabe" - Darstellung der Parameter der in "Steuerprogramm: Registrierte Aufgaben" ausgewählten Aufgabe.</p>
+<p>"Ausführungsplan" - Darstellung der Pararmeter der in "Steuerprogramm: Registrierte Aufgaben" ausgewählten Aufgabe, in Bezug auf die Ausführung.</p>
+<p>"Status" - Darstellung des Ergebnisses/der Pararmeter der in "Steuerprogramm: Registrierte Aufgaben" ausgewählten Aufgabe, in Bezug auf die letzte/nächste Ausführung.</p>
+<p></p>
+<h4>Ausgewählter Lauf</h4>
+<p>Darstellung des Ergebnisses des ausgewählten Laufes in "Ausgewählte Aufgabe: Ergebnisse der letzten Läufe".</p>
+<p></p>

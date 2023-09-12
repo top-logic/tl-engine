@@ -1,0 +1,201 @@
+<p>Grundsätzlich gehen wir dazu von folgendem Vorgehen aus:</p>
+<ul>
+ <li>Initial-Objekte: Die Objekte zu denen ein Chart erstellt werden soll, müssen bereitgestellt werden</li>
+ <li>Aufbereitung der Daten: Beschreibt, wie die Initialobjekte einzuteilen sind (z.B. Aufteilung auf verschiedene Balken in einem Balkendiagramm) und zu bewerten sind (z.B. Anzahl der so eingeteilten Objekte oder Summe bestimmter Attributwerte).</li>
+ <li>Darstellung: Wie sollen die Daten angezeigt werden, z.B. Kuchendiagramm, Balkendiagramm, …</li>
+</ul>
+<p>Aus der gewünschten Darstellung ergeben sich Einschränkungen für bzw. Anforderungen an die Aufbereitung. Je nachdem nach wie vielen Kriterien die Eingangsobjekte klassifiziert werden sollen bieten sich folgende Darstellungsmöglichkeiten an:</p>
+<ul>
+ <li>Kuchendiagramm (<code class="hljs inlineCode">PieChart</code>) - eine Einteilung</li>
+ <li>Balken/Säulen-diagramm (<code class="hljs inlineCode">BarChart</code>) - zwei Einteilungen</li>
+ <li>Gruppierte Balken (<code class="hljs inlineCode">GroupedStackedBarChart</code>) - drei Einteilungen</li>
+</ul>
+<h2>Konfigurierte Charts</h2>
+<h3>Typisierte Konfiguration</h3>
+<pre><code>com.top_logic.reporting.chart.configuration.ChartConfig
+</code></pre>
+<p>Entsprechend der Beschreibung oben besteht die Chart-Konfiguration im wesentlichen aus 3 Teilen:</p>
+<p>Beschreibung der Eingangs-Daten (data-source)</p>
+<p>Hier kann eine Klasse hinterlegt werden, welche die Eingangsobjekte für den Chart liefert. Zum Beispiel alle Objekte zu einem Typ. Diese Objekte sollen ggf. noch gefiltert werden oder transformiert.</p>
+<p>Aufbereitung der Daten (model-preparation)</p>
+<p>Es können Funktionen (PartitionFunction) zur Einteilung der Daten hinterlegt werden und Funktionen zur Berechnung des Wertes einer Partition (AggregationFunction)</p>
+<p>Darstellung (chart-builder)</p>
+<p>Die Diagrammart kann festgelegt werden und weitere Informationen zur Darstellung können hinterlegt werde. Zum Beispiel Titel und Achsen-Beschriftungen oder Farben. Außerdem muss es ja nach Ausgabemedium möglich sein weitere Informationen unterzubringen, z.B. Tooltips und Links.</p>
+<p>Eine solche Konfiguration enthält alle notwendigen Informationen darüber, welche Daten wie anzuzeigen sind. Es wird eine Default-Implementierung einer Chart-Component bereitgestellt, welche ein Chart zu einer gegebenen Konfiguration darstellen kann. Es sollte in der Regel nicht notwendig sein, eigene Chart-Komponenten zu implementieren bzw. abzuleiten.</p>
+<h2>Interaktive konfigurierte Charts</h2>
+<h3>Typisierte Konfiguration</h3>
+<pre><code>com.top_logic.reporting.chart.configuration.gui.InteractiveChartBuilder.Config
+</code></pre>
+<p>Die interaktive Chart-Konfigurationen ist ganz ähnlich der normalen Chart-Konfiguration aufgebaut. Am Ende muss eine Chart-Konfiguration vorliegen, die auf dem Standard-Weg (siehe oben - Default-Implementierung der Chart-Component) dargestellt werden kann. Variable Anteile werden an der GUI zur Anzeige gebracht, so dass der Nutzer eine entsprechende Parametrisierung vornehmen kann.</p>
+<p>Ausgehend davon, dass die variablen Anteile valide vorbelegt sind, kann man aus einer interaktiven Konfiguration immer direkt eine valide ChartConfig ableiten ohne dass der Nutzer eine Eingabe vornehmen muss.</p>
+<h2>Konfigurationsteile</h2>
+<h3>Datenquelle</h3>
+<pre><code>public interface ChartDataSource&lt;C extends DataContext&gt; {
+	Collection&lt;? extends Object&gt; getRawData(C context);
+}
+</code></pre>
+<p>Die Datenquelle liefert die Initialobjekte für die Chart-Darstellung. Dazu muss die Methode getRawData(DataContext) implementiert werden. Ob Kontextinformationen zum bereitstellen der Initialobjekte notwendig sind, ist von der jeweiligen Implementierung abhängig. Die Ableitung</p>
+<pre><code>ComponentDataContext extends DataContext 
+</code></pre>
+<p>kann verwendet werden, falls der Chart ausschließlich durch eine entsprechende LayoutComponent zur Anzeige gebracht wird (das ist der Standardfall). In diesem Fall kann Bezug auf die Komponente und deren Modell genommen werden. Z.b. wenn sich die Initialobjekte aus der Master-Selektion ableiten.</p>
+<h4>Beispiele</h4>
+<ol>
+ <li>Datenquelle liefert (kontextfrei) alle Objekte zu einem gegeben (konfigurierten) KO-Typ</li>
+</ol>
+<pre><code>com.top_logic.reporting.chart.configuration.datasource.KOTypeProducer
+</code></pre>
+<ol start="2">
+ <li>Datenquelle liefert das Ergebnis eines gegebenen (konfigurierten) ListModelBuilder zum aktuellen Modell der Kontext-Komponente</li>
+</ol>
+<pre><code>com.top_logic.reporting.chart.configuration.datasource.ListModelBuilderProducer
+</code></pre>
+<h3>Aufbereitung</h3>
+<pre><code>public interface ModelPreparation {
+	public ChartTree prepare(Collection&lt;? extends Object&gt; rawData);
+}
+</code></pre>
+<p>Es gibt die Default-Implementierung</p>
+<pre><code>com.top_logic.reporting.chart.configuration.model.DefaultModelPreparation
+</code></pre>
+<p>welche kofiguriert werden kann. Es sollte in der Regel nicht notwendig sein, weitere Implementierungen zu erstellen. Ziel der ModelPreparation ist es, aus den Initialobjekten aus der Datenquelle einen ChartTree zu erstellen. Der ChartTree ist das allgemeine interne Modell welches unabhängig von der späteren Darstellung alle notwendigen Informationen hält. Der ChartTree muss also außer den visualisierten "Zahlen"werten auch noch die zugrundeliegenden Objekte kennen. Dies wird verwendet um zum Beispiel Tooltips und URLs in Charts zu hinterlegen. Welche Zusatzinformationen hinterlegt werden können, hängt vom gewählten Ausgabemedium und Darstellungsform ab. Der ChartTree muss unabhängig davon die Informationen bereithalten.</p>
+<p>Statt eine eigene ModelPreparation zu implementieren, sollte die Einteilung und Wertberechung konfiguriert werden. Die Standardimplementierung kann dafür mit Partitionierungsfunktionen und Aggregationsfunktionen konfiguriert werden.</p>
+<h4>Beispiele</h4>
+<ol>
+ <li>Die Initialobjekte werden anhand ihres Wertes eines klassifikationswertigen Attributes eingeteilt</li>
+</ol>
+<pre><code>com.top_logic.reporting.chart.configuration.partition.ClassificationPartition
+</code></pre>
+<h3>Darstellung</h3>
+<p>Die ersten Konfigurationsteile (Datenquelle und Aufbereitung) sind allgemein. Der Darstellungsteil hingegen ist auf JFreeChart ausgelegt da dies bisher die auschließlich verwendete Darstellungsform ist. Eine Standard-Komponente wird bereitgestellt, um aus den aufbereiteten Daten JFreeCharts zu erstellen und mit allen Standard-Features zur Anzeige zu bringen (Export, Links).</p>
+<pre><code>com.top_logic.reporting.layout.flexreporting.component.ConfiguredChartComponent
+</code></pre>
+<p>Soll auf eine andere Rendering-Engine gewechselt werden oder zusätzlich angeboten werden, müssen entsprechende Klassen bereitgestellt werden.</p>
+<pre><code>
+public interface JFreeChartBuilder&lt;D extends Dataset&gt; extends ConfiguredInstance {
+
+	public DatasetBuilder&lt;D&gt; getDatasetBuilder();
+
+	public Class&lt;D&gt; getRequiredDatasetType();
+
+	public JFreeChart createChart(ChartContext context, ChartData&lt;D&gt; chartData);
+}
+
+</code></pre>
+<p>Der JFreeChartBuilder erstellt aus dem ChartTree ein JFreeChart. JFreeChart unterstützt unterschiedliche Darstellungen. Abhängig von der Darstellung, wird ein eigenes internes Modell (Dataset) verwendet. Der DatasetBuilder ist dafür zuständig, passend zum JFreeChart-Builder die Daten in das notwendige JFreeChart-Modell umzuwandeln. Die Standard-Komponente erstellt mit Hilfe des hinterlegten DatasetBuilder das notwendige JFreeChart-Modell und ruft die Methode createChart(ChartContext, ChartData). ChartData enthält außer dem JFreeChart-Modell (Dataset) noch das interne Modell (ChartTree) so dass bei Bedarf zusätzliche Informationen bereitgestellt werden können:</p>
+<p>Im Dataset steht z.b. nur, das für Spalte S1 und Reihe R1 der Wert 4711 gilt. Im ChartTree sind die Objekte die zu diesem Wert geführt haben hinterlegt. So kann z.B. ein Link hinterlegt werden, der zu den jeweiligen Objekten führt oder ein Tooltip kann Auskunft darüber geben wie der Wert zustande kommt.</p>
+<p>Der ChartContext wird verwendet um URLs zu generieren.</p>
+<h4>Beispiele</h4>
+<ol>
+ <li>Balkendiagramme</li>
+</ol>
+<pre><code>com.top_logic.reporting.chart.configuration.chartbuilder.BarChartBuilder
+</code></pre>
+<ol start="2">
+ <li>Kuchendiagramme</li>
+</ol>
+<pre><code>com.top_logic.reporting.chart.configuration.chartbuilder.PieChartBuilder
+</code></pre>
+<ol start="3">
+ <li>Zeitverlauf</li>
+</ol>
+<pre><code>com.top_logic.reporting.chart.configuration.chartbuilder.TimeSeriesChartBuilder
+</code></pre>
+<h3>Idealfall</h3>
+<p>Im folgenden wird der Idealfall beschrieben, der sehr viele einfache Standardauswertungen umfasst. In diesem Fall ist es nicht notwendig eigene Klassen zu implementieren, alles kann einfach in der Konfiguration hinterlegt werden:</p>
+<p>Eine Datenquelle liefert Initialobjekte (z.B. alle Risiken) und eine konfigurierte Liste von Partitionierungsfunktionen teilt die Menge ein (z.B. nach Status). Eine geeignete Darstellungsart aus den vorhandenen JFreeChartBuildern wird verwendet (Balkendiagramm).</p>
+<p>Die Konfiguration sieht wie folgt aus:</p>
+<pre><code>
+&lt;chart xmlns:config="http://www.top-logic.com/ns/config/6.0" &gt;
+	&lt;data-source class="com.top_logic.reporting.chart.configuration.datasource.KOTypeProducer" object-type="Risk" /&gt;
+	&lt;model-preparation class="com.top_logic.reporting.chart.configuration.model.DefaultModelPreparation"&gt;
+		&lt;partitions&gt;
+			&lt;partition class="com.top_logic.reporting.chart.configuration.partition.ClassificationPartition" attribute-name="state" meta-element-name="riskItem.risk" /&gt; 
+		&lt;/partitions&gt;
+	&lt;/model-preparation&gt;
+	&lt;chart-builder class="com.top_logic.reporting.chart.configuration.chartbuilder.BarChartBuilder" /&gt;
+&lt;/chart&gt;
+
+</code></pre>
+<p>Aus der Datenquelle ergeben sich die Initialobjekte, ein Standard-Export kann also zusätzlich zum Diagramm auch eine Liste der Objekte (hier Risiken) exportieren. Da eine Einteilung nach Status vorgenommen wurde, kann für den Export abgeleitet werden, das diese Information in der Liste der Objekte enthalten sein muss. Jeder Balken repräsentiert eine Menge von Risiken. Standardmäßig werden URLs gerendert, so dass ein Klick auf einen Balken die Liste der entsprechenden Objekte zur Detailansicht öffnen kann.</p>
+<h3>Abweichungen vom Standard</h3>
+<p>Einige Darstellungsoptionen können direkt über die JFreeChartBuilder-Konfiguration gesteuert werden, z.B. Titel, Achsen-Bezeichnungen oder ob Tooltips / URLs gerendert werden sollen. Zum Beispiel kann es vorkommen, dass keine Fachobjekte hinter den angezeigten Daten liegen, so dass es keinen Sinn ergibt URLs zu generieren. Unter Umständen ergeben sich die relevanten Objekte auch erst im Zuge der ModelPreparation und haben nur indirekt mit den Initialobjekten aus der Datenquelle zu tun. In diesem Fall ist es nicht sinnvoll, diese Objekte in einem Export aufzuführen. In der Standardkomponente lassen sich die export-relevanten Objekte konfigurieren:</p>
+<ul>
+ <li>Initialobjekte - Es werden die Objekte aus der Datenquelle in einer Detailtabelle exportiert</li>
+ <li>Blatt-Objekte im ChartTree - Es werden die Objekte die im internen Modell hinter den Blatt-Knoten liegen in einer Detailtabelle exportiert</li>
+ <li>Keine - Es wird keine Detailtabelle exportiert</li>
+</ul>
+<p>Der Export setzt momentan voraus, dass die zu exportierenden Objekte Wrapper sind.</p>
+<h3>(Good) practices</h3>
+<h4>Vorberechnung</h4>
+<p>Aus Performance-Gründen ist es manchmal nicht möglich oder sinnvoll den Standard-Weg zu gehen. Unter Umständen müssen viele Daten vorberechnet werden um überhaupt die reportrelevanten Daten zusammenzustellen. Evtl. gibt es auch schon Berechnungscode, der weiterverwendet werden soll.</p>
+<p>Um trotzdem möglichst viel des Standards zu verwenden müssen die Daten in einen ChartTree aufbereitet werden. Die Standardimplementierungen des JFreeChartBuilder können diesen dann an der GUI darstellen.</p>
+<p>Beispiel "Soll/Ist-Vergleich" in Project: Pro definiertem Zeitpunkt werden Säulen für Plan und Ist angezeigt, jede Säule enthält Werte für verschiedene Klassifikationen. Diese Art der Darstellung ist in JFreeChart ein GroupedStackedBarChart. Der bisherige Code hat ein CategoryDataset für JFreeChart erstellt. Dabei werden Einteilungen gruppiert und später beim generieren des Charts werden die Gruppierungen wieder aufgelöst. Die Fachlichkeit geht hier verloren. In der Baumdarstellung im ChartTree bleibt die Struktur und damit die Fachlichkeit erhalten:</p>
+<ol>
+ <li>Baumebene: Zeitpunkt</li>
+ <li>Baumebene: Plan oder Ist</li>
+ <li>Baumebene: Klassifikation</li>
+</ol>
+<p>Der bisherige Code musste nur geringfügig angepasst werden um statt einem CategoryDataset eine verschachtelte Map zu liefern, welche die Baumstruktur repräsentiert. Als Partitionierungsfunktion wird die</p>
+<pre><code>com.top_logic.reporting.chart.configuration.partition.KeySetPartition
+</code></pre>
+<p>verwendet. Danach kann ein Standard JFreeChartBuilder für GroupedStackedBarCharts verwendet werden.</p>
+<h4>Raw-Data</h4>
+<p>Nicht immer entsprechen die Initialdaten den Daten, die letztendlich in den ChartTree-Blättern den dargestellten Werten zugrundeliegen. Was mit den Initialdaten passiert, liegt an der (ersten) verwendeten Partitionierungsfunktion. Falls die Partitionierungsfunktion selbst die relevanten Objekte bereitstellt, ist die Datenquelle irrelevant.</p>
+<p>Eine andere mögliche Verwendung der Datenquelle ist es, ein Initialmodell zu liefern, aus dem dann durch spezielle Partitionierungsfunktionen die relevanten Objekte abgeleitet werden. Zum Beispiel ist das Initialobjekt ein Modell, die report-relevanten Objekte sind aber zugehörigen Risiken. Eine solche Datenquelle kann dann Kontext-abhängig leicht ausgetauscht werden. So kann im Kompoenenten-Kontext z.B. eine Datenquelle verwendet werden, welche die Selektion in einem Projektbaum liefert. An anderer Stelle soll der gleiche Chart für ein fixes Projekt erstellt werden, ohne dass es einen Navigationbaum gibt. In diesem Fall müsste man nur die Datenquelle austauschen.</p>
+<h4>Interaktion</h4>
+<p>Die Teile der interaktiven Chart-Konfiguration, die einen Beitrag zum GUI liefern, müssen das folgende Interface implementieren:</p>
+<pre><code>
+public interface InteractiveFormBuilder&lt;R, A&gt; extends ConfiguredInstance {
+
+	void fillContainer(FormContainer container, A arg);
+
+	R create(FormContainer container);
+
+}
+
+</code></pre>
+<p>Die konfigurierten Instanzen füttern in fillContainer den FormContext um die relevanten Anteile an und müssen in create daraus das Ergebnis ableiten können. Die interaktive Chart-Konfiguration ist ganz analog zur ChartConfig aufgebaut. Statt dass die jeweiligen Anteile direkt konfiguriert werden, werden Implementierungen von InteractiveFormBuilder geliefert, die in ihrer create-Methode dann die jeweilgen Konfigurationsanteile liefern.</p>
+<pre><code>public interface Config extends PolymorphicConfiguration&lt;InteractiveChartBuilder&gt; {
+
+	@InstanceFormat
+	InteractiveFormBuilder&lt;ChartDataSource&lt;?&gt;, ChartContextObserver&gt; getDataSource();
+
+	@InstanceFormat
+	InteractiveFormBuilder&lt;DefaultModelPreparation, ChartContextObserver&gt; getModelPreparation();
+
+	@InstanceFormat
+	JFreeChartBuilder&lt;?&gt; getChartBuilder();
+
+}
+
+</code></pre>
+<p>Die Standardkomponente zur Darstellung der variablen Anteile ist die</p>
+<pre><code>com.top_logic.reporting.layout.flexreporting.component.ChartConfigComponent
+</code></pre>
+<p>Falls dynamische GUI-Anteile auf Modelländerungen dieser Komponente reagieren sollen, können sie sich am ChartContextObserver registrieren. Interaktive Anteile können in ihrer Konfiguration selbst wieder interaktive Anteile enthälten. Um name-clashes zu vermeiden, empfiehlt es sich, pro property einen FormContainer anzulegen, der vom jeweiligen InteractiveFormBuilder befüllt wird.</p>
+<p>Im folgenden Beispiel werden InteractiveFormBuilder von Datenquellen verschachtelt verwendet:</p>
+<ol>
+ <li>ListModelBuilderProducer - liefert die Initialobjekte und benötigt keine GUI-Interaktion</li>
+ <li>TransformedDataSourceBuilder - Zeigt ein Auswahlfeld für Zeitpunkte (z.B. Berichtsabschlüsse) und transformiert die Daten aus der inneren Datenquelle (1.) in die gewählte Revision</li>
+ <li>FilteredDataSourceBuilder - Zeigt konfigurierte Filter (z.B. nach Status) und filtert Daten aus der inneren Datenquelle (2.) entsprechend der Einstellung…</li>
+</ol>
+<pre><code>
+&lt;data-source class="com.top_logic.reporting.chart.configuration.datasource.FilteredDataSourceBuilder"&gt;
+	&lt;data-source class="com.top_logic.reporting.chart.configuration.datasource.TransformedDataSourceBuilder"&gt;
+		&lt;transformer class="com.top_logic.project.pos.layout.filter.version.transform.TaggedReportTransformerBuilder" master="projectView_navigationTree"	/&gt;
+		&lt;data-source class="com.top_logic.reporting.chart.configuration.datasource.ListModelBuilderProducer" 
+			master="projectView_navigationTree" 
+			list-model-builder="com.top_logic.risk.layout.risk.RiskListModelBuilder" &gt;
+		&lt;/data-source&gt;
+	&lt;/data-source&gt;
+	&lt;filters&gt;
+		&lt;filter
+			class="com.top_logic.reporting.chart.configuration.datasource.StaticAttributeFilter"
+			meta-element="riskItem.risk" attribute="state" /&gt;
+		&lt;filter
+			class="com.top_logic.reporting.chart.configuration.datasource.StaticAttributeFilter"
+			meta-element="riskItem.risk" attribute="itemclass" /&gt;
+	&lt;/filters&gt;
+&lt;/data-source&gt;
+
+</code></pre>

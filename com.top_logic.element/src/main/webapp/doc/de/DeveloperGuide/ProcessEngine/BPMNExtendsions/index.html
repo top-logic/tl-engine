@@ -1,0 +1,107 @@
+<p>Prozessdefinitionen können in die Application-Engine geladen, in der Engine erstellt oder modifiziert und aus der Engine wieder exportiert werden. Hierfür wird als Austauschformat BPML verwendet. BPML ist eine XML-Sprache für den Austausch von BPMN (Business Process Model and Notation, vgl. <a href="http://www.bpmn.org/" target="_blank">​http://www.bpmn.org/</a>).</p>
+<p>Das XML-Schema von BPML ist erweiterbar, so dass Anwendungen zusätzliche Informationen zu den im Standard definierten Bestandteilen von BPMN ablegen können. Solche Erweiterungen werden von der Application-Engine genutzt, um Top-Logic-spezifische Annotationen zu speichern. BPML-Erweiterungen nutzen das XML-Tag <code class="hljs inlineCode">&lt;bpmn:extensionElements&gt;</code> aus dem Namensraum <code class="hljs inlineCode">xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"</code>, in welchem XML-Tags aus beliebigen fremden Namensräumen enthalten sein dürfen.</p>
+<p>Top-Logic nutzt als Namensraum für BPML-Erweiterungen <code class="hljs inlineCode">xmlns:tl="http://www.top-logic.com/ns/BPMN/extensions/7.0"</code>.</p>
+<h2>Pool-Erweiterungen</h2>
+<h3>Modell-Typ</h3>
+<p>Der für einen Pool verwendete Modell-Typ wird über das Tag <code class="hljs inlineCode">tl:modelType</code> an das <code class="hljs inlineCode">bpmn:participant</code>-Element annotiert:</p>
+<pre><code>&lt;bpmn:participant ...&gt;
+   &lt;bpmn:extensionElements&gt;
+      &lt;tl:modelType value="my.module:MyType" /&gt;
+   &lt;/bpmn:extensionElements&gt;
+&lt;/bpmn:participant&gt;
+</code></pre>
+<p>Der Wert des <code class="hljs inlineCode">value</code>-Attributs enthält den vollqualifizierten Modellnamen des Modell-Typs, der das Datenobjekt eines Pools beschreibt.</p>
+<h2>Manual-Task-Erweiterungen</h2>
+<p>Ein Manual-Task beschreibt eine GUI, die dem Nutzer in dem entsprechenden Schritt angeboten wird.</p>
+<h3>Formular-Annotation</h3>
+<p>Das Formular, welches in dem beschriebenen Schritt angezeigt wird, ist über das Tag <code class="hljs inlineCode">tl:displayDescription</code> an das Element <code class="hljs inlineCode">bpmn:manualTask</code> annotiert:</p>
+<pre><code>&lt;bpmn:manualTask ...&gt;
+   &lt;bpmn:extensionElements&gt;
+      &lt;tl:displayDescription&gt;
+         &lt;form&gt;
+            ...
+         &lt;/form&gt;
+      &lt;/tl:displayDescription&gt;
+   &lt;/bpmn:extensionElements&gt;
+&lt;/bpmn:manualTask&gt;
+</code></pre>
+<p>Eine Formular-Definition besteht immer aus dem Root-Tag <code class="hljs inlineCode">form</code>. Innerhalb dieses Tags kann der folgende Inhalt auftreten:</p>
+<h4>Eingabe-Feld</h4>
+<p>Ein Eingabe-Feld wird über das Tag <code class="hljs inlineCode">field</code> definiert. Das Atttribut <code class="hljs inlineCode">attribute</code> verweist auf den technischen Namen des Attributs des Prozess-Basisobjektes (vom Modell-Typ, der als Pool-Erweiterung angegegeben ist), dessen Inhalt in dem Feld dargestellt bzw. editiert werden soll:</p>
+<pre><code>&lt;field attribute="myAttr" visibility="editable"/&gt;
+</code></pre>
+<p>Das Attribut <code class="hljs inlineCode">visibility</code> gibt, an wie das Feld dargestellt werden soll. Mögliche Werte sind:</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th>default</th>
+   <td>Das Eingabe-Feld wird so dargestellt, wie im Modell definiert.</td>
+  </tr>
+  <tr>
+   <th>editable</th>
+   <td>Es wird ein bearbeitbares Eingabe-Feld dargestellt.</td>
+  </tr>
+  <tr>
+   <th>read-only</th>
+   <td>Es wird nur der Wert angezeigt (ohne Bearbeitungsmöglichkeit).</td>
+  </tr>
+  <tr>
+   <th>mandatory</th>
+   <td>Es wird ein Eingabe-Feld dargestellt und die Eingabe ist verpflichtend (das Feld darf nicht leer bleiben).</td>
+  </tr>
+ </tbody>
+</table>
+<h4>Field-Set</h4>
+<p>Eine Menge von Eingabe-Felder kann über ein Field-Set gruppiert werden. Die Gruppe hat optional eine Überschrift und weitere Attribute:</p>
+<pre><code>&lt;group
+   columns="DEFAULT"
+   labelPlacement="DEFAULT"
+   collapsible="true" 
+   initiallyOpened="true" 
+   showBorder="true"
+   showTitle="true" 
+   wholeLine="true"
+&gt;
+   &lt;label&gt;
+      &lt;de&gt;Titel auf Deutsch&lt;/de&gt;
+      &lt;en&gt;Title in Englisch&lt;/en&gt;
+   &lt;/label&gt;
+
+   &lt;field .../&gt;
+   ...
+   &lt;field .../&gt;
+&lt;/group&gt;
+</code></pre>
+<h4>Titelanzeige</h4>
+<p>Das Attribut <code class="hljs inlineCode">showTitle</code> gibt an, ob die Formulargruppe mit einem Title dargestellt werden soll.</p>
+<p>Ist dies der Fall, wird der internationalisierte Titel der Formular-Gruppe über das geschachtelte Tag <code class="hljs inlineCode">label</code> angegeben. Dieses enthält Sub-Tags für alle in der Engine aktivierten Sprachen. Standardmäßig sind das Deutsch (<code class="hljs inlineCode">de</code>) und Englisch (<code class="hljs inlineCode">en</code>).</p>
+<h4>Gruppen-Inhalt</h4>
+<p>Der Inhalt der Formular-Gruppe wird über geschachtelte Tags beschrieben. Beispielsweise sind das eine Menge von Formular-Feldern.</p>
+<h4>Spalten</h4>
+<p>Das Attribut <code class="hljs inlineCode">columns</code> gibt die Anzahl von maximalen Spalten (1-5) an, die in dieser Formular-Gruppe dargestellt werden. Der Wert <code class="hljs inlineCode">DEFAULT</code> bedeutet, dass so viele Spalten angezeigt werden, wie dier Bildschirm Platz bietet.</p>
+<h4>Label-Ausrichtung</h4>
+<p>Das Attribut <code class="hljs inlineCode">labelPlacement</code> wie Label relativ zu ihrem Eingabe-Feld dargestellt werden. Es sind die folgenden Werte möglich:</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th>DEFAULT</th>
+   <td>Es wird die globale Voreinstellung der Engine verwendet.</td>
+  </tr>
+  <tr>
+   <th>ABOVE</th>
+   <td>Das Label wird über dem Eingabefeld dargestellt.</td>
+  </tr>
+  <tr>
+   <th>IN_FRONT_OF_INPUT</th>
+   <td>Das Label wird vor dem Eingabefeld dargesetllt, wenn der verfügbare Platz dies zulässt.</td>
+  </tr>
+ </tbody>
+</table>
+<h4>Collabierbarkeit</h4>
+<p>Das Attribut <code class="hljs inlineCode">collapsible</code> gibt an, ob die Formular-Gruppe zugeklappt werden kann.</p>
+<h4>Initialdarstellung</h4>
+<p>Das Attribut <code class="hljs inlineCode">initiallyOpened</code> gibt an, ob die Formular-Gruppe initial geöffnet dargestellt werden soll.</p>
+<h4>Rahmendarstellung</h4>
+<p>Das Attribut <code class="hljs inlineCode">showBorder</code> gibt an, ob die Formulargruppe mit einem Rahmen dargestellt werden soll. Da konkrete Aussehen des Rahmens gibt das gewählte Theme vor.</p>
+<h4>Anordnung</h4>
+<p>Wenn das Attribut <code class="hljs inlineCode">wholeLine</code> gleich <code class="hljs inlineCode">true</code> ist, wird die Formulargruppe über die gesamte Zeile dargestellt. Wenn der Wert <code class="hljs inlineCode">false</code> ist, wird die Gruppe mit anderen Elementen zusammen in einer Zeile dargestellt, wenn genügend Platz verfügbar ist.</p>

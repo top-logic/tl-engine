@@ -1,0 +1,43 @@
+<p>Indizierte Subkomponenten</p>
+<pre><code class="language-java">public class A {
+   public interface Config extends PolymorphicConfiguration&lt;A&gt; {
+
+      @Key(B.Config.NAME_PROPERTY_NAME)
+      @EntryTag("bConfig")
+      Map&lt;String, B.Config&gt; getBConfigs();
+   }
+
+   Map&lt;String, B&gt; bs;
+
+   public A(InstantiationContext context, A.Config config) {
+      this.bs = TypedConfiguration.getInstanceMap(context, config.getBConfigs());
+   }
+}
+
+public class B {
+   public interface Config extends PolymorphicConfiguration&lt;B&gt; {
+
+      String NAME_PROPERTY_NAME = "name";
+
+      @Name(NAME_PROPERTY_NAME)
+      String getName()
+   }
+
+   ...
+}
+</code></pre>
+<p>Eine Komponente <code class="hljs inlineCode">A</code> kann eine Ansammlung von Subkomponenten enthalten, die nach einem definierten Konfigurationswert indiziert werden. In der obigen Deklaration besteht die Konfiguration <code class="hljs inlineCode">A.Config</code> aus einer indizierten Ansammlung von Konfigurationen <code class="hljs inlineCode">B.Config</code>, die nach dem Konfigurationswert <code class="hljs inlineCode">B.Config.getName()</code> indiziert sind. Die von <code class="hljs inlineCode">A.Config.getBConfigs()</code> gelieferte Map enthält als Werte Konfigurationseinträge <code class="hljs inlineCode">B.Config</code> und als Schlüssel die Werte der Property <code class="hljs inlineCode">name</code> der entsprechenden <code class="hljs inlineCode">B.Config</code> Konfigurationseinträge.</p>
+<p>Über die Annotation <code class="hljs inlineCode">com.top_logic.basic.config.annotation.Key</code> wird deklariert, dass die Ansammlung nach der Eigenschaft <code class="hljs inlineCode">name</code> des Elementtyps <code class="hljs inlineCode">B.Config</code> indiziert werden soll. Die Referenz auf eine Eigenschaft eines Konfigurationsinterfaces wird realisiert, indem der <a href="Konfigurationsnamen">Konfigurationsname</a> der fremden Eigenschaft angegeben wird.</p>
+<p>Bei Verwendung des <a href="Default-XML-Binding">Default-XML-Bindings</a> könnte eine Komponente über folgendes XML-Document konfiguriert werden:</p>
+<pre><code class="language-xml">&lt;aConfig&gt;
+   &lt;bConfigs&gt;
+      &lt;bConfig name="component-1" /&gt;
+      &lt;bConfig name="component-2" /&gt;
+      &lt;bConfig name="component-3" /&gt;
+      ...
+   &lt;bConfigs&gt;
+&lt;/aConfig&gt;
+</code></pre>
+<p>Das Ergebnis von <code class="hljs inlineCode">A.Config.getBConfigs()</code> wäre dann eine Map, welche die im <code class="hljs inlineCode">name</code>-Attribute angegebenen Schlüssel <code class="hljs inlineCode">component-1</code>,… auf den jeweiligen Konfigurationseintrag vom Typ <code class="hljs inlineCode">B.Config</code> abbildet.</p>
+<p>Bei der Instanziierung bleiben die Map-Schlüssel erhalten, und die Konfigurationseinträge werden durch die jeweiligen konfigurierten Instanzen ersetzt.</p>
+<p>Auch Eigenschaften vom Typ <code class="hljs inlineCode">Collection</code>, <code class="hljs inlineCode">List</code> und <code class="hljs inlineCode">Set</code> können mit der <code class="hljs inlineCode">@Key</code>-Annotation versehen werden. In diesem Fall, können in einer inkrementellen XML-Konfiguration auf einzelne Elemente der Kollektion zugegriffen werden, siehe unten</p>

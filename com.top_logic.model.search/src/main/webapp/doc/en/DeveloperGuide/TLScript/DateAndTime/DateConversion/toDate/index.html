@@ -1,0 +1,46 @@
+<h2>Syntax</h2>
+<pre>	<code>toDate($calendar)
+
+toDate($number)</code>
+</pre>
+<h2>Description</h2>
+<p>Converts the given parameter into a date value.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>calendar</td>
+   <td>Business object</td>
+   <td>A calendar with a date value. Depending on the calendar (system calendar or user calendar), the value is compatible with <code class="hljs inlineCode">tl.core:Date</code> or <code class="hljs inlineCode">tl.core:DateTime</code>.</td>
+   <td colspan="1" rowspan="2">One of the two must be defined.</td>
+   <td colspan="1" rowspan="2"></td>
+  </tr>
+  <tr>
+   <td>number</td>
+   <td>Number</td>
+   <td>Milliseconds since 1970-01-01:00:00.000. The inverse of this is <a class="tlObject" data-custom="true" href="?page=toMillis&amp;uuid=11ace3b7-6de1-45b1-9878-c5d7ed24280a">toMillis()</a>.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p>
+<p>A date value representing the day of the calendar or the day of the milliseconds.</p>
+<h2>Examples</h2>
+<p><strong>Note: </strong>The output may differ depending on the calendar's time zone.</p>
+<h3>Calendar as parameter</h3>
+<pre>	<code>toDate(date(2012, 5, 5))</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 05.06.2012</p>
+<h3>Number as parameter</h3>
+<pre>	<code>toDate(1338822000000)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> 05.06.2012</p>

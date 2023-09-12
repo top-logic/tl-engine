@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+<pre>	<code>$calendar.withDayOfWeekInMonth($day)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Erstellt einen neuen Kalender aus dem gegebenen Kalender, wobei der <a class="tlObject" data-custom="true" href="?page=dayOfWeekInMonth&amp;uuid=25d2caa1-50a3-4898-91f8-4068da748ff9">Tag der Woche im Monat</a> auf <code class="hljs inlineCode">day</code> gesetzt wird. Durch das Verändern des Tages der Woche im Monat können sich auch andere Werte wie zum Beispiel der <a class="tlObject" data-custom="true" href="?page=day&amp;uuid=4bf3f6a5-acc7-4f26-9aa0-1efb04882005">Tag</a> ändern.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>calendar</td>
+   <td>Fachobjekt</td>
+   <td>Der Kalender, dessen Tag der Woche im Monat geändert werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>day</td>
+   <td>Zahl</td>
+   <td>Wert für den neuen Tag der Woche im Monat, der für den Kalender gesetzt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Ein Kalender mit dem geänderten Wert für den <a class="tlObject" data-custom="true" href="?page=dayOfWeekInMonth&amp;uuid=25d2caa1-50a3-4898-91f8-4068da748ff9">Tag der Woche im Monat</a>.</p>
+<h2>Beispiele</h2>
+<pre>	<code>dateTime(2012, 8, 10, 7, 55, 24, 13).toUserCalendar().withDayOfWeekInMonth(1).dayOfWeekInMonth()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>1</p>

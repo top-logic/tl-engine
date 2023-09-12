@@ -1,0 +1,66 @@
+<h2>Syntax</h2>
+<pre>	<code>if($test, $then, $else)
+
+$test ? $then : $else
+</code>
+</pre>
+<h2>Description</h2>
+<p>Returns the result of the evaluation of <code class="hljs inlineCode">then</code> or <code class="hljs inlineCode">else</code> depending on the evaluation of <code class="hljs inlineCode">test</code>. If the evaluation of <code class="hljs inlineCode">test</code> is <code class="hljs inlineCode">true</code>, then <code class="hljs inlineCode">then</code> is evaluated and the result is returned, otherwise <code class="hljs inlineCode">else</code>.</p>
+<p>All of the above notations are equivalent. Alternative notation: <a class="tlObject" data-custom="false" href="?page=ifElse&amp;uuid=bbcba58e-d9b6-4da4-88af-03f6ca7f9c70">ifElse</a>.</p>
+<p>For case distinctions where multiple conditions must be evaluated, there is the alternative <a class="tlObject" data-custom="true" href="?page=switch&amp;uuid=5887a3b1-3e57-4227-bbab-5581a3023d53">switch</a> syntax. This avoids the nesting of conditions and leads to a much better readability in this case.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>test</td>
+   <td>Business object</td>
+   <td>An expression that returns <code class="hljs inlineCode">true</code> or <code class="hljs inlineCode">false</code> after evaluation.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>then</td>
+   <td>Business object</td>
+   <td>An expression that evaluates when <code class="hljs inlineCode">test</code> returns <code class="hljs inlineCode">true </code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>else</td>
+   <td>Business object</td>
+   <td>An expression that evaluates if <code class="hljs inlineCode">test</code> results in <code class="hljs inlineCode">false</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p>
+<p><span style="background-color:rgba(255, 255, 255, 0)">The result of evaluating <code class="hljs inlineCode">then</code> or <code class="hljs inlineCode">else</code>, depending on the result of <code class="hljs inlineCode">test</code>.</span></p>
+<h2>Examples</h2>
+<h3>Notation with "if</h3>
+<pre>	<code>{
+  time = dateTime(2021, 9, 13, 15, 24);
+  hour = $time.toSystemCalendar().hour();
+  ($hour &gt; 12).if("Nachmittag", "Vormittag")
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> Nachmittag</p>
+<p>The hour 13 is greater than 12, therefore the expression of "then" is output (note the time zone!).</p>
+<h3>Shortened notation</h3>
+<pre>	<code>{
+  x = 16;
+  ($x &gt;= 18)? "Here is your alcohol": "No alcohol vor kids!";
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> No alcohol for kids!</p>
+<p>Since x is less than 18, the result of <code class="hljs inlineCode">else</code> is returned.</p>

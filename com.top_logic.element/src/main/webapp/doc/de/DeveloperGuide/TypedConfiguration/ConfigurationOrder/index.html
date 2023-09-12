@@ -1,0 +1,133 @@
+<p>Eine allgemeine Konfiguration kann durch eine speziellere Konfiguration überschrieben werden. Diese Reihenfolge wird durch mehrere Faktoren bestimmt:</p>
+<ul>
+ <li>Kategorie der Konfigurationsdatei: 
+  <ul>
+   <li>Normale Konfiguration</li>
+   <li>Test-Konfiguration 
+    <ul>
+     <li>Spezielle Test-Konfiguration</li>
+     <li>Normale Test-Konfiguration</li>
+    </ul></li>
+   <li>Persönliche Konfiguation</li>
+  </ul></li>
+ <li>Abhängigkeiten der Eclipse Projekte voneinander</li>
+ <li><code class="hljs inlineCode">metaConf.txt</code> Dateien</li>
+</ul>
+<p>Dabei bestimmt die Kategorie der Konfigurationsdatei die grobe Position in der oben angegebenen Reihenfolge. Das heißt zum Beispiel, alle "normalen Konfigurationen" kommen vor allen "Test-Konfigurationen". Die <code class="hljs inlineCode">metaConf</code> Dateien legen die Reihenfolge zwischen Dateien derselben Kategorie im selben Projekt fest. Außerdem regeln die <code class="hljs inlineCode">metaConf</code> Dateien, welche Konfigurationsdateien überhaupt verwendet werden.</p>
+<h2>Weitere Faktoren</h2>
+<ul>
+ <li>Bei JUnit-Tests wird die persönliche Konfiguration nicht verwendet. Damit soll sichergestellt werden, dass bei allen Entwicklern das gleiche getestet wird. Das soll vermeiden, dass ein Test bei einem Entwickler funktioniert aber bei anderen fehlschlägt. 
+  <ul>
+   <li>Die persönliche Konfiguration kann trotzdem verwendet werden. Dazu muss in der Launch-Konfiguration folgendes VM Argument hinzugefügt werden: <code class="hljs inlineCode">-Dproject.developer=${project.developer}</code></li>
+  </ul></li>
+ <li>Bei Anwendungstests werden die Test-Konfigurationen nicht verwendet. Damit soll sichergestellt werden, dass die an den Kunden gelieferte Anwendung funktioniert, nicht nur eine speziell für die Tests konfigurierte Anwendung. 
+  <ul>
+   <li>Anwendungstests sind geskriptete Tests (also zum Beispiel <a class="tlObject" data-custom="false" href="?page=ExcelTests&amp;uuid=5d24dde6-deb7-4538-808c-bf85d813592a">Excel Tests</a>) und alle anderen Tests, die <code class="hljs inlineCode">ApplicationTestSetup.setupApplication(...)</code> nutzen.</li>
+   <li>Falls bei einem Anwendungstest die Test-Konfigurationen verwendet werden sollen, muss <code class="hljs inlineCode">ApplicationTestSetup.setupTestApplication(...)</code> verwendet werden.</li>
+  </ul></li>
+</ul>
+<h1>Arten von Konfigurationsdateien</h1>
+<h2>Normale Konfigurationen</h2>
+<ul>
+ <li>Normale Konfigurationsdateien sind diejenigen, die in den <code class="hljs inlineCode">metaConf.txt</code> und <code class="hljs inlineCode">metaConf.txt.local</code> Dateien stehen.</li>
+ <li>Sie sind die eigentlichen Konfigurationsdateien und enthalten den größten Teil der Konfiguration. Alle anderen Konfigurationsdateien passen diese nur für spezielle Zwecke an, zum Beispiel für Tests.</li>
+ <li>Beispiele: 
+  <ul>
+   <li><code class="hljs inlineCode">com.top_logic.basic/webapp/WEB-INF/conf/tl_basic.xml</code></li>
+   <li><code class="hljs inlineCode">com.top_logic/webapp/WEB-INF/conf/top-logic.xml</code></li>
+   <li><code class="hljs inlineCode">com.top_logic.element/webapp/WEB-INF/conf/ElementConf.xml</code></li>
+  </ul></li>
+</ul>
+<h2>Test-Konfigurationen</h2>
+<p>Test-Konfigurationen werden nur für Tests verwendet. Sie dienen dazu Einstellungen vorzunehmen, die nur für Tests notwendig sind. Damit soll verhindert werden, Konfigurationen in der produktiven Anwendung vorzunehmen, die nur für Tests notwendig sind.</p>
+<h3>Spezielle Test-Konfiguration</h3>
+<ul>
+ <li>Ein Teil der Test-Konfigurationen wird hart-kodiert eingebunden. Darum kümmert sich <code class="hljs inlineCode">ConfigLoaderTestUtil.setupConnectionPoolRegistry()</code>.</li>
+ <li>Beispiele: 
+  <ul>
+   <li><code class="hljs inlineCode">com.top_logic.basic/test/webapp/WEB-INF/conf/testingConnectionPool.xml</code></li>
+   <li><code class="hljs inlineCode">com.top_logic.basic/test/webapp/WEB-INF/conf/test-with-mysql.xml</code></li>
+   <li><code class="hljs inlineCode">com.top_logic.basic/test/webapp/WEB-INF/conf/test-with-h2.xml</code></li>
+  </ul></li>
+</ul>
+<h3>Normale Test-Konfiguration</h3>
+<ul>
+ <li>Normale Test-Konfigurationen sind Dateien, deren Name mit <code class="hljs inlineCode">.test.xml</code> endet.</li>
+ <li>Es darf nur eine pro Projekt geben. (Sonst wird eine Exception geworfen.)</li>
+ <li>Es wird nur die Test-Konfiguration aus dem gestarteten Projekt verwendet. Ein Test in <code class="hljs inlineCode">com.top_logic.element</code> lädt also nur die <code class="hljs inlineCode">element.test.xml</code>, nicht aber die <code class="hljs inlineCode">top-logic.test.xml</code>.</li>
+ <li>Test-Konfigurationen liegen normalerweise in einem eigenen <code class="hljs inlineCode">webapp</code>-Verzeichnisbaum, um sie von den normalen Konfigurationsdateien getrennt zu halten. 
+  <ul>
+   <li>Normale Konfigurationsdatei: <code class="hljs inlineCode">com.top_logic/webapp/WEB-INF/conf/</code></li>
+   <li>Test-Konfigurationsdatei: <code class="hljs inlineCode">com.top_logic/test/webapp/WEB-INF/conf/</code></li>
+  </ul></li>
+ <li>Beispiele: 
+  <ul>
+   <li><code class="hljs inlineCode">com.top_logic/test/webapp/WEB-INF/conf/top-logic.test.xml</code></li>
+   <li><code class="hljs inlineCode">com.top_logic.element/test/webapp/WEB-INF/conf/element.test.xml</code></li>
+  </ul></li>
+</ul>
+<h2>Persönliche Konfigurationen</h2>
+<ul>
+ <li>Wichtig: Die persönliche Konfiguration wird nicht berücksichtigt, wenn die Anwendung deployed ist.</li>
+ <li>Wichtig: Die persönliche Konfiguration wird nicht berücksichtigt, wenn bereits eine Konfiguration anhand des Anwendungsnamens gefunden wurde. (Siehe oben)</li>
+ <li>Die persönliche Konfiguration liegt immer unter: <code class="hljs inlineCode">/bin/launch/conf/config-xxx.xml</code>
+  <ul>
+   <li>"xxx" entspricht dabei dem Entwickler-Kürzel, also zum Beispiel "jst".</li>
+  </ul></li>
+ <li>Die persönliche Konfigurationen sind Entwickler spezifische Konfigurationsdateien. Sie sind dafür da, die Anwendung entsprechend der eigenen Bedürfnissen und Vorlieben anzupassen. Diese Konfigurationsdateien werden nur für ihren jeweiligen Entwickler verwendet.</li>
+ <li>Die persönliche Konfiguration wird durch das VM Argument <code class="hljs inlineCode">-Dproject.developer=${project.developer}</code> definiert. 
+  <ul>
+   <li><code class="hljs inlineCode">project.developer</code> ist ein in Eclipse eingetragener Parameter der durch das Entwickler-Kürzel ersetzt wird.</li>
+   <li>Meistens ist das Kürzel 3-stellig. Aber das ist nur Konvention. Technisch gesehen ist die Länge egal.</li>
+  </ul></li>
+ <li>Die persönliche Konfiguration (<code class="hljs inlineCode">config-abc.xml</code>) kann entsprechend ihres Inhalts auf die Projekte verteilt werden und wird dann wie die normalen Konfigurationen aus allen Projekten zusammengesetzt.</li>
+</ul>
+<h2>Ordner <code class="hljs inlineCode">deploy</code></h2>
+<h3><code class="hljs inlineCode">deploy/local</code></h3>
+<p>In diesen Ordnern gibt es eine weitere <code class="hljs inlineCode">webapp</code> Struktur. Diese enthält Konfigurationen, die nur für dieses Eclipse-Projekt verwendet werden sollen. Wenn andere Projekte von diesem Projekt anleiten, verwenden sie diese Dateien nicht.</p>
+<p>In der B.O.S.-Infrastruktur wird dieser Ordner außerdem für das Deployment verwendet. Wenn kein anderer <code class="hljs inlineCode">deploy</code> Ordner angegeben wird, wird der oberste <code class="hljs inlineCode">deploy/local</code> Ordner verwendet. In <code class="hljs inlineCode">com.top_logic</code> ist dort die H2-Datenbank eingetragen. Dadurch können Anwendungen ohne zusätzliche Einstellungen deployt werden.</p>
+<p>Dieser Ordner kommt unmittelbar nach der normalen Konfiguration des Eclipse-Projektes. Dadurch können hier Einstellungen der normalen Anwendungskonfiguration überschrieben werden.</p>
+<h3><code class="hljs inlineCode">deploy/private</code></h3>
+<p>In diesen Ordnern gibt es eine weitere <code class="hljs inlineCode">webapp</code> Struktur. Diese enthält Konfigurationen, die nur innerhalb der B.O.S. verwendet werden. Zum Beispiel die Einstellungen für unseren LDAP-Server. Dateien in diesen Ordnern werden nicht in <code class="hljs inlineCode">.war</code> Dateien übernommen und nicht im TL-Studio ausgeliefert.</p>
+<p>In der B.O.S.-Infrastruktur wird dieser Ordner für Deployments verwendet, wenn kein <code class="hljs inlineCode">deploy</code>-Ordner angegeben wurde. Siehe auch: <a class="tlObject" data-custom="false" data-section="Deploy-OrdnerimProjekt" href="?page=DockerDeployment&amp;uuid=ac047be9-4a05-4fff-bb29-3abcf7fdce1c&amp;section=Deploy-OrdnerimProjekt">Docker Deployment</a></p>
+<p>Die <code class="hljs inlineCode">deploy/private</code> Ordner kommen nach dem normalen <code class="hljs inlineCode">webabb</code> Ordner ihres Projektes. Sie kommen auch nach einem eventuellen <code class="hljs inlineCode">deploy/local</code> Ordner. Dadurch können hier allgemeine Einstellungen innerhalb der B.O.S.-Infrastruktur vorgenommen werden, die die normalen Projekt-Einstellungen überschreiben.</p>
+<p>Der <code class="hljs inlineCode">deploy/private</code> Ordner eines Projektes kommt vor allen <code class="hljs inlineCode">webapp</code> und <code class="hljs inlineCode">deploy</code> Ordnern von abhängigen Projekten. Beispiel:</p>
+<ul>
+ <li><code class="hljs inlineCode">com.top_logic.demo\deploy\private\webapp</code></li>
+ <li><code class="hljs inlineCode">com.top_logic.demo\deploy\local\webapp</code></li>
+ <li><code class="hljs inlineCode">com.top_logic.demo\webapp</code></li>
+ <li><code class="hljs inlineCode">com.top_logic.element\deploy\private\webapp</code></li>
+ <li><code class="hljs inlineCode">com.top_logic.element\webapp</code></li>
+</ul>
+<h2><code class="hljs inlineCode">metaConf.txt</code></h2>
+<ul>
+ <li>Jedes Projekt hat eine <code class="hljs inlineCode">metaConf.txt</code> Datei. Diese befindet sich unter <code class="hljs inlineCode">webapp/WEB-INF/conf.metaConf.txt</code>. Diese definiert welche normalen Konfigurationsdateien eingebunden werden, und in welcher Reihenfolge. Das gilt für dieses Eclipse-Projekt selber sowie alle abhängigen Eclipse Projekte.</li>
+ <li><code class="hljs inlineCode">metaConf.txt.local</code> Dateien gibt es nicht mehr. Deren Funktion wurde von den <code class="hljs inlineCode">deploy/local</code> Ordnern übernommen.</li>
+</ul>
+<h1>Überprüfen der Reihenfolge beim Debuggen</h1>
+<p>Die laufende Anwendung mit einem Breakpoint anhalten und in der Eclipse-View namens "Debug Shell" folgenden Code ausführen:</p>
+<pre><code>com.top_logic.basic.XMLProperties.getInstance().toString()
+</code></pre>
+<p>Das liefert die Reihenfolge der Konfigurationsdateien. Beispiel:</p>
+<pre><code>com.top_logic.basic.XMLProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic.basic\webapp\WEB-INF\conf\tl_basic.xml']
+com.top_logic.basic.MultiProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic.basic\webapp\WEB-INF\conf\devel-host.xml']
+com.top_logic.basic.MultiProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic.convert\webapp\WEB-INF\conf\tl_convert.xml']
+com.top_logic.basic.MultiProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic.dob\webapp\WEB-INF\conf\tl_dob.xml']
+com.top_logic.basic.MultiProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic.dsa\webapp\WEB-INF\conf\tl_dsa.xml']
+com.top_logic.basic.MultiProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic.basic.db\webapp\WEB-INF\conf\basicDbConf.xml']
+com.top_logic.basic.MultiProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic.basic.db.schema\webapp\WEB-INF\conf\basicDbSchemaConf.xml']
+com.top_logic.basic.MultiProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic.dob.persist\webapp\WEB-INF\conf\dobPersistConf.xml']
+com.top_logic.basic.MultiProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic\webapp\WEB-INF\conf\top-logic.xml']
+com.top_logic.basic.MultiProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic\webapp\WEB-INF\conf\devel-appdata.xml']
+com.top_logic.basic.MultiProperties [BinaryContent: 'file:D:\development\workspaces\prime_0\com.top_logic\webapp\WEB-INF\conf\devel-smtpTestConf.xml']
+...
+</code></pre>
+<h1>Tests mit anderer Datenbank ausführen</h1>
+<ul>
+ <li>Beispiel: H2 statt MySQL</li>
+ <li>Launch-Konfiguration anpassen und folgende VM Argumente hinzufügen: 
+  <ul>
+   <li><code class="hljs inlineCode">-Dtl.test.defaultDB=h2</code></li>
+   <li><code class="hljs inlineCode">-Dtl.test.onlyDefaultDB=true</code></li>
+  </ul></li>
+</ul>

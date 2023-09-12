@@ -1,0 +1,71 @@
+<h2>Syntax</h2>
+<pre>	<code>dict = {
+  $key1: $value1,
+  $key2: $value2,
+  ...,
+  $keyN: $valueN
+}</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Ein Wörterbuch ist eine statische Zuweisung von Schlüsseln zu Werten. In seltenen Fällen kann es sinnvoll sein ein solches Wörterbuch explizit über einen Ausdruck zu erstellen, indem einer Liste von verschiedenen Schlüsseln <code class="hljs inlineCode">key1</code> bis <code class="hljs inlineCode">keyN</code> eine Liste von Werten <code class="hljs inlineCode">value1</code> bis <code class="hljs inlineCode">valueN</code> zugewiesen werden. Schlüssel dürfen dabei nur einmal vorkommen, Während Werte mehreren Schlüssel zugeordnet sein können.</p>
+<p>Die Syntax ist an die verbreitete JSON-Syntax für strukturierte Daten angelehnt. Anders als bei reinen JSON-Werten sind die Schlüssel nicht auf Zeichenketten beschränkt, sondern es können auch Zahlen oder beliebige andere Werte (z.B. auch Fachobjekte) verwendet werden.</p>
+<p>In aller Regel, werden Wörterbücher aber duch eine <a class="tlObject" data-custom="false" href="?page=groupBy&amp;uuid=0ceea055-4867-461a-9a86-d6ed56272dd8">Gruppierung</a> oder <a class="tlObject" data-custom="false" href="?page=indexBy&amp;uuid=2d2d4110-a97a-4937-8464-e221e65ceeb5">Indizierung</a> erzeugt.</p>
+<p>Der Zugriff auf ein Wörterbuch erfolgt über den <code class="hljs inlineCode">[...]</code>-Operator. Hierbei wird in die eckigen Klammern der Schlüssel geschrieben, dessen Wert man möchte. Das Ergebnis ist dann der im Wörterbuch für diesen Schlüssel hinterlegte Wert.</p>
+<pre><code>$dict[$key]</code></pre>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>key</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+   <td>Schlüssel für ein Key-Value-Paar.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>value</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+   <td>Wert für ein Key-Value-Paar.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Ein Wörterbuch mit den angegebenen Key-Value-Paaren.</p>
+<h2>Beispiele</h2>
+<h3>Zeichenketten Wörterbuch</h3>
+<pre>	<code>{
+  dict = {
+    "all": "alle",
+    "some": "manche",
+    "none": "keine"
+  };
+
+  $dict["all"]
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> alle</p>
+<p>Gibt den Wert für den Key <code class="hljs inlineCode">all</code> aus.</p>
+<h3>Wörterbuch mit unterschiedlichsten Schlüssel Datentypen</h3>
+<pre>	<code>{
+  dict = {
+    list(1, 2): "List",
+    2: "Number",
+    date(2020, 5, 8): "Object"
+  };
+
+  list($dict[list(1, 2)], $dict[2], $dict[date(2020, 5, 8)])
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit den Werten ["List", "Number", "Object"].</p>

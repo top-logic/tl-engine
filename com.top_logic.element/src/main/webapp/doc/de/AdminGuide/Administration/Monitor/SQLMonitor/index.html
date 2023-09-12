@@ -1,0 +1,53 @@
+<p>Der SQL Monitor analysiert, welche Datenbankabfragen in welcher Häugifkeit getätigt werden und wie viel Zeit sie benötigt haben. Dadurch können zu häufige Abfragen identifiziert und behandelt werden, um die Performance zu steigern.</p>
+<h1>Konfiguration</h1>
+<p>Um den SQL Monitor zur Verfügung zu haben, muss dieser in die Benutzerkonfiguration oder der Konfiguration der entsprechenden Anwendung eingetragen werden.</p>
+<pre><code class="language-xml">&lt;config service-class="com.top_logic.basic.sql.ConnectionPoolRegistry"&gt;
+	&lt;instance&gt;
+		&lt;pools&gt;
+			&lt;pool name="default"&gt;
+				&lt;data-source class="com.top_logic.basic.sql.LoggingDataSourceFactory"&gt;
+					&lt;ignorePattern&gt;DBExportRegistry|KnowledgeBaseRefetch|ClusterManagerRefetch|scripting\.recorder\.ref\.ReferenceFactory|com\.top_logic\.util\.sched\.Scheduler&lt;/ignorePattern&gt;
+					&lt;logStacktrace&gt;true&lt;/logStacktrace&gt;
+					&lt;logAggregate&gt;true&lt;/logAggregate&gt;
+					&lt;logTimeoutNanos&gt;500000000&lt;/logTimeoutNanos&gt;
+				&lt;/data-source&gt;
+			&lt;/pool&gt;
+		&lt;/pools&gt;
+	&lt;/instance&gt;
+&lt;/config&gt;</code></pre>
+<p>Ein aktivierter SQL Monitor kann daran erkannt werden, dass der Button für die Aufnahme aktiv ist.</p>
+<h1>Darstellung / Auswertung</h1>
+<p>Im Reiter <strong>Administration <em>:</em> Monitor: SQL Monitor</strong> befindet sich eine tabellarische Auswertung der Datenbankabfragen.</p>
+<h2>Buttons</h2>
+<p>Um den SQL Monitor bedienen zu können, werden einige Buttons zur Verfügung gestellt. Damit möglichst nur die gewünschten Aktionen aufgezeichnet werden, sollte die Aufnahme in einem anderen Browser gestartet werden als dort, wo die zu analysierenden Aktionen durchgeführt werden.</p>
+<h2>Tabelle</h2>
+<p>Die Tabelle besteht aus mehreren Spalten, die dabei helfen, zu teure Abfragen zu finden und diese im Code zu identifizieren.</p>
+<table border="1" cellpadding="1" cellspacing="1" style="width:500px">
+ <tbody>
+  <tr>
+   <td>Tabelle</td>
+   <td>Der Name der Tabelle innerhalb der Datenbank.</td>
+  </tr>
+  <tr>
+   <td>Zeit</td>
+   <td>Die benötigte Zeit für diese Abfragen.</td>
+  </tr>
+  <tr>
+   <td>
+    <p>Aufrufe</p></td>
+   <td>Dieser Wert gibt an, wie viele Abfragen dieser Art an die Datenbank gestellt werden. Dieser Wert sollte möglichst gering sein, da gerade auf verteilten Systemen die benötigte Zeit deutlich höher sein kann, als auf lokalen Systemen.</td>
+  </tr>
+  <tr>
+   <td>Zeilen</td>
+   <td>Dieser Wert gibt an, wie viele Zeilen insgesamt für alle Aufrufe zurück geliefert werden.</td>
+  </tr>
+  <tr>
+   <td>Stack</td>
+   <td>Über die Buttons können die jeweiligen Stack-Traces geöffnet werden, um die entsprechenden Stellen im Code besser identifizieren zu können. Diese können daraufhin angepasst werden, um die Anzahl der Aufrufe oder auch die Anzahl der Zeilen zu verringern.</td>
+  </tr>
+  <tr>
+   <td>SQL</td>
+   <td>Die ausgeführte SQL-Abfrage.</td>
+  </tr>
+ </tbody>
+</table>

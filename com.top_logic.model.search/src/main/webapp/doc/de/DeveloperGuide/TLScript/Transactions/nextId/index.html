@@ -1,0 +1,55 @@
+<h2>Syntax</h2>
+<pre>	<code>nextId($sequence)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Erzeugt eine neue eindeutige Nummer in der Sequenz mit gegebenem Namen. Der Rückgabewert ist eine Ganzzahl. Mehrere Aufrufe mit demselben Sequenznamen erzeugen unterschiedliche fortlaufende Nummern. Aufrufe mit unterschiedlichen Sequenznamen können dieselbe Nummer generieren.</p>
+<p>Es können mehrere Argumente übergeben werden. In diesem Fall werden alle Argumente zu einem Sequenznamen konkateniert. Ist ein Argument keine Zeichenkette, so wird es in eine Zeichenkette konvertiert. Ist ein Argument ein Fachobjekt, so wird seine interne technische ID verwendet, um als Sequenzname zu dienen. Hierdurch kann für ein bestimmtes Fachobjekt eine Sequenz aus fortlaufenden Nummern generiert werden.</p>
+<p>Die Funktion darf nur in einem Transaktionskontext aufgerufen werden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>sequence</td>
+   <td>Zeichenkette</td>
+   <td>Name der Sequenz. Kann auch in mehreren Parametern angegeben werden, die konkatiniert werden.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl</p>
+<p>Eine ganze Zahl aus der genannten Sequenz.</p>
+<h2>Beispiele</h2>
+<h3>Eine Sequenz</h3>
+<pre>	<code>{
+   a = new(`my.module:MyClass`);
+   $a.set(`my.module:MyClass#name`, "A" + nextId("Seq1"));
+   b = new(`my.module:MyClass`);
+   $b.set(`my.module:MyClass#name`, "B" + nextId("Seq1"));
+   list($a, $b);
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit Objekten mit folgenden Namen: [A1, B2]</p>
+<h3>Mehrere Sequenzen</h3>
+<pre>	<code>{
+   a = new(`my.module:MyClass`);
+   $a.set(`my.module:MyClass#name`, "A" + nextId("Seq1"));
+   b = new(`my.module:MyClass`);
+   $b.set(`my.module:MyClass#name`, "B" + nextId("Seq1"));
+   c = new(`my.module:MyClass`);
+   $c.set(`my.module:MyClass#name`, "C" + nextId("Seq2"));
+   list($a, $b, $c);
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit Objekten mit folgenden Namen: [A1, B2, C1]</p>
+<p>Das Objekt <code class="hljs inlineCode">c</code> erhält hier die Nummer <code class="hljs inlineCode">1</code>, da die ID mit einer anderen Sequenz erzeugt wurde, als <code class="hljs inlineCode">a</code> und <code class="hljs inlineCode">b</code>.</p>

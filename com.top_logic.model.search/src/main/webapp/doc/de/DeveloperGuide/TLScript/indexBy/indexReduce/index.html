@@ -1,0 +1,68 @@
+<h2>Syntax</h2>
+<pre>	<code>$list.indexReduce($index-fun, $unit, $reduce-fun)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Erstellt ein Wörterbuch aus den Einträgen einer Liste. Die Schlüsselwerte werden über die Indizierungsfunktion aus Listenelementen berechnet. Ein Wert des resultierenden Wörterbuchs besteht aus der Reduktion aller Listenelemente, für die derselbe Schlüsselwert ausgerechnet wurde. Der erste Reduktionsschritt wird mit dem übergebenen neutralen Element und dem ersten Listenelement eines Schlüssels durchgeführt.</p>
+<p>Wenn für die Listenelemente <code class="hljs inlineCode">e1</code>,<code class="hljs inlineCode"> e5</code> und <code class="hljs inlineCode">e7</code> der selbe Schlüsselwert <code class="hljs inlineCode">k</code> ausgerechnet wurde, dann wird im resultierenden Wörterbuch unter dem Schlüssel <code class="hljs inlineCode">k</code> der Wert <code class="hljs inlineCode">$reduceFun($reduceFun($reduceFun($unit, e1), e5), e7)</code> gespeichert.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>list</td>
+   <td>Menge</td>
+   <td>Eine Liste, aus der ein Wörterbuch generiert werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>index-fun</td>
+   <td>Funktion</td>
+   <td>Funktion, die ein Listenelement einen Schlüsselwert zuordnet.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>unit</td>
+   <td>Zahl/Zeichenkette</td>
+   <td>Neutrales Element der <code class="hljs inlineCode">reduce-fun</code>.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>reduce-fun</td>
+   <td>Funktion</td>
+   <td>Funktion, die mehrere Listenwerte mit demselben Schlüsselwert auf ein Element reduziert.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+<p>Ein Wörterbuch mit allen Listenelementen, die gemäß der <code class="hljs inlineCode">index-fun</code> und <code class="hljs inlineCode">reduce-fun</code> Funktionen Schlüsselwerten zugeordnet wurden.</p>
+<h2>Beispiele</h2>
+<h3>Anzahl von gleichen Listenelementen</h3>
+<pre>	<code>{
+   list = list("Martin", "Tom", "Eric", "Martin", "Eric", "Lars", "Steven", "Steven", "Eric");
+   indexfun = string -&gt; $string;
+   reducefun = subtotal -&gt; listElem -&gt; $subtotal + 1;
+   $list.indexReduce($indexfun, 0, $reducefun);
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Wöterbuch mit folgenden Werten:</p>
+<pre><code>{
+  Martin=2.0, 
+  Tom=1.0, 
+  Eric=3.0, 
+  Lars=1.0, 
+  Steven=2.0
+}</code></pre>

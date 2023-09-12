@@ -1,0 +1,66 @@
+<p>Ein Modell wird normalerweise in-app erstellt und kann direkt ohne Code-Generierung für die Definition von Sichten in der Anwendung verwendet werden. Hierfür werden <a class="tlObject" data-custom="false" href="?page=TLScript&amp;uuid=d1172c3d-4596-48b0-837a-42349d1e3227">TL-Script</a> Ausdrücke verwendet, um auf das Modell zuzugreifen. Wenn allerdings komplexere Algorithmen implementiert werden müssen, die Zugriff auf das Fachmodell haben müssen, kann es sinnvoll sein, diese in Java zu implementieren und die Engine entsprechend zu erweitern. In einem solchen Fall ist es nützlich, wenn der Java-Code typisierte Modell-Interfaces hat, über die der Zugriff stattfinden kann. Ohne diese Schicht kann nur über die generische API von <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.model.TLObject" target="_blank">TLObject</a> auf die Eigenschaften von Modellelementen zugegriffen werden. Hierbei erfolgt beispielsweise der Zugriff auf Attribute über deren Namen, was schnell zu schlecht wartbarem Code führt.</p>
+<p>Um wartbaren Code für den Zugriff auf das TopLogic-Modell zu schreiben, steht der sog. "Wrapper-Generator" zur Verfügung. Dieser generiert aus einer TopLogic-Modellbeschreibung Java-Interfaces, über die aus Java-Code typisiert auf das Modell zugegriffen werden kann.</p>
+<h2>Java-Paket-Definition</h2>
+<p>Um Java-Interfaces für die Klassen in einem Modul generieren zu können, muss definiert werden, in welchem Java-Paket der generierte Code erzeugt werden soll. Hierfür muss die Annotation <code class="hljs inlineCode">package-binding</code> an dem Modul gesetzt werden, für welches Interfaces generiert werden sollen. Diese Annotation kann nicht in-app im Modelleditor vorgenommen werden, weil sie für die normale In-App-Entwicklung nicht sinnvoll/notwendig ist. Stattdessen muss das Modell in die Entwicklungsumgebung exportiert werden, um dort in der XML-Definition des Modells die Annotation zu setzten:</p>
+<pre><code class="language-xml">&lt;model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"&gt;
+   &lt;module name="my.app"&gt;
+      &lt;annotations&gt;
+         &lt;package-binding
+            implementation-package="my.company.my.app.model.impl"
+            interface-package="my.company.my.app.model"
+         /&gt;
+      &lt;/annotations&gt;
+
+      &lt;class name="A"&gt;
+         ...
+      &lt;/class&gt;
+   &lt;/module&gt;
+&lt;/model&gt;</code></pre>
+<p>Obiges Beispiel setzt die Annotation <code class="hljs inlineCode">package-binding</code> für das Modul <code class="hljs inlineCode">my.app</code> und definert, dass die generierten Schnittstellen in das Java-Paket <code class="hljs inlineCode">my.company.my.app.model</code> abgelegt werden sollen. Die von der Engine verwendeten Implementierungsklassen, welche dabei ebenfalls generiert werden, werden im Paket <code class="hljs inlineCode">my.company.my.app.model.impl</code> erzeugt.</p>
+<h2>Build-Anpassung</h2>
+<p>Wenn ein Modul Java-Pakete für Schnittstellen und Implementierungsklassen definiert, kann die Generierung gestartet werden. Hierfür kann entweder die Klasse <code class="hljs inlineCode">com.top_logic.element.model.generate.WrapperGenerator</code> über eine Launch-Konfiguration aus der Entwicklungsumgebung aufgerufen werden, oder man ergänzt die Build-Definition (d.h. die <code class="hljs inlineCode">pom.xml</code>) der Applikation wie folgt:</p>
+<pre><code class="language-xml">&lt;build&gt;
+   &lt;plugins&gt;
+      &lt;plugin&gt;
+         &lt;groupId&gt;com.top-logic&lt;/groupId&gt;
+         &lt;artifactId&gt;tl-maven-plugin&lt;/artifactId&gt;
+         &lt;version&gt;${tl.version}&lt;/version&gt;
+
+         &lt;executions&gt;
+            &lt;execution&gt;
+               &lt;id&gt;generate-binding&lt;/id&gt;
+               &lt;goals&gt;
+                  &lt;goal&gt;generate-java&lt;/goal&gt;
+               &lt;/goals&gt;
+               &lt;configuration&gt;
+                  &lt;modules&gt;my.app&lt;/modules&gt;
+               &lt;/configuration&gt;
+            &lt;/execution&gt;
+         &lt;/executions&gt;
+      &lt;/plugin&gt;
+   &lt;/plugins&gt;
+&lt;/build&gt;
+</code></pre>
+<p>Obige Build-Plugin-Definition verwendet das Standard-Maven-Plugin <code class="hljs inlineCode">exec</code>, um den Wrapper-Generator mit den zwei verpflichtenden Argumenten <code class="hljs inlineCode">-out</code> und <code class="hljs inlineCode">-modules</code> aufzurufen. Das Argument <code class="hljs inlineCode">-out</code> legt fest, wohin der generierte Code geschrieben werden soll. Mit <code class="hljs inlineCode">-modules</code> werden die Module aufgezählt, für die Code generiert werden soll. Wenn für mehr als ein Modul Code generiert werden soll, müssen die Modul-Namen kommasepariert in einem Argument übergeben werden.</p>
+<h2>Wrapper-Generierung</h2>
+<p>Ist die Build-Definition wie oben beschrieben angepasst, kann die Generierung über den folgenden Aufruf angestoßen werden:</p>
+<pre><code class="language-bash">mvn install tl:generate-java@generate-binding</code></pre>
+<p>Der generierte Code wird in den am Modell definierten Java-Paketen abgelegt. Nachdem dieser entsprechend übersetzt wurde, kann die Anwendung neu gestartet werden. Dabei werden die so generierten Klassen automatisch geladen und für Modellelemente in dem entsprechenden Modul verwendet. Java-Implementierungen, welche auf das Modell zugreifen, können dann mit regulären Java-Instanceof-Abfragen testen, welchen Typ ein Modellelement hat und über die in den generierten Interfaces definierten Methoden auf die Eigenschaften von Modellelementen zugreifen.</p>
+<h2>Codierung von Fachfunktionalität</h2>
+<p>Funktionen, welche auf das Modell zugreifen, können entweder extern z.B. in statischen Methoden definiert werden, oder aber direkt als Methodenimplementierungen in den generierten Schnittstellen implementiert werden. Die Generierung produziert hierfür für eine Modell-Klasse <code class="hljs inlineCode">A</code> zwei Java-Interfaces (<code class="hljs inlineCode">A</code> und <code class="hljs inlineCode">ABase</code>) und eine Java-Klasse (<code class="hljs inlineCode">AImpl</code>). Von diesen drei Typen enthalten zwei tatsächlich generierten Code (<code class="hljs inlineCode">ABase</code> und <code class="hljs inlineCode">AImpl</code>) und dürfen daher nicht modifiziert werden. Das Interface <code class="hljs inlineCode">A</code> hingegen ist lediglich ein leeres Template, das mit eigenen Methoden angereichert werden kann. Bei einer Neu-Generierung wird nur <code class="hljs inlineCode">ABase</code> und <code class="hljs inlineCode">AImpl</code> überschrieben. Das angepasste Template <code class="hljs inlineCode">A</code> bleibt hingegen erhalten.</p>
+<p><strong>Achtung:</strong> Selbstdefinierte Methoden in Modell-Interfaces müssen immer Default-Methoden mit einer Implementierung sein. Keinesfalls darf die ebenfalls generierte Implementierungsklasse angepasst werden. Default-Implementierungen von Modell-Methoden dürfen sich ausschließlich auf im Modell definierte Eigenschaften beziehen (auf welche sie über die generierten Get-Methoden zugreifen können). Auf keinen Fall darf die Impementierungsklasse mit zusätlichen Feldern ergänzt werden.</p>
+<p>Ein Beispiel einer Fachmethode in dem generierten Template für einen Typ <code class="hljs inlineCode">A</code> könnte wie folgt aussehen:</p>
+<pre><code class="language-java">public interface A extends ABase {
+
+   /**
+    * The {@link #getName() name} enclosed in stars.
+    */
+   default String enhancedName() {
+      return "*** " + getName() + " ***";
+   }
+
+}
+</code></pre>
+<p>Die Methode <code class="hljs inlineCode">enhancedName()</code> verwendet die generierte Zugriffsmethode <code class="hljs inlineCode">getName()</code> für die Eigenschaft <code class="hljs inlineCode">name</code>, um einen neuen Wert zu berechnen.</p>
+<p>Fachfunktionalität kann auch Polymorphie verwenden. In einem Interface für einen abstrakten Modell-Typ kann die Default-Implementierung fehlen. Dann müssen in allen Interfaces von Untertypen Default-Methoden für die abstrakte Interface-Methode des Obertyps angeben.</p>
+<p><strong>Achtung:</strong> Insbesondere gilt auch in diesem Fall, dass die Implementierungen für eine abstrakte Fachmethode eines abstrakten Modell-Typs nicht in die generierte Implementierungsklasse geschrieben werden dürfen (auch wenn die Entwicklungsungebung hier einen Fehler anzeigt), sondern als Default-Methode in das generierte Interface für den entsprechenden Modell-Typ.</p>

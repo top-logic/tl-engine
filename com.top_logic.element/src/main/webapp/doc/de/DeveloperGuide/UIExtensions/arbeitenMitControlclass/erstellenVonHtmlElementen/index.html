@@ -1,0 +1,27 @@
+<p>​In Top-Logic existiert ein <code class="hljs inlineCode">TagWriter</code> Objekt, das HTML Code generiert. Es ist mit einer Vielzahl an Methoden ausgestattet, um alle Möglichkeiten abzudecken. Im folgendem Artikel werden wir genauer auf die verschiedenen Möglichkeiten eingehen.</p>
+<p>Beispiel wie <code class="hljs inlineCode">&lt;span&gt;Text&lt;/span&gt;</code> in Eclipse aussehen würde:</p>
+<pre><code class="language-java">// &lt;span
+out.beginBeginTag(HTMLConstants.SPAN);
+// &gt;
+out.endBeginTag();
+out.writeText(„Text“);
+// &lt;/span&gt;
+out.endTag(HTMLConstants.SPAN);</code></pre>
+<p>Zwischen der ersten und dritten Zeile könnte z.B. eine id hinzugefügt werden. Falls das nicht gemacht wird, kann der obere Code abgekürzt werden.</p>
+<pre><code class="language-java">// &lt;span&gt;
+out.beginTag(HTMLConstants.SPAN);
+out.writeText(„Text“);
+// &lt;/span&gt;
+out.endTag(HTMLConstants.SPAN);</code></pre>
+<p>Ein <code class="hljs inlineCode">Tag</code> kann auch einen Klassennamen oder andere Attribute besitzen. Das wird anhand des a <code class="hljs inlineCode">Tag</code> Beispiels demonstriert:</p>
+<pre><code class="language-java">out.beginBeginTag(HTMLConstants.ANCHOR);
+out.writeAttribute(HTMLConstants.CLASS_ATTR, "links");
+out.writeAttribute(HTMLConstants.HREF_ATTR, „www.top-logic.com“);
+out.endBeginTag();
+out.writeText(„TopLogic Homepage“);
+out.endTag(HTMLConstants.ANCHOR);</code></pre>
+<p>Es ist möglich, dass Element mit einem <code class="hljs inlineCode">onclick</code> oder andere Attribute zu ergänzen, solange es ein valides Attribut des gewählten <code class="hljs inlineCode">Tags</code> ist.</p>
+<p><code class="language-java hljs">out.writeAttribute(HTMLConstants.ONCLICK_ATTR, "services.form.buttonDyerControl.handleButtonClick(" + "'" + getID() + "'); return false;");</code></p>
+<p>Um einen Zeilenumbruch zu generieren, wird der <code class="hljs inlineCode">&lt;br&gt; Tag</code> verwendet. Die Methode dafür ist <code class="hljs inlineCode">out.emptyTag(HTMLConstants.BR);</code></p>
+<p></p>
+<p></p>

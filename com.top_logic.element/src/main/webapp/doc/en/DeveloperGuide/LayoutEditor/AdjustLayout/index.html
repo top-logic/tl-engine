@@ -1,0 +1,23 @@
+<p>After <a class="tlObject" data-custom="true" href="?page=CreateTab&amp;uuid=8ab47cac-6622-4f05-983d-aeb48adccacb">creating</a> a <a class="tlObject" data-custom="true" href="?page=CreateTab&amp;uuid=8ab47cac-6622-4f05-983d-aeb48adccacb">new tab</a>, you get an initially empty view where you can create a new component.</p>
+<p><img src="ref:image.png" style="height:381px; opacity:1; width:600px"></p>
+<h2>Split view horizontally</h2>
+<p>But before you fill the view with a component, you should think about how the layout of this view should look like. Here it is important how many components should be displayed in total and how they should be arranged. Let's assume we want to display two components side by side (a selection table with a detail form), then first the view must be split horizontally:</p>
+<p><img src="ref:image_1.png" style="height:246px; opacity:1; width:600px"></p>
+<p>In the dialog that opens, several placeholders can be created for new components, which can be arranged either horizontally or vertically:</p>
+<p><img src="ref:image_2.png" style="height:344px; opacity:1; width:600px"></p>
+<p>If we want to arrange the two components horizontally next to each other and the left one should take a fixed place, then the following setting would be correct:</p>
+<p><img src="ref:image_3.png" style="height:494px; opacity:1; width:600px"></p>
+<p>After confirming, we now get the following view:</p>
+<p><img src="ref:image_5.png" style="height:292px; opacity:1; width:600px"></p>
+<p>We now have two placeholders that can be filled with a component. The separator in the middle is preset to a fixed width for the left component, but can be adjusted by the user. The placeholders can now be filled by a <a class="tlObject" data-custom="true" href="?page=Tables&amp;uuid=a47c9522-9095-4eaa-b105-aafabf942ed7">table</a> or <a class="tlObject" data-custom="true" href="?page=Forms&amp;uuid=5d6c339d-82b0-49ef-b49e-d884eb849eae">form</a>.</p>
+<h2>Combination of horizontal and vertical separators</h2>
+<p>If you want to create a more complex layout from a nesting of components arranged next to and below each other, you start with the main direction and divide the view e.g. horiontal first. Then fill one or more placeholders with a new layout. This inner layout can then be given a different direction.</p>
+<p>If we want to divide the left part of the screen vertically, we create a new layout in the left placeholder:</p>
+<p><img src="ref:image_4.png" style="height:244px; opacity:1; width:600px"></p>
+<p>We select "Layout" as the new component:</p>
+<p><img src="ref:image_6.png" style="height:402px; opacity:1; width:600px"></p>
+<p>In the dialog that then opens, we select the option "vertical" for the division direction:</p>
+<p><img src="ref:image_7.png" style="height:506px; opacity:1; width:600px"></p>
+<p>After confirming this setting, we get the desired view, in which there is a horizontal and a vertical divider:</p>
+<p><img src="ref:image_8.png" style="height:384px; opacity:1; width:600px"></p>
+<p>Now all three placeholders can be filled with display components.</p>

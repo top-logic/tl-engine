@@ -1,0 +1,31 @@
+<p></p>
+<h1 id="TypisierteKonfiguration">Typisierte Konfiguration</h1>
+<p>Die typisierte Konfiguration stellt eine Abbildung von annotierten Java-Interfaces (Konfigurationsinterfaces) auf XML-Konfigurationsdateien zur Verfügung. Beim Parsen werden aus der XML-Konfiguration automatisch Instanzen der Java-Interfaces erzeugt, ohne dass der Anwendungsprogrammierer einen Parser programmieren, oder Implementierungen der Interfaces vornehmen müsste. Umgekehrt können die Konfigurationsinstanzen automatisch zurück nach XML serialisiert werden, ohne einen Serialisierungsalgorithmus zu schreiben.</p>
+<h2 id="Konfigurationsinterface">Konfigurationsinterface</h2>
+<p>Das Konfigurationsinterface muss von <a href="http://tl/svn/top-logic/trunk/TL/tl-doc/javadoc/index.html#com.top_logic.basic.config.ConfigurationItem" title="com.top_logic.basic.config.ConfigurationItem in tl" target="_blank">​ConfigurationItem</a> ableiten und folgt der Java-Beans-Konvention. Jede Get-Methode im Konfigurationsinterface definiert eine konfigurierbare Eigenschaft.</p>
+<pre><code>public interface Config extends ConfigurationItem {
+   int getOption();
+   String getOtherOption();
+}
+</code></pre>
+<p>Entsprechende Set-Methoden müssen im Konfigurationsinterface nicht aufgeführt werden, um Konfigurationswerte aus XML einlesen zu können. Instanzen der Konfiguration werden vom Framework über Reflection erzeugt. Aus dem Namen der Get-Methode leitet sich der Name der konfigurierbaren Eigenschaft am. Der Rückgabetyp der Get-Methode definert den Typ des Konfigurationswertes, mit der diese Eigenschaft konfiguriert werden kann.</p>
+<p>Bei Verwendung des <a href="?page=XMLBinding&amp;uuid=4269c26d-3e60-4ca8-8883-1a5afd894fed" data-custom="true" class="tlObject">XML-Bindings</a> könnte eine Konfiguration passend zu obigem Konfigurationsinterface über folgendes XML-Document konfiguriert werden:</p>
+<pre><code>&lt;config
+   option="42"
+   other-option="Hello World!"
+/&gt;
+</code></pre>
+<h2 id="Konfigurationswerte">Konfigurationswerte</h2>
+<p>Konfigurationseigenschaften können Werte enthalten, die selbst nicht wiederum konfigurierte Komponenten sind, sondern Instanzen einfacher Java-Klassen. Diese Blätter des Konfigurationsbaums können entweder aus einem Satz vordefinierter Typen stammen, oder durch Annotation eines <a href="?page=FormatAnnotation&amp;uuid=6d91f715-9a35-4317-99cf-c8e672d28622" data-custom="true" class="tlObject">Formats</a> oder <a href="?page=MapBindingAnnotation+&amp;uuid=06325453-9cbd-48a5-bf74-fd3e95243837" data-custom="true" class="tlObject">Bindings</a> an die Konfigurationseigenschaft definiert werden.</p>
+<h2 id="Wertannotationen">Wertannotationen</h2>
+<p>Jede Property darf nur eine lokale (also nicht-geerbte) Wertannotation haben. Ausnahme: Die Property darf gleichzeitig eine Defaultwert-Annotation und eine Derived-Annotation haben. In diesem Fall wird der Default-Wert genommen, wenn der Derived-Ausdruck null ergibt. Nur diese beiden Annotationen können gleichzeitig gesetzt sein. Verstößt eine Property gegen diese Regeln, führt die Verwendung des betroffenen <code class="hljs inlineCode">ConfigurationItems</code> zu einer Exception. Genauer: Das Erstellen oder Einlesen eines solchen Config-Items schlägt fehl. Auch das Bauen des <code class="hljs inlineCode">ConfigurationDescriptor</code> für diesen Typ schlägt fehl.</p>
+<p>Eine Property darf beliebig viele Wertannotationen erben. Wenn eine Property sowohl ein oder mehrere Wertannotationen erbt und zusätzlich eine lokal (also nicht-geerbt) Wertannotation hat, gewinnt die lokale Wertannotation. Hierbei kann eine lokale Defaultwert-Annotation aber durch eine geerbte Derived-Annotation ergänzt werden und umgekehrt.</p>
+<p>Erbt eine Property mehrere Annotationen, wird folgende Priorisierung verwendet:</p>
+<ol>
+ <li><a href="?page=DefaultValues&amp;uuid=21331497-0577-440f-be16-f42a2e67de67" data-custom="true" class="tlObject">Defaultwert</a></li>
+ <li>Container</li>
+ <li>Derived</li>
+ <li>Mandatory</li>
+ <li>Abstract</li>
+</ol>
+<p>Auch hierbei kann sich eine Defaultwert-Annotation mit einer Derived-Annotation ergänzen.</p>

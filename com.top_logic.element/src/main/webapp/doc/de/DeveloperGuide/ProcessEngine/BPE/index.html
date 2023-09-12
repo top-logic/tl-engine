@@ -1,0 +1,12 @@
+<p>Damit die Process-Engine in einer neu erstellten Applikation verfügbar ist, muss das Modul "Process engine" in den Einstellungen aktiviert werden (siehe auch <a class="tlObject" data-custom="false" href="?page=SetupApplication&amp;uuid=97ca436f-3646-4f01-b6a2-6947a2d8989a">Anwendung erstellen</a>).</p>
+<p><img src="ref:image_1.png" style="height:687px; opacity:1; width:600px"></p>
+<p>Die Process-Engine kann auch nachträglich in einer schon erstellten Applikation aktiviert werden, indem das Modul <code class="hljs inlineCode">com.top_logic.bpe.app</code> in den Java-Build-Path aufgenommen wird.</p>
+<h2>Prozess-Cockpit einblenden</h2>
+<p>In einer Anwendung mit aktivierter Process-Engine kann die Sicht "Prozess-Cockpit" z.B. als Hauptseite der Anwendung ausgewählt werden. Siehe hierzu <a class="tlObject" data-custom="false" href="?page=ConfigureTabs&amp;uuid=bfab7b0f-e717-4682-acc9-2f8af6c7607a">Tabs konfigurieren</a>.</p>
+<h2>Prozess anlegen</h2>
+<p>In der Administration kann im Prozess-Editor ein neuer Prozess angelegt oder ein über ein externes Tool definierter Prozess hochgeladen werden. Legt man einen neuen Prozess in der Anwendung an, erhält man ein minimales Prozess-Template, dass über die Bearbeitungsfunktion ergänzt werden kann.</p>
+<p><img src="ref:image_3.png" style="height:285px; opacity:1; width:600px"></p>
+<p>Lädt man einen extern definierten Prozess hoch, so muss dieser im Anschluss nur noch für die Verwendung zur Applikationssteuerung annotiert werden.</p>
+<p>Neben den von BPMN definierten Standardeigenschaften sieht der Prozess-Editor die Eingabe von weiteren Optionen vor, welche die Darstellung des Prozesses in der Anwendung steuern. So kann beispielsweise bei der Anlage eines neuen Prozesses ein Icon für den Prozess ausgewählt werden. Dieses Icon wird verwendet, um den Prozess über eine Kachel im Prozess-Cockpit auswählbar zu machen.</p>
+<h2>Prozess freigeben</h2>
+<p>Ist der Prozess fertig definiert und mit dem Anwendungsmodell passend verknüpft, kann der Prozess freigegeben werden. Erst danach erscheint in dem Prozess-Cockpit eine Kachel für diesen Prozess, über die ein Workflow gestartet werden kann.</p>

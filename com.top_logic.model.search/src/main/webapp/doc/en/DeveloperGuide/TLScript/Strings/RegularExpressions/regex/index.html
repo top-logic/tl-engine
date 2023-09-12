@@ -1,0 +1,39 @@
+<h2><span style="display:none"> </span>Syntax</h2>
+<pre>	<code>regex($string)
+</code>
+</pre>
+<h2>Description</h2>
+<p>Generates a regular expression pattern from the given string. The pattern can be applied to strings using the <a class="tlObject" data-custom="true" href="?page=regexSearch&amp;uuid=74b294a0-955f-4fc0-b55e-793641445745">regexSearch()</a> and <a class="tlObject" data-custom="true" href="?page=regexReplace&amp;uuid=827fa943-ea69-4f63-a797-df18d238eb51">regexReplace()</a> expressions.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>string</td>
+   <td>String</td>
+   <td>A regex expression from which the pattern should be created.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return Value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Business Object</p>
+<p>A regular expression pattern that can be applied to string.</p>
+<h2>Examples</h2>
+<h3>Letters and numbers</h3>
+<pre>	<code>regex("[A-Za-z0-9]")</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> Pattern for any Latin letter or number.</p>
+<h3>Numbers</h3>
+<pre>	<code>regex("[0-9]")</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> Pattern for any digit.</p>

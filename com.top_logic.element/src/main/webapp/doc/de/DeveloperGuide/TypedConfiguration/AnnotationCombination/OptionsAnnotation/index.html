@@ -1,0 +1,11 @@
+<p>In-App kann man den Nutzer den Wert einer Eigenschaft aus&nbsp;einer vorgegebener Kollektion auswählen lassen, z.B.</p>
+<pre><code class="language-java">@Options(fun = AllCharsetNames.class)
+String getCharsetName();</code></pre>
+<p>wo&nbsp;die Klasse&nbsp;<code class="hljs inlineCode">AllCharsetNames</code>&nbsp;eine passende Ableitung von&nbsp;&nbsp;<code class="hljs inlineCode">GenericFunction</code>&nbsp;ist, die die Optionen (Auswahlmöglichkeiten) berechnet, die&nbsp;dann dem Nutzer angeboten werden, z.B.</p>
+<pre><code class="language-java">public class AllCharsetNames extends Function0&lt;Collection&lt;String&gt;&gt; {
+  @Override
+  public Collection&lt;String&gt; apply() {
+    return Charset.availableCharsets().keySet();
+  }
+}</code></pre>
+<p>Ob&nbsp;eine&nbsp;oder mehrere Optionen ausgewählt werden können, entscheidet der Rückgabetyp des Getters der Eigenschaft.</p>

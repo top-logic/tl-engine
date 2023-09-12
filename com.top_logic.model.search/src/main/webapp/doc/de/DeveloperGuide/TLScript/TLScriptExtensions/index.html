@@ -1,0 +1,54 @@
+<p>TL-Script kann ganz leicht mit eigenen Funktionen über einen Plug-In-Mechanismus erweitert werden. Hierfür muss eine Java-Implementierung der TL-Script-Funktion erstellt und diese in der Anwendungskonfiguration registriert werden.</p>
+<h2>Implementierung</h2>
+<p>Die TL-Script-Funktion wird in einer Ableitung von <code class="hljs inlineCode">com.top_logic.model.search.expr.GenericMethod</code> implementiert. Die eigentliche Funktion wird in der überschriebenen Methode <code class="hljs inlineCode">com.top_logic.model.search.expr.Info.eval(Object, Object[], EvalContext)</code> implementiert. Die Methode erhält das Self-Argument als ersten Parameter und alle weiteren Argumente in dem Arguments-Array. Als Ergebnis muss die Methode das Funktionsergebnis der TL-Script-Funktion liefern.</p>
+<p>Zusätzlich muss ein Builder für die Funktionsklasse erstellt werden. Dieser wird als Ableitung von <code class="hljs inlineCode">com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder&lt;I&gt;</code> erstellt. Dieser Builder erzeugt eine Instanz der Funktionsimplementierung von oben. Die Builder-Implementierung wird in der Anwendungskonfiguration registriert.</p>
+<p>Eine minimale Implementierung einer TL-Script-Funktion, welche eine Zahl abrundet, könnte folgendermaßen aussehen:</p>
+<pre><code class="language-java">public class Floor extends SimpleGenericMethod {
+   protected Floor(String name, SearchExpression self, SearchExpression[] arguments) {
+      super(name, self, arguments);
+   }
+
+   @Override
+   public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
+      return new Floor(getName(), self, arguments);
+   }
+
+   @Override
+   public TLType getType(TLType selfType, List&lt;TLType&gt; argumentTypes) {
+      return selfType;
+   }
+
+   @Override
+   public Object eval(Object self, Object[] arguments) {
+      return Math.floor(asDouble(self));
+   }
+
+   public static final class Builder extends AbstractSimpleMethodBuilder&lt;Floor&gt; {
+      public Builder(InstantiationContext context, Config&lt;?&gt; config) {
+         super(context, config);
+      }
+
+      @Override
+      public Floor build(Expr expr, SearchExpression self, SearchExpression[] args)
+            throws ConfigurationException {
+         checkNoArguments(expr, self, args);
+         return new Floor(getConfig().getName(), self, args);
+      }
+   }
+}
+</code></pre>
+<h2>Konfiguration</h2>
+<p>Der Builder für die Funktionsimplementierung wird in der Anwendungskonfiguration im Abschnitt &nbsp;<code class="hljs inlineCode">com.top_logic.model.search.expr.config.SearchBuilder</code> registriert. Die obige Funktion könnte wie folgt unter dem Namen <code class="hljs inlineCode">my_floor</code> registriert werden:</p>
+<pre><code>&lt;config service-class="com.top_logic.model.search.expr.config.SearchBuilder"&gt;
+   &lt;instance&gt;
+      &lt;methods&gt;
+         &lt;method name="my_floor" class="my.package.Floor$Builder"/&gt;
+      &lt;/methods&gt;
+   &lt;/instance&gt;
+&lt;/config&gt;
+</code></pre>
+<h2>Nutzung</h2>
+<p>Eigene Funktionen können wie Built-In-Funktionen über den in der Konfiguration vergebenen Namen aufgerufen werden. Um Namenskonflikte mit zukünftigen Updates zu verhindern, empfiehlt es sich, einen Namenspräfix wie <code class="hljs inlineCode">my_</code> in obigem Konfigurationsbeispiel zu verwenden.</p>
+<p>Die oben registrierte Funktion kann dann wie folgt aufgerufen werden:</p>
+<pre><code>my_floor(4.2)</code></pre>
+<p>Das erwartete Ergebnis wäre dann <code class="hljs inlineCode">4</code>.</p>

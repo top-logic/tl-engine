@@ -1,0 +1,49 @@
+<h2>Syntax</h2>
+<pre>	<code>$set.elementIndex($element)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Bestimmt die Position eines Elements in einer Liste zurück, wobei die Zählung bei 0 beginnt. Falls das Element mehrfach enthalten ist, wird die Position des ersten Vorkommens zurückgegeben.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>set</td>
+   <td>Menge</td>
+   <td>Eine Menge, in der die Position eines Elements bestimmt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>element</td>
+   <td>Zahl/Zeichenkette/Wahrheitswert/Fachobjekt/Menge</td>
+   <td>Das Element dessen Position bestimmt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zahl</p>
+<p>Den Index der Position des Elements in der Menge. Falls das Element mehrfach vorkommt wird der Index des ersten Vorkommens zurückgegeben. Falls das Element gar nicht enthalten ist, wird -1 zurückgegeben.</p>
+<h2>Beispiele</h2>
+<h3>Element befindet sich 1 Mal in der Menge</h3>
+<pre>	<code>list(1, 2, 3, 4).elementIndex(2)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> 1</p>
+<h3>Element befindet sich merhfach in der Menge</h3>
+<pre>	<code>list(1, 2, 2, 2, 3, 4).elementIndex(2)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> 1</p>
+<h3>Element befindet sich nicht in der Menge</h3>
+<pre>	<code>list(1, 2, 2, 2, 3, 4).elementIndex(8)</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span><span style="color:#3498db"> </span>-1<span style="color:#3498db"></span></p>

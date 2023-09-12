@@ -1,0 +1,21 @@
+<p>Mit <code class="hljs inlineCode">@ComplexDefault</code>&nbsp;wird an das Property ein Algorithmus (eine Ableitung von <a href="http://tl/svn/top-logic/trunk/TL/tl-doc/javadoc/index.html#com.top_logic.basic.config.annotation.DefaultValueProvider" target="_blank" title="com.top_logic.basic.config.annotation.DefaultValueProvider in tl">DefaultValueProvider</a>)&nbsp;annotiert, der den Default-Wert berechnet (einmalig bei Instanziierung der Konfiguration).</p>
+<p>Beispiel&nbsp;für <code class="hljs inlineCode">Enum</code>:</p>
+<pre><code class="language-java">@ComplexDefault(DefaultFruit.class)
+Fruit getFruit();
+
+class DefaultFruit extends DefaultValueProvider {
+  @Override
+  public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
+    return Fruit.ORANGE;
+  }
+}</code></pre>
+<p>Beispiel für eine Liste von <code class="hljs inlineCode">Enum</code>s:</p>
+<pre><code class="language-java">@ComplexDefault(DefaultFruits.class)
+List&lt;Fruit&gt; getMyFruits();
+
+class DefaultFruits extends DefaultValueProvider {
+  @Override
+  public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
+    return CollectionUtil.createList(Fruit.values());
+  }
+}</code></pre>

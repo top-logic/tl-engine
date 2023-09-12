@@ -1,0 +1,54 @@
+<h2>Syntax</h2>
+<pre>	<code>$e1 &lt;= $e2
+
+$e1.le($e2)
+</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Boolescher Ausdruck, der als wahr bewertet wird, wenn das Ergebnis der Auswertung von <code class="hljs inlineCode">e1</code> kleiner oder gleich dem Ergebnis der Auswertung von <code class="hljs inlineCode">e2</code> ist.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>e1</td>
+   <td>Zahl/Zeichenkette/Menge</td>
+   <td>Objekt, das mit <code class="hljs inlineCode">e2</code> verglichen werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>e2</td>
+   <td>Zahl/Zeichenkette/Menge</td>
+   <td>Objekt, das mit <code class="hljs inlineCode">e1</code> verglichen werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+<p><code class="hljs inlineCode">true</code>, wenn das Ergebnis der Auswertung besagt, dass <code class="hljs inlineCode">e1</code> kleiner gleich <code class="hljs inlineCode">e2</code> ist.</p>
+<h2>Beispiele</h2>
+<h3>Zahlen</h3>
+<pre>	<code>1 &lt;= 1
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span>true</p>
+<h3>Ungleiche Mengen</h3>
+<pre>	<code>list(1, 2, 3).le(list(1, 2, 4))</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong><code class="hljs inlineCode">true</code></p>
+<p>Da Mengen elementweise miteinander verglichen werden, ist die erste Menge kleiner als die zweite, denn die Zahl 3 ist kleiner als die Zahl 4 (siehe <a class="tlObject" data-custom="false" href="?page=Comparisons&amp;uuid=a9117c9d-c941-44d9-bdc1-00f4a25e8a7a">Vergleichsoperatoren</a>).</p>
+<h3>Gleiche Mengen</h3>
+<pre>	<code>list(1, 2, 3).le(list(1, 2, 3))</code>
+</pre>
+<p><strong><span style="color:#3498db">Ausgabe:</span> </strong><code class="hljs inlineCode">true</code></p>

@@ -1,0 +1,57 @@
+<h2>Syntax</h2>
+<pre>	<code>$e1.isFloatGreater(e2, $precision)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Bestimmt, ob die Fließkommazahl <code class="hljs inlineCode">e1</code> größer ist als die Fließkommazahl <code class="hljs inlineCode">e2</code>, wenn man auf <code class="hljs inlineCode">precision</code> Stellen rundet.<span style="background-color:rgba(255, 255, 255, 0); font-size:16pt"></span></p>
+<p>Der Ausdruck ist äquivalent zu</p>
+<pre><code>$e1.round($precision) &gt; $e2.round($precision)</code></pre>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>e1</td>
+   <td>Zahl</td>
+   <td>Eine Fließkommazahl, die mit <code class="hljs inlineCode">e2</code> verglichen werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>e2</td>
+   <td>Zahl</td>
+   <td>Eine Fließkommazahl, die mit <code class="hljs inlineCode">e1</code> verglichen werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>precision</td>
+   <td>Zahl</td>
+   <td>Eine Zahl, die angibt wie viele Nachkommastellen berücksichtigt werden sollen.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2><span style="background-color:rgba(255, 255, 255, 0); font-size:16pt">Rückgabewert</span></h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+<p><code class="hljs inlineCode">true</code>, wenn <code class="hljs inlineCode">e1</code> größer ist als <code class="hljs inlineCode">e2</code>.</p>
+<h2>Beispiele</h2>
+<h3>Vergleich mit 4 Nachkommastellen</h3>
+<pre>	<code>3.1314.isFloatGreater(3.1311, 4)
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe: </strong></span> true</p>
+<h3>Vergleich mit 2 Nachkommastellen</h3>
+<pre>	<code>3.1314.isFloatGreater(3.1351, 2)
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> false</p>
+<p>Durch die angegebene <code class="hljs inlineCode">precision</code><code class="hljs inlineCode"> = 2</code> werden die Zahlen 3.14 und 3.14 verglichen, die gleich sind.</p>

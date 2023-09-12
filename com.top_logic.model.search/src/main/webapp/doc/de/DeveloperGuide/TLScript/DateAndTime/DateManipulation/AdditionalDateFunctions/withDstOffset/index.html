@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+<pre>	<code>$calendar.withDstOffset($offset)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Erstellt einen neuen Kalender aus dem gegebenen Kalender, wobei der <a class="tlObject" data-custom="true" href="?page=dstOffset&amp;uuid=125d8c6e-20cf-490b-8a99-ab9c7521fa27">Sommerzeit-Offset</a> auf <code class="hljs inlineCode">offset</code> gesetzt wird. Durch das Verändern des Offsets können sich auch andere Werte wie zum Beispiel die <a class="tlObject" data-custom="true" href="?page=hour&amp;uuid=7035566c-b509-4dcd-b3b1-c5d9aeaea837">Stunde</a> ändern.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>calendar</td>
+   <td>Fachobjekt</td>
+   <td>Der Kalender, dessen Sommerzeit-Offset geändert werden soll. Es kann sich dabei um einen <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">System-</a> oder <a class="tlObject" data-custom="true" href="?page=toUserCalendar&amp;uuid=17b7892f-ab6d-419a-80b5-107cb3a415ce">Benutzerkalender</a> handeln.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>offset</td>
+   <td>Zahl</td>
+   <td>Wert für den neuen Sommerzeit-Offset in Millisekunden, der für den Kalender gesetzt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong> </span>Fachobjekt</p>
+<p>Ein Kalender mit dem geänderten Wert für den Sommerzeit-Offset.</p>
+<h2>Beispiele</h2>
+<pre>	<code>dateTime(2012, 8, 10, 7, 55, 24, 13).toUserCalendar().withDstOffset(3600000).dstOffset()</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 3.600.000</p>

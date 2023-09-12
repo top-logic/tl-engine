@@ -1,0 +1,52 @@
+<h2>Syntax</h2>
+<pre>	<code>log($message)
+
+log($message, $arguments)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Schreibt einen Eintrag in das Anwendungslog.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>message</td>
+   <td>Zeichenkette</td>
+   <td>Die Message, die ins Log geschrieben werden soll. Falls auch <code class="hljs inlineCode">arguments</code> angegeben werden, können in der Message Platzhalte im Form von {0}...{n} definiert werden. Enthält die Message einen Platzhalter, aber es gibt kein Argument, um es zu füllen, wird im Klartext {n} in die Nachricht geschrieben.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>arguments</td>
+   <td>Menge</td>
+   <td>Argumente, die in der angegebenen Reihenfolge in die Platzhalter von <code class="hljs inlineCode">message</code> eingefügt werden. Werden keine oder zu wenige Platzhalter angegeben, dann werden nicht alle Argumente verwendet.</td>
+   <td>nein</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Beispiele</h2>
+<h3>Einfache Log Message</h3>
+<pre>	<code>log('Hello');</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe </strong></span>(im Log)<strong>:</strong><span style="color:#3498db"><strong> </strong></span>Hello</p>
+<h3>Platzhalter Log Message</h3>
+<pre>	<code>log('Current date: {0}. Current week day: {1}', today(), today().toUserCalendar().dayOfWeek())</code>
+</pre>
+<p><span style="color:#3498db"></span><span style="color:#3498db"><strong>Ausgabe </strong>(im Log)</span><strong><span style="color:#3498db">:</span> </strong>Current date: 14.02.22 16:00. Current week day: 2</p>
+<h3>Platzhalter mit zu wenigen Argumenten</h3>
+<pre><code>log('Current date: {0}. Current week day: {1}')</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe</strong> </span>(im Log): Current date: {0}. Current week day: {1}</p>
+<p>Da keine Argumente angegeben wurden, werden die Platzhalter nicht ersetzt und so ausgegeben.</p>
+<h3>Platzhalter mit zu vielen Argumenten</h3>
+<pre><code>log('Current date: {0}', today(), today().toUserCalendar().dayOfWeek())</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe</strong></span> (im Log): Current date: 14.02.22 16:00</p>
+<p>Es gibt mehr Argumente als Platzhalter, daher wird das zweite Argument ignoriert.</p>

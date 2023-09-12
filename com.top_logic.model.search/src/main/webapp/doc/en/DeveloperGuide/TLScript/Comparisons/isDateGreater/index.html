@@ -1,0 +1,52 @@
+<h2>Syntax</h2>
+<pre>	<code>$e1.isDateGreater($e2)</code>
+</pre>
+<h2>Description</h2>
+<p>Checks if the date <code class="hljs inlineCode">e1</code> is greater than the date <code class="hljs inlineCode">e2</code>. Only whole days are compared and no clock times are taken into account.</p>
+<p>Is equivalent to</p>
+<pre><code>$e1.day() &gt; $e2.day()</code></pre>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>e1</td>
+   <td>Business object</td>
+   <td>Date to be compared with <code class="hljs inlineCode">e2</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>e2</td>
+   <td>Business object</td>
+   <td>Date to be compared with <code class="hljs inlineCode">e1</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong> </span>Boolean</p>
+<p><code class="hljs inlineCode">true</code>, if the result of the evaluation says that the date <code class="hljs inlineCode">e1</code> is greater than the date <code class="hljs inlineCode">e2</code>.</p>
+<h2>Examples</h2>
+<h3>Simple date</h3>
+<pre>	<code>date(2021, 10, 5).isDateGreater(date(2021, 10, 4))</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong> <code class="hljs inlineCode">true</code></p>
+<h3>Simple same date</h3>
+<pre>	<code>date(2021, 10, 5).isDateGreater(date(2021, 10, 5))</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong><code class="hljs inlineCode">false</code></p>
+<p>Since the dates are equal, the first date is not greater than the second.</p>
+<h3>Date with time</h3>
+<pre><code>dateTime(2021, 10, 5, 12, 24, 55).isDateGreater(dateTime(2021, 10, 5, 1, 24, 23))</code></pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span><code class="hljs inlineCode">false</code></p>
+<p>Since only to the day is compared and the time of day is not considered, <code class="hljs inlineCode">false </code>is returned here.</p>

@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+<pre>	<code>$e1 == $e2
+
+$e1.equals($e2)</code>
+</pre>
+<h2>Description</h2>
+<p>Boolean expression that evaluates to true if <code class="hljs inlineCode">e1</code> and <code class="hljs inlineCode">e2</code> evaluate to the same value.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>e1</td>
+   <td>Number/string/boolean/Business object/set</td>
+   <td>Object to be compared with <code class="hljs inlineCode">e2</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>e2</td>
+   <td>Number/string/boolean/Business object/set</td>
+   <td>Object to be compared with <code class="hljs inlineCode">e1</code>.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p>
+<p><code class="hljs inlineCode">true</code>, if the result of the evaluation says that the two objects are identical.</p>
+<h2>Examples</h2>
+<h3>Numbers</h3>
+<pre>	<code>1 == 1
+</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output: </strong></span> <code class="hljs inlineCode">true</code></p>
+<h3>Equal quantities</h3>
+<pre>	<code>list(1, 2).equals(list(1, 2))</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong> <code class="hljs inlineCode">true</code></p>
+<h3>Unequal quantities</h3>
+<pre>	<code>list(1, 2).equals(list("one", "two"))</code>
+</pre>
+<p><strong><span style="color:#3498db">Output:</span> </strong><code class="hljs inlineCode">false</code></p>
+<h2>See also</h2>
+<ul>
+ <li><a class="tlObject" data-custom="true" href="?page=isDateEqual&amp;uuid=61bc603f-0c3c-4e7c-9336-bf18f0cb3ad6">Equality on daily values </a></li>
+ <li><a class="tlObject" data-custom="true" href="?page=isFloatEqual&amp;uuid=f5e1a865-4441-4894-8a36-89bd15ad338f">Equality on floating point numbers</a></li>
+ <li><a class="tlObject" data-custom="true" href="?page=isStringEqual&amp;uuid=58980aa6-dba0-4fc3-a05f-9ce468c4b8ad">Equality on strings</a></li>
+</ul>

@@ -1,0 +1,134 @@
+<p>Eine Top-Logic-Anwendung ist in der Lage bestimmte Anwendungsdaten verschlüsselt in der Datenbank abzulegen. Hierzu muss die Verschlüsselung persistenter Daten aktiviert werden. Dies erfordert, dass bei jedem Start der Anwendung ein Anwendungspasswort für die Datenentschlüsselung eingegeben werden muss, bevor ein Login in die Anwendung möglich ist.</p>
+<h3>Verschlüsselbare Daten</h3>
+<p>Die folgenden Daten sind verschlüsselbar</p>
+<ul>
+ <li>Dokumente</li>
+ <li>Die Journal-Historie</li>
+ <li>Speziell ausgezeichnete Attributwerte von Objekten. 
+  <ul>
+   <li>Ein Attribut kann nur dann verschlüsselt werden, wenn die Anwendung nicht von datenbankbasierten Suchen nach Werten dieses Attributs abhängt.</li>
+   <li>Es können insbesondere keine Attribute verschlüsselt werden, welche als Basis für eine Datenbankindizierung dienen.</li>
+   <li>Ebensowenig können Beziehungen zwischen Objekten (oder deren Attribute) verschlüsselt weden.</li>
+   <li>Storages sind ebenso von der Verschüsselung ausgenommen.</li>
+  </ul></li>
+</ul>
+<h3>Aktivierung der Verschlüsselung</h3>
+<h4>Modell</h4>
+<p>Damit Attribute verschlüsselt werden können, müssen diese im sog. Flex-Storage gespeichert werden. Sie dürfen also nicht als normale Knowledge-Objekt-Attribute definiert sein. U.U. muss das Anwendungsmodell so geändert werden, dass alle sicherheitsrelevanten Daten im Flex-Storage gespeichert werden. Hierfür kann es notwendig sein, die Meta-Schemata der Anwendung so anzupassen.</p>
+<h4>Anwendungskonfiguration</h4>
+<p>Das Feature "Verschlüsselung" lässt sich aktivieren, indem das Konfigurationsbundle <code class="hljs inlineCode">top-logic.encrypted.xml</code> in die <code class="hljs inlineCode">metaConf.txt</code> der Anwendung eingebunden wird:</p>
+<pre><code>top-logic.encrypted.xml
+</code></pre>
+<p>Dieses Konfigurationsbundle besteht aus den im folgenden beschriebenen Teilen.</p>
+<h5>Verzögerter Anwendungsstart</h5>
+<p>Bei eingeschalteter Verschlüsselung muss während des Anwendungsstarts vom Administrator das Verschlüsselungspasswort eingegeben werden. Diese Eingabe erfolgt ebenfalls über die Web-Schnittstelle der Anwendung. Allerdings können vor der Eingabe des Verschlüsselungspassworts noch nicht alle Services gestartet werden. Technisch muss die Web-Anwendung daher den Start der Services solange verzögern, bis das Verschlüsselungspasswort eingegeben ist.</p>
+<p>Der verzögerte Start wird in der Konfiguration für den StartStopListener aktiviert. Technisch wird dadurch beim Anwendungsstart der <code class="hljs inlineCode">DeferredBootService</code> gestartet, welcher zu einem späteren Zeitpunkt die Anwendungsdienste starten kann. Alle Dienste, die für die Passworteingabe selbst notwendig sind, müssen als Abhängigkeiten des <code class="hljs inlineCode">DeferredBootService</code> angegeben werden.</p>
+<p>Bevor die Anwendung vollständig hochgefahren ist, leitet sie alle Anfragen an die beim <code class="hljs inlineCode">DeferredBootService</code> konfigurierte <code class="hljs inlineCode">deferredBootLocation</code> weiter.</p>
+<pre><code>&lt;section name="StartStopListener"&gt;
+   &lt;entry name="deferredBoot" value="true" /&gt;
+&lt;/section&gt;
+
+&lt;section name="DeferredBootService"&gt;
+   &lt;!-- Application password page requires DB-Access. --&gt;
+   &lt;entry name="dependency:com.top_logic.basic.sql.DBProperties$Module" value="enabled" /&gt;
+
+   &lt;!-- Redirect directly to the password input page. --&gt;
+   &lt;entry name="deferredBootLocation" value="/applicationPassword.jsp" /&gt;
+&lt;/section&gt;
+</code></pre>
+<h5>Verschlüsselungsdienst</h5>
+<p>Das Key-Handling für die Verschlüsselung wird durch den <code class="hljs inlineCode">EncryptionService</code> übernommen. Für die Verschlüsselung mit einem vom Nutzer gewählten Passwort muss der <code class="hljs inlineCode">PasswordBasedEncryptionService</code> gewählt werden. Über Konfigurationsoptionen können die Verschüsselungsalgorithmen für den Schlüssel und die Anwendungsdaten eingestellt werden.</p>
+<pre><code>&lt;section name="EncryptionService"&gt;
+   &lt;entry name="class" value="com.top_logic.knowledge.service.encryption.pbe.PasswordBasedEncryptionService" /&gt;
+
+   &lt;!-- The password based encryption algorithm for encrypting the encryption key. --&gt;
+   &lt;entry name="pbeAlgorithm" value="PBEWithSHAAndTwofish-CBC" /&gt;
+   &lt;entry name="saltLength" value="16" /&gt;
+   &lt;entry name="iterations" value="100000" /&gt;
+
+   &lt;!-- The algorithm for data encryption --&gt;
+   &lt;entry name="encryptionAlgorithm" value="Blowfish" /&gt;
+
+   &lt;!-- The digest algorithm to produce (symmetric) signatures with. --&gt;
+   &lt;entry name="signatureDigestAlgorithm" value="SHA1" /&gt;
+&lt;/section&gt;
+</code></pre>
+<h5>Verschlüsselung von Flex-Attributen</h5>
+<p>Die Flex-Attribute von Objekten werden durch einen <code class="hljs inlineCode">FlexDataManager</code> gespeichert. Verschlüsselte Speicherung wird durch die Wahl der <code class="hljs inlineCode">EncryptedFlexDataManagerFactory</code> für den <code class="hljs inlineCode">FlexDataManagerFactory</code>-Dienst erreicht.</p>
+<pre><code>&lt;section name="FlexDataManagerFactory"&gt;
+   &lt;entry name="class" value="com.top_logic.knowledge.service.encryption.data.EncryptedFlexDataManagerFactory" /&gt;
+&lt;/section&gt;
+</code></pre>
+<h5>Selektive Attribut-Verschlüsselung</h5>
+<p>Es ist möglich, selektiv, einzelne Typen (Knowledge-Base-Typen) bzw. deren Flex-Attribute von der Verschlüsselung auszunehmen (oder die Verschlüsselung nur für ausgewählte Typen oder Attribute einzuschalten):</p>
+<pre><code>&lt;section name="FlexDataManagerFactory"&gt;
+   &lt;entry name="dataManager.default" value="include"/&gt;
+   &lt;entry name="dataManager.type.UIConfig" value="exclude"/&gt;
+   &lt;entry name="dataManager.attribute.DemoTypesC.stringInBAndC" value="exclude"/&gt;
+&lt;/section&gt;
+</code></pre>
+<p>Über eine solche Konfiguration können Datenbanksuchen auf einzelnen Flex-Attributen trotz eingeschalteter Verschlüsselung ermöglicht werden.</p>
+<h5>Journal in verschlüsselten Flex-Attribut-Tabellen</h5>
+<p>Damit die Journal-Historie verschlüsselt gespeichert wird, muss diese in Flex-Attribut-Tabellen geschrieben werden. Hierfür muss der <code class="hljs inlineCode">FlexJournalManager</code> als <code class="hljs inlineCode">JournalManager</code> aktiviert werden.</p>
+<pre><code>&lt;section name="JournalManager"&gt;
+   &lt;entry name="class" value="com.top_logic.knowledge.journal.FlexJournalManager"/&gt;
+&lt;/section&gt;
+
+&lt;section name="ApplicationTypes"&gt;
+   &lt;entry name="provider:com.top_logic.knowledge.journal.FlexJournalManager$JournalTypes" value="enabled"/&gt;
+&lt;/section&gt;
+</code></pre>
+<h5>Verschlüsselung des File-Repositories</h5>
+<p>Damit die Dateien im File-Repository verschlüsselt werden, muss der <code class="hljs inlineCode">EncryptedDataSourceAdaptor</code> für den <code class="hljs inlineCode">DataAccessService</code> verwendet werden. Der <code class="hljs inlineCode">EncryptedDataSourceAdaptor</code> verwendet den <code class="hljs inlineCode">EncryptionService</code>. Daher muss eine zusätzliche Abhängigkeit in den <code class="hljs inlineCode">DataAccessService</code> eingetragen werden.</p>
+<pre><code>&lt;section name="DataAccessService"&gt;
+   &lt;entry name="dependency:com.top_logic.basic.encryption.EncryptionService$Module" value="enabled" /&gt;
+
+   &lt;entry name="repository" value="com.top_logic.dsa.impl.EncryptedDataSourceAdaptor" /&gt;
+   &lt;entry name="repository.xproperties" value="repository" /&gt;
+&lt;/section&gt;
+
+&lt;section name="repository"&gt;
+   &lt;entry name="wrapped" value="com.top_logic.dsa.repos.RepositoryDataSourceAdaptor" /&gt;
+&lt;/section&gt;
+</code></pre>
+<h5>Signaturdienst zum Schutz vor gefälschten Login-Daten</h5>
+<p>Nutzerpasswörter werden als Signatur (Einwegverschlüsselung) gespeichert. Normalerweise wird hierfür ein Schlüsselpaar verwendet, das im Anwendungsverzeichnis abgelegt wird. Um bei eingeschalteter Verschlüsselung zu verhindern, dass ein Datenbankadministrator einen Passwort-Hash selbst berechnen und in die Datenbank speichern kann, um sich danach mit dem gefälschten Login an der Anwendung anzumelden, werden die Nutzerpasswörter mit dem Verschlüsselungsschlüssel signiert (verschlüsselter Hash des Passworts gespeichert).</p>
+<pre><code>&lt;section name="SignatureService"&gt;
+   &lt;entry name="class" value="com.top_logic.knowledge.service.encryption.EncryptionSignatureService"/&gt;
+&lt;/section&gt;
+</code></pre>
+<p>Es steht ein Utility zur Verfügung, mit dem man unter Angabe des Anwendungspassworts einen signierten Nutzerpassworthash generieren kann. Hiermit ist es möglich ein vergessenes Administratorpasswort direkt über die Datenbank zurückzusetzen:</p>
+<pre><code>    java com.top_logic.base.security.util.CreatePasswordHash -w &lt;application-root-dir&gt;
+</code></pre>
+<h3>Administration</h3>
+<h4>Java-Installation mit Unlimited-Stength-Encryption</h4>
+<p>Damit sinnvolle Verschlüsselungspasswörter mit starken Verschlüsselungsalgorithmen vergeben werden können, muss die "Unlimited-Strength-Encryption" in der Java-Installation freigeschaltet werden. Hierzu müssen die Dateien</p>
+<pre><code>local_policy.jar
+US_export_policy.jar
+</code></pre>
+<p>in das entsprechende Verzeichnis der Java-Installation kopiert werden (bzw. die dort vorhandenen ersetzt werden):</p>
+<pre><code>jdk1.5.0_xx\jre\lib\security
+</code></pre>
+<p>Die notwendigen Dateien sind bei Oracle in folgendem Archiv erhältlich:</p>
+<pre><code>jce_policy-1_5_0.zip
+jce_policy-6.zip
+</code></pre>
+<p>Siehe auch: <code class="hljs inlineCode">\\tl\tl\Infrastructure\BaseInstall\Java\jce\</code>.</p>
+<h4>Anwendungsinstallation</h4>
+<p>Nach dem ersten Start einer Anwendung mit Datenverschlüsselung muss das initiale Anwendungspasswort vergeben werden. Damit nicht der erste Nutzer, der eine Verbindung zu einer neuinstallierten Anwendung aufbaut, das initale Anwendungspasswort vergeben kann, ist hierfür ein Produktschlüssel notwendig. Ein Produktschlüssel hat nichts mit dem Lizenzschlüssel zu tun (welcher der Administration bei der technischen Installation der Anwendung zur Verfügung stehen muss). Der Produktschlüssel ist eine Art Passwort, welches zur Vergabe (und Wechsel) des Anwendungspassworts berechtigt.</p>
+<p>Vergabe des Anwendungspassworts</p>
+<p>Nach dem ersten Start einer neuinstallierten Anwendung leitet diese auf eine Maske zur Eingabe des Anwendungspassworts weiter. In dieser Maske müssen die folgenden Daten eingegeben werden:</p>
+<ul>
+ <li>Produktschlüssel</li>
+ <li>Initiales Anwendungspasswort</li>
+ <li>Initialpasswörter für alle vorkonfigurierten Nutzer (root/admin)</li>
+</ul>
+<h5>Eingabe des Verschlüsselungspassworts</h5>
+<p>Nach jedem Neustart einer Anwendung mit Datenverschlüsselung muss das Verschlüsselungspasswort eingegeben werden. Hierfür leitet die Anwendung nach dem Start auf eine spezielle Maske weiter.</p>
+<h5>Änderung des Anwendungspassworts</h5>
+<p>Von der Maske für die Eingabe des Anwendungspassworts ist eine Seite erreichbar, mit der das Anwendungspasswort geändert werden kann. Hierfür sind die folgenden Eingaben erforderlich:</p>
+<ul>
+ <li>Produktschlüssel</li>
+ <li>Altes Anwendungspasswort</li>
+ <li>Neues Anwendungspasswort</li>
+</ul>

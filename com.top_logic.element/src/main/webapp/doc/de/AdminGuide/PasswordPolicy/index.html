@@ -1,0 +1,45 @@
+<p>Die Passwort-Regeln können in der Anwendungskonfiguration definiert werden. Standardmäßig werden die folgenen Einstellungen unterstützt:</p>
+<table cellpadding="1" cellspacing="1">
+ <tbody>
+  <tr>
+   <th><code class="hljs inlineCode">enabled</code></th>
+   <td>Ob Passwort-Prüfungen stattfinden sollen.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">expiry-period</code></th>
+   <td>Wie lange ein Passwort gültig bleibt, bevor ein neues gewählt werden muss.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">repeat-cycle</code></th>
+   <td>Nach wievielen Änderungen dasselbe Passwort wiederverwendet werden darf.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">min-password-length</code></th>
+   <td>Die minimale Länge des Passworts in Zeichen.</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">criteria-count</code></th>
+   <td>Die Anzahl von Kategorien von Zeichen (Großbuchstaben, Kleinbuchstaben, Sonderzeichen, Ziffern) aus denen sich das Passwort zusammensetzten muss (bis zu 4).</td>
+  </tr>
+  <tr>
+   <th><code class="hljs inlineCode">exclude-uids</code></th>
+   <td>Liste von User-IDs, für welche diese Regeln nicht gelten.</td>
+  </tr>
+ </tbody>
+</table>
+<p>Eine Konfiguration könnte folgendermaßen aussehen:</p>
+<pre><code>&lt;config service-class="com.top_logic.base.accesscontrol.Login"&gt;
+   &lt;instance&gt;
+      &lt;password-manager&gt;
+         &lt;password-validator&gt;
+            &lt;enabled&gt;true&lt;/enabled&gt;
+            &lt;expiry-period&gt;365&lt;/expiry-period&gt;
+            &lt;repeat-cycle&gt;3&lt;/repeat-cycle&gt;
+            &lt;min-password-length&gt;12&lt;/min-password-length&gt;
+            &lt;criteria-count&gt;2&lt;/criteria-count&gt;
+            &lt;exclude-uids&gt;&lt;/exclude-uids&gt;
+         &lt;/password-validator&gt;
+      &lt;/password-manager&gt;
+   &lt;/instance&gt;
+&lt;/config&gt;
+</code></pre>

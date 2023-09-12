@@ -1,0 +1,48 @@
+<h2>Syntax</h2>
+<pre>	<code>structType($key1, $key2, ..., $keyN)</code>
+</pre>
+<h2>Description</h2>
+<p>A dictionary type creates dictionaries with predefined keys. A dictionary type can be used to create multiple dictionaries with the same keys but different values (see <a class="tlObject" data-custom="true" href="?page=newStruct&amp;uuid=50d6882e-2264-4047-bdf8-1a428e3acc1f">Dictionary creation</a>).</p>
+<p>The following expressions are equivalent:</p>
+<pre><code>structType("one", "two", "three")
+ .newStruct(1, 2, 3)</code></pre>
+<pre><code>{
+  "one": 1,
+  "two": 2,
+  "three": 3
+}</code></pre>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>key</td>
+   <td>Number/string/boolean/business object/set</td>
+   <td>A key of the dictionary.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>type:</strong></span> Business object</p>
+<p>A dictionary type that can be further used for <a class="tlObject" data-custom="true" href="?page=newStruct&amp;uuid=50d6882e-2264-4047-bdf8-1a428e3acc1f">Dictionary creation</a>.</p>
+<h2>Examples</h2>
+<h3>Multilingual dictionary</h3>
+<pre>	<code>{
+  eng = structType("Hello", "Goodbye");
+  fr = $eng.newStruct("Bonjour", "Au revoir"); 
+  ger = $eng.newStruct("Hallo", "Tschüss");
+  $ger["Hello"];
+}</code>
+</pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> Hallo</p>
+<p>Generates dictionaries for the different translations.</p>

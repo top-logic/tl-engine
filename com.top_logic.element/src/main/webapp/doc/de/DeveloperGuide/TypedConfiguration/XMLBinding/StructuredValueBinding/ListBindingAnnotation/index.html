@@ -1,0 +1,20 @@
+<p>Z.B., eine String-Liste</p>
+<pre><code>public interface Config extends ConfigurationItem {
+  @ListBinding()
+  List&lt;String&gt; getMyListValues();
+}
+</code></pre>
+<p>lässt sich über XML-Tags konfigurieren als:</p>
+<pre><code>&lt;foo&gt;
+  &lt;my-list-values&gt;
+    &lt;my-list-value value="bli" /&gt;
+    &lt;my-list-value value="bla" /&gt;
+    &lt;my-list-value value="blub" /&gt;
+  &lt;/my-list-values&gt;
+&lt;/foo&gt;
+</code></pre>
+<ul>
+ <li>Die Tag- und Attribut-Namen können als optionale Parameter am <code class="hljs inlineCode">@ListBinding</code> spezifiziert werden.</li>
+ <li>Für andere Typen als Strings kann ein <code class="hljs inlineCode">ConfigurationValueProvider</code> als Parameter am <code class="hljs inlineCode">@ListBinding</code> angegeben werden.</li>
+</ul>
+<p>Der Default-Wert ist in beiden Fällen eine leere, modifizierbare und größenveränderbare Liste, nicht <code class="hljs inlineCode">null</code>.</p>

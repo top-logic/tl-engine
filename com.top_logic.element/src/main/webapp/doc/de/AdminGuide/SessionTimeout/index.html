@@ -1,0 +1,6 @@
+<p>Für eine Nutzersitzung gibt es eine maximale Zeitspanne, welche die Sitzung aktiv bleibt, ohne dass eine Nutzerinteraktion stattgefunden hat. Der Sitzungsablauf wird normalerweise vom Anwendungscontainer gesteuert, kann aber in der <code class="hljs inlineCode">web.xml</code> der Anwendung überschrieben werden. Hierfür muss in der Datei <code class="hljs inlineCode">/webapp/WEB-INF/web.xml</code> im Modul der eigenen Anwendung der folgende Bereich aktiviert werden:</p>
+<pre><code class="language-xml">&lt;session-config&gt;
+   &lt;session-timeout&gt;20&lt;/session-timeout&gt;
+&lt;/session-config&gt;
+</code></pre>
+<p>Das Element <code class="hljs inlineCode">session-timeout</code> definiert das Standard-Timeout-Intervall für alle Sitzungen, die in dieser Webanwendung erstellt werden. Der angegebene Timeout muss als ganze Zahl von Minuten ausgedrückt werden. Wenn der Timeout <code class="hljs inlineCode">0</code> oder weniger ist, stellt der Container sicher, dass Sitzungen nie ablaufen. Wenn dieses Element nicht angegeben wird, legt der Container eine Standard-Timeout-Periode fest.</p>

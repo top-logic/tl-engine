@@ -1,0 +1,12 @@
+<p>User-Interface-Elemente arbeiten nach dem MVC – <a href="https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller" target="_blank">Model View Controller</a> – Prinzip. Das ist ein Programmierkonzept, mit dem Elemente auf der Benutzeroberfläche (GUI) manipuliert werden.</p>
+<ul>
+ <li>Modell: Beschreibt das Element und die Programmierlogik auf der Server-Seite. Die Hauptaufgabe besteht darin, die Informationen zu verwalten.</li>
+ <li>View: Beschreibt das Element auf der Client-Seite. Die View stellt den aktuellen Zustand des Modells auf der Benutzeroberfläche dar.</li>
+ <li>Controller: Ist das Bindeglieg, welches entscheidet wie etwas dargestellt wird. Es kann die Informationen, das Modell, verändern. Der Controller lädt die View und könnte das Element nach belieben auch umgestalten.</li>
+</ul>
+<p>Das Kontroll holt sich die Informationen, falls welche übergeben wurden, aktualisiert das Modell und zeichnet das Objekt wieder neu für die View auf der GUI. Als Beispiel werden wir ein String Feld in einen Button umwandeln. Der Button wird zuerst dunkel sein und das Wort auf dem Button wird <em>"Text"</em> in weisser Farbe sein. Wenn auf den Knopf gedrückt wird, wird der weisse <em>"Text"</em> in roter Farbe angezeigt und der Button erhält ein helleres Design.</p>
+<p><img src="ref:darkbutton_27496.png" style="opacity:1"><img src="ref:lightbutton_93630.png" style="opacity:1"></p>
+<p>Das Feld muss in einer Java Datei erstellt werden, die mit einer jsp Datei verbunden ist. Der Code für die Initialisierung des String Felds lautet:</p>
+<p><code class="hljs inlineCode">StringField buttonString = FormFactory.newStringField("buttonDyer");</code>.</p>
+<p></p>
+<p>In Top-Logic haben wir für dieses Konzept die Kontroll Klasse, welches im <a class="tlObject" data-custom="false" href="?page=arbeitenMitControlclass&amp;uuid=ddce9249-4b38-4a43-afdf-bbddff9bba0c">Arbeiten mit der Klasse Control</a> thematisiert wird.</p>

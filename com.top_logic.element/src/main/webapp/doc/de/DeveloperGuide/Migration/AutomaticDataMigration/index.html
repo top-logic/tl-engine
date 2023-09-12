@@ -93,7 +93,7 @@
   <pre><code>&lt;sql file-name-prefix="webinf://kbase/migration/scripts/migration4711" /&gt;
 </code></pre> wird z.B. im Ordner "WEB-INF/kbase/migration/scripts" das auszuführende SQL-Skript erwartet. Ist die Ziel-Datenbank z.B. "Oracle" so wird die Datei "migration4711.oracle.sql" ausgeführt, auf einer "MySQL" die Datei "migration4711.mysql.sql" und auf einer "MSSQL"-Datenbank "migration4711.mssql.sql".</li>
  <li>
-  <p>Für unversionierte Modelländerungen (z.B. Anlegen eines Fachobjektes oder einer Eigenschaft eines Fachobjektes, so als ob sie schon immer existieren würde), gibt es eine Menge vorgefertigter Prozessoren die unter <a class="tlObject" data-custom="true" href="?page=unversionedModelMigration&amp;uuid=6c92e89e-a445-4d9b-af6b-9dac960c86bc">Unversionierte Modellanpassung</a> beschrieben sind. Der Vorteil an diesen Prozessoren ist, dass der Entwickler sie Datenbank-unabhängig einsetzen kann.</p></li>
+  <p>Für unversionierte Modelländerungen (z.B. Anlegen eines Fachobjektes oder einer Eigenschaft eines Fachobjektes, so als ob sie schon immer existieren würde), gibt es eine Menge vorgefertigter Prozessoren die unter <a class="tlObject" data-custom="false" href="?page=unversionedModelMigration&amp;uuid=6c92e89e-a445-4d9b-af6b-9dac960c86bc">Unversionierte Modellanpassung</a> beschrieben sind. Der Vorteil an diesen Prozessoren ist, dass der Entwickler sie Datenbank-unabhängig einsetzen kann.</p></li>
 </ul>
 <h2>Replay</h2>
 <p>Ist der Unter-Abschnitt <code class="hljs inlineCode">migration</code> gefüllt, wird ein Replay der Anwendungshistorie durchgeführt. Hierbei werden aus der Persistenz-Schicht die Änderungen in Change-Set's extrahiert, umgeschrieben und wieder eingespielt.</p>

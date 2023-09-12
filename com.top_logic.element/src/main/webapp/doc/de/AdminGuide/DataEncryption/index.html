@@ -17,7 +17,7 @@
 <p>Damit Attribute verschlüsselt werden können, müssen diese im sog. Flex-Storage gespeichert werden. Sie dürfen also nicht als normale Knowledge-Objekt-Attribute definiert sein. U.U. muss das Anwendungsmodell so geändert werden, dass alle sicherheitsrelevanten Daten im Flex-Storage gespeichert werden. Hierfür kann es notwendig sein, die Meta-Schemata der Anwendung so anzupassen.</p>
 <h4>Anwendungskonfiguration</h4>
 <p>Das Feature "Verschlüsselung" lässt sich aktivieren, indem das Konfigurationsbundle <code class="hljs inlineCode">top-logic.encrypted.xml</code> in die <code class="hljs inlineCode">metaConf.txt</code> der Anwendung eingebunden wird:</p>
-<pre><code>../../../../../com.top_logic/webapps/top-logic/WEB-INF/conf/top-logic.encrypted.xml
+<pre><code>top-logic.encrypted.xml
 </code></pre>
 <p>Dieses Konfigurationsbundle besteht aus den im folgenden beschriebenen Teilen.</p>
 <h5>Verzögerter Anwendungsstart</h5>
@@ -116,11 +116,7 @@ jce_policy-6.zip
 <p>Siehe auch: <code class="hljs inlineCode">\\tl\tl\Infrastructure\BaseInstall\Java\jce\</code>.</p>
 <h4>Anwendungsinstallation</h4>
 <p>Nach dem ersten Start einer Anwendung mit Datenverschlüsselung muss das initiale Anwendungspasswort vergeben werden. Damit nicht der erste Nutzer, der eine Verbindung zu einer neuinstallierten Anwendung aufbaut, das initale Anwendungspasswort vergeben kann, ist hierfür ein Produktschlüssel notwendig. Ein Produktschlüssel hat nichts mit dem Lizenzschlüssel zu tun (welcher der Administration bei der technischen Installation der Anwendung zur Verfügung stehen muss). Der Produktschlüssel ist eine Art Passwort, welches zur Vergabe (und Wechsel) des Anwendungspassworts berechtigt.</p>
-<h5>Erzeugung eines Produktschlüssel</h5>
-<p>Zusammen mit einer Anwendung mit eingeschalteter Datenverschlüsselung ist ein (geheimer) Produktschlüssel zu liefern. Dieser wird von der Klasse <code class="hljs inlineCode">com.top_logic.internal.license.ApplicationKeyGenerator</code> generiert. Ein gültiger Produktschlüssel für die Top-Logic-Demo-Anwendung ist beispielsweise:</p>
-<pre><code>BUTHJ-GUJLK-E5M9X-H69YL-XA5JQ-S
-</code></pre>
-<h5>Vergabe des Anwendungspassworts</h5>
+<p>Vergabe des Anwendungspassworts</p>
 <p>Nach dem ersten Start einer neuinstallierten Anwendung leitet diese auf eine Maske zur Eingabe des Anwendungspassworts weiter. In dieser Maske müssen die folgenden Daten eingegeben werden:</p>
 <ul>
  <li>Produktschlüssel</li>

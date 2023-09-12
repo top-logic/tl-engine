@@ -1,4 +1,4 @@
-<p>Reicht die &nbsp;<a class="tlObject" data-custom="false" href="?page=GenericDataBaseMapping&amp;uuid=9f541afb-032d-4522-82a4-db6e4adb3c90">Generische Speicherung</a> nicht aus, lassen sich Modellelemente flexibel auf applikationsdefinierte Tabellen in Datenbank abbilden, vgl. <a class="tlObject" data-custom="false" href="?page=DatabaseDefinition&amp;uuid=f4596594-a751-4804-a110-40729c46d415">Schema-Deklaration</a>.</p>
+<p>Reicht die &nbsp;<a class="tlObject" data-custom="false" href="?page=GenericDataBaseMapping&amp;uuid=9f541afb-032d-4522-82a4-db6e4adb3c90">Generische Speicherung</a> nicht aus, lassen sich Modellelemente flexibel auf applikationsdefinierte Tabellen in Datenbank abbilden, vgl. <a class="tlObject" data-custom="true" href="?page=DatabaseDefinition&amp;uuid=f4596594-a751-4804-a110-40729c46d415">Schema-Deklaration</a>.</p>
 <h2>Klassen</h2>
 <p>Konkrete Klassen (<code class="hljs inlineCode">TLClass</code>) können über die Annotation <code class="hljs inlineCode">&lt;table name="..."/&gt;</code> auf Datenbanktabellen abgebildet werden:</p>
 <pre><code>&lt;class name="MyClass"&gt;
@@ -43,7 +43,7 @@
 &lt;/class&gt;
 </code></pre>
 <h2>Referenzen über Fremdschlüssel</h2>
-<p>"Zu-eins" Referenzen kann man auch "inline" als Fremdschlüssel in die Tabelle desjenigen Typs ablegen, der die Referenz enthält. In diesem Fall muss die Tabelle des Typs eine entsprechende Fremdschlüsselspalte definieren, vgl. <a class="tlObject" data-custom="false" href="?page=DatabaseDefinition&amp;uuid=f4596594-a751-4804-a110-40729c46d415">Schema-Deklaration</a>. Die Referenz muss den <code class="hljs inlineCode">foreign-key-storage</code> verwenden und darin angeben, in welche Fremdschlüsselspalte gespeichert werden soll. In diesem Fall gibt es keinen Defaultwert für den Spaltennamen, sondern dieser muss immer explizit angegeben werden. Aus technischen Gründen muss auch der Name der Tabelle, in der der Typ selbst gespeichert wird, in dem Fremdschlüsselattribut nochmals wiederholt werden:</p>
+<p>"Zu-eins" Referenzen kann man auch "inline" als Fremdschlüssel in die Tabelle desjenigen Typs ablegen, der die Referenz enthält. In diesem Fall muss die Tabelle des Typs eine entsprechende Fremdschlüsselspalte definieren, vgl. <a class="tlObject" data-custom="true" href="?page=DatabaseDefinition&amp;uuid=f4596594-a751-4804-a110-40729c46d415">Schema-Deklaration</a>. Die Referenz muss den <code class="hljs inlineCode">foreign-key-storage</code> verwenden und darin angeben, in welche Fremdschlüsselspalte gespeichert werden soll. In diesem Fall gibt es keinen Defaultwert für den Spaltennamen, sondern dieser muss immer explizit angegeben werden. Aus technischen Gründen muss auch der Name der Tabelle, in der der Typ selbst gespeichert wird, in dem Fremdschlüsselattribut nochmals wiederholt werden:</p>
 <pre><code>&lt;class name="A"&gt;
    &lt;annotations&gt;
       &lt;table name="ATable"/&gt;
@@ -65,4 +65,4 @@
 </code></pre>
 <p>Obige Deklaration gibt an, dass Instanzen von <code class="hljs inlineCode">A</code> in der Tabelle <code class="hljs inlineCode">ATable</code> gespeichert werden sollen. Die "zu-eins" Referenz <code class="hljs inlineCode">bs</code> soll in der Fremdschlüsselspalte <code class="hljs inlineCode">bsKey</code> gespeichert werden.</p>
 <p>Gibt man bei Referenzen keinen <code class="hljs inlineCode">storage-algorithm</code> an, wählt die Engine aufgrund der Referenzauszeichnung (<code class="hljs inlineCode">multiple</code>, <code class="hljs inlineCode">ordered</code>) eine passende Implementierung mit einer generischen Tabelle für die Speicherung.</p>
-<p>Für die Definition von Datenbanktabellen und Fremdschlüsselspalten siehe <a class="tlObject" data-custom="false" href="?page=DatabaseDefinition&amp;uuid=f4596594-a751-4804-a110-40729c46d415">Schema-Deklaration</a>.</p>
+<p>Für die Definition von Datenbanktabellen und Fremdschlüsselspalten siehe <a class="tlObject" data-custom="true" href="?page=DatabaseDefinition&amp;uuid=f4596594-a751-4804-a110-40729c46d415">Schema-Deklaration</a>.</p>

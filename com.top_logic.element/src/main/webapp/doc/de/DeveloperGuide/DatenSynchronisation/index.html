@@ -86,7 +86,7 @@
   &lt;/modules&gt;
 &lt;/model&gt;</code></pre>
 <h2>Nachrichten über 1 MB</h2>
-<p>In der Standardkonfiguration überträgt Kafka nur Nachrichten bis 1 MB Größe. Dieses Limit kann zum Beispiel bei Gallery-Attributen oder anderen Datei-Uploads schnell erreicht werden. Sobald in der Standardkonfiguration eine Nachricht größer 1 MB übertragen werden soll, bricht die TL-Sync-Übertragung dauerhaft zusammen. Es gibt zwei Wege, dies zu vermeiden</p>
+<p>In der Standardkonfiguration überträgt Kafka nur Nachrichten bis 1 MB Größe. Dieses Limit kann zum Beispiel bei Gallery-Attributen oder anderen Datei-Uploads schnell erreicht werden. Sobald in der Standardkonfiguration eine Nachricht größer 1 MB übertragen werden soll, stoppt die TL-Sync-Übertragung dauerhaft, bis das Problem behoben wurde. Es gibt zwei Wege, dies zu vermeiden:</p>
 <h3>Anpassung der Kafka-Konfiguration</h3>
 <p>Um größere Nachrichten zu übertragen, müssen folgende Konfigurationen geändert werden:</p>
 <ul>
@@ -102,16 +102,11 @@
   </ul></li>
  <li>Nachrichten größer als 32 MB: 
   <ul>
-   <li>Basis-Änderung notwendig: <code class="hljs inlineCode">TLKafkaProducer.getProperties(Config&lt;K, V&gt;)</code></li>
-   <li>Es muss folgende Zeile hinzugefügt werden: <code class="hljs inlineCode">props.put("buffer.memory", 200 * 1024 * 1024);</code>
-    <ul>
-     <li>Die 200 MB sind nur ein Beispiel.</li>
-    </ul></li>
+   <li>Nicht ohne weiteres möglich.</li>
    <li>Fehlermeldung, falls diese Grenze überschritten wird: 
     <ul>
      <li>The message is 80895596 bytes when serialized which is larger than the total memory buffer you have configured with the buffer.memory configuration.</li>
     </ul></li>
-   <li>Darauf hat der Kunde keinen Einfluss, das müssen wir erledigen.</li>
   </ul></li>
  <li>Eventuell müssen weitere Einstellungen vorgenommen werden. Das muss vorher entsprechend getestet werden. Mögliche weitere Einstellungen, die eventuell geändert werden müssen: 
   <ul>

@@ -135,7 +135,7 @@ public class LayoutExportContext {
 		MainLayout mainLayout = MainLayout.getDefaultMainLayout();
 
 		for (String layoutKey : _templatesByLayoutKey.keySet()) {
-			if (isExistingComponent(layoutKey)) {
+			if (FileManager.getInstance().exists(LayoutConstants.LAYOUT_BASE_RESOURCE + "/" + layoutKey)) {
 				LayoutComponent component = mainLayout.getComponentForLayoutKey(layoutKey);
 
 				if (component != null) {
@@ -143,12 +143,6 @@ public class LayoutExportContext {
 				}
 			}
 		}
-	}
-
-	private boolean isExistingComponent(String key) {
-		String path = LayoutConstants.LAYOUT_BASE_RESOURCE + "/" + key;
-
-		return FileManager.getInstance().getIDEFileOrNull(path) != null;
 	}
 
 	private Map<String, TLLayout> getLayouts(Person person) {

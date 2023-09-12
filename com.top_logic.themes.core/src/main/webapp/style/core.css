@@ -626,6 +626,25 @@ a.cMenuButton.menuEntryDisabled:focus {
 	box-shadow: none;
 }
 
+/* ============================================= */
+/* ====== Styles for AJAX command handling ===== */
+/* ============================================= */
+
+#waitPane {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+}
+
+#waitPane {
+	visibility: hidden;
+}
+
+#waitPane.waiting {
+	visibility: visible;
+}
 
 /* Dialog Window Styles */
 #dlgDialogs {
@@ -660,7 +679,6 @@ div.dlgWindow {
 	flex-direction: column;
 	position: absolute;
 	background-color: var(--background);
-	filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.32));
 	box-shadow: var(--shadow-menu);
 }
 

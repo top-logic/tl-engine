@@ -34,6 +34,7 @@ import com.top_logic.layout.layoutRenderer.DialogRenderer;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolbarControl;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
+import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;

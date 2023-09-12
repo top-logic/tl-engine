@@ -31,6 +31,7 @@ import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLResKeyUtil;
 
 /**
  * Utilities for the meta model.
@@ -118,7 +119,7 @@ public class TLMetaModelUtil {
 				}
 			}
 		} else {
-			if (labelKey != null && Resources.getInstance().existsResource(labelKey.getKey())) {
+			if (labelKey != null && TLResKeyUtil.existsResource(labelKey)) {
 				return Resources.getInstance().getString(labelKey);
 			}
 

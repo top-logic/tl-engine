@@ -4,9 +4,23 @@
 mvn --help >/dev/null 2>&1
 [[ $(echo $?) != "0" ]] && echo "Maven is missing. Pls install with 'apt install maven'." && exit 0;
 docker --help >/dev/null 2>&1
-[[ $(echo $?) != "0" ]] && echo "Docker is missing. Pls install with 'apt install docker.io'." && exit 0;
+DOCKER=$(echo $?)
+podman --help >/dev/null 2>&1
+PODMAN=$(echo $?)
+
+if [[ "$DOCKER" == "0" ]]; then
+RUN="sudo docker"	
+elif [[ "$PODMAN" == "0" ]]; then
+RUN="podman"
+else
+echo "Docker and Podman are missing. Pls install one of these container engines.
+Use 'apt install docker.io'
+Or 'apt install podman'";
+exit 0;
+fi
 
 error_param(){
+echo "The used container engine is '$RUN'"
 echo -e "Usage:\tcreateDocker.sh [OPTIONS...]
 Run parameter:
   -h \t\t\tThis help.
@@ -171,21 +185,21 @@ fi
 
 echo
 echo "=== Log-in to docker registry ==="
-$DRY_RUN sudo docker login docker.top-logic.com -u guest -p guest
+$DRY_RUN $RUN login docker.top-logic.com -u guest -p guest
 
 echo
 echo "=== Pulling base image ==="
-$DRY_RUN sudo docker pull docker.top-logic.com/tomcat9-java11:latest
+$DRY_RUN $RUN pull docker.top-logic.com/tomcat9-java11:latest
 
 echo
 echo "=== Building docker image ==="
-$DRY_RUN sudo docker build -t "$APPNAME" "$BUILD_PATH/"
+$DRY_RUN $RUN build -t "$APPNAME" "$BUILD_PATH/"
 
 if [[ "DOCKER_PUSH" == "true" ]]; then
 	echo
 	echo "=== Push to docker registry ==="
-	$DRY_RUN sudo docker image tag "$APPNAME" "$DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_TAG"
-	$DRY_RUN sudo docker image push "$DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_TAG"
+	$DRY_RUN $RUN image tag "$APPNAME" "$DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_TAG"
+	$DRY_RUN $RUN image push "$DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_TAG"
 
 	if [[ "$CREATE_ONLY" != "true" && "$START_LOCAL" != "true" ]]; then
 		echo "Stopping. The rest of the output is only a hint for possible commands"
@@ -195,7 +209,7 @@ fi
 
 echo
 echo "=== Removing old docker container ==="
-$DRY_RUN sudo docker rm -f "$APPNAME" || echo "Nothing to delete"
+$DRY_RUN $RUN rm -f "$APPNAME" || echo "Nothing to delete"
 
 echo
 echo "=== Starting docker container ==="
@@ -221,16 +235,16 @@ $DRY_RUN sleep 5
 mkdir -p "${FILES}"
 
 # Start docker container
-$DRY_RUN sudo docker run \
+$DRY_RUN $RUN run \
   -tdi -p $HTTP_PORT:8080 \
   -v "$FILES":"/var/lib/tomcat9/work/${APPNAME}" \
   --restart=unless-stopped \
   --name="$APPNAME" \
-  --hostname="$APPNAME" "$APPNAME" && $DRY_RUN sudo docker logs -f "$APPNAME"
+  --hostname="$APPNAME" "$APPNAME" && $DRY_RUN $RUN logs -f "$APPNAME"
 
 # When the control flow reaches this point, the user has pressed Ctrl-C, stop the contaner.
 
 echo
 echo "=== Stopping docker container ==="
-$DRY_RUN sudo docker stop "$APPNAME"
+$DRY_RUN $RUN stop "$APPNAME"
 

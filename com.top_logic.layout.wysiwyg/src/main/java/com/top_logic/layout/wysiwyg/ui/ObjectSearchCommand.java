@@ -7,7 +7,6 @@ package com.top_logic.layout.wysiwyg.ui;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +22,7 @@ import com.top_logic.knowledge.searching.DefaultFullTextBuffer;
 import com.top_logic.knowledge.searching.FullTextSearchable;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.list.model.ListModelUtilities;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -166,7 +166,7 @@ public class ObjectSearchCommand extends AbstractSearchCommand {
 	 */
 	@Override
 	protected void sortResult(List<Object> searchResult) {
-		Collections.sort(searchResult, Comparator.comparing(x -> MetaLabelProvider.INSTANCE.getLabel(x)));
+		Collections.sort(searchResult, LabelComparator.newInstance(MetaLabelProvider.INSTANCE));
 	}
 
 }

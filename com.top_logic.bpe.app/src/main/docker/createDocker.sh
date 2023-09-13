@@ -9,7 +9,7 @@ podman --help >/dev/null 2>&1
 PODMAN=$(echo $?)
 
 if [[ "$DOCKER" == "0" ]]; then
-RUN="sudo docker"	
+RUN="sudo docker"
 elif [[ "$PODMAN" == "0" ]]; then
 RUN="podman"
 else
@@ -20,7 +20,6 @@ exit 0;
 fi
 
 error_param(){
-echo "The used container engine is '$(${RUN[*]#sudo} --version)'"
 echo -e "Usage:\tcreateDocker.sh [OPTIONS...]
 Run parameter:
   -h \t\t\tThis help.
@@ -189,7 +188,7 @@ $DRY_RUN $RUN login docker.top-logic.com -u guest -p guest
 
 echo
 echo "=== Pulling base image ==="
-$DRY_RUN $RUN pull docker.top-logic.com/tomcat9-java11:latest
+$DRY_RUN $RUN pull docker.top-logic.com/tomcat9-java11:latest || true
 
 echo
 echo "=== Building docker image ==="

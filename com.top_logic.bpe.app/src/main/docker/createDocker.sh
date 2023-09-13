@@ -7,87 +7,71 @@ docker --help >/dev/null 2>&1
 [[ $(echo $?) != "0" ]] && echo "Docker is missing. Pls install with 'apt install docker.io'." && exit 0;
 
 error_param(){
-echo -e "Usage:\tcreateDocker.sh [OPTION]...
-Parameter:
-\t-n [app name]
-\t-x [context name]\tDefault: [app name], use "ROOT" to deploy to the root context ("/").
-\t-d [DatabaseType]\tOptions: h2 (default), mysql, postgre, mssql, oracle
-\t-c \t\t\tDry-run: Only create docker configuration and exit.
-
-File storage:
-\t-f [path]\t\t Path to data folder. Default: volume "[app name]"
-
-Optional additional database parameter:
-\t-l [JDBC URL]\t\tURL format dependent on the choosen database. Please refer to the specific documentations. Overrides hostname, port and scheme.
-\t-h [ip|hostname]\tDefault: [IP of this machine] - H2 default:/var/lib/tomcat9/work/
-\t-o [port]\t\tDefault: DB dependent default port
-\t-s [DB scheme]\t\tDefault: [AppContextName] - In case of Oracle this is the prefixed (/)SERVICE or (:)SID name. Example: :SIDNAME or /SERVICENAME.
-\t-u [DB username]\tDefault: user
-\t-p [DB password]\tDefault: passwd
-
-Start local parameter:
-\t-w [HTTP PORT]\t\tDefault: 8080 - The http port where the app should be accessible
-\t-r\n";
+echo -e "Usage:\tcreateDocker.sh [OPTIONS...]
+Run parameter:
+  -h \t\t\tThis help.
+  -d \t\t\tDry-run. Create docker config and exit. Default off
+  -s \t\t\tStart the App locally.\t\t\t Default on
+  -f [PathToFile]\tThe Path to the parameter file to load. Default: ./BuildParameters
+  -t [Tag]\t\tTag for the docker image.\t\tDefault: latest
+  -p \t\t\tPush image to the configured Docker registry";
 exit 0;
 }
 
-DATABASE="config_h2"
+PARAMETER_FILE=""
 
-while getopts n:x:f:d:l:h:o:s:u:p:w:rc opt
+while getopts hdsf:t: opt
 do
    case $opt in
-       n) CONTEXT="$OPTARG";;
-       x) ROOT="$OPTARG";;
-       f) FILES="$OPTARG";;
-       d) case $OPTARG in
-              h2) DATABASE="config_h2";;
-              mysql) DATABASE="config_mysql";;
-              mssql) DATABASE="config_mssql";;
-              postgre) DATABASE="config_postgre";;
-              oracle) DATABASE="config_oracle";;
-              *) error_param;;
-          esac;;
-	   l) DB_URL="$OPTARG";;
-       h) DB_HOST="$OPTARG";;
-	   o) DB_PORT="$OPTARG";;
-       s) DB_SCHEME="$OPTARG";;
-       u) DB_USER="$OPTARG";;
-       p) DB_PASSWD="$OPTARG";;
-	   w) HTTP_PORT="$OPTARG";;
-       r) START_LOCAL="true";;
-       c) START_LOCAL="true" ; CREATE_ONLY="true" ;;
+   	   h) error_param;;
+       d) CREATE_ONLY="true";;
+       s) START_LOCAL="true";;
+	   f) PARAMETER_FILE="$OPTARG";;
+	   t) DOCKER_TAG="$OPTARG";;
+	   p) DOCKER_PUSH="true";;
        *) error_param;;
    esac
 done
 
-if [ "$CONTEXT" == "" ] ; then
-  echo "ERROR: Missing app context."
-  error_param
-  exit 1
+[ -z "$PARAMETER_FILE" ] && PARAMETER_FILE="./BuildParameters"
+# Load build parameter file
+if [ -f "$PARAMETER_FILE"  ] ; then
+	. $PARAMETER_FILE
 fi
 
-if [ "$ROOT" == "" ] ; then
-  ROOT="$CONTEXT"
-fi
+# Set defaults for empty parameters
+[ -z "$APPNAME" ]		&& APPNAME="toplogic"
+[ -z "$CONTEXT" ]		&& CONTEXT="ROOT"
+[ -z "$HTTP_PORT" ]		&& HTTP_PORT="8080"
+[ -z "$FILES" ]			&& FILES="$APPNAME"
+[ -z "$START_LOCAL" ]	&& START_LOCAL="true"
+[ -z "$CREATE_ONLY" ]	&& CREATE_ONLY="false"
+[ -z "$DATABASE" ]		&& DATABASE="h2"
+[ -z "$JAVA_XMS" ]		&& JAVA_XMS="256"
+[ -z "$JAVA_XMX" ]		&& JAVA_XMX="1024"
+[ -z "$CPUS" ]			&& CPUS="1.0"
+[ -z "$DOCKER_REGISTRY" ] && DOCKER_REGISTRY="hub.docker.com"
+[ -z "$DOCKER_IMAGE_NAME" ]	&& DOCKER_IMAGE_NAME="$APPNAME"
+[ -z "$DOCKER_TAG" ]	&& DOCKER_TAG="latest"
+[ -z "$DOCKER_PUSH" ]	&& DOCKER_PUSH="false"
+DOCKER_MEMORY=$(( JAVA_XMX*2/10 > 200 ? JAVA_XMX+200 : JAVA_XMX*12/10 ))
 
-if [ "$FILES" == "" ] ; then
-  FILES="$CONTEXT"
-fi
 
-config_h2(){
+# Database setup functions
+h2(){
   echo "Configuring H2 database"
-  [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
+  [ -z "$DB_SCHEME" ] && DB_SCHEME=$APPNAME
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
-  [ -z "$DB_URL" ] && DB_URL="\/var\/lib\/tomcat9\/work\/$CONTEXT\/h2" || DB_URL="$(sed 's/\//\\\//g' <<<$DB_URL)"
+  [ -z "$DB_URL" ] && DB_URL="\/var\/lib\/tomcat9\/work\/$APPNAME\/h2" || DB_URL="$(sed 's/\//\\\//g' <<<$DB_URL)"
   sed -i -e "s/{dbLibrary}/RUN apt install libh2-java/g" $BUILD_PATH/Dockerfile
   sed -i -e 's/{dbDriver}/org.h2.Driver/g' $BUILD_PATH/context.xml
   sed -i -e "s/{dbURL}/jdbc:h2:$DB_URL/g" $BUILD_PATH/context.xml
 }
 
-config_mysql(){
+mysql(){
   echo "Configuring MySQL database"
-  [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
+  [ -z "$DB_SCHEME" ] && DB_SCHEME=$APPNAME
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
@@ -99,9 +83,9 @@ config_mysql(){
 
 }
 
-config_mssql(){
+mssql(){
   echo "Configuring MSSQL database"
-  [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
+  [ -z "$DB_SCHEME" ] && DB_SCHEME=$APPNAME
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
@@ -120,9 +104,9 @@ config_mssql(){
   sed -i -e "s/{dbURL}/jdbc:sqlserver:\/\/$DB_URL/g" $BUILD_PATH/context.xml
 }
 
-config_postgre(){
+postgre(){
   echo "Configuring PostgreSQL database"
-  [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
+  [ -z "$DB_SCHEME" ] && DB_SCHEME=$APPNAME
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
@@ -133,9 +117,9 @@ config_postgre(){
   sed -i -e "s/{dbURL}/jdbc:postgresql:\/\/$DB_URL/g" $BUILD_PATH/context.xml
 }
 
-config_oracle(){
+oracle(){
   echo "Configuring Oracle database"
-  [ -z "$DB_SCHEME" ] && DB_SCHEME=$CONTEXT
+  [ -z "$DB_SCHEME" ] && DB_SCHEME=$APPNAME
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
@@ -149,6 +133,8 @@ config_oracle(){
   sed -i -e "s/{dbURL}/jdbc:oracle:thin:@$DB_URL/g" $BUILD_PATH/context.xml
 }
 
+
+# Build & deploy
 LOCAL_IP="$(hostname -I | awk '{print $1}')"
 SRC_PATH=$(dirname $(readlink -f "$0"))
 ROOT_PATH=$(realpath -s "$SRC_PATH/../../..")
@@ -161,7 +147,7 @@ mkdir -p "$BUILD_PATH"
 echo
 echo "=== Building application WAR ==="
 ( cd "$ROOT_PATH" ; mvn package -Dtl.deb.skip=true )
-cp -f "$TARGET_PATH"/*app.war "$BUILD_PATH/$ROOT.war"
+cp -f "$TARGET_PATH"/*app.war "$BUILD_PATH/$CONTEXT.war"
 cp -f "$ROOT_PATH/src/main/deb/data/tomcat/context.xml" "$BUILD_PATH/"
 
 echo
@@ -174,7 +160,7 @@ echo "=== Configuring database ==="
 $DATABASE
 sed -i -e "s/{dbUser}/$DB_USER/g" "$BUILD_PATH/context.xml"
 sed -i -e "s/{dbPasswd}/$DB_PASSWD/g" "$BUILD_PATH/context.xml"
-sed -i -e "s/{contextName}/$ROOT/g" "$BUILD_PATH/context.xml"
+sed -i -e "s/{contextName}/$CONTEXT/g" "$BUILD_PATH/context.xml"
 sed -i -e "s/{timeZone}/$(sed 's/\//\\\//g' <<<$(cat /etc/timezone))/g" "$BUILD_PATH/Dockerfile"
 
 DRY_RUN=""
@@ -193,24 +179,23 @@ $DRY_RUN sudo docker pull docker.top-logic.com/tomcat9-java11:latest
 
 echo
 echo "=== Building docker image ==="
-$DRY_RUN sudo docker build -t "$CONTEXT" "$BUILD_PATH/"
+$DRY_RUN sudo docker build -t "$APPNAME" "$BUILD_PATH/"
 
-TAG="latest"
-REGISTRY="hub.docker.com"
+if [[ "DOCKER_PUSH" == "true" ]]; then
+	echo
+	echo "=== Push to docker registry ==="
+	$DRY_RUN sudo docker image tag "$APPNAME" "$DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_TAG"
+	$DRY_RUN sudo docker image push "$DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$DOCKER_TAG"
 
-echo
-echo "=== Push to docker registry ==="
-echo sudo docker image tag "$CONTEXT" "$REGISTRY/$CONTEXT:$TAG"
-echo sudo docker image push "$REGISTRY/$CONTEXT:$TAG"
-
-if [[ "$CREATE_ONLY" != "true" && "$START_LOCAL" != "true" ]]; then
-    echo "Stopping. The rest of the output is only a hint for possible commands"
-    DRY_RUN="echo "
+	if [[ "$CREATE_ONLY" != "true" && "$START_LOCAL" != "true" ]]; then
+		echo "Stopping. The rest of the output is only a hint for possible commands"
+		DRY_RUN="echo "
+	fi
 fi
 
 echo
 echo "=== Removing old docker container ==="
-$DRY_RUN sudo docker rm -f "$CONTEXT" || echo "Nothing to delete"
+$DRY_RUN sudo docker rm -f "$APPNAME" || echo "Nothing to delete"
 
 echo
 echo "=== Starting docker container ==="
@@ -219,10 +204,10 @@ $DRY_RUN sleep 5
 
 # Open browser to log-in to started app.
 (
-  if [[ "$ROOT" == "ROOT" ]]; then
+  if [[ "$CONTEXT" == "ROOT" ]]; then
 	  contextPath="/"
   else
-	  contextPath="/$ROOT"
+	  contextPath="/$CONTEXT"
   fi
 
   echo
@@ -238,14 +223,14 @@ mkdir -p "${FILES}"
 # Start docker container
 $DRY_RUN sudo docker run \
   -tdi -p $HTTP_PORT:8080 \
-  -v "$FILES":"/var/lib/tomcat9/work/${CONTEXT}" \
+  -v "$FILES":"/var/lib/tomcat9/work/${APPNAME}" \
   --restart=unless-stopped \
-  --name="$CONTEXT" \
-  --hostname="$CONTEXT" "$CONTEXT" && $DRY_RUN sudo docker logs -f "$CONTEXT"
+  --name="$APPNAME" \
+  --hostname="$APPNAME" "$APPNAME" && $DRY_RUN sudo docker logs -f "$APPNAME"
 
 # When the control flow reaches this point, the user has pressed Ctrl-C, stop the contaner.
 
 echo
 echo "=== Stopping docker container ==="
-$DRY_RUN sudo docker stop "$CONTEXT"
+$DRY_RUN sudo docker stop "$APPNAME"
 

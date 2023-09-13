@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Used as container name and default for db scheme and data folder. Default: toplogic
+APPNAME=""
+# HTTP context name Default: "ROOT" - the root context ("/")
+CONTEXT=""
+# Default: 8080 - The http port where the app should be accessible
+HTTP_PORT=""
+# Path to data folder. Use a simple string to use a Docker volume. Default: Volume '[APPNAME]'
+FILES=""
+# Start the App locally. Default: "true"
+START_LOCAL=""
+# Dry run. Only create docker configuration and exit. Default: "false"
+CREATE_ONLY=""
+
+## DB Parameters will be set to default if not set
+# DB Options are: h2, mysql, mssql, postgre, oracle
+DATABASE=""
+# JDBC URL format dependent on the choosen database. Please refer to the specific documentations. Overrides hostname, port and scheme.
+DB_URL=""
+# [ip|hostname] Default: [IP of this machine] - H2 default:/var/lib/tomcat9/work/
+DB_HOST=""
+# Default: DB dependent default port
+DB_PORT=""
+# Default: [APPNAME] - In case of Oracle this is the prefixed (/)SERVICE or (:)SID name. Example: :SIDNAME or /SERVICENAME.
+DB_SCHEME=""
+# Default: user
+DB_USER=""
+# Default: passwd
+DB_PASSWD=""
+
+## Environment parameters
+# Minimum Java heap space to allocate for the application in mega bytes. Default: 256
+JAVA_XMS=""
+# Maximum Java heap space to allocate for the application. Default: 1024
+# The container itself will take +20% of memory until a maximum overhead of 200MB
+JAVA_XMX=""
+# Specify how much of the available CPU resources (cores) a container can use. For instance, if the host machine has two CPUs and you set CPUS="1.5", the container is guaranteed at most one and a half CPU cores.
+# Default 1.0
+CPUS=""
+
+## Docker repository parameters
+# Host name of the docker repository. Default: hub.docker.com
+DOCKER_REGISRTY=""
+# name of the docker images. Default: [APPNAME]
+DOCKER_IMAGE_NAME=""
+# Tag for the docker image to push to the repository. Default: latest
+DOCKER_TAG=""
+# Enable the push to the configured Docker registry. Default: false
+DOCKER_PUSH=""
+
+

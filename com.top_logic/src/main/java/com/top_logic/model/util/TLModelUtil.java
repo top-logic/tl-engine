@@ -3005,4 +3005,44 @@ public class TLModelUtil {
 		};
 	}
 
+	/**
+	 * Returns true if the given {@link TLClass} has a generalization in the same module as itself,
+	 * otherwise false.
+	 * 
+	 * @param clazz
+	 *        A generalization of this class in the same module is searched.
+	 */
+	public static boolean hasGeneralizationsInSameModule(TLClass clazz) {
+		TLModule module = clazz.getModule();
+
+		for (TLClass superType : clazz.getGeneralizations()) {
+			if (superType.getModule() == module) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Returns the local name of the given (full qualified) technical name.
+	 * 
+	 * <p>
+	 * It handles <code>.</code> as name part separator.
+	 * </p>
+	 * 
+	 * <p>
+	 * Example: The name <code>my.foo.bar</code> results in the local name <code>bar</code>.
+	 * </p>
+	 */
+	public static String getLocalName(String name) {
+		int lastIndexOf = name.lastIndexOf(".");
+
+		if (lastIndexOf != -1 && lastIndexOf != name.length() - 1) {
+			return name.substring(lastIndexOf + 1);
+		} else {
+			return name;
+		}
+	}
+
 }

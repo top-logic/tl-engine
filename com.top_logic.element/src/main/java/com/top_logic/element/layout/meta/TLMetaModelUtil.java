@@ -31,6 +31,7 @@ import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLResKeyUtil;
 
 /**
  * Utilities for the meta model.
@@ -49,21 +50,27 @@ public class TLMetaModelUtil {
 	 */
 	public static void saveI18NForPart(TLNamedPart part, Internationalized i18n, ResourceTransaction tx) {
 		boolean autoTranslate = PersonalConfiguration.getPersonalConfiguration().getAutoTranslate();
-		storeInternationalized(i18n, getResKey(part), part.getName(), tx, CodeUtil::englishLabel, autoTranslate);
+
+		if (part instanceof TLModule) {
+			storeInternationalized(i18n, getResKey(part), part.getName(), tx, name -> {
+				return CodeUtil.englishLabel(TLModelUtil.getLocalName(name));
+			}, autoTranslate);
+		} else {
+			storeInternationalized(i18n, getResKey(part), part.getName(), tx, CodeUtil::englishLabel, autoTranslate);
+		}
 	}
 
 	/**
-	 * Like {@link #saveI18NForPart(TLNamedPart, Internationalized, ResourceTransaction)} but uses
-	 * the technical name directly as label, if no translation is given.
+	 * Stores the I18N for the given {@link ResKey}.
 	 */
-	public static void saveI18NForPartNoLabelHeuristic(TLNamedPart part, Internationalized i18n,
-			ResourceTransaction tx) {
-		storeInternationalized(i18n, getResKey(part), part.getName(), tx, name -> name, false);
+	public static void saveI18N(Internationalized i18n, ResKey key, String name, ResourceTransaction tx) {
+		boolean autoTranslate = PersonalConfiguration.getPersonalConfiguration().getAutoTranslate();
+
+		storeInternationalized(i18n, key, name, tx, CodeUtil::englishLabel, autoTranslate);
 	}
 
 	private static void storeInternationalized(Internationalized i18n, ResKey key, String technicalName,
 			ResourceTransaction tx, Function<String, String> labelHeuristic, boolean autoTranslate) {
-
 		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
 			Resources bundle = Resources.getInstance(locale);
 
@@ -95,12 +102,14 @@ public class TLMetaModelUtil {
 		if (autoTranslate) {
 			Translator service = TranslationService.getInstance();
 			if (service.isSupported(locale)) {
-				for (Locale other : ResourcesModule.getInstance().getSupportedLocales()) {
-					if (service.isSupported(other)) {
-						String otherLabel =
-							StringServices.nonEmpty(Resources.getInstance(other).getString(labelKey, null));
-						if (otherLabel != null) {
-							return service.translate(otherLabel, other, locale);
+				if (labelKey != null && labelKey instanceof LiteralKey) {
+					for (Locale other : ResourcesModule.getInstance().getSupportedLocales()) {
+						if (service.isSupported(other)) {
+							if (((LiteralKey) labelKey).getTranslations().containsKey(other)) {
+								String originLabel = Resources.getInstance(other).getString(labelKey);
+
+								return service.translate(originLabel, other, locale);
+							}
 						}
 					}
 				}
@@ -109,10 +118,14 @@ public class TLMetaModelUtil {
 					return service.translate(labelHeuristic.apply(technicalName), Locale.ENGLISH, locale);
 				}
 			}
-		}
+		} else {
+			if (labelKey != null && TLResKeyUtil.existsResource(labelKey)) {
+				return Resources.getInstance().getString(labelKey);
+			}
 
-		if (technicalName != null) {
-			return labelHeuristic.apply(technicalName);
+			if (technicalName != null) {
+				return labelHeuristic.apply(technicalName);
+			}
 		}
 
 		return null;

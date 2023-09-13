@@ -3,6 +3,7 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="DemoTypes">
 		<annotations>
+			<display-group value="demo"/>
 			<package-binding
 				implementation-package="com.top_logic.demo.model.types.wrap"
 				interface-package="com.top_logic.demo.model.types"

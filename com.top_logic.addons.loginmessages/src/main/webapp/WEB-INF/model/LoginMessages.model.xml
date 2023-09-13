@@ -4,6 +4,7 @@
 	<modules>
 		<module name="LoginMessages">
 			<annotations>
+				<display-group value="tl"/>
 				<package-binding
 					implementation-package="com.top_logic.addons.loginmessages.model"
 					interface-package="com.top_logic.addons.loginmessages.model.intf"

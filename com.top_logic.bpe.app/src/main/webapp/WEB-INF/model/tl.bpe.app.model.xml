@@ -2,6 +2,9 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.bpe.app">
+		<annotations>
+			<display-group value="bpe"/>
+		</annotations>
 		<interface name="Entity">
 			<generalizations>
 				<generalization type="tl.element:Attributed"/>

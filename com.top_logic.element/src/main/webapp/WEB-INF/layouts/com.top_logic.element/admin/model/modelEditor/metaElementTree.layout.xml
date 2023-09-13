@@ -21,7 +21,7 @@
 		id-column=""
 	>
 		<rowObjectResourceProvider class="com.top_logic.layout.tree.model.TLTreeNodeResourceProvider">
-			<impl class="com.top_logic.model.resources.TLPartScopedResourceProvider"/>
+			<impl class="com.top_logic.element.layout.meta.MetaElementTreeResourceProvider"/>
 		</rowObjectResourceProvider>
 		<exporter
 			downloadNameKey="layouts.element.meta.metaElementTree.exportName"
@@ -37,13 +37,14 @@
 					valueOrder="com.top_logic.util.TLCollator"
 				>
 					<mapping class="com.top_logic.layout.LabelMapping">
-						<labels class="com.top_logic.model.resources.TLPartScopedResourceProvider"/>
+						<labels class="com.top_logic.element.layout.meta.MetaElementTreeResourceProvider"/>
 					</mapping>
 				</comparator>
 				<cellRenderer class="com.top_logic.layout.tree.renderer.TreeCellRenderer"/>
 				<resourceProvider class="com.top_logic.mig.html.NoLinkResourceProvider"
-					inner="com.top_logic.model.resources.TLPartScopedResourceProvider"
+					inner="com.top_logic.element.layout.meta.MetaElementTreeResourceProvider"
 				/>
+				<cellExistenceTester class="com.top_logic.layout.table.filter.AllCellsExist"/>
 			</column>
 			<column name="id"
 				columnWidth="200px"
@@ -51,7 +52,7 @@
 			>
 				<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
 					method="getName"
-					type="com.top_logic.model.TLNamedPart"
+					type="com.top_logic.basic.Named"
 				/>
 			</column>
 			<column name="abstract"
@@ -155,6 +156,7 @@
 		<button id="configExport"
 			class="com.top_logic.element.model.export.ui.ModelExportCommand"
 			clique="exportButtons"
+			executability="com.top_logic.tool.execution.IsModelPart"
 			image="theme:ICONS_BUTTON_XML_EXPORT"
 		/>
 		<button id="importModel"

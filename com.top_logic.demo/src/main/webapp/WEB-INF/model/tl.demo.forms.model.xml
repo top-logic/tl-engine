@@ -2,6 +2,9 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.demo.forms">
+		<annotations>
+ 			<display-group value="demo"/>
+		</annotations>
 		<class name="DuplicateObjectInput">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>

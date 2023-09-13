@@ -83,7 +83,7 @@
 					/>
 				</context-model>
 				<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-					label-path="DemoTypes > Demo All > Demo A"
+					label-path="Demo > DemoTypes > Demo All > Demo A"
 				/>
 			</model-name>
 		</action>
@@ -522,7 +522,7 @@
 					/>
 				</context-model>
 				<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-					label-path="DemoTypes > Demo All > Demo A"
+					label-path="Demo > DemoTypes > Demo All > Demo A"
 				/>
 			</model-name>
 		</action>

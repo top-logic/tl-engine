@@ -46,7 +46,7 @@
 								>
 									<selection>
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-											path="DemoPlain > DefaultFor_TestType1"
+											path="Demo > DemoPlain > DefaultFor_TestType1"
 										/>
 										<selection-state boolean="true"/>
 									</selection>
@@ -151,7 +151,7 @@
 								>
 									<selection>
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-											path="DemoPlain > DefaultFor_TestType2"
+											path="Demo > DemoPlain > DefaultFor_TestType2"
 										/>
 										<selection-state boolean="true"/>
 									</selection>
@@ -1238,7 +1238,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-									path="DemoPlain > DefaultFor_TestType2"
+									path="Demo > DemoPlain > DefaultFor_TestType2"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -1305,7 +1305,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-									path="DemoPlain > DefaultFor_TestType1"
+									path="Demo > DemoPlain > DefaultFor_TestType1"
 								/>
 								<selection-state boolean="true"/>
 							</selection>

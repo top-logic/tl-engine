@@ -20,6 +20,12 @@
 								<parameter name="name"
 									value="test.foreignObjects"
 								/>
+								<parameter name="de"
+									value="test.foreignObjects"
+								/>
+								<parameter name="en"
+									value="test.foreignObjects"
+								/>
 							</parameters>
 						</action>
 						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
@@ -130,7 +136,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-									path="test.foreignObjects > A"
+									path="Test > test.foreignObjects > A"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -309,7 +315,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-									path="test.foreignObjects > B"
+									path="Test > test.foreignObjects > B"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -819,7 +825,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.foreignObjects"
+							path="Test > test.foreignObjects"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -835,7 +841,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.foreignObjects > A"
+							path="Test > test.foreignObjects > A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -915,7 +921,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.foreignObjects > B"
+							path="Test > test.foreignObjects > B"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

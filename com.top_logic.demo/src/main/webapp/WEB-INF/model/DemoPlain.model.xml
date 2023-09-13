@@ -4,6 +4,7 @@
 	<modules>
 		<module name="DemoPlain">
 			<annotations>
+				<display-group value="demo"/>
 				<package-binding
 					implementation-package="com.top_logic.demo.model.plain.wrap"
 					interface-package="com.top_logic.demo.model.plain"

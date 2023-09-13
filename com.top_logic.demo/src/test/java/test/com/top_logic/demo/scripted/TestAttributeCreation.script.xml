@@ -60,7 +60,7 @@
 								>
 									<selection>
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-											label-path="DemoTypes"
+											label-path="Demo"
 										/>
 										<selection-state boolean="true"/>
 									</selection>
@@ -77,7 +77,7 @@
 								>
 									<selection>
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-											label-path="DemoTypes > Demo All"
+											label-path="Demo > DemoTypes"
 										/>
 										<selection-state boolean="true"/>
 									</selection>
@@ -94,7 +94,7 @@
 								>
 									<selection>
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-											label-path="DemoTypes > Demo All > Demo Supertyp von B und C"
+											label-path="Demo > DemoTypes > Demo All"
 										/>
 										<selection-state boolean="true"/>
 									</selection>
@@ -111,7 +111,7 @@
 								>
 									<selection>
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-											label-path="DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All"
+											label-path="Demo > DemoTypes > Demo All > Demo Supertyp von B und C"
 										/>
 										<selection-state boolean="true"/>
 									</selection>
@@ -128,7 +128,24 @@
 								>
 									<selection>
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-											label-path="DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All > Demo C (TestAttributeCreation)"
+											label-path="Demo > DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All"
+										/>
+										<selection-state boolean="true"/>
+									</selection>
+									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+											tab-path="Administration > Development > Modell Editor"
+										/>
+									</selection-model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+									change-kind="ABSOLUTE"
+									user-id="root"
+								>
+									<selection>
+										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+											label-path="Demo > DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All > Demo C (TestAttributeCreation)"
 										/>
 										<selection-state boolean="true"/>
 									</selection>
@@ -2019,7 +2036,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-									label-path="DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All > Demo C (TestAttributeCreation)"
+									label-path="Demo > DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All > Demo C (TestAttributeCreation)"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -2540,7 +2557,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-									label-path="DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All > Demo C (TestAttributeCreation)"
+									label-path="Demo > DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All > Demo C (TestAttributeCreation)"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -2800,7 +2817,7 @@
 									/>
 								</context-model>
 								<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-									label-path="DemoTypes > Demo All > Demo A"
+									label-path="Demo > DemoTypes > Demo All > Demo A"
 								/>
 							</model-name>
 						</action>
@@ -2810,7 +2827,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-									label-path="DemoTypes > Demo All"
+									label-path="Demo > DemoTypes > Demo All"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -3269,7 +3286,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes"
+							label-path="Demo"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -3286,7 +3303,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All"
+							label-path="Demo > DemoTypes"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -3303,7 +3320,24 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All > Demo A"
+							label-path="Demo > DemoTypes > Demo All"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							tab-path="Administration > Development > Modell Editor"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Demo > DemoTypes > Demo All > Demo A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -3757,7 +3791,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="DemoTypes > Demo All > Mein Typ"
+							path="Demo > DemoTypes > Demo All > Mein Typ"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

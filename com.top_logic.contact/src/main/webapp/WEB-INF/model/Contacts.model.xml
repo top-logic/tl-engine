@@ -3,6 +3,9 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<modules>
 		<module name="Contacts">
+			<annotations>
+				<display-group value="tl.contact"/>
+			</annotations>
 			<types>
 				<interface name="Contact.all">
 					<annotations>

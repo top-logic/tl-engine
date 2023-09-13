@@ -134,7 +134,7 @@
 							/>
 						</context-model>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes"
+							label-path="Demo"
 						/>
 					</model-name>
 				</action>
@@ -152,7 +152,7 @@
 							/>
 						</context-model>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All"
+							label-path="Demo > DemoTypes"
 						/>
 					</model-name>
 				</action>
@@ -170,7 +170,25 @@
 							/>
 						</context-model>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All > Demo A"
+							label-path="Demo > DemoTypes > Demo All"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+								tab-path="Administration > Development > Modell Editor"
+							/>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Demo > DemoTypes > Demo All > Demo A"
 						/>
 					</model-name>
 				</action>
@@ -180,7 +198,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All > Demo A > Demo A"
+							label-path="Demo > DemoTypes > Demo All > Demo A > Demo A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

@@ -16,6 +16,12 @@
 						<parameter name="name"
 							value="test.globalDialog"
 						/>
+						<parameter name="de"
+							value="test.globalDialog"
+						/>
+						<parameter name="en"
+							value="test.globalDialog"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
@@ -508,7 +514,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="test.globalDialog"
+							path="Test > test.globalDialog"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

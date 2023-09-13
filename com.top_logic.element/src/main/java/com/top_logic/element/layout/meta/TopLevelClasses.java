@@ -9,6 +9,7 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLType;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * {@link Filter} that accepts {@link TLClass}es not being derived from other types in their own
@@ -32,7 +33,7 @@ public class TopLevelClasses implements Filter<TLType> {
 		if (type.getModelKind() != ModelKind.CLASS) {
 			return false;
 		}
-		if (MetaElementTreeModelBuilder.hasGeneralizationsInSameModule((TLClass) type)) {
+		if (TLModelUtil.hasGeneralizationsInSameModule((TLClass) type)) {
 			return false;
 		}
 		return true;

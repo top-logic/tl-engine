@@ -26,13 +26,30 @@
 						tab-path="Administration > Development"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+							/>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Demo"
+						/>
+					</model-name>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
 					user-id="root"
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoPlain"
+							label-path="Demo > DemoPlain"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -49,7 +66,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoPlain > Flaches All"
+							label-path="Demo > DemoPlain > Flaches All"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -66,7 +83,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoPlain > Flaches All > Flaches A"
+							label-path="Demo > DemoPlain > Flaches All > Flaches A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -198,8 +215,40 @@
 					user-id="root"
 				>
 					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Demo"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Demo > DemoTypes"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes"
+							label-path="Demo > DemoTypes > Demo All"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -216,7 +265,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All"
+							label-path="Demo > DemoTypes > Demo All > Demo Supertyp von B und C"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -233,7 +282,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All > Demo Supertyp von B und C"
+							label-path="Demo > DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -250,24 +299,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All"
-						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
-							tab-path="Administration > Development > Modell Editor"
-						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All > Demo C (TestTypeWithoutTableAnnotation)"
+							label-path="Demo > DemoTypes > Demo All > Demo Supertyp von B und C > Demo C.All > Demo C (TestTypeWithoutTableAnnotation)"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -614,8 +646,24 @@
 					user-id="root"
 				>
 					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Demo"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoPlain"
+							label-path="Demo > DemoPlain"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -632,7 +680,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoPlain > Flaches All"
+							label-path="Demo > DemoPlain > Flaches All"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -649,7 +697,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoPlain > Flaches All > Flaches A"
+							label-path="Demo > DemoPlain > Flaches All > Flaches A"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -666,7 +714,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-							label-path="DemoPlain > Flaches All > Flaches A > FlatNone"
+							label-path="Demo > DemoPlain > Flaches All > Flaches A > FlatNone"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

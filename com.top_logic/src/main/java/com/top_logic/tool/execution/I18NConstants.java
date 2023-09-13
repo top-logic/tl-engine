@@ -66,6 +66,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey ERROR_EDIT_MULTI_SELECTION;
 
+	public static ResKey1 ERROR_IS_NOT_MODEL_PART;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

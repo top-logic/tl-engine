@@ -58,7 +58,7 @@ public class TLModuleCreateHandler extends AbstractCreateCommandHandler {
 		resolver.complete();
 
 		try (ResourceTransaction tx = ResourcesModule.getInstance().startResourceTransaction()) {
-			TLMetaModelUtil.saveI18NForPartNoLabelHeuristic(module, editModel, tx);
+			TLMetaModelUtil.saveI18NForPart(module, editModel, tx);
 
 			tx.commit();
 		}

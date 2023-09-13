@@ -4,6 +4,7 @@
 	<modules>
 		<module name="SecurityStructure">
 			<annotations>
+				<display-group value="tl"/>
 				<singletons>
 					<singleton type="Root"/>
 				</singletons>

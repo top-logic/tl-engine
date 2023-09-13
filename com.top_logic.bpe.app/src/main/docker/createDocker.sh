@@ -20,7 +20,7 @@ exit 0;
 fi
 
 error_param(){
-echo "The used container engine is '$RUN'"
+echo "The used container engine is '$(${RUN[*]#sudo} --version)'"
 echo -e "Usage:\tcreateDocker.sh [OPTIONS...]
 Run parameter:
   -h \t\t\tThis help.

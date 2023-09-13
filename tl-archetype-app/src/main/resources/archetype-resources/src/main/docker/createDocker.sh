@@ -154,7 +154,7 @@ ROOT_PATH=$(realpath -s "$SRC_PATH/../../..")
 TARGET_PATH="$ROOT_PATH/target"
 BUILD_PATH="$TARGET_PATH/docker"
 
-rm "$BUILD_PATH"/*.war
+rm "$BUILD_PATH"/*.war 2> /dev/null
 mkdir -p "$BUILD_PATH"
 
 echo
@@ -188,7 +188,7 @@ $DRY_RUN $RUN login docker.top-logic.com -u guest -p guest
 
 echo
 echo "=== Pulling base image ==="
-$DRY_RUN $RUN pull docker.top-logic.com/tomcat9-java11:latest
+$DRY_RUN $RUN pull docker.top-logic.com/tomcat9-java11:latest 2> /dev/null
 
 echo
 echo "=== Building docker image ==="

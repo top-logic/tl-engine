@@ -233,6 +233,13 @@ $DRY_RUN sleep 5
 
 mkdir -p "${FILES}"
 
+function finish {
+	echo
+	echo "=== Stopping docker container ==="
+	$DRY_RUN $RUN stop "$APPNAME"
+}
+trap finish EXIT 2
+
 # Start docker container
 $DRY_RUN $RUN run \
   -tdi -p $HTTP_PORT:8080 \
@@ -245,6 +252,3 @@ $DRY_RUN $RUN run \
 
 # When the control flow reaches this point, the user has pressed Ctrl-C, stop the contaner.
 
-echo
-echo "=== Stopping docker container ==="
-$DRY_RUN $RUN stop "$APPNAME"

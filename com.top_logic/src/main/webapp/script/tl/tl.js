@@ -106,6 +106,13 @@ BAL.addEventListener(document, "mouseover", function(evt) {
 		let tooltipTarget = TL.getTooltipTargetIfRelated(evt.target);
 		if (tooltipTarget) {
 			TL.preventCloseTooltip(tooltipTarget);
+		} else {
+			let outerDocument = document.body.firstElementChild,
+				oldTooltip = outerDocument.querySelector(":scope > .tooltip"),
+				activeTarget = outerDocument.querySelector(".activeTooltip");
+			if (oldTooltip && !activeTarget) {
+				oldTooltip.remove();
+			}
 		}
 		
 		if (tooltip) {

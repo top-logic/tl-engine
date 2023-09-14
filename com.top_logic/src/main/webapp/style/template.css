@@ -4596,7 +4596,7 @@ td.tl-table__cell .cDataItem li {
 	background-color: #464646;
 	border-radius: 1em;
 	position: fixed;
-	box-shadow: 0 1px 8px rgba(0,0,0,0.5);
+	filter: drop-shadow(0 1px 4px rgba(0,0,0,0.8));
 	z-index: 9999999999999999;
 	--ttPadding: 8px;
 	font-weight: normal;
@@ -7873,7 +7873,7 @@ div.dirtyHandlingDialog .changes {
 	background-color: #464646;
 	border-radius: 1em;
 	position: fixed;
-	box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+	filter: drop-shadow(0 1px 4px rgba(0,0,0,0.8));
 	display: none;
 	z-index: 9999999999999999;
 }

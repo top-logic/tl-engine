@@ -1,8 +1,8 @@
 <Context>
 	<Resource name="jdbc/toplogic"
 		type="javax.sql.DataSource"
-		url="jdbc:mysql://localhost:3306/{dbSchema}"
-		driverClassName="org.mariadb.jdbc.Driver" 
+		url="{dbURL}"
+		driverClassName="{dbDriver}" 
 		username="{dbUser}"
 		password="{dbPasswd}"
 		auth="Container" 

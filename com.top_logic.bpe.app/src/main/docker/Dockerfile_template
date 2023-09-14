@@ -1,0 +1,13 @@
+FROM docker.top-logic.com/tomcat9-java11:latest
+MAINTAINER support@top-logic.com
+USER root
+RUN apt update
+{dbLibrary}
+RUN echo {timeZone} > /etc/timezone
+RUN ln -sf /usr/share/zoneinfo/{timeZone} /etc/localtime
+COPY --chown=root ./*.war $CATALINA_HOME/webapps/
+COPY --chown=root ./context.xml $CATALINA_HOME/conf/
+RUN ln -s /usr/share/java/*.jar $CATALINA_HOME/lib/
+ENV JPDA_OPTS='-XX:+UnlockExperimentalVMOptions -XX:+UseContainerSupport -Xms{JAVA_XMS}m -Xmx{JAVA_XMX}m'
+EXPOSE 8080/tcp
+CMD $CATALINA_HOME/bin/catalina.sh jpda run

@@ -5,7 +5,7 @@
  */
 package com.top_logic.doc.export;
 
-import static com.top_logic.basic.shared.string.StringServicesShared.*;
+import static com.top_logic.basic.StringServices.*;
 
 import java.io.File;
 import java.io.IOException;

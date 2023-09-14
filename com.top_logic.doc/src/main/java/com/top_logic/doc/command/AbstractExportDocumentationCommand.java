@@ -5,7 +5,7 @@
  */
 package com.top_logic.doc.command;
 
-import static com.top_logic.basic.shared.string.StringServicesShared.*;
+import static com.top_logic.basic.StringServices.*;
 import static com.top_logic.doc.export.TLDocExportImportConstants.*;
 
 import java.io.IOError;

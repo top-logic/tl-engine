@@ -29,7 +29,7 @@ Read about the latest features and browse the TopLogic JavaDoc [here](https://de
 
 ## Getting in touch
 
-The TopLogic team offers a Discord server ([join](https://discord.gg/XsNq9JXTe9)) with several channels where you can 
+The TopLogic team offers a Discord server ([join](https://discord.gg/QqW7bAD2zt)) with several channels where you can 
 join and watch the development of TopLogic. Having questions about TopLogic, the installation, configuration, and usage, 
 this is the right place to visit. 
 
@@ -37,7 +37,7 @@ this is the right place to visit.
 
 Your contributions to TopLogic open-source project are welcome. You may contribute bug reports, feature requests, 
 fixes, enhancements to existing functionality, new components and models. Having issues or suggestions, it is best to 
-first discuss them at the [TopLogic Discord Server](https://discord.gg/XsNq9JXTe9). 
+first discuss them at the [TopLogic Discord Server](https://discord.gg/QqW7bAD2zt). 
 
 If you are willing to contribute models, code, or configurations, we require that you sign a 
 [Contributor License Agreement](https://github.com/top-logic/.github/blob/main/CLA.md) that makes sure that you are the 

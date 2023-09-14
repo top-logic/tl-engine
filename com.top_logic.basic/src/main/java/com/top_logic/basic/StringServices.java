@@ -2662,7 +2662,15 @@ public abstract class StringServices extends StringServicesShared {
 		
 		return theRes;
 	}
-	
+
+	/** Null safe {@link String#strip()}. */
+	public static String stripNullsafe(String nullable) {
+		if (nullable == null) {
+			return null;
+		}
+		return nullable.strip();
+	}
+
     /**
      * Return a String with given numSpaces number of spaces.
      * 

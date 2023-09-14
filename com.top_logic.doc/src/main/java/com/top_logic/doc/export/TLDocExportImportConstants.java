@@ -73,8 +73,9 @@ public interface TLDocExportImportConstants {
 	/**
 	 * The characters that must not be used in a file name.
 	 * <p>
-	 * Contains not just those characters forbidden by Windows, but the "." too. That is necessary
-	 * to prevent directory traversal.
+	 * Contains not just those characters forbidden by Windows, but the dot too. That is necessary
+	 * to prevent directory traversal. Additionally, the dot is not allowed as the last character of
+	 * a file name in Windows.
 	 * </p>
 	 */
 	Pattern INVALID_FILE_NAME_CHARACTERS = Pattern.compile("[.\\/:*?\"<>|]");

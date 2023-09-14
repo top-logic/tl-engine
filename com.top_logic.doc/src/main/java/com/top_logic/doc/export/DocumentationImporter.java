@@ -5,6 +5,8 @@
  */
 package com.top_logic.doc.export;
 
+import static com.top_logic.basic.StringServices.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -422,22 +424,27 @@ public class DocumentationImporter {
 	 */
 	protected Page createPage(Page parent, Locale locale, String id, String title, String uuid, String contents,
 			Map<String, BinaryData> images, int position, String source) {
+		String idStripped = id.strip(); // The id is not allowed to be null.
+		String titleStripped = stripNullsafe(title);
+		String uuidStripped = stripNullsafe(uuid);
+		String contentsStripped = stripNullsafe(contents);
+		String sourceStripped = stripNullsafe(source);
 		KnowledgeBase kb = parent.tKnowledgeBase();
-		KnowledgeItem existingPage = findExistingPage(kb, uuid, id);
+		KnowledgeItem existingPage = findExistingPage(kb, uuidStripped, idStripped);
 		Page page;
 		if (existingPage == null) {
-			page = (Page) parent.createChild(id, Page.PAGE_TYPE);
-			if (uuid != null) {
-				page.setUuid(uuid);
+			page = (Page) parent.createChild(idStripped, Page.PAGE_TYPE);
+			if (uuidStripped != null) {
+				page.setUuid(uuidStripped);
 			}
 		} else {
 			page = existingPage.getWrapper();
-			page.setName(id);
+			page.setName(idStripped);
 		}
 		page.setPosition(position);
-		page.setImportSource(source);
-		TLResKeyUtil.updateTranslation(page, Page.TITLE_ATTR, locale, title);
-		I18NStructuredTextUtil.updateStructuredText(page, Page.CONTENT_ATTR, locale, contents, images);
+		page.setImportSource(sourceStripped);
+		TLResKeyUtil.updateTranslation(page, Page.TITLE_ATTR, locale, titleStripped);
+		I18NStructuredTextUtil.updateStructuredText(page, Page.CONTENT_ATTR, locale, contentsStripped, images);
 		return page;
 	}
 

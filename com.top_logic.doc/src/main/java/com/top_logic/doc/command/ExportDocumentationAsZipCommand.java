@@ -80,7 +80,7 @@ public class ExportDocumentationAsZipCommand extends AbstractExportDocumentation
 			appendPageName(result, parent);
 			result.append("-");
 		}
-		result.append(page.getName());
+		result.append(toFileName(page.getName()));
 	}
 
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.doc.command;
 
+import static com.top_logic.basic.shared.string.StringServicesShared.*;
 import static com.top_logic.doc.export.TLDocExportImportConstants.*;
 
 import java.io.IOError;
@@ -251,10 +252,10 @@ public abstract class AbstractExportDocumentationCommand extends AbstractImportE
 
 		Properties properties = new Properties();
 
-		setPropValue(properties, PROPERTIES_UUID, page.getUuid());
-		setPropValue(properties, PROPERTIES_TITLE, resources.getString(page.getTitle()));
+		setPropValue(properties, PROPERTIES_UUID, stripNullsafe(page.getUuid()));
+		setPropValue(properties, PROPERTIES_TITLE, stripNullsafe(resources.getString(page.getTitle())));
 		setPropValue(properties, PROPERTIES_POSITION, Integer.toString(position));
-		setPropValue(properties, PROPERTIES_SOURCE_BUNDLE, page.getImportSource());
+		setPropValue(properties, PROPERTIES_SOURCE_BUNDLE, stripNullsafe(page.getImportSource()));
 
 		try {
 			try (OutputStream out = Files.newOutputStream(path.resolve(PROPERTIES_FILE_NAME))) {
@@ -289,7 +290,7 @@ public abstract class AbstractExportDocumentationCommand extends AbstractImportE
 			// No source known. export to default path.
 			return path;
 		}
-		Path resolvedSource = arg._ws.resolve(importSource);
+		Path resolvedSource = arg._ws.resolve(importSource.strip());
 		if (!Files.exists(resolvedSource)) {
 			// source bundle does not exist.
 			if (arg._exportUnknownSource) {

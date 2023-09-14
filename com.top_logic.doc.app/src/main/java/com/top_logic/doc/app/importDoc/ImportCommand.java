@@ -336,9 +336,9 @@ public class ImportCommand {
 			if (split.equals("")) {
 				return null;
 			}
-			return ResKey.text(split);
+			return ResKey.text(split.strip());
 		} else {
-			return ResKey.text(name);
+			return ResKey.text(name.strip());
 		}
 	}
 
@@ -401,7 +401,7 @@ public class ImportCommand {
 	 * @return Newly created {@link Page}.
 	 */
 	private Page createPageInTransaction(Page parent, String name, ResKey title, String contents, Map<String, BinaryData> images) {
-		Page newPage = (Page) parent.createChild(name, Page.PAGE_TYPE);
+		Page newPage = (Page) parent.createChild(name.strip(), Page.PAGE_TYPE);
 		Map<Locale, StructuredText> content =
 			Collections.singletonMap(getLanguage(), new StructuredText(contents, images));
 		I18NStructuredText structuredText = new I18NStructuredText(content);

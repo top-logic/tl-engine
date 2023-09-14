@@ -142,16 +142,16 @@ public class CreatePageCommand implements Command {
 		}
 		Page newPage;
 		if(isChild()) {
-			newPage = (Page) selected.createChild(helpId, Page.PAGE_TYPE);
+			newPage = (Page) selected.createChild(helpId.strip(), Page.PAGE_TYPE);
 		} else {
 			Page parent = selected.getParent();
-			newPage = (Page) parent.createChild(helpId, Page.PAGE_TYPE);
+			newPage = (Page) parent.createChild(helpId.strip(), Page.PAGE_TYPE);
 			Page nextSibling = getNextSiblingOfPage(selected);
 			if (nextSibling != newPage) {
 				parent.move(newPage, nextSibling);
 			}
 		}
-		newPage.setTitle(ResKey.text(title));
+		newPage.setTitle(ResKey.text(title.strip()));
 		newPage.setImportSource(selected.getImportSource());
 		return newPage;
 	}

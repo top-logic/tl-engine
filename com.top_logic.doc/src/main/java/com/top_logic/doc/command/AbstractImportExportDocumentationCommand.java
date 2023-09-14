@@ -60,15 +60,16 @@ public abstract class AbstractImportExportDocumentationCommand extends AbstractC
 	 *        ID of the {@link Page}.
 	 * @return Valid file name.
 	 */
-	private String toFileName(String id) {
+	protected String toFileName(String id) {
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("The help id must not be empty.");
 		}
-		int idSize = Math.min(id.length(), FILE_NAME_LIMIT + 1);
-		String limitedId = id.substring(0, idSize);
+		String strippedId = id.strip();
+		int idSize = Math.min(strippedId.length(), FILE_NAME_LIMIT);
+		String limitedId = strippedId.substring(0, idSize);
 		return INVALID_FILE_NAME_CHARACTERS.matcher(limitedId).replaceAll("_");
 	}
-	
+
 	/**
 	 * Resolve the given {@link String} to a {@link Path}, using the {@link FileManager}.
 	 */

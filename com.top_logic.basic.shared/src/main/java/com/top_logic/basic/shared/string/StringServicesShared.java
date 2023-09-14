@@ -56,6 +56,14 @@ public class StringServicesShared {
 		return input == null ? "" : input;
 	}
 
+	/** Null safe {@link String#strip()}. */
+	public static String stripNullsafe(String nullable) {
+		if (nullable == null) {
+			return null;
+		}
+		return nullable.strip();
+	}
+
 	/**
 	 * Creates a debug representation of the object.
 	 * <p>

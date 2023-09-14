@@ -248,8 +248,9 @@ public class DocumentationGenerator {
 		}
 		Page newPage = createEmptyPage(name, predecessor, parent);
 		if (uuid != null) {
-			newPage.setUuid(uuid);
-			addPage(uuid, newPage);
+			String uuidStripped = uuid.strip();
+			newPage.setUuid(uuidStripped);
+			addPage(uuidStripped, newPage);
 		}
 		return newPage;
 	}
@@ -312,7 +313,7 @@ public class DocumentationGenerator {
 	 * Creates an empty {@link Page} under the given parent.
 	 */
 	protected Page createEmptyPage(String name, Page parent) {
-		return (Page) parent.createChild(name, getPageType());
+		return (Page) parent.createChild(name.strip(), getPageType());
 	}
 
 	/** The {@link TLClass} representing the {@link Page} type. */

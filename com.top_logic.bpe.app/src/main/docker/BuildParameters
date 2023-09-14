@@ -22,7 +22,7 @@ DB_URL=""
 DB_HOST=""
 # Default: DB dependent default port
 DB_PORT=""
-# Default: [APPNAME] - In case of Oracle this is the prefixed (/)SERVICE or (:)SID name. Example: :SIDNAME or /SERVICENAME.
+# Default: [APPNAME] - In case of Oracle this is the prefixed (/)SERVICE or (:)SID name. Example: :SIDNAME or /SERVICENAME. The Oracle Default will be an  service name: /[APPNAME]
 DB_SCHEME=""
 # Default: user
 DB_USER=""

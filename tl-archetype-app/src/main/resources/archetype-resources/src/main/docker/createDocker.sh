@@ -135,7 +135,7 @@ oracle(){
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
   [ -z "$DB_PORT" ] && DB_PORT=1521
-  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT$(sed 's/\//\\//g' <<<$DB_SCHEME)"
+  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT$(sed 's/\//\\\//g' <<<$DB_SCHEME)"
 # HowTo https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbbz/#articletitle
 # Download https://www.oracle.com/database/technologies/appdev/jdbc-downloads.html
   wget https://download.oracle.com/otn-pub/otn_software/jdbc/232-DeveloperRel/ojdbc11.jar -O $BUILD_PATH/ojdbc11.jar

@@ -8,8 +8,6 @@ RUN ln -sf /usr/share/zoneinfo/{timeZone} /etc/localtime
 COPY --chown=root ./*.war $CATALINA_HOME/webapps/
 COPY --chown=root ./context.xml $CATALINA_HOME/conf/
 RUN ln -s /usr/share/java/*.jar $CATALINA_HOME/lib/
-ENV tl_host='http://localhost:8080'
-ENV host='http://apps.top-logic.com'
-ENV JPDA_OPTS='-XX:+UnlockExperimentalVMOptions -XX:+UseContainerSupport -Xms256m'
+ENV JPDA_OPTS='-XX:+UnlockExperimentalVMOptions -XX:+UseContainerSupport -Xms{JAVA_XMS}m -Xmx{JAVA_XMX}m'
 EXPOSE 8080/tcp
 CMD $CATALINA_HOME/bin/catalina.sh jpda run

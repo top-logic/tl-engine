@@ -89,11 +89,10 @@ mysql(){
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
   [ -z "$DB_PORT" ] && DB_PORT=3306
-  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT/$DB_SCHEME"
+  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT\/$DB_SCHEME"
   sed -i -e 's/{dbLibrary}/RUN apt install libmariadb-java/g' $BUILD_PATH/Dockerfile
   sed -i -e 's/{dbDriver}/org.mariadb.jdbc.Driver/g' $BUILD_PATH/context.xml
   sed -i -e "s/{dbURL}/jdbc:mysql:\/\/$DB_URL/g" $BUILD_PATH/context.xml
-
 }
 
 mssql(){
@@ -106,11 +105,10 @@ mssql(){
   [ -z "$DB_URL" ] && DB_URL=";serverName=$DB_HOST;port=$DB_PORT;databaseName=$DB_SCHEME;encrypt=false;"
 # HowTo https://learn.microsoft.com/en-us/sql/connect/jdbc/using-the-jdbc-driver?view=sql-server-ver16#make-a-simple-connection-to-a-database
 # Download v12.2.0 from https://learn.microsoft.com/en-us/sql/connect/jdbc/download-microsoft-jdbc-driver-for-sql-server?view=sql-server-ver16
-  cd $BUILD_PATH/
-  wget https://go.microsoft.com/fwlink/?linkid=2222954 -O mssql.tar.gz
-  tar -xvzf mssql.tar.gz
-  rm -f mssql.tar.gz
-  mv ./sqljdbc_12.2/enu/mssql-jdbc-12.2.0.jre11.jar ./
+  wget https://go.microsoft.com/fwlink/?linkid=2222954 -O $BUILD_PATH/mssql.tar.gz
+  tar -xvzf $BUILD_PATH/mssql.tar.gz -C $BUILD_PATH/
+  rm -f $BUILD_PATH/mssql.tar.gz
+  mv $BUILD_PATH/sqljdbc_12.2/enu/mssql-jdbc-12.2.0.jre11.jar $BUILD_PATH/
   rm -rf $BUILD_PATH/sqljdbc_12.2
   sed -i -e "s/{dbLibrary}/COPY --chown=root .\/mssql-jdbc-12.2.0.jre11.jar \/usr\/share\/java\//g" $BUILD_PATH/Dockerfile
   sed -i -e 's/{dbDriver}/com.microsoft.sqlserver.jdbc.SQLServerDriver/g' $BUILD_PATH/context.xml
@@ -124,7 +122,7 @@ postgre(){
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
   [ -z "$DB_PORT" ] && DB_PORT=5432
-  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT/$DB_SCHEME"
+  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT\/$DB_SCHEME"
   sed -i -e "s/{dbLibrary}/RUN apt install libpostgresql-jdbc-java/g" $BUILD_PATH/Dockerfile
   sed -i -e 's/{dbDriver}/org.postgresql.Driver/g' $BUILD_PATH/context.xml
   sed -i -e "s/{dbURL}/jdbc:postgresql:\/\/$DB_URL/g" $BUILD_PATH/context.xml
@@ -132,15 +130,15 @@ postgre(){
 
 oracle(){
   echo "Configuring Oracle database"
-  [ -z "$DB_SCHEME" ] && DB_SCHEME=$APPNAME
+  [ -z "$DB_SCHEME" ] && DB_SCHEME=/$APPNAME
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
   [ -z "$DB_PORT" ] && DB_PORT=1521
-  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT$(sed 's/\//\\\//g' <<<$DB_SCHEME)"
+  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT$(sed 's/\//\\//g' <<<$DB_SCHEME)"
 # HowTo https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbbz/#articletitle
 # Download https://www.oracle.com/database/technologies/appdev/jdbc-downloads.html
-  wget https://download.oracle.com/otn-pub/otn_software/jdbc/232-DeveloperRel/ojdbc11.jar -O ojdbc11.jar
+  wget https://download.oracle.com/otn-pub/otn_software/jdbc/232-DeveloperRel/ojdbc11.jar -O $BUILD_PATH/ojdbc11.jar
   sed -i -e "s/{dbLibrary}/COPY --chown=root .\/ojdbc11.jar \/usr\/share\/java\//g" $BUILD_PATH/Dockerfile
   sed -i -e 's/{dbDriver}/oracle.jdbc.driver.OracleDriver/g' $BUILD_PATH/context.xml
   sed -i -e "s/{dbURL}/jdbc:oracle:thin:@$DB_URL/g" $BUILD_PATH/context.xml
@@ -174,6 +172,8 @@ $DATABASE
 sed -i -e "s/{dbUser}/$DB_USER/g" "$BUILD_PATH/context.xml"
 sed -i -e "s/{dbPasswd}/$DB_PASSWD/g" "$BUILD_PATH/context.xml"
 sed -i -e "s/{contextName}/$CONTEXT/g" "$BUILD_PATH/context.xml"
+sed -i -e "s/{JAVA_XMS}/$JAVA_XMS/g" "$BUILD_PATH/Dockerfile"
+sed -i -e "s/{JAVA_XMX}/$JAVA_XMX/g" "$BUILD_PATH/Dockerfile"
 sed -i -e "s/{timeZone}/$(sed 's/\//\\\//g' <<<$(cat /etc/timezone))/g" "$BUILD_PATH/Dockerfile"
 
 DRY_RUN=""
@@ -238,6 +238,8 @@ $DRY_RUN $RUN run \
   -tdi -p $HTTP_PORT:8080 \
   -v "$FILES":"/var/lib/tomcat9/work/${APPNAME}" \
   --restart=unless-stopped \
+  --memory ${DOCKER_MEMORY}m \
+  --cpus $CPUS \
   --name="$APPNAME" \
   --hostname="$APPNAME" "$APPNAME" && $DRY_RUN $RUN logs -f "$APPNAME"
 
@@ -246,4 +248,3 @@ $DRY_RUN $RUN run \
 echo
 echo "=== Stopping docker container ==="
 $DRY_RUN $RUN stop "$APPNAME"
-

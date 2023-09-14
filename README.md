@@ -1,7 +1,7 @@
 # TopLogic - the automated application engine
 
-This is the home of the open-source version of _TopLogic - the automated application engine_. TopLogic is the only 
-open-source model-based no-code web-application development platform. With TopLogic, you are able to create professional
+This is the home of the open-source version of [_TopLogic - the automated application engine_](https://github.com/top-logic/tl-engine).
+TopLogic is the only open-source model-based no-code web-application development platform. With TopLogic, you are able to create professional
 three-tier web-applications using diagram-based modeling (UML and BPMN) in combination with WYSIWYG user-interface 
 configuration. 
 
@@ -16,16 +16,20 @@ TopLogic is provided to you by [Business Operation Systems GmbH](https://top-log
 TopLogic features so called in-app development. This means that most of the development tools are built-in. 
 Start creating a new app therefore is a three step process:
 
-1. Install the engine and log in.
+1. [Install the engine](https://dev.top-logic.com/tl/content/docs/GetStarted/) and log in.
 2. Draw and configure your models, processes and user interfaces.
 3. Start using your new app.
 
+Explore the features of TopLogic in-app development by following the guided tour in the [TopLogic Tutorial](https://dev.top-logic.com/tl/content/docs/Tutorial/).
+
 However, you are not limited to in-app development. When using TopLogic with a team of developers, you can still use 
-standard development workflows with repositories, version control, build and deployment process(es).
+standard development workflows with repositories, version control, build and deployment process(es). Check out the 
+[TopLogic Developer Guide](https://dev.top-logic.com/tl/content/docs/DeveloperGuide/) for deep insights into the TopLogic engine. 
+Read about the latest features and browse the TopLogic JavaDoc [here](https://dev.top-logic.com/tl/content/releases/).
 
 ## Getting in touch
 
-The TopLogic team offers a Discord server ([join](https://discord.gg/XsNq9JXTe9)) with several channels where you can 
+The TopLogic team offers a Discord server ([join](https://discord.gg/QqW7bAD2zt)) with several channels where you can 
 join and watch the development of TopLogic. Having questions about TopLogic, the installation, configuration, and usage, 
 this is the right place to visit. 
 
@@ -33,7 +37,7 @@ this is the right place to visit.
 
 Your contributions to TopLogic open-source project are welcome. You may contribute bug reports, feature requests, 
 fixes, enhancements to existing functionality, new components and models. Having issues or suggestions, it is best to 
-first discuss them at the [TopLogic Discord Server](https://discord.gg/XsNq9JXTe9). 
+first discuss them at the [TopLogic Discord Server](https://discord.gg/QqW7bAD2zt). 
 
 If you are willing to contribute models, code, or configurations, we require that you sign a 
 [Contributor License Agreement](https://github.com/top-logic/.github/blob/main/CLA.md) that makes sure that you are the 

@@ -238,48 +238,46 @@ public class AttributedSearchResultComponent extends TableComponent
     protected void adaptTableConfiguration(TableConfiguration table) {
         super.adaptTableConfiguration(table);
 
-        AttributedSearchResultSet theModel   = getSearchResult() ;
-		if (theModel == null) {
+		AttributedSearchResultSet searchResult = getSearchResult();
+		if (searchResult == null) {
 			return;
 		}
-		DefaultAttributeFormFactory.configureWithMetaElement(table, theModel.getTypes());
+		DefaultAttributeFormFactory.configureWithMetaElement(table, searchResult.getTypes());
 
-		LayoutComponent masterComponent = getMaster();
-		Set<String> dropColumns;
-		if (masterComponent instanceof AttributedSearchComponent) {
-			dropColumns = ((AttributedSearchComponent) masterComponent).getExcludeSetForColumns();
-		} else {
-			dropColumns = new HashSet<>();
-		}
-		List<String> resultColumns = theModel.getResultColumns();
-        
-		Set<String> visibleColumns = CollectionUtil.toSet(resultColumns);
-        
-		for (ColumnConfiguration colConfiguration : table.getElementaryColumns()) {
-			String columnName = colConfiguration.getName();
-
-        	DisplayMode visibility = colConfiguration.getVisibility();
-			if (visibility == DisplayMode.mandatory || visibility == DisplayMode.excluded) {
-        		continue;
-        	}
-        	if (visibleColumns.contains(columnName)) {
-        		colConfiguration.setVisibility(DisplayMode.visible);
-				/* Drop column if it is contained in exclude set but not in visible columns. Those
-				 * columns are explicit given from the value of the SelectField in the
-				 * SearchInputComponent. */
-				dropColumns.remove(columnName);
-        	} else {
-				colConfiguration.setVisibility(DisplayMode.hidden);
-        	}
-        }
-
-		for (String columnName : dropColumns) {
-			table.removeColumn(columnName);
-		}
+		removeColumns(table, getColumnsToRemove(getMaster()));
+		addColumns(table, getSearchResultColumns(searchResult));
 
 		adaptTableConfigurationToDefaultSortOrder(table);
     }
-    
+
+	private Set<String> getColumnsToRemove(LayoutComponent component) {
+		if (component instanceof AttributedSearchComponent) {
+			return ((AttributedSearchComponent) component).getExcludeSetForColumns();
+		} else {
+			return Collections.emptySet();
+		}
+	}
+
+	private void removeColumns(TableConfiguration table, Set<String> columnNames) {
+		for (String columnName : columnNames) {
+			table.removeColumn(columnName);
+		}
+	}
+
+	private Set<String> getSearchResultColumns(AttributedSearchResultSet searchResult) {
+		return CollectionUtil.toSet(searchResult.getResultColumns());
+	}
+
+	private void addColumns(TableConfiguration table, Set<String> columnNames) {
+		for (String columnName : columnNames) {
+			ColumnConfiguration column = table.getDeclaredColumn(columnName);
+
+			if (column != null && column.getVisibility() != DisplayMode.excluded) {
+				column.setVisibility(DisplayMode.visible);
+			}
+		}
+	}
+
 	protected void adaptTableConfigurationToDefaultSortOrder(TableConfiguration table) {
 		AttributedSearchResultSet model = getSearchResult();
 		if (model == null) {

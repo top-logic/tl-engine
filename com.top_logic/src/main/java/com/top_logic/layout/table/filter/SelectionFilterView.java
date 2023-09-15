@@ -5,9 +5,6 @@
  */
 package com.top_logic.layout.table.filter;
 
-import static com.top_logic.layout.table.filter.SelectionFilterViewBuilder.*;
-import static com.top_logic.layout.table.filter.SingleEmptyValueMatchCounter.*;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +18,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.AbstractConstantControlBase;
 import com.top_logic.layout.form.control.ErrorControl;
+import com.top_logic.layout.form.control.LabelControl;
 import com.top_logic.layout.form.control.SelectOptionControl;
 import com.top_logic.layout.form.control.SelectionControl;
 import com.top_logic.layout.form.model.FormGroup;
@@ -70,7 +68,7 @@ public class SelectionFilterView extends FilterViewControl<SelectionFilterConfig
 
 	@Override
 	protected void internalValueChanged() {
-		setFilterOptions(getOptions(getFilterModel()));
+		setFilterOptions(SelectionFilterViewBuilder.getOptions(getFilterModel()));
 		setFilterSelection(getFilterModel().getFilterPattern());
 		requestRepaint();
 	}
@@ -206,21 +204,15 @@ public class SelectionFilterView extends FilterViewControl<SelectionFilterConfig
 				out.writeAttribute(CLASS_ATTR, CHECKBOX_MULTI_SELECT_ENTRY_CLASS);
 				out.endBeginTag();
 				{
-					writeOptionCheckbox(context, out, selectField, option);
-					writeOptionLabel(out, selectField, option);
+					SelectOptionControl checkbox = new SelectOptionControl(selectField, option);
+					checkbox.write(context, out);
+					LabelControl label = new LabelControl(selectField);
+					label.setOption(option);
+					label.write(context, out);
 					writeOptionCount(out, option);
 				}
 				out.endTag(PARAGRAPH);
 			}
-		}
-
-		private void writeOptionCheckbox(DisplayContext context, TagWriter out, SelectField selectField, Object option)
-				throws IOException {
-			new SelectOptionControl(selectField, option).write(context, out);
-		}
-
-		private void writeOptionLabel(TagWriter out, SelectField selectField, Object option) {
-			out.writeText(selectField.getOptionLabel(option));
 		}
 
 		private void writeOptionCount(TagWriter out, Object option) {
@@ -232,7 +224,7 @@ public class SelectionFilterView extends FilterViewControl<SelectionFilterConfig
 				if (_filterConfiguration.isOptionMatchCountable()) {
 					optionCount = 0;
 				} else {
-					optionCount = EMPTY_VALUE;
+					optionCount = SingleEmptyValueMatchCounter.EMPTY_VALUE;
 				}
 			}
 			if (optionCount >= 0) {

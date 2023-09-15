@@ -110,24 +110,29 @@ public class ComparableFilterView extends FilterViewControl<ComparableFilterConf
 		filterModel.setFilterPattern(newSelection);
 		Comparable<?> newPrimaryPattern = (Comparable<?>) filterFormFields.getPrimaryFilterPatternField().getValue();
 		changed |= !Utils.equals(newPrimaryPattern, filterModel.getPrimaryFilterPattern());
-		filterModel
-			.setPrimaryFilterPattern(newPrimaryPattern);
+		filterModel.setPrimaryFilterPattern(newPrimaryPattern);
 		Comparable<?> newSecondaryPattern =
 			(Comparable<?>) filterFormFields.getSecondaryFilterPatternField().getValue();
 		changed |= !Utils.equals(newSecondaryPattern, filterModel.getSecondaryFilterPattern());
 		filterModel.setSecondaryFilterPattern(newSecondaryPattern);
-
-		Operators newOperator;
-		if (filterModel.getPrimaryFilterPattern() == null
-			&& filterModel.getSecondaryFilterPattern() == null) {
-			newOperator = filterModel.getDefaultOperator();
-		} else {
-			newOperator = (Operators) filterFormFields.getOperatorField().getSingleSelection();
-		}
-
+		Operators newOperator = getNewOperator(filterModel);
 		changed |= !Utils.equals(newOperator, filterModel.getOperator());
 		filterModel.setOperator(newOperator);
 		return changed;
+	}
+
+	private Operators getNewOperator(ComparableFilterConfiguration filterModel) {
+		Operators selectedOperator = getSelectedOperator();
+
+		if (selectedOperator == null) {
+			return filterModel.getDefaultOperator();
+		} else {
+			return selectedOperator;
+		}
+	}
+
+	private Operators getSelectedOperator() {
+		return (Operators) filterFormFields.getOperatorField().getSingleSelection();
 	}
 
 	@Override

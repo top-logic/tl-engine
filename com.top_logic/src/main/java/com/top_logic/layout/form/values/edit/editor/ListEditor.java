@@ -94,6 +94,7 @@ import com.top_logic.layout.scripting.runtime.action.RecordingFailedActionOp;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.template.WithProperties;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
@@ -312,7 +313,7 @@ public class ListEditor implements Editor {
 		boolean compact = editorFactory.isCompact();
 		PropertyDescriptor property = valueModel.getProperty();
 		TagTemplate content =
-			div(css("dfList rf_line"),
+			div(css("dfList " + ReactiveFormCSS.RF_LINE),
 				div(css("dfListContent"),
 					member(EditorUtils.LIST_CONTENT_GROUP,
 						div(
@@ -398,7 +399,7 @@ public class ListEditor implements Editor {
 					htmlTemplate(Icons.ITEM_ICON),
 					label(EditorUtils.LIST_ITEM_GROUP),
 					"colored"),
-				div(css("rf_columnsLayout"), member(EditorUtils.LIST_ITEM_GROUP, embedd())));
+				div(css(ReactiveFormCSS.RF_COLUMNS_LAYOUT), member(EditorUtils.LIST_ITEM_GROUP, embedd())));
 		} else {
 			return div(
 				css("dfListEntry"),
@@ -475,8 +476,8 @@ public class ListEditor implements Editor {
 
 			@Override
 			public void write(DisplayContext context, TagWriter out, WithProperties properties) throws IOException {
-				HTMLFragment content =
-					TemplateRenderer.toFragment(properties, div(css("rf_columnsLayout"), self(embedd())));
+				HTMLFragment content = TemplateRenderer.toFragment(properties,
+					div(css(ReactiveFormCSS.RF_COLUMNS_LAYOUT), self(embedd())));
 				Collapsible collapsible = (Collapsible) TemplateRenderer.model(properties);
 				new OnExpandedControl(collapsible, content).write(context, out);
 			}

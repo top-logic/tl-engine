@@ -8,6 +8,7 @@ package com.top_logic.model.form.implementation;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
@@ -65,13 +66,18 @@ public class FormDefinitionTemplateProvider extends AbstractFormContainerProvide
 	public HTMLTemplateFragment createDesignTemplate(FormEditorContext context) {
 		context.getFormEditorMapping().putMapping(context.getFormEditorControl(), getConfig());
 
-		return decorateContainer(
-			createContentTemplate(context), context);
+		return decorateContainer(createContentTemplate(context), context);
 	}
 
 	@Override
 	public HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context) {
 		return contentBox(content, getWholeLine(context.getFormType()));
+	}
+
+	@Override
+	public void addCssClassForContent(List<HTMLTemplateFragment> buffer) {
+		super.addCssClassForContent(buffer);
+		buffer.add(css(ColumnsDefinitionTemplateProvider.cssClassForColumnsLayout(getConfig())));
 	}
 
 	@Override

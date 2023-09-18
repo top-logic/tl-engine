@@ -12,6 +12,8 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ConstantControl;
 import com.top_logic.mig.html.HTMLUtil;
+import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.definition.Columns;
 
 /**
  * Control creating a containers with a configurable number of columns for reactive columns.
@@ -20,11 +22,7 @@ import com.top_logic.mig.html.HTMLUtil;
  */
 public class ColumnsLayoutControl extends ConstantControl<HTMLFragment> {
 
-	private static final String CSS_CLASS = "rf_columnsLayout cols";
-
-	private static final String CSS_CLASS_KEEP = "keep";
-
-	private int _count = 1;
+	private int _count = Columns.ONE.getValue().intValue();
 
 	private boolean _keep = false;
 
@@ -71,9 +69,10 @@ public class ColumnsLayoutControl extends ConstantControl<HTMLFragment> {
 	@Override
 	protected void writeControlClassesContent(Appendable out) throws IOException {
 		super.writeControlClassesContent(out);
-		HTMLUtil.appendCSSClass(out, CSS_CLASS + _count);
+		HTMLUtil.appendCSSClass(out, ReactiveFormCSS.RF_COLUMNS_LAYOUT);
+		HTMLUtil.appendCSSClass(out, Columns.getColsCSS(_count));
 		if (_keep) {
-			HTMLUtil.appendCSSClass(out, CSS_CLASS_KEEP);
+			HTMLUtil.appendCSSClass(out, ReactiveFormCSS.CSS_CLASS_KEEP);
 		}
 	}
 

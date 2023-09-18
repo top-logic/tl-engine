@@ -11,8 +11,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.model.form.implementation.ColumnsDefinitionTemplateProvider;
 
 /**
- * Definition of a columns layout. It can contain other @{@link FormElement}s. {@link TagName}
- * is "columns".
+ * Definition of a columns layout. It can contain other {@link FormElement}s.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */

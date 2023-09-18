@@ -14,13 +14,13 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.boxes.reactive_tag.DescriptionCellControl;
 import com.top_logic.layout.form.template.model.internal.TemplateRenderer;
 import com.top_logic.layout.template.WithProperties;
+import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * {@link HTMLTemplateFragment} creating a label and content box.
  * 
  * @see #getLabel()
  * @see #getContent()
- * @see #getLabelFirst()
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -35,6 +35,8 @@ public class DescriptionBoxTemplate implements Template {
 	/** Width of the first column for created {@link FormMember}s. */
 	public static final String FIRST_COLUMN_WIDTH = "15em";
 
+	private LabelPlacement _labelPlacement;
+
 	/**
 	 * Creates a {@link DescriptionBoxTemplate}.
 	 * 
@@ -43,12 +45,16 @@ public class DescriptionBoxTemplate implements Template {
 	 * @param content
 	 *        See {@link #getContent()}.
 	 * @param labelFirst
-	 *        See {@link #getLabelFirst()}.
+	 *        Whether the label is rendered first.
+	 * @param labelPlacement
+	 *        Where the label is placed.
 	 */
-	DescriptionBoxTemplate(HTMLTemplateFragment label, HTMLTemplateFragment content, boolean labelFirst) {
+	DescriptionBoxTemplate(HTMLTemplateFragment label, HTMLTemplateFragment content, boolean labelFirst,
+			LabelPlacement labelPlacement) {
 		_label = label;
 		_content = content;
 		_labelFirst = labelFirst;
+		_labelPlacement = labelPlacement;
 	}
 
 	/**
@@ -56,13 +62,6 @@ public class DescriptionBoxTemplate implements Template {
 	 */
 	public HTMLTemplateFragment getLabel() {
 		return _label;
-	}
-
-	/**
-	 * Whether the label is rendered first;
-	 */
-	public boolean getLabelFirst() {
-		return _labelFirst;
 	}
 
 	/**
@@ -93,7 +92,8 @@ public class DescriptionBoxTemplate implements Template {
 		if (renderWholeLine != null) {
 			descriptionCell.setWholeLine(renderWholeLine.booleanValue());
 		}
-		descriptionCell.setLabelFirst(getLabelFirst());
+		descriptionCell.setLabelFirst(_labelFirst);
+		descriptionCell.setLabelPlacement(_labelPlacement);
 
 		TemplateRenderer.renderControl(displayContext, out, descriptionCell);
 	}

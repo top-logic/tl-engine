@@ -18,6 +18,7 @@ import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.EmptyCellDefinition;
 
 /**
@@ -61,7 +62,9 @@ public class EmptyCellDefinitionTemplateProvider extends AbstractFormElementProv
 
 	@Override
 	public HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
-		return contentBox(div(css("rf_inputCellOneLine rf_emptyCell"), empty()), getWholeLine(context.getFormType()));
+		return contentBox(
+			div(css(inputCellCSS(context) + " " + ReactiveFormCSS.RF_EMPTY_CELL), empty()),
+			getWholeLine(context.getFormType()));
 	}
 
 	@Override

@@ -28,6 +28,7 @@ import com.top_logic.layout.form.tag.ControlTagUtil;
 import com.top_logic.layout.form.tag.FormGroupTag;
 import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.layout.form.tag.FormTagUtil;
+import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Tag creating a description/content cell for reactive forms.
@@ -454,8 +455,12 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 		descriptionCellControl.setCellClass(_cssClass);
 		descriptionCellControl.setCellStyle(_style);
 		descriptionCellControl.setCellWidth(_width);
-		descriptionCellControl.setLabelAbove(getLabelAbove());
-		descriptionCellControl.setKeepInline(getKeepInline());
+		if (getLabelAbove()) {
+			descriptionCellControl.setLabelPlacement(LabelPlacement.ABOVE);
+		}
+		if (getKeepInline()) {
+			descriptionCellControl.setLabelPlacement(LabelPlacement.INLINE);
+		}
 		descriptionCellControl.setWholeLine(_wholeLine || forceWholeLine);
 		descriptionCellControl.setLabelFirst(labelFirst == null || labelFirst);
 		descriptionCellControl.setDescription(finalDescription);

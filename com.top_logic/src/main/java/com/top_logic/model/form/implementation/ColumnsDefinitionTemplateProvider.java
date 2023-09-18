@@ -19,6 +19,7 @@ import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.form.definition.ColumnsDefinition;
 import com.top_logic.model.form.definition.ContainerProperties;
@@ -38,7 +39,8 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 
 	private static final ResKey LABEL = I18NConstants.FORM_EDITOR__TOOL_NEW_COLUMNSLAYOUT;
 
-	private static final String CSS_COLUMNS = "rf_columnsLayout rf_innerTarget";
+	private static final String CSS_COLUMNS =
+		ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + ReactiveFormCSS.RF_INNER_TARGET;
 
 	/**
 	 * Create a new {@link ColumnsDefinitionTemplateProvider} for a given {@link ColumnsDefinition}
@@ -71,8 +73,10 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 	@Override
 	public HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context) {
 		HTMLTemplateFragment container =
-			div(getIdAttribute(), css("rf_container rf_dropTarget"), content);
-		HTMLTemplateFragment elementWrapper = div(attr("id", "columns-" + getID()), css("rf_wrapper"), container);
+			div(getIdAttribute(), css(ReactiveFormCSS.RF_CONTAINER + " " + ReactiveFormCSS.RF_DROP_TARGET),
+				content);
+		HTMLTemplateFragment elementWrapper =
+			div(attr("id", "columns-" + getID()), css(ReactiveFormCSS.RF_WRAPPER), container);
 
 		return contentBox(elementWrapper);
 	}
@@ -80,34 +84,25 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 	@Override
 	public void addCssClassForContent(List<HTMLTemplateFragment> buffer) {
 		buffer.add(getIdAttribute());
-		buffer.add(css(getCssClass()));
+		buffer.add(css(contentCssClasses()));
 	}
 
-	String getCssClass() {
+	private String contentCssClasses() {
 		ColumnsDefinition config = getConfig();
-		String cssGroup = cssClassForColumnsLayout(config);
-
-		cssGroup += !config.getLineBreak().booleanValue() ? " keep" : "";
-
-		return cssGroup;
+		StringBuilder css = new StringBuilder(cssClassForColumnsLayout(config));
+		if (!config.getLineBreak().booleanValue()) {
+			css.append(' ');
+			css.append(ReactiveFormCSS.CSS_CLASS_KEEP);
+		}
+		return css.toString();
 	}
 
 	/**
 	 * Constructs a CSS class that enables client-side form layouting in reactive columns.
 	 */
 	public static String cssClassForColumnsLayout(ContainerProperties<?> config) {
-		String cssGroup = CSS_COLUMNS;
-
-		Integer columns = getColumns(config);
-		if (columns != null) {
-			cssGroup += " cols" + columns;
-		}
-		return cssGroup;
-	}
-
-	static private Integer getColumns(ContainerProperties<?> config) {
 		Columns columns = config.getColumns();
-		return columns != null ? columns.getValue() : null;
+		return columns.appendColsCSSto(CSS_COLUMNS);
 	}
 
 	@Override

@@ -99,6 +99,8 @@ import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.layout.form.values.edit.initializer.InitializerUtil;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.resources.AbstractResourceView;
+import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.definition.Columns;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -898,7 +900,8 @@ public class EditorFactory implements AnnotationCustomizations {
 	 */
 	private HTMLTemplateFragment defaultItemTemplate(ConfigurationItem model,
 			List<FormMember> members) {
-		return div(css("rf_columnsLayout cols3"), verticalBox(templates(members)));
+		return div(css(Columns.THREE.appendColsCSSto(ReactiveFormCSS.RF_COLUMNS_LAYOUT)),
+			verticalBox(templates(members)));
 	}
 
 	private HTMLTemplateFragment[] templates(List<FormMember> members) {

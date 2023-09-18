@@ -8,6 +8,7 @@ package com.top_logic.layout.form.boxes.reactive_tag;
 import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -28,6 +29,8 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.mig.html.layout.VisibilityListener;
+import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Control to write a tag creating a description/content cell. Its visibility is controlled by a
@@ -89,10 +92,6 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	private boolean _wholeLine;
 
-	private boolean _labelAbove;
-
-	private boolean _keepInline = false;
-
 	/**
 	 * Whether the label is rendered first.
 	 */
@@ -105,6 +104,8 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	private String _labelClass;
 
 	private HTMLFragment _description;
+
+	private LabelPlacement _labelPlacement = LabelPlacement.DEFAULT;
 
 	/**
 	 * Creates a {@link DescriptionCellControl}.
@@ -176,22 +177,10 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	}
 
 	/**
-	 * Whether the label should be rendered on a separate line above the input element.
-	 * 
-	 * <p>
-	 * Otherwise, the label is rendered before the input element if enough space is available.
-	 * </p>
+	 * Sets the definition where the the label has to be rendered.
 	 */
-	@TemplateVariable("labelAbove")
-	public boolean getLabelAbove() {
-		return _labelAbove && !_keepInline;
-	}
-
-	/**
-	 * @see #getLabelAbove()
-	 */
-	public void setLabelAbove(boolean labelAbove) {
-		_labelAbove = labelAbove;
+	public void setLabelPlacement(LabelPlacement labelPlacement) {
+		_labelPlacement = labelPlacement;
 	}
 
 	/**
@@ -200,26 +189,27 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("keepInline")
 	public boolean getKeepInline() {
-		return _keepInline;
+		return _labelPlacement == LabelPlacement.INLINE;
 	}
 
 	/**
-	 * @see #getKeepInline()
+	 * Space separated list of CSS classes to add to the top-level tag of the cell.
 	 */
-	public void setKeepInline(boolean keepInline) {
-		_keepInline = keepInline;
+	@TemplateVariable("cellClasses")
+	public String getCellClasses() {
+		String css = ReactiveFormCSS.RF_INPUT_CELL;
+		String labelCSS = _labelPlacement.cssClass();
+		if (labelCSS != null) {
+			css = css + " " + labelCSS;
+		}
+		if (!StringServices.isEmpty(_cellClass)) {
+			css = css + " " + _cellClass;
+		}
+		return css;
 	}
 
 	/**
-	 * Custom CSS class to add to the top-level tag of the cell.
-	 */
-	@TemplateVariable("cellClass")
-	public String getCellClass() {
-		return _cellClass;
-	}
-
-	/**
-	 * @see #getCellClass()
+	 * @see #getCellClasses()
 	 */
 	public void setCellClass(String cssClass) {
 		_cellClass = cssClass;

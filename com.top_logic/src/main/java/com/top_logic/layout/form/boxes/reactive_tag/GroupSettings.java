@@ -42,9 +42,19 @@ public interface GroupSettings extends WithProperties {
 
 	/**
 	 * Whether the label of all inner elements are rendered above their input.
+	 * 
+	 * @see #getLabelInline()
 	 */
 	@TemplateVariable("labelAbove")
 	boolean getLabelAbove();
+
+	/**
+	 * Whether the label of all inner elements are rendered in the same line as their input.
+	 * 
+	 * @see #getLabelAbove()
+	 */
+	@TemplateVariable("labelInline")
+	boolean getLabelInline();
 
 	/**
 	 * Whether a border should be drawn around the group cell. The default value is provided by the

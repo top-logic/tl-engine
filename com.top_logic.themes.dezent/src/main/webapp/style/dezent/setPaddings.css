@@ -93,7 +93,7 @@ div.fltCommandContent
     padding-top: 4px;
 }
 
-div.rf_inputCellOneLine
+div.rf_inputCell
 {
     padding: 0 0.4em;
     box-sizing: border-box;
@@ -132,7 +132,6 @@ td.tl-table_cell:nth-child(2) .tblCellInnerSpacer
 input:not(.input-image):not(.fltButton):not(#quickSearch-input):not( [type="image"] ):not(#icon-search-input):not(#icon-input-input):not(name*='pageInput.cpi'),
 textarea:not(.is-input),
 .rf_inputCell textarea.is-input,
-.rf_inputCellOneLine textarea.is-input,
 select:not( [multiple="multiple"] )
 {
     padding: 2px 8px 4px 8px;

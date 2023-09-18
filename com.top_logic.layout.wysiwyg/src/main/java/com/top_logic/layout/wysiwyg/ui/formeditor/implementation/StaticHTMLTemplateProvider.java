@@ -19,6 +19,7 @@ import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 
@@ -78,7 +79,7 @@ public class StaticHTMLTemplateProvider extends AbstractFormElementProvider<Stat
 			return contentBox(htmlSource(content), wholeLine);
 		} else {
 			return contentBox(div(
-				css("rf_inputCellOneLine rf_emptyCell"),
+				css(inputCellCSS(context) + " " + ReactiveFormCSS.RF_EMPTY_CELL),
 				resource(I18NConstants.STATIC_HTML_LABEL)), wholeLine);
 		}
 	}

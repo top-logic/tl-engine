@@ -19,7 +19,7 @@ import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.form.definition.Columns;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.FrameDefinition;
 import com.top_logic.util.css.CssUtil;
 
@@ -78,8 +78,10 @@ public class FrameDefinitionTemplateProvider extends AbstractFormContainerProvid
 		if (getID() != null) {
 			HTMLTemplateFragment element = content;
 			HTMLTemplateFragment container =
-				div(getIdAttribute(), css("rf_container rf_dropTarget"), element);
-			return contentBox(div(attr("id", "columns-" + getID()), css("rf_wrapper"), container), wholeLine);
+				div(getIdAttribute(), css(ReactiveFormCSS.RF_CONTAINER + " " + ReactiveFormCSS.RF_DROP_TARGET),
+					element);
+			return contentBox(div(attr("id", "columns-" + getID()), css(ReactiveFormCSS.RF_WRAPPER), container),
+				wholeLine);
 		} else {			
 			return contentBox(content, wholeLine);
 		}
@@ -87,31 +89,24 @@ public class FrameDefinitionTemplateProvider extends AbstractFormContainerProvid
 
 	@Override
 	public void addCssClassForContent(List<HTMLTemplateFragment> buffer) {
-		Integer columns = getColumns();
-
 		String cssFrame = "rf_frame";
 		String cssClass = "";
-		String cssInnerTarget = "rf_innerTarget";
+		String cssInnerTarget = ReactiveFormCSS.RF_INNER_TARGET;
 		String cssShowBorder = "showBorder";
-		String cssWholeLine = "rf_line";
-		String cssColumns = "rf_columnsLayout";
-		cssColumns += columns != null ? " cols" + columns : "";
+		String cssWholeLine = ReactiveFormCSS.RF_LINE;
+		String cssColumns = ReactiveFormCSS.RF_COLUMNS_LAYOUT;
+		cssColumns = getConfig().getColumns().appendColsCSSto(cssColumns);
 
 		if (getConfig() != null) {
 			cssClass = getConfig().getCssClass();
 			cssShowBorder = getConfig().getShowBorder().booleanValue() ? "showBorder" : "";
-			cssWholeLine = getWholeLine() ? "rf_line" : "";
+			cssWholeLine = getWholeLine() ? ReactiveFormCSS.RF_LINE : "";
 		}
 
 		String cssClasses =
 			CssUtil.joinCssClasses(cssFrame, cssClass, cssInnerTarget, cssShowBorder, cssWholeLine, cssColumns);
 
 		buffer.add(css(cssClasses));
-	}
-
-	private Integer getColumns() {
-		Columns columns = getConfig().getColumns();
-		return Columns.DEFAULT.equals(columns) ? null : columns.getValue();
 	}
 
 	@Override

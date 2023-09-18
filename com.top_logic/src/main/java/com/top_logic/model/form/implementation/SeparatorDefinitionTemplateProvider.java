@@ -22,6 +22,7 @@ import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.SeparatorDefinition;
 
 /**
@@ -70,7 +71,7 @@ public class SeparatorDefinitionTemplateProvider extends AbstractFormElementProv
 		boolean visible = getConfig() != null ? getConfig().getVisible().booleanValue() : true;
 		String visibleCss = visible ? " visible" : "";
 
-		return contentBox(div(css("rf_hr rf_line" + visibleCss)));
+		return contentBox(div(css("rf_hr " + ReactiveFormCSS.RF_LINE + visibleCss)));
 	}
 
 	@Override

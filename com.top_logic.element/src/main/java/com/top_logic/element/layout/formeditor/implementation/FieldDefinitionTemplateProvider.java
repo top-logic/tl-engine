@@ -68,6 +68,7 @@ import com.top_logic.model.annotate.ui.PDFRendererAnnotation;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.form.definition.FormVisibility;
+import com.top_logic.model.form.definition.LabelPlacement;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
@@ -190,7 +191,8 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 					type, part, context.getDomain(), visibility, fieldDefinition);
 				if (member != null) {
 					HTMLTemplateFragment result =
-						createFieldTemplate(member, part, AttributeFormFactory.getAttributeUpdate(member));
+						createFieldTemplate(member, part, AttributeFormFactory.getAttributeUpdate(member),
+							context.getLabelPlacement());
 					_member = member;
 					return result;
 				}
@@ -272,11 +274,11 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	static HTMLTemplateFragment createFieldTemplate(FormMember member, TLStructuredTypePart part,
-			AttributeUpdate update) {
+			AttributeUpdate update, LabelPlacement labelPlacement) {
 		boolean renderLabelFirst = !AttributeOperations.renderInputBeforeLabel(part, update);
 
 		if (renderLabelFirst) {
-			return fieldBox(member.getName());
+			return fieldBox(member.getName(), labelPlacement);
 		} else {
 			return fieldBoxInputFirst(member.getName());
 		}

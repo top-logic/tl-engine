@@ -231,10 +231,6 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	}
 
-	public static final String TAG_COLUMN_DEFAULT      = "default";
-    public static final String TAG_COLUMN_DESCRIPTION  = "col";
-    public static final String TAG_COLUMN_DESCRIPTIONS = "cols";
-
     /** Configuration name for excluded columns attribute. */
     public static final String XML_CONF_KEY_EXCLUDE_COLUMNS = "excludeColumns";
 

@@ -95,11 +95,6 @@ div.card-text
     margin-left: 20px;
 }
 
-.dlgDialog :not(.keepInline).rf_inputCellOneLine > div:nth-child(2)
-{
-    margin-bottom: 4px;
-}
-
 h5.card-title
 {
     text-indent: -20px;

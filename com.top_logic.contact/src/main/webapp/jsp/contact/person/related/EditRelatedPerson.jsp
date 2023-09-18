@@ -40,15 +40,13 @@
 					<form:inputCell name="<%=PersonAttributes.ORG_UNIT%>"/>
 					<form:inputCell name="<%=EditPersonComponent.COUNTRY%>"/>
 					<form:inputCell name="<%=EditPersonComponent.LANGUAGE%>"/>
-					<form:inputCell name="<%=EditPersonComponent.COUNTRY%>"/>
+					<form:inputCell name="<%=EditPersonComponent.TIME_ZONE%>"/>
 				</form:descriptionContainer>
 
 				<form:descriptionContainer>
 					<form:inputCell name="<%=PersonAttributes.MAIL_NAME%>"/>
 					<form:inputCell name="<%=PersonAttributes.EXTERNAL_MAIL%>"/>
 				</form:descriptionContainer>
-
-				<form:inputCell name="<%=EditPersonComponent.TIME_ZONE%>"/>
 			</form:groupCell>
 
 			<form:groupCell titleKeySuffix="securityData">
@@ -80,7 +78,6 @@
 				</form:ifExists>
 			</form:groupCell>
 
-			<!-- summary="Process information" -->
 			<form:groupCell titleKeySuffix="configuration">
 				<form:inputCell name="<%=EditPersonComponent.THEME_SELECTOR%>"/>
 			</form:groupCell>

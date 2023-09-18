@@ -24,10 +24,10 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.form.definition.ContainerDefinition;
 import com.top_logic.model.form.definition.FormDefinition;
-import com.top_logic.model.form.definition.LabelPlacement;
 import com.top_logic.model.form.implementation.FormDefinitionTemplateProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
@@ -41,11 +41,7 @@ import com.top_logic.model.form.implementation.FormMode;
  */
 public class FormEditorEditorControl extends FormEditorDisplayControl {
 
-	private static final String TARGET_CSS = "rf_innerTarget";
-
 	private static final boolean ATTRIBUTE_HIDDEN = true;
-
-	private LabelPlacement _labelPlacement;
 
 	private Columns _maxCols;
 
@@ -82,7 +78,6 @@ public class FormEditorEditorControl extends FormEditorDisplayControl {
 	
 	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		_labelPlacement = getModel().getLabelPlacement();
 		_maxCols = getModel().getColumns();
 
 		out.beginBeginTag(DIV);
@@ -113,16 +108,26 @@ public class FormEditorEditorControl extends FormEditorDisplayControl {
 	@Override
 	protected void writeControlClassesContent(Appendable out) throws IOException {
 		super.writeControlClassesContent(out);
-		out.append(TARGET_CSS);
+		out.append(ReactiveFormCSS.RF_INNER_TARGET);
 
-		if (_labelPlacement == LabelPlacement.IN_FRONT_OF_INPUT) {
-			out.append("rf_labelInFrontOfInput");
-		} else if (_labelPlacement == LabelPlacement.ABOVE) {
-			out.append("rf_labelAbove");
-		}
-
-		if (_maxCols.getValue() != null) {
-			out.append("maxCols" + _maxCols.getValue());
+		switch (_maxCols) {
+			case DEFAULT:
+				break;
+			case ONE:
+				out.append("maxCols1");
+				break;
+			case TWO:
+				out.append("maxCols2");
+				break;
+			case THREE:
+				out.append("maxCols3");
+				break;
+			case FOUR:
+				out.append("maxCols4");
+				break;
+			case FIVE:
+				out.append("maxCols5");
+				break;
 		}
 	}
 

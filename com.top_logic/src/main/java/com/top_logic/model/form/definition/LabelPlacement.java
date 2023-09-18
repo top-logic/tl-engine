@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.form.definition;
 
+import com.top_logic.model.form.ReactiveFormCSS;
+
 /**
  * Decision about where to place labels in forms.
  * 
@@ -16,15 +18,19 @@ public enum LabelPlacement {
 	/** Label is above its input */
 	ABOVE,
 	/** Label is in the same line as its input */
-	IN_FRONT_OF_INPUT;
+	INLINE;
 
-	/** Returns whether the element is marked to render the label above. */
-	public Boolean getLabelAbove() {
+	/**
+	 * CSS class representing this {@link LabelPlacement}.
+	 * 
+	 * @return May be <code>null</code>.
+	 */
+	public String cssClass() {
 		switch (this) {
 			case ABOVE:
-				return true;
-			case IN_FRONT_OF_INPUT:
-				return false;
+				return ReactiveFormCSS.RF_LABEL_ABOVE;
+			case INLINE:
+				return ReactiveFormCSS.RF_LABEL_INLINE;
 			default:
 				return null;
 		}

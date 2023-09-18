@@ -57,7 +57,7 @@
 						/>
 					</component>
 				</layout>
-				<component class="com.top_logic.element.layout.structured.AdminElementComponent"
+				<component class="com.top_logic.doc.component.ExternalWindowDocViewerComponent"
 					applyCommand=""
 					deleteCommand=""
 					model="selection(${namePrefix}Tree)"

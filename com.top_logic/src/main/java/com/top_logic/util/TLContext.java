@@ -12,8 +12,6 @@ import java.util.TimeZone;
 import com.top_logic.base.context.SubSessionListener;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.base.security.authorisation.roles.ACL;
-import com.top_logic.base.security.authorisation.roles.RoleManager;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.AbstractSubSessionContext;
 import com.top_logic.basic.CalledByReflection;
@@ -276,13 +274,11 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 	 * @return    true, if user's roles contain tl-admin
 	 */
 	public static boolean isAdmin(Person aUser) {
-		if (aUser == null || !aUser.isAlive()) {
+		if (aUser == null) {
 			return false;
 		}
 
-		ACL theACL = aUser.getACLRoles();
-
-		return ((theACL != null) && theACL.hasRole(RoleManager.ADMIN_ROLE));
+		return aUser.isAdmin();
 	}
 
 	@Override
@@ -367,6 +363,18 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 			Logger.error("Unable to trigger listener '" + listener + "' with subsession '" + this + "'.",
 				ex, AbstractSubSessionContext.class);
 		}
+	}
+
+	/**
+	 * The user currently logged in.
+	 */
+	public static Person currentUser() {
+		TLContext context = getContext();
+	
+		if (context != null) {
+			return context.getPerson();
+	    }
+		return null;
 	}
 
 	/**

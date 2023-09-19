@@ -2210,9 +2210,6 @@
 			<layout>
 				<collector class="com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupCollector" />
 			</layout>
-			<authorisation class="com.top_logic.base.security.authorisation.symbols.file.FileAuthorisation">
-				<symbols resource="/WEB-INF/database/Symbols.xml" />
-			</authorisation>
 		</config>
 		
 		<config config:interface="com.top_logic.base.office.excel.ExcelAccess$GlobalConfig">

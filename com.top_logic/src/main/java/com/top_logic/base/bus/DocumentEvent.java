@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.base.security.UserSecurityException;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
@@ -23,6 +22,7 @@ import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.util.TLContext;
 
 /**
  * The Event which should be used to make Changes of Documents available
@@ -111,7 +111,7 @@ public class DocumentEvent extends MonitorEvent {
                                                   String kindOfEvent) 
                                                 throws UserSecurityException, 
                                                        Exception {
-        UserInterface aUser = SecurityContext.getCurrentUser ();
+		UserInterface aUser = TLContext.currentUser().getUser();
 
         if (aUser == null) {
             throw new UserSecurityException ("No current user set in " +

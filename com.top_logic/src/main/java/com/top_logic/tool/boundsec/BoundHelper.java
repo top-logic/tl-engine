@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -826,8 +825,9 @@ public class BoundHelper extends ManagedClass {
             if (currPerson == null)
                 return false;   // no Person, no Security
 
-            if (SecurityContext.isAdmin(currPerson.getUser()))
-                return true;
+			if (currPerson.isAdmin()) {
+				return true;
+			}
 
             return hasAnyRole(anObject, currPerson);
         }

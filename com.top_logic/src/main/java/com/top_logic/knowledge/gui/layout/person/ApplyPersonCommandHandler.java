@@ -10,9 +10,7 @@ import static com.top_logic.basic.shared.string.StringServicesShared.*;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.base.security.attributes.PersonAttributes;
-import com.top_logic.base.security.authorisation.roles.RoleManager;
 import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.user.UserService;
@@ -109,7 +107,6 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
 
         if (hasSuccess) {
             Person  thePerson               = (Person) aModel;
-            boolean hasAccess               = SecurityContext.isTechnicalAdmin();
             String  thePersonsDadID         = thePerson.getDataAccessDeviceID();
             String  newDataAccessDevice     = (String) ((SelectField)aContext.getField(PersonAttributes.DATA_ACCESS_DEVICE_ID)).getSingleSelection();
             String  newAuthenticationDevice = (String) ((SelectField)aContext.getField(PersonAttributes.AUTHENTICATION_DEVICE_ID)).getSingleSelection();
@@ -138,7 +135,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
                 this.updateAdminFields(thePerson, aContext);
 
                 // Store admin-accessible changes to model
-                if (hasAccess) { 
+				if (TLContext.isSuperUser()) {
                     this.updateRoles(thePerson, aContext);
                 }
     
@@ -200,8 +197,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
             if (theField.isChanged()) {
 				boolean isSuperUser = ((Boolean) theField.getValue()).booleanValue();
             	
-				ApplyPersonCommandHandler.setValue(aPerson, PersonAttributes.USER_ROLE,
-					isSuperUser ? RoleManager.ADMIN_ROLE_NAME : "");
+				aPerson.setAdmin(isSuperUser);
             }
         }
     }
@@ -225,7 +221,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
         String theGiven = (String)aPerson.getUser().getAttributeValue(PersonAttributes.GIVEN_NAME);
         String theTitle = (String)aPerson.getUser().getAttributeValue(PersonAttributes.TITLE);
         String theFull  = getFullName(theTitle, theGiven, theSur);
-        ApplyPersonCommandHandler.setValue(aPerson, PersonAttributes.DISPLAY_NAME, theFull);
+        aPerson.getUser().setAttributeValue(PersonAttributes.DISPLAY_NAME, theFull);
     }
 
     public static String getFullName(String title, String first, String last){
@@ -316,7 +312,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
         Object theValue = this.getChangedValue(aContext, aKey);
 
         if (theValue != null) {
-            ApplyPersonCommandHandler.setValue(aModel, aKey, theValue);
+            aModel.getUser().setAttributeValue(aKey, theValue);
         }else{
             FormField theField = aContext.getField(aKey);
             if(theField!=null){
@@ -325,19 +321,6 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
         }    
 
         return (theValue);
-    }    
-
-    /**
-     * Set the given value to the given person.
-     * 
-     * This method will not perform any checks.
-     * 
-     * @param    aPerson    The person to set the new value, must not be <code>null</code>.
-     * @param    aKey       The key of the attribute to be set, must not be <code>null</code>.
-     * @param    aValue     The new value to be set, may be <code>null</code>.
-     */
-	protected static void setValue(Person aPerson, String aKey, Object aValue) {
-        aPerson.getUser().setAttributeValue(aKey, aValue);
     }
 
 }

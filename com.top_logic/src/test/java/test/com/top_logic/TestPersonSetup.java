@@ -57,9 +57,9 @@ public class TestPersonSetup extends ThreadContextSetup {
 		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		{
 			_testPerson = PersonManager.getManager().createPerson(USER_ID, "dbSecurity", "dbSecurity", Boolean.FALSE);
-			_testPerson.getUser().setAttributeValue(PersonAttributes.PASSWORD,
+			Person.getUser(_testPerson).setAttributeValue(PersonAttributes.PASSWORD,
 				SignatureService.getInstance().sign(USER_PASSWORD));
-			_testPerson.getUser().setAttributeValue(PersonAttributes.USER_ROLE, USER_ROLE);
+			Person.getUser(_testPerson).setAttributeValue(PersonAttributes.USER_ROLE, USER_ROLE);
 			tx.commit();
 		}
 	}

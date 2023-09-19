@@ -77,7 +77,7 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
             return false;
         }
         
-        if (ThreadContext.isSuperUser())
+        if (ThreadContext.isAdmin())
             return true;    // allow all
         
 		Person currentPerson = PersonManager.getManager().getCurrentPerson();

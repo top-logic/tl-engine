@@ -135,7 +135,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
                 this.updateAdminFields(thePerson, aContext);
 
                 // Store admin-accessible changes to model
-				if (TLContext.isSuperUser()) {
+				if (TLContext.isAdmin()) {
                     this.updateRoles(thePerson, aContext);
                 }
     
@@ -188,7 +188,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
      * @param    aContext    To fetch the <code>roleString</code> from.
      */
 	protected void updateRoles(Person aPerson, FormContext aContext) {
-		if (!TLContext.isSuperUser()) {
+		if (!TLContext.isAdmin()) {
 			return;
 		}
 
@@ -217,11 +217,11 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
         this.setAttribute(aPerson, PersonAttributes.GIVEN_NAME , aContext);
         this.setAttribute(aPerson, PersonAttributes.TITLE      , aContext);
 
-        String theSur   = (String)aPerson.getUser().getAttributeValue(PersonAttributes.SUR_NAME);
-        String theGiven = (String)aPerson.getUser().getAttributeValue(PersonAttributes.GIVEN_NAME);
-        String theTitle = (String)aPerson.getUser().getAttributeValue(PersonAttributes.TITLE);
+        String theSur   = (String)Person.getUser(aPerson).getAttributeValue(PersonAttributes.SUR_NAME);
+        String theGiven = (String)Person.getUser(aPerson).getAttributeValue(PersonAttributes.GIVEN_NAME);
+        String theTitle = (String)Person.getUser(aPerson).getAttributeValue(PersonAttributes.TITLE);
         String theFull  = getFullName(theTitle, theGiven, theSur);
-        aPerson.getUser().setAttributeValue(PersonAttributes.DISPLAY_NAME, theFull);
+        Person.getUser(aPerson).setAttributeValue(PersonAttributes.DISPLAY_NAME, theFull);
     }
 
     public static String getFullName(String title, String first, String last){
@@ -312,7 +312,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
         Object theValue = this.getChangedValue(aContext, aKey);
 
         if (theValue != null) {
-            aModel.getUser().setAttributeValue(aKey, theValue);
+            Person.getUser(aModel).setAttributeValue(aKey, theValue);
         }else{
             FormField theField = aContext.getField(aKey);
             if(theField!=null){

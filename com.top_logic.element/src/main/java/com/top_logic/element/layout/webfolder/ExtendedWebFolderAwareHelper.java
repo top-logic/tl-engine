@@ -66,7 +66,7 @@ public class ExtendedWebFolderAwareHelper {
 			
 			if (anAttNameExcludes == null || !anAttNameExcludes.contains(theAttrName)) {
 		
-				boolean hasAccess = TLContext.isSuperUser();
+				boolean hasAccess = TLContext.isAdmin();
 				if (!hasAccess) {
 					if (AttributeOperations.isClassified(theFolderAttr)) {
 						hasAccess = AttributeOperations.getAccess(theFolderAttr, AccessManager.getInstance().getRoles(TLContext.getContext().getCurrentPersonWrapper(), 

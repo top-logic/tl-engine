@@ -353,7 +353,7 @@ public class SearchFieldSupport {
 				// for the owner the unversioned identity must be compared, otherwise it wont be equal
 				// even for the "same" person
 				if (WrapperHistoryUtils.getUnversionedIdentity(theCurrentUser)
-					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || theCurrentUser.isAdmin()) {
+					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || Person.isAdmin(theCurrentUser)) {
 					boolean isPublished;
 					
 					if (groupAssociations.isEmpty()) {

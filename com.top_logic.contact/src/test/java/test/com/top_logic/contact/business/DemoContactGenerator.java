@@ -89,7 +89,7 @@ public class DemoContactGenerator implements DemoPersonNames {
             String firstName, String lastName, int i) {
          String name = "" + lastName.charAt(0) + firstName.charAt(0) + Integer.toString(i);
 			Person p = pmgr.createPerson(name, accessID, authID, Boolean.FALSE);
-         UserInterface user =  p.getUser();
+         UserInterface user =  Person.getUser(p);
          user.setAttributeValue(PersonAttributes.SUR_NAME  , lastName );
          user.setAttributeValue(PersonAttributes.GIVEN_NAME, firstName);
          pmgr.handleRefreshPerson(p);

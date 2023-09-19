@@ -219,7 +219,7 @@ public class ReportSelectorComponent extends FormComponent implements ReportCons
 				
 				// root or owner can modify published queries
 				if (WrapperHistoryUtils.getUnversionedIdentity(theCurrentUser)
-					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || theCurrentUser.isAdmin()) {
+					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || Person.isAdmin(theCurrentUser)) {
 					boolean isPublished = groupAssociations.isEmpty() ? false : true;
 					
 					thePublishGroup.setVisible(true);

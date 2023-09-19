@@ -19,7 +19,6 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.mapBasedPersistancy.MapBasedPersistancySupport;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.search.persistency.expressions.SearchExpression;
 import com.top_logic.model.search.persistency.expressions.SearchExpressionImpl;
 import com.top_logic.model.search.persistency.expressions.SearchExpressionStructureFactory;
@@ -63,7 +62,7 @@ public class SearchExpressionProvider implements Provider<List<SearchExpressionI
 	}
 
 	private boolean showEveryonesSearches() {
-		return ThreadContext.isSuperUser() || PersonManager.isAdmin(TLContext.getContext().getPerson());
+		return ThreadContext.isAdmin() || Person.isAdmin(TLContext.getContext().getPerson());
 	}
 
 	private List<SearchExpressionImpl> getAllStoredSearches() {

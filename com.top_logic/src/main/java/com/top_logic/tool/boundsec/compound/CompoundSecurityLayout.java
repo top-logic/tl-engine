@@ -355,7 +355,7 @@ public class CompoundSecurityLayout extends BoundLayout {
      *              is not empty.
      */
     protected boolean checkAccess(TLContext aContext, BoundObject aModel, BoundCommandGroup aCmdGroup) {
-		if (ThreadContext.isSuperUser()) {
+		if (ThreadContext.isAdmin()) {
             return true;    // bypass bound security for all for SuperUsers
         }
 

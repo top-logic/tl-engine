@@ -270,7 +270,7 @@ public class EditPersonComponent extends EditComponent {
 		// Note: Only super users can change the super user flag. A super-user cannot remove itself
 		// the super user flag to prevent to delete the last super user.
 		boolean cannotChangeSuperUserFlag =
-			!TLContext.isSuperUser() || thePerson == TLContext.getContext().getCurrentPersonWrapper()
+			!TLContext.isAdmin() || thePerson == TLContext.getContext().getCurrentPersonWrapper()
 				|| noDataStorage(thePerson);
 
 		// TODO BHU, KHA, KBU: this code might never be used at all, the
@@ -422,7 +422,7 @@ public class EditPersonComponent extends EditComponent {
 				restrictedUser = createRestrictedUserField(thePerson);
 				formContext.addMember(restrictedUser);
 
-                if(ThreadContext.isSuperUser()){
+                if(ThreadContext.isAdmin()){
 					dataDevicesField.setDisabled(!BoundHelper.getInstance().isAllowChangeDeleteProtection());
 					authDevicesField.setDisabled(!BoundHelper.getInstance().isAllowChangeDeleteProtection());
                 } else {
@@ -467,7 +467,7 @@ public class EditPersonComponent extends EditComponent {
         }
 
 		BooleanField superUser =
-			FormFactory.newBooleanField(SUPER_USER_FIELD, TLContext.isAdmin(thePerson), cannotChangeSuperUserFlag);
+			FormFactory.newBooleanField(SUPER_USER_FIELD, Person.isAdmin(thePerson), cannotChangeSuperUserFlag);
 		formContext.addMember(superUser);
 
 		AtMostOneFilledFieldDependency dependency = new AtMostOneFilledFieldDependency(restrictedUser, superUser);
@@ -643,7 +643,7 @@ public class EditPersonComponent extends EditComponent {
         if (tlContext != null)
             currentUser = tlContext.getCurrentUser();
 
-        UserEvent theEvent = new UserEvent(USER_EVENT_SENDER, ((Person) this.getModel()).getUser(), currentUser, now, aType);
+        UserEvent theEvent = new UserEvent(USER_EVENT_SENDER, Person.getUser(((Person) this.getModel())), currentUser, now, aType);
 
         USER_EVENT_SENDER.send(theEvent);
     }

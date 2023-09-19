@@ -41,7 +41,7 @@ public class BoundSecurityFilter implements Filter {
      */
     public BoundSecurityFilter() {
 		{
-            isSuperUser = ThreadContext.isSuperUser();
+            isSuperUser = ThreadContext.isAdmin();
             person      = PersonManager.getManager().getCurrentPerson();
         }
     }

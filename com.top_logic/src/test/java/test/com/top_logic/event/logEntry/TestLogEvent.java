@@ -18,6 +18,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.TLContext;
 
 /**
@@ -74,7 +75,7 @@ public class TestLogEvent extends TestLogHelper {
             theBuse.subscribe (receiver, ModelTrackingService.getTrackingService());
             
             assertNull(receiver.getReceivedEvent());
-			MonitorEvent event = new MonitorEvent(sender, trigger, source, TLContext.currentUser().getUser(), type);
+			MonitorEvent event = new MonitorEvent(sender, trigger, source, Person.getUser(TLContext.currentUser()), type);
             assertNull(receiver.getReceivedEvent());      
             sender.send(event);
             assertEquals("Event not received",event,receiver.getReceivedEvent() );

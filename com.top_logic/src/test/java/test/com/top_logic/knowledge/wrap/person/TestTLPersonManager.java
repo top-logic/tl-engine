@@ -136,7 +136,7 @@ public class TestTLPersonManager extends BasicTestCase {
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersonsSet().contains(fooPerson));
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersonsList().contains(fooPerson));
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllAlivePersons().contains(fooPerson));
-		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllAliveUsers().contains(fooPerson.getUser()));
+		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllAliveUsers().contains(Person.getUser(fooPerson)));
 
 		secondNodeKnowledgeBase.refetch();
 		secondNodeRefreshUsersTask.run();
@@ -146,7 +146,7 @@ public class TestTLPersonManager extends BasicTestCase {
 		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllPersonsSet().contains(fooPersonNode2));
 		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllPersonsList().contains(fooPersonNode2));
 		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllAlivePersons().contains(fooPersonNode2));
-		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllAliveUsers().contains(fooPersonNode2.getUser()));
+		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllAliveUsers().contains(Person.getUser(fooPersonNode2)));
 	}
 
 	public void testDeletePerson() throws RefetchTimeout {
@@ -162,7 +162,7 @@ public class TestTLPersonManager extends BasicTestCase {
 		secondNodeKnowledgeBase.refetch();
 		Person fooPersonNode2 = secondNodePersonManager.getPersonByName(personName);
 		assertNotNull(fooPersonNode2);
-		UserInterface fooUserNode2 = fooPersonNode2.getUser();
+		UserInterface fooUserNode2 = Person.getUser(fooPersonNode2);
 		Transaction deleteTx = secondNodeKnowledgeBase.beginTransaction();
 		secondNodePersonManager.deleteUser(fooPersonNode2);
 		deleteTx.commit();

@@ -21,6 +21,7 @@ import com.top_logic.base.bus.UserEvent;
 import com.top_logic.base.monitor.bus.EventWriter;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.event.bus.Sender;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
@@ -46,7 +47,7 @@ public class TestEventWriter extends BasicTestCase {
         EventWriter theWriter_single = new EventWriter(single);
         EventWriter theWriter_all    = new EventWriter(all);        
         List theEvents = new ArrayList(theNumber);
-        UserInterface rootUser =  PersonManager.getManager().getRoot().getUser();
+        UserInterface rootUser =  Person.getUser(PersonManager.getManager().getRoot());
         for(int i=0; i<theNumber; i++) {
             theEvent = new UserEvent (new Sender(),rootUser, (String) null, null, UserEvent.LOGGED_IN);
             theWriter_single.writeEvent(theEvent);

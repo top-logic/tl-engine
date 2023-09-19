@@ -43,7 +43,7 @@ public class UserService {
     	if (PersonManager.Module.INSTANCE.isActive()) {
 			Person thePers = PersonManager.getManager().getPersonByName(aName);
 			if (thePers != null) {
-				return thePers.getUser();
+				return Person.getUser(thePers);
 			}
 			Logger.info("No person with name ('" + aName + "')", UserService.class);
 			return null;

@@ -28,15 +28,11 @@ public class RootOnlyExecutabilityRule implements ExecutabilityRule {
 
     @Override
 	public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
-		TLContext theContext = TLContext.getContext();
-
-        if (theContext != null) {
-            if (theContext.isCurrentSuperUser()) {
-                return ExecutableState.EXECUTABLE;
-            }
+		if (TLContext.isAdmin()) {
+			return ExecutableState.EXECUTABLE;
+		} else {
+			return ExecutableState.NOT_EXEC_HIDDEN;
         }
-
-        return ExecutableState.NOT_EXEC_HIDDEN;
     }
 }
 

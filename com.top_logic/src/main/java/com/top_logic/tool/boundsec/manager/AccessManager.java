@@ -184,7 +184,7 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
      *         otherwise
      */
     protected boolean isSuperUser(Person aPerson) {
-		return aPerson != null && aPerson.isAdmin();
+		return aPerson != null && Person.isAdmin(aPerson);
     }
 
 	public Collection<String> getStructureNames() {

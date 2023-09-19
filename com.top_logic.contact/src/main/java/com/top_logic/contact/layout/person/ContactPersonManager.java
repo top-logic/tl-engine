@@ -141,7 +141,7 @@ public class ContactPersonManager extends ElementPersonManager {
         }
         
         try {
-            UserInterface user = aPerson.getUser();
+            UserInterface user = Person.getUser(aPerson);
             if (!deviceReadonly && user != null) {
                 user.setAttributeValue(PersonAttributes.SUR_NAME,        aPersonContact.getValue(PersonContact.NAME_ATTRIBUTE));
                 user.setAttributeValue(PersonAttributes.GIVEN_NAME,      aPersonContact.getValue(PersonContact.ATT_FIRSTNAME));

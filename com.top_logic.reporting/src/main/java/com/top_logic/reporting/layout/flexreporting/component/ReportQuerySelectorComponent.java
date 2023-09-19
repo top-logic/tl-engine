@@ -31,7 +31,6 @@ import com.top_logic.element.meta.query.StoredQuery;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.mapBasedPersistancy.MapBasedPersistancySupport;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.ValueListener;
@@ -246,7 +245,7 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
 				
 				// root or owner can modify published queries
 				if (WrapperHistoryUtils.getUnversionedIdentity(theCurrentUser)
-					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || theCurrentUser.isAdmin()) {
+					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || Person.isAdmin(theCurrentUser)) {
 					boolean isPublished;
 					if (groupAssociations.isEmpty()) {
 						isPublished = false;
@@ -335,7 +334,7 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
 			{
 				Comparator theComparator;
 				Person theUser = TLContext.getContext().getCurrentPersonWrapper();
-				if (ThreadContext.isSuperUser() || PersonManager.isAdmin(theUser)) {
+				if (ThreadContext.isAdmin() || Person.isAdmin(theUser)) {
 					theComparator = FlexWrapperAdminComparator.INSTANCE;
 				}
 				else {

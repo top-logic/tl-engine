@@ -33,7 +33,7 @@ public class SecurityAccessor implements Accessor {
 	    this.currentGroup = currentGroup;
 		this.valueAccessor = valueAccessor;
 		this.securityProvider = securityProvider;
-		this.isSuperUser = ThreadContext.isSuperUser();
+		this.isSuperUser = ThreadContext.isAdmin();
 	}
 
 	@Override

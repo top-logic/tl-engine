@@ -167,7 +167,7 @@ public class ReportingCommandSupport implements ReportConstants{
 			Person creator = ((StoredReport) model).getCreator();
 			Person currentUser = TLContext.getContext().getCurrentPersonWrapper();
 
-			if (!WrapperHistoryUtils.equalsUnversioned(currentUser, creator) || currentUser.isAdmin()) {
+			if (!WrapperHistoryUtils.equalsUnversioned(currentUser, creator) || Person.isAdmin(currentUser)) {
 				return ExecutableState.NO_EXEC_PERMISSION;
 			}
 

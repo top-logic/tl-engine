@@ -61,7 +61,7 @@ public class StoredReport extends StoredFlexWrapper {
 		{
 			Comparator theComparator = FlexWrapperUserComparator.INSTANCE;
 			
-			if (ThreadContext.isSuperUser() || PersonManager.isAdmin(anOwner)) {
+			if (ThreadContext.isAdmin() || Person.isAdmin(anOwner)) {
 				
 			    Collection allKnowledgeObjects = new ArrayList();
 			    Iterator theIter = getDefaultKnowledgeBase().getObjectsByAttribute(KO_TYPE, ATTRIBUTE_BO_TYPE, aBOType);

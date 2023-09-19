@@ -102,7 +102,7 @@ public class DBUserRepository {
 			 * made persistent until the next KB commit. */
 			try (Transaction tx = kb.beginTransaction()) {
 				Person person = login.getPerson();
-				person.getUser().setAttributeValue(PersonAttributes.PASSWORD, verificationResult.newHash());
+				Person.getUser(person).setAttributeValue(PersonAttributes.PASSWORD, verificationResult.newHash());
 				person.updateUserData();
 				tx.commit();
 			}

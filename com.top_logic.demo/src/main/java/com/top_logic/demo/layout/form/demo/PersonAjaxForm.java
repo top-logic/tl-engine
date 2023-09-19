@@ -202,7 +202,7 @@ public class PersonAjaxForm extends EditComponent {
 			if (p == null) {
 				return null;
 			}
-			UserInterface user = p.getUser();
+			UserInterface user = Person.getUser(p);
 			String mail = user.getInternalMail();
 			if (StringServices.isEmpty(mail)) {
 				mail = user.getExternalMail();

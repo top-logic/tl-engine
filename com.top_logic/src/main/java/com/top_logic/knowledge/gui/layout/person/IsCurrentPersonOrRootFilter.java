@@ -20,12 +20,12 @@ public class IsCurrentPersonOrRootFilter implements Filter {
 	@Override
 	public boolean accept(Object aObject) {
 		
-		if (ThreadContext.isSuperUser()) {
+		if (ThreadContext.isAdmin()) {
 			return true;
 		}
 		
 		{
-			UserInterface theSelected = ((Person) aObject).getUser();
+			UserInterface theSelected = Person.getUser(((Person) aObject));
 			
 			return Utils.equals(theSelected, TLContext.currentUser());
 		}

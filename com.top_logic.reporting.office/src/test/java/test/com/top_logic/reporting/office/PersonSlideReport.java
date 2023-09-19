@@ -106,7 +106,7 @@ public class PersonSlideReport extends AbstractReport {
             }
             // first get the User from the person:
             try {
-                UserInterface theUser    = thePerson.getUser();
+                UserInterface theUser    = Person.getUser(thePerson);
                 String        thePath    = "/images/people/";
                 String        theSuffix  = ".jpg";
                 FileManager   theManager = FileManager.getInstance();

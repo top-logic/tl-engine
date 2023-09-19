@@ -215,7 +215,7 @@ public class TestPerson extends BasicTestCase {
             // Person is god
 			assertEquals(thePerson.getName(), TestPersonSetup.USER_ID);
             // get DOUser from Person
-            UserInterface theUser = thePerson.getUser();
+            UserInterface theUser = Person.getUser(thePerson);
 			assertNotNull("No user for Person.", theUser);
 			assertEquals(TestPersonSetup.USER_ID, theUser.getUserName());
         }

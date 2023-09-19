@@ -33,7 +33,7 @@ public class DisallowRootDeleteRule implements ExecutabilityRule {
 	@Override
 	public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
 		{
-			if (model instanceof Person && ((Person) model).isAdmin()) {
+			if (model instanceof Person && Person.isAdmin(((Person) model))) {
 				return ExecutableState.createDisabledState(I18NConstants.ERROR_CANNOT_DELETE_ADMIN_USER);
 			}
 		}

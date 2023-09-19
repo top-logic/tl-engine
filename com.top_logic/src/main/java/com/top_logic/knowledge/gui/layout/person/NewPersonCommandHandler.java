@@ -64,7 +64,7 @@ public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
 		Person thePerson = PersonManager.getManager().createPerson(anID, aDataDeviceID, aAuthDeviceID, isRestricted);
 
         if (thePerson != null) {
-			UserInterface user = thePerson.getUser();
+			UserInterface user = Person.getUser(thePerson);
 			user.setAttributeValue(PersonAttributes.RESTRICTED_USER, isRestricted);
 			thePerson.setValue(PersonAttributes.RESTRICTED_USER, isRestricted);
             user.setAttributeValue(PersonAttributes.GIVEN_NAME, aFirst);

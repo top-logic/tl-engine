@@ -194,7 +194,7 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 	public final UserInterface getCurrentUser() {
 		Person currentPerson = getPerson();
 		if (currentPerson != null) {
-			return currentPerson.getUser();
+			return Person.getUser(currentPerson);
 		}
 		return null;
     }
@@ -242,15 +242,10 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		throw new UnsupportedOperationException("Username must not be set. Set Person to SessionContext.");
     }
 
-	/**
-	 * Check if the current user is an administrator (tl-admin).
-	 * 
-	 * @return true, if user's roles contain tl-admin
-	 */
-    @Override
-	public boolean isCurrentSuperUser() {
-		return isAdmin(getCurrentPersonWrapper());
-    }
+	@Override
+	protected boolean isAdminContext() {
+		return Person.isAdmin(getPerson());
+	}
 
 	@Override
 	public void setSessionBranch(Branch sessionBranch) {
@@ -267,19 +262,6 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
     public static TLContext getContext() {
         return (TLContext) ThreadContext.getThreadContext();
     }
-
-	/**
-	 * Check if the given user is an administrator (tl-admin).
-	 *
-	 * @return    true, if user's roles contain tl-admin
-	 */
-	public static boolean isAdmin(Person aUser) {
-		if (aUser == null) {
-			return false;
-		}
-
-		return aUser.isAdmin();
-	}
 
 	@Override
 	public TLSessionContext getSessionContext() {

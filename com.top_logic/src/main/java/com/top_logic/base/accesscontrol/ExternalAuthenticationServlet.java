@@ -369,7 +369,7 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	 * Calls {@link Person#getFullName()}.
 	 */
 	protected static String getLoginName(Person person) {
-		return person.getUser().getUserName();
+		return Person.getUser(person).getUserName();
 	}
 
 }

@@ -192,7 +192,7 @@ public class ShowSecurityQuery {
 	protected boolean appendWrapperIDs(DBHelper sqlDialect, StringBuffer aQuery,
 			Collection<? extends Wrapper> someWrappers, String aColumn, boolean hasWhere) {
 
-		aQuery.append(hasWhere ? " AND " : " WHERE ").append(aColumn).append(" IN ");
+		aQuery.append(hasWhere ? " AND " : " WHERE ").append(sqlDialect.columnRef(aColumn)).append(" IN ");
 
 		List<Wrapper> wrapperBuffer = new ArrayList<>(someWrappers);
 		List<TLID> groupIds = WrapperFactory.toObjectNamesInline(wrapperBuffer);

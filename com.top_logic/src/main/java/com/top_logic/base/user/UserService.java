@@ -8,10 +8,9 @@ package com.top_logic.base.user;
 import java.util.HashMap;
 
 import com.top_logic.base.security.attributes.PersonAttributes;
+import com.top_logic.base.security.password.PasswordManager;
 import com.top_logic.base.user.douser.DOUser;
-import com.top_logic.basic.Logger;
 import com.top_logic.dob.DataObject;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
@@ -28,33 +27,6 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 public class UserService {    
     
 	/**
-	 * Placeholder that is used upon user creation as initial password-hash as long as no explicit
-	 * password has been set.
-	 */
-	public static final String INITIAL_PWD_HASH_PLACEHOLDER = "*";
-
-    /**
-     * Returns the userobject for the Person with given name.
-     *
-     * @param aName   the username
-     * @return theUser or null
-     */
-    public static UserInterface getUser(String aName) {
-    	if (PersonManager.Module.INSTANCE.isActive()) {
-			Person thePers = PersonManager.getManager().getPersonByName(aName);
-			if (thePers != null) {
-				return Person.getUser(thePers);
-			}
-			Logger.info("No person with name ('" + aName + "')", UserService.class);
-			return null;
-    	} else {
-    		Logger.info("Failed to getUser('" + aName + "'): PersonManager not configured", UserService.class);
-    		return null;
-    	}
-    }
-
-
-    /**
 	 * Creates an empty userobject with the given name.
 	 * 
 	 * All attributes are initally filled with the given username as value except the Object_Class,
@@ -93,7 +65,7 @@ public class UserService {
 				// Neither null nor the empty string can be used,
 				// as the password is mandatory in the database
 				// and oracle does not allow empty strings in a mandatory columns.
-				new_person.put(attr, INITIAL_PWD_HASH_PLACEHOLDER);
+				new_person.put(attr, PasswordManager.INITIAL_PWD_HASH_PLACEHOLDER);
             }
 			else if (attr.equals(PersonAttributes.USER_NAME)
 				|| attr.equals(PersonAttributes.GIVEN_NAME)

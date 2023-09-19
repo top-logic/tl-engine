@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import com.top_logic.base.user.UserInterface;
-import com.top_logic.base.user.UserService;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.BatchImpl;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /** 
@@ -114,7 +114,7 @@ public class UserMailBatch extends BatchImpl {
 
             while (theNameIter.hasNext()){
                 String        theName = (String) theNameIter.next();
-                UserInterface theUser = UserService.getUser(theName);
+                UserInterface theUser = Person.getUser(PersonManager.getManager().getPersonByName(theName));
                 if (theUser != null){
                     theRecipients.add(theUser); 
                 }

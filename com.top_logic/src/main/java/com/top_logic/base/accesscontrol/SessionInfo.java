@@ -10,8 +10,9 @@ import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
 
 import com.top_logic.base.user.UserInterface;
-import com.top_logic.base.user.UserService;
 import com.top_logic.basic.Logger;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * This class holds the informations about an active session
@@ -149,7 +150,7 @@ class SessionInfo extends HashMap<String, Object> {
         if (theUser == null) {
             String theUserName = (String) this.get(SESSION_DATA_USER_NAME);
             if (theUserName != null) {
-                theUser = UserService.getUser(theUserName);
+                theUser = Person.getUser(PersonManager.getManager().getPersonByName(theUserName));
             }
         }
         return theUser;

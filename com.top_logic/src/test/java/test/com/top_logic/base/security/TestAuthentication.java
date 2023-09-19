@@ -19,7 +19,7 @@ import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
-import com.top_logic.base.user.UserService;
+import com.top_logic.base.security.password.PasswordManager;
 import com.top_logic.knowledge.wrap.person.Person;
 
 
@@ -94,7 +94,7 @@ public class TestAuthentication extends BasicTestCase {
 		Person newPerson = TestPerson.createPerson("newPerson");
 		try {
 			assertEquals("Test checks that verifying the initial password hash does not terminetes abnormally.",
-				UserService.INITIAL_PWD_HASH_PLACEHOLDER, Person.getUser(newPerson).getPassword());
+				PasswordManager.INITIAL_PWD_HASH_PLACEHOLDER, Person.getUser(newPerson).getPassword());
 			try (LoginCredentials login = LoginCredentials.fromUserAndPassword(newPerson, "pwd".toCharArray())) {
 				try {
 					assertFalse(this.authentication.authentify(login));

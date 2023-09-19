@@ -475,7 +475,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      * @return true when you can only get the backup user.
      */
 	public boolean isBackupMode() {
-        UserInterface user = this.getUser();
+		UserInterface user = Person.getUser(this);
         return user != null && KBUtils.getWrappedObjectName(this).equals(user.getIdentifier());
     }
 
@@ -585,13 +585,23 @@ public class Person extends AbstractBoundWrapper implements Author {
         this.setIsDeletionHandled(false);
     }
 
-    /**
-     * Get the DOUser for the Person.
-     *
-     * @return the User of this person, or the backup if the secDevice could not
-     *         be reached or this persons user has been deleted
-     */
-	public UserInterface getUser() {
+	/**
+	 * Null-safe account information retrieval for the given account.
+	 */
+	public static UserInterface getUser(Person person) {
+		if (person == null) {
+			return null;
+		}
+		return person.getUser();
+	}
+
+	/**
+	 * Get the DOUser for the Person.
+	 *
+	 * @return the User of this person, or the backup if the secDevice could not be reached or this
+	 *         persons user has been deleted
+	 */
+	protected UserInterface getUser() {
         this.checkInvalid();
 
 		// User has been deleted before, use data from backup user.
@@ -701,28 +711,28 @@ public class Person extends AbstractBoundWrapper implements Author {
      * the customer name of this user
      */
 	public String getCustomerName() {
-        return this.getUser().getCustomerName();
+		return Person.getUser(this).getCustomerName();
     }
 
     /**
      * the external email of this user
      */
 	public String getExternalMail() {
-        return this.getUser().getExternalMail();
+		return Person.getUser(this).getExternalMail();
     }
 
     /**
      * the external number of this user
      */
 	public String getExternalNumber() {
-        return this.getUser().getExternalNumber();
+		return Person.getUser(this).getExternalNumber();
     }
 
     /**
      * the firstname of this user
      */
 	public String getFirstName() {
-        return this.getUser().getFirstName();
+		return Person.getUser(this).getFirstName();
     }
 
     /**
@@ -737,7 +747,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      * @return    The full name of the person as mentioned above.
      */
 	public String getFullName() {
-        String theFullName = this.getUser().getFullName();
+		String theFullName = Person.getUser(this).getFullName();
         if (StringServices.isEmpty(theFullName)) {
             // TODO this is not better than the above ?
             theFullName = this.getFirstName() + ' ' + this.getLastName();
@@ -750,28 +760,28 @@ public class Person extends AbstractBoundWrapper implements Author {
      * the internal email of this user
      */
 	public String getInternalMail() {
-        return this.getUser().getInternalMail();
+		return Person.getUser(this).getInternalMail();
     }
 
     /**
      * the internal number of this user
      */
 	public String getInternalNumber() {
-        return this.getUser().getInternalNumber();
+		return Person.getUser(this).getInternalNumber();
     }
 
     /**
      * the lastname of this user
      */
 	public String getLastName() {
-        return this.getUser().getLastName();
+		return Person.getUser(this).getLastName();
     }
 
     /**
      * the mobile number of this user
      */
 	public String getMobileNumber() {
-        return this.getUser().getMobileNumber();
+		return Person.getUser(this).getMobileNumber();
     }
 
     /**
@@ -782,28 +792,28 @@ public class Person extends AbstractBoundWrapper implements Author {
      * @return formatted username
      */
 	public String getNameAs_LastTitleFirst(boolean includeTitle) {
-        return this.getUser().getNameAs_LastTitleFirst(includeTitle);
+		return Person.getUser(this).getNameAs_LastTitleFirst(includeTitle);
     }
 
     /**
      * the organization unit of this user
      */
 	public String getOrgUnit() {
-        return this.getUser().getOrgUnit();
+		return Person.getUser(this).getOrgUnit();
     }
 
     /**
      * the private number of this user
      */
 	public String getPrivateNumber() {
-        return this.getUser().getPrivateNumber();
+		return Person.getUser(this).getPrivateNumber();
     }
 
     /**
      * the title of this user
      */
 	public String getTitle() {
-        return this.getUser().getTitle();
+		return Person.getUser(this).getTitle();
     }
 
     /**
@@ -824,7 +834,7 @@ public class Person extends AbstractBoundWrapper implements Author {
         properties = null;
         // reload the user to make sure it is cached again
         // in the valid persons cache
-		this.getUser();
+		Person.getUser(this);
     }
      
      @Override
@@ -930,7 +940,7 @@ public class Person extends AbstractBoundWrapper implements Author {
             // all the getUser() call is for, is to force an update
             // if this person should not be alive already. So it could have
             // changed its state after calling this method
-            return tValid() && this.getUser() != null
+			return tValid() && Person.getUser(this) != null
                 && getPersonManager().isKnown(current);
         }
     }
@@ -1111,6 +1121,17 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 */
 	public void setAdmin(boolean value) {
 		tSetDataBoolean("admin", value);
+	}
+
+	/**
+	 * Null-safe check for the given {@link Person} to have administrative rights.
+	 */
+	public static boolean isAdmin(Person aUser) {
+		if (aUser == null) {
+			return false;
+		}
+	
+		return aUser.isAdmin();
 	}
 
 }

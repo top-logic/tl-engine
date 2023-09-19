@@ -117,27 +117,27 @@ public class TestThreadContext extends TestCase {
      */
     public void testSuperUser () throws Exception {
        
-        assertFalse(ThreadContext.isSuperUser());
+        assertFalse(ThreadContext.isAdmin());
         ThreadContext.pushSuperUser();
-        assertTrue (ThreadContext.isSuperUser());
+        assertTrue (ThreadContext.isAdmin());
         ThreadContext.pushSuperUser();
-        assertTrue (ThreadContext.isSuperUser());
+        assertTrue (ThreadContext.isAdmin());
         ThreadContext.resetSuperUser();
-        assertFalse(ThreadContext.isSuperUser());
+        assertFalse(ThreadContext.isAdmin());
         try {
         	ThreadContext.popSuperUser();
         	fail("Expected EmptyStackException");
         } catch (EmptyStackException expected) { /* expected */ }
             
-        assertFalse(ThreadContext.isSuperUser());
+        assertFalse(ThreadContext.isAdmin());
         ThreadContext.pushSuperUser();
-        assertTrue (ThreadContext.isSuperUser());
+        assertTrue (ThreadContext.isAdmin());
         ThreadContext.pushSuperUser();
-        assertTrue (ThreadContext.isSuperUser());
+        assertTrue (ThreadContext.isAdmin());
         ThreadContext.popSuperUser();
-        assertTrue (ThreadContext.isSuperUser());
+        assertTrue (ThreadContext.isAdmin());
         ThreadContext.popSuperUser();
-        assertFalse(ThreadContext.isSuperUser());
+        assertFalse(ThreadContext.isAdmin());
     }
 
     /** Inner class implementing ThreadContextListener */

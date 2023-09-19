@@ -150,7 +150,7 @@ public abstract class ExpressionSelectorComponent<W extends Wrapper> extends For
 					// root or owner can modify published queries
 					if (WrapperHistoryUtils.getUnversionedIdentity(currentUser).equals(
 						WrapperHistoryUtils.getUnversionedIdentity(creator))
-						|| currentUser.isAdmin()) {
+						|| Person.isAdmin(currentUser)) {
 						boolean isPublished;
 						if (groupAssociations.isEmpty()) {
 							isPublished = false;

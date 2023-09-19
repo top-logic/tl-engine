@@ -57,7 +57,7 @@ public class AllowAccessVisitor extends AllElementVisitor {
     }
     
     public static AllElementVisitor createVisitor(int size, BoundCommandGroup aGroup, BoundComponent aChecker) {
-        if (ThreadContext.isSuperUser()) {
+        if (ThreadContext.isAdmin()) {
             return new AllElementVisitor(size);
         } 
         return new AllowAccessVisitor(size, aChecker.getRolesForCommandGroup(aGroup));

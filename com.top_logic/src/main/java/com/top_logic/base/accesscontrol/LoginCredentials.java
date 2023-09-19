@@ -183,7 +183,7 @@ public class LoginCredentials implements AutoCloseable {
 	}
 
 	private static UserInterface getUser(Person person) {
-		return person.getUser();
+		return Person.getUser(person);
 	}
 
 	@Override

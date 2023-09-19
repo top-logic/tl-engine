@@ -168,7 +168,7 @@ public class TLContextManager extends ThreadContextManager {
 		if (currentPerson == null) {
 			return null;
 		}
-		return currentPerson.getUser();
+		return Person.getUser(currentPerson);
 	}
 
 	/**

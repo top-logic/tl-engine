@@ -83,7 +83,7 @@ public class EditRelatedPersonComponent extends EditPersonComponent {
             	return theResult;
             }};
 
-        boolean immutable = !allowManualContactAssigning || !TLContext.isSuperUser();
+        boolean immutable = !allowManualContactAssigning || !TLContext.isAdmin();
 		SelectField relatedContactField = FormFactory.newSelectField(FIELD_NAME_RELATED_CONTACT, allContacts, false, immutable);
 
         if (this.getModel() != null) {

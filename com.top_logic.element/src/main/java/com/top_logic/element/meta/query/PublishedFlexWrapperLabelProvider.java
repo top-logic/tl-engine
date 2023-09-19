@@ -8,7 +8,6 @@ package com.top_logic.element.meta.query;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.util.TLContext;
@@ -44,7 +43,7 @@ public class PublishedFlexWrapperLabelProvider implements LabelProvider {
 			    Person      theUser    = TLContext.getContext().getCurrentPersonWrapper();
 			    Person      theCreator = theWrapper.getCreator();
     			if (!WrapperHistoryUtils.getUnversionedIdentity(theUser).equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator))) {
-					if (TLContext.isSuperUser() || PersonManager.isAdmin(theUser)) {
+					if (TLContext.isAdmin() || Person.isAdmin(theUser)) {
     				    String theSuffix = "";
     				    if (theCreator.wasAlive()) {
 							theSuffix = " (" + theCreator.getLastName() + ", " + theCreator.getFirstName() + ")";

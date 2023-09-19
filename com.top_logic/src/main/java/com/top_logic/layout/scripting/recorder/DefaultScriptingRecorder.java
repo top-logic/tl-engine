@@ -36,6 +36,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.basic.Command;
@@ -527,16 +528,17 @@ public class DefaultScriptingRecorder extends ScriptingRecorder {
 		if (context == null) {
 			return true;
 		}
-		if (context.isCurrentSuperUser()) {
-			// Super user sees everything
-			return true;
-		}
+
+		// Look up cached value from context.
 		Boolean enabled = context.get(SCRIPTING_ENABLED);
 		if (enabled == null) {
-			if (_scriptingGroup.containsPerson(context.getCurrentPersonWrapper())) {
+			Person person = context.getPerson();
+			if (person == null) {
+				enabled = false;
+			} else if (person.isAdmin()) {
 				enabled = true;
 			} else {
-				enabled = false;
+				enabled = _scriptingGroup.containsPerson(person);
 			}
 			context.set(SCRIPTING_ENABLED, enabled);
 		}

@@ -101,7 +101,7 @@ public class PasswordManager extends AbstractConfiguredInstance<PasswordManager.
             return false;
         }
 		try {
-			DataObject userData = account.getUser();
+			DataObject userData = Person.getUser(account);
 			/* returns pass signed with leading '#', or the initial password hash */
 			String theOldPwd = (String) userData.getAttributeValue(PersonAttributes.PASSWORD);
 

@@ -34,8 +34,8 @@ public class CommonPersonLabelProvider implements LabelProvider {
 
 		Person person = (Person) object;
 
-		return person.getUser().getUserName() + "(" +
-			person.getUser().getNameAs_LastTitleFirst(false) + ")";
+		return Person.getUser(person).getUserName() + "(" +
+			Person.getUser(person).getNameAs_LastTitleFirst(false) + ")";
 	}
 
 }

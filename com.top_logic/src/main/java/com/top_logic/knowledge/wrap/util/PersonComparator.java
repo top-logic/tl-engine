@@ -42,10 +42,10 @@ public class PersonComparator implements Comparator<Person> {
 		UserInterface u1 = null;
 		UserInterface u2 = null;
 		if (p1 != null) {
-			u1 = p1.getUser();
+			u1 = Person.getUser(p1);
 		}
 		if (p2 != null) {
-			u2 = p2.getUser();
+			u2 = Person.getUser(p2);
 		}
 		return usercomp.compare(u1, u2);
 	}

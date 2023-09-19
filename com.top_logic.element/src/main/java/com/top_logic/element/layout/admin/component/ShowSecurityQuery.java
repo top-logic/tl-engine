@@ -180,23 +180,28 @@ public class ShowSecurityQuery {
         }
 	}
 
-	/** 
+	/**
 	 * Append the given collection of wrappers as where clause to the query.
-	 * @param    aQuery          The query to be extended, must not be <code>null</code>.
-	 * @param    someWrappers    The wrappers to get the ID from, must not be <code>null</code>.
-	 * @param    aColumn         Name of the requested column, must not be <code>null</code>.
-	 * @param    hasWhere        <code>true</code> when where clause is already part of the query.
 	 * 
-	 * @return   <code>true</code> when where clause is now part of the query.
+	 * @param query
+	 *        The query to be extended, must not be <code>null</code>.
+	 * @param wrappers
+	 *        The wrappers to get the ID from, must not be <code>null</code>.
+	 * @param column
+	 *        Name of the requested column, must not be <code>null</code>.
+	 * @param hasWhere
+	 *        <code>true</code> when where clause is already part of the query.
+	 * 
+	 * @return <code>true</code> when where clause is now part of the query.
 	 */
-	protected boolean appendWrapperIDs(DBHelper sqlDialect, StringBuffer aQuery,
-			Collection<? extends Wrapper> someWrappers, String aColumn, boolean hasWhere) {
+	protected boolean appendWrapperIDs(DBHelper sqlDialect, StringBuffer query,
+			Collection<? extends Wrapper> wrappers, String column, boolean hasWhere) {
 
-		aQuery.append(hasWhere ? " AND " : " WHERE ").append(aColumn).append(" IN ");
+		query.append(hasWhere ? " AND " : " WHERE ").append(sqlDialect.columnRef(column)).append(" IN ");
 
-		List<Wrapper> wrapperBuffer = new ArrayList<>(someWrappers);
+		List<Wrapper> wrapperBuffer = new ArrayList<>(wrappers);
 		List<TLID> groupIds = WrapperFactory.toObjectNamesInline(wrapperBuffer);
-		sqlDialect.literalSet(aQuery, DBType.ID, groupIds);
+		sqlDialect.literalSet(query, DBType.ID, groupIds);
 
 		return true;
 	}

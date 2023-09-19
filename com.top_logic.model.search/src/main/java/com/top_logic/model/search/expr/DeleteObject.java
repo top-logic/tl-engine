@@ -5,10 +5,13 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
@@ -52,6 +55,13 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
 		return evalPotentialFlatMap(definitions, self, null);
+	}
+
+	@Override
+	public Object evalFlatMap(EvalContext definitions, Collection<?> base, Void param) {
+		PersistencyLayer.getKnowledgeBase().deleteAll(base.stream().filter(x -> x instanceof TLObject)
+			.map(x -> ((TLObject) x).tHandle()).collect(Collectors.toList()));
+		return null;
 	}
 
 	@Override

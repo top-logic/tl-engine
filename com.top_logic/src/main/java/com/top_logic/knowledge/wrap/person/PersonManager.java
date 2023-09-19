@@ -659,11 +659,4 @@ public abstract class PersonManager extends ManagedClass {
 		return null;
 	}
 
-	/**
-	 * Whether the given user is non-<code>null</code> and marked as administrator.
-	 */
-	public static boolean isAdmin(Person theUser) {
-		return theUser != null && theUser.isAdmin();
-	}
-
 }

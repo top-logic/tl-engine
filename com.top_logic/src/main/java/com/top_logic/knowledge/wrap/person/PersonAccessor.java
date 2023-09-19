@@ -34,7 +34,7 @@ public class PersonAccessor implements Accessor<Person> {
 		}
 		else if (PersonAccessor.PERSON_INFOS.contains(property)) {
             try {
-				return person.getUser().getAttributeValue(property);
+				return Person.getUser(person).getAttributeValue(property);
 			} catch (Exception ex) {
 				Logger.error("Failed to get person attribute from user object: " + property, ex, PersonAccessor.class);
             }

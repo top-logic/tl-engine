@@ -72,7 +72,7 @@ public class UnlockExecutable extends AbstractWebfolderAction {
 
 			DataAccessProxy theDAP = document.getDAP();
             if (LockExecutable.isLocked(theDAP)) {
-                if (!TLContext.isSuperUser()) {
+                if (!TLContext.isAdmin()) {
                     String theName = LockExecutable.getLocker(theDAP);
                     String theUser = TLContext.getContext().getCurrentUserName();
 

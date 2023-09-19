@@ -121,7 +121,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		if (result instanceof FormField) {
 			FormField resultField = (FormField) result;
 			initFormField(update, resultField);
-			if (AttributeOperations.isClassified(theMA) && !ThreadContext.isSuperUser()) {
+			if (AttributeOperations.isClassified(theMA) && !ThreadContext.isAdmin()) {
 			    AccessManager theAM = AccessManager.getInstance();
 			    Person        thePerson = TLContext.getContext().getCurrentPersonWrapper();
 				TLObject theAttrib = update.getObject();

@@ -16,6 +16,7 @@ import com.top_logic.basic.module.ModuleException;
 import com.top_logic.event.bus.Bus;
 import com.top_logic.event.bus.Sender;
 import com.top_logic.event.bus.Service;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.TLContext;
 
@@ -69,7 +70,7 @@ public final class ModelTrackingService extends ManagedClass {
         }
         
 		MonitorEvent theEvent =
-			new MonitorEvent(eventSender, aMessage, aSource, TLContext.currentUser().getUser(), anEventType);
+			new MonitorEvent(eventSender, aMessage, aSource, Person.getUser(TLContext.currentUser()), anEventType);
         try {
             Logger.debug("Send tracking event " + anEventType + " for (" + aSource + "," + aMessage + ")", ModelTrackingService.class);
             eventSender.send(theEvent);

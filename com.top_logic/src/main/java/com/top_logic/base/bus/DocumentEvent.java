@@ -22,6 +22,7 @@ import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.TLContext;
 
 /**
@@ -111,7 +112,7 @@ public class DocumentEvent extends MonitorEvent {
                                                   String kindOfEvent) 
                                                 throws UserSecurityException, 
                                                        Exception {
-		UserInterface aUser = TLContext.currentUser().getUser();
+		UserInterface aUser = Person.getUser(TLContext.currentUser());
 
         if (aUser == null) {
             throw new UserSecurityException ("No current user set in " +

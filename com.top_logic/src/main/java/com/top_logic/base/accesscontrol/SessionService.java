@@ -377,13 +377,13 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		LicenseTool licenseTool = LicenseTool.getInstance();
 		TLLicense license = licenseTool.getLicense();
 		if (licenseTool.usersExceeded(license)) {
-			if (!aUser.getUser().getUserName().equals(PersonManager.getManager().getSuperUserName())) {
+			if (!Person.getUser(aUser).getUserName().equals(PersonManager.getManager().getSuperUserName())) {
 				return null;
 			}
-			logOutExistingSession(aUser.getUser().getUserName());
+			logOutExistingSession(Person.getUser(aUser).getUserName());
 		}
 		if (getOnlyOneSession() || licenseTool.limitToOneSession(license)) {
-			logOutExistingSession(aUser.getUser().getUserName());
+			logOutExistingSession(Person.getUser(aUser).getUserName());
     	}
         return (getNewSessionForUser (request, response, aUser));
     }    
@@ -452,7 +452,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         
         this.putSession (session, aUser, request, sessionContext);            
 
-		sendEvent(session.getId(), aUser.getUser(), aUser.getUser(), UserEvent.LOGGED_IN);
+		sendEvent(session.getId(), Person.getUser(aUser), Person.getUser(aUser), UserEvent.LOGGED_IN);
 
         return (session);
     }
@@ -522,7 +522,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         //in the session map, which is only used in this class
         SessionInfo sessioninfo = new SessionInfo ();
 
-		sessioninfo.setUser(aUser.getUser());
+		sessioninfo.setUser(Person.getUser(aUser));
 
 		sessioninfo.setClientIP(clientHost(aRequest));
         sessioninfo.setCreationTime         (session.getCreationTime ());

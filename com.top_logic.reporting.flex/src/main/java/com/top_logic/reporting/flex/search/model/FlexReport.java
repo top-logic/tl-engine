@@ -74,7 +74,7 @@ public class FlexReport extends StoredFlexWrapper {
 			Comparator theComparator = FlexWrapperUserComparator.INSTANCE;
 			
 			String typeNames = names(types);
-			if (ThreadContext.isSuperUser() || PersonManager.isAdmin(anOwner)) {
+			if (ThreadContext.isAdmin() || Person.isAdmin(anOwner)) {
 				
 			    Collection allKnowledgeObjects = new ArrayList();
 				Iterator theIter =

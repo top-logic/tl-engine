@@ -651,7 +651,7 @@ public class StateManager /* implements EventListener */ {
             }
             */
             Logger.warn("StateManager.isOwner HAS TO BE IMPLEMENTED",this);
-            if (ThreadContext.isSuperUser()) {
+            if (ThreadContext.isAdmin()) {
                 return true;
             }
         } catch (Exception e) {

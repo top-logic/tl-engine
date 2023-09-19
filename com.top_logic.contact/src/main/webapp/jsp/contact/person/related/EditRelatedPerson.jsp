@@ -52,17 +52,17 @@
 			<form:groupCell titleKeySuffix="securityData">
 				<%
 				Collection<?> allDataDevices = TLSecurityDeviceManager.getInstance().getConfiguredDataAccessDeviceIDs();
-				if(ThreadContext.isSuperUser() && !allDataDevices.isEmpty()){
-					%>
+						if(ThreadContext.isAdmin() && !allDataDevices.isEmpty()){
+				%>
 					<form:inputCell name="<%=PersonAttributes.DATA_ACCESS_DEVICE_ID%>"/>
 					<%
-				}
-				%>
+					}
+					%>
 				
 				<%
-				Collection<?> allAuthDevices = TLSecurityDeviceManager.getInstance().getConfiguredAuthenticationDeviceIDs();
-				if(ThreadContext.isSuperUser() && !allAuthDevices.isEmpty()){
-					%>
+								Collection<?> allAuthDevices = TLSecurityDeviceManager.getInstance().getConfiguredAuthenticationDeviceIDs();
+										if(ThreadContext.isAdmin() && !allAuthDevices.isEmpty()){
+								%>
 					<form:inputCell name="<%=PersonAttributes.AUTHENTICATION_DEVICE_ID%>"/>
 					<%
 				}

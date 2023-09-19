@@ -623,7 +623,7 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
      *              is not empty.
      */
     protected boolean checkAccess(TLContext context, BoundObject model, BoundCommandGroup aCmdGroup) {
-        if (ThreadContext.isSuperUser()) {
+        if (ThreadContext.isAdmin()) {
             return true;    // bypass bound security for SuperUsers
         }
 

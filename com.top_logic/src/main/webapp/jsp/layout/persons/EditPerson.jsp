@@ -158,36 +158,38 @@ com.top_logic.knowledge.wrap.person.PersonManager"
 								colon="true"
 							/>
 							<%
-							if (ThreadContext.isSuperUser()) {
-								Set<String> allDataDevices = TLSecurityDeviceManager.getInstance().getConfiguredDataAccessDeviceIDs();
-								if (!allDataDevices.isEmpty()) {
-									%>
+							if (ThreadContext.isAdmin()) {
+													Set<String> allDataDevices = TLSecurityDeviceManager.getInstance().getConfiguredDataAccessDeviceIDs();
+													if (!allDataDevices.isEmpty()) {
+							%>
 									<form:inputCell name="<%=PersonAttributes.DATA_ACCESS_DEVICE_ID%>">
 										<form:select name="<%=PersonAttributes.DATA_ACCESS_DEVICE_ID%>"/>
 									</form:inputCell>
 									<%
-								}
-								%>
+									}
+									%>
 								
 								<%
-								Set<String> allAuthDevices = TLSecurityDeviceManager.getInstance().getConfiguredAuthenticationDeviceIDs();
-								if (!allAuthDevices.isEmpty()) {
-									%>
+																Set<String> allAuthDevices = TLSecurityDeviceManager.getInstance().getConfiguredAuthenticationDeviceIDs();
+																						if (!allAuthDevices.isEmpty()) {
+																%>
 									<form:inputCell name="<%=PersonAttributes.AUTHENTICATION_DEVICE_ID%>">
 										<form:select name="<%=PersonAttributes.AUTHENTICATION_DEVICE_ID%>"/>
 									</form:inputCell>
 									<%
-								}
-							}
-							%>
-							<form:ifExists name="<%= EditPersonComponent.GROUPS_FIELD_NAME %>">
-								<form:inputCell name="<%= EditPersonComponent.GROUPS_FIELD_NAME %>"/>
+									}
+														}
+									%>
+							<form:ifExists name="<%=EditPersonComponent.GROUPS_FIELD_NAME%>">
+								<form:inputCell name="<%=EditPersonComponent.GROUPS_FIELD_NAME%>"/>
 							</form:ifExists>
 						</form:groupCell>
 					</form:layout>
 				</form:layout>
 			</form:layout>
-			<%if(ThreadContext.isSuperUser()){ %>
+			<%
+			if(ThreadContext.isAdmin()){
+			%>
 				<form:groupCell titleKeySuffix="section.licenseData">
 					<%
 					TagWriter tagWriter = MainLayout.getTagWriter(pageContext);

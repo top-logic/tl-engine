@@ -16,6 +16,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import com.top_logic.base.monitor.bus.LoginInfo;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
@@ -109,7 +110,7 @@ public class TestLoginInfo extends BasicTestCase {
 	protected void setUp () throws Exception {
         super.setUp (); //setup TLTestCase
 
-        this.user = PersonManager.getManager().getPersonByName(DEFAULT_USER).getUser();
+        this.user = Person.getUser(PersonManager.getManager().getPersonByName(DEFAULT_USER));
     }
 
     @Override

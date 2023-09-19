@@ -817,7 +817,7 @@ public class BoundHelper extends ManagedClass {
         if (context == null)
             return true;   // no Context, no Security
 
-        if (ThreadContext.isSuperUser()) {
+        if (ThreadContext.isAdmin()) {
             return true;
         }
 		{
@@ -825,7 +825,7 @@ public class BoundHelper extends ManagedClass {
             if (currPerson == null)
                 return false;   // no Person, no Security
 
-			if (currPerson.isAdmin()) {
+			if (Person.isAdmin(currPerson)) {
 				return true;
 			}
 

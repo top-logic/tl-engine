@@ -26,6 +26,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.event.bus.Bus;
 import com.top_logic.event.bus.Sender;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
@@ -45,7 +46,7 @@ public class TestUserMonitor extends BasicTestCase {
 
         Sender theSender = new Sender (Bus.CHANGES, Bus.USER);
         String theUserId = "root";
-        UserInterface theUser = PersonManager.getManager().getPersonByName(theUserId).getUser();
+        UserInterface theUser = Person.getUser(PersonManager.getManager().getPersonByName(theUserId));
         if(theUser == null) {
             fail("User "+theUserId+" not found.");
         } 

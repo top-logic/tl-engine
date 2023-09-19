@@ -16,7 +16,6 @@ import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.db.DBUserRepository;
 import com.top_logic.base.security.password.PasswordValidator.ValidationResult;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
-import com.top_logic.base.user.UserService;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -57,6 +56,12 @@ public class PasswordManager extends AbstractConfiguredInstance<PasswordManager.
     private static final String PERSON_KO_ATTRIB_PWD_HISTORY     = "pwdhistory";
 
     private final PasswordValidator _validator;
+
+	/**
+	 * Placeholder that is used upon user creation as initial password-hash as long as no explicit
+	 * password has been set.
+	 */
+	public static final String INITIAL_PWD_HASH_PLACEHOLDER = "*";
 
     /**
 	 * Creates a {@link PasswordManager} from configuration.
@@ -136,7 +141,7 @@ public class PasswordManager extends AbstractConfiguredInstance<PasswordManager.
 	 * Adds a password hash to the persons password history.
 	 */
 	private void addPwdToHistory(Person aPerson, String pwdHash) {
-		if (UserService.INITIAL_PWD_HASH_PLACEHOLDER.equals(pwdHash)) {
+		if (PasswordManager.INITIAL_PWD_HASH_PLACEHOLDER.equals(pwdHash)) {
 			/* do not add the initial placeholder to pwd history as it is no valid pwd hash */
 			return;
 		}

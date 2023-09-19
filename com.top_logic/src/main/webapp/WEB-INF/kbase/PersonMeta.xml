@@ -24,6 +24,7 @@
 	<mo_attribute att_name="dataDeviceID" att_type="String" mandatory="false" />
 	<mo_attribute att_name="authDeviceID" att_type="String" mandatory="false" />	
 	<mo_attribute att_name="restrictedUser" att_type="Boolean" mandatory="false" />	
+	<mo_attribute att_name="admin" att_type="Boolean" mandatory="false" />	
 </attributes>
 	<index>
 		<mo_index name="name" unique="true">

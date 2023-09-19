@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -151,7 +150,7 @@ public abstract class ExpressionSelectorComponent<W extends Wrapper> extends For
 					// root or owner can modify published queries
 					if (WrapperHistoryUtils.getUnversionedIdentity(currentUser).equals(
 						WrapperHistoryUtils.getUnversionedIdentity(creator))
-						|| SecurityContext.isAdmin()) {
+						|| currentUser.isAdmin()) {
 						boolean isPublished;
 						if (groupAssociations.isEmpty()) {
 							isPublished = false;

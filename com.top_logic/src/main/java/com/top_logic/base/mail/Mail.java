@@ -21,12 +21,12 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.util.DataAccessProxyDataSource;
+import com.top_logic.util.TLContext;
 
 /** 
  * Class for easily sending mails.
@@ -419,7 +419,7 @@ public class Mail {
      */
     public static String getCurrentUserAddress() {
         
-        UserInterface theUser = SecurityContext.getCurrentUser();
+		UserInterface theUser = TLContext.currentUser().getUser();
         String theAddress = null;
         if (theUser != null) {
             //anAddress = theUser.getUserName();

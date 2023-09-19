@@ -7,7 +7,6 @@ package com.top_logic.base.user.douser;
 
 
 import com.top_logic.base.security.attributes.PersonAttributes;
-import com.top_logic.base.security.authorisation.roles.ACL;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
@@ -51,10 +50,6 @@ public class DOUser implements UserInterface, PersonAttributes {
     /** The internal dataobject. */
     protected DataObject internalUser;
 
-
-    /** The ACL of the user. */
-    private ACL acl;    // Private - must by synchronized
-
     /**
      * Creates a new DOUser.
      *
@@ -74,7 +69,6 @@ public class DOUser implements UserInterface, PersonAttributes {
      */
     public void reset (DataObject aUser) {
         this.internalUser = aUser;
-        this.resetACLRoles();
     }
 
     /**
@@ -185,72 +179,6 @@ public class DOUser implements UserInterface, PersonAttributes {
 	}
 
 	/**
-	 * Is this user restricted or not.
-	 * 
-	 * @see com.top_logic.base.user.UserInterface#isRestricted()
-	 */
-	@Override
-	public Boolean isRestricted() {
-		try {
-			return (Boolean) (internalUser.getAttributeValue(RESTRICTED_USER));
-		} catch (NoSuchAttributeException nae) {
-			Logger.error("Tried to retrieve Users RESTRICTION from dataobject " + internalUser
-				+ ", which is no User or has no such attribute", DOUser.class);
-			return false;
-		}
-	}
-
-    /**
-    * the roles of this user as string, sparated by ','
-    */
-    @Override
-	public String getRoleString () {
-        try {
-            return (String)this.internalUser.getAttributeValue (USER_ROLE);                            
-        }catch (NoSuchAttributeException nae) {
-            Logger.error ("Tried to retrieve Userroles from dataobject " + internalUser + ", which is no User or has no such attribute", this);
-            return "";
-        }
-    }
-
-    /**
-     * Returns the roles of this user as ACL.
-     *
-     * This value will be cached in this instance, so that changes in the
-     * underlying data object will not be checked.
-     *
-     * @return    The roles of this user as ACL.
-     */
-    @Override
-	public synchronized ACL getACLRoles () {
-        if (this.acl == null) {
-            try {
-                String theName   = this.getUserName ();
-                String theString = (String) (this.internalUser.
-                                            getAttributeValue (USER_ROLE));
-
-                this.acl = new ACL(theString);
-
-				// Make sure that user is contained in its own Role List.
-               	this.acl.addRole(theName);
-            }
-            catch (NoSuchAttributeException ex) {
-                Logger.error ("Unable to get user role from data object", 
-                              ex, this);
-            }
-        }
-
-        return (this.acl);
-    }
-
-    /** 
-     * Method for resetting the cached ACL roles.
-     */
-    public synchronized void resetACLRoles () {
-        this.acl = null;
-    }
-
-    /**
      * the object class of this user (should be always "person")
      */
     @Override

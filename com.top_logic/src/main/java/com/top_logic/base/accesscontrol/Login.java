@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.password.PasswordManager;
@@ -32,6 +31,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.monitor.FailedLogin;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.TLPersonManager;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.QualifiedComponentNameConstraint;
@@ -463,7 +463,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			if (allowedGroups == null) {
 				return;
 			}
-			if (SecurityContext.isAdmin(aPerson.getUser())) {
+			if (PersonManager.isAdmin(aPerson)) {
 				// Administrator may always log in.
 				return;
 			}

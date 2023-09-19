@@ -6,8 +6,6 @@
  */
 package com.top_logic.base.user;
 
-import com.top_logic.base.security.authorisation.roles.ACL;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.dob.DataObject;
 
 
@@ -55,22 +53,6 @@ public interface UserInterface extends DataObject {
 	 * @return formatted username
 	 */
 	public String getNameAs_LastTitleFirst(boolean includeTitle);
-
-	/**
-	 * Is this user restricted or not.
-	 */
-	@BooleanDefault(false)
-	public Boolean isRestricted();
-
-    /**
-     * the roles of this user as String sparated by ','
-     */
-    public String getRoleString ();
-
-    /**
-     * the roles of this user as HashSet
-     */
-    public ACL getACLRoles ();           
 
     /**
      * the object class of this user (should be always "person")

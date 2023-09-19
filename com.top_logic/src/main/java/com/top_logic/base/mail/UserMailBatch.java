@@ -12,9 +12,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import com.top_logic.base.security.authorisation.roles.ACL;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.base.user.UserService;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.BatchImpl;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -119,7 +119,7 @@ public class UserMailBatch extends BatchImpl {
                     theRecipients.add(theUser); 
                 }
                 else{
-                    this.checkForRoleRecipients(theRecipients, theName);
+					Logger.warn("No such user: " + theName, UserMailBatch.class);
                 }
             }
             return theRecipients;
@@ -129,28 +129,6 @@ public class UserMailBatch extends BatchImpl {
         
     }
     
-    /**
-     * Add recipients (UserInterface) to the collection anRecipients.
-     * 
-     * Every UserInterface that is added to the collection belongs to 
-     * the role with the given role-name.
-     * 
-     * @param anRecipients a collection of UserInterfaces of users the mail 
-     *        is sent to.
-     * @param aRoleName the name of the role that is checked for users
-     *        belong to.
-     */
-    private void checkForRoleRecipients(Collection anRecipients, String aRoleName){
-        List theAllUsers = this.getAllUsers();
-        int theSize = theAllUsers.size();
-        for (int i = 0; i < theSize; i++){
-            UserInterface theUser = (UserInterface)theAllUsers.get(i);
-            ACL theUserRoles = theUser.getACLRoles();
-            if (theUserRoles.hasAccess(aRoleName)) {
-                anRecipients.add(theUser);                       
-            }
-        }    
-    }
     /**
      * Lazy initialization of the instance-variable allUsers.
      */

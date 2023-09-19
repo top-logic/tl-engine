@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.layout.meta.search.AttributedSearchComponent;
@@ -219,7 +218,8 @@ public class ReportSelectorComponent extends FormComponent implements ReportCons
 				Person theCurrentUser    = TLContext.getContext().getCurrentPersonWrapper();
 				
 				// root or owner can modify published queries
-				if (WrapperHistoryUtils.getUnversionedIdentity(theCurrentUser).equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || SecurityContext.isAdmin()) {
+				if (WrapperHistoryUtils.getUnversionedIdentity(theCurrentUser)
+					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || theCurrentUser.isAdmin()) {
 					boolean isPublished = groupAssociations.isEmpty() ? false : true;
 					
 					thePublishGroup.setVisible(true);

@@ -6,6 +6,7 @@
 	<ko_attribute att_name="name" att_value="root"/>
 	<ko_attribute att_name="dataDeviceID" att_value="defaultDataAccessID"/>
 	<ko_attribute att_name="authDeviceID" att_value="defaultAuthenticationID"/>		
+	<ko_attribute att_name="admin" att_value="true"/>		
 </knowledgeobject>
 
 <knowledgeobject object_type="Group" object_name="rootGroup">

@@ -8,6 +8,7 @@ package com.top_logic.knowledge.gui.layout.person;
 import java.util.Map;
 
 import com.top_logic.base.security.attributes.PersonAttributes;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.event.ModelTrackingService;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -63,12 +64,13 @@ public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
 		Person thePerson = PersonManager.getManager().createPerson(anID, aDataDeviceID, aAuthDeviceID, isRestricted);
 
         if (thePerson != null) {
-			ApplyPersonCommandHandler.setValue(thePerson, PersonAttributes.RESTRICTED_USER, isRestricted);
+			UserInterface user = thePerson.getUser();
+			user.setAttributeValue(PersonAttributes.RESTRICTED_USER, isRestricted);
 			thePerson.setValue(PersonAttributes.RESTRICTED_USER, isRestricted);
-            ApplyPersonCommandHandler.setValue(thePerson, PersonAttributes.GIVEN_NAME, aFirst);
-            ApplyPersonCommandHandler.setValue(thePerson, PersonAttributes.SUR_NAME  , aSurname);
-            ApplyPersonCommandHandler.setValue(thePerson, PersonAttributes.TITLE     , aTitle);
-            ApplyPersonCommandHandler.setValue(thePerson, PersonAttributes.DISPLAY_NAME, ApplyPersonCommandHandler.getFullName(aTitle, aFirst, aSurname) );
+            user.setAttributeValue(PersonAttributes.GIVEN_NAME, aFirst);
+            user.setAttributeValue(PersonAttributes.SUR_NAME, aSurname);
+            user.setAttributeValue(PersonAttributes.TITLE, aTitle);
+            user.setAttributeValue(PersonAttributes.DISPLAY_NAME, ApplyPersonCommandHandler.getFullName(aTitle, aFirst, aSurname));
 			PersonManager.getManager().handleRefreshPerson(thePerson);
         }
         else {

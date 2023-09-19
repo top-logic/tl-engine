@@ -12,7 +12,6 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.top_logic.base.security.attributes.PersonAttributes;
-import com.top_logic.base.security.authorisation.roles.ACL;
 import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
@@ -656,13 +655,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 	}
 
     /**
-     * the roles of this user as HashSet
-     */
-	public ACL getACLRoles() {
-        return this.getUser().getACLRoles();
-    }
-    
-    /**
      * Get the global roles as a Collection of BoundedRoles
      * 
      * @return the global roles. May be empty but not <code>null</code>.
@@ -1101,6 +1093,24 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 */
 	public void setLastPasswordChange(Date changeDate) {
 		setValue(Person.LAST_PWD_CHANGE, changeDate);
+	}
+
+	/**
+	 * Whether this account is marked as super user.
+	 */
+	public boolean isAdmin() {
+		if (!isAlive()) {
+			return false;
+		}
+
+		return tGetDataBooleanValue("admin");
+	}
+
+	/**
+	 * @see #isAdmin()
+	 */
+	public void setAdmin(boolean value) {
+		tSetDataBoolean("admin", value);
 	}
 
 }

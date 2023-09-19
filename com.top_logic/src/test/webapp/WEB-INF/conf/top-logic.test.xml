@@ -111,38 +111,6 @@
 	        <entry name="superUserName" value="root" />
         </section>
         
-        <section name="LDAPUserInfoFactory" comment=".">
-            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
-        </section>
-        
-        <section name="LDAPSecurityUserFactory" comment=".">
-            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
-        </section>
-        
-        <section name="AuthenticationService" comment=".">
-        </section>
-        
-        <section name="LDAPAuthentication" comment=".">
-            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
-        </section>
-        
-        <section name="ADAuthentication" comment=".">
-            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
-        </section>
-        
-        <section name="FileAuthentication" comment=".">
-        </section>
-        
-        <section name="AuthorisationService" comment=".">
-        </section>
-        
-        <section name="LDAPAuthorisation" comment=".">
-            <entry name="initialContextFactory" value="com.sun.jndi.ldap.LdapCtxFactory"/>
-        </section>
-        
-        <section name="FileAuthorisation" comment=".">
-        </section>
-        
         <section name="TreeManager" comment=".">
             <entry name="tree.dir" value="tree"/>
             <entry name="user.dir" value="personal"/>

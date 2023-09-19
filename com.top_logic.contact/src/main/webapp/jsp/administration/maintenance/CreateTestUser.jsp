@@ -112,8 +112,8 @@
 								foreName = femaleForenames[foreNameIndex];
 							}
 							Person person = persMan.createPerson(createUserName(addPrefix, foreName, surName), "dbSecurity", null, false);
-							person.getUser().setAttributeValue(PersonAttributes.GIVEN_NAME, foreName);
-							person.getUser().setAttributeValue(PersonAttributes.SUR_NAME, surName);
+							Person.getUser(person).setAttributeValue(PersonAttributes.GIVEN_NAME, foreName);
+							Person.getUser(person).setAttributeValue(PersonAttributes.SUR_NAME, surName);
 							if (initialPassword.length > 0) {
 								PasswordManager.getInstance().setPassword(LoginCredentials.fromUserAndPassword(person, initialPassword));
 							}
@@ -137,7 +137,7 @@
 				Transaction transaction = knowledgeBase.beginTransaction();
 				List<Person> persons = persMan.getAllPersonsList();
 				for(Person person : persons) {
-					if(person.getUser().getUserName().startsWith(testUserPrefix)) {
+					if(Person.getUser(person).getUserName().startsWith(testUserPrefix)) {
 						delCount++;
 						persMan.deleteUser(person);
 						person.tDelete();

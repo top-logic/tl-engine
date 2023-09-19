@@ -10,6 +10,8 @@ import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.search.expr.All;
+import com.top_logic.model.search.expr.DynamicAll;
+import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -21,7 +23,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class AllBuilder extends NoArgMethodBuilder<All> {
+public class AllBuilder extends NoArgMethodBuilder<SearchExpression> {
 
 	/**
 	 * Creates a {@link AllBuilder}.
@@ -31,9 +33,13 @@ public class AllBuilder extends NoArgMethodBuilder<All> {
 	}
 
 	@Override
-	protected All internalBuild(Expr expr, SearchExpression self)
+	protected SearchExpression internalBuild(Expr expr, SearchExpression self)
 			throws ConfigurationException {
-		return all(resolveStructuredType(expr, self));
+		if (self instanceof Literal) {
+			return all(resolveStructuredType(expr, self));
+		} else {
+			return new DynamicAll(getConfig().getName(), self, new SearchExpression[0]);
+		}
 	}
 
 }

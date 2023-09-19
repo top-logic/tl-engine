@@ -6,11 +6,13 @@
 package com.top_logic.model.search.expr;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLInstanceAccess;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
@@ -56,13 +58,20 @@ public class All extends SearchExpression {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		switch (_type.getModelKind()) {
+		return all(this, _type);
+	}
+
+	/**
+	 * Retrieves all instances of the given type.
+	 */
+	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type) {
+		switch (type.getModelKind()) {
 			case CLASS: {
-				ArrayList<Object> result = new ArrayList<>();
-				try (CloseableIterator<?> instances =
-					_type.getModel().getQuery(TLInstanceAccess.class).getAllInstances((TLClass) _type)) {
+				ArrayList<TLObject> result = new ArrayList<>();
+				try (CloseableIterator<TLObject> instances =
+					type.getModel().getQuery(TLInstanceAccess.class).getAllInstances((TLClass) type)) {
 					while (instances.hasNext()) {
-						Object instance = instances.next();
+						TLObject instance = instances.next();
 						result.add(instance);
 					}
 				}
@@ -70,11 +79,11 @@ public class All extends SearchExpression {
 			}
 
 			case ENUMERATION: {
-				return ((TLEnumeration) _type).getClassifiers();
+				return ((TLEnumeration) type).getClassifiers();
 			}
 
 			default: {
-				throw new TopLogicException(I18NConstants.ERROR_NEITHER_CLASS_NOR_ENUM__TYPE_EXPR.fill(_type, this));
+				throw new TopLogicException(I18NConstants.ERROR_NEITHER_CLASS_NOR_ENUM__TYPE_EXPR.fill(type, self));
 			}
 		}
 	}

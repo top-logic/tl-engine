@@ -180,14 +180,19 @@ public class ShowSecurityQuery {
         }
 	}
 
-	/** 
+	/**
 	 * Append the given collection of wrappers as where clause to the query.
-	 * @param    query          The query to be extended, must not be <code>null</code>.
-	 * @param    wrappers    The wrappers to get the ID from, must not be <code>null</code>.
-	 * @param    column         Name of the requested column, must not be <code>null</code>.
-	 * @param    hasWhere        <code>true</code> when where clause is already part of the query.
 	 * 
-	 * @return   <code>true</code> when where clause is now part of the query.
+	 * @param query
+	 *        The query to be extended, must not be <code>null</code>.
+	 * @param wrappers
+	 *        The wrappers to get the ID from, must not be <code>null</code>.
+	 * @param column
+	 *        Name of the requested column, must not be <code>null</code>.
+	 * @param hasWhere
+	 *        <code>true</code> when where clause is already part of the query.
+	 * 
+	 * @return <code>true</code> when where clause is now part of the query.
 	 */
 	protected boolean appendWrapperIDs(DBHelper sqlDialect, StringBuffer query,
 			Collection<? extends Wrapper> wrappers, String column, boolean hasWhere) {

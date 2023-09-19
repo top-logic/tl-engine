@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import com.top_logic.base.bus.MonitorEvent;
-import com.top_logic.base.security.SecurityContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
@@ -18,6 +17,7 @@ import com.top_logic.event.bus.Bus;
 import com.top_logic.event.bus.Sender;
 import com.top_logic.event.bus.Service;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.TLContext;
 
 /**
  * The ModelTrackingService can be used to send {@link MonitorEvent}s to inform recievers about
@@ -68,7 +68,8 @@ public final class ModelTrackingService extends ManagedClass {
             aSource = aMessage;
         }
         
-        MonitorEvent theEvent = new MonitorEvent(eventSender, aMessage, aSource, SecurityContext.getCurrentUser(), anEventType);
+		MonitorEvent theEvent =
+			new MonitorEvent(eventSender, aMessage, aSource, TLContext.currentUser().getUser(), anEventType);
         try {
             Logger.debug("Send tracking event " + anEventType + " for (" + aSource + "," + aMessage + ")", ModelTrackingService.class);
             eventSender.send(theEvent);

@@ -11,7 +11,6 @@ import java.text.DateFormat;
 import java.util.Date;
 
 import com.top_logic.base.user.UserInterface;
-import com.top_logic.base.user.UserService;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
@@ -24,6 +23,8 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * The monitor event is used to publish messages of changes on the system.
@@ -262,7 +263,7 @@ public class MonitorEvent extends BusEvent {
             return (null);
         }
         else {
-            return (UserService.getUser (aName));
+            return (Person.getUser(PersonManager.getManager().getPersonByName(aName)));
         }
     }    
     

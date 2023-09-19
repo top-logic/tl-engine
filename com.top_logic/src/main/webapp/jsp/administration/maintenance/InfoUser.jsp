@@ -39,7 +39,7 @@ extends="com.top_logic.util.TopLogicJspBase" contentType="text/html; charset=UTF
 			Person current = (Person) persons.get(index);
 			out.beginTag("li");
 			GotoHandler.writeGotoStart(context, out, current);
-			out.writeText(current.getLastName() + ", " + current.getFirstName() + " (" + current.getUser().getUserName() + ")");
+			out.writeText(current.getLastName() + ", " + current.getFirstName() + " (" + Person.getUser(current).getUserName() + ")");
 			GotoHandler.writeGotoEnd(out, current);
 			out.endTag("li");
 		}

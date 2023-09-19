@@ -199,7 +199,7 @@ private static final int MAX_INT = 10000;
 						while (emails.contains(genMail));
 					}
 					Person person = personHandler.createPerson(loginName, pFistNamePrefix + formSuffix, pLastNamePrefix + formSuffix, null, "dbSecurity", null, false);
-					person.getUser().setAttributeValue(PersonAttributes.MAIL_NAME, genMail);
+					Person.getUser(person).setAttributeValue(PersonAttributes.MAIL_NAME, genMail);
 					PersonManager.getManager().handleRefreshPerson(person);
 					emails.add(genMail);
 				}

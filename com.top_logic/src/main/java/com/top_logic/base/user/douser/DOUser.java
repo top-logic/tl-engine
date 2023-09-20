@@ -372,16 +372,6 @@ public class DOUser implements UserInterface, PersonAttributes {
     	return this.internalUser.setAttributeValue(attrName,value);                
     }
 
-    /**
-     * Returns the DataObject for this user.
-     *
-     * @return the encapsulated DataObject (if any)
-     */
-    @Override
-	public DataObject getDataObject () {
-        return this.internalUser;
-    }
-
 	@Override
 	public Object getValue(MOAttribute attribute) {
 		return internalUser.getValue(attribute);

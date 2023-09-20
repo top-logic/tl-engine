@@ -79,6 +79,23 @@
 				</dependency>
 			</dependencies>
 		</profile>
+
+	  	<profile>
+	  		<id>professional</id>
+	  		
+	  		<activation>
+	  			<activeByDefault>false</activeByDefault>
+	  		</activation>
+	  		
+	  		<dependencies>
+	  			<!-- Activate professional licensing.  -->
+			    <dependency>
+					<groupId>com.top-logic</groupId>
+					<artifactId>tl-license-professional</artifactId>
+					<version>${tl.version}</version>
+			    </dependency>
+	  		</dependencies>
+	  	</profile>
 	
 		<!-- Profiles for including a database driver to the final application WAR. -->
 		<!-- 

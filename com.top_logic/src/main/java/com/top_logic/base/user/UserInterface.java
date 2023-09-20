@@ -54,16 +54,6 @@ public interface UserInterface extends DataObject {
 	 */
 	public String getNameAs_LastTitleFirst(boolean includeTitle);
 
-    /**
-     * the object class of this user (should be always "person")
-     */
-    public String getObjectClass ();
-
-    /**
-     * the password of this user
-     */
-    public String getPassword ();
-
      /**
      * the internal email of this user
      */

@@ -334,7 +334,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	public void loginFromExternalAuth(HttpServletRequest aRequest, HttpServletResponse response, Person aUser)
 			throws Exception {
         boolean debug = Logger.isDebugEnabled(this);
-		String theName = aUser.getDataAccessDeviceID() + "\\" + Person.getUser(aUser).getUserName();
+		String theName = aUser.getDataAccessDeviceID() + "\\" + aUser.getName();
 		checkAllowedGroups(aUser);
         if (debug) {
             Logger.debug("Get new Session for user "+ theName, this);

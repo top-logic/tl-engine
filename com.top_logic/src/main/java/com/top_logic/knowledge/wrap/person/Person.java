@@ -453,7 +453,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      * @return true when you can only get the backup user.
      */
 	public boolean isBackupMode() {
-		UserInterface user = Person.getUser(this);
+		UserInterface user = getUser();
         return user != null && KBUtils.getWrappedObjectName(this).equals(user.getIdentifier());
     }
 
@@ -671,28 +671,28 @@ public class Person extends AbstractBoundWrapper implements Author {
      * the customer name of this user
      */
 	public String getCustomerName() {
-		return Person.getUser(this).getCustomerName();
+		return getUser().getCustomerName();
     }
 
     /**
      * the external email of this user
      */
 	public String getExternalMail() {
-		return Person.getUser(this).getExternalMail();
+		return getUser().getExternalMail();
     }
 
     /**
      * the external number of this user
      */
 	public String getExternalNumber() {
-		return Person.getUser(this).getExternalNumber();
+		return getUser().getExternalNumber();
     }
 
     /**
      * the firstname of this user
      */
 	public String getFirstName() {
-		return Person.getUser(this).getFirstName();
+		return getUser().getFirstName();
     }
 
     /**
@@ -707,7 +707,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      * @return    The full name of the person as mentioned above.
      */
 	public String getFullName() {
-		String theFullName = Person.getUser(this).getFullName();
+		String theFullName = getUser().getFullName();
         if (StringServices.isEmpty(theFullName)) {
             // TODO this is not better than the above ?
             theFullName = this.getFirstName() + ' ' + this.getLastName();
@@ -720,28 +720,28 @@ public class Person extends AbstractBoundWrapper implements Author {
      * the internal email of this user
      */
 	public String getInternalMail() {
-		return Person.getUser(this).getInternalMail();
+		return getUser().getInternalMail();
     }
 
     /**
      * the internal number of this user
      */
 	public String getInternalNumber() {
-		return Person.getUser(this).getInternalNumber();
+		return getUser().getInternalNumber();
     }
 
     /**
      * the lastname of this user
      */
 	public String getLastName() {
-		return Person.getUser(this).getLastName();
+		return getUser().getLastName();
     }
 
     /**
      * the mobile number of this user
      */
 	public String getMobileNumber() {
-		return Person.getUser(this).getMobileNumber();
+		return getUser().getMobileNumber();
     }
 
     /**
@@ -752,28 +752,28 @@ public class Person extends AbstractBoundWrapper implements Author {
      * @return formatted username
      */
 	public String getNameAs_LastTitleFirst(boolean includeTitle) {
-		return Person.getUser(this).getNameAs_LastTitleFirst(includeTitle);
+		return getUser().getNameAs_LastTitleFirst(includeTitle);
     }
 
     /**
      * the organization unit of this user
      */
 	public String getOrgUnit() {
-		return Person.getUser(this).getOrgUnit();
+		return getUser().getOrgUnit();
     }
 
     /**
      * the private number of this user
      */
 	public String getPrivateNumber() {
-		return Person.getUser(this).getPrivateNumber();
+		return getUser().getPrivateNumber();
     }
 
     /**
      * the title of this user
      */
 	public String getTitle() {
-		return Person.getUser(this).getTitle();
+		return getUser().getTitle();
     }
 
     /**
@@ -793,7 +793,7 @@ public class Person extends AbstractBoundWrapper implements Author {
     	getPersonManager().disconnect(current);
         // reload the user to make sure it is cached again
         // in the valid persons cache
-		Person.getUser(this);
+		getUser();
     }
      
      @Override
@@ -897,7 +897,7 @@ public class Person extends AbstractBoundWrapper implements Author {
             // all the getUser() call is for, is to force an update
             // if this person should not be alive already. So it could have
             // changed its state after calling this method
-			return tValid() && Person.getUser(this) != null
+			return tValid() && getUser() != null
                 && getPersonManager().isKnown(current);
         }
     }

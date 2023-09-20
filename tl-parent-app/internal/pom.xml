@@ -161,12 +161,6 @@
 	  		<dependencies>
 			    <dependency>
 					<groupId>com.top-logic</groupId>
-					<artifactId>tl-license-professional</artifactId>
-					<version>${tl.version}</version>
-			    </dependency>
-
-			    <dependency>
-					<groupId>com.top-logic</groupId>
 					<artifactId>bos-deepl</artifactId>
 					<version>${tl.version}</version>
 			    </dependency>

@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.top_logic.base.bus.UserEvent;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.FilteredIterator;
 import com.top_logic.basic.config.CommaSeparatedStringSet;
@@ -39,6 +38,7 @@ import com.top_logic.knowledge.search.RevisionQuery;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Monitor component for user activities within the application.
@@ -196,10 +196,10 @@ public class UserMonitor extends AbstractReceiver {
      * @param    anEvent    The event holding the information about the login.
      */
     protected void login(UserEvent anEvent) {
-        UserInterface theUser = anEvent.getPassiveUser();
+		Person theUser = anEvent.getPassiveUser();
         Date          theDate = anEvent.getDate();
 
-		String userName = theUser.getUserName();
+		String userName = theUser.getName();
 		if (isExcluded(userName)) {
 			return;
 		}
@@ -217,10 +217,10 @@ public class UserMonitor extends AbstractReceiver {
      * @return   <code>true</code>, if ending the session succeeds.
      */
     protected boolean logout(UserEvent anEvent) {
-        UserInterface theUser    = anEvent.getPassiveUser();
+		Person theUser = anEvent.getPassiveUser();
         Date          theDate    = anEvent.getDate();
 
-        String userName = theUser.getUserName();
+		String userName = theUser.getName();
 		if (isExcluded(userName)) {
 			return false;
 		}

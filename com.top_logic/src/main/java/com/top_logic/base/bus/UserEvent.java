@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
 
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.event.bus.Sender;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * The Event which should be used to make Changes of Users available
@@ -43,7 +43,7 @@ public class UserEvent extends MonitorEvent {
      *            passive at the same time e.g. a user has logged out himself
      * @param aMode Type of the Event - what has actually happened
      */
-    public UserEvent(Sender aSender, UserInterface aUser, String anID, String aMachine, String aMode) {
+	public UserEvent(Sender aSender, Person aUser, String anID, String aMachine, String aMode) {
         this(aSender, aUser, aUser, anID, aMachine, aMode);
     }
 
@@ -56,7 +56,8 @@ public class UserEvent extends MonitorEvent {
      * @param theActiveUser User who performed the actions mentioned above
      * @param aMode Type of the Event - what has actually happened
      */
-    public UserEvent(Sender aSender, UserInterface thePassiveUser, UserInterface theActiveUser, String anID, String aMachine, String aMode) {
+	public UserEvent(Sender aSender, Person thePassiveUser, Person theActiveUser, String anID, String aMachine,
+			String aMode) {
         super(aSender, thePassiveUser, "not available", theActiveUser, aMode);
 
         this.id      = anID;
@@ -72,7 +73,7 @@ public class UserEvent extends MonitorEvent {
      * @param theActiveUser User who performed the actions mentioned above
      * @param aMode Type of the Event - what has actually happened
      */
-    public UserEvent(Sender aSender, UserInterface thePassiveUser, UserInterface theActiveUser, Date aDate,
+	public UserEvent(Sender aSender, Person thePassiveUser, Person theActiveUser, Date aDate,
             String aMode) {
         super(aSender, thePassiveUser, "not available", theActiveUser, aDate, aMode);
     }
@@ -94,15 +95,15 @@ public class UserEvent extends MonitorEvent {
     /**
      * the passive User, which is the subject of this event
      */
-    public UserInterface getPassiveUser() {
-        return (UserInterface) (this.getMessage());
+	public Person getPassiveUser() {
+		return (Person) (this.getMessage());
     }
 
     /**
      * the active user which has performed the change of the passive
      *         user. The active user can be the same as the passive
      */
-    public UserInterface getActiveUser() {
+	public Person getActiveUser() {
         return (this.getUser());
     }
 

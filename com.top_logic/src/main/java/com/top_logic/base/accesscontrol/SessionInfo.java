@@ -9,7 +9,6 @@ import java.util.HashMap;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -83,10 +82,10 @@ class SessionInfo extends HashMap<String, Object> {
     /**
     * Sets a User in the sessioninfo
     */
-    protected void setUser(UserInterface aUser) {
+	protected void setUser(Person aUser) {
         if (aUser != null) {
             this.put(SESSION_DATA_USER,aUser);
-            this.put(SESSION_DATA_USER_NAME, aUser.getUserName());
+			this.put(SESSION_DATA_USER_NAME, aUser.getName());
         }
     }
     
@@ -145,12 +144,12 @@ class SessionInfo extends HashMap<String, Object> {
      * Get the user for the session. Use lazy init to prevent problems while restart
      * of the server.
      */
-    protected UserInterface getUser() {
-        UserInterface theUser = (UserInterface)(this.get(SESSION_DATA_USER));
+	protected Person getUser() {
+		Person theUser = (Person) (this.get(SESSION_DATA_USER));
         if (theUser == null) {
             String theUserName = (String) this.get(SESSION_DATA_USER_NAME);
             if (theUserName != null) {
-                theUser = Person.getUser(PersonManager.getManager().getPersonByName(theUserName));
+				theUser = PersonManager.getManager().getPersonByName(theUserName);
             }
         }
         return theUser;

@@ -21,7 +21,6 @@ import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.base.bus.UserEvent;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Mappings;
 import com.top_logic.event.bus.Sender;
@@ -127,7 +126,7 @@ public class TestUserMonitor extends BasicTestCase {
         UserSession       us     = UserSession.startSession(kb, 
             "TestUserSession", "xxxxx",  "127.0.0.1", start); 
 		String testUserName = TestPersonSetup.USER_ID;
-		UserInterface dummy = Person.getUser(PersonManager.getManager().getPersonByName(testUserName));
+		Person dummy = PersonManager.getManager().getPersonByName(testUserName);
 		assertNotNull("Unable to get user for name " + testUserName, us);
         Sender            sender = new Sender("Testing", "TestUserMonitor");
         UserEvent         login  = new UserEvent(sender, dummy, "yyyyy", server, UserEvent.LOGGED_IN);

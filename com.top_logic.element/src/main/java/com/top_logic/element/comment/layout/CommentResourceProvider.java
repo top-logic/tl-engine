@@ -5,10 +5,10 @@
  */
 package com.top_logic.element.comment.layout;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.comment.wrap.Comment;
 import com.top_logic.knowledge.gui.WrapperResourceProvider;
+import com.top_logic.knowledge.wrap.person.CommonPersonLabelProvider;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.HTMLFormatter;
@@ -23,15 +23,8 @@ public class CommentResourceProvider extends WrapperResourceProvider {
 
     @Override
 	public String getLabel(Object anObject) {
-        try {
-            // creator can be null if the person was deleted
-            Person creator = ((Comment)anObject).getCreator();
-            return creator == null ? "???" : creator.getNameAs_LastTitleFirst(false);
-        }
-        catch (Exception ex) {
-            Logger.error("Unable to get name of author of comment " + anObject, ex, this);
-            return "???";
-        }
+		Person creator = ((Comment) anObject).getCreator();
+		return CommonPersonLabelProvider.getLabelNameTitleFirst(creator, false);
     }
     
     @Override

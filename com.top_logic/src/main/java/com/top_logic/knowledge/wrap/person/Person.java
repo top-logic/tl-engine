@@ -745,17 +745,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     }
 
     /**
-     * get formatted username: lastname, Title firstname.
-     * Suppress Title via param includeTitle
-     * 
-     * @param  includeTitle true to include, false to suppress 
-     * @return formatted username
-     */
-	public String getNameAs_LastTitleFirst(boolean includeTitle) {
-		return getUser().getNameAs_LastTitleFirst(includeTitle);
-    }
-
-    /**
      * the organization unit of this user
      */
 	public String getOrgUnit() {

@@ -45,15 +45,6 @@ public interface UserInterface extends DataObject {
      */
     public String getFullName ();
     
-	/**
-	 * get formatted username: Lastname, Title Firstname.
-	 * Suppress Title via param includeTitle
-	 * 
-	 * @param  includeTitle true to include, false to suppress 
-	 * @return formatted username
-	 */
-	public String getNameAs_LastTitleFirst(boolean includeTitle);
-
      /**
      * the internal email of this user
      */

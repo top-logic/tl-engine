@@ -379,10 +379,10 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 			if (!aUser.getName().equals(PersonManager.getManager().getSuperUserName())) {
 				return null;
 			}
-			logOutExistingSession(Person.getUser(aUser).getUserName());
+			logOutExistingSession(aUser.getName());
 		}
 		if (getOnlyOneSession() || licenseTool.limitToOneSession(license)) {
-			logOutExistingSession(Person.getUser(aUser).getUserName());
+			logOutExistingSession(aUser.getName());
     	}
         return (getNewSessionForUser (request, response, aUser));
     }    

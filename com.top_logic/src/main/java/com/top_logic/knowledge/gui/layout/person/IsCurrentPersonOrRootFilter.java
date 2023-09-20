@@ -5,7 +5,6 @@
  */
 package com.top_logic.knowledge.gui.layout.person;
 
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -19,16 +18,12 @@ public class IsCurrentPersonOrRootFilter implements Filter {
 
 	@Override
 	public boolean accept(Object aObject) {
-		
 		if (ThreadContext.isAdmin()) {
 			return true;
 		}
 		
-		{
-			UserInterface theSelected = Person.getUser(((Person) aObject));
-			
-			return Utils.equals(theSelected, TLContext.currentUser());
-		}
+		Person selectedUser = ((Person) aObject);
+		return Utils.equals(selectedUser, TLContext.currentUser());
 	}
 
 }

@@ -27,7 +27,6 @@ import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.db.DBUserRepository;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Configuration;
 import com.top_logic.basic.Configuration.IterableConfiguration;
 import com.top_logic.basic.Logger;
@@ -638,12 +637,8 @@ public class EditPersonComponent extends EditComponent {
 	 */
     protected void notifyBus(String aType) {
         Date                  now = new Date();
-        UserInterface currentUser = null;
-        TLContext tlContext       = TLContext.getContext();
-        if (tlContext != null)
-            currentUser = tlContext.getCurrentUser();
-
-        UserEvent theEvent = new UserEvent(USER_EVENT_SENDER, Person.getUser(((Person) this.getModel())), currentUser, now, aType);
+		UserEvent theEvent =
+			new UserEvent(USER_EVENT_SENDER, (Person) this.getModel(), TLContext.currentUser(), now, aType);
 
         USER_EVENT_SENDER.send(theEvent);
     }

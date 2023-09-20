@@ -18,7 +18,6 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.base.bus.UserEvent;
 import com.top_logic.base.monitor.bus.UserMonitor;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
@@ -46,7 +45,7 @@ public class TestUserMonitor extends BasicTestCase {
 
         Sender theSender = new Sender (Bus.CHANGES, Bus.USER);
         String theUserId = "root";
-        UserInterface theUser = Person.getUser(PersonManager.getManager().getPersonByName(theUserId));
+		Person theUser = PersonManager.getManager().getPersonByName(theUserId);
         if(theUser == null) {
             fail("User "+theUserId+" not found.");
         } 

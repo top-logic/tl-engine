@@ -8,8 +8,8 @@ package com.top_logic.base.monitor.bus;
 
 import java.util.Date;
 
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.StringServices;
+import com.top_logic.knowledge.wrap.person.Person;
 
 
 /**
@@ -20,7 +20,7 @@ import com.top_logic.basic.StringServices;
 public class LoginInfo {
 
     /** The affected user. */
-    private UserInterface user;
+	private Person user;
 
     /** The login time of the user, may be null. */
     private Date login;
@@ -35,7 +35,7 @@ public class LoginInfo {
      * @param    aDate    The login time of this user (may be null).
      * @throws   IllegalArgumentException    If the given user is null.
      */
-    public LoginInfo (UserInterface aUser, Date aDate) 
+	public LoginInfo(Person aUser, Date aDate)
                                         throws IllegalArgumentException {
         if (aUser == null) {
             throw new IllegalArgumentException ("Given user is null");
@@ -64,7 +64,7 @@ public class LoginInfo {
      *
      * @return    The user (cannot be null).
      */
-    public UserInterface getUser () {
+	public Person getUser() {
         return (this.user);
     }
 
@@ -74,7 +74,7 @@ public class LoginInfo {
      * @return    The name of the user (cannot be null).
      */
     public String getUserName () {
-        return (this.user.getUserName ());
+		return (this.user.getName());
     }
 
     /**

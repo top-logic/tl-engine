@@ -15,11 +15,9 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.TLID;
-import com.top_logic.dob.DataObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.util.MetaObjectUtils;
-import com.top_logic.dsa.DAPropertyNames;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.LifecycleAttributes;
@@ -132,23 +130,8 @@ public class StaticKnowledgeObject extends StaticKnowledgeItem implements Knowle
 
 	@Override
 	public Date getModified() {
-		Long theVal = null;
-		DataObject theProps = this.getProperties();
-
-		// try via DAP/Properties first ...
-		if (theProps != null) {
-			try {
-				theVal = (Long) theProps.getAttributeValue(DAPropertyNames.LAST_MODIFIED);
-			} catch (NoSuchAttributeException ignored) {
-				// e.g. happens with security://
-			}
-		}
-
-		if (theVal == null) { // fall back to LifecycleAttributes
-			theVal = (Long) this.getKOValue(LifecycleAttributes.MODIFIED);
-		}
-
-		return ((theVal != null) ? new Date(theVal.longValue()) : null);
+		Long modified = (Long) this.getKOValue(LifecycleAttributes.MODIFIED);
+		return ((modified != null) ? new Date(modified.longValue()) : null);
 	}
 
 	@Override

@@ -12,7 +12,6 @@ import java.util.TimeZone;
 import com.top_logic.base.context.SubSessionListener;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.AbstractSubSessionContext;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -186,19 +185,6 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		return null;
 	}
 
-    /** 
-     * Get the the user currently logged in.
-     *
-     * @return null only just before successful login.
-     */
-	public final UserInterface getCurrentUser() {
-		Person currentPerson = getPerson();
-		if (currentPerson != null) {
-			return Person.getUser(currentPerson);
-		}
-		return null;
-    }
-    
 	/**
 	 * Same as {@link TLSessionContext#getOriginalUser()} of {@link #getSessionContext() session
 	 * context}.

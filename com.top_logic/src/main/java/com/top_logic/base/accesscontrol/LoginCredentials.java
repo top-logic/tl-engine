@@ -8,7 +8,6 @@ package com.top_logic.base.accesscontrol;
 import java.util.Arrays;
 
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.StringServices;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -159,7 +158,7 @@ public class LoginCredentials implements AutoCloseable {
 			String message = "Person '" + person + "' is not alive!";
 			throw new LoginDeniedException(message);
 		}
-		if (getUser(person) == null) {
+		if (Person.getUser(person) == null) {
 			String message = "No User for the person with login name '" + person.getName() + "' found!";
 			throw new LoginDeniedException(message);
 		}
@@ -175,15 +174,11 @@ public class LoginCredentials implements AutoCloseable {
 			String message = "Person with login name '" + loginName + "' is not alive!";
 			throw new LoginDeniedException(message);
 		}
-		if (getUser(person) == null) {
+		if (Person.getUser(person) == null) {
 			String message = "No User for the person with login name '" + loginName + "' found!";
 			throw new LoginDeniedException(message);
 		}
 		return person;
-	}
-
-	private static UserInterface getUser(Person person) {
-		return Person.getUser(person);
 	}
 
 	@Override

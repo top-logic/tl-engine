@@ -9,7 +9,6 @@ import java.util.Date;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Mapping;
-import com.top_logic.dob.DataObject;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.DatabaseAccessException;
@@ -77,7 +76,6 @@ public interface Wrapper extends TLNamed, Comparable<Wrapper>, ValueProvider, Fu
 	 * attribute will be used.
 	 * 
 	 * @return The modification date of the wrapper.
-	 * @see #getProperties()
 	 */
 	default Date getModified() {
 		return tLastModificationDate();
@@ -137,21 +135,6 @@ public interface Wrapper extends TLNamed, Comparable<Wrapper>, ValueProvider, Fu
 	 * @implNote The default implementation returns <code>null</code>.
 	 */
 	default String getDSN() {
-		return null;
-	}
-    
-    /**
-	 * Get the properties associated with the DAP.
-	 * 
-	 * So this is the same as <code>getDAP().getProperties()</code> but the Properties can be
-	 * cached.
-	 * 
-	 * @return the properties associated with the DAP, <code>null</code> if there is no DAP for the
-	 *         knowledge object, or there are no properties associated.
-	 * 
-	 * @implNote The default implementation returns <code>null</code>.
-	 */
-	default DataObject getProperties() {
 		return null;
 	}
     

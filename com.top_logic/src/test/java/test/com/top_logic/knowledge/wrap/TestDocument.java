@@ -163,7 +163,6 @@ public class TestDocument extends AbstractDocumentTest {
 
 
 		assertEquals("text/html", _testDocument.getContentType());
-		assertNotNull(_testDocument.getProperties());
 	}
 
 	/* Test for OutputStream updateDocument() public void testUpdateDocument() throws Exception { } */

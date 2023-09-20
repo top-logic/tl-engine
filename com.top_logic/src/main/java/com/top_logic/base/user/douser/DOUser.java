@@ -178,35 +178,6 @@ public class DOUser implements UserInterface, PersonAttributes {
 		return name.toString();
 	}
 
-	/**
-     * the object class of this user (should be always "person")
-     */
-    @Override
-	public String getObjectClass () {
-
-        try {
-            return(String)(internalUser.getAttributeValue (OBJECT_CLASS));                
-        }catch (NoSuchAttributeException nae) {
-            Logger.error ("Tried to retrieve OBJECT_CLASS from dataobject " + internalUser + ", which is no User or has no such attribute", this);
-            return "";
-        }
-    }
-
-    /**
-     * the password of this user
-     */
-    @Override
-	public String getPassword () {
-
-        try {
-            return(String)(internalUser.getAttributeValue (PASSWORD));                
-        }catch (NoSuchAttributeException nae) {
-            Logger.error ("Tried to retrieve Users PASSWORD from dataobject " + internalUser + ", which is no User or has no such attribute", this);
-            return "";
-        }
-    }
-
-
     /**
      * the internal email of this user
      */

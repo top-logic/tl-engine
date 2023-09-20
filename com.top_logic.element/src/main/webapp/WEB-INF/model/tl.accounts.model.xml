@@ -83,6 +83,13 @@
 						<delete-protected/>
 					</annotations>
 				</property>
+				<property name="admin"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
 				<reference name="representativeGroup"
 					multiple="false"
 					type="tl.accounts:Group"

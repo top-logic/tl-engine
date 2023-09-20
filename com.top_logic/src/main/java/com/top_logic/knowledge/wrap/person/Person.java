@@ -14,7 +14,6 @@ import java.util.TimeZone;
 import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
-import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.user.UserDataObject;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.base.user.UserService;
@@ -274,27 +273,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     @Deprecated
 	public PersonalConfiguration getPersonalConfiguration(){
         return PersonalConfiguration.getPersonalConfiguration();
-    }
-    
-    /**
-     * Returned is the DataObject to be used to construct a User (DOUser) This
-     * data object is read directly from the security system and afterwards
-     * cached in this instance of person until a call of resetUser() If the
-     * security system cannot be reached, an appropriate RunntimeException is
-     * thrown
-     */
-    @Override
-	public DataObject getProperties() {
-        this.checkInvalid();
-        if (!getPersonManager().isKnown(current)) {
-            String deviceID = this.getDataAccessDeviceID();
-            PersonDataAccessDevice sdp = SecurityDeviceFactory.getPersonAccessDevice(deviceID);
-            if (sdp == null) {
-                throw new NullPointerException("No security device configured for '" + deviceID + "'");
-            }
-            this.properties = sdp.getUserData(this.getName());
-        }
-        return this.properties;
     }
     
     /**
@@ -617,26 +595,8 @@ public class Person extends AbstractBoundWrapper implements Author {
         PersonManager pm = getPersonManager();
 		UserInterface ui = pm.getUser(current);
 		if (ui == null) {
-            DataObject theDO = null;
             try {
-				theDO = getProperties();
-				if (theDO != null) {
-					UserInterface tmp = DOUser.getInstance(theDO);
-					if (tmp.getUserName().equals(PersonManager.getManager().getSuperUserName())
-						|| LicenseTool.moreUsersAllowed(LicenseTool.getInstance().getLicense(), current.isRestrictedUser())) {
-						ui = tmp;
-						// isAlive() would cause infinite recursion, "current != null" should be
-						// equivalent
-						if (current != null) {
-							// user found in security, put in map -> person is
-							// alive
-							putInAliveCache(ui);
-							// user found in security system, make sure backup is
-							// up to date
-							updateUserBackup(ui);
-						}
-					}
-				} else {
+				{
 					UserInterface tmp = getUserBackup();
 					if (tmp.getUserName().equals(PersonManager.getManager().getSuperUserName())
 						|| LicenseTool.moreUsersAllowed(LicenseTool.getInstance().getLicense(), current.isRestrictedUser())) {
@@ -831,7 +791,6 @@ public class Person extends AbstractBoundWrapper implements Author {
      */
      void resetUser() {
     	getPersonManager().disconnect(current);
-        properties = null;
         // reload the user to make sure it is cached again
         // in the valid persons cache
 		Person.getUser(this);
@@ -871,11 +830,10 @@ public class Person extends AbstractBoundWrapper implements Author {
     		 return current.setUser(ui);
     	 }
     	 
-        DataObject userDO = ui.getDataObject();
         String userSecDev = null;
         String ownSecDev = null;
         try {
-            userSecDev = (String) userDO.getAttributeValue(PersonAttributes.DATA_ACCESS_DEVICE_ID);
+			userSecDev = ui.getDataAccessDeviceID();
             ownSecDev = this.getDataAccessDeviceID(); 
         } catch (NoSuchAttributeException nae) {
             return false;// userDo cannot provide secDevID, that means setUser is not possible
@@ -885,7 +843,6 @@ public class Person extends AbstractBoundWrapper implements Author {
         }
         
         if (!StringServices.isEmpty(userSecDev) && userSecDev.equals(ownSecDev)) {
-            this.properties = userDO;
             putInAliveCache(ui);
 			updateUserBackup(ui);
             return true;
@@ -974,9 +931,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     		current.updateUserData();
     		return;
     	}
-    	
-        PersonDataAccessDevice theDataDevice = SecurityDeviceFactory.getPersonAccessDevice(this.getDataAccessDeviceID());
-        theDataDevice.updateUserData(this.getProperties());
         this.resetUser();
     }
     

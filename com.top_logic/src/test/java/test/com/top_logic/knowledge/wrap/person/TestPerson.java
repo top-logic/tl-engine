@@ -176,8 +176,6 @@ public class TestPerson extends BasicTestCase {
     	Person root = PersonManager.getManager().getRoot();
 		KnowledgeBase kb = root.getKnowledgeBase();
     	
-    	assertNotNull(root.getProperties());
-    	
 		Locale previousLocale = root.getLocale();
     	// Modify back and forth.
 		Transaction modifyTx = kb.beginTransaction();
@@ -189,8 +187,6 @@ public class TestPerson extends BasicTestCase {
 		root.setLocale(previousLocale);
 		modifyBackTx.commit();
 		assertEquals(previousLocale, root.getLocale());
-    	
-    	assertNotNull(root.getProperties());
     }
     
     public void testGetPerson() throws Exception {

@@ -21,7 +21,6 @@ import javax.servlet.http.HttpSessionBindingListener;
 import com.top_logic.base.bus.UserEvent;
 import com.top_logic.base.context.DefaultSessionContext;
 import com.top_logic.base.context.TLSessionContext;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
@@ -265,7 +264,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
      *
      * @return the user which is associated with the given session id
      */
-	public UserInterface getUser(String sessionid) {
+	public Person getUser(String sessionid) {
 		SessionInfo sessioninfo = _sessionMap.get(sessionid);
 
         //if no session info found for the given session id
@@ -398,8 +397,8 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		if (!ArrayUtil.contains(getExcludeUIDs(), userName)) {
 			Collection<String> sessionIDs = getSessionIDs();
 			for (String sessionID : sessionIDs) {
-				UserInterface user = getUser(sessionID);
-				if (Utils.equals(userName, user.getUserName())) {
+				Person user = getUser(sessionID);
+				if (Utils.equals(userName, user.getName())) {
 					Logger.info("Logging out user '" + userName + "' because of another login." , SessionService.class);
 					invalidateSession(sessionID);
 				}
@@ -452,7 +451,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         
         this.putSession (session, aUser, request, sessionContext);            
 
-		sendEvent(session.getId(), Person.getUser(aUser), Person.getUser(aUser), UserEvent.LOGGED_IN);
+		sendEvent(session.getId(), aUser, aUser, UserEvent.LOGGED_IN);
 
         return (session);
     }
@@ -522,7 +521,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         //in the session map, which is only used in this class
         SessionInfo sessioninfo = new SessionInfo ();
 
-		sessioninfo.setUser(Person.getUser(aUser));
+		sessioninfo.setUser(aUser);
 
 		sessioninfo.setClientIP(clientHost(aRequest));
         sessioninfo.setCreationTime         (session.getCreationTime ());
@@ -572,28 +571,28 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 			return;
 		}
 		
-		UserInterface theRemovedUser = sessioninfo.getUser();
+		Person theRemovedUser = sessioninfo.getUser();
 		{
-            UserInterface theRemovingUser    = null;
+			Person theRemovingUser = null;
             TLContext     context            = TLContext.getContext();
             if (context != null) {
-                theRemovingUser = context.getCurrentUser();
+				theRemovingUser = context.getPerson();
             }
            
             if(theRemovingUser == null) {
                 theRemovingUser = theRemovedUser; 
             }
             else if (!theRemovingUser.equals(theRemovedUser)) {
-                Logger.warn(theRemovedUser.getUserName() 
+				Logger.warn(theRemovedUser.getName()
                             + " was removed by "
-                            + theRemovingUser.getUserName(), this);
+					+ theRemovingUser.getName(), this);
             }
 	
 			sendEvent(sessionid, theRemovedUser, theRemovingUser, UserEvent.LOGGED_OUT);
         }
     }
 
-	private void sendEvent(String sessionid, UserInterface passiveUser, UserInterface activeUser,
+	private void sendEvent(String sessionid, Person passiveUser, Person activeUser,
 			final String mode) {
 		final Sender sender = this.getSender();
 		if (sender != null) {

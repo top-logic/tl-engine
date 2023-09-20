@@ -15,7 +15,6 @@ import java.util.List;
 
 import com.top_logic.base.bus.MonitorEvent;
 import com.top_logic.base.bus.UserEvent;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -24,6 +23,7 @@ import com.top_logic.event.bus.Bus;
 import com.top_logic.event.bus.BusEvent;
 import com.top_logic.event.bus.IReceiver;
 import com.top_logic.event.bus.Sender;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Listener of {@link com.top_logic.base.bus.UserEvent}s.
@@ -205,10 +205,11 @@ public class UserMonitor extends DefaultMonitor implements IReceiver {
     }
         
     /**
-     * Returns the last login time of a user.
-     * @see com.top_logic.base.monitor.bus.UserMonitor#getLastLogin(UserInterface, int)
-     */    
-    public UserEvent getLastLogin (UserInterface aUser) {
+	 * Returns the last login time of a user.
+	 * 
+	 * @see com.top_logic.base.monitor.bus.UserMonitor#getLastLogin(Person, int)
+	 */    
+	public UserEvent getLastLogin(Person aUser) {
         return this.getLastLogin (aUser, 0);
     }    
 
@@ -226,8 +227,8 @@ public class UserMonitor extends DefaultMonitor implements IReceiver {
      *                       1 for the one before, etc).
      * @return   The matching event or null, if none found.
      */
-    public UserEvent getLastLogin (UserInterface aUser, int anAmount) {
-        return this.getLastLogin (aUser.getUserName (), anAmount);
+	public UserEvent getLastLogin(Person aUser, int anAmount) {
+		return this.getLastLogin(aUser.getName(), anAmount);
     }
     
     /**
@@ -259,10 +260,11 @@ public class UserMonitor extends DefaultMonitor implements IReceiver {
 //LOGOUT    
     
     /**
-     * Returns the last login time of a user.
-     * @see com.top_logic.base.monitor.bus.UserMonitor#getLastLogout(UserInterface, int)
-     */     
-    public UserEvent getLastLogout (UserInterface aUser) {
+	 * Returns the last login time of a user.
+	 * 
+	 * @see com.top_logic.base.monitor.bus.UserMonitor#getLastLogout(Person, int)
+	 */     
+	public UserEvent getLastLogout(Person aUser) {
         return this.getLastLogout (aUser, 0);
     }    
 
@@ -280,8 +282,8 @@ public class UserMonitor extends DefaultMonitor implements IReceiver {
      *                       1 for the one before, etc).
      * @return   The matching event or null, if none found.
      */
-    public UserEvent getLastLogout (UserInterface aUser, int anAmount) {
-        return this.getLastLogout (aUser.getUserName (), anAmount);
+	public UserEvent getLastLogout(Person aUser, int anAmount) {
+		return this.getLastLogout(aUser.getName(), anAmount);
     }
     
     /**
@@ -349,7 +351,7 @@ public class UserMonitor extends DefaultMonitor implements IReceiver {
      * @param    anEvent    The event describing the logout event.
      */
     protected void logout (UserEvent anEvent) {
-        UserInterface theUser = anEvent.getPassiveUser ();
+		Person theUser = anEvent.getPassiveUser();
         LoginInfo     theInfo = this.getLatestLoginInfo (theUser, null);
 
         if (theInfo != null) {
@@ -367,7 +369,7 @@ public class UserMonitor extends DefaultMonitor implements IReceiver {
      * @param    aDate    The login date of the user (can be null).
      * @return   The searched last login info or null.
      */
-    protected LoginInfo getLatestLoginInfo (UserInterface aUser, Date aDate) {
+	protected LoginInfo getLatestLoginInfo(Person aUser, Date aDate) {
         LoginInfo theCurr;
         LoginInfo theInfo = null;
         Iterator  theIt   = this.loginInfo.iterator ();
@@ -404,7 +406,7 @@ public class UserMonitor extends DefaultMonitor implements IReceiver {
      * @return   The new instance of LoginInfo.
      * @throws   IllegalArgumentException    If the given user is null.
      */
-    protected LoginInfo addLoginInfo (UserInterface aUser, Date aDate) 
+	protected LoginInfo addLoginInfo(Person aUser, Date aDate)
                                             throws IllegalArgumentException {
         int       thePos  = this.loginInfo.size ();
         LoginInfo theInfo = new LoginInfo (aUser, aDate);
@@ -444,7 +446,7 @@ public class UserMonitor extends DefaultMonitor implements IReceiver {
             currEvent = (UserEvent) theIt.next ();
 
             if (aType.equals( currEvent.getType ())) {
-                theName = currEvent.getPassiveUser ().getUserName ();
+				theName = currEvent.getPassiveUser().getName();
 
                 if (aName.equals (theName)) {
                     if (anAmount == 0) {
@@ -481,8 +483,8 @@ public class UserMonitor extends DefaultMonitor implements IReceiver {
         //user
         String theUser        = aReader.readLine ();
         if (theUser != null) {        
-            UserInterface messageUser = MonitorEvent.getUser (theMessageUser);
-            UserInterface theUserI;
+			Person messageUser = MonitorEvent.getUser(theMessageUser);
+			Person theUserI;
             if (theMessageUser.equals(theUser))
                 theUserI = messageUser;
             else

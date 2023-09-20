@@ -100,11 +100,6 @@ public interface UserInterface extends DataObject {
     public String getPrivateNumber ();
 
     /**
-     * the encapsulated DataObject (if any)
-     */
-    public DataObject getDataObject ();
-    
-    /**
      * the ID of the device this user data object originates from
      */
     public String getDataAccessDeviceID();

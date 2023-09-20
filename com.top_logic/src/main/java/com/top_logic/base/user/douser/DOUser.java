@@ -160,25 +160,6 @@ public class DOUser implements UserInterface, PersonAttributes {
     }
 
 	/**
-	 * get formatted username: Lastname, Title Firstname.
-	 * Suppress Title via param includeTitle
-	 * 
-	 * @param  includeTitle true to include, false to suppress 
-	 * @return formatted username
-	 */
-	@Override
-	public String getNameAs_LastTitleFirst (boolean includeTitle) {
-		
-		StringBuffer name = new StringBuffer();
-		name.append(getLastName()).append(", ");
-		if (includeTitle) {
-			name.append(getTitle()).append(' ');
-		}
-		name.append(getFirstName());
-		return name.toString();
-	}
-
-    /**
      * the internal email of this user
      */
     @Override

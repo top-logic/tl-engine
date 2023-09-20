@@ -377,7 +377,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		LicenseTool licenseTool = LicenseTool.getInstance();
 		TLLicense license = licenseTool.getLicense();
 		if (licenseTool.usersExceeded(license)) {
-			if (!Person.getUser(aUser).getUserName().equals(PersonManager.getManager().getSuperUserName())) {
+			if (!aUser.getName().equals(PersonManager.getManager().getSuperUserName())) {
 				return null;
 			}
 			logOutExistingSession(Person.getUser(aUser).getUserName());

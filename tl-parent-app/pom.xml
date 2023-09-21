@@ -34,6 +34,9 @@
 		<javadocOutput>${project.build.directory}/javadoc</javadocOutput>
 		<tl.app.metaConfAddons>db-jndi.xml</tl.app.metaConfAddons>
 		<tl.app.buildQualifier>${maven.build.timestamp}</tl.app.buildQualifier>
+		
+		<!-- The HTTP port where the development-mode application is started. -->
+		<tl.port>8080</tl.port>
 	</properties>
 
 	<dependencies>
@@ -251,7 +254,7 @@
 					
 					<arguments>
 						<argument>-port</argument>
-						<argument>8080</argument>
+						<argument>${tl.port}</argument>
 						<argument>-contextPath</argument>
 						<argument>${project.artifactId}</argument>
 					</arguments>

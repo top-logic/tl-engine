@@ -127,13 +127,13 @@ done
 [ -z "$CREATE_ONLY" ]	&& CREATE_ONLY="false"
 [ -z "$DATABASE" ]		&& DATABASE="h2"
 [ -z "$JAVA_XMS" ]		&& JAVA_XMS="256"
-[ -z "$JAVA_XMX" ]		&& JAVA_XMX="1024"
-[ -z "$CPUS" ]			&& CPUS="1.0"
+[ -z "$JAVA_XMX" ]		&& JAVA_XMX="4096"
+[ -z "$CPUS" ]			&& CPUS="2.0"
 [ -z "$DOCKER_REGISTRY" ] && DOCKER_REGISTRY="hub.docker.com"
 [ -z "$DOCKER_IMAGE_NAME" ]	&& DOCKER_IMAGE_NAME="$APPNAME"
 [ -z "$DOCKER_TAG" ]	&& DOCKER_TAG="latest"
 [ -z "$DOCKER_PUSH" ]	&& DOCKER_PUSH="false"
-DOCKER_MEMORY=$(( JAVA_XMX*2/10 > 200 ? JAVA_XMX+200 : JAVA_XMX*12/10 ))
+DOCKER_MEMORY=$(( JAVA_XMX*3/10 > 300 ? JAVA_XMX+300 : JAVA_XMX*13/10 ))
 
 
 # Database setup functions
@@ -142,10 +142,10 @@ h2(){
   [ -z "$DB_SCHEME" ] && DB_SCHEME=$APPNAME
   [ -z "$DB_USER" ] && DB_USER="user"
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
-  [ -z "$DB_URL" ] && DB_URL="\/var\/lib\/tomcat9\/work\/$APPNAME\/h2" || DB_URL="$(sed 's/\//\\\//g' <<<$DB_URL)"
-  sed -i -e "s/{dbLibrary}/RUN apt install libh2-java/g" $BUILD_PATH/Dockerfile
-  sed -i -e 's/{dbDriver}/org.h2.Driver/g' $BUILD_PATH/context.xml
-  sed -i -e "s/{dbURL}/jdbc:h2:$DB_URL/g" $BUILD_PATH/context.xml
+  [ -z "$DB_URL" ] && DB_URL="/var/lib/tomcat9/work/$APPNAME/h2"
+  sed -i -e "s|{dbLibrary}|RUN apt install libh2-java|g" $BUILD_PATH/Dockerfile
+  sed -i -e 's|{dbDriver}|org.h2.Driver|g' $BUILD_PATH/context.xml
+  sed -i -e "s|{dbURL}|jdbc:h2:$DB_URL|g" $BUILD_PATH/context.xml
 }
 
 mysql(){
@@ -155,10 +155,10 @@ mysql(){
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
   [ -z "$DB_PORT" ] && DB_PORT=3306
-  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT\/$DB_SCHEME"
-  sed -i -e 's/{dbLibrary}/RUN apt install libmariadb-java/g' $BUILD_PATH/Dockerfile
-  sed -i -e 's/{dbDriver}/org.mariadb.jdbc.Driver/g' $BUILD_PATH/context.xml
-  sed -i -e "s/{dbURL}/jdbc:mysql:\/\/$DB_URL/g" $BUILD_PATH/context.xml
+  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT/$DB_SCHEME"
+  sed -i -e 's|{dbLibrary}|RUN apt install libmariadb-java|g' $BUILD_PATH/Dockerfile
+  sed -i -e 's|{dbDriver}|org.mariadb.jdbc.Driver|g' $BUILD_PATH/context.xml
+  sed -i -e "s|{dbURL}|jdbc:mysql://$DB_URL|g" $BUILD_PATH/context.xml
 }
 
 mssql(){
@@ -176,9 +176,9 @@ mssql(){
   rm -f $BUILD_PATH/mssql.tar.gz
   mv $BUILD_PATH/sqljdbc_12.2/enu/mssql-jdbc-12.2.0.jre11.jar $BUILD_PATH/
   rm -rf $BUILD_PATH/sqljdbc_12.2
-  sed -i -e "s/{dbLibrary}/COPY --chown=root .\/mssql-jdbc-12.2.0.jre11.jar \/usr\/share\/java\//g" $BUILD_PATH/Dockerfile
-  sed -i -e 's/{dbDriver}/com.microsoft.sqlserver.jdbc.SQLServerDriver/g' $BUILD_PATH/context.xml
-  sed -i -e "s/{dbURL}/jdbc:sqlserver:\/\/$DB_URL/g" $BUILD_PATH/context.xml
+  sed -i -e "s|{dbLibrary}|COPY --chown=root ./mssql-jdbc-12.2.0.jre11.jar /usr/share/java/|g" $BUILD_PATH/Dockerfile
+  sed -i -e 's|{dbDriver}|com.microsoft.sqlserver.jdbc.SQLServerDriver|g' $BUILD_PATH/context.xml
+  sed -i -e "s|{dbURL}|jdbc:sqlserver://$DB_URL|g" $BUILD_PATH/context.xml
 }
 
 postgre(){
@@ -189,9 +189,9 @@ postgre(){
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
   [ -z "$DB_PORT" ] && DB_PORT=5432
   [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT\/$DB_SCHEME"
-  sed -i -e "s/{dbLibrary}/RUN apt install libpostgresql-jdbc-java/g" $BUILD_PATH/Dockerfile
-  sed -i -e 's/{dbDriver}/org.postgresql.Driver/g' $BUILD_PATH/context.xml
-  sed -i -e "s/{dbURL}/jdbc:postgresql:\/\/$DB_URL/g" $BUILD_PATH/context.xml
+  sed -i -e "s|{dbLibrary}|RUN apt install libpostgresql-jdbc-java|g" $BUILD_PATH/Dockerfile
+  sed -i -e 's|{dbDriver}|org.postgresql.Driver|g' $BUILD_PATH/context.xml
+  sed -i -e "s|{dbURL}|jdbc:postgresql://$DB_URL|g" $BUILD_PATH/context.xml
 }
 
 oracle(){
@@ -201,13 +201,13 @@ oracle(){
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
   [ -z "$DB_PORT" ] && DB_PORT=1521
-  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT$(sed 's/\//\\\//g' <<<$DB_SCHEME)"
+  [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT/$DB_SCHEME"
 # HowTo https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbbz/#articletitle
 # Download https://www.oracle.com/database/technologies/appdev/jdbc-downloads.html
   wget https://download.oracle.com/otn-pub/otn_software/jdbc/232-DeveloperRel/ojdbc11.jar -O $BUILD_PATH/ojdbc11.jar
-  sed -i -e "s/{dbLibrary}/COPY --chown=root .\/ojdbc11.jar \/usr\/share\/java\//g" $BUILD_PATH/Dockerfile
-  sed -i -e 's/{dbDriver}/oracle.jdbc.driver.OracleDriver/g' $BUILD_PATH/context.xml
-  sed -i -e "s/{dbURL}/jdbc:oracle:thin:@$DB_URL/g" $BUILD_PATH/context.xml
+  sed -i -e "s|{dbLibrary}|COPY --chown=root ./ojdbc11.jar /usr/share/java/|g" $BUILD_PATH/Dockerfile
+  sed -i -e 's|{dbDriver}|oracle.jdbc.driver.OracleDriver|g' $BUILD_PATH/context.xml
+  sed -i -e "s|{dbURL}|jdbc:oracle:thin:@$DB_URL|g" $BUILD_PATH/context.xml
 }
 
 
@@ -232,12 +232,12 @@ echo "Created dockerfile: $BUILD_PATH/Dockerfile"
 echo
 echo "=== Configuring database ==="
 $DATABASE
-sed -i -e "s/{dbUser}/$DB_USER/g" "$BUILD_PATH/context.xml"
-sed -i -e "s/{dbPasswd}/$DB_PASSWD/g" "$BUILD_PATH/context.xml"
-sed -i -e "s/{contextName}/$CONTEXT/g" "$BUILD_PATH/context.xml"
-sed -i -e "s/{JAVA_XMS}/$JAVA_XMS/g" "$BUILD_PATH/Dockerfile"
-sed -i -e "s/{JAVA_XMX}/$JAVA_XMX/g" "$BUILD_PATH/Dockerfile"
-sed -i -e "s/{timeZone}/$(sed 's/\//\\\//g' <<<$(cat /etc/timezone))/g" "$BUILD_PATH/Dockerfile"
+sed -i -e "s|{dbUser}|$DB_USER|g" "$BUILD_PATH/context.xml"
+sed -i -e "s|{dbPasswd}|$DB_PASSWD|g" "$BUILD_PATH/context.xml"
+sed -i -e "s|{contextName}|$CONTEXT|g" "$BUILD_PATH/context.xml"
+sed -i -e "s|{JAVA_XMS}|$JAVA_XMS|g" "$BUILD_PATH/Dockerfile"
+sed -i -e "s|{JAVA_XMX}|$JAVA_XMX|g" "$BUILD_PATH/Dockerfile"
+sed -i -e "s|{timeZone}|$(cat /etc/timezone)|g" "$BUILD_PATH/Dockerfile"
 
 DRY_RUN=""
 if [[ "$CREATE_ONLY" == "true" ]]; then
@@ -307,6 +307,7 @@ echo "=== Creating container ==="
 mkdir -p "${FILES}"
 
 function finish {
+# When the control flow reaches this point, the user has pressed Ctrl-C, stop the contaner.
 	echo
 	echo "=== Stopping container ==="
 	$DRY_RUN $RUN stop "$APPNAME"
@@ -322,6 +323,4 @@ $DRY_RUN $RUN run \
   --cpus $CPUS \
   --name="$APPNAME" \
   --hostname="$APPNAME" "$APPNAME" && $DRY_RUN $RUN logs -f "$APPNAME"
-
-# When the control flow reaches this point, the user has pressed Ctrl-C, stop the contaner.
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Container name and default for DB scheme and data folder.
-APPNAME="\${projectName}"
+APPNAME="toplogic"
 
 # HTTP context name or "ROOT" for the root context ("/")
 CONTEXT="ROOT"
@@ -56,7 +56,7 @@ DB_PASSWD=""
 JAVA_XMS="256"
 
 # Maximum Java heap space to allocate for the application.
-# The container itself will take +20% of memory until a maximum overhead of 200MB
+# The container itself will take +30% of memory until a maximum overhead of 300MB
 JAVA_XMX="4096"
 
 # Specify how much of the available CPU resources (cores) a container can use. For instance, if the host machine has two

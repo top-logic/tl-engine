@@ -25,7 +25,11 @@ set -e
 
 # Decide which container command to use
 if [[ "$DOCKER" == "0" ]] ; then
-	RUN="sudo docker"
+	if [[ -z "$(groups | grep -o docker)" ]]; then
+		RUN="sudo docker"
+	else
+		RUN="docker"
+	fi
 elif [[ "$PODMAN" == "0" ]] ; then
 	RUN="podman"
 else
@@ -252,7 +256,12 @@ if [[ "$SKIP_CONTAINER" != "true" ]] ; then
 	
 	echo
 	echo "=== Pulling base image ==="
-	$DRY_RUN $RUN pull docker.top-logic.com/tomcat9-java11:latest 2> /dev/null
+	# Workaround for the docker "login/pull with sudo" bug
+	if [[ "$RUN" == "sudo docker" ]]; then
+		sudo chown :$USER /root/.docker/config.json
+		sudo chmod g+r /root/.docker/config.json
+	fi
+	$DRY_RUN $RUN pull docker.top-logic.com/tomcat9-java11:latest
 	
 	echo
 	echo "=== Building docker image ==="

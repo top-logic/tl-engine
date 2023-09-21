@@ -25,7 +25,11 @@ set -e
 
 # Decide which container command to use
 if [[ "$DOCKER" == "0" ]] ; then
-	RUN="sudo docker"
+	if [[ -z "$(groups | grep -o docker)" ]]; then
+		RUN="sudo docker"
+	else
+		RUN="docker"
+	fi
 elif [[ "$PODMAN" == "0" ]] ; then
 	RUN="podman"
 else
@@ -144,7 +148,7 @@ h2(){
   [ -z "$DB_PASSWD" ] && DB_PASSWD="passwd"
   [ -z "$DB_URL" ] && DB_URL="/var/lib/tomcat9/work/$APPNAME/h2"
   sed -i -e "s|{dbLibrary}|RUN apt install libh2-java|g" $BUILD_PATH/Dockerfile
-  sed -i -e 's|{dbDriver}|org.h2.Driver|g' $BUILD_PATH/context.xml
+  sed -i -e "s|{dbDriver}|org.h2.Driver|g" $BUILD_PATH/context.xml
   sed -i -e "s|{dbURL}|jdbc:h2:$DB_URL|g" $BUILD_PATH/context.xml
 }
 
@@ -156,8 +160,8 @@ mysql(){
   [ -z "$DB_HOST" ] && DB_HOST=$LOCAL_IP
   [ -z "$DB_PORT" ] && DB_PORT=3306
   [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT/$DB_SCHEME"
-  sed -i -e 's|{dbLibrary}|RUN apt install libmariadb-java|g' $BUILD_PATH/Dockerfile
-  sed -i -e 's|{dbDriver}|org.mariadb.jdbc.Driver|g' $BUILD_PATH/context.xml
+  sed -i -e "s|{dbLibrary}|RUN apt install libmariadb-java|g" $BUILD_PATH/Dockerfile
+  sed -i -e "s|{dbDriver}|org.mariadb.jdbc.Driver|g" $BUILD_PATH/context.xml
   sed -i -e "s|{dbURL}|jdbc:mysql://$DB_URL|g" $BUILD_PATH/context.xml
 }
 
@@ -177,7 +181,7 @@ mssql(){
   mv $BUILD_PATH/sqljdbc_12.2/enu/mssql-jdbc-12.2.0.jre11.jar $BUILD_PATH/
   rm -rf $BUILD_PATH/sqljdbc_12.2
   sed -i -e "s|{dbLibrary}|COPY --chown=root ./mssql-jdbc-12.2.0.jre11.jar /usr/share/java/|g" $BUILD_PATH/Dockerfile
-  sed -i -e 's|{dbDriver}|com.microsoft.sqlserver.jdbc.SQLServerDriver|g' $BUILD_PATH/context.xml
+  sed -i -e "s|{dbDriver}|com.microsoft.sqlserver.jdbc.SQLServerDriver|g" $BUILD_PATH/context.xml
   sed -i -e "s|{dbURL}|jdbc:sqlserver://$DB_URL|g" $BUILD_PATH/context.xml
 }
 
@@ -190,7 +194,7 @@ postgre(){
   [ -z "$DB_PORT" ] && DB_PORT=5432
   [ -z "$DB_URL" ] && DB_URL="$DB_HOST:$DB_PORT\/$DB_SCHEME"
   sed -i -e "s|{dbLibrary}|RUN apt install libpostgresql-jdbc-java|g" $BUILD_PATH/Dockerfile
-  sed -i -e 's|{dbDriver}|org.postgresql.Driver|g' $BUILD_PATH/context.xml
+  sed -i -e "s|{dbDriver}|org.postgresql.Driver|g" $BUILD_PATH/context.xml
   sed -i -e "s|{dbURL}|jdbc:postgresql://$DB_URL|g" $BUILD_PATH/context.xml
 }
 
@@ -206,7 +210,7 @@ oracle(){
 # Download https://www.oracle.com/database/technologies/appdev/jdbc-downloads.html
   wget https://download.oracle.com/otn-pub/otn_software/jdbc/232-DeveloperRel/ojdbc11.jar -O $BUILD_PATH/ojdbc11.jar
   sed -i -e "s|{dbLibrary}|COPY --chown=root ./ojdbc11.jar /usr/share/java/|g" $BUILD_PATH/Dockerfile
-  sed -i -e 's|{dbDriver}|oracle.jdbc.driver.OracleDriver|g' $BUILD_PATH/context.xml
+  sed -i -e "s|{dbDriver}|oracle.jdbc.driver.OracleDriver|g" $BUILD_PATH/context.xml
   sed -i -e "s|{dbURL}|jdbc:oracle:thin:@$DB_URL|g" $BUILD_PATH/context.xml
 }
 
@@ -252,7 +256,12 @@ if [[ "$SKIP_CONTAINER" != "true" ]] ; then
 	
 	echo
 	echo "=== Pulling base image ==="
-	$DRY_RUN $RUN pull docker.top-logic.com/tomcat9-java11:latest 2> /dev/null
+	# Workaround for the docker "login/pull with sudo" bug
+	if [[ "$RUN" == "sudo docker" ]]; then
+		sudo chown :$USER /root/.docker/config.json
+		sudo chmod g+r /root/.docker/config.json
+	fi
+	$DRY_RUN $RUN pull docker.top-logic.com/tomcat9-java11:latest
 	
 	echo
 	echo "=== Building docker image ==="
@@ -274,6 +283,7 @@ fi
 
 echo
 echo "=== Removing old container ==="
+
 $DRY_RUN $RUN rm -f "$APPNAME" || echo "Nothing to delete"
 
 open_browser() {
@@ -287,8 +297,8 @@ open_browser() {
   fi
 
   # Wait until container startup is at least in progress
-  $DRY_RUN sleep 10
-  
+  $DRY_RUN sleep 15
+
   # Open browser to log-in to started app.
   $DRY_RUN xdg-open "http://localhost:${HTTP_PORT}${contextPath}"
 }
@@ -302,6 +312,7 @@ fi
 
 echo
 echo "=== Creating container ==="
+
 [ -z "$HTTP_PORT" ] && HTTP_PORT=8080
 
 mkdir -p "${FILES}"

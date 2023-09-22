@@ -264,6 +264,10 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 			} else {
 				config.setEndName(TLModelUtil.qualifiedName(model.getEnd()));
 			}
+		} else {
+			if (kind(model) == ReferenceKind.BACKWARDS) {
+				config.setKind(ReferenceKind.BACKWARDS);
+			}
 		}
 		return config;
 	}

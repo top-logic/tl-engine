@@ -70,7 +70,6 @@ public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
             user.setAttributeValue(PersonAttributes.GIVEN_NAME, aFirst);
             user.setAttributeValue(PersonAttributes.SUR_NAME, aSurname);
             user.setAttributeValue(PersonAttributes.TITLE, aTitle);
-            user.setAttributeValue(PersonAttributes.DISPLAY_NAME, ApplyPersonCommandHandler.getFullName(aTitle, aFirst, aSurname));
 			PersonManager.getManager().handleRefreshPerson(thePerson);
         }
         else {

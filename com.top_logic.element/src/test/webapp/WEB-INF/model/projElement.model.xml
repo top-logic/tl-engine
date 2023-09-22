@@ -148,7 +148,7 @@
 								<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
 							</annotations>
 							<attributes>
-								<reference name="parent" override="true" type="tl.element:StructuredElementContainer">
+								<reference kind="backwards" name="parent" override="true" type="tl.element:StructuredElementContainer">
 									<annotations>
 										<visibility value="read-only"/>
 									</annotations>

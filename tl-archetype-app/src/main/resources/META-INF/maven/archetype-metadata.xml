@@ -20,9 +20,6 @@
 		<requiredProperty key="DisplayName">
 			<defaultValue>#foreach($x in $artifactId.split("-"))#if(!$foreach.first) #end${x.substring(0,1).toUpperCase()}${x.substring(1)}#end</defaultValue>
 		</requiredProperty>
-		<requiredProperty key="ProjectName">
-			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring(0,1).toUpperCase()}${x.substring(1)}#end</defaultValue>
-		</requiredProperty>
 		<requiredProperty key="projectName">
 			<defaultValue>${artifactId.replace("-", "")}</defaultValue>
 		</requiredProperty>

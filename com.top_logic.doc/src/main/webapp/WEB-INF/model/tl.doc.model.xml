@@ -83,6 +83,7 @@
 							type="Page"
 						/>
 						<reference name="parent"
+							kind="backwards"
 							override="true"
 							type="Page"
 						/>

@@ -15,7 +15,6 @@ import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.user.UserService;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.dob.DataObject;
 import com.top_logic.event.ModelTrackingService;
@@ -203,45 +202,22 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
     }
 
     /**
-     * Update the admin fields of the given person.
-     * 
-     * The admin fields are {@link PersonAttributes#SUR_NAME}, {@link PersonAttributes#GIVEN_NAME},
-     * {@link PersonAttributes#TITLE} and {@link PersonAttributes#DISPLAY_NAME}.
-     * 
-     * @param    aPerson     The person to be changed.
-     * @param    aContext    The form context containing the values to be set.
-     */
+	 * Update the admin fields of the given person.
+	 * 
+	 * The admin fields are {@link PersonAttributes#SUR_NAME}, {@link PersonAttributes#GIVEN_NAME},
+	 * {@link PersonAttributes#TITLE}.
+	 * 
+	 * @param aPerson
+	 *        The person to be changed.
+	 * @param aContext
+	 *        The form context containing the values to be set.
+	 */
 	protected void updateAdminFields(Person aPerson, FormContext aContext) {
-        
         this.setAttribute(aPerson, PersonAttributes.SUR_NAME   , aContext);
         this.setAttribute(aPerson, PersonAttributes.GIVEN_NAME , aContext);
         this.setAttribute(aPerson, PersonAttributes.TITLE      , aContext);
-
-        String theSur   = (String)Person.getUser(aPerson).getAttributeValue(PersonAttributes.SUR_NAME);
-        String theGiven = (String)Person.getUser(aPerson).getAttributeValue(PersonAttributes.GIVEN_NAME);
-        String theTitle = (String)Person.getUser(aPerson).getAttributeValue(PersonAttributes.TITLE);
-        String theFull  = getFullName(theTitle, theGiven, theSur);
-        Person.getUser(aPerson).setAttributeValue(PersonAttributes.DISPLAY_NAME, theFull);
     }
 
-    public static String getFullName(String title, String first, String last){
-        String theFull = "";
-        // Compose some (usefull ?) Display / Full-Name
-        if (!StringServices.isEmpty(title)) {
-            theFull += title.trim() + ' ';
-        }
-
-        if (!StringServices.isEmpty(first)) { 
-            theFull += first.trim() + ' ';
-        }
-
-        if (!StringServices.isEmpty(last)) {
-            theFull += last.trim() + ' ';
-        }
-        
-        theFull = theFull.trim();
-        return theFull;
-    }
     /**
      * Update the fields that a user may change for himself.    
      * 
@@ -257,8 +233,6 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
     	this.setAttribute(aPerson, PersonAttributes.CUSTOMER      , aContext);
     	this.setAttribute(aPerson, PersonAttributes.EXTERNAL_MAIL , aContext);
     	this.setAttribute(aPerson, PersonAttributes.MAIL_NAME     , aContext);
-    	
-
     }
     
     /**

@@ -69,8 +69,7 @@ public class UserService {
             }
 			else if (attr.equals(PersonAttributes.USER_NAME)
 				|| attr.equals(PersonAttributes.GIVEN_NAME)
-				|| attr.equals(PersonAttributes.SUR_NAME)
-				|| attr.equals(PersonAttributes.DISPLAY_NAME)) {
+				|| attr.equals(PersonAttributes.SUR_NAME)) {
             	new_person.put(attr, aName);
             }else if(attr.equals(PersonAttributes.RESTRICTED_USER)) {
             	new_person.put(attr, Boolean.FALSE);

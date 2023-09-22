@@ -10,13 +10,9 @@ import com.top_logic.dob.DataObject;
 
 
 /**
- * Interface for userobjects within <i>TopLogic</i>.
+ * Interface for user information in <i>TopLogic</i>.
  *
- * A user is basically a dataobject. This interface only allows 
- * easier access to it's attributes. It can be used as dataobject 
- * anyway.
- *
- * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
+ * @author <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public interface UserInterface extends DataObject {
 
@@ -38,12 +34,6 @@ public interface UserInterface extends DataObject {
      * the lastname of this user
      */
     public String getLastName ();
-
-    /**
-     * get a formatted String for Username, should be "Title FirstName LastName".
-     * @return the fullname of this user
-     */
-    public String getFullName ();
     
      /**
      * the internal email of this user

@@ -618,7 +618,6 @@
 							</annotations>
 						</property>
 						<property name="historyType"
-							override="true"
 							type="tl.model:HistoryType"
 						>
 							<annotations>

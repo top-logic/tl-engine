@@ -707,12 +707,36 @@ public class Person extends AbstractBoundWrapper implements Author {
      * @return    The full name of the person as mentioned above.
      */
 	public String getFullName() {
-		String theFullName = getUser().getFullName();
-        if (StringServices.isEmpty(theFullName)) {
-            // TODO this is not better than the above ?
-            theFullName = this.getFirstName() + ' ' + this.getLastName();
+		UserInterface user = getUser();
+
+		String title = user.getTitle();
+		String first = user.getFirstName();
+		String last = user.getLastName();
+
+		StringBuilder result = new StringBuilder();
+		if (!StringServices.isEmpty(title)) {
+			result.append(title.trim());
+		}
+
+		if (!StringServices.isEmpty(first)) {
+			if (result.length() > 0) {
+				result.append(' ');
+			}
+			result.append(first.trim());
+		}
+
+		if (!StringServices.isEmpty(last)) {
+			if (result.length() > 0) {
+				result.append(' ');
+			}
+			result.append(last.trim());
+		}
+
+		if (result.length() == 0) {
+			return getName();
         }
-        return theFullName;
+
+		return result.toString();
     }
 
 

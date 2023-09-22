@@ -144,27 +144,11 @@ public class DOUser implements UserInterface, PersonAttributes {
         }
     }
 
-
-    /**
-     * get formatted username: Title Firstname Lastname. 
-     * @return the fullname of this user
-     */
-    @Override
-	public String getFullName () {
-        try {
-            return(String)(internalUser.getAttributeValue (DISPLAY_NAME));
-        }catch (NoSuchAttributeException nae) {
-            Logger.error ("Tried to retrieve Users DISPLAYNAME from dataobject " + internalUser + ", which is no User or has no such attribute", this);
-            return "";
-        }
-    }
-
 	/**
      * the internal email of this user
      */
     @Override
 	public String getInternalMail () {
-
         try {
             return(String)(internalUser.getAttributeValue (MAIL_NAME));                
         }catch (NoSuchAttributeException nae) {
@@ -178,7 +162,6 @@ public class DOUser implements UserInterface, PersonAttributes {
      */
     @Override
 	public String getExternalMail () {
-
         try {
             return(String)(internalUser.getAttributeValue (EXTERNAL_MAIL));                
         }catch (NoSuchAttributeException nae) {

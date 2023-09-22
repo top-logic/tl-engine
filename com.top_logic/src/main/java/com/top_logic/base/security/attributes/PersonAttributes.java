@@ -37,9 +37,6 @@ public interface PersonAttributes extends LDAPAttributes {
     /** The attribute "customer name". */
     public static final String CUSTOMER      = "customerName";
 
-    /** The attribute "display name". */
-    public static final String DISPLAY_NAME  = "displayName";
-
     /** The attribute "title". */
     public static final String TITLE         = "personalTitle";
 
@@ -82,7 +79,7 @@ public interface PersonAttributes extends LDAPAttributes {
             SUR_NAME,  TITLE,           CUSTOMER,     INTERNAL_NR,
             MOBILE_NR, EXTERNAL_NR,     PRIVATE_NR,
             MAIL_NAME, EXTERNAL_MAIL,   OBJECT_CLASS,
-            DISPLAY_NAME,    ORG_UNIT,
+		ORG_UNIT,
 		LOCALE, PASSWORD, DATA_ACCESS_DEVICE_ID, RESTRICTED_USER
     };
 }

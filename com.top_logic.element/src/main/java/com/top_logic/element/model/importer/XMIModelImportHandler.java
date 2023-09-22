@@ -10,6 +10,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -68,6 +69,7 @@ import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.config.TypeConfig;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -200,14 +202,20 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 		ModelConfig newConfig = TypedConfiguration.copy(oldConfig);
 		
 		ModelConfig importedConfig = TypedConfiguration.parse("model", ModelConfig.class, modelDefinition);
-		for (ModuleConfig moduleConfig : importedConfig.getModules()) {
-			ModuleConfig existingConfig = newConfig.getModule(moduleConfig.getName());
+		for (ModuleConfig importedModule : importedConfig.getModules()) {
+			ModuleConfig existingConfig = newConfig.getModule(importedModule.getName());
 
 			if (existingConfig != null) {
-				newConfig.getModules().remove(existingConfig);
+				for (TypeConfig importedType : importedModule.getTypes()) {
+					Collection<TypeConfig> existingTypes = existingConfig.getTypes();
+
+					existingTypes.remove(existingConfig.getType(importedType.getName()));
+					existingTypes.add(importedType);
+				}
+			} else {
+				DynamicModelService.addTLObjectExtension(importedModule);
+				newConfig.getModules().add(importedModule);
 			}
-			DynamicModelService.addTLObjectExtension(moduleConfig);
-			newConfig.getModules().add(moduleConfig);
 		}
 
 		TLModel newModel = service.loadTransientModel(log, newConfig);

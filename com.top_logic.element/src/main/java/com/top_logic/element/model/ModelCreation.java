@@ -16,6 +16,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.ArrayQueue;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLTypePart;
 
 /**
  * Scheduler for the phases of a model instantiation.
@@ -41,14 +42,30 @@ public class ModelCreation {
 		START,
 
 		/**
-		 * Creation of type members.
+		 * Creation of the type hierarchy.
 		 * 
 		 * <p>
-		 * All types must have been created in the preceding phase, before properties and references
-		 * are created, because these use (other) types to describe their content.
+		 * All types must have been created in the preceding phase, before for each type its
+		 * generalizations could be set.
 		 * </p>
 		 */
-		FILL_TYPE,
+		CREATE_TYPE_HIERARCHY,
+
+		/**
+		 * Creation of type parts.
+		 * 
+		 * <p>
+		 * All types must have been created and its generalizations should been set, before its
+		 * parts could be created.
+		 * </p>
+		 * 
+		 * <p>
+		 * The inheritance hierarchy must be known in order to topologically sort the actions for
+		 * creating the type parts. This sorting is necessary because an override of a
+		 * {@link TLTypePart} can only be created if the underlying type part already exists.
+		 * </p>
+		 */
+		CREATE_PARTS,
 
 		/**
 		 * Creations of association ends.
@@ -61,13 +78,37 @@ public class ModelCreation {
 		CREATE_ASSOCIATION_END,
 
 		/**
-		 * Reference (and other property) creation.
+		 * Creation of references.
 		 * 
 		 * <p>
-		 * All (original) properties must be created before creating overrides.
+		 * References must be created before creating reference overrides.
 		 * </p>
 		 */
 		CREATE_REFERENCE,
+
+		/**
+		 * Creation of reference overrides.
+		 * 
+		 * <p>
+		 * All reference overrides must be created before back references are created, because there
+		 * might be back references on overridden references.
+		 * </p>
+		 */
+		CREATE_REFERENCE_OVERRIDE,
+
+		/**
+		 * Creation of back references.
+		 * 
+		 * <p>
+		 * Back references must be created before creating back reference overrides
+		 * </p>
+		 * 
+		 * <p>
+		 * Back references must be created before finally determining the total order of all
+		 * properties of a class.
+		 * </p>
+		 */
+		CREATE_BACK_REFERENCE,
 
 		/**
 		 * Creation of property overrides.
@@ -77,17 +118,7 @@ public class ModelCreation {
 		 * might be back references on overridden references.
 		 * </p>
 		 */
-		CREATE_OVERRIDE,
-
-		/**
-		 * Creation of back references.
-		 * 
-		 * <p>
-		 * Back references must be created before finally determining the total order of all
-		 * properties of a class.
-		 * </p>
-		 */
-		CREATE_BACK_REFERENCE,
+		CREATE_BACK_REFERENCE_OVERRIDE,
 
 		/**
 		 * Establishing the final property order.
@@ -109,7 +140,11 @@ public class ModelCreation {
 
 	private final EnumMap<Phase, Queue<Runnable>> _jobs = new EnumMap<>(Phase.class);
 
-	private InTopologicalSortOrder _createOverrides;
+	private InTopologicalSortOrder _createParts;
+	
+	private InTopologicalSortOrder _createReferenceOverrides;
+
+	private InTopologicalSortOrder _createBackReferenceOverrides;
 
 	/**
 	 * Creates a {@link ModelCreation}.
@@ -119,10 +154,28 @@ public class ModelCreation {
 	}
 
 	/**
-	 * Schedules a the creation of type members.
+	 * Schedules the creation of the models type hierarchy.
 	 */
-	public void fillType(Runnable step) {
-		add(Phase.FILL_TYPE, step);
+	public void createTypeHierarchy(Runnable step) {
+		add(Phase.CREATE_TYPE_HIERARCHY, step);
+	}
+
+	/**
+	 * Schedules the creation of type parts.
+	 * 
+	 * <p>
+	 * Type part overrides must be sorted topologically with respect to the inheritance hierarchy of
+	 * their type, since one override may overwrite another.
+	 * </p>
+	 */
+	public void createParts(TLClass type, Runnable step) {
+		if (_createParts == null) {
+			_createParts = new InTopologicalSortOrder();
+
+			add(Phase.CREATE_PARTS, _createParts);
+		}
+
+		_createParts.add(type, step);
 	}
 
 	/**
@@ -140,18 +193,21 @@ public class ModelCreation {
 	}
 
 	/**
-	 * Schedules a property override creation.
+	 * Schedules a reference override creation.
+	 * 
+	 * <p>
+	 * Type part overrides must be sorted topologically with respect to the inheritance hierarchy of
+	 * their type, since one override may overwrite another.
+	 * </p>
 	 */
-	public void createOverride(TLClass type, Runnable step) {
-		getCreateOverrides().add(type, step);
-	}
+	public void createReferenceOverride(TLClass type, Runnable step) {
+		if (_createReferenceOverrides == null) {
+			_createReferenceOverrides = new InTopologicalSortOrder();
 
-	private InTopologicalSortOrder getCreateOverrides() {
-		if (_createOverrides == null) {
-			_createOverrides = new InTopologicalSortOrder();
-			add(Phase.CREATE_OVERRIDE, getCreateOverrides());
+			add(Phase.CREATE_REFERENCE_OVERRIDE, _createReferenceOverrides);
 		}
-		return _createOverrides;
+
+		_createReferenceOverrides.add(type, step);
 	}
 
 	/**
@@ -159,6 +215,24 @@ public class ModelCreation {
 	 */
 	public void createBackReference(Runnable step) {
 		add(Phase.CREATE_BACK_REFERENCE, step);
+	}
+
+	/**
+	 * Schedules a backwards reference override creation.
+	 * 
+	 * <p>
+	 * Type part overrides must be sorted topologically with respect to the inheritance hierarchy of
+	 * their type, since one override may overwrite another.
+	 * </p>
+	 */
+	public void createBackReferenceOverride(TLClass type, Runnable step) {
+		if (_createBackReferenceOverrides == null) {
+			_createBackReferenceOverrides = new InTopologicalSortOrder();
+
+			add(Phase.CREATE_BACK_REFERENCE_OVERRIDE, _createBackReferenceOverrides);
+		}
+
+		_createBackReferenceOverrides.add(type, step);
 	}
 
 	/**

@@ -44,14 +44,7 @@ public class PublishedFlexWrapperLabelProvider implements LabelProvider {
 			    Person      theCreator = theWrapper.getCreator();
     			if (!WrapperHistoryUtils.getUnversionedIdentity(theUser).equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator))) {
 					if (TLContext.isAdmin() || Person.isAdmin(theUser)) {
-    				    String theSuffix = "";
-    				    if (theCreator.wasAlive()) {
-							theSuffix = " (" + theCreator.getLastName() + ", " + theCreator.getFirstName() + ")";
-    				    }
-    				    else {
-    				        theSuffix = " (" + theCreator.getName() + ")";
-    				    }
-    				    theLabel += theSuffix;
+						theLabel += " (" + theCreator.getFullName() + ")";
     				}
     				else {
     					theLabel = PUBLISHED_MARKER + theLabel;

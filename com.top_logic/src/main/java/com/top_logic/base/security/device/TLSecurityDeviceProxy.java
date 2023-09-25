@@ -11,6 +11,7 @@ import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.device.interfaces.SecurityDevice;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.dob.DataObject;
 import com.top_logic.util.license.LicenseTool;
@@ -53,12 +54,12 @@ public class TLSecurityDeviceProxy implements PersonDataAccessDevice, Authentica
 	}
 
 	@Override
-	public List<?> getAllUserData() {
+	public List<UserInterface> getAllUserData() {
 		return accessImpl().getAllUserData();
 	}
 
 	@Override
-	public DataObject getUserData(String aName) {
+	public UserInterface getUserData(String aName) {
 		return accessImpl().getUserData(aName);
 	}
 

@@ -5,7 +5,6 @@
  */
 package com.top_logic.knowledge.wrap.person;
 
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
@@ -14,10 +13,7 @@ import java.util.TimeZone;
 import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
-import com.top_logic.base.user.UserDataObject;
 import com.top_logic.base.user.UserInterface;
-import com.top_logic.base.user.UserService;
-import com.top_logic.base.user.douser.DOUser;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -25,13 +21,8 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.time.TimeZones;
-import com.top_logic.dob.DataObject;
 import com.top_logic.dob.DataObjectException;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.NamedValues;
-import com.top_logic.dob.ex.NoSuchAttributeException;
-import com.top_logic.dob.persist.DataManager;
-import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -49,7 +40,6 @@ import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Utils;
-import com.top_logic.util.license.LicenseTool;
 
 /**
  * Wrapper for {@link com.top_logic.knowledge.objects.KnowledgeObject KnowledgeObjects} of
@@ -111,35 +101,11 @@ public class Person extends AbstractBoundWrapper implements Author {
 		Person.GLOBAL_ROLE_KA);
 
     /**
-     * Set to true when this person was known as alive - that means its user data was found in the security system
-     * It is set to false, when the security system is available, but no user data for this person was found, which means it has been deleted from this security system
-     * 
-     * This info is used to determine the state of a person (alive or externally deleted) when the security system is not available, i.e. due to a network problem
-     * 
-     * For newly created persons, this attribute is initialized automatically (with true, otherwise, the creation would fail)
-     * If running this version on an old database, this attribute can be null for persons which didn't have this attribute before.
-     * Null means not alive (same as externally deleted). It will be set automatically as soon as the security system, the person refers to can be reached and the persons state can be determined 
-     */
-    private static final String WAS_ALIVE = "wasAlive";
-
-    /**
-     * cache of the KOAttribute WAS_ALIVE
-     */
-    private Boolean wasAlive = null;
-    
-    /**
-     * Transient flag to indicate if the deletion of this persons user already
-     * has been handled or not. Avoids executing this handling every
-     * refresh cycle if this persons user is found to have been deleted
-     */
-    private boolean userDeletionHandled = false;
-
-    /**
      * Reference to a backed up user object which is used/returned in case of the
      * actual user being deleted from security or the security system currently
      * not being available (due to network problems or alike)
      */
-    private UserInterface userBackup = null;
+	private UserInterface _user;
     
     /**
      * Caches the representative group for this person.
@@ -177,7 +143,7 @@ public class Person extends AbstractBoundWrapper implements Author {
 		}
 	};
 
-	private Person current;
+	private Person _current;
 
     /**
      * Ctor to be used ONLY by WrapperFactory.
@@ -223,8 +189,8 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 *        The new {@link TimeZone}
 	 */
 	public void setTimeZone(TimeZone timeZone) {
-		if (this != current) {
-			current.setTimeZone(timeZone);
+		if (this != _current) {
+			_current.setTimeZone(timeZone);
 			return;
 		}
 
@@ -251,8 +217,8 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 *        The new {@link Locale}.
 	 */
 	public void setLocale(Locale locale) {
-    	if (this != current) {
-			current.setLocale(locale);
+		if (this != _current) {
+			_current.setLocale(locale);
     		return;
     	}
     	
@@ -279,12 +245,9 @@ public class Person extends AbstractBoundWrapper implements Author {
      * the ID of the PersonDataAccessDevice, this person retrieves its data from
      */
 	public String getDataAccessDeviceID() {
-        String theName = this.getName();
         String theDeviceID = (String)getValue(PersonAttributes.DATA_ACCESS_DEVICE_ID);
         if(StringServices.isEmpty(theDeviceID) || PLACE_HOLDER_DEFAULT_DATA_ACCESS_ID.equals(theDeviceID)){ //happens only during the initial startup call
             theDeviceID = TLSecurityDeviceManager.getInstance().getDefaultDataAccessDevice().getDeviceID();
-            Logger.info("Person "+theName+" has no data access device, using '" + theDeviceID + "'. This is normal on first startup for system persons who initially are in the knowledgebase.",this);
-            this.setDataAccessDeviceID(theDeviceID);
         }
         return theDeviceID;
     }
@@ -293,118 +256,11 @@ public class Person extends AbstractBoundWrapper implements Author {
      * the ID of the AuthenticationDevice, this person can be authenticated against
      */
 	public String getAuthenticationDeviceID() {
-        String theName = this.getName();
         String theDeviceID = (String)getValue(PersonAttributes.AUTHENTICATION_DEVICE_ID);
         if(PLACE_HOLDER_DEFAULT_DATA_AUTH_ID.equals(theDeviceID)){ //happens only during the initial startup call
             theDeviceID = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
-            Logger.info("Person "+theName+" has no authentication device, using '" + theDeviceID + "'. This is normal on first startup for system persons who initially are in the knowledgebase.",this);
-            this.setAuthenticationDeviceID(theDeviceID);
         }
         return theDeviceID;
-    }
-
-    /**
-     * Check if deletion has already been handled by the system.
-     * 
-     * @return true if the user deletion has definitely been handled
-     */
-    public boolean getIsDeletionHandled() {
-        return userDeletionHandled;
-    }
-
-    /**
-     * Set if the user has already deletion has already been handled by the
-     * system.
-     * 
-     * @param isDeleted if true the user deletion has definitely been handled
-     */
-    public void setIsDeletionHandled(boolean isDeleted) {
-    	if (this != current) {
-    		current.setIsDeletionHandled(isDeleted);
-    		return;
-    	}
-    	
-    	userDeletionHandled = isDeleted;
-    }
-
-    /**
-     * a backup of the actual user of this person, which is directly
-     *         read from the DB. Returns null, if this person has no backup, yet
-     */
-	public UserInterface getUserBackup() {
-        if (this.userBackup == null) {
-            DataManager theDM = DataManager.getInstance();
-			DataObject theDO;
-			try {
-				theDO = theDM.load(UserDataObject.META_OBJECT_NAME, KBUtils.getWrappedObjectName(this));
-			} catch (SQLException ex) {
-				Logger.error("Unable to load user interface for person " + KBUtils.getWrappedObjectName(this), ex,
-					Person.class);
-				theDO = null;
-			}
-            if (theDO != null) {
-                // Fill in attributes that were null and so were not written by
-                // the DataManager and so are not reconstructed in the DataObject and so access
-                // to these attributes throws a NoSuchAttributeException
-                MetaObject theMO = theDO.tTable();
-                for (int i = 0; i < PersonAttributes.PERSON_INFO.length; i++) {
-                    String theAttName = PersonAttributes.PERSON_INFO[i];
-                    if (!MetaObjectUtils.hasAttribute(theMO, theAttName)) {
-                        try {
-                            theDO.setAttributeValue(theAttName, "");
-                        } catch (Exception ex) {
-                            // 
-                        }
-                    }
-                }
-                this.userBackup = DOUser.getInstance(theDO);
-            }
-        }
-
-        return this.userBackup;
-    }
-
-    /**
-     * Copies the data of the given user into the backup user. If no backup user
-     * exists, yet, it creates one for this person
-     */
-	void updateUserBackup(UserInterface actualUser) {
-    	if (this != current) {
-    		current.updateUserBackup(actualUser);
-    		return;
-    	}
-    	
-        UserInterface currentUserBackup = getUserBackup();
-        boolean deleteBackup = actualUser == null && currentUserBackup != null;
-        boolean updateBackup = actualUser != null && currentUserBackup != null;
-        boolean createBackup = actualUser != null && currentUserBackup == null;
-        if (deleteBackup) {         //else both is null, so do nothing
-            try {
-                boolean success = DataManager.getInstance().delete(currentUserBackup);
-                this.userBackup = null;
-                if (!success) {
-                    Logger.error("updateUserBackup(): Deletion of UserBackup failed for unknown reasons", this);
-                }
-            } catch (Exception e) {
-                Logger.error("problem deleting user backup", e, this);
-            }
-            return; //backup deleted, return
-        }
-        if (createBackup) { //create empty user object and set identifier
-            currentUserBackup = UserService.getEmptyUser(this.getName());
-            currentUserBackup.setIdentifier(KBUtils.getWrappedObjectName(this));
-        }
-        if (updateBackup || createBackup) {
-            // copy actual data to backup
-            if (copyAnyThingExceptID(actualUser, currentUserBackup)) {
-                try {
-                    DataManager.getInstance().store(currentUserBackup); //save
-                    this.userBackup = currentUserBackup;
-                } catch (Exception e) {
-                    Logger.error("problem storing user backup", e, this);
-                }
-            }
-        }
     }
 
     /**
@@ -458,46 +314,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     }
 
     /**
-     * This is true if this person was alive when the according security system
-     * was asked last time and false otherwise if this attribute has not been
-     * set before, false is returned
-     * 
-     * @return the last know alive state.
-     */
-    public boolean wasAlive() {
-        if (wasAlive == null) {
-			this.wasAlive = tGetDataBoolean(WAS_ALIVE);
-        }
-		return wasAlive != null && wasAlive.booleanValue();
-    }
-
-    /**
-     * Sets the alive state of this person to what was found when trying the
-     * fetch this persons user from security system. That is true if the user was
-     * found and false if the user was not found even though the device was
-     * available
-     * 
-     * @param flag
-     *            will be ignores if same as current state
-     */
-    private void setLastKnownAliveState(boolean flag) {
-    	if (this != current) {
-    		if (current == null) {
-    			// Already known to be dead.
-    			return;
-    		}
-    		current.setLastKnownAliveState(flag);
-    		return;
-    	}
-    	
-    	if (flag != wasAlive() || this.wasAlive == null) {
-    		Boolean bFlag = Boolean.valueOf(flag);
-    		this.wasAlive = bFlag;
-    		getPersonManager().aliveStateChanged(current);
-    	}
-    }
-    
-    /**
      * Get the representative group for this person. 
      * 
      * @return the representative group if it exists, null otherwise
@@ -534,35 +350,6 @@ public class Person extends AbstractBoundWrapper implements Author {
         }
     }
 
-    /**
-     * Callback from manager
-     */
-    void storeChangedAliveState(){
-    	if (this != current) {
-    		current.storeChangedAliveState();
-    		return;
-    	}
-    	
-		this.tSetData(WAS_ALIVE, this.wasAlive);
-    }
-    /**
-     * Called if the user of this person was found in security and is going to
-     * be updated in the cache. Last known alive state of this person is set to
-     * true by this call
-     */
-    private void putInAliveCache(UserInterface user) {
-
-		// The current is null if this is a historic person which was deleted and the
-		// system cannot access the DataAccessDevice now.
-		// @see #getUser() and the catch-block in there
-		if (current == null) {
-			return;
-		}
-        getPersonManager().connect(current, user);
-        setLastKnownAliveState(true);
-        this.setIsDeletionHandled(false);
-    }
-
 	/**
 	 * Null-safe account information retrieval for the given account.
 	 */
@@ -579,50 +366,13 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 * @return the User of this person, or the backup if the secDevice could not be reached or this
 	 *         persons user has been deleted
 	 */
-	protected UserInterface getUser() {
-        this.checkInvalid();
-
-		// User has been deleted before, use data from backup user.
-		if (this.current == null) {
-			return this.getUserBackup();
+	public UserInterface getUser() {
+		if (!tValid() || _current != this) {
+			return null;
 		}
 
-        return internalGetUser();
+		return _user;
     }
-
-	private UserInterface internalGetUser() {
-		// check if person has a user being cached
-        PersonManager pm = getPersonManager();
-		UserInterface ui = pm.getUser(current);
-		if (ui == null) {
-            try {
-				{
-					UserInterface tmp = getUserBackup();
-					if (tmp.getUserName().equals(PersonManager.getManager().getSuperUserName())
-						|| LicenseTool.moreUsersAllowed(LicenseTool.getInstance().getLicense(), current.isRestrictedUser())) {
-						// user not found in security (user has been
-						// deleted) note: person is not put into alive
-						// user map, as this person is not alive
-						setLastKnownAliveState(false);
-						ui = tmp;
-					}
-				}
-				return ui;
-			} catch (Exception e) {
-                Logger.warn(//SecDev not accessible
-                        "Could not access security system " + this.getDataAccessDeviceID() + " working on backup user", e, this);
-                // security service not reachable
-                ui = this.getUserBackup();
-                if (ui != null && wasAlive()) {
-                    // using backup - thats okay, person is alive if it
-                    // was known as alive before
-                    putInAliveCache(ui);
-                }
-                return ui;
-            }
-        }
-        return ui;
-	}
 
     /**
      * Get the global roles as a Collection of BoundedRoles
@@ -656,8 +406,8 @@ public class Person extends AbstractBoundWrapper implements Author {
      * @throws DataObjectException if removal of the KA fails
      */
 	public void removeGlobalRole(BoundedRole aGlobalRole) throws DataObjectException {
-    	if (this != current) {
-    		current.removeGlobalRole(aGlobalRole);
+		if (this != _current) {
+			_current.removeGlobalRole(aGlobalRole);
     		return;
     	}
     	
@@ -795,7 +545,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      */
 	void deleteUser() {
         SecurityDeviceFactory.getPersonAccessDevice(getDataAccessDeviceID()).deleteUserData(this.getName());
-        this.resetUser();
+		_user = null;
     }
 
     /**
@@ -803,7 +553,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      * updated depending on the result
      */
      void resetUser() {
-    	getPersonManager().disconnect(current);
+			getPersonManager().disconnect(_current);
         // reload the user to make sure it is cached again
         // in the valid persons cache
 		getUser();
@@ -815,54 +565,9 @@ public class Person extends AbstractBoundWrapper implements Author {
     	resetUser();
     }
 
-    /**
-     * This method is for usage during initialization / user refresh only. It is
-     * used to set a Person to "Alive" if its user was amongst those being
-     * found in the SecurityDevices without the need for each Person to query
-     * its user individually (as would be done by resetUser()) for performance
-     * reasons.
-     * 
-     * This is useful as initially all Users are read from security anyway and
-     * then the Persons are resolved / created according to them.
-     * 
-     * This method does exactly the same as if this Person would query the user
-     * itself in the resetUser() method - just uses the given user instead of
-     * querying it from security.`
-     * 
-     * It can set the given user only if it originates from the same security device
-     * as the person is referring to. Usually the security device is set into the users
-     * DO when it is read by one of the security accesses. If the userDo has cannot
-     * provide info about its secDev or it originates from a different secDev, this method
-     * will return false.
-     * If the secDev of  the user and this person match, the user is taken and true is returned.
-     * @param ui -
-     *            the User belonging to this person
-     */
-     boolean setUser(UserInterface ui) {
-    	 if (this != current) {
-    		 return current.setUser(ui);
-    	 }
-    	 
-        String userSecDev = null;
-        String ownSecDev = null;
-        try {
-			userSecDev = ui.getDataAccessDeviceID();
-            ownSecDev = this.getDataAccessDeviceID(); 
-        } catch (NoSuchAttributeException nae) {
-            return false;// userDo cannot provide secDevID, that means setUser is not possible
-        } catch (Exception e) {
-            Logger.error("Error getting secDev from user", e, this);
-            return false;
-        }
-        
-        if (!StringServices.isEmpty(userSecDev) && userSecDev.equals(ownSecDev)) {
-            putInAliveCache(ui);
-			updateUserBackup(ui);
-            return true;
-        } else {
-            return false;
-        }
-    }
+	void setUser(UserInterface user) {
+		_user = user;
+	}
 
     /**
      * Can be used to change the security device of a person during its
@@ -870,8 +575,8 @@ public class Person extends AbstractBoundWrapper implements Author {
      * and is later moved into another
      */
 	public void setDataAccessDeviceID(String securityDeviceName) {
-    	if (this != current) {
-    		current.setDataAccessDeviceID(securityDeviceName);
+		if (this != _current) {
+			_current.setDataAccessDeviceID(securityDeviceName);
     		return;
     	} 
 		if(StringServices.isEmpty(securityDeviceName)){
@@ -886,8 +591,8 @@ public class Person extends AbstractBoundWrapper implements Author {
      * lifecycle
      */
 	public void setAuthenticationDeviceID(String securityDeviceName) {
-    	if (this != current) {
-    		current.setAuthenticationDeviceID(securityDeviceName);
+		if (this != _current) {
+			_current.setAuthenticationDeviceID(securityDeviceName);
     		return;
     	}
     	
@@ -911,7 +616,7 @@ public class Person extends AbstractBoundWrapper implements Author {
             // if this person should not be alive already. So it could have
             // changed its state after calling this method
 			return tValid() && getUser() != null
-                && getPersonManager().isKnown(current);
+				&& getPersonManager().isKnown(_current);
         }
     }
 
@@ -927,8 +632,8 @@ public class Person extends AbstractBoundWrapper implements Author {
         } catch (InvalidWrapperException e) {
             // if this person is found to be invalid,
             // remove it from the alive person cache
-        	if (this == current) {
-        		getPersonManager().disconnect(current);
+			if (this == _current) {
+				getPersonManager().disconnect(_current);
         	}
             throw e;
         }
@@ -940,8 +645,8 @@ public class Person extends AbstractBoundWrapper implements Author {
      * its data device
      */
 	public void updateUserData() {
-    	if (this != current) {
-    		current.updateUserData();
+		if (this != _current) {
+			_current.updateUserData();
     		return;
     	}
         this.resetUser();
@@ -986,8 +691,8 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 * @return <code>true</code> iff the value of this property changed.
 	 */
 	public boolean setRestrictedUser(Boolean isRestrictedUser) {
-    	if (this != current) {
-			return current.setRestrictedUser(isRestrictedUser);
+		if (this != _current) {
+			return _current.setRestrictedUser(isRestrictedUser);
     	}
     	
 		Boolean currVal = getBoolean(PersonAttributes.RESTRICTED_USER);
@@ -1001,7 +706,7 @@ public class Person extends AbstractBoundWrapper implements Author {
 
 	void init(PersonManager personManager, Person current) {
 		this.personManager = personManager;
-		this.current = current;
+		this._current = current;
 	}
 
 	/**
@@ -1011,7 +716,7 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 *         {@link Person} is deleted.
 	 */
 	public Person getCurrent() {
-		return current;
+		return _current;
 	}
 
 	private PersonManager getPersonManager() {

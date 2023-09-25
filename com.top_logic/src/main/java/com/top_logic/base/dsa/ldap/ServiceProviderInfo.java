@@ -16,9 +16,9 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 
 /**
- * This class is the configuration object used to instantiate an LDAPAccessService
+ * Configuration object for instantiating {@link LDAPAccessService}
  * 
- * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
+ * @author <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public class ServiceProviderInfo extends Hashtable {
 	
@@ -128,29 +128,27 @@ public class ServiceProviderInfo extends Hashtable {
 	}
 
 	/**
-	 * HelperMethod
-	 * Decodes the given String if encoded, returns it unchanged if not
-	 * @param theValue - String to be decoded
+	 * HelperMethod Decodes the given String if encoded, returns it unchanged if not
+	 * 
+	 * @param encryptedPassword
+	 *        String to be decoded
 	 * @return the decoded string
 	 */
-	private static String decodeCredentials(String theValue, String aDeviceID) {
-		if (theValue == null) {
-			theValue = "";
+	private static String decodeCredentials(String encryptedPassword, String aDeviceID) {
+		if (encryptedPassword == null) {
 			Logger.warn("Given Credentials for LDAP Access were empty for Device " + aDeviceID, LDAPAccessService.class);
+			return "";
 		} else {
-			String theKey = null;
 			try {
-				theKey = CryptSupport.getInstance().decodeString(theValue);
+				return CryptSupport.getInstance().decodeString(encryptedPassword);
 			} catch (NumberFormatException nfe) {
 				Logger.debug("Given credentials were given plain / unencrypted", nfe, LDAPAccessService.class);
+				return encryptedPassword;
 			} catch (Exception e) {
 				Logger.error("Unable to decode credentials from what was given", e, LDAPAccessService.class);
-			}
-			if (theKey != null) {
-				theValue = theKey;
+				return encryptedPassword;
 			}
 		}
-		return (theValue);
 	}
 
 }

@@ -25,7 +25,7 @@ import com.top_logic.util.TopLogicDirContext;
  * 
  * Provides read only access only.
  * 
- * @author    <a href="mailto:tri@top-loigc.com">Thomas Trichter</a>
+ * @author    <a href="mailto:tri@top-loigc.com">Thomas Richter</a>
  */
 public class LDAPAccessService {
 	

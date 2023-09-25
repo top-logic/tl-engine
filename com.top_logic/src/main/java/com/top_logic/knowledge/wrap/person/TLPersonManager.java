@@ -8,13 +8,10 @@ package com.top_logic.knowledge.wrap.person;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import com.top_logic.base.context.TLSubSessionContext;
@@ -28,7 +25,6 @@ import com.top_logic.base.user.UserInterface;
 import com.top_logic.base.user.UserService;
 import com.top_logic.base.user.douser.DOUser;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
@@ -41,7 +37,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.dob.DataObject;
 import com.top_logic.dob.persist.DataManager;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryManager;
@@ -60,7 +55,6 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.license.LicenseTool;
-import com.top_logic.util.license.TLLicense;
 
 /**
  * Manage Person entities, reference implementation.
@@ -363,25 +357,25 @@ public class TLPersonManager extends PersonManager {
 		}
 		Person thePerson = getPersonByName(aName, aKnowledgeBase);
 		PersonDataAccessDevice theDataDevice = SecurityDeviceFactory.getPersonAccessDevice(dataAccessDeviceID);
-		DataObject theUserData = theDataDevice.getUserData(aName);
+		UserInterface user = theDataDevice.getUserData(aName);
 		if (thePerson != null && thePerson.isAlive()) {
 			throw new IllegalStateException("Person '" + aName + "' already exists");
 		}
-		if (theUserData == null) {
-			theUserData = UserService.getNewUserDO(aName);
-			boolean ok = theDataDevice.createUserEntry(theUserData);
+		if (user == null) {
+			user = DOUser.getInstance(UserService.getNewUserDO(aName));
+			boolean ok = theDataDevice.createUserEntry(user);
 			if (!ok) {
 				throw new TopLogicException(I18NConstants.ERROR_NO_MORE_USERS);
 			}
 		}
 		if (thePerson == null) { //creating new KO
 			thePerson =
-				getOrCreatePersonForUser(DOUser.getInstance(theUserData),
+				getOrCreatePersonForUser(dataAccessDeviceID, user,
 					LicenseTool.moreUsersAllowed(LicenseTool.getInstance().getLicense(), isRestricted));
 		} else { //reusing existing KO for new user
 			this._renamePerson(thePerson, aName); //make sure personname and username are same (dependingon DB possible upper/lowercase conflicts.)
 			thePerson.setDataAccessDeviceID(dataAccessDeviceID); //set datadevice to point to given users device
-			setInitialLocale(thePerson);
+			ensureLocale(thePerson);
 			thePerson.resetUser(); //reload user
 			handleNewPerson(thePerson);
 		}
@@ -394,29 +388,6 @@ public class TLPersonManager extends PersonManager {
 			}
 		}
 		return (thePerson);
-	}
-
-	/**
-	 * Tries to intialize the locale of the given (newly created) person with the locale of the
-	 * current user. Uses configured initial locale as default if that doesn't work.
-	 */
-	private void setInitialLocale(Person person) {
-		Locale locale = findInitialLocale();
-		person.setLocale(locale);
-	}
-
-	private Locale findInitialLocale() {
-		Locale locale = _resourcesModule.getDefaultLocale();
-		{ // trying to preset with data from current user
-            Person current = getCurrentPerson();
-            if (current != null) { // happens when Testing/Import 
-				Locale currentLocale = getCurrentPerson().getLocale();
-				if (currentLocale != null) {
-					locale = currentLocale;
-				}
-            }
-		}
-		return locale;
 	}
 
     /**
@@ -472,29 +443,22 @@ public class TLPersonManager extends PersonManager {
 	 *            person.
 	 * @return The person or null.
 	 */
-	public synchronized Person getOrCreatePersonForUser(UserInterface theUser, boolean morePersonsAllowed) {
-		return internalGetOrCreatePersonForUser(theUser, morePersonsAllowed);
+	public synchronized Person getOrCreatePersonForUser(String dataAccessDeviceID, UserInterface theUser,
+			boolean morePersonsAllowed) {
+		return internalGetOrCreatePersonForUser(dataAccessDeviceID, theUser, morePersonsAllowed);
 	}
 
-	private Person internalGetOrCreatePersonForUser(UserInterface theUser, boolean morePersonsAllowed) {
+	private Person internalGetOrCreatePersonForUser(String dataAccessDeviceID, UserInterface user,
+			boolean morePersonsAllowed) {
 		{
-			String theUserName = theUser.getUserName();
-			Person existingPerson = getPersonByName(theUserName);
-			String dataAccessDeviceID = theUser.getDataAccessDeviceID();
-			if (existingPerson != null) {
-				if (existingPerson.setUser(theUser)) {
-					/* Necessary for dynamic translations see setLocale(...) */
-					if (existingPerson.getLocale() == null) {
-						setInitialLocale(existingPerson);
-					}
-					this.handleRefreshPerson(existingPerson);
-					return existingPerson;
-				} else {
-					Logger.info("Unable to create person for " + dataAccessDeviceID + "//" + theUserName
-						+ " as there exist already a user " + existingPerson.getDataAccessDeviceID() + "//"
-						+ theUserName, TLPersonManager.class);
-					return null;
-				}
+			String theUserName = user.getUserName();
+			Person existingAccount = getPersonByName(theUserName);
+			if (existingAccount != null) {
+				existingAccount.setUser(user);
+				enter(existingAccount);
+				ensureLocale(existingAccount);
+				this.handleRefreshPerson(existingAccount);
+				return existingAccount;
 			} else {
 				if (personNameAlreadyUsed(theUserName)) {
 					Logger.info("Unable to create person for " + dataAccessDeviceID + "//" + theUserName
@@ -506,11 +470,8 @@ public class TLPersonManager extends PersonManager {
 					Person createdPerson =
 						createPersonInKBOnly(theUserName, getKnowledgeBase(), dataAccessDeviceID,
 							authenticationDeviceID);
-					setInitialLocale(createdPerson);
-					if (!createdPerson.setUser(theUser)) {
-						Logger.warn("Unable to connect user dataobject to newly created person. Try to let the person retrieve the data itself.", TLPersonManager.class);
-						createdPerson.resetUser();
-					}
+					ensureLocale(createdPerson);
+					createdPerson.setUser(user);
 					handleNewPerson(createdPerson);
 					return createdPerson;
 				} else {
@@ -521,6 +482,12 @@ public class TLPersonManager extends PersonManager {
 				}
 
 			}
+		}
+	}
+
+	private void ensureLocale(Person sccount) {
+		if (sccount.getLocale() == null) {
+			sccount.setLocale(_resourcesModule.getDefaultLocale());
 		}
 	}
 
@@ -566,109 +533,48 @@ public class TLPersonManager extends PersonManager {
 	}
 
 	/**
-	 * Re-Initializes the usercache upon startup and whenever called thereafter.
-     * 
-     * This will fetch all know Persons and add Persons when there is a User only.
-     * no commit() is executed by this code.
+	 * Re-Initializes the user cache upon startup and whenever called thereafter.
+	 * 
+	 * This will fetch all know Persons and add Persons when there is a User only. no commit() is
+	 * executed by this code.
 	 */
 	@FrameworkInternal
 	private synchronized void _initUserMap() {
-		// at first getting a copy of the current / previous alive persons
-		Set<Person> thePersons = getAllPersonsSet();
-		// if no one except the root user is in there we assume this is initial
-		// startup
-		if (thePersons.size() <= 1) { // no User or only root, KHA: strange check.
-			// so we fetch all known persons from KB
-			for (KnowledgeObject theKO : getAllPersonKOs()) {
-				{
-					Person aPerson = getPersonByKO(theKO);
-					aPerson.getDataAccessDeviceID(); // just make sure it is
-													 // properly initialized on
-													 // startup
-					aPerson.getAuthenticationDeviceID(); // just make sure it is
-														 // properly initialized
-														 // on startup
-					thePersons.add(aPerson);
+		TLSecurityDeviceManager deviceManager = _tlSecurityDeviceManager;
+		
+		Set<Person> accountsToCheck = getAllPersonsSet();
+
+		for (String deviceId : deviceManager.getConfiguredDataAccessDeviceIDs()) {
+			PersonDataAccessDevice device = deviceManager.getDataAccessDevice(deviceId);
+
+			for (UserInterface user : device.getAllUserData()) {
+				String userName = user.getUserName();
+				if (StringServices.isEmpty(userName)) {
+					Logger.warn("Encountered empty username in '" + deviceId + "' - entry ignored.", this);
+					continue;
 				}
+				
+				Person account = getOrCreatePersonForUser(deviceId, user, true);
+				accountsToCheck.remove(account);
 			}
 		}
-		// declaring some variables to avoid having declarations in the loop
-		String        theUserName = null;
-		Person        thePerson   = null;
-		// now we read all users we can find in the security systems
-		Set<UserInterface> allUsers =
-			new HashSet<>(CollectionUtil.dynamicCastView(UserInterface.class,
-				_tlSecurityDeviceManager.getAllAvailableUserData()));
-		Logger.info("Synchronizing person objects, and user backups...",this);
-		TLLicense licenseObject = LicenseTool.getInstance().getLicense();
+		
+		accountsToCheck = _personDeletionPolicy.restrictPersonsToDelete(this, accountsToCheck);
 
-		// remove super user from list so it can never be deleted
-		String superUserName = PersonManager.getManager().getSuperUserName();
-		UserInterface rootUser =
-			CollectionUtil.find(allUsers, superUserName, UserInterface::getUserName);
-		Person rootPerson = getOrCreatePersonForUser(rootUser, Boolean.FALSE);
-		thePersons.remove(rootPerson);
-
-		// First look up for persons from DB. Important for restart of application.
-		Set<Person> tmpPersons = new HashSet<>();
-		for (Person person : thePersons) {
-			// The amount of system users is changed in every cycle, don't move this out!
-			boolean allowMoreAccounts = LicenseTool.moreUsersAllowed(licenseObject, false);
-			String personName = person.getName();
-			Optional<UserInterface> user =
-				allUsers.stream().filter(item -> (personName.equals(item.getUserName()))).findFirst();
-			if (!user.isPresent()) {
-				Logger.warn("Encountered empty username for userentry in userlist - entry will be ignored.", this);
-				continue;
-			}
-			tmpPersons.add(getOrCreatePersonForUser(user.get(), allowMoreAccounts));
-			allUsers.remove(user.get());
-		}
-		// Remove all persons that are found
-		thePersons.removeAll(tmpPersons);
-		// Import all users left by security devices
-		for (UserInterface theUser : allUsers) {
-			// The amount of system users is changed in every cycle, don't move this out!
-			boolean allowMoreAccounts = LicenseTool.moreUsersAllowed(licenseObject, Boolean.FALSE);
-			theUserName = theUser.getUserName();
-			if (StringServices.isEmpty(theUserName)) {
-				Logger.warn("Encountered empty username for userentry in userlist - entry will be ignored.", this);
-				continue;
-			}
-			thePerson = getOrCreatePersonForUser(theUser, allowMoreAccounts);
-			thePersons.remove(thePerson);
-		}
-
-		thePersons = _personDeletionPolicy.restrictPersonsToDelete(this, thePersons);
-
-		// what remains in this list are persons for which no user was found in
-		// security-
+		// what remains in this list are persons for which no user was found in any security device,
 		// either because security system was not available right now or because
-		// the user has been deleted
-		Iterator<Person> notFoundInSecurity = thePersons.iterator();
-		while (notFoundInSecurity.hasNext()) {
-			thePerson = notFoundInSecurity.next();
-            if (!thePerson.tValid()) {
+		// the user has been deleted.
+		for (Person account : accountsToCheck) {
+			if (!account.tValid()) {
 				// Person has been already deleted from database by another cluster node's knowledge
 				// base.
 				// Therefore exclude this person from deletion and remove it from cache.
-				notFoundInSecurity.remove();
-				disconnect(thePerson);
-				continue;
+				disconnect(account);
+			} else {
+				deleteUser(account);
             }
-			// force those to reload, to see if deleted (not alive) or secdev
-			// down (still alive)
-			thePerson.resetUser();
-			if (thePerson.isAlive()) {
-				// again remove all alive
-				notFoundInSecurity.remove();
-			}
+
 		}
-		//just make sure, those persons with changed state make it persistent
-		// now
-		this.storeChangedAliveStates();
-		// therefore rest being handled as deleted
-		handleDeletedUsers(thePersons);
 
 		for (Person person : getAllPersons()) {
 			ensureRepresentativeGroup(person);
@@ -710,29 +616,6 @@ public class TLPersonManager extends PersonManager {
 	}
 
 	/**
-	 * Hook for subclasses to react on persons which got their user deleted Upon
-	 * each sync the persons which are found to have no user in the security
-	 * system are given to this method
-	 * 
-	 * @param personList
-	 *            the persons with deleted users
-	 */
-	private void handleDeletedUsers(Set<Person> personList) {
-		Iterator<Person> personsWithDeletedUserData = personList.iterator();
-		while(personsWithDeletedUserData.hasNext()){
-			Person tmp = personsWithDeletedUserData.next();
-			if(!tmp.getIsDeletionHandled()){
-				{
-					deleteLocalAccount(tmp);
-					// delete person
-					tmp.tDelete();
-				}
-				tmp.setIsDeletionHandled(true);
-			}
-		}
-	}
-
-	/**
 	 * Deletes the {@link UserInterface} for the {@link Person} and the {@link Person} itself.
 	 */
 	@Override
@@ -768,13 +651,10 @@ public class TLPersonManager extends PersonManager {
      * Delete the {@link PersonalConfigurationWrapper} attached to aPerson.
      */
     protected void deletePersonalConfiguration(Person aPerson) {
-        PersonalConfigurationWrapper personalConfiguration = PersonalConfigurationWrapper.getPersonalConfiguration(aPerson);
-        if (personalConfiguration != null) try {
-            personalConfiguration.tDelete();
+		PersonalConfigurationWrapper personalConfig = PersonalConfigurationWrapper.getPersonalConfiguration(aPerson);
+		if (personalConfig != null) {
+			personalConfig.tDelete();
         }
-        catch (Exception ex) {
-        	Logger.warn("Failed to delete personal configuration for person " + aPerson + ".", ex, TLPersonManager.class);
-		}
     }
 
 	/**

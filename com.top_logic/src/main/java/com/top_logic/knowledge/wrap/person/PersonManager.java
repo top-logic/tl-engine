@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -178,16 +177,13 @@ public abstract class PersonManager extends ManagedClass {
      * There can be Persons with invalid/unaccessible Users that will not
      * be found here.
      */
-	private Map<Person, UserInterface> allUsers = new HashMap<>();
+	private Map<String, Person> allUsers = new HashMap<>();
 
 	private final KnowledgeBase knowledgeBase;
 
 	private final Pattern userNamePattern;
 
 	private final int maxPersonNameLength;
-
-    /** Set of Persons where {@link Person#isAlive()} was changed since last call to {@link #storeChangedAliveStates()}  */
-	private Set<Person> aliveStateChanged = new HashSet<>();
 
 	private final boolean showRepresentativeGroups;
 	
@@ -210,42 +206,6 @@ public abstract class PersonManager extends ManagedClass {
 		superUserName = config.getSuperUserName();
 		tokenTimeout = config.getTokenTimeout();
 		knowledgeBase = config.getKnowledgeBaseProvider().get();
-	}
-
-    /**
-     * Call storeChangedAliveState()) for all Persons in aliveStateChanged Set.
-     *  
-     * TODO TRI should this be synchronized ?
-     */
-	protected void storeChangedAliveStates() {
-	    synchronized (aliveStateChanged) {
-    		Iterator it = this.aliveStateChanged.iterator();
-    		while (it.hasNext()) {
-    			String thePersonStr = "";
-    			try {
-    				Person tmp = (Person) it.next();
-                    if (!tmp.tValid()) {
-                        Logger.info("storeChangedAliveStates(): Skipping Person" + tmp, this);
-                        continue; // better skip these
-                    }
-                    thePersonStr = tmp.getDataAccessDeviceID() + "\\" + tmp.getName();
-    				tmp.storeChangedAliveState();
-    			} catch (Exception e) {
-    				Logger.error("Unable to store last known alive state from person: " + thePersonStr, e, this);
-    			} finally {
-    				it.remove();
-    			}
-    		}
-	    }
-	}
-
-	/**
-	 * Callback from person.
-	 */
-	void aliveStateChanged(Person aPerson) {
-	    synchronized (aliveStateChanged) {
-	        this.aliveStateChanged.add(aPerson);
-	    }
 	}
 
 	/**
@@ -543,50 +503,35 @@ public abstract class PersonManager extends ManagedClass {
 	 * True when we have a known Mapping for this Person to a User.
 	 */
 	synchronized boolean isKnown(Person aPerson) {
-	    return allUsers.containsKey(aPerson);
+		return aPerson == allUsers.get(aPerson.getName());
 	}
 
     /**
      * Connect the given Person to the given user.
      */
-    synchronized UserInterface connect(Person aPerson, UserInterface user) {
-        return allUsers.put(aPerson, user);
+	synchronized void enter(Person aPerson) {
+		allUsers.put(aPerson.getName(), aPerson);
     }
     
     /**
      * Disconnect given Person from its User.
      */
-    synchronized UserInterface disconnect(Person aPerson) {
-        return allUsers.remove(aPerson);
-    }
-
-    /**
-     * Return the User mapped to aPerson.
-     */
-    synchronized UserInterface getUser(Person aPerson) {
-        return allUsers.get(aPerson);
-    }
-    
-    /**
-     * a List containing all Users belonging to the currently known
-     *         alive persons
-     */
-    public synchronized List<UserInterface> getAllAliveUsers() {
-        return new ArrayList<>(allUsers.values());
+	synchronized void disconnect(Person aPerson) {
+		allUsers.remove(aPerson.getName());
     }
     
     /**
      * a Copy of the currently know alive Persons.
      */
     public synchronized Set<Person> getAllPersonsSet() {
-        return new HashSet<>(allUsers.keySet());
+		return new HashSet<>(allUsers.values());
     }
     
     /**
      * a Copy of the currently know alive Persons.
      */
     public synchronized List<Person> getAllPersonsList() {
-        return new ArrayList<>(allUsers.keySet());
+		return new ArrayList<>(allUsers.values());
     }
 
     /**

@@ -129,14 +129,14 @@ public class TestTLPersonManager extends BasicTestCase {
 		mockPersonDataAccessDevice.addUserData(user);
 
 		Transaction createTx = firstNodeKnowledgeBase.beginTransaction();
-		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(user, Boolean.TRUE);
+		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(mockPersonDataAccessDevice.getDeviceID(),
+			user, Boolean.TRUE);
 		createTx.commit();
 
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersons().contains(fooPerson));
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersonsSet().contains(fooPerson));
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersonsList().contains(fooPerson));
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllAlivePersons().contains(fooPerson));
-		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllAliveUsers().contains(Person.getUser(fooPerson)));
 
 		secondNodeKnowledgeBase.refetch();
 		secondNodeRefreshUsersTask.run();
@@ -146,7 +146,6 @@ public class TestTLPersonManager extends BasicTestCase {
 		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllPersonsSet().contains(fooPersonNode2));
 		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllPersonsList().contains(fooPersonNode2));
 		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllAlivePersons().contains(fooPersonNode2));
-		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllAliveUsers().contains(Person.getUser(fooPersonNode2)));
 	}
 
 	public void testDeletePerson() throws RefetchTimeout {
@@ -155,7 +154,8 @@ public class TestTLPersonManager extends BasicTestCase {
 		mockPersonDataAccessDevice.addUserData(user);
 
 		Transaction createTx = firstNodeKnowledgeBase.beginTransaction();
-		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(user, Boolean.TRUE);
+		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(mockPersonDataAccessDevice.getDeviceID(),
+			user, Boolean.TRUE);
 		createTx.commit();
 		String personName = fooPerson.getName();
 
@@ -171,16 +171,12 @@ public class TestTLPersonManager extends BasicTestCase {
 		assertFalse("Ticket #13195: ", secondNodePersonManager.getAllPersonsSet().contains(fooPersonNode2));
 		assertFalse("Ticket #13195: ", secondNodePersonManager.getAllPersonsList().contains(fooPersonNode2));
 		assertFalse("Ticket #13195: ", secondNodePersonManager.getAllAlivePersons().contains(fooPersonNode2));
-		assertFalse("Ticket #13195: User does not belong to an alive person.", secondNodePersonManager
-			.getAllAliveUsers().contains(fooUserNode2));
 
 		firstNodeKnowledgeBase.refetch();
 		assertFalse("Ticket #13195: ", firstNodePersonManager.getAllPersons().contains(fooPerson));
 		assertFalse("Ticket #13195: ", firstNodePersonManager.getAllPersonsSet().contains(fooPerson));
 		assertFalse("Ticket #13195: ", firstNodePersonManager.getAllPersonsList().contains(fooPerson));
 		assertFalse("Ticket #13195: ", firstNodePersonManager.getAllAlivePersons().contains(fooPerson));
-		assertFalse("Ticket #13195: User does not belong to an alive person.", firstNodePersonManager
-			.getAllAliveUsers().contains(user));
 	}
 
 	public void testLocalePreservationOnRefetch() {
@@ -190,14 +186,16 @@ public class TestTLPersonManager extends BasicTestCase {
 
 		assertNull(firstNodePersonManager.getPersonByName(fooUser.getUserName(), firstNodeKnowledgeBase));
 		Transaction tx = firstNodeKnowledgeBase.beginTransaction();
-		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(fooUser, Boolean.TRUE);
+		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(mockPersonDataAccessDevice.getDeviceID(),
+			fooUser, Boolean.TRUE);
 		fooPerson.setLocale(Locale.CHINA);
 		tx.commit();
 
 		Locale dynamicLocale = fooPerson.getLocale();
 		// Dynamic locale may differ from set locale because a variant is included in Locale.
 		// assertEquals(Locale.CHINA, dynamicLocale);
-		Person refetchedPerson = firstNodePersonManager.getOrCreatePersonForUser(fooUser, Boolean.TRUE);
+		Person refetchedPerson = firstNodePersonManager
+			.getOrCreatePersonForUser(mockPersonDataAccessDevice.getDeviceID(), fooUser, Boolean.TRUE);
 		assertEquals("Ticket #11923: Fetching person for user changes locale.", dynamicLocale,
 			refetchedPerson.getLocale());
 	}

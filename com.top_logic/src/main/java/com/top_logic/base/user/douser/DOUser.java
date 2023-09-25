@@ -33,20 +33,6 @@ import com.top_logic.dob.meta.MOReference;
  */
 public class DOUser implements UserInterface, PersonAttributes {
 
-	/**
-	 * @see com.top_logic.base.user.UserInterface#getDataAccessDeviceID()
-	 */
-	@Override
-	public String getDataAccessDeviceID() {
-		
-		try {
-			return (String) this.internalUser.getAttributeValue(PersonAttributes.DATA_ACCESS_DEVICE_ID);
-		} catch (NoSuchAttributeException e) {
-			Logger.error("Problem getting deviceId from userDo: "+internalUser,e,this);
-			return null;
-		}
-	}
-
     /** The internal dataobject. */
     protected DataObject internalUser;
 
@@ -78,7 +64,10 @@ public class DOUser implements UserInterface, PersonAttributes {
      * @return  the existing or new user, null on error
      */
     public static synchronized DOUser getInstance (DataObject aUserDO) {
-            return new DOUser (aUserDO);
+		if (aUserDO instanceof UserInterface) {
+			return (DOUser) aUserDO;
+		}
+		return new DOUser(aUserDO);
     }
 
 //    /** equals() based on key or internalUser */

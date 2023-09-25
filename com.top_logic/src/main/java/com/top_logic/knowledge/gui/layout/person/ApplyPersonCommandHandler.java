@@ -86,7 +86,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
 							throw new TopLogicException(
 								com.top_logic.knowledge.wrap.person.I18NConstants.ERROR_NO_MORE_USERS);
 						}
-						Person.copyAnyThingExceptID(aPerson.getUserBackup(), userData);
+						Person.copyAnyThingExceptID(aPerson.getUser(), userData);
     				}
     			}
     		}

@@ -42,8 +42,8 @@ public class FlexWrapperAdminComparator implements Comparator {
 				return 1;
 			}
 			else {
-				String n1 = creator1.wasAlive() ? creator1.getFullName() : creator1.getID().toString();
-				String n2 = creator2.wasAlive() ? creator2.getFullName() : creator2.getID().toString();
+				String n1 = creator1.getFullName();
+				String n2 = creator2.getFullName();
 			    
 		        int res = n1.compareTo(n2);
 		        if (res == 0) {

@@ -7,6 +7,7 @@ package com.top_logic.base.security.device.interfaces;
 
 import java.util.List;
 
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.DataObject;
 
@@ -59,13 +60,13 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 * 
 	 * @return a List of DOs where each DO represents the data of a person
 	 */
-	public List getAllUserData();
+	public List<UserInterface> getAllUserData();
 	
 	/**
 	 * @param aName - the internal unique username
 	 * @return the data for the given person as DataObject or null if not found
 	 */
-	public DataObject getUserData(String aName);
+	public UserInterface getUserData(String aName);
 	
 	/**
 	 * Creates a new user entry with the given data if not already exists

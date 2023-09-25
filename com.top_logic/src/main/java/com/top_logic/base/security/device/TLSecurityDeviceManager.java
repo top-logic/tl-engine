@@ -17,8 +17,6 @@ import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.device.interfaces.SecurityDevice;
 import com.top_logic.base.security.device.interfaces.SecurityDevice.SecurityDeviceConfig;
-import com.top_logic.base.user.douser.DOUser;
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.FrameworkInternal;
@@ -32,7 +30,6 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.dob.DataObject;
 import com.top_logic.util.license.LicenseTool;
 
 /**
@@ -372,60 +369,6 @@ public class TLSecurityDeviceManager extends ManagedClass {
 			}
 		}
 		return result;
-	}
-	
-	/**
-	 * Searches all configured PersonDataAccessDevices for available user data and returns them all
-	 * as Set of DOs. NOTE: the set may contain multiple DOs with the same name, if names aren't
-	 * unique between the configured devices
-	 * 
-	 * @return a set of user interfaces (which is a data object)
-	 */
-	public Set<DOUser> getAllAvailableUserData() {
-		Iterator<?> userDOs = getAllUserDOsFromSecurity().iterator();
-		Set<DOUser> result = new HashSet<>();
-		int count = 0;
- 		while(userDOs.hasNext()){
- 			result.add(DOUser.getInstance((DataObject)userDOs.next()));
-			count++;
- 		}
- 		if(count!=result.size()){
- 			//paranoia, but we had a problem with the DOuser cache and its equals method
- 			Logger.error("Added: "+count+" users, size of set is: "+result.size(),this);	
- 		}
- 		
- 		checkUserData(result);		
-		return result;		
-	}
-
-	private void checkUserData(Set<DOUser> result) {
-		int availableAccounts = result.size();
-		int allowedAccounts = LicenseTool.getInstance().getLicense().getUsers();
-		if( availableAccounts > allowedAccounts){
-			Logger.info("With "+ availableAccounts +", there are more Users available in the securitysystem(s) than can be used of with the current available "+allowedAccounts+" accounts.",TLSecurityDeviceManager.class);
-		}
-	}
-	
-	/**
-	 * HelperMethod
-	 * @return all userDOs that can be found in the configured systems
-	 */
-	private Set<DataObject> getAllUserDOsFromSecurity() {
-		Set<String> deviceIds = new HashSet<>(this.getConfiguredDataAccessDeviceIDs());
-		Iterator<?> itDevIDs = deviceIds.iterator();
-		Set<DataObject> theResult = new HashSet<>();
-		while(itDevIDs.hasNext()){
-			String aDevID = (String)itDevIDs.next();
-			try{
-				theResult.addAll(
-					CollectionUtil.dynamicCastView(DataObject.class,
-						this.getDataAccessDevice(aDevID).getAllUserData()));
-			}catch(Exception e){
-				Logger.error("Failed to retrieve userdata from device " + aDevID, e, this);
-				continue;
-			}
-		}
-		return theResult;
 	}
 	
 	/**

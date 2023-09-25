@@ -123,7 +123,7 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	}
 
 	@Override
-	public DataObject getUserData(String name) {
+	public UserInterface getUserData(String name) {
 		for (UserInterface user : availableUsers) {
 			if (user.getUserName().equals(name)) {
 				return user;

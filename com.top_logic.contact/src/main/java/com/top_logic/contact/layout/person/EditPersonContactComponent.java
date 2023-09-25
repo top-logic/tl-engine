@@ -120,8 +120,8 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
     		    Person thePerson = theContact.getPerson();
     		    theContext.addMember(ConstantFieldProvider.INSTANCE.createField(FIELD_PERSON, thePerson));
                 // Disable only when Person wasAlive when when last checked
-                if (thePerson != null && thePerson.tValid() && thePerson.wasAlive()) {
-					TLClass theMetaElement = (TLClass) theContact.tType();
+				if (thePerson != null && thePerson.tValid()) {
+					TLClass theMetaElement = theContact.tType();
     
                     disableAttribute(theContext, PersonContact.ATT_FIRSTNAME    , theContact, theMetaElement);
                     disableAttribute(theContext, PersonContact.NAME_ATTRIBUTE   , theContact, theMetaElement);

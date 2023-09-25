@@ -18,6 +18,8 @@ import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.base.security.password.hashing.VerificationResult;
 import com.top_logic.base.security.util.SignatureService;
+import com.top_logic.base.user.UserInterface;
+import com.top_logic.base.user.douser.DOUser;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.sql.ConnectionPool;
@@ -246,7 +248,7 @@ public class DBUserRepository {
 	 * 
 	 * @return empty List in case no user is found.
 	 */
-	public List<DataObject> getAllUsers(ConnectionPool connectionPool) throws SQLException {
+	public List<UserInterface> getAllUsers(ConnectionPool connectionPool) throws SQLException {
         
         // now check, whether the user exists
 		DBHelper          theHelper = connectionPool.getSQLDialect();
@@ -258,12 +260,11 @@ public class DBUserRepository {
 				try (PreparedStatement stmt =
 					readConnection.prepareStatement("SELECT * FROM " + sqlDialect.tableRef(_dbUserMO.getDBName()))) {
 					try (ResultSet res = stmt.executeQuery()) {
-						ArrayList<DataObject> allUserDOs = new ArrayList<>(128);
+						List<UserInterface> allUserDOs = new ArrayList<>();
 						while (res.next()) {
-							allUserDOs
-								.add(DBMORepository.extractDataObject(res, _dbUserMO, connectionPool));
+							allUserDOs.add(
+								DOUser.getInstance(DBMORepository.extractDataObject(res, _dbUserMO, connectionPool)));
 						}
-						allUserDOs.trimToSize();
 						return allUserDOs;
 					} catch (SQLException sqlX) {
 						// Better forget about the Connection

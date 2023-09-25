@@ -26,6 +26,8 @@ import com.top_logic.base.security.device.DeviceMapping;
 import com.top_logic.base.security.device.interfaces.SecurityDevice;
 import com.top_logic.base.security.device.ldap.LDAPDataObject;
 import com.top_logic.base.security.device.ldap.LDAPMetaObject;
+import com.top_logic.base.user.UserInterface;
+import com.top_logic.base.user.douser.DOUser;
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
@@ -549,10 +551,10 @@ public class PersonLDAPAccessService extends LDAPAccessService {
 	/** 
 	 * @see com.top_logic.base.security.device.interfaces.PersonDataAccessDevice#getUserData(java.lang.String)
 	 */
-	public DataObject getUserData(String aName) {
+	public UserInterface getUserData(String aName) {
 		String theDN = this.getFullUserDN(aName);
 		if(!StringServices.isEmpty(theDN)){
-			return getEntryByDN(theDN, true);
+			return DOUser.getInstance(getEntryByDN(theDN, true));
 		}else{
 			//user name unknown
 			return null;

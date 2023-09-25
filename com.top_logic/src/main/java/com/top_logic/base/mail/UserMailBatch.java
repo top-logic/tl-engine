@@ -128,14 +128,4 @@ public class UserMailBatch extends BatchImpl {
         }
         
     }
-    
-    /**
-     * Lazy initialization of the instance-variable allUsers.
-     */
-    private List getAllUsers(){
-        if (this.allUsers == null){
-            this.allUsers = PersonManager.getManager().getAllAliveUsers();
-        }
-        return this.allUsers;
-    }
 }

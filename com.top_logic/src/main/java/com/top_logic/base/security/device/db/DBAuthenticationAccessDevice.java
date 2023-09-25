@@ -19,6 +19,8 @@ import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.AbstractAuthenticationAccessDevice;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.base.user.UserDataObject;
+import com.top_logic.base.user.UserInterface;
+import com.top_logic.base.user.douser.DOUser;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -246,8 +248,8 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 	 * Note: also checks for possible states of the requested objects in the transient commit
 	 * context. That means this method reflects uncommited creations, changes or deletions */
 	@Override
-	public List<?> getAllUserData() {
-		List<?> result = Collections.EMPTY_LIST;
+	public List<UserInterface> getAllUserData() {
+		List<UserInterface> result = Collections.emptyList();
 		CommitableDBUserRepository myCommitable = CommitableDBUserRepository.getForCurrentThread();
 		// query all users
 		try {
@@ -286,7 +288,7 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 	 * Note: also checks for possible states of the requested object in the transient commit context.
 	 * That means this method reflects uncommited creations, changes or deletions	 */
 	@Override
-	public DataObject getUserData(String aName) {
+	public UserInterface getUserData(String aName) {
 		if (StringServices.isEmpty(aName)) {
 			return null;
 		} else {
@@ -302,7 +304,7 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 				if(theResult!=null){
 					theResult.setAttributeValue(PersonAttributes.DATA_ACCESS_DEVICE_ID,this.getDeviceID());
 				}
-				return theResult;
+				return DOUser.getInstance(theResult);
 			} catch (Exception e) {
 				Logger.info("Could not get the entry for " + aName, e, this);
 				return null;

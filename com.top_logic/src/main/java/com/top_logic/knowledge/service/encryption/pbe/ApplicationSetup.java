@@ -21,6 +21,7 @@ import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.db.DBUserRepository;
 import com.top_logic.base.security.util.SignatureService;
 import com.top_logic.base.security.util.SignatureService.Module;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -158,10 +159,10 @@ public class ApplicationSetup {
 		phase(Phase.USER_SETUP);
 		
 		final DBUserRepository userRepository = newDBUserRepository();
-		final List<DataObject> userDatas =
-			TLContext.inSystemContext(this.getClass(), new Computation<List<DataObject>>() {
+		final List<UserInterface> userDatas =
+			TLContext.inSystemContext(this.getClass(), new Computation<List<UserInterface>>() {
 			@Override
-			public List<DataObject> run() {
+			public List<UserInterface> run() {
 				try {
 					return userRepository.getAllUsers(ConnectionPoolRegistry.getDefaultConnectionPool());
 				} catch (SQLException ex) {

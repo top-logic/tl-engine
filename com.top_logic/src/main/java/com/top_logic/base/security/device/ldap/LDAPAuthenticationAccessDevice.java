@@ -16,12 +16,12 @@ import com.top_logic.base.dsa.ldap.LDAPAccessService;
 import com.top_logic.base.dsa.ldap.PersonLDAPAccessService;
 import com.top_logic.base.dsa.ldap.ServiceProviderInfo;
 import com.top_logic.base.security.device.AbstractAuthenticationAccessDevice;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.dob.DataObject;
 
 /**
  * AuthenticationDevice and PersonDataAccessDevice against LDAP.
@@ -124,11 +124,8 @@ public class LDAPAuthenticationAccessDevice extends AbstractAuthenticationAccess
 		return this.las.getAllUserData();
 	}
 
-	/**
-	 * @see com.top_logic.base.security.device.interfaces.PersonDataAccessDevice#getUserData(java.lang.String)
-	 */
 	@Override
-	public DataObject getUserData(String aName) {
+	public UserInterface getUserData(String aName) {
 		return this.las.getUserData(aName);
 	}
 }

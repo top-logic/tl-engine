@@ -57,7 +57,7 @@ import com.top_logic.util.license.LicenseTool;
  * Typically this class will be instantiated by the TLSecurityDeviceManager, which also
  * has control of the number of created instances
  * 
- * @author    <a href="mailto:tri@top-logic.com">Tomate Richter</a>
+ * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDevice {
 

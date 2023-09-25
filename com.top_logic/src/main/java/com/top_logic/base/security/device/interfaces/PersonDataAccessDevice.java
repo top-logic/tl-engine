@@ -14,7 +14,7 @@ import com.top_logic.dob.DataObject;
 /**
  * Used to access a persons userdata according to PersonAttributes.
  * 
- * @author    <a href="mailto:tri@top-logic.com">Tomate Richter</a>
+ * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public interface PersonDataAccessDevice extends SecurityDevice {
 	

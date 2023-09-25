@@ -20,7 +20,7 @@ import com.top_logic.basic.StringServices;
  *
  * A Device Mapping can translate internal attribute names to their corresponding names as used in an external DataAccessDevice
  *  
- * @author    <a href="mailto:tri@top-logic.com">Thomat Trichter</a>
+ * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public class DeviceMapping extends Properties {
 	

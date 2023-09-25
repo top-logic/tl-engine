@@ -16,7 +16,7 @@ import com.top_logic.dob.DataObject;
  * Eases implementation of new AuthDevices as configuration access and stuff
  * is already taken care of
  * 
- * @author    <a href="mailto:tri@top-logic.com">Thomat Trichter</a>
+ * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public abstract class AbstractPersonDataAccessDevice extends AbstractSecurityDevice implements PersonDataAccessDevice {
 	

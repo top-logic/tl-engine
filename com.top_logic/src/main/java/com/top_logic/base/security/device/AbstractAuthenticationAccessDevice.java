@@ -14,7 +14,7 @@ import com.top_logic.basic.config.InstantiationContext;
  * This is an abstract implementation for a SecurityDevice that is both, 
  * an PersonDataAccess and an AuthenticationDevice
  * 
- * @author    <a href="mailto:tri@top-logic.com">Thomat Trichter</a>
+ * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public abstract class AbstractAuthenticationAccessDevice extends AbstractPersonDataAccessDevice implements AuthenticationDevice {
 	

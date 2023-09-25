@@ -106,7 +106,7 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	}
 
 	@Override
-	public List getAllUserData() {
+	public List<UserInterface> getAllUserData() {
 		return availableUsers;
 	}
 

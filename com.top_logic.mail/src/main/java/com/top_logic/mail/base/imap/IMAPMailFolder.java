@@ -144,7 +144,7 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
             }
         }
         catch (Exception ex) {
-			throw new TopLogicException(I18NConstants.ERROR_FOLDER_GET_PARENT__FOLDER.fill(this), ex);
+			throw new TopLogicException(I18NConstants.ERROR_FOLDER_GET_PARENT__FOLDER.fill(this.toString()), ex);
         }
     }
 
@@ -468,7 +468,7 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
                 }
             }
             catch (Exception ex) {
-				throw new TopLogicException(I18NConstants.ERROR_FOLDER_GET_ORIGINAL__FOLDER.fill(this), ex);
+				throw new TopLogicException(I18NConstants.ERROR_FOLDER_GET_ORIGINAL__FOLDER.fill(this.toString()), ex);
             }
         }
         return this.origFolder;
@@ -525,7 +525,7 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
             return (this.removeKO(aKO) == null);
         }
         catch (DataObjectException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_MAIL_REMOVE__MAIL.fill(aKO), ex);
+			throw new TopLogicException(I18NConstants.ERROR_MAIL_REMOVE__MAIL.fill(aKO.getWrapper().toString()), ex);
         }
     }
 

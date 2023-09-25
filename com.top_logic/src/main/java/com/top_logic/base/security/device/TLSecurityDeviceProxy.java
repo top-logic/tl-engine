@@ -24,7 +24,7 @@ import com.top_logic.util.license.LicenseTool;
  * from the TLSecurityDeviceManager each time it is needed. Aside from this does the same as if one would work on the 
  * Device directly it just shortens the way to do it
  * 
- * @author    <a href="mailto:tri@top-logic.com">Thomat Trichter</a>
+ * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public class TLSecurityDeviceProxy implements PersonDataAccessDevice, AuthenticationDevice {
 

@@ -136,15 +136,15 @@ public class ServiceProviderInfo extends Hashtable {
 	private static String decodeCredentials(String theValue, String aDeviceID) {
 		if (theValue == null) {
 			theValue = "";
-			Logger.warn("Given Credentials for LDAP Access were empty for Device " + aDeviceID, PersonLDAPAccessService.class);
+			Logger.warn("Given Credentials for LDAP Access were empty for Device " + aDeviceID, LDAPAccessService.class);
 		} else {
 			String theKey = null;
 			try {
 				theKey = CryptSupport.getInstance().decodeString(theValue);
 			} catch (NumberFormatException nfe) {
-				Logger.debug("Given credentials were given plain / unencrypted", nfe, PersonLDAPAccessService.class);
+				Logger.debug("Given credentials were given plain / unencrypted", nfe, LDAPAccessService.class);
 			} catch (Exception e) {
-				Logger.error("Unable to decode credentials from what was given", e, PersonLDAPAccessService.class);
+				Logger.error("Unable to decode credentials from what was given", e, LDAPAccessService.class);
 			}
 			if (theKey != null) {
 				theValue = theKey;

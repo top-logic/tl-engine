@@ -13,7 +13,6 @@ import javax.naming.directory.DirContext;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.dsa.ldap.LDAPAccessService;
-import com.top_logic.base.dsa.ldap.PersonLDAPAccessService;
 import com.top_logic.base.dsa.ldap.ServiceProviderInfo;
 import com.top_logic.base.security.device.AbstractAuthenticationAccessDevice;
 import com.top_logic.base.user.UserInterface;
@@ -48,17 +47,17 @@ public class LDAPAuthenticationAccessDevice extends AbstractAuthenticationAccess
 		String ACCESS_SERVICE_NAME = "access-service";
 
 		/**
-		 * Configuration of the {@link PersonLDAPAccessService} to delegate authentication check to.
+		 * Configuration of the {@link LDAPAccessService} to delegate authentication check to.
 		 */
 		@Mandatory
 		@Name(ACCESS_SERVICE_NAME)
-		PersonLDAPAccessService.Config getAccessService();
+		LDAPAccessService.Config getAccessService();
 
 	}
 	/**
 	 * Instance of the LDAP access service, used to actually access the external system
 	 */
-	protected PersonLDAPAccessService	las;
+	protected LDAPAccessService	las;
 
 	/**
 	 * Creates a new {@link LDAPAuthenticationAccessDevice} from the given configuration.
@@ -78,7 +77,7 @@ public class LDAPAuthenticationAccessDevice extends AbstractAuthenticationAccess
 	 * Set the correct LAS internally
 	 */
 	protected void initLAS(String deviceID, Config config) {
-		las = new PersonLDAPAccessService(deviceID, config.getAccessService(), this);
+		las = new LDAPAccessService(deviceID, config.getAccessService(), this);
 	}
 
 	@Override
@@ -116,11 +115,8 @@ public class LDAPAuthenticationAccessDevice extends AbstractAuthenticationAccess
 		return (theContext != null);
 	}
 
-	/**
-	 * @see com.top_logic.base.security.device.interfaces.PersonDataAccessDevice#getAllUserData()
-	 */
 	@Override
-	public List getAllUserData() {
+	public List<UserInterface> getAllUserData() {
 		return this.las.getAllUserData();
 	}
 

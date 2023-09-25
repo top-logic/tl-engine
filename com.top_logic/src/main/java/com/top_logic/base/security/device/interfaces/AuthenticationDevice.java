@@ -12,7 +12,7 @@ import com.top_logic.dob.DataObject;
 /**
  * An authentication device is used to autheticate a person against.
  * 
- * @author    <a href="mailto:tri@top-logic.com">Tomate Richter</a>
+ * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public interface AuthenticationDevice extends SecurityDevice {
 	

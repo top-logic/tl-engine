@@ -24,7 +24,7 @@ import com.top_logic.basic.config.annotation.Nullable;
  * A SecurityDevice describes a subsystem either used to authenticate a person against 
  * or to retrieve data according to the PersonAttributes from
  *  
- * @author    <a href="mailto:tri@top-logic.com">Tomate Richter</a>
+ * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.SecurityDeviceConfig> {
 	

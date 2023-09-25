@@ -8,7 +8,7 @@ package com.top_logic.base.security.attributes;
 /**
  * Interface to carry some constants.
  * 
- * @author <a href="mailto:tri@top-loigc.com">Thomas Trichter</a>
+ * @author <a href="mailto:tri@top-loigc.com">Thomas Richter</a>
  */
 public interface GroupAttributes extends LDAPAttributes {
     public static final String MEMBER="member";

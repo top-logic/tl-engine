@@ -16,7 +16,7 @@ import com.top_logic.basic.StringServices;
 /**
  * Login via J2EE remote user authentication.
  * 
- * @author <a href="mailto:tri@top-loigc.com">Thomas Trichter</a>
+ * @author <a href="mailto:tri@top-loigc.com">Thomas Richter</a>
  */
 public class J2eeRemoteUserAuthenticationServlet extends ExternalAuthenticationServlet {
     

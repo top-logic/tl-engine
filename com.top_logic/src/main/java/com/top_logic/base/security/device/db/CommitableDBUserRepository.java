@@ -23,7 +23,7 @@ import com.top_logic.knowledge.service.Committable;
  * This implementation caches write accesses to the DBUser repository and writes
  * them to the DB upon the next commit for a given thread
  * 
- * @author    <a href="mailto:tri@top-logic.com">Tomate Richter</a>
+ * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public class CommitableDBUserRepository implements Committable {
 

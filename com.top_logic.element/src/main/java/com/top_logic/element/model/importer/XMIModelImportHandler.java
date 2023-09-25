@@ -33,6 +33,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -110,6 +111,18 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@AcceptedTypes({ "text/xml", "application/xml", "application/vnd.xmi+xml" })
 		BinaryData getModelDefinition();
+
+		/**
+		 * Whether this model import should replace or extend existing modules.
+		 * 
+		 * <ul>
+		 * <li><code>true</code> if types of imported modules are added to the types of existing
+		 * modules.</li>
+		 * <li><code>false</code> if imported modules replace existing modules.</li>
+		 * </ul>
+		 */
+		@BooleanDefault(true)
+		boolean isPartialImport();
 	}
 
 	@Override
@@ -124,6 +137,7 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 		try {
 			String ns;
 			BinaryData modelDefinition = upload.getModelDefinition();
+			boolean isPartialImport = upload.isPartialImport();
 			try (InputStream in = modelDefinition.getStream()) {
 				XMLStreamReader reader = XMLStreamUtil.getDefaultInputFactory().createXMLStreamReader(in);
 				XMLStreamUtil.nextStartTag(reader);
@@ -132,14 +146,14 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 
 			if (XMI_NS.equals(ns)) {
 				try {
-					return importXmiModel(modelDefinition);
+					return importXmiModel(modelDefinition, isPartialImport);
 				} catch (TransformerException ex) {
 					throw new TopLogicException(I18NConstants.ERROR_INVALID_MODEL_DEFINITION, ex)
 						.initSeverity(ErrorSeverity.WARNING)
 						.initDetails(ResKey.text(ex.getMessage()));
 				}
 			} else if (TL_MODEL_NS.equals(ns)) {
-				return importTlModel(modelDefinition);
+				return importTlModel(modelDefinition, isPartialImport);
 			} else {
 				throw new TopLogicException(I18NConstants.ERROR_INVALID_MODEL_DEFINITION)
 					.initSeverity(ErrorSeverity.WARNING)
@@ -157,7 +171,7 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 		}
 	}
 
-	private HandlerResult importXmiModel(BinaryData modelDefinition)
+	private HandlerResult importXmiModel(BinaryData modelDefinition, boolean isPartialImport)
 			throws TransformerException, IOException, ConfigurationException {
 		try (InputStream in = modelDefinition.getStream()) {
 			Source modelSource = new StreamSource(in);
@@ -165,7 +179,7 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 			StreamResult result = new StreamResult(out);
 			newTransformer().transform(modelSource, result);
 
-			return importTlModel(BinaryDataFactory.createBinaryData(out.toByteArray()));
+			return importTlModel(BinaryDataFactory.createBinaryData(out.toByteArray()), isPartialImport);
 		}
 	}
 
@@ -182,7 +196,8 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 		}
 	}
 
-	private HandlerResult importTlModel(BinaryData modelDefinition) throws ConfigurationException {
+	private HandlerResult importTlModel(BinaryData modelDefinition, boolean isPartialImport)
+			throws ConfigurationException {
 		ModelConfigExtractor extractor = new ModelConfigExtractor();
 		DynamicModelService service = (DynamicModelService) ModelService.getInstance();
 
@@ -206,11 +221,17 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 			ModuleConfig existingConfig = newConfig.getModule(importedModule.getName());
 
 			if (existingConfig != null) {
-				for (TypeConfig importedType : importedModule.getTypes()) {
-					Collection<TypeConfig> existingTypes = existingConfig.getTypes();
+				if (isPartialImport) {
+					for (TypeConfig importedType : importedModule.getTypes()) {
+						Collection<TypeConfig> existingTypes = existingConfig.getTypes();
 
-					existingTypes.remove(existingConfig.getType(importedType.getName()));
-					existingTypes.add(importedType);
+						existingTypes.remove(existingConfig.getType(importedType.getName()));
+						existingTypes.add(importedType);
+					}
+				} else {
+					newConfig.getModules().remove(existingConfig);
+					DynamicModelService.addTLObjectExtension(importedModule);
+					newConfig.getModules().add(importedModule);
 				}
 			} else {
 				DynamicModelService.addTLObjectExtension(importedModule);

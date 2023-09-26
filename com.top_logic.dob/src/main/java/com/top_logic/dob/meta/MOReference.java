@@ -24,33 +24,33 @@ import com.top_logic.dob.sql.DBMetaObject;
 public interface MOReference extends MOAttribute {
 	
 	/**
-	 * Constants how to handle deletion of the referenced object. 
+	 * Specification of how to react on the deletion of an object referenced by a
+	 * {@link MOReference}.
 	 * 
-	 * @author    <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	public enum DeletionPolicy implements ExternallyNamed {
 		
 		/**
-		 * Constant to indicate that the value of this reference must be set to
-		 * <code>null</code>, when the referenced object is deleted
+		 * The reference is set to <code>null</code>, if the referenced object is deleted.
 		 */
 		CLEAR_REFERENCE("clear-reference"),
 		
 		/**
-		 * Constant to indicate that the object whose reference is deleted must
-		 * also be deleted.
+		 * The object that refers to the deleted object should be also be deleted.
 		 */
 		DELETE_REFERER("delete-referer"),
 		
 		/**
-		 * Constant to indicate that the reference is stabilised, i.e. the
-		 * reference points to the historic version of the referenced object
-		 * directly before deletion.
+		 * The reference should be stabilized. This means that the reference should be modified to
+		 * point to the the historic version of the referenced object directly before deletion.
 		 */
 		STABILISE_REFERENCE("stabilise-reference"),
 		
 		/**
-		 * Constant to indicate that the referenced object can not be deleted
+		 * The deletion of the referenced object should fail, if the reference is not cleared
+		 * manually in the same transaction or the referring object is deleted altogether with the
+		 * referenced object.
 		 */
 		VETO("veto"),
 		;
@@ -326,24 +326,32 @@ public interface MOReference extends MOAttribute {
 	public DBMetaObject getType(ReferencePart part);
 	
 	/**
-	 * Whether the referenced object is a containment of the object having this
-	 * attribute, i.e. if <code>true</code> the referenced object is deleted if
-	 * the object referring to it via this reference is deleted.
+	 * Whether the referencing object is the container of the referenced content object.
+	 * 
+	 * <p>
+	 * The life span of a content object is bound to the live span of the container object. This
+	 * means that the referenced object is automatically deleted, if the referencing object is
+	 * deleted.
+	 * </p>
+	 * 
+	 * @see #getDeletionPolicy()
 	 */
 	boolean isContainer();
 	
 	/**
-	 * Setter for {@link #isContainer()}
-	 * 
-	 * @param isContainer the new value of {@link #isContainer()}
+	 * @see #isContainer()
 	 */
 	void setContainer(boolean isContainer);
 	
 	/**
-	 * The policy to handle deletion of the currently referenced object.
+	 * Policy how to react upon deletion of the referenced object.
 	 * 
+	 * <p>
 	 * If nothing special was set, the deletion policy is
 	 * {@link MOReference#DEFAULT_DELETION_POLICY}.
+	 * </p>
+	 * 
+	 * @see #isContainer()
 	 */
 	DeletionPolicy getDeletionPolicy();
 	

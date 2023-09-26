@@ -10,6 +10,11 @@
 	<!-- KA from StoredQuery or StoredReport (currently) to a person who has defined it -->
 	<association super_class="Association" object_name="hasOwner">
 		<attributes>
+		<source
+			override="true"
+			target-type="Object"
+			is-container="true"
+		/>
 		<destination
 			override="true"
 			target-type="Person"

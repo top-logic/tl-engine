@@ -738,7 +738,7 @@ public class PersonManager extends ManagedClass {
 	 * the user of the person already had been deleted from security.
 	 */
 	public void postProcessUserDeletion(Person aPerson) {
-		deletePersonalConfiguration(aPerson);
+		// Hook method.
 	}
 
 	/**
@@ -1072,16 +1072,6 @@ public class PersonManager extends ManagedClass {
 	private void ensureRepresentativeGroup(Person person) {
 		if (person.getRepresentativeGroup() == null) {
 			Person.createRepresentativeGroup(person);
-		}
-	}
-
-	/**
-	 * Delete the {@link PersonalConfigurationWrapper} attached to aPerson.
-	 */
-	protected void deletePersonalConfiguration(Person aPerson) {
-		PersonalConfigurationWrapper personalConfig = PersonalConfigurationWrapper.getPersonalConfiguration(aPerson);
-		if (personalConfig != null) {
-			personalConfig.tDelete();
 		}
 	}
 

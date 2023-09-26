@@ -24,7 +24,7 @@
 			<type-systems>
 				<type-system name="Default">
 					<declarations>
-						<declaration resource="webinf://kbase/\${ProjectName}Meta.xml" />
+						<declaration resource="webinf://kbase/\${projectName}Meta.xml" />
 					</declarations>
 				</type-system>
 			</type-systems>

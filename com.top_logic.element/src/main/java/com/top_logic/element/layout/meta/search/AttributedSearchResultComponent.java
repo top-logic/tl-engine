@@ -245,7 +245,7 @@ public class AttributedSearchResultComponent extends TableComponent
 		DefaultAttributeFormFactory.configureWithMetaElement(table, searchResult.getTypes());
 
 		removeColumns(table, getColumnsToRemove(getMaster()));
-		addColumns(table, getSearchResultColumns(searchResult));
+		showColumns(table, getSearchResultColumns(searchResult));
 
 		adaptTableConfigurationToDefaultSortOrder(table);
     }
@@ -268,12 +268,16 @@ public class AttributedSearchResultComponent extends TableComponent
 		return CollectionUtil.toSet(searchResult.getResultColumns());
 	}
 
-	private void addColumns(TableConfiguration table, Set<String> columnNames) {
-		for (String columnName : columnNames) {
-			ColumnConfiguration column = table.getDeclaredColumn(columnName);
-
-			if (column != null && column.getVisibility() != DisplayMode.excluded) {
-				column.setVisibility(DisplayMode.visible);
+	private void showColumns(TableConfiguration table, Set<String> columnNames) {
+		for (ColumnConfiguration column : table.getElementaryColumns()) {
+			if (columnNames.contains(column.getName())) {
+				if (column.getVisibility() != DisplayMode.excluded) {
+					column.setVisibility(DisplayMode.visible);
+				}
+			} else {
+				if (column.getVisibility() == DisplayMode.visible) {
+					column.setVisibility(DisplayMode.hidden);
+				}
 			}
 		}
 	}

@@ -306,7 +306,8 @@ public interface FormConstants {
 	 * CSS class that creates a fixed size box (at the right of the flexible box) within a flexible
 	 * table cell layout.
 	 * 
-	 * @see #FLEXIBLE_CSS_CLASS S * @see #FIXED_LEFT_CSS_CLASS
+	 * @see #FLEXIBLE_CSS_CLASS
+	 * @see #FIXED_LEFT_CSS_CLASS
 	 */
 	public static final String FIXED_RIGHT_CSS_CLASS = "lFixedRight";
 

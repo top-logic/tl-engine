@@ -112,6 +112,8 @@ public class DescriptionTag extends AbstractBoxTag implements ControlBodyTag {
 	@Override
 	protected void tearDown() {
 		_contents = null;
+		_style = null;
+		_cssClass = null;
 		super.tearDown();
 	}
 

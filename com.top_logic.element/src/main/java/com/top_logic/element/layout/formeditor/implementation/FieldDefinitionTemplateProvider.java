@@ -60,6 +60,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLCreateVisibility;
 import com.top_logic.model.annotate.TLVisibility;
@@ -191,7 +192,7 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 					type, part, context.getDomain(), visibility, fieldDefinition);
 				if (member != null) {
 					HTMLTemplateFragment result =
-						createFieldTemplate(member, part, AttributeFormFactory.getAttributeUpdate(member),
+						createFieldTemplate(context, member, part, AttributeFormFactory.getAttributeUpdate(member),
 							context.getLabelPlacement());
 					_member = member;
 					return result;
@@ -273,15 +274,23 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		}
 	}
 
-	static HTMLTemplateFragment createFieldTemplate(FormMember member, TLStructuredTypePart part,
-			AttributeUpdate update, LabelPlacement labelPlacement) {
-		boolean renderLabelFirst = !AttributeOperations.renderInputBeforeLabel(part, update);
-
-		if (renderLabelFirst) {
-			return fieldBox(member.getName(), labelPlacement);
-		} else {
-			return fieldBoxInputFirst(member.getName());
+	static HTMLTemplateFragment createFieldTemplate(FormEditorContext context, FormMember member,
+			TLStructuredTypePart part, AttributeUpdate update, LabelPlacement labelPlacement) {
+		String memberName = member.getName();
+		LabelPosition labelPosition = AttributeOperations.labelPosition(part, update);
+		switch (labelPosition) {
+			case DEFAULT:
+				return fieldBox(memberName, labelPlacement);
+			case AFTER_VALUE:
+				return fieldBoxInputFirst(memberName);
+			case HIDE_LABEL:
+				if (context.getFormMode() == FormMode.DESIGN) {
+					return fieldBox(memberName);
+				} else {
+					return fieldBoxNoLabel(memberName);
+				}
 		}
+		throw LabelPosition.noSuchPosition(labelPosition);
 	}
 
 	private static FormMember createFormMember(AttributeFormContext formContext, FormContainer contentGroup,
@@ -374,23 +383,31 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		}
 
 		HTMLUtil.beginDiv(out, "field");
-		boolean renderLabelFirst = !AttributeOperations.renderInputBeforeLabel(part);
-		if (renderLabelFirst) {
-			HTMLUtil.beginDiv(out, "label");
-			renderLabel(out, part, true);
-			HTMLUtil.endDiv(out);
+		LabelPosition labelPosition = AttributeOperations.labelPosition(part);
+		switch (labelPosition) {
+			case DEFAULT:
+				HTMLUtil.beginDiv(out, "label");
+				renderLabel(out, part, true);
+				HTMLUtil.endDiv(out);
 
-			HTMLUtil.beginDiv(out, "value");
-			renderValue(context, out, renderContext.getModel(), part);
-			HTMLUtil.endDiv(out);
-		} else {
-			HTMLUtil.beginSpan(out, "value");
-			renderValue(context, out, renderContext.getModel(), part);
-			HTMLUtil.endSpan(out);
+				HTMLUtil.beginDiv(out, "value");
+				renderValue(context, out, renderContext.getModel(), part);
+				HTMLUtil.endDiv(out);
+				break;
+			case AFTER_VALUE:
+				HTMLUtil.beginSpan(out, "value");
+				renderValue(context, out, renderContext.getModel(), part);
+				HTMLUtil.endSpan(out);
 
-			HTMLUtil.beginSpan(out, "label");
-			renderLabel(out, part, false);
-			HTMLUtil.endSpan(out);
+				HTMLUtil.beginSpan(out, "label");
+				renderLabel(out, part, false);
+				HTMLUtil.endSpan(out);
+				break;
+			case HIDE_LABEL:
+				HTMLUtil.beginSpan(out, "value");
+				renderValue(context, out, renderContext.getModel(), part);
+				HTMLUtil.endSpan(out);
+				break;
 		}
 		HTMLUtil.endDiv(out);
 	}

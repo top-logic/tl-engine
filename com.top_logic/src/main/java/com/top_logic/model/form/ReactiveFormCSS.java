@@ -52,5 +52,10 @@ public interface ReactiveFormCSS {
 	 * @see #RF_LABEL_INLINE
 	 */
 	String RF_LABEL_ABOVE = "rf_labelAbove";
+
+	/**
+	 * CSS class to mark a {@link #RF_INPUT_CELL} that it contains no label.
+	 */
+	String RF_NO_LABEL = "rf_noLabel";
 }
 

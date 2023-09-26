@@ -9,6 +9,7 @@ import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -29,6 +30,7 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.mig.html.layout.VisibilityListener;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.LabelPlacement;
 
@@ -57,24 +59,45 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 		}
 	
 		Control inputControl = cp.createControl(member, inputStyle);
-		boolean labelFirst = controlLabelFirst(inputControl);
+		LabelPosition labelPosition = controlLabelFirst(inputControl);
 		boolean wholeLine = controlWholeLine(inputControl);
 	
-		LabelControl labelControl =
-			(LabelControl) DefaultFormFieldControlProvider.INSTANCE.createControl(member,
-				labelFirst && colon ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
-					: FormTemplateConstants.STYLE_LABEL_VALUE);
+		LabelControl labelControl = (LabelControl) labelControl(member, colon, labelPosition);
 		Control errorControl = DefaultFormFieldControlProvider.INSTANCE.createControl(member, FormTemplateConstants.STYLE_ERROR_VALUE);
 		if (errorControl instanceof ErrorControl) {
 			((ErrorControl) errorControl).setIconDisplay(!errorAsText);
 		}
 	
-		DescriptionCellControl result = new DescriptionCellControl(member, inputControl);
-		result.setDescription(Fragments.concat(labelControl, errorControl));
-		result.setLabelFirst(labelFirst);
+		HTMLFragment content;
+		HTMLFragment description;
+		if (labelPosition != LabelPosition.HIDE_LABEL) {
+			content = inputControl;
+			description = Fragments.concat(labelControl, errorControl);
+		} else {
+			content = Fragments.concat(inputControl, errorControl);
+			description = Fragments.empty();
+		}
+		DescriptionCellControl result = new DescriptionCellControl(member, content);
+		result.setDescription(description);
+		result.setLabelPosition(labelPosition);
 		result.setWholeLine(wholeLine);
 
 		return result;
+	}
+
+	private static Control labelControl(FormMember member, boolean colon, LabelPosition labelPosition) {
+		ControlProvider cp = DefaultFormFieldControlProvider.INSTANCE;
+		switch (labelPosition) {
+			case AFTER_VALUE:
+				return cp.createControl(member, FormTemplateConstants.STYLE_LABEL_VALUE);
+			case DEFAULT:
+				return cp.createControl(member,
+					colon ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
+						: FormTemplateConstants.STYLE_LABEL_VALUE);
+			case HIDE_LABEL:
+				return null;
+		}
+		throw new UnreachableAssertion("Uncovered label position: " + labelPosition);
 	}
 
 	private HTMLFragment _model;
@@ -95,7 +118,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	/**
 	 * Whether the label is rendered first.
 	 */
-	private boolean _labelFirst = true;
+	private LabelPosition _labelPosition = LabelPosition.DEFAULT;
 
 	private String _labelWidth;
 
@@ -166,14 +189,14 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("labelFirst")
 	public boolean isLabelFirst() {
-		return _labelFirst;
+		return _labelPosition == LabelPosition.DEFAULT;
 	}
 
 	/**
 	 * @see #isLabelFirst()
 	 */
-	public void setLabelFirst(boolean labelFirst) {
-		_labelFirst = labelFirst;
+	public void setLabelPosition(LabelPosition labelPosition) {
+		_labelPosition = labelPosition;
 	}
 
 	/**
@@ -299,15 +322,21 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	}
 
 	/**
-	 * Checks whether the label is rendered first.
+	 * Computes the label position.
 	 * 
 	 * @param control
 	 *        The HTMLFragment to check.
 	 * @return If the HTMLFragment is not a {@link CheckboxControl} and not a
 	 *         {@link IconSelectControl}.
 	 */
-	protected static boolean controlLabelFirst(HTMLFragment control) {
-		return !(control instanceof CheckboxControl || control instanceof IconSelectControl);
+	protected static LabelPosition controlLabelFirst(HTMLFragment control) {
+		if (control instanceof CheckboxControl) {
+			return LabelPosition.AFTER_VALUE;
+		}
+		if (control instanceof IconSelectControl) {
+			return LabelPosition.AFTER_VALUE;
+		}
+		return LabelPosition.DEFAULT;
 	}
 
 	/**
@@ -383,7 +412,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("hasLabel")
 	public boolean hasLabel() {
-		return _description != null;
+		return _description != null && _labelPosition != LabelPosition.HIDE_LABEL;
 	}
 
 	/**

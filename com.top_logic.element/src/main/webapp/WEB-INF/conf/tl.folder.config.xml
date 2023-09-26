@@ -7,7 +7,7 @@
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance class="com.top_logic.util.resource.analyzer.IDEResources">
 				<bundles>
-					<bundle name="tl.folderMessages"/>
+					<bundle name="model.tl.folder.messages"/>
 				</bundles>
 			</instance>
 		</config>

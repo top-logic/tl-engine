@@ -317,7 +317,7 @@
 						<global aspect="com.top_logic.util.AbstractStartStopListener"/>
 					</operation>
 					<operation name="initUsers">
-						<global aspect="com.top_logic.knowledge.wrap.person.TLPersonManager"/>
+						<global aspect="com.top_logic.knowledge.wrap.person.PersonManager"/>
 					</operation>
 				</global>
 			</instance>
@@ -1554,7 +1554,7 @@
 		</config>
 		
 		<config service-class="com.top_logic.knowledge.wrap.person.PersonManager">
-			<instance class="com.top_logic.knowledge.wrap.person.TLPersonManager"
+			<instance class="com.top_logic.knowledge.wrap.person.PersonManager"
 					  super-user-name="root"
 					  person-name-pattern="[-_a-zA-Z0-9@\.]+"
 					  token-timeout="5400000"

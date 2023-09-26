@@ -23,7 +23,7 @@ import com.top_logic.importer.base.AbstractImportParser;
 import com.top_logic.importer.base.AbstractImportPerformer;
 import com.top_logic.importer.logger.FileLogger;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.assistent.AssistentComponent;
@@ -152,10 +152,10 @@ public class DispatchingEVAAssistantController extends EVAAssistantController {
 
             this.implName = aName;
             this.values   = CollectionUtil.dynamicCastView(ImportMessage.class, (Collection<?>) someData.get(EVAAssistantController.VALIDATION_RESULT));
-            this.person   = TLPersonManager.getManager().getPersonByName(this.implName);
+            this.person   = PersonManager.getManager().getPersonByName(this.implName);
 
             if (this.person == null) {
-				this.person = TLPersonManager.getManager().getCurrentPerson();
+				this.person = PersonManager.getManager().getCurrentPerson();
             }
         }
 

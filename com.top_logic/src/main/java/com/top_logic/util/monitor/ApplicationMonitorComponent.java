@@ -32,7 +32,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.version.Version;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ReadOnlyAccessor;
@@ -438,7 +437,7 @@ public class ApplicationMonitorComponent extends FormComponent {
 	private List<Property> getLicenceInfo() {
 		final List<Property> result = new ArrayList<>();
 
-		final TLPersonManager system = (TLPersonManager) PersonManager.getManager();
+		final PersonManager system = PersonManager.getManager();
 		final TLLicense license = LicenseTool.getInstance().getLicense();
 		final Formatter format = HTMLFormatter.getInstance();
 

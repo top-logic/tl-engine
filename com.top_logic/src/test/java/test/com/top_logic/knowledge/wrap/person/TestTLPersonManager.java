@@ -46,10 +46,9 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.RefreshUsersTask;
 import com.top_logic.knowledge.wrap.person.RefreshUsersTask.Config;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
 
 /**
- * {@link TestCase} for {@link TLPersonManager}
+ * {@link TestCase} for {@link PersonManager}
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
@@ -65,9 +64,9 @@ public class TestTLPersonManager extends BasicTestCase {
 
 	private KnowledgeBase secondNodeKnowledgeBase;
 
-	private TLPersonManager firstNodePersonManager;
+	private PersonManager firstNodePersonManager;
 
-	private TLPersonManager secondNodePersonManager;
+	private PersonManager secondNodePersonManager;
 
 	private RefreshUsersTask firstNodeRefreshUsersTask;
 
@@ -98,16 +97,16 @@ public class TestTLPersonManager extends BasicTestCase {
 		return KnowledgeBaseFactory.getInstance().getKnowledgeBase(SECOND_DEFAULT_KB_ID);
 	}
 
-	private TLPersonManager createPersonManager(KnowledgeBase knowledgeBase) {
-		TLPersonManager.Config configItem = TypedConfiguration.newConfigItem(TLPersonManager.Config.class);
+	private PersonManager createPersonManager(KnowledgeBase knowledgeBase) {
+		PersonManager.Config configItem = TypedConfiguration.newConfigItem(PersonManager.Config.class);
 		ConfigurationDescriptor descriptor = configItem.descriptor();
 		configItem.update(descriptor.getProperty(PersonManager.Config.KNOWLEDGE_BASE_PROPERTY),
 			new ConstantProvider<>(
 				knowledgeBase));
-		configItem.update(descriptor.getProperty(TLPersonManager.Config.TL_SECURITY_DEVICE_MANAGER_PROPERTY),
+		configItem.update(descriptor.getProperty(PersonManager.Config.TL_SECURITY_DEVICE_MANAGER_PROPERTY),
 			new ConstantProvider<>(
 				TLSecurityDeviceManager.getInstance()));
-		return new TLPersonManager(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, configItem);
+		return new PersonManager(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, configItem);
 	}
 
 	private CollectingLogListener createLogListener() {

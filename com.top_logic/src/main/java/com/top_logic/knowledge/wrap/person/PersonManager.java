@@ -624,7 +624,7 @@ public class PersonManager extends ManagedClass {
 	 */
 	public void deleteUser(Person aPerson) {
 		aPerson.deleteUser();
-		deleteLocalAccount(aPerson);
+		postProcessUserDeletion(aPerson);
 		// delete person
 		aPerson.tDelete();
 	}
@@ -1072,22 +1072,6 @@ public class PersonManager extends ManagedClass {
 	private void ensureRepresentativeGroup(Person person) {
 		if (person.getRepresentativeGroup() == null) {
 			Person.createRepresentativeGroup(person);
-		}
-	}
-
-	/**
-	 * Deletes the locally cached account.
-	 * 
-	 * @param aPerson
-	 *        The {@link Person} representing the local account.
-	 */
-	private void deleteLocalAccount(Person aPerson) {
-		this.postProcessUserDeletion(aPerson);
-
-		// delete representative group
-		Group representativeGroup = aPerson.getRepresentativeGroup();
-		if (representativeGroup != null) {
-			representativeGroup.tDelete();
 		}
 	}
 

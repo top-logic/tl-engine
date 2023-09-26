@@ -1,9 +1,0 @@
-Package: [[name]]
-Version: [[version]]
-Section: [[tl.deb.section]]
-Priority: [[tl.deb.priority]]
-Architecture: all
-Maintainer: [[tl.deb.maintainer]]
-Description: [[description]]
-Distribution: [[tl.deb.distribution]]
-Depends: mariadb-server,tomcat9,libmariadb-java,apache2,apg

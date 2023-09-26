@@ -624,8 +624,6 @@ public class PersonManager extends ManagedClass {
 	 */
 	public void deleteUser(Person aPerson) {
 		aPerson.deleteUser();
-		postProcessUserDeletion(aPerson);
-		// delete person
 		aPerson.tDelete();
 	}
 
@@ -728,17 +726,6 @@ public class PersonManager extends ManagedClass {
 				// handled this exception
 			}
 		}
-	}
-
-	/**
-	 * Sometimes, if the user of a person has been deleted from security, some
-	 * postprocessing of the Person object is necessary - such as removing
-	 * assignments/roles or to delete previously saved user images. Thats what
-	 * this method is for. Note, this method has to work even if called AFTER
-	 * the user of the person already had been deleted from security.
-	 */
-	public void postProcessUserDeletion(Person aPerson) {
-		// Hook method.
 	}
 
 	/**

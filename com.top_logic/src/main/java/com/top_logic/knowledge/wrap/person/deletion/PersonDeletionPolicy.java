@@ -9,10 +9,9 @@ import java.util.Set;
 
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
 
 /**
- * Plugin for the {@link TLPersonManager} to restrict the persons without user to delete.
+ * Plugin for the {@link PersonManager} to restrict the persons without user to delete.
  * 
  * @since 5.7.5
  * 

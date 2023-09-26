@@ -53,7 +53,6 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.knowledge.wrap.person.PersonalConfigurationWrapper;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
 import com.top_logic.knowledge.wrap.person.infouser.InfoUserConstraint;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelComparator;
@@ -520,13 +519,7 @@ public class EditPersonComponent extends EditComponent {
 	}
 
 	private void addMaxFullUserCheck(BooleanField restrictedUserField) {
-		PersonManager personManager = PersonManager.getManager();
-		if (!(personManager instanceof TLPersonManager)) {
-			return;
-		}
-
 		restrictedUserField.addListener(FormField.IS_CHANGED_PROPERTY, new ChangeStateListener() {
-
 			@Override
 			public Bubble handleChangeStateChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
 				FormField field = (FormField) sender;

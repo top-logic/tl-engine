@@ -31,7 +31,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.monitor.FailedLogin;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.QualifiedComponentNameConstraint;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -302,7 +302,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			}
 			return noLogin(userName, aRequest, reason);
 		}
-		Person thePerson = TLPersonManager.getManager().getPersonByName(userName);
+		Person thePerson = PersonManager.getManager().getPersonByName(userName);
 		if (thePerson == null || !thePerson.isAlive()) {
 			// no such person known to the system or person not longer alive
 			return this.noLogin(userName, aRequest, FailedLogin.REASON_UNKNOWN_PERSON);

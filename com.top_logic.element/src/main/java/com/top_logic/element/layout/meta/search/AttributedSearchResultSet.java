@@ -57,7 +57,11 @@ public class AttributedSearchResultSet implements SearchResultSet {
 		if (someColumns != null) {
 			columns = someColumns;
 		} else {
-			columns = getDefaultColumns(types);
+			if (types.isEmpty()) {
+				columns = Collections.emptyList();
+			} else {
+				columns = getDefaultColumns(types);
+			}
 		}
 
 		for (TLObject theAttributed : aResult) {

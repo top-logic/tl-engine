@@ -17,7 +17,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.search.AttributedSearchResultSet;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ConstantDisplayValue;
-import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
@@ -87,7 +86,6 @@ public class DisplayDetailsCommand extends OpenModalDialogCommandHandler {
 				List<String> chartColumns = new ChartDescription(tree).getColumns();
 				chartColumns.removeAll(searchColumns);
 				chartColumns.addAll(0, searchColumns);
-				chartColumns.remove(GenericTableConfigurationProvider.NAME_COLUMN);
 				AttributedSearchResultSet result = toSearchResult(objects, types, chartColumns);
 				dialog.setSearchResult(result);
 				LayoutComponent topLayout = dialog.getDialogTopLayout();

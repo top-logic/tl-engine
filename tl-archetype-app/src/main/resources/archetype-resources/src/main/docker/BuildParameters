@@ -68,7 +68,7 @@ CPUS="2.0"
 ##
 
 # Host name of the docker repository. 
-DOCKER_REGISRTY="hub.docker.com"
+DOCKER_REGISTRY="hub.docker.com"
 
 # name of the docker images. Default: Same as [APPNAME]
 DOCKER_IMAGE_NAME=""

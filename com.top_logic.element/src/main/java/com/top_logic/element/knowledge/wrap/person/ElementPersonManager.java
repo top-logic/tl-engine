@@ -16,14 +16,14 @@ import com.top_logic.knowledge.objects.SourceIterator;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.mapBasedPersistancy.MapBasedPersistancySupport;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
- * {@link TLPersonManager} deleting stored queries of the person also.
+ * {@link PersonManager} deleting stored queries of the person also.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
-public class ElementPersonManager extends TLPersonManager {
+public class ElementPersonManager extends PersonManager {
 
 	/**
 	 * Creates a new {@link ElementPersonManager}.

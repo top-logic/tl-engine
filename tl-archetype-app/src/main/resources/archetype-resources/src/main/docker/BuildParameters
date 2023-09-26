@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Container name and default for DB scheme and data folder.
-APPNAME="toplogic"
+APPNAME="\${projectName}"
 
 # HTTP context name or "ROOT" for the root context ("/")
 CONTEXT="ROOT"

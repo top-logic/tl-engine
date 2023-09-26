@@ -7,7 +7,6 @@ package com.top_logic.base.security.password;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
@@ -273,10 +272,13 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
     }
     
 	private boolean alreadyUsed(List<String> previousPwdHashes, char[] thePwd) {
+		if (repeatCycle <= 0) {
+			return false;
+		}
 		PasswordHashingService phs = PasswordHashingService.getInstance();
-		Iterator<String> it = previousPwdHashes.iterator();
-        while(it.hasNext()){
-			String aPwdHash = it.next();
+		int hashCnt = previousPwdHashes.size();
+		List<String> relevantHashes = previousPwdHashes.subList(Math.max(0, hashCnt - repeatCycle), hashCnt);
+		for (String aPwdHash : relevantHashes) {
 			if (phs.verify(thePwd, aPwdHash).success()) {
                 return true;
             }

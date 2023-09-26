@@ -14,6 +14,7 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.boxes.reactive_tag.DescriptionCellControl;
 import com.top_logic.layout.form.template.model.internal.TemplateRenderer;
 import com.top_logic.layout.template.WithProperties;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
@@ -21,6 +22,7 @@ import com.top_logic.model.form.definition.LabelPlacement;
  * 
  * @see #getLabel()
  * @see #getContent()
+ * @see #getLabelPosition()
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -30,7 +32,7 @@ public class DescriptionBoxTemplate implements Template {
 
 	private final HTMLTemplateFragment _content;
 
-	private final boolean _labelFirst;
+	private LabelPosition _labelPosition;
 
 	/** Width of the first column for created {@link FormMember}s. */
 	public static final String FIRST_COLUMN_WIDTH = "15em";
@@ -44,16 +46,16 @@ public class DescriptionBoxTemplate implements Template {
 	 *        See {@link #getLabel()}.
 	 * @param content
 	 *        See {@link #getContent()}.
-	 * @param labelFirst
-	 *        Whether the label is rendered first.
+	 * @param labelPosition
+	 *        See {@link #getLabelPosition()}.
 	 * @param labelPlacement
 	 *        Where the label is placed.
 	 */
-	DescriptionBoxTemplate(HTMLTemplateFragment label, HTMLTemplateFragment content, boolean labelFirst,
+	DescriptionBoxTemplate(HTMLTemplateFragment label, HTMLTemplateFragment content, LabelPosition labelPosition,
 			LabelPlacement labelPlacement) {
 		_label = label;
 		_content = content;
-		_labelFirst = labelFirst;
+		_labelPosition = labelPosition;
 		_labelPlacement = labelPlacement;
 	}
 
@@ -62,6 +64,14 @@ public class DescriptionBoxTemplate implements Template {
 	 */
 	public HTMLTemplateFragment getLabel() {
 		return _label;
+	}
+
+	/**
+
+	 * The position of the label.
+	 */
+	public LabelPosition getLabelPosition() {
+		return _labelPosition;
 	}
 
 	/**
@@ -92,7 +102,7 @@ public class DescriptionBoxTemplate implements Template {
 		if (renderWholeLine != null) {
 			descriptionCell.setWholeLine(renderWholeLine.booleanValue());
 		}
-		descriptionCell.setLabelFirst(_labelFirst);
+		descriptionCell.setLabelPosition(getLabelPosition());
 		descriptionCell.setLabelPlacement(_labelPlacement);
 
 		TemplateRenderer.renderControl(displayContext, out, descriptionCell);

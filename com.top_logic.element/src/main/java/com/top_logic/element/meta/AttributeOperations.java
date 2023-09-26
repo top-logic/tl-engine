@@ -90,8 +90,8 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
-import com.top_logic.model.annotate.BooleanAnnotation;
-import com.top_logic.model.annotate.RenderInputBeforeLabelAnnotation;
+import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.RenderWholeLineAnnotation;
 import com.top_logic.model.annotate.TLFullTextRelevant;
 import com.top_logic.model.annotate.TLRange;
@@ -1315,44 +1315,49 @@ public class AttributeOperations {
 	}
 
 	/**
-	 * Returns whether the element is rendered over the whole line.
+	 * Determines the position of the label of the given attribute.
 	 * 
 	 * @param attribute
-	 *        the attribute.
+	 *        The attribute to get label position for.
 	 * @param update
 	 *        Pending attribute updates container.
-	 * @return true if the element is rendered over the whole line.
+	 * 
+	 * @return The {@link LabelPosition position} where the label is rendered.
 	 */
-	public static boolean renderInputBeforeLabel(TLStructuredTypePart attribute, AttributeUpdate update) {
+	public static LabelPosition labelPosition(TLStructuredTypePart attribute, AttributeUpdate update) {
 		if (update != null) {
-			return inputBeforeLabel(attribute, update.getAnnotation(RenderInputBeforeLabelAnnotation.class));
+			return labelPosition(attribute, update.getAnnotation(LabelPositionAnnotation.class));
 		}
 
-		return false;
+		return LabelPosition.DEFAULT;
 	}
 
 	/**
-	 * Returns whether the element is rendered over the whole line.
+	 * Determines the position of the label of the given attribute.
 	 * 
 	 * @param attribute
-	 *        the attribute.
-	 * @return true if the element is rendered over the whole line.
+	 *        The attribute to get label position for.
+	 * 
+	 * @return The {@link LabelPosition position} where the label is rendered.
 	 */
-	public static boolean renderInputBeforeLabel(TLStructuredTypePart attribute) {
-		return inputBeforeLabel(attribute, attribute.getAnnotation(RenderInputBeforeLabelAnnotation.class));
+	public static LabelPosition labelPosition(TLStructuredTypePart attribute) {
+		return labelPosition(attribute, attribute.getAnnotation(LabelPositionAnnotation.class));
 	}
 
-	private static boolean inputBeforeLabel(TLStructuredTypePart attribute, BooleanAnnotation annotation) {
+	private static LabelPosition labelPosition(TLStructuredTypePart attribute, LabelPositionAnnotation annotation) {
 		if (annotation != null) {
 			return annotation.getValue();
 		}
 
 		if (isBooleanAttribute(attribute) || isTristateAttribute(attribute)) {
 			if (getBooleanDisplay(attribute) == BooleanPresentation.CHECKBOX) {
-				return true;
+				return LabelPosition.AFTER_VALUE;
 			}
 		}
+		if (isComposition(attribute)) {
+			return LabelPosition.HIDE_LABEL;
+		}
 
-		return false;
+		return LabelPosition.DEFAULT;
 	}
 }

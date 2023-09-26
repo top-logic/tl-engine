@@ -20,7 +20,7 @@
 					>
 						<annotations>
 							<render-whole-line/>
-							<input-before-label value="false"/>
+							<label-position value="default"/>
 						</annotations>
 					</field>
 				</formDefinition>

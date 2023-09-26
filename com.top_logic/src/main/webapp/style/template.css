@@ -5272,12 +5272,14 @@ div.dfEntryHeader {
 	gap: 3px;
 	align-items: center;
 }
-	
+
+.rf_inputCell.rf_noLabel  > .rf_cell,
 .dfModeFull .dfEntryTitle > .lFlexible {
 	flex-grow: 1;
 	position: relative;
 }
 	
+.rf_inputCell.rf_noLabel  > .rf_cell .is-error,
 .dfModeFull .dfEntryTitle > .lFlexible .is-error {
 	position: absolute;
 	right: 5px;
@@ -6215,7 +6217,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 .rf_spanCol3 { grid-col-end: span 3; }
 .rf_spanCol4 { grid-col-end: span 4; }
 
-.rf_inputCell {
+.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
 	grid-gap: 5px 5px;
@@ -6231,20 +6233,20 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	grid-column:2; 
 }
 
-                                        .rf_labelAbove.rf_inputCell:not(.keepInline) > div:nth-child(2),
-.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline) > div:nth-child(2),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline) > div:nth-child(2),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline) > div:nth-child(2),
-.rf_inputCell.rf_line                                                                > div:nth-child(2) {
+                                        .rf_labelAbove.rf_inputCell:not(.keepInline)                  > div:nth-child(2),
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
+.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel)                                               > div:nth-child(2) {
 	grid-row:2; 
 	grid-column:1; 
 }
 
                                         .rf_labelAbove.rf_inputCell:not(.keepInline),
-.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline),
-.rf_inputCell.rf_line {
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
+.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(0px, 1fr);
 	grid-template-rows: 24px 1fr;
@@ -6252,11 +6254,11 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 } 
 
 /* indent all lines but the first */
-                                        .rf_labelAbove.rf_inputCell:not(.keepInline) > :nth-child(n+2),
-.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline) > :nth-child(n+2),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline) > :nth-child(n+2),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline) > :nth-child(n+2),
-.rf_inputCell.rf_line                                                                > :nth-child(n+2)  {
+                                        .rf_labelAbove.rf_inputCell:not(.keepInline)                  > :nth-child(n+2),
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
+.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > :nth-child(n+2),
+.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel)                                               > :nth-child(n+2)  {
 	padding-left: 5px;
 }
 

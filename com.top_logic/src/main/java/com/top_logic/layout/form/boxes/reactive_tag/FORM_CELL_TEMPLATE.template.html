@@ -1,33 +1,41 @@
 <tl:choose>
 <tl:when test="visible">
 	<div id="{id}" 
-		class="is-control {canInspectClass} {keepInline ? 'keepInline'} {wholeLine ? 'rf_line'} {cellClasses}" 
+		class="is-control {canInspectClass} {keepInline ? 'keepInline'} {wholeLine ? 'rf_line'} {cellClasses} {!hasLabel ? 'rf_noLabel'}" 
 		style="{cellWidth ? 'width: ' + cellWidth + '; '}{cellStyle}"
 	>
 		
 		<tl:choose>
-		<tl:when test="labelFirst">
-			<tl:if test="hasLabel">
+		<tl:when test="hasLabel">
+			<tl:choose>
+			<tl:when test="labelFirst">
 				<div
 					class="rf_label rf_firstColumn {labelClass}" 
 					style="{labelWidth ? 'min-width: ' + labelWidth + '; '}{labelStyle}"
 				>
 					{label}
 				</div>
-			</tl:if>
+				
+				<div class="rf_cell">
+					{content}
+				</div>
+			</tl:when>
 			
-			<div class="rf_cell">
-				{content}
-			</div>
+			<tl:otherwise>
+				<div
+					class="rf_label rf_firstColumn {labelClass}"
+					style="{labelWidth ? 'min-width: ' + labelWidth + '; '}{labelStyle}"
+				>
+					{content}
+					{label}
+				</div>
+			</tl:otherwise>		
+			</tl:choose>
 		</tl:when>
 		
 		<tl:otherwise>
-			<div
-				class="rf_label rf_firstColumn {labelClass}" 
-				style="{labelWidth ? 'min-width: ' + labelWidth + '; '}{labelStyle}"
-			>
+			<div class="rf_cell rf_firstColumn">
 				{content}
-				{label}
 			</div>
 		</tl:otherwise>		
 		</tl:choose>

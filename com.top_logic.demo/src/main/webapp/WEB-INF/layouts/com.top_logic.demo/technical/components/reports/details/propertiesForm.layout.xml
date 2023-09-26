@@ -24,7 +24,7 @@
 							type="Contacts:PersonContact"
 						>
 							<annotations>
-								<input-before-label value="false"/>
+								<label-position value="default"/>
 							</annotations>
 						</field>
 						<field attribute="partner"/>

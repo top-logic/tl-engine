@@ -28,6 +28,7 @@ import com.top_logic.layout.form.tag.ControlTagUtil;
 import com.top_logic.layout.form.tag.FormGroupTag;
 import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.layout.form.tag.FormTagUtil;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
@@ -51,13 +52,13 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 
 	private Boolean _labelAbove;
 
-	private boolean _keepInline = false;
+	private boolean _keepInline;
 
-	private boolean _wholeLine = false;
+	private boolean _wholeLine;
 
-	private boolean _labelFirst = true;
+	private boolean _labelFirst;
 
-	private boolean _splitControls = false;
+	private boolean _splitControls;
 
 	private JSPLayoutedControls _description;
 
@@ -65,10 +66,33 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 
 	private String _firstColumnCssClass;
 
+	private LabelPosition _labelPosition;
+
+	{
+		setMemberVariablesToDefault();
+	}
+
 	/**
 	 * XML name of this tag.
 	 */
 	public static final String DESCRIPTION_CELL_TAG = "form:descriptionCell";
+
+	private void setMemberVariablesToDefault() {
+		_firstColumnCssClass = null;
+		_firstColumnStyle = null;
+		_description = null;
+		_splitControls = false;
+		_labelFirst = true;
+		_wholeLine = false;
+		_keepInline = false;
+		_labelAbove = null;
+		_firstColumnWidth = null;
+		_width = null;
+		_style = null;
+		_cssClass = null;
+		_contents = null;
+		_memberName = null;
+	}
 
 	/**
 	 * The name of the {@link FormMember} to listen to the visibility. If nothing is set, this cell
@@ -198,12 +222,31 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 	}
 
 	/**
+	 * Determines the position of the label.
+	 */
+	public void setLabelPosition(LabelPosition labelPosition) {
+		_labelPosition = labelPosition;
+	}
+
+	/**
 	 * Returns whether the label is rendered before the input or behind it.
 	 * 
 	 * @see DescriptionCellTag#setLabelFirst(boolean)
 	 */
 	public boolean getLabelFirst() {
-		return (_labelFirst || _splitControls);
+		if (_splitControls) {
+			return true;
+		}
+		if (_labelPosition != null) {
+			switch (_labelPosition) {
+				case DEFAULT:
+					return true;
+				case AFTER_VALUE:
+				case HIDE_LABEL:
+					return false;
+			}
+		}
+		return _labelFirst;
 	}
 
 	/**
@@ -265,8 +308,7 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 
 	@Override
 	protected void tearDown() {
-		_contents = null;
-		_labelAbove = null;
+		setMemberVariablesToDefault();
 		super.tearDown();
 	}
 
@@ -382,7 +424,7 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 			}
 		}
 
-		Boolean labelFirst = null;
+		LabelPosition labelFirst = null;
 		boolean forceWholeLine = false;
 		List<HTMLFragment> filteredControls = new ArrayList<>();
 		List<HTMLFragment> controls = _contents.getControls();
@@ -399,10 +441,36 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 					// error is already rendered in description
 					filteredControls.add(controls.get(i));
 					contentPatternNew += FormGroupTag.PLACEHOLDER;
+					LabelPosition controlLabelFirst = DescriptionCellControl.controlLabelFirst(controls.get(i));
 					if (labelFirst == null) {
-						labelFirst = DescriptionCellControl.controlLabelFirst(controls.get(i));
+						labelFirst = controlLabelFirst;
 					} else {
-						labelFirst = labelFirst || DescriptionCellControl.controlLabelFirst(controls.get(i));
+						switch (labelFirst) {
+							case AFTER_VALUE:
+								switch (controlLabelFirst) {
+									case AFTER_VALUE:
+									case HIDE_LABEL:
+										break;
+									case DEFAULT:
+										labelFirst = LabelPosition.DEFAULT;
+										break;
+								}
+								break;
+							case DEFAULT:
+								break;
+							case HIDE_LABEL:
+								switch (controlLabelFirst) {
+									case AFTER_VALUE:
+										labelFirst = LabelPosition.AFTER_VALUE;
+										break;
+									case DEFAULT:
+										labelFirst = LabelPosition.DEFAULT;
+										break;
+									case HIDE_LABEL:
+										break;
+								}
+								break;
+						}
 					}
 					forceWholeLine = forceWholeLine || DescriptionCellControl.controlWholeLine(controls.get(i));
 				}
@@ -431,6 +499,7 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 		if (_description != null) {
 			for (HTMLFragment control : _description.getControls()) {
 				if (control instanceof LabelControl) {
+
 					((LabelControl) control).setColon(descriptionFirst);
 				}
 			}
@@ -462,7 +531,11 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 			descriptionCellControl.setLabelPlacement(LabelPlacement.INLINE);
 		}
 		descriptionCellControl.setWholeLine(_wholeLine || forceWholeLine);
-		descriptionCellControl.setLabelFirst(labelFirst == null || labelFirst);
+		if (_labelPosition != null) {
+			descriptionCellControl.setLabelPosition(_labelPosition);
+		} else {
+			descriptionCellControl.setLabelPosition(labelFirst != null ? labelFirst : LabelPosition.DEFAULT);
+		}
 		descriptionCellControl.setDescription(finalDescription);
 		descriptionCellControl.setLabelWidth(getFirstColumnWidth());
 		descriptionCellControl.setLabelStyle(_firstColumnStyle);

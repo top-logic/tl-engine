@@ -113,10 +113,12 @@
 	<source
 		override="true"
 		target-type="Person"
+		deletion-policy="delete-referer" 
 	/>
 	<destination
 		override="true"
 		target-type="Group"
+		is-container="true"
 	/>
 </attributes>
 </association>

@@ -378,6 +378,9 @@
 					<method class="com.top_logic.layout.wysiwyg.ui.tlscript.I18NInternationalize$Builder"
 						name="internationalize"
 					/>
+					<method class="com.top_logic.layout.wysiwyg.ui.tlscript.I18NLocalize$Builder"
+						name="localize"
+					/>
 				</methods>
 			</instance>
 		</config>

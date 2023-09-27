@@ -92,7 +92,6 @@ public class DemoContactGenerator implements DemoPersonNames {
          UserInterface user =  Person.getUser(p);
          user.setAttributeValue(PersonAttributes.SUR_NAME  , lastName );
          user.setAttributeValue(PersonAttributes.GIVEN_NAME, firstName);
-         pmgr.handleRefreshPerson(p);
          return  p;
     }
 

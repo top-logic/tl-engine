@@ -56,7 +56,7 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object base, Locale param) {
-		ResKey key = asResKeyNotNull(base);
+		ResKey key = asResKeyNotNull(base, getSelf());
 
 		return Resources.getInstance(param).getString(key);
 	}

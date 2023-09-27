@@ -586,16 +586,18 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * @param value
 	 *        The value to convert to {@link ResKey} instance; either a {@link ResKey},
 	 *        <code>null</code>, or a {@link String}.
+	 * @param expression
+	 *        The expression representing the given value.
 	 * @return A {@link ResKey} for the given value.
 	 */
-	public ResKey asResKeyNotNull(Object value) {
+	public static ResKey asResKeyNotNull(Object value, SearchExpression expression) {
 		if (value instanceof ResKey) {
 			return (ResKey) value;
 		}
 		if (value instanceof String || value == null) {
 			return ResKey.text((String) value);
 		}
-		throw new TopLogicException(I18NConstants.ERROR_NOT_A_RES_KEY__VALUE__EXPR.fill(value, this));
+		throw new TopLogicException(I18NConstants.ERROR_NOT_A_RES_KEY__VALUE__EXPR.fill(value, expression));
 	}
 
 	/**

@@ -22,7 +22,6 @@ import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.gui.MultiThemeFactory;
 import com.top_logic.gui.Theme;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.knowledge.wrap.person.PersonalConfigurationWrapper;
 import com.top_logic.layout.form.FormField;
@@ -40,6 +39,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@Deprecated
 public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
 
     /** ID of this handler. */
@@ -147,8 +147,6 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
 					throw new TopLogicException(ApplyPersonCommandHandler.class, "update.userdata", ex);
                 }
             }
-
-			PersonManager.getManager().handleRefreshPerson(thePerson);
 
             if (hasSuccess) {
                 sendEvent(thePerson);

@@ -667,14 +667,6 @@ public class PersonManager extends ManagedClass {
 		}
 		return lock;
 	}
-	
-	/**
-	 * If a Person is updated this method is supposed to make sure that the
-	 * system acts properly, e.g. set attributes in other objects
-	 */
-	public void handleRefreshPerson(Person aPerson) {
-		// Ignore.
-	}
 
 	/**
 	 * A sorted copy of the current AlivePersons - List
@@ -970,7 +962,6 @@ public class PersonManager extends ManagedClass {
 				existingAccount.setUser(user);
 				enter(existingAccount);
 				ensureLocale(existingAccount);
-				this.handleRefreshPerson(existingAccount);
 				return existingAccount;
 			} else {
 				if (personNameAlreadyUsed(theUserName)) {

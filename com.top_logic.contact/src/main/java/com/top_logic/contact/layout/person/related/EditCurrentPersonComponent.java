@@ -68,6 +68,7 @@ import com.top_logic.util.TLContextManager;
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
+@Deprecated
 public class EditCurrentPersonComponent extends EditRelatedPersonComponent {
 
 	public static final Set<BoundCommandGroup> READWRITE_SET = 
@@ -175,7 +176,6 @@ public class EditCurrentPersonComponent extends EditRelatedPersonComponent {
 			thePCTableGroup.addMember(thePCField);
 			thePCTableGroup.setCollapsed(true);
 			theFC.addMember(thePCTableGroup);
-			theFC.getField(FIELD_NAME_RELATED_CONTACT).setImmutable(true);
 			if (!PersonalConfiguration.getConfig().getHideOptionStartPageAutomatism()) {
 				theFC.addMember(createFieldStartPageAutomatism());
 			}

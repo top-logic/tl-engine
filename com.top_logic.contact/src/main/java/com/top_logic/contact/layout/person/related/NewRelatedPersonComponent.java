@@ -15,12 +15,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
-import com.top_logic.contact.layout.person.ContactPersonManager;
 import com.top_logic.contact.layout.person.related.EditRelatedPersonComponent.EditRelatedPersonConfig;
 import com.top_logic.knowledge.gui.layout.person.NewPersonComponent;
 import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.form.model.SelectField;
 
 
 /**
@@ -28,11 +25,9 @@ import com.top_logic.layout.form.model.SelectField;
  *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
+@Deprecated
 public class NewRelatedPersonComponent extends NewPersonComponent {
 
-    /** The related contact to the person. */
-	public static final String FIELD_NAME_RELATED_CONTACT = ContactPersonManager.RELATED_PERSON_CONTACT.getName();
-    
     /** If <code>true</code>, super user can change the person contact of an account. */
     private final boolean allowManualContactAssigning;
 
@@ -68,10 +63,6 @@ public class NewRelatedPersonComponent extends NewPersonComponent {
                 	}
                 	return theResult;
                 }};
-
-            SelectField relatedContactField = FormFactory.newSelectField(FIELD_NAME_RELATED_CONTACT, allContacts, false, false);
-            relatedContactField.setOptionLabelProvider(RelatedPersonContactLabelProvider.INSTANCE);
-            formContext.addMember(relatedContactField);
         }
 
         return formContext;

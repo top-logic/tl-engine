@@ -3,10 +3,10 @@
     sourceLang: $sourceLang, 
     translate: $translate
 )</code></pre>
-<p>Wandelt den Text der gegebenen Sprache in eine internationalisierte Zeichenkette um.</p>
+<p>Wandelt den Text der gegebenen Sprache in einen internationalisierten Text um.</p>
 <pre><code>{"en": $englishText, "de": $germanText}
     .internationalize(translate: $translate)</code></pre>
-<p>Fasst Texte in mehreren Sprachen zu einer internationalisierten Zeichenkette zusammen.</p>
+<p>Fasst Texte in mehreren Sprachen zu einem internationalisierten Text zusammen.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>
@@ -21,8 +21,8 @@
  <tbody>
   <tr>
    <td>input</td>
-   <td>Zeichenkette oder Wörterbuch mit Zeichenketten</td>
-   <td>Entweder die umzuwandelnde einfache Zeichenkette, oder ein Wörterbuch, das Sprachkürzel auf Texte in der jeweiligen Sprache abbildet.</td>
+   <td>Text oder Wörterbuch mit Texten</td>
+   <td>Entweder der umzuwandelnde Text, oder ein Wörterbuch, das Sprachkürzel auf Texte in der jeweiligen Sprache abbildet.</td>
    <td>ja</td>
    <td></td>
   </tr>
@@ -43,11 +43,11 @@
  </tbody>
 </table>
 <h2>Rückgabewert</h2>
-<p><strong>Typ:</strong> Internationalisierte Zeichenkette (<code class="hljs inlineCode">tl.model.i18n:I18NString</code>)</p>
-<p>Ein Wert der in der Sprache des angemeldeten Nutzers dargestellt werden kann. Die Eingangstexte werden zu einer internationalisierten Zeichenkette zusammengefasst und optional durch generierte Übersetzungen des Übersetzungsservice ergänzt.</p>
+<p><strong>Typ:</strong> Internationalisierter Text</p>
+<p>Ein Wert der in der Sprache des angemeldeten Nutzers dargestellt werden kann. Die Eingangstexte werden zu einem internationalisierten Text zusammengefasst und optional durch generierte Übersetzungen des Übersetzungsservice ergänzt.</p>
 <h2>Beispiele</h2>
 <h3>Einzelnen Text internationalisieren</h3>
-<p>Mache aus dem englischen Text "Hello world!" eine internationalisierte Zeichenkette (<code class="hljs inlineCode">tl.model.i18n:I18NString</code>). Fülle die restlichen von der Anwendung unterstützten Sprachen mit Übersetzungen, die vom Übersetzungsservice generiert werden:</p>
+<p>Mache aus der englischen Zeichenkette "Hello world!" eine internationalisierte Zeichenkette (<code class="hljs inlineCode">tl.model.i18n:I18NString</code>). Fülle die restlichen von der Anwendung unterstützten Sprachen mit Übersetzungen, die vom Übersetzungsservice generiert werden:</p>
 <pre><code>"Hello world".internationalize(lang:"en", translate: true)</code></pre>
 <p>Liefert einen Wert, der für einen Nutzer mit der Sprache Deutsch als "Hallo Welt!" dargestellt würde.</p>
 <h3>Texte in mehreren Sprachen zu einer internationalisierten Zeichenkette zusammenfassen</h3>

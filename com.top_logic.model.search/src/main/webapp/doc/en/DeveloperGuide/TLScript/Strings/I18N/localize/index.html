@@ -1,6 +1,6 @@
 <h2>Syntax</h2>
-<pre><code>$resKey.localize(lang: $language)</code></pre>
-<p>Evaluates an internationalized string in a given language.</p>
+<pre><code>$input.localize(lang: $language)</code></pre>
+<p>Evaluates an internationalized text in a given language.</p>
 <h2>Parameters</h2>
 <table class="tlDocTable">
  <thead>
@@ -14,23 +14,23 @@
  </thead>
  <tbody>
   <tr>
-   <td>resKey</td>
-   <td>Internationalized string</td>
-   <td>The internationalized text whose localization is to be determined.</td>
+   <td>input</td>
+   <td>Internationalized text</td>
+   <td>The internationalized text whose localization should be determined.</td>
    <td>yes</td>
    <td></td>
   </tr>
   <tr>
    <td>language</td>
    <td>String</td>
-   <td>The code of the language to which the localization is to be made.</td>
+   <td>The code of the language to localize to.</td>
    <td>no</td>
-   <td>The language of the user.</td>
+   <td>The language of the logged in user or the default language of the application.</td>
   </tr>
  </tbody>
 </table>
 <h2>Return value</h2>
-<p><strong>Type:</strong> string</p>
+<p><strong>Type:</strong> Text</p>
 <p>The value that a user with the selected language will see.</p>
 <h2>Examples</h2>
 <pre><code>{

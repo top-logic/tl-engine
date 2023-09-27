@@ -21,7 +21,6 @@ import com.top_logic.common.webfolder.ui.commands.UpdateExecutable;
 import com.top_logic.common.webfolder.ui.commands.VersionExecutable;
 import com.top_logic.common.webfolder.ui.commands.WebFolderDeleteExecutable;
 import com.top_logic.common.webfolder.ui.keywords.ShowKeywordExecutable;
-import com.top_logic.common.webfolder.ui.mail.MailExecutable;
 import com.top_logic.common.webfolder.ui.similar.ShowSimilarExecutable;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.DocumentVersion;
@@ -86,9 +85,6 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
         }
         else if (WebFolderAccessor.VERSION.equals(aProperty)) {
 			return this.createVersionField(fieldName, retrieveDocument(businessObject));
-        }
-        else if (WebFolderAccessor.MAIL.equals(aProperty)) {
-			return this.createMailField(fieldName, retrieveDocument(businessObject));
         }
         else { 
             return null;
@@ -288,21 +284,6 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 
 		return theField;
 	}
-
-	protected FormMember createMailField(String name, Object userObject) {
-		if (userObject instanceof Document) {
-            Command theExecutable = new MailExecutable(((Document) userObject));
-
-			CommandField mailCommand = WebFolderFieldProvider.createField(name, theExecutable,
-				com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_16,
-				com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_DISABLED_16);
-			mailCommand.setInheritDeactivation(false);
-			return mailCommand;
-        }
-        else {
-			return this.createHiddenField(name);
-        }
-    }
 
     public static CommandField createField(String aName, Command anExecutable, ThemeImage anImage, ThemeImage aDisabled) {
         CommandField theField = FormFactory.newCommandField(aName, anExecutable);

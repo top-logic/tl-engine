@@ -8,7 +8,6 @@ package com.top_logic.common.webfolder.ui;
 import java.util.Collections;
 import java.util.Comparator;
 
-import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder;
 import com.top_logic.common.webfolder.WebFolderUtils;
 import com.top_logic.common.webfolder.model.WebFolderAccessor;
@@ -48,7 +47,6 @@ public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBu
 
 	private boolean _withAnalysis = DefaultAnalyzeService.isAvailable();
 
-	private boolean _withMail = MailSenderService.isConfigured();
 
 	/**
 	 * Creates a {@link WebFolderColumnDescriptionBuilder}.
@@ -72,13 +70,6 @@ public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBu
 	}
 
 	/**
-	 * Whether sending documents by mail is enabled.
-	 */
-	public void setMail(boolean withMail) {
-		_withMail = withMail && MailSenderService.isConfigured();
-	}
-
-	/**
 	 * Creates and returns a table configuration suitable for a WebFolder.
 	 */
     public TableConfiguration createWebFolderColumns() {
@@ -97,9 +88,6 @@ public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBu
 		createDownloadColumn(tableConfig.declareColumn(WebFolderAccessor.DOWNLOAD));
 		createLockColumn(tableConfig.declareColumn(WebFolderAccessor.LOCK));
 		createVersionColumn(tableConfig.declareColumn(WebFolderAccessor.VERSION));
-		if (_withMail) {
-			createMailColumn(tableConfig.declareColumn(WebFolderAccessor.MAIL));
-		}
 		createClipboardColumn(tableConfig.declareColumn(WebFolderAccessor.CLIPBOARD));
 		createDeleteColumn(tableConfig.declareColumn(WebFolderAccessor.DELETE));
 		if (_withAnalysis) {

@@ -47,8 +47,6 @@ public class WebFolderAccessor {
     
     public static final String VERSION = "_version";
     
-    public static final String MAIL = "_mail";
-
     public static final String DELETE = "_delete";
 
 	public static final String SIMILAR_DOCUMENTS = "_similar";
@@ -59,7 +57,7 @@ public class WebFolderAccessor {
     
 	public static final String[] DEFAULT_COLUMNS =
 		new String[] { WebFolder.NAME, DESCRIPTION, DOWNLOAD, TYPE, SIZE, DATE,
-		LOCK, VERSION, CLIPBOARD, MAIL, SIMILAR_DOCUMENTS, KEYWORDS, DELETE };
+			LOCK, VERSION, CLIPBOARD, SIMILAR_DOCUMENTS, KEYWORDS, DELETE };
 
     private static final Map<String, PropertyAccessor<? super FolderNode>> PROPERTIES = new MapBuilder<String, PropertyAccessor<? super FolderNode>>()
 		.put(WebFolder.NAME, SelfPropertyAccessor.INSTANCE)

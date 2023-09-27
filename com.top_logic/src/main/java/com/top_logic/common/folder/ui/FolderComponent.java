@@ -9,7 +9,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Set;
 
-import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -146,11 +145,6 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		String ANALYZE_DOCUMENTS = "analyzeDocuments";
 
 		/**
-		 * @see #sendDocuments()
-		 */
-		String SEND_DOCUMENTS = "sendDocuments";
-
-		/**
 		 * @see #updateDocuments()
 		 */
 		String UPDATE_DOCUMENTS = "updateDocuments";
@@ -202,19 +196,6 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		@Name(DELETE_DOCUMENTS)
 		@BooleanDefault(true)
 		boolean deleteDocuments();
-
-		/**
-		 * Whether documents can be sent by e-mail.
-		 * 
-		 * <p>
-		 * The mail sender service has to be configured also to provide this functionality.
-		 * </p>
-		 * 
-		 * @see MailSenderService#isActivated()
-		 */
-		@Name(SEND_DOCUMENTS)
-		@BooleanDefault(true)
-		boolean sendDocuments();
 
 		/**
 		 * Whether documents should be indexed and compared by keywords.
@@ -431,11 +412,10 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		Config config = (Config) getConfig();
 		boolean withUpdate = config.updateDocuments();
 		boolean withDelete = config.deleteDocuments();
-		boolean withMail = config.sendDocuments() && MailSenderService.isConfigured();
 		boolean withClipboard = config.getHasClipboardCommand();
 		boolean withAnalyze = config.analyzeDocuments() && DefaultAnalyzeService.isAvailable();
 
-		return WebFolderUIFactory.defaultColumns(withUpdate, withDelete, withMail, withClipboard, withAnalyze);
+		return WebFolderUIFactory.defaultColumns(withUpdate, withDelete, withClipboard, withAnalyze);
 	}
 
 	@Override

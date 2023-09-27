@@ -509,6 +509,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-mail-smtp</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-model-search</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

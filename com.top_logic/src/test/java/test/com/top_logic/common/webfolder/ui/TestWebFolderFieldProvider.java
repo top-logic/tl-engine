@@ -79,10 +79,6 @@ public class TestWebFolderFieldProvider extends BasicTestCase {
 		checkNameCreationAndRetrievalEquality(WebFolderAccessor.VERSION);
 	}
 
-	public void testGetMailFieldName() {
-		checkNameCreationAndRetrievalEquality(WebFolderAccessor.MAIL);
-	}
-
 	private void checkNameCreationAndRetrievalEquality(String fieldName) {
 		FormMember lockField = fieldProvider.createField(emptyFolderNode, null, fieldName);
 

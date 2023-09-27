@@ -12,10 +12,6 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.base.mail.MailHelper">
-			<instance class="com.top_logic.contact.layout.mail.ContactMailHelper"/>
-		</config>
-		
         <config service-class="com.top_logic.layout.provider.LabelProviderService">
             <instance>
                 <label-providers>

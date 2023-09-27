@@ -513,7 +513,6 @@
 						</task>
 					</task>
 				</tasks>
-				<kb-tasks>EMailTask</kb-tasks>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.knowledge.service.KnowledgeBaseFactory">

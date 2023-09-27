@@ -27,6 +27,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.contact.business.PersonContact;
+import com.top_logic.contact.external.ExternalContact;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.util.DataAccessProxyDataSource;
 import com.top_logic.knowledge.wrap.Document;
@@ -269,7 +271,11 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
      * Get an email addres for an object
      */
     protected String internalGetEmailAddress(Object anObject) {
-        if (anObject instanceof String) {
+		if (anObject instanceof PersonContact) {
+			return ((PersonContact) anObject).getMail();
+		} else if (anObject instanceof ExternalContact) {
+			return ((ExternalContact) anObject).getEMail();
+		} else if (anObject instanceof String) {
             return (String) anObject;
         }
         else if (anObject instanceof UserInterface) {

@@ -2195,15 +2195,6 @@
 	<icon name="com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS_DISABLED"
 		value="/icons/keywordsDisabled.png"
 	/>
-	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_16"
-		value="/icons/mail-forward-16.png"
-	/>
-	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_60"
-		value="/icons/mail-forward-60.png"
-	/>
-	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_DISABLED_16"
-		value="/icons/mail-forward-disabled-16.png"
-	/>
 	<icon name="com.top_logic.common.webfolder.ui.similar.Icons.DOCUMENT_SIMILAR_60"
 		value="/icons/document-similar-60.png"
 	/>

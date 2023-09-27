@@ -5,7 +5,12 @@
  */
 package com.top_logic.kafka.services.common;
 
+import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
+
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -16,8 +21,10 @@ import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.security.auth.AuthenticateCallbackHandler;
 import org.apache.kafka.common.security.auth.Login;
 
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.NamedPolymorphicConfiguration;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
@@ -37,6 +44,9 @@ import com.top_logic.kafka.services.consumer.KafkaClientProperty;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<T> {
+
+	/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
+	Lookup LOOKUP = MethodHandles.lookup();
 
 	/** Property name of {@link #getSecurityProviders()}. */
 	String SECURITY_PROVIDERS = "security.providers";
@@ -419,5 +429,43 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	@Name(LOG_WRITER)
 	@Mandatory
 	PolymorphicConfiguration<KafkaLogWriter<V>> getLogWriter();
+
+	/**
+	 * The Kafka {@link Properties} to be used for {@link KafkaCommonClient} instantiation. A new,
+	 * mutable and resizable {@link Map}.
+	 */
+	default Map<String, Object> getAllProperties() {
+		Map<String, Object> properties = getTypedProperties();
+		properties.putAll(getUntypedProperties());
+		return properties;
+	}
+
+	/**
+	 * The properties with an explicit {@link PropertyDescriptor} in the {@link ConfigurationItem}.
+	 * <p>
+	 * If a property is not set, the {@link Map} will contain its default value. If the (default)
+	 * value is null, the {@link Map} will {@link Map#containsKey(Object) contain} the key and
+	 * value.
+	 * </p>
+	 * 
+	 * @return The Kafka {@link Properties} to be used for {@link KafkaCommonClient} instantiation. A
+	 *         new, mutable and resizable {@link Map}.
+	 */
+	default Map<String, Object> getTypedProperties() {
+		Map<String, Object> properties = map();
+		for (PropertyDescriptor property : descriptor().getProperties()) {
+			if (property.getAnnotation(KafkaClientProperty.class) == null) {
+				continue;
+			}
+			if (!valueSet(property) && !property.hasExplicitDefault()) {
+				// Do not add null values to Kafka properties that just represent unset
+				// configuration values.
+				continue;
+			}
+			Object value = value(property);
+			properties.put(property.getPropertyName(), value);
+		}
+		return properties;
+	}
 
 }

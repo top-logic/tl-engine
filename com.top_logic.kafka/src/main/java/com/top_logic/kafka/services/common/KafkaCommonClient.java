@@ -5,20 +5,14 @@
  */
 package com.top_logic.kafka.services.common;
 
-import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static java.util.Collections.*;
 
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfiguredInstance;
-import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.logging.LogUtil;
 import com.top_logic.kafka.services.consumer.ConsumerDispatcher;
-import com.top_logic.kafka.services.consumer.KafkaClientProperty;
 import com.top_logic.kafka.services.producer.TLKafkaProducer;
 
 /**
@@ -31,43 +25,14 @@ public interface KafkaCommonClient<V, C extends CommonClientConfig<V, ?>> extend
 	/** The {@link LogUtil#withLogMark(String, String, Runnable) log mark} for Kafka. */
 	String LOG_MARK_KAFKA = "in-kafka-context";
 
-	/**
-	 * The Kafka {@link Properties} to be used for {@link KafkaConsumer} instantiation. A
-	 *         new, mutable and resizable {@link Map}.
-	 */
+	/** @see CommonClientConfig#getAllProperties() */
 	default Map<String, Object> getAllProperties() {
-		Map<String, Object> properties = getTypedProperties();
-		properties.putAll(getUntypedProperties());
-		return properties;
+		return getConfig().getAllProperties();
 	}
 
-	/**
-	 * The properties with explicit an {@link PropertyDescriptor} in the {@link ConfigurationItem}.
-	 * <p>
-	 * If a property is not set, the {@link Map} will contain its default value. If the (default)
-	 * value is null, the {@link Map} will {@link Map#containsKey(Object) contain} the key and
-	 * value.
-	 * </p>
-	 * 
-	 * @return The Kafka {@link Properties} to be used for {@link KafkaConsumer} instantiation. A
-	 *         new, mutable and resizable {@link Map}.
-	 */
+	/** @see CommonClientConfig#getTypedProperties() */
 	default Map<String, Object> getTypedProperties() {
-		Map<String, Object> properties = map();
-		C config = getConfig();
-		for (PropertyDescriptor property : config.descriptor().getProperties()) {
-			if (property.getAnnotation(KafkaClientProperty.class) == null) {
-				continue;
-			}
-			if (!config.valueSet(property) && !property.hasExplicitDefault()) {
-				// Do not add null values to Kafka properties that just represent unset
-				// configuration values.
-				continue;
-			}
-			Object value = config.value(property);
-			properties.put(property.getPropertyName(), value);
-		}
-		return properties;
+		return getConfig().getTypedProperties();
 	}
 
 	/**

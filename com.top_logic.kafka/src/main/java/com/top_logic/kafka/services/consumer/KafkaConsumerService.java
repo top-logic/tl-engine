@@ -25,6 +25,7 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.kafka.services.common.TopicChecker;
 
 /**
  * A service providing access to {@link KafkaConsumer}s.
@@ -99,6 +100,10 @@ public class KafkaConsumerService extends ConfiguredManagedClass<KafkaConsumerSe
 	 * and starts it.
 	 */
 	protected void createAndStartConsumer(InstantiationContext context, ConsumerDispatcherConfiguration<?, ?> config) {
+		if (!TopicChecker.checkTopicsExists(context, config)) {
+			/* No need to log it, as 'checkTopicExists' already logged an error. */
+			return;
+		}
 		ConsumerDispatcher<?, ?> consumer = createConsumer(context, config);
 		startConsumer(consumer);
 	}

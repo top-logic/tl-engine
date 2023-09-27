@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -400,21 +399,19 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * Creates the full columns list.
 	 */
 	public static String[] defaultColumns() {
-		boolean withMail = MailSenderService.isConfigured();
 		boolean withAnalyze = DefaultAnalyzeService.isAvailable();
 		boolean withClipboard = true;
 		boolean withUpdate = true;
 		boolean withDelete = true;
-		return defaultColumns(withUpdate, withDelete, withMail, withClipboard, withAnalyze);
+		return defaultColumns(withUpdate, withDelete, withClipboard, withAnalyze);
 	}
 
 	/**
 	 * Creates a customized columns list.
 	 */
-	public static String[] defaultColumns(boolean withUpdate, boolean withDelete, boolean withMail,
-			boolean withClipboard,
+	public static String[] defaultColumns(boolean withUpdate, boolean withDelete, boolean withClipboard,
 			boolean withAnalyze) {
-		if (withMail && withAnalyze && withClipboard && withDelete) {
+		if (withAnalyze && withClipboard && withDelete) {
 			return WebFolderAccessor.DEFAULT_COLUMNS;
 		}
 
@@ -427,9 +424,6 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		}
 		if (!withClipboard) {
 			columns.remove(WebFolderAccessor.CLIPBOARD);
-		}
-		if (!withMail) {
-			columns.remove(WebFolderAccessor.MAIL);
 		}
 		if (!withAnalyze) {
 			columns.remove(WebFolderAccessor.SIMILAR_DOCUMENTS);

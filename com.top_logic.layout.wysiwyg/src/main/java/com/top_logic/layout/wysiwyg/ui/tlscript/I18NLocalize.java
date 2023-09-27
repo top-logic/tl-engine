@@ -39,16 +39,15 @@ public class I18NLocalize extends Localize {
 	}
 
 	@Override
-	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		if (self instanceof StructuredText) {
-			return self;
+	public Object evalDirect(EvalContext definitions, Object base, Locale param) {
+		if (base instanceof StructuredText) {
+			return base;
 		}
-		if (self instanceof I18NStructuredText) {
-			I18NStructuredText i18nText = (I18NStructuredText) self;
-			Locale targetLocale = asLocale(arguments[0]);
-			return i18nText.localize(targetLocale);
+		if (base instanceof I18NStructuredText) {
+			I18NStructuredText i18nText = (I18NStructuredText) base;
+			return i18nText.localize(param);
 		}
-		return super.eval(self, arguments, definitions);
+		return super.evalDirect(definitions, base, param);
 	}
 
 	/**

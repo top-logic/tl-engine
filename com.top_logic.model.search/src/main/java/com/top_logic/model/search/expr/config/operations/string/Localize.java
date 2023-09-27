@@ -17,6 +17,7 @@ import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
+import com.top_logic.model.search.expr.WithFlatMapSemantics;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
@@ -29,7 +30,7 @@ import com.top_logic.util.TLContext;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class Localize extends GenericMethod {
+public class Localize extends GenericMethod implements WithFlatMapSemantics<Locale> {
 
 	/**
 	 * Creates a {@link Localize} expression.
@@ -50,11 +51,14 @@ public class Localize extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
-		ResKey key = asResKeyNotNull(self);
+		return evalPotentialFlatMap(definitions, self, asLocale(arguments[0]));
+	}
 
-		Locale targetLocale = asLocale(arguments[0]);
+	@Override
+	public Object evalDirect(EvalContext definitions, Object base, Locale param) {
+		ResKey key = asResKeyNotNull(base);
 
-		return Resources.getInstance(targetLocale).getString(key);
+		return Resources.getInstance(param).getString(key);
 	}
 
 	/**

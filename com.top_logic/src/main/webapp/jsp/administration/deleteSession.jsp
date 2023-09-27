@@ -1,11 +1,11 @@
-<%@page import="com.top_logic.base.taglibs.basic.TextTag"
+<%@page import="com.top_logic.knowledge.wrap.person.Person"
+%><%@page import="com.top_logic.base.taglibs.basic.TextTag"
 %><%@page import="com.top_logic.basic.util.ResKey"
 %><%@page import="java.util.Collection"
 %><%@page extends="com.top_logic.util.TopLogicJspBase"
 %><%@page import="java.util.Enumeration,
 com.top_logic.basic.Logger,
 com.top_logic.base.accesscontrol.SessionService,
-com.top_logic.base.user.UserInterface,
 com.top_logic.util.Resources"
 %><%@taglib uri="basic" prefix="basic"
 %><%@taglib uri="util" prefix="tl"
@@ -103,7 +103,7 @@ com.top_logic.util.Resources"
 					</tr>
 					<%
 					for (String theSession : sessionIDs) {
-						UserInterface theUser    = null;
+						Person theUser    = null;
 						String        theName;
 						String        theId;
 						String        theIp="unknown";
@@ -119,8 +119,8 @@ com.top_logic.util.Resources"
 						}
 						
 						if (theUser != null) {
-							theName = theUser.getFullName ();
-							theId   = theUser.getUserName ();
+							theName = theUser.getFullName();
+							theId   = theUser.getName();
 						}
 						else {
 							theName = "unknown";

@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.kafka.services.common.TopicChecker;
 
 /**
  * A {@link ManagedClass} providing kafka producer services.
@@ -63,9 +64,14 @@ public class KafkaProducerService extends ConfiguredManagedClass<KafkaProducerSe
 	private HashMap<String, TLKafkaProducer<?, ?>> getInstanceMap(InstantiationContext context, Config config) {
 		HashMap<String, TLKafkaProducer<?, ?>> producers = CollectionFactory.map();
 		for (Entry<String, ? extends TLKafkaProducer.Config<?, ?>> entry : config.getProducers().entrySet()) {
+			TLKafkaProducer.Config<?, ?> producerConfig = entry.getValue();
+			if (!TopicChecker.checkTopicExists(context, producerConfig)) {
+				/* No need to log it, as 'checkTopicExists' already logged an error. */
+				continue;
+			}
 			TLKafkaProducer<?, ?> producer;
 			try {
-				producer = context.getInstance(entry.getValue());
+				producer = context.getInstance(producerConfig);
 			} catch (Exception ex) {
 				context.error("Unable to create producer with name: " + entry.getKey(), ex);
 				continue;

@@ -6,16 +6,12 @@
 package com.top_logic.contact.layout.person.related;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.contact.business.PersonContact;
-import com.top_logic.contact.layout.person.ContactPersonManager;
 import com.top_logic.knowledge.gui.layout.person.ApplyPersonCommandHandler;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.form.model.SelectField;
 
 
 /**
@@ -23,6 +19,7 @@ import com.top_logic.layout.form.model.SelectField;
  * 
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
+@Deprecated
 public class ApplyRelatedPersonCommandHandler extends ApplyPersonCommandHandler {
 
     public ApplyRelatedPersonCommandHandler(InstantiationContext context, Config config) {
@@ -33,17 +30,6 @@ public class ApplyRelatedPersonCommandHandler extends ApplyPersonCommandHandler 
 	protected void updateNonUserFields(Person aPerson, FormContext aContext) {
         super.updateNonUserFields(aPerson, aContext);
 		storeStartPageAutomatism(aContext);
-		if (aContext.hasMember(EditRelatedPersonComponent.FIELD_NAME_RELATED_CONTACT)) {
-			PersonContact personContact =
-				(PersonContact) ((SelectField) aContext.getField(EditRelatedPersonComponent.FIELD_NAME_RELATED_CONTACT))
-					.getSingleSelection();
-			if (personContact != null) {
-				PersonManager personManager = PersonManager.getManager();
-				if (personManager instanceof ContactPersonManager) {
-					((ContactPersonManager) personManager).connectContactToPerson(aPerson, personContact);
-				}
-			}
-        }
 
 		if (aContext.hasMember(EditCurrentPersonComponent.PERSONAL_CONFIGURATION_AUTO_TRANSLATE)) {
 			FormField autoTranslate =

@@ -8,7 +8,6 @@ package com.top_logic.knowledge.gui.layout.person;
 import java.util.Map;
 
 import com.top_logic.base.security.attributes.PersonAttributes;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.event.ModelTrackingService;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -27,6 +26,7 @@ import com.top_logic.util.license.LicenseTool;
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler </a>
  */
+@Deprecated
 public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
 
 	public static final String	COMMAND_ID	= "newPerson";
@@ -62,19 +62,10 @@ public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
 	public Person createPerson(String anID, String aFirst, String aSurname, String aTitle, String aDataDeviceID,
 			String aAuthDeviceID, Boolean isRestricted) {
 		Person thePerson = PersonManager.getManager().createPerson(anID, aDataDeviceID, aAuthDeviceID, isRestricted);
-
-        if (thePerson != null) {
-			UserInterface user = Person.getUser(thePerson);
-			user.setAttributeValue(PersonAttributes.RESTRICTED_USER, isRestricted);
-			thePerson.setValue(PersonAttributes.RESTRICTED_USER, isRestricted);
-            user.setAttributeValue(PersonAttributes.GIVEN_NAME, aFirst);
-            user.setAttributeValue(PersonAttributes.SUR_NAME, aSurname);
-            user.setAttributeValue(PersonAttributes.TITLE, aTitle);
-			PersonManager.getManager().handleRefreshPerson(thePerson);
-        }
-        else {
+		if (thePerson == null) {
 			throw new TopLogicException(I18NConstants.REFRESH_ACCOUNTS_FAILED);
         }
+		thePerson.setValue(PersonAttributes.RESTRICTED_USER, isRestricted);
         return thePerson;
     }
 

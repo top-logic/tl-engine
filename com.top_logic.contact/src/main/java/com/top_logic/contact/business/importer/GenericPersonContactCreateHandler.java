@@ -14,7 +14,6 @@ import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
-import com.top_logic.contact.layout.person.ContactPersonManager;
 import com.top_logic.contact.mandatoraware.COSPersonContact;
 import com.top_logic.element.genericimport.MetaElementBasedUpdateHandler;
 import com.top_logic.element.genericimport.interfaces.GenericCreateHandler;
@@ -23,11 +22,11 @@ import com.top_logic.element.structured.wrap.Mandator;
 import com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler;
 import com.top_logic.knowledge.objects.CreateException;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
-import com.top_logic.util.TLContext;
 
 /**
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
+@Deprecated
 public class GenericPersonContactCreateHandler extends MetaElementBasedUpdateHandler implements
         GenericCreateHandler {
 
@@ -66,20 +65,15 @@ public class GenericPersonContactCreateHandler extends MetaElementBasedUpdateHan
 		updateBusinessObject(theContact, aDO, aFKeyAttr);
         
         if (this.createUser) {
-            TLContext theContext = TLContext.getContext();
-            try {
+			{
                 boolean isUser = ParseBooleanMapping.INSTANCE.map((String) aDO.getAttributeValue(IS_USER_COLUMN));
                 String  userID = (String) aDO.getAttributeValue(USER_ID_COLUMN);
                 if (isUser) {
-                    theContext.set(ContactPersonManager.RELATED_PERSON_CONTACT, theContact);
 					userFactory.createPerson(userID, theContact.getString(PersonContact.ATT_FIRSTNAME),
 						theContact.getString(PersonContact.NAME_ATTRIBUTE),
 						theContact.getString(PersonContact.ATT_TITLE), "dbSecurity", "dbSecurity",
 						(Boolean) aDO.getAttributeValue(PersonAttributes.RESTRICTED_USER));
                 }
-            }
-            finally {
-                theContext.reset(ContactPersonManager.RELATED_PERSON_CONTACT);
             }
         }
         

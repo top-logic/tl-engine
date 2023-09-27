@@ -152,32 +152,6 @@
 			<property name="revision" type="INT"/>
 		</class>
 		<class name="DublinCore" abstract="true" tl5:name="DublinCore"></class>
-		<class name="EMailTask" tl5:name="EMailTask">
-			<property name="active" type="BOOLEAN"/>
-			<property name="daymask" type="INT"/>
-			<property name="daytype" type="INT"/>
-			<property name="hour" type="INT"/>
-			<property name="interval" type="INT"/>
-			<property name="message" type="STRING">
-				<size:constraint upper="4000"/>
-			</property>
-			<property name="minute" type="INT"/>
-			<property name="name" type="STRING">
-				<size:constraint upper="250"/>
-			</property>
-			<property name="physicalResource" type="STRING">
-				<size:constraint upper="4000"/>
-			</property>
-			<property name="stopHour" type="INT"/>
-			<property name="stopMinute" type="INT"/>
-			<property name="subject" type="STRING">
-				<size:constraint upper="254"/>
-			</property>
-			<property name="users" type="STRING">
-				<size:constraint upper="254"/>
-			</property>
-			<property name="when" type="DATE"/>
-		</class>
 		<class name="Group" tl5:name="Group">
 			<property name="isSystem" type="BOOLEAN"/>
 			<property name="name" type="STRING">

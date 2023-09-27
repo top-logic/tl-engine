@@ -867,12 +867,6 @@
 	<icon name="com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS_DISABLED"
 		expr="%com.top_logic.common.webfolder.ui.keywords.Icons.KEYWORDS_60%"
 	/>
-	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_16"
-		value="css:far fa-envelope"
-	/>
-	<icon name="com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_60"
-		expr="%com.top_logic.common.webfolder.ui.mail.Icons.MAIL_FORWARD_16%"
-	/>
 	<icon name="com.top_logic.common.webfolder.ui.similar.Icons.DOCUMENT_SIMILAR_60"
 		expr="%com.top_logic.common.webfolder.ui.similar.Icons.SIMILAR_OBJECTS%"
 	/>

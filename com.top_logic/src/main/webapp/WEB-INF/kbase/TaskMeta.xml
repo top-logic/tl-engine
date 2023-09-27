@@ -23,20 +23,6 @@
 </attributes>
 </metaobject>
 
-<metaobject object_type="MOKnowledgeObject" object_name="EMailTask" super_class="Task" >
-<annotations>
-	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
-		<binding application-type="com.top_logic.knowledge.wrap.EMailTask"/>
-	</annotation>
-</annotations>
-<attributes>
-	<mo_attribute att_name="active" 	 att_type="Boolean" mandatory="true"	/>
-	<mo_attribute att_name="users"   	 att_type="String"	db_size="254" mandatory="true" />
-	<mo_attribute att_name="subject" 	 att_type="String"	db_size="254" mandatory="true" />
-	<mo_attribute att_name="message" 	 att_type="String"	db_size="100000" mandatory="true" />
-</attributes>
-</metaobject>
-
 <metaobject object_type="MOKnowledgeObject" object_name="TaskLog" super_class="KnowledgeObject" versioned="false">
 <annotations>
 	<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">

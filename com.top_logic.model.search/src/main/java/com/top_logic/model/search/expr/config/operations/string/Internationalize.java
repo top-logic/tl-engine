@@ -123,16 +123,6 @@ public class Internationalize extends GenericMethod {
 		}
 	}
 
-	private Locale asLocale(Object langArg) {
-		String language;
-		if (langArg instanceof Locale) {
-			language = ((Locale) langArg).getLanguage();
-		} else {
-			language = asString(langArg);
-		}
-		return ResourcesModule.localeFromString(language);
-	}
-
 	@Override
 	public boolean isSideEffectFree() {
 		SearchExpression translateArg = getArguments()[1];
@@ -144,7 +134,8 @@ public class Internationalize extends GenericMethod {
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Internationalize> {
 
-		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+		/** Description of parameters for an {@link Internationalize}. */
+		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.optional("sourceLang")
 			.optional("translate", false)
 			.build();

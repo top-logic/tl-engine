@@ -11,7 +11,6 @@ import java.util.Locale;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.translation.TranslationService;
-import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
@@ -33,7 +32,7 @@ public class Translate extends GenericMethod {
 	 * Special value for the source language to request auto-detection by the
 	 * {@link TranslationService}.
 	 */
-	private static final String AUTO_DETECT = "auto";
+	protected static final String AUTO_DETECT = "auto";
 
 	/**
 	 * Creates a {@link Translate} expression.
@@ -83,16 +82,6 @@ public class Translate extends GenericMethod {
 		return translator.translate(text, sourceLang, targetLang);
 	}
 
-	private Locale asLocale(Object langArg) {
-		String language;
-		if (langArg instanceof Locale) {
-			language = ((Locale) langArg).getLanguage();
-		} else {
-			language = asString(langArg);
-		}
-		return ResourcesModule.localeFromString(language);
-	}
-
 	@Override
 	public boolean isSideEffectFree() {
 		return false;
@@ -103,7 +92,8 @@ public class Translate extends GenericMethod {
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Translate> {
 
-		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+		/** Description of parameters for a {@link Translate}. */
+		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("targetLang")
 			.optional("sourceLang")
 			.build();

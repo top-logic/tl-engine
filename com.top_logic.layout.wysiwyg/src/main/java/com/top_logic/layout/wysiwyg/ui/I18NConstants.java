@@ -30,8 +30,6 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey OPEN_TL_OBJECT_LINK;
 
-	public static ResKey UPDATE_TL_OBJECT_LINK;
-
 	public static ResKey OBJECT_NOT_FOUND;
 
 	public static ResKey WRITE_LINK_ERROR;

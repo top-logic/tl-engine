@@ -34,11 +34,6 @@ public class TestPersonSetup extends ThreadContextSetup {
 	public static final String USER_ID = "test";
 
 	/**
-	 * The role of the person that is created by this setup.
-	 */
-	public static final String USER_ROLE = "user";
-
-	/**
 	 * The password of the person that is created by this setup.
 	 */
 	public static final String USER_PASSWORD = "test-password";
@@ -59,7 +54,6 @@ public class TestPersonSetup extends ThreadContextSetup {
 			_testPerson = PersonManager.getManager().createPerson(USER_ID, "dbSecurity", "dbSecurity", Boolean.FALSE);
 			Person.getUser(_testPerson).setAttributeValue(PersonAttributes.PASSWORD,
 				SignatureService.getInstance().sign(USER_PASSWORD));
-			Person.getUser(_testPerson).setAttributeValue(PersonAttributes.USER_ROLE, USER_ROLE);
 			tx.commit();
 		}
 	}
@@ -77,7 +71,6 @@ public class TestPersonSetup extends ThreadContextSetup {
 	 * The {@link Person} that is created by this setup.
 	 * 
 	 * @see #USER_ID
-	 * @see #USER_ROLE
 	 * @see #USER_PASSWORD
 	 */
 	public static Person getTestPerson() {

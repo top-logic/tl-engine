@@ -147,19 +147,6 @@ public class DOUser implements UserInterface, PersonAttributes {
     }
 
     /**
-     * the external email of this user
-     */
-    @Override
-	public String getExternalMail () {
-        try {
-            return(String)(internalUser.getAttributeValue (EXTERNAL_MAIL));                
-        }catch (NoSuchAttributeException nae) {
-            Logger.error ("Tried to retrieve EXTERNAL_MAIL from dataobject " + internalUser + ", which is no User or has no such attribute", this);
-            return "";
-        }
-    }
-
-    /**
      * the customer name of this user
      */
     @Override

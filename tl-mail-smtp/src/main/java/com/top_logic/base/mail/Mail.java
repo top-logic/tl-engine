@@ -426,9 +426,6 @@ public class Mail {
             //anAddress = theUser.getUserName();
             theAddress = theUser.getInternalMail();
             if (theAddress == null || theAddress.length() < 2){
-                theAddress = theUser.getExternalMail();
-            }
-            if (theAddress == null || theAddress.length() < 2){
                 theAddress = theUser.getUserName();
             }
             

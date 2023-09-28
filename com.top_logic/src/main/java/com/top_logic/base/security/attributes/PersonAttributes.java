@@ -31,9 +31,6 @@ public interface PersonAttributes extends LDAPAttributes {
     /** The attribute "mailname". */
     public static final String MAIL_NAME     = "mail";
 
-    /** The attribute "external mailname". */
-    public static final String EXTERNAL_MAIL = "otherMailbox";
-
     /** The attribute "customer name". */
     public static final String CUSTOMER      = "customerName";
 
@@ -78,7 +75,7 @@ public interface PersonAttributes extends LDAPAttributes {
             USER_NAME, USER_ROLE,       GIVEN_NAME,	  INITIALS, DESCRIPTION,
             SUR_NAME,  TITLE,           CUSTOMER,     INTERNAL_NR,
             MOBILE_NR, EXTERNAL_NR,     PRIVATE_NR,
-            MAIL_NAME, EXTERNAL_MAIL,   OBJECT_CLASS,
+		MAIL_NAME, OBJECT_CLASS,
 		ORG_UNIT,
 		LOCALE, PASSWORD, DATA_ACCESS_DEVICE_ID, RESTRICTED_USER
     };

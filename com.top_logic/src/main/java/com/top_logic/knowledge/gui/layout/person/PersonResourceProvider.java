@@ -107,7 +107,7 @@ public class PersonResourceProvider extends WrapperResourceProvider
 	protected ResKey getTooltipNonNull(Object object) {
 		Person account = (Person) object;
 		String label = this.getLabel(account);
-		String mail = account.getExternalMail();
+		String mail = account.getInternalMail();
 		String phone = account.getInternalNumber();
 
 		return I18NConstants.ACCOUNT_TOOLTIP__LABEL_MAIL_PHONE.fill(

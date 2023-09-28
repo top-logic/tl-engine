@@ -35,10 +35,10 @@ public interface UserInterface extends DataObject {
      */
     public String getLastName ();
     
-     /**
-     * the internal email of this user
-     */
-    public String getInternalMail ();
+	/**
+	 * The e-mail of the user that the system may send mails to, if the user must be notified.
+	 */
+	public String getMail();
 
     /**
      * the customer name of this user

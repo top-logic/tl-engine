@@ -33,6 +33,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -110,6 +111,7 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 		@InstanceFormat
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@AcceptedTypes({ "text/xml", "application/xml", "application/vnd.xmi+xml" })
+		@Mandatory
 		BinaryData getModelDefinition();
 
 		/**

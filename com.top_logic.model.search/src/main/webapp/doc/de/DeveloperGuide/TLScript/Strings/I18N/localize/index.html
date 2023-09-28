@@ -1,0 +1,41 @@
+<h2>Syntax</h2>
+<pre><code>$input.localize(lang: $language)</code></pre>
+<p>Wertet einen internationalisierten Text in einer gegeben Sprache aus.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>input</td>
+   <td>Internationalisierter Text</td>
+   <td>Der internationalisierte Text dessen Lokalisierung bestimmt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>language</td>
+   <td>Zeichenkette</td>
+   <td>Der Code der Sprache zu der die Lokalisierung vorgenommen werden.</td>
+   <td>nein</td>
+   <td>Die Sprache des angemeldeten Nutzers oder die Default-Sprache der Anwendung.</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><strong>Typ:</strong> Text</p>
+<p>Der Wert den ein Nutzer mit der ausgewählten Sprache sehen wird.</p>
+<h2>Beispiele</h2>
+<pre><code>{
+  resKey = {"de": "Hallo", "en": "Hello"}.internationalize();
+
+  $resKey.localize("en"); // Hello
+  $resKey.localize("de"); // Hallo
+}</code></pre>

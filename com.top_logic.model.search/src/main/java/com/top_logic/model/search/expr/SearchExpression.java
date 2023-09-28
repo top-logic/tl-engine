@@ -12,6 +12,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -19,6 +20,7 @@ import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.model.TLObject;
@@ -584,16 +586,18 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * @param value
 	 *        The value to convert to {@link ResKey} instance; either a {@link ResKey},
 	 *        <code>null</code>, or a {@link String}.
+	 * @param expression
+	 *        The expression representing the given value.
 	 * @return A {@link ResKey} for the given value.
 	 */
-	public ResKey asResKeyNotNull(Object value) {
+	public static ResKey asResKeyNotNull(Object value, SearchExpression expression) {
 		if (value instanceof ResKey) {
 			return (ResKey) value;
 		}
 		if (value instanceof String || value == null) {
 			return ResKey.text((String) value);
 		}
-		throw new TopLogicException(I18NConstants.ERROR_NOT_A_RES_KEY__VALUE__EXPR.fill(value, this));
+		throw new TopLogicException(I18NConstants.ERROR_NOT_A_RES_KEY__VALUE__EXPR.fill(value, expression));
 	}
 
 	/**
@@ -652,6 +656,23 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 */
 	public Object getId() {
 		return getClass();
+	}
+
+	/**
+	 * Converts the given value to a {@link Locale}.
+	 * 
+	 * @param lang
+	 *        The value to convert to a locale: Either a {@link Locale} (then only its
+	 *        {@link Locale#getLanguage() language} is used) or a {@link #asString(Object) string}.
+	 */
+	protected Locale asLocale(Object lang) {
+		String language;
+		if (lang instanceof Locale) {
+			language = ((Locale) lang).getLanguage();
+		} else {
+			language = asString(lang);
+		}
+		return ResourcesModule.localeFromString(language);
 	}
 
 }

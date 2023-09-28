@@ -32,6 +32,7 @@ import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.model.form.definition.NamedPartNames;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.AllTypeAttributes;
@@ -144,7 +145,7 @@ public class TableContentProvider extends AbstractPreviewContent<TableContentPro
 	private TableConfigurationProvider disableTableCustomizations(Object model) {
 		ResKey titleKey;
 		if (_title != null) {
-			titleKey = _title.getSearch().asResKeyNotNull(_title.execute(model));
+			titleKey = SearchExpression.asResKeyNotNull(_title.execute(model), _title.getSearch());
 		} else {
 			titleKey = null;
 		}

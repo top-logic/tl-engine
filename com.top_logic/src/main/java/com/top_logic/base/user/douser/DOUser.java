@@ -175,48 +175,6 @@ public class DOUser implements UserInterface, PersonAttributes {
     }
 
     /**
-     * the external number of this user
-     */
-    @Override
-	public String getExternalNumber () {
-
-        try {
-            return(String)(internalUser.getAttributeValue (EXTERNAL_NR));                
-        }catch (NoSuchAttributeException nae) {
-            Logger.error ("Tried to retrieve Users EXTERNAL_NUMBER from dataobject " + internalUser + ", which is no User or has no such attribute", this);
-            return "";
-        }
-    }
-
-    /**
-     * the mobile number of this user
-     */
-    @Override
-	public String getMobileNumber () {
-
-        try {
-            return(String)(internalUser.getAttributeValue (MOBILE_NR));                
-        }catch (NoSuchAttributeException nae) {
-            Logger.error ("Tried to retrieve Users MOBILE_NUMBER from dataobject " + internalUser + ", which is no User or has no such attribute", this);
-            return "";
-        }
-    }
-
-    /**
-     * the private number of this user
-    */
-    @Override
-	public String getPrivateNumber () {
-        try {
-            return(String)(internalUser.getAttributeValue (PRIVATE_NR));                
-        }
-        catch (NoSuchAttributeException nae) {
-            Logger.error ("Tried to retrieve Users PRIVATE_NUMBER from dataobject " + internalUser + ", which is no User or has no such attribute", this);
-            return "";
-        }
-    }
-
-    /**
 	 * TODO #2829: Delete TL 6 deprecation.
 	 * 
 	 * @deprecated Use {@link #tTable()} instead

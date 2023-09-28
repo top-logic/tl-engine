@@ -34,9 +34,6 @@ public interface PersonAttributes extends LDAPAttributes {
     /** The attribute "title". */
     public static final String TITLE         = "personalTitle";
 
-    /** The attribute "role". */
-    public static final String USER_ROLE     = "userrole";
-
     /** The attribute "internal number". */
     public static final String INTERNAL_NR   = "telephoneNumber";
 
@@ -66,7 +63,7 @@ public interface PersonAttributes extends LDAPAttributes {
     
 	/** List of all DataObject attributes provided in this interface. */
     public static final String [] PERSON_INFO = {
-            USER_NAME, USER_ROLE,       GIVEN_NAME,	  INITIALS, DESCRIPTION,
+		USER_NAME, GIVEN_NAME, INITIALS, DESCRIPTION,
 		SUR_NAME, TITLE, INTERNAL_NR,
             MOBILE_NR, EXTERNAL_NR,     PRIVATE_NR,
 		MAIL_NAME, OBJECT_CLASS,

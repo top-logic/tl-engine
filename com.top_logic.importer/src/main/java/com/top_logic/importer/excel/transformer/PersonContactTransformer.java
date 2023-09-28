@@ -131,7 +131,7 @@ public class PersonContactTransformer implements Transformer<PersonContact> {
 	protected PersonContact getPersonContactByMail(ExcelContext aContext, String columnName, String aMail) {
 		for (Object theContact : ContactFactory.getInstance().getAllContactsUnsorted(ContactFactory.PERSON_TYPE)) {
 			PersonContact thePerson = (PersonContact) theContact;
-			String        theMail   = thePerson.getMail();
+			String        theMail   = thePerson.getEMail();
 
 			if (!StringServices.isEmpty(theMail) && aMail.equals(theMail)) {
 				return thePerson;

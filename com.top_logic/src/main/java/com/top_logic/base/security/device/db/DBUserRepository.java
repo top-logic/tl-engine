@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.attributes.PersonAttributes;
+import com.top_logic.base.security.password.PasswordManager;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.base.security.password.hashing.VerificationResult;
 import com.top_logic.base.security.util.SignatureService;
@@ -50,7 +50,7 @@ public class DBUserRepository {
 
 	private final MOStructureImpl _dbUserMO;
 	/**
-	 * Column name of the {@link PersonAttributes#USER_NAME} attribute.
+	 * Column name of the {@link UserInterface#USER_NAME} attribute.
 	 */
 	public static final String DB_USER_NAME = "CN";
 
@@ -60,7 +60,7 @@ public class DBUserRepository {
 	public static final String NO_PASSWORD = "*";
 	
 	/**
-	 * The database name of the password identifier {@value PersonAttributes#PASSWORD}.
+	 * The column name of the password hash.
 	 */
 	static String DB_PASSWORD_IDENTIFIER = "USERPASSWORD";
 
@@ -104,7 +104,8 @@ public class DBUserRepository {
 			 * made persistent until the next KB commit. */
 			try (Transaction tx = kb.beginTransaction()) {
 				Person person = login.getPerson();
-				Person.getUser(person).setAttributeValue(PersonAttributes.PASSWORD, verificationResult.newHash());
+
+				PasswordManager.getInstance().setPasswordHash(person, verificationResult.newHash());
 				person.updateUserData();
 				tx.commit();
 			}
@@ -182,7 +183,7 @@ public class DBUserRepository {
 	 */
 	public List<DataObject> searchUsers(ConnectionPool connectionPool, DataObject anUserDO) throws SQLException,
 			DataObjectException {
-        String cn = (String) anUserDO.getAttributeValue(PersonAttributes.USER_NAME);
+        String cn = (String) anUserDO.getAttributeValue(UserInterface.USER_NAME);
         return searchUsers(connectionPool, cn);
     }
 
@@ -440,7 +441,7 @@ public class DBUserRepository {
 		sql.append(" WHERE ");
 		sql.append(sqlDialect.columnRef(DBUserRepository.DB_USER_NAME));
 		sql.append("='");
-		sql.append(userDO.getAttributeValue(PersonAttributes.USER_NAME));
+		sql.append(userDO.getAttributeValue(UserInterface.USER_NAME));
 		sql.append('\'');
 
 		try (PreparedStatement stmt = connection.prepareStatement(sql.toString());) {
@@ -459,7 +460,7 @@ public class DBUserRepository {
      * Will fall back to  <code>searchUser(String)</code>
      */
     public boolean deleteUser(PooledConnection statementCache, DataObject anUserDO) throws SQLException, DataObjectException {
-        String cn = (String) anUserDO.getAttributeValue(PersonAttributes.USER_NAME);
+        String cn = (String) anUserDO.getAttributeValue(UserInterface.USER_NAME);
         return deleteUser(statementCache, cn);
     }
 

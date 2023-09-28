@@ -97,7 +97,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
 	@Override
 	public List<String> getExcludeList() {
 		List<String> excludeList = super.getExcludeList();
-		excludeList.add(PersonContact.ATT_FULLNAME);
+		excludeList.add(PersonContact.FULLNAME);
 		return excludeList;
 	}
 
@@ -123,13 +123,13 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
 				if (thePerson != null && thePerson.tValid()) {
 					TLClass theMetaElement = theContact.tType();
     
-                    disableAttribute(theContext, PersonContact.ATT_FIRSTNAME    , theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.FIRST_NAME    , theContact, theMetaElement);
                     disableAttribute(theContext, PersonContact.NAME_ATTRIBUTE   , theContact, theMetaElement);
-                    disableAttribute(theContext, PersonContact.ATT_MAIL         , theContact, theMetaElement);
-                    disableAttribute(theContext, PersonContact.ATT_TITLE        , theContact, theMetaElement);
-                    disableAttribute(theContext, PersonContact.ATT_PHONE_MOBILE , theContact, theMetaElement);
-                    disableAttribute(theContext, PersonContact.ATT_PHONE_OFFICE , theContact, theMetaElement);
-                    disableAttribute(theContext, PersonContact.ATT_PHONE_PRIVATE, theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.EMAIL         , theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.TITLE        , theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.PHONE_MOBILE , theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.PHONE , theContact, theMetaElement);
+                    disableAttribute(theContext, PersonContact.PHONE_PRIVATE, theContact, theMetaElement);
                     
                     Group theRepresentativeGroup = thePerson.getRepresentativeGroup();
                     if (theRepresentativeGroup != null) {
@@ -142,7 +142,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
                         };
 
                         SelectField theRepresentativeField = FormFactory.newSelectField(PARAM_REPRESENTATIVES, thePersons, true, false);
-						theRepresentativeField.setOptionComparator(new PersonComparator());
+						theRepresentativeField.setOptionComparator(PersonComparator.getInstance());
                     	theRepresentativeField.setAsSelection(new ArrayList(theRepresentativeGroup.getMembers()));
                     	theContext.addMember(theRepresentativeField);
                     }
@@ -196,7 +196,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
         if (aModel instanceof PersonContact) {
 			try {
 				TLClass   theME = MetaElementFactory.getInstance().getGlobalMetaElement(ContactFactory.STRUCTURE_NAME, this.getMetaElementName());
-				TLStructuredTypePart theMA = MetaElementUtil.getMetaAttribute(theME, PersonContact.ATT_BOSS);
+				TLStructuredTypePart theMA = MetaElementUtil.getMetaAttribute(theME, PersonContact.BOSS);
 
 				theResult.addAll(AttributeOperations.getReferers((PersonContact) aModel, theMA));
 			}

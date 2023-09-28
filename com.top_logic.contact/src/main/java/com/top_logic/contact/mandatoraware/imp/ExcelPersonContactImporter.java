@@ -234,12 +234,12 @@ public class ExcelPersonContactImporter extends POIExcelImporter {
             logInfo("Created new PersonContact for " + message, null);
         } 
         else { // Update ?
-            changed = !Utils.equals(title,       thePerson.getValue(COSPersonContact.ATT_TITLE))
-                   || !Utils.equals(phonecell,   thePerson.getValue(COSPersonContact.ATT_PHONE_MOBILE))
-                   || !Utils.equals(phonepriv,   thePerson.getValue(COSPersonContact.ATT_PHONE_PRIVATE))
-                   || !Utils.equals(phonecomp,   thePerson.getValue(COSPersonContact.ATT_PHONE_OFFICE))
-                   || !Utils.equals(email,       thePerson.getValue(COSPersonContact.ATT_MAIL))
-                   || !Utils.equals(position,    thePerson.getValue(COSPersonContact.ATT_POSITION))
+            changed = !Utils.equals(title,       thePerson.getValue(COSPersonContact.TITLE))
+                   || !Utils.equals(phonecell,   thePerson.getValue(COSPersonContact.PHONE_MOBILE))
+                   || !Utils.equals(phonepriv,   thePerson.getValue(COSPersonContact.PHONE_PRIVATE))
+                   || !Utils.equals(phonecomp,   thePerson.getValue(COSPersonContact.PHONE))
+                   || !Utils.equals(email,       thePerson.getValue(COSPersonContact.EMAIL))
+                   || !Utils.equals(position,    thePerson.getValue(COSPersonContact.POSITION))
                    //TODO KBU SEC/CHECK REIMPLEMENT
 //                   || maybeownerB != null && !Utils.equals(maybeownerB, thePerson.getValue(COSPersonContact.ATT_MAYBEOWNER))
                    || !Utils.equals(fax,         thePerson.getValue(COSPersonContact.ATT_FAX))
@@ -260,12 +260,12 @@ public class ExcelPersonContactImporter extends POIExcelImporter {
         }
         
         if (changed) { // includes created ...
-            thePerson.setValue(COSPersonContact.ATT_TITLE,          title);
-            thePerson.setValue(COSPersonContact.ATT_PHONE_MOBILE,   phonecell);
-            thePerson.setValue(COSPersonContact.ATT_PHONE_PRIVATE,  phonepriv);
-            thePerson.setValue(COSPersonContact.ATT_PHONE_OFFICE,   phonecomp);
-            thePerson.setValue(COSPersonContact.ATT_MAIL,           email);
-            thePerson.setValue(COSPersonContact.ATT_POSITION,       position);
+            thePerson.setValue(COSPersonContact.TITLE,          title);
+            thePerson.setValue(COSPersonContact.PHONE_MOBILE,   phonecell);
+            thePerson.setValue(COSPersonContact.PHONE_PRIVATE,  phonepriv);
+            thePerson.setValue(COSPersonContact.PHONE,   phonecomp);
+            thePerson.setValue(COSPersonContact.EMAIL,           email);
+            thePerson.setValue(COSPersonContact.POSITION,       position);
             //TODO KBU SEC/CHECK REIMPLEMENT
 //            if (maybeownerB != null) {
 //            	thePerson.setValue(COSPersonContact.ATT_MAYBEOWNER, maybeownerB);

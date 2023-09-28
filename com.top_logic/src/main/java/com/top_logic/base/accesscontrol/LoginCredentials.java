@@ -158,7 +158,7 @@ public class LoginCredentials implements AutoCloseable {
 			String message = "Person '" + person + "' is not alive!";
 			throw new LoginDeniedException(message);
 		}
-		if (Person.getUser(person) == null) {
+		if (Person.userOrNull(person) == null) {
 			String message = "No User for the person with login name '" + person.getName() + "' found!";
 			throw new LoginDeniedException(message);
 		}
@@ -174,7 +174,7 @@ public class LoginCredentials implements AutoCloseable {
 			String message = "Person with login name '" + loginName + "' is not alive!";
 			throw new LoginDeniedException(message);
 		}
-		if (Person.getUser(person) == null) {
+		if (Person.userOrNull(person) == null) {
 			String message = "No User for the person with login name '" + loginName + "' found!";
 			throw new LoginDeniedException(message);
 		}

@@ -31,21 +31,19 @@ extends="com.top_logic.util.TopLogicJspBase" contentType="text/html; charset=UTF
 	List allUser = mgr.getAllAlivePersons();
 	%>
 	
-	<%!
-	private void writePersonList(PageContext pageContext, List persons) throws Exception {
+	<%!private void writePersonList(PageContext pageContext, List persons) throws Exception {
 		DisplayContext context = DefaultDisplayContext.getDisplayContext(pageContext);
 		TagWriter out = MainLayout.getTagWriter(pageContext);
 		for (int index = 0, size = persons.size(); index < size; index++) {
 			Person current = (Person) persons.get(index);
 			out.beginTag("li");
 			GotoHandler.writeGotoStart(context, out, current);
-			out.writeText(current.getLastName() + ", " + current.getFirstName() + " (" + Person.getUser(current).getUserName() + ")");
+			out.writeText(current.getLastName() + ", " + current.getFirstName() + " (" + Person.userOrNull(current).getUserName() + ")");
 			GotoHandler.writeGotoEnd(out, current);
 			out.endTag("li");
 		}
 		out.flushBuffer();
-	}
-	%>
+	}%>
 	<layout:body>
 		<basic:access>
 			<h1>

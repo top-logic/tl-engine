@@ -6,17 +6,11 @@
 package com.top_logic.base.user.douser;
 
 
-import com.top_logic.base.security.attributes.PersonAttributes;
+import com.top_logic.base.security.attributes.LDAPAttributes;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.TLID;
 import com.top_logic.dob.DataObject;
-import com.top_logic.dob.DataObjectException;
-import com.top_logic.dob.MOAttribute;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
-import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.dob.meta.MOReference;
 
 /**
  * This class is an implementation of Userinterface and represents a 
@@ -31,7 +25,7 @@ import com.top_logic.dob.meta.MOReference;
  * 
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
-public class DOUser implements UserInterface, PersonAttributes {
+public class DOUser implements UserInterface, LDAPAttributes {
 
     /** The internal dataobject. */
     protected DataObject internalUser;
@@ -98,7 +92,7 @@ public class DOUser implements UserInterface, PersonAttributes {
     @Override
 	public String getUserName () {
         try {
-            return (String) internalUser.getAttributeValue (USER_NAME);
+            return (String) internalUser.getAttributeValue (UserInterface.USER_NAME);
         }
         catch (NoSuchAttributeException nae) {
             Logger.error ("Tried to retrieve Users USERNAME from dataobject " + internalUser + ", which is no User or has no such attribute", this);
@@ -112,7 +106,7 @@ public class DOUser implements UserInterface, PersonAttributes {
     @Override
 	public String getFirstName () {
         try {
-            return(String)(internalUser.getAttributeValue (GIVEN_NAME));                
+            return(String)(internalUser.getAttributeValue (UserInterface.NAME));                
         }
         catch (NoSuchAttributeException nae) {
             Logger.error ("Tried to retrieve Users GIVENNAME from dataobject " + internalUser + ", which is no User or has no such attribute", this);
@@ -124,9 +118,9 @@ public class DOUser implements UserInterface, PersonAttributes {
     * the lastname of this user
     */
     @Override
-	public String getLastName () {
+	public String getName () {
         try {
-            return(String)(internalUser.getAttributeValue (SUR_NAME));                
+            return(String)(internalUser.getAttributeValue (UserInterface.FIRST_NAME));                
         }catch (NoSuchAttributeException nae) {
             Logger.error ("Tried to retrieve Users SUR_NAME from dataobject " + internalUser + ", which is no User or has no such attribute", this);
             return "";
@@ -137,9 +131,9 @@ public class DOUser implements UserInterface, PersonAttributes {
      * the internal email of this user
      */
     @Override
-	public String getMail () {
+	public String getEMail () {
         try {
-            return(String)(internalUser.getAttributeValue (MAIL_NAME));                
+            return(String)(internalUser.getAttributeValue (UserInterface.EMAIL));                
         }catch (NoSuchAttributeException nae) {
             Logger.error ("Tried to retrieve Users MAIL_NAME from dataobject " + internalUser + ", which is no User or has no such attribute", this);
             return "";
@@ -153,7 +147,7 @@ public class DOUser implements UserInterface, PersonAttributes {
 	public String getTitle () {
 
         try {
-            return(String)(internalUser.getAttributeValue (TITLE));                
+            return(String)(internalUser.getAttributeValue (UserInterface.TITLE));                
         }catch (NoSuchAttributeException nae) {
             Logger.error ("Tried to retrieve Users TITLE from dataobject " + internalUser + ", which is no User or has no such attribute", this);
             return "";
@@ -164,97 +158,39 @@ public class DOUser implements UserInterface, PersonAttributes {
      * the internal number of this user
      */
     @Override
-	public String getInternalNumber () {
+	public String getPhone () {
 
         try {
-            return(String)(internalUser.getAttributeValue (INTERNAL_NR));                
+            return(String)(internalUser.getAttributeValue (UserInterface.PHONE));                
         }catch (NoSuchAttributeException nae) {
             Logger.error ("Tried to retrieve Users INTERNAL_NUMBER from dataobject " + internalUser + ", which is no User or has no such attribute", this);
             return "";
         }
     }
 
-    /**
-	 * TODO #2829: Delete TL 6 deprecation.
-	 * 
-	 * @deprecated Use {@link #tTable()} instead
-	 */
 	@Override
-	@Deprecated
-	public final MetaObject getMetaObject() {
-		return tTable();
-	}
-
-	/**
-     * available. All calls to this methods will be mapped
-     * to the encapsuled DataObject. Please refer the Documentation
-     * of DataObject for further information about these methods.
-     */
-    @Override
-	public MetaObject tTable () {
-        return this.internalUser.tTable ();
-    }
-
-    @Override
-	public boolean isInstanceOf (MetaObject aMetaObject) {
-        return this.internalUser.isInstanceOf (aMetaObject);
-    }
-
-    /** Forward to the internalUser */
-    @Override
-	public boolean isInstanceOf (String aMetaObjectName) {
-        return this.internalUser.isInstanceOf (aMetaObjectName);
-    }
-
-    @Override
-	public TLID getIdentifier () {
-        return this.internalUser.getIdentifier ();
-    }
-
-    @Override
-	public void setIdentifier (TLID anIdentifier) {
-        this.internalUser.setIdentifier (anIdentifier);
-    }
-
-    @Override
-	public Iterable<? extends MOAttribute> getAttributes () {
-        return this.internalUser.getAttributes ();
-    }
-
-    @Override
-	public String [] getAttributeNames () {
-        return this.internalUser.getAttributeNames ();
-    }
-
-	@Override
-	public boolean hasAttribute(String attributeName) {
-		return internalUser.hasAttribute(attributeName);
-	}
-
-    @Override
-	public Object getAttributeValue (String attrName)
-    throws NoSuchAttributeException {
-        return this.internalUser.getAttributeValue (attrName);
-    }
-
-    @Override
-	public Object setAttributeValue (String attrName, Object value) throws DataObjectException {
-    	return this.internalUser.setAttributeValue(attrName,value);                
-    }
-
-	@Override
-	public Object getValue(MOAttribute attribute) {
-		return internalUser.getValue(attribute);
+	public void setFirstName(String value) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public ObjectKey getReferencedKey(MOReference reference) {
-		return internalUser.getReferencedKey(reference);
+	public void setName(String value) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Object setValue(MOAttribute attribute, Object newValue) throws DataObjectException {
-		return internalUser.setValue(attribute, newValue);
+	public void setEMail(String value) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setTitle(String value) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setPhone(String value) {
+		throw new UnsupportedOperationException();
 	}
 
 }

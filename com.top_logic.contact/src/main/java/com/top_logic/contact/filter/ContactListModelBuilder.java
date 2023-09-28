@@ -64,7 +64,7 @@ public class ContactListModelBuilder extends AbstractGlobalSearchModelBuilder im
     }
     
 	private static final String[] PERSON_CONTACT_COLUMNS = new String[] { COSPersonContact.NAME_ATTRIBUTE,
-		COSPersonContact.ATT_PHONE_OFFICE, COSPersonContact.ATT_MAIL, COSPersonContact.ATTRIBUTE_MANDATOR };
+		COSPersonContact.PHONE, COSPersonContact.EMAIL, COSPersonContact.ATTRIBUTE_MANDATOR };
 
 	private static final String[] COMPANY_CONTACT_COLUMNS = new String[] { COSCompanyContact.NAME_ATTRIBUTE,
 		COSCompanyContact.ATTRIBUTE_SAP_NR, COSCompanyContact.ATTRIBUTE_FKEY, COSCompanyContact.ATTRIBUTE_MANDATOR };

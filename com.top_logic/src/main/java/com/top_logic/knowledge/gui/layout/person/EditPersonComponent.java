@@ -22,11 +22,11 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import com.top_logic.base.bus.UserEvent;
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.db.DBUserRepository;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Configuration;
 import com.top_logic.basic.Configuration.IterableConfiguration;
 import com.top_logic.basic.Logger;
@@ -279,25 +279,25 @@ public class EditPersonComponent extends EditComponent {
 		if (thePerson == null) {
             //this is for create new user, null-selection in list is not expected
 
-			int theSize = getSizeForMOAttribute(_userMO, PersonAttributes.USER_NAME, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.USER_NAME, true, false, new StringLengthConstraint(1, theSize)));
+			int theSize = getSizeForMOAttribute(_userMO, UserInterface.USER_NAME, false);
+            formContext.addMember(FormFactory.newStringField(UserInterface.USER_NAME, true, false, new StringLengthConstraint(1, theSize)));
 
-			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.GIVEN_NAME, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.GIVEN_NAME, false, false, new StringLengthConstraint(0, theSize)));
+			theSize = getSizeForMOAttribute(_userMO, UserInterface.NAME, false);
+            formContext.addMember(FormFactory.newStringField(UserInterface.NAME, false, false, new StringLengthConstraint(0, theSize)));
 
-			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.TITLE, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.TITLE, false, false, new StringLengthConstraint(0, theSize)));
+			theSize = getSizeForMOAttribute(_userMO, UserInterface.TITLE, false);
+            formContext.addMember(FormFactory.newStringField(UserInterface.TITLE, false, false, new StringLengthConstraint(0, theSize)));
 
-			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.SUR_NAME, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.SUR_NAME, false, false, new StringLengthConstraint(1, theSize)));
+			theSize = getSizeForMOAttribute(_userMO, UserInterface.FIRST_NAME, false);
+            formContext.addMember(FormFactory.newStringField(UserInterface.FIRST_NAME, false, false, new StringLengthConstraint(1, theSize)));
 
-			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.INTERNAL_NR, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.INTERNAL_NR, false, false, new StringLengthConstraint(0, theSize)));
+			theSize = getSizeForMOAttribute(_userMO, UserInterface.PHONE, false);
+            formContext.addMember(FormFactory.newStringField(UserInterface.PHONE, false, false, new StringLengthConstraint(0, theSize)));
 
-			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.MAIL_NAME, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.MAIL_NAME, false, false, new StringLengthConstraint(0, theSize)));
+			theSize = getSizeForMOAttribute(_userMO, UserInterface.EMAIL, false);
+            formContext.addMember(FormFactory.newStringField(UserInterface.EMAIL, false, false, new StringLengthConstraint(0, theSize)));
 
-			restrictedUser = FormFactory.newBooleanField(PersonAttributes.RESTRICTED_USER, Boolean.FALSE, false);
+			restrictedUser = FormFactory.newBooleanField(Person.RESTRICTED_USER, Boolean.FALSE, false);
 			formContext.addMember(restrictedUser);
         }
         else { // model != null
@@ -316,7 +316,7 @@ public class EditPersonComponent extends EditComponent {
 				if (!StringServices.isEmpty(dataAccessDeviceID) && !allDataDevices.contains(dataAccessDeviceID)) {
 					options.add(0, dataAccessDeviceID);
 				}
-				SelectField dataDevicesField = FormFactory.newSelectField(PersonAttributes.DATA_ACCESS_DEVICE_ID, options, false, true, false, constraintSelectOne);
+				SelectField dataDevicesField = FormFactory.newSelectField(Person.DATA_ACCESS_DEVICE_ID, options, false, true, false, constraintSelectOne);
 				if (!StringServices.isEmpty(dataAccessDeviceID))
 					dataDevicesField.initSingleSelection(dataAccessDeviceID);
 
@@ -325,7 +325,7 @@ public class EditPersonComponent extends EditComponent {
 				if (!StringServices.isEmpty(authenticationDeviceID) && !allAuthDevices.contains(authenticationDeviceID)) {
 					options.add(0, authenticationDeviceID);
 				}
-				SelectField authDevicesField = FormFactory.newSelectField(PersonAttributes.AUTHENTICATION_DEVICE_ID, options, false, false, false, null);
+				SelectField authDevicesField = FormFactory.newSelectField(Person.AUTHENTICATION_DEVICE_ID, options, false, false, false, null);
 				if (!StringServices.isEmpty(authenticationDeviceID))
 					authDevicesField.initSingleSelection(authenticationDeviceID);
 
@@ -337,34 +337,34 @@ public class EditPersonComponent extends EditComponent {
 					formContext.addMember(givenNameField(thePerson, deviceReadonly));
 					formContext.addMember(titleField(thePerson, deviceReadonly));
 					formContext.addMember(surnameField(thePerson, deviceReadonly));
-					formContext.addMember(newPersonField(PersonAttributes.INTERNAL_NR, thePerson.getInternalNumber(),
+					formContext.addMember(newPersonField(UserInterface.PHONE, thePerson.getInternalNumber(),
 						deviceReadonly));
-					formContext.addMember(newPersonField(PersonAttributes.MAIL_NAME, thePerson.getInternalMail(),
+					formContext.addMember(newPersonField(UserInterface.EMAIL, thePerson.getInternalMail(),
 						deviceReadonly));
                 }
                 else {
-					int givenNameSize = getSizeForMOAttribute(_userMO, PersonAttributes.GIVEN_NAME, deviceReadonly);
+					int givenNameSize = getSizeForMOAttribute(_userMO, UserInterface.NAME, deviceReadonly);
 					StringField givenNameField =
-						newSizedFormConstraint(PersonAttributes.GIVEN_NAME, !allowedToEdit || deviceReadonly, 0,
+						newSizedFormConstraint(UserInterface.NAME, !allowedToEdit || deviceReadonly, 0,
 							givenNameSize, thePerson.getFirstName());
 					givenNameField.setMandatory(true);
 					formContext.addMember(givenNameField);
-					int tileSize = getSizeForMOAttribute(_userMO, PersonAttributes.TITLE, deviceReadonly);
-					formContext.addMember(newSizedFormConstraint(PersonAttributes.TITLE,
+					int tileSize = getSizeForMOAttribute(_userMO, UserInterface.TITLE, deviceReadonly);
+					formContext.addMember(newSizedFormConstraint(UserInterface.TITLE,
 						!allowedToEdit || deviceReadonly, 0, tileSize, thePerson.getTitle()));
 					StringField surNameField =
-						newSizedFormConstraint(PersonAttributes.SUR_NAME,
+						newSizedFormConstraint(UserInterface.FIRST_NAME,
 							!allowedToEdit || deviceReadonly, 1, getSizeForMOAttribute(_userMO,
-								PersonAttributes.SUR_NAME, deviceReadonly),
+								UserInterface.FIRST_NAME, deviceReadonly),
 							thePerson
 								.getLastName());
 					surNameField.setMandatory(true);
 					formContext.addMember(surNameField);
-					formContext.addMember(newSizedFormConstraint(PersonAttributes.INTERNAL_NR, deviceReadonly, 0,
-						getSizeForMOAttribute(_userMO, PersonAttributes.INTERNAL_NR, deviceReadonly),
+					formContext.addMember(newSizedFormConstraint(UserInterface.PHONE, deviceReadonly, 0,
+						getSizeForMOAttribute(_userMO, UserInterface.PHONE, deviceReadonly),
 						thePerson.getInternalNumber()));
-					formContext.addMember(newSizedFormConstraint(PersonAttributes.MAIL_NAME, deviceReadonly, 0,
-						getSizeForMOAttribute(_userMO, PersonAttributes.MAIL_NAME, deviceReadonly),
+					formContext.addMember(newSizedFormConstraint(UserInterface.EMAIL, deviceReadonly, 0,
+						getSizeForMOAttribute(_userMO, UserInterface.EMAIL, deviceReadonly),
 						thePerson.getInternalMail()));
                 }
                 formContext.addMember(dataDevicesField);
@@ -466,7 +466,7 @@ public class EditPersonComponent extends EditComponent {
 			!hasDeleteAccess(person) || person.equals(PersonManager.getManager().getCurrentPerson())
 				|| person.equals(PersonManager.getManager().getRoot());
 		BooleanField restrictedUserField =
-			FormFactory.newBooleanField(PersonAttributes.RESTRICTED_USER, isRestrictedUser, restrictedFieldImmutable);
+			FormFactory.newBooleanField(Person.RESTRICTED_USER, isRestrictedUser, restrictedFieldImmutable);
 		addMaxFullUserCheck(restrictedUserField);
 		return restrictedUserField;
 	}
@@ -476,7 +476,7 @@ public class EditPersonComponent extends EditComponent {
 			@Override
 			public Bubble handleChangeStateChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
 				FormField field = (FormField) sender;
-				String userName = (String) field.getParent().getField(PersonAttributes.USER_NAME).getValue();
+				String userName = (String) field.getParent().getField(UserInterface.USER_NAME).getValue();
 				Boolean restrictedUser = PersonManager.getManager().getPersonByName(userName).isRestrictedUser();
 				if (restrictedUser.equals(field.getValue())) {
 					field.removeConstraint(InfoUserConstraint.INSTANCE);
@@ -503,28 +503,28 @@ public class EditPersonComponent extends EditComponent {
 	}
 
 	private StringField surnameField(Person person, boolean deviceReadonly) {
-		StringField field = newPersonField(PersonAttributes.SUR_NAME, person.getLastName(), deviceReadonly);
+		StringField field = newPersonField(UserInterface.FIRST_NAME, person.getLastName(), deviceReadonly);
 		field.setMandatory(true);
 		return field;
 	}
 
 	private StringField userNameField(Person person, MOStructureImpl type, boolean deviceReadonly) {
-		int maximumSize = getSizeForMOAttribute(type, PersonAttributes.USER_NAME, deviceReadonly);
+		int maximumSize = getSizeForMOAttribute(type, UserInterface.USER_NAME, deviceReadonly);
 		StringField userNameField =
-			FormFactory.newStringField(PersonAttributes.USER_NAME, person.getName(), FormFactory.MANDATORY,
+			FormFactory.newStringField(UserInterface.USER_NAME, person.getName(), FormFactory.MANDATORY,
 				FormFactory.IMMUTABLE, new StringLengthConstraint(1, maximumSize));
 		return userNameField;
 	}
 
 	private StringField titleField(Person person, boolean deviceReadonly) {
-		StringField field = FormFactory.newStringField(PersonAttributes.TITLE, person.getTitle(), false);
+		StringField field = FormFactory.newStringField(UserInterface.TITLE, person.getTitle(), false);
 		field.setDisabled(deviceReadonly);
 		return field;
 	}
 
 	private StringField givenNameField(Person person, boolean deviceReadonly) {
 		StringField field =
-			FormFactory.newStringField(PersonAttributes.GIVEN_NAME, person.getFirstName(), false);
+			FormFactory.newStringField(UserInterface.NAME, person.getFirstName(), false);
 		field.setDisabled(deviceReadonly);
 		field.setMandatory(true);
 		return field;

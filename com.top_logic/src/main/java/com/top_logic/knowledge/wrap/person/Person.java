@@ -487,7 +487,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      * the internal email of this user
      */
 	public String getInternalMail() {
-		return getUser().getInternalMail();
+		return getUser().getMail();
     }
 
     /**

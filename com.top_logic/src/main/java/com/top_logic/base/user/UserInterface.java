@@ -41,11 +41,6 @@ public interface UserInterface extends DataObject {
     public String getInternalMail ();
 
     /**
-     * the external email of this user
-     */
-    public String getExternalMail ();
-
-    /**
      * the customer name of this user
      */
     public String getCustomerName ();

@@ -119,7 +119,8 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 		 * 
 		 * <ul>
 		 * <li><code>true</code> if types of imported modules are added to the types of existing
-		 * modules.</li>
+		 * modules. A type that is imported and has the same name as an existing type replaces
+		 * it.</li>
 		 * <li><code>false</code> if imported modules replace existing modules.</li>
 		 * </ul>
 		 */

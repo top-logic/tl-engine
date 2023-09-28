@@ -147,20 +147,6 @@ public class DOUser implements UserInterface, PersonAttributes {
     }
 
     /**
-     * the customer name of this user
-     */
-    @Override
-	public String getCustomerName () {
-
-        try {
-            return(String)(internalUser.getAttributeValue (CUSTOMER));                
-        }catch (NoSuchAttributeException nae) {
-            Logger.error ("Tried to retrieve Users CUSTOMER from dataobject " + internalUser + ", which is no User or has no such attribute", this);
-            return "";
-        }
-    }
-
-    /**
      * the title of this user
      */
     @Override

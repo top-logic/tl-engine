@@ -418,13 +418,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     }
     
     /**
-     * the customer name of this user
-     */
-	public String getCustomerName() {
-		return getUser().getCustomerName();
-    }
-
-    /**
      * the external number of this user
      */
 	public String getExternalNumber() {

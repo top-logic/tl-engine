@@ -4,4 +4,10 @@
 	<icon name="mime.SearchExpressionTable"
 		value="/mimetypes/tl/StoredQuery.png"
 	/>
+	<icon name="tl-model-search.command.updateSearchConsole"
+		value="css:fas fa-save"
+	/>
+	<icon name="tl-model-search.command.executeSearchConsole"
+		value="css:fas fa-search"
+	/>
 </settings>

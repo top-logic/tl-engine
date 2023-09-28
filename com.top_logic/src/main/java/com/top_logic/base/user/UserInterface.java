@@ -46,11 +46,6 @@ public interface UserInterface extends DataObject {
     public String getTitle ();
 
     /**
-     * the organization unit of this user
-     */
-    public String getOrgUnit ();
-
-    /**
      * the internal number of this user
      */
     public String getInternalNumber ();

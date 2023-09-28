@@ -34,9 +34,6 @@ public interface PersonAttributes extends LDAPAttributes {
     /** The attribute "title". */
     public static final String TITLE         = "personalTitle";
 
-    /** The attribute "organiation unit". */
-    public static final String ORG_UNIT      = "orgUnit";
-
     /** The attribute "role". */
     public static final String USER_ROLE     = "userrole";
 
@@ -73,7 +70,6 @@ public interface PersonAttributes extends LDAPAttributes {
 		SUR_NAME, TITLE, INTERNAL_NR,
             MOBILE_NR, EXTERNAL_NR,     PRIVATE_NR,
 		MAIL_NAME, OBJECT_CLASS,
-		ORG_UNIT,
 		LOCALE, PASSWORD, DATA_ACCESS_DEVICE_ID, RESTRICTED_USER
     };
 }

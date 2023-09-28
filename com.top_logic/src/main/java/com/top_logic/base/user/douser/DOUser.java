@@ -161,20 +161,6 @@ public class DOUser implements UserInterface, PersonAttributes {
     }
 
     /**
-     * the organization unit of this user
-     */
-    @Override
-	public String getOrgUnit () {
-
-        try {
-            return(String)(internalUser.getAttributeValue (ORG_UNIT));                
-        }catch (NoSuchAttributeException nae) {
-            Logger.error ("Tried to retrieve Users ORG_UNIT from dataobject " + internalUser + ", which is no User or has no such attribute", this);
-            return "";
-        }
-    }
-
-    /**
      * the internal number of this user
      */
     @Override

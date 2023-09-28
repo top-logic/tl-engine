@@ -338,7 +338,7 @@ services.wysiwyg = {
 		},
 		
 		openTLObject: function(controlId, object) {
-			services.ajax.execute('dispatchControlCommand', {controlCommand: 'openTLObjectLink', controlID: controlId, object: object.href, section: object.dataset.section, custom: object.dataset.custom});
+			services.ajax.execute('dispatchControlCommand', {controlCommand: 'openTLObjectLink', controlID: controlId, object: object.href, section: object.dataset.section});
 		},
 		
 		goto: function(locationId) {

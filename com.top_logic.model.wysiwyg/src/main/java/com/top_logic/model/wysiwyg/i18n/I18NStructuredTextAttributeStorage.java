@@ -8,7 +8,6 @@ package com.top_logic.model.wysiwyg.i18n;
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.list;
 import static com.top_logic.layout.wysiwyg.ui.StructuredText.*;
-import static com.top_logic.mig.html.HTMLConstants.*;
 import static java.util.Collections.*;
 
 import java.util.ArrayList;
@@ -17,11 +16,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.CollectionUtil;
@@ -37,17 +31,12 @@ import com.top_logic.element.model.i18n.I18NAttributeStorage;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.StaticItem;
-import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
-import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.wysiwyg.storage.CommonStructuredTextAttributeStorage;
-import com.top_logic.tool.boundsec.ObjectNotFound;
-import com.top_logic.tool.boundsec.commandhandlers.BookmarkService;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -105,9 +94,7 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 			Locale currentLocale = subSession.set(StructuredTextConfigService.LOCALE, getLanguage(sourceCode));
 			try {
 				StructuredText structuredText = getOrCreateByLanguage(structuredTexts, sourceCode);
-				String oldSourceCode = getSourceCode(sourceCode);
-				String newSourceCode = updateLinks(oldSourceCode);
-				structuredText.setSourceCode(newSourceCode);
+				structuredText.setSourceCode(getSourceCode(sourceCode));
 			} finally {
 				if (currentLocale == null) {
 					subSession.reset(StructuredTextConfigService.LOCALE);
@@ -165,7 +152,6 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 				oldSourceCode.delete();
 				changed = true;
 			} else {
-				newSourceCode = setCustomLinks(newSourceCode);
 				if (changed) {
 					/* It is not necessary to check for change of source code, because only the
 					 * accumulated change state is required. */
@@ -180,107 +166,11 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		for (Locale language : supportedLocales) {
 			String newSourceCode = getSourceCodeNullSafe(getEntryNullsafe(newValue, language));
 			if (!StringServices.isEmpty(newSourceCode)) {
-				createSourceCodeTLObject(owner, attribute, language, setCustomLinks(newSourceCode));
+				createSourceCodeTLObject(owner, attribute, language, newSourceCode);
 				changed = true;
 			}
 		}
 		return changed;
-	}
-
-	/**
-	 * Sets the {@link TLObjectLinkUtil#DATA_CUSTOM} attribute of TLObject links.
-	 * 
-	 * <p>
-	 * When the user edited and saved a new source code this functions checks if the link texts of
-	 * TLObject links equal the names of their target TLObject. If not that means that the user
-	 * edited the text of the link and {@link TLObjectLinkUtil#DATA_CUSTOM} has to be set to true.
-	 * If they equal {@link TLObjectLinkUtil#DATA_CUSTOM} has to be false.
-	 * </p>
-	 * 
-	 * @param sourceCode
-	 *        Source code of the {@link I18NStructuredText}.
-	 * @return Source code of the {@link I18NStructuredText} with updated TLObject links.
-	 */
-	private String setCustomLinks(String sourceCode) {
-		Document doc = Jsoup.parse(sourceCode);
-		Elements links = doc
-			.select(ANCHOR + "[" + HREF_ATTR + "][" + TLObjectLinkUtil.DATA_CUSTOM + "]");
-		for (Element link : links) {
-			String href = link.attr(HREF_ATTR);
-			Wrapper object = resolveLinkTaget(href);
-			if (object != null) {
-				String objectName = MetaLabelProvider.INSTANCE.getLabel(object);
-				String linkText = link.text();
-				if (!objectName.equals(linkText)) {
-					link.attr(TLObjectLinkUtil.DATA_CUSTOM, "true");
-				} else {
-					link.attr(TLObjectLinkUtil.DATA_CUSTOM, "false");
-				}
-			}
-		}
-		return getBodyHTML(doc);
-	}
-
-	private Wrapper resolveLinkTaget(String href) {
-		try {
-			return TLObjectLinkUtil.getObject(href);
-		} catch (ObjectNotFound ex) {
-			// Link became invalid. Do not fail. Just do not update link
-			return null;
-		}
-	}
-
-	/**
-	 * Updates the link text of {@link TLObject} links if the displayed link text or the actual
-	 * {@link #HREF_ATTR goto link} of the target {@link TLObject} has changed.
-	 * 
-	 * <p>
-	 * Displayed links will only be updated if {@link TLObjectLinkUtil#DATA_CUSTOM} is false.
-	 * </p>
-	 * 
-	 * @param sourceCode
-	 *        Source code of the {@link I18NStructuredText}.
-	 * @return Source code of the {@link I18NStructuredText} with updated {@link TLObject} links.
-	 */
-	private String updateLinks(String sourceCode) {
-		if (!BookmarkService.Module.INSTANCE.isActive()) {
-			// Sometimes Lucene starts before the BookmarkService and tries to update links. This
-			// will lead to an exception because Lucene wants the full text and will automatically
-			// update bookmarks if their label changed. As this is not necessary during the Lucene
-			// startup the update can be skipped.
-			return sourceCode;
-		}
-		boolean changed = false;
-		Document doc = Jsoup.parse(sourceCode);
-		Elements links = doc.select(ANCHOR + "[" + CLASS_ATTR + "=" + TLObjectLinkUtil.TL_OBJECT + "]");
-		for (Element link : links) {
-			String href = link.attr(HREF_ATTR);
-			Wrapper object = resolveLinkTaget(href);
-			if (object != null) {
-				if ("false".equals(link.attr(TLObjectLinkUtil.DATA_CUSTOM))) {
-					String objectName = MetaLabelProvider.INSTANCE.getLabel(object);
-					if (!objectName.equals(link.text())) {
-						link.text(objectName);
-						changed = true;
-					}
-				}
-				String section = StringServices.nonEmpty(link.attr(TLObjectLinkUtil.DATA_SECTION));
-				String newHref = TLObjectLinkUtil.getLinkDestination(object, section);
-				if (!newHref.equals(href)) {
-					link.attr(HREF_ATTR, newHref);
-					changed = true;
-				}
-			}
-		}
-		if (changed) {
-			return getBodyHTML(doc);
-		} else {
-			return sourceCode;
-		}
-	}
-
-	static String getBodyHTML(Document document) {
-		return document.body().html();
 	}
 
 	private void createSourceCodeTLObject(TLObject owner, TLStructuredTypePart attribute, Locale language,

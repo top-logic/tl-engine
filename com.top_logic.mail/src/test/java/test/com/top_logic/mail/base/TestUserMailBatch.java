@@ -77,7 +77,7 @@ public class TestUserMailBatch extends BasicTestCase {
 		assertNotNull("Person is created because user is defined in Users.test.xml", person);
 		UserInterface user = Person.getUser(person);
 		assertNotNull("User is defined in Users.test.xml", user);
-		assertEquals("Email is defined in Users.test.xml", userMailAddress, user.getInternalMail());
+		assertEquals("Email is defined in Users.test.xml", userMailAddress, user.getMail());
 	}
     
    /**

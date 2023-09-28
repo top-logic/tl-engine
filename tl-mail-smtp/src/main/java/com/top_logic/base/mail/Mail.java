@@ -424,7 +424,7 @@ public class Mail {
         String theAddress = null;
         if (theUser != null) {
             //anAddress = theUser.getUserName();
-            theAddress = theUser.getInternalMail();
+            theAddress = theUser.getMail();
             if (theAddress == null || theAddress.length() < 2){
                 theAddress = theUser.getUserName();
             }

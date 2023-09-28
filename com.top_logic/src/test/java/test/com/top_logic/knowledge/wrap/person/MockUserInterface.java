@@ -5,7 +5,6 @@
  */
 package test.com.top_logic.knowledge.wrap.person;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.base.user.UserService;
 
@@ -20,7 +19,6 @@ final class MockUserInterface {
 
 	public static UserInterface newUserInterface(String userName, String dataAccessDeviceId) {
 		UserInterface userInterface = UserService.getEmptyUser(userName);
-		userInterface.setAttributeValue(PersonAttributes.DATA_ACCESS_DEVICE_ID, dataAccessDeviceId);
 		return userInterface;
 	}
 

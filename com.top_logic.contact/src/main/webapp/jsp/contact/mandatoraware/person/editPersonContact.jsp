@@ -25,13 +25,13 @@
 		<form:form>
 			<%
 			FormComponent theComponent = (FormComponent) MainLayout.getComponent(pageContext);
-			Wrapper    theModel     = (Wrapper) theComponent.getModel();
-			Person        thePerson   = ((PersonContact) theModel).getPerson();
-			Set           theSet      = new HashSet();
-			Accessor      theAccessor = WrapperAccessor.INSTANCE;
-			
-			theSet.add(COSPersonContact.ATT_PHONE_PRIVATE);
-			theSet.add(COSPersonContact.ATT_TITLE);
+					Wrapper    theModel     = (Wrapper) theComponent.getModel();
+					Person        thePerson   = ((PersonContact) theModel).getPerson();
+					Set           theSet      = new HashSet();
+					Accessor      theAccessor = WrapperAccessor.INSTANCE;
+					
+					theSet.add(COSPersonContact.PHONE_PRIVATE);
+					theSet.add(COSPersonContact.TITLE);
 			%>
 			<meta:group object="<%=theModel %>">
 				<basic:fieldset titleKeySuffix="basicAttributes">
@@ -49,7 +49,7 @@
 								/>
 							</td>
 							<td class="content">
-								<meta:attribute name="<%=COSPersonContact.ATT_FIRSTNAME %>"
+								<meta:attribute name="<%=COSPersonContact.FIRST_NAME%>"
 									inputSize="10"
 								/>
 								&#xA0;
@@ -68,12 +68,12 @@
 						</tr>
 						<tr>
 							<td class="label">
-								<meta:label name="<%=COSPersonContact.ATT_POSITION %>"
+								<meta:label name="<%=COSPersonContact.POSITION%>"
 									colon="true"
 								/>
 							</td>
 							<td class="content">
-								<meta:attribute name="<%=COSPersonContact.ATT_POSITION %>"/>
+								<meta:attribute name="<%=COSPersonContact.POSITION%>"/>
 							</td>
 						</tr>
 						<form:ifExists name="<%=COSEditPersonContactComponent.PARAM_REPRESENTATIVES%>">
@@ -92,12 +92,12 @@
 						</form:ifExists>
 						<tr>
 							<td class="label">
-								<meta:label name="<%=COSPersonContact.ATT_BOSS %>"
+								<meta:label name="<%=COSPersonContact.BOSS%>"
 									colon="true"
 								/>
 							</td>
 							<td class="content">
-								<meta:attribute name="<%=COSPersonContact.ATT_BOSS %>"/>
+								<meta:attribute name="<%=COSPersonContact.BOSS%>"/>
 							</td>
 						</tr>
 						<tr>
@@ -117,36 +117,36 @@
 						</tr>
 						<tr>
 							<td class="label">
-								<meta:label name="<%=COSPersonContact.ATT_MAIL %>"
+								<meta:label name="<%=COSPersonContact.EMAIL%>"
 									colon="true"
 								/>
 							</td>
 							<td class="content">
-								<meta:attribute name="<%=COSPersonContact.ATT_MAIL %>"
+								<meta:attribute name="<%=COSPersonContact.EMAIL%>"
 									inputSize="30"
 								/>
 							</td>
 						</tr>
 						<tr>
 							<td class="label">
-								<meta:label name="<%=COSPersonContact.ATT_PHONE_OFFICE %>"
+								<meta:label name="<%=COSPersonContact.PHONE%>"
 									colon="true"
 								/>
 							</td>
 							<td class="content">
-								<meta:attribute name="<%=COSPersonContact.ATT_PHONE_OFFICE %>"
+								<meta:attribute name="<%=COSPersonContact.PHONE%>"
 									inputSize="30"
 								/>
 							</td>
 						</tr>
 						<tr>
 							<td class="label">
-								<meta:label name="<%=COSPersonContact.ATT_PHONE_MOBILE %>"
+								<meta:label name="<%=COSPersonContact.PHONE_MOBILE%>"
 									colon="true"
 								/>
 							</td>
 							<td class="content">
-								<meta:attribute name="<%=COSPersonContact.ATT_PHONE_MOBILE %>"
+								<meta:attribute name="<%=COSPersonContact.PHONE_MOBILE%>"
 									inputSize="30"
 								/>
 							</td>

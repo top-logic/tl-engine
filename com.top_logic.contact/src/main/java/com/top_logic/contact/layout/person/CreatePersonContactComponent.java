@@ -55,7 +55,7 @@ public class CreatePersonContactComponent extends AbstractCreateComponent {
         FormContext theContext = new FormContext("default", this.getResPrefix(), 
               new FormField[] {
    		 		FormFactory.newStringField(PersonContact.NAME_ATTRIBUTE, "", true,  false, new StringLengthConstraint(1, 30)),
-   		 		FormFactory.newStringField(PersonContact.ATT_FIRSTNAME,  "", true,  false, new StringLengthConstraint(1, 30))
+   		 		FormFactory.newStringField(PersonContact.FIRST_NAME,  "", true,  false, new StringLengthConstraint(1, 30))
               });
         return theContext;
     }

@@ -10,7 +10,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.user.UserInterface;
@@ -54,6 +53,24 @@ public class Person extends AbstractBoundWrapper implements Author {
      * Type of KO as defined by KBMeta.xml
      */
     public static final String OBJECT_NAME = "Person";
+
+	/**
+	 * Attribute to identify a person who is registered as restricted user, i.e. a user who can do
+	 * nothing but read in the application
+	 */
+	public static final String RESTRICTED_USER = "restrictedUser";
+
+	/**
+	 * attribute to indicate against which auth system the person should be authenticated, needed in
+	 * the KO only, not in the DO
+	 **/
+	public static final String AUTHENTICATION_DEVICE_ID = "authDeviceID";
+
+	/** attribute to indicate to which data device the person or a user belongs to **/
+	public static final String DATA_ACCESS_DEVICE_ID = "dataDeviceID";
+
+	/** The attribute "locale". */
+	public static final String LOCALE = "locale";
 
 	/** Full qualified name of the {@link TLType} of a {@link Person}. */
 	public static final String PERSON_TYPE = "tl.accounts:Person";
@@ -207,7 +224,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      * @return the locale of the person.
      */
 	public Locale getLocale() {
-		return Utils.parseLocale(tGetDataString(PersonAttributes.LOCALE));
+		return Utils.parseLocale(tGetDataString(Person.LOCALE));
     }
     
     /**
@@ -223,9 +240,9 @@ public class Person extends AbstractBoundWrapper implements Author {
     	}
     	
 		if (locale == null) {
-			tSetData(PersonAttributes.LOCALE, null);
+			tSetData(Person.LOCALE, null);
 		} else {
-			tSetData(PersonAttributes.LOCALE, Utils.formatLocale(locale));
+			tSetData(Person.LOCALE, Utils.formatLocale(locale));
 		}
     }
 
@@ -245,7 +262,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      * the ID of the PersonDataAccessDevice, this person retrieves its data from
      */
 	public String getDataAccessDeviceID() {
-        String theDeviceID = (String)getValue(PersonAttributes.DATA_ACCESS_DEVICE_ID);
+        String theDeviceID = (String)getValue(Person.DATA_ACCESS_DEVICE_ID);
         if(StringServices.isEmpty(theDeviceID) || PLACE_HOLDER_DEFAULT_DATA_ACCESS_ID.equals(theDeviceID)){ //happens only during the initial startup call
             theDeviceID = TLSecurityDeviceManager.getInstance().getDefaultDataAccessDevice().getDeviceID();
         }
@@ -256,7 +273,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      * the ID of the AuthenticationDevice, this person can be authenticated against
      */
 	public String getAuthenticationDeviceID() {
-        String theDeviceID = (String)getValue(PersonAttributes.AUTHENTICATION_DEVICE_ID);
+        String theDeviceID = (String)getValue(Person.AUTHENTICATION_DEVICE_ID);
         if(PLACE_HOLDER_DEFAULT_DATA_AUTH_ID.equals(theDeviceID)){ //happens only during the initial startup call
             theDeviceID = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
         }
@@ -277,7 +294,7 @@ public class Person extends AbstractBoundWrapper implements Author {
         boolean result = false;
         for (int idx = 0; idx < attrNamesSrc.length; idx++) {
             String attrName = attrNamesSrc[idx];
-            if (!attrName.equals(PersonAttributes.USER_NAME)) {
+            if (!attrName.equals(UserInterface.USER_NAME)) {
                 try {
                     if (StringServices.contains(attrNamesTgt, attrName)) {
                         tgtAttribValue = target.getAttributeValue(attrName);
@@ -295,22 +312,6 @@ public class Person extends AbstractBoundWrapper implements Author {
             }
         }
         return result;
-    }
-
-    /**
-     * True when getUser() would only return a (stale) backup copy of the actual user.
-     * 
-     * That is if the person's security device cannot be accessed momentarily and
-     * calls to getUser() therefore cannot return the actual user object, but a
-     * previously saved copy. Same is true for persons which users have been
-     * deleted. These persons also return the backed up user to allow access to
-     * the last known user data. However- the latter are not alive while the former are.
-     * 
-     * @return true when you can only get the backup user.
-     */
-	public boolean isBackupMode() {
-		UserInterface user = getUser();
-        return user != null && KBUtils.getWrappedObjectName(this).equals(user.getIdentifier());
     }
 
     /**
@@ -353,7 +354,7 @@ public class Person extends AbstractBoundWrapper implements Author {
 	/**
 	 * Null-safe account information retrieval for the given account.
 	 */
-	public static UserInterface getUser(Person person) {
+	public static UserInterface userOrNull(Person person) {
 		if (person == null) {
 			return null;
 		}
@@ -440,7 +441,7 @@ public class Person extends AbstractBoundWrapper implements Author {
 
 		String title = user.getTitle();
 		String first = user.getFirstName();
-		String last = user.getLastName();
+		String last = user.getName();
 
 		StringBuilder result = new StringBuilder();
 		if (!StringServices.isEmpty(title)) {
@@ -473,21 +474,21 @@ public class Person extends AbstractBoundWrapper implements Author {
      * the internal email of this user
      */
 	public String getInternalMail() {
-		return getUser().getMail();
+		return getUser().getEMail();
     }
 
     /**
      * the internal number of this user
      */
 	public String getInternalNumber() {
-		return getUser().getInternalNumber();
+		return getUser().getPhone();
     }
 
     /**
      * the lastname of this user
      */
 	public String getLastName() {
-		return getUser().getLastName();
+		return getUser().getName();
     }
 
     /**
@@ -541,7 +542,7 @@ public class Person extends AbstractBoundWrapper implements Author {
 			Logger.warn("Attempting to set an empty dataAccessDeviceID. Will be ignored.",this);
 			return;
 		}
-		this.tSetData(PersonAttributes.DATA_ACCESS_DEVICE_ID, securityDeviceName);
+		this.tSetData(Person.DATA_ACCESS_DEVICE_ID, securityDeviceName);
     }
     
     /**
@@ -554,7 +555,7 @@ public class Person extends AbstractBoundWrapper implements Author {
     		return;
     	}
     	
-		this.tSetData(PersonAttributes.AUTHENTICATION_DEVICE_ID, securityDeviceName);
+		this.tSetData(Person.AUTHENTICATION_DEVICE_ID, securityDeviceName);
     }
 
     
@@ -634,7 +635,7 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 * restricted rights due to license reasons.
 	 */
 	public Boolean isRestrictedUser() {
-		Boolean restrictedUser = getBoolean(PersonAttributes.RESTRICTED_USER);
+		Boolean restrictedUser = getBoolean(Person.RESTRICTED_USER);
 		if (restrictedUser == null) {
 			restrictedUser = Boolean.FALSE;
 		}
@@ -653,10 +654,10 @@ public class Person extends AbstractBoundWrapper implements Author {
 			return _current.setRestrictedUser(isRestrictedUser);
     	}
     	
-		Boolean currVal = getBoolean(PersonAttributes.RESTRICTED_USER);
+		Boolean currVal = getBoolean(Person.RESTRICTED_USER);
 
 		if (!isRestrictedUser.equals(currVal)) {
-			setValue(PersonAttributes.RESTRICTED_USER, isRestrictedUser);
+			setValue(Person.RESTRICTED_USER, isRestrictedUser);
 			return true;
 		}
 		return false;

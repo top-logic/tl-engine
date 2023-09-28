@@ -7,7 +7,6 @@ package com.top_logic.contact.business.importer;
 
 import java.util.Properties;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.ParseBooleanMapping;
 import com.top_logic.basic.config.ConfigUtil;
@@ -21,6 +20,7 @@ import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 import com.top_logic.element.structured.wrap.Mandator;
 import com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler;
 import com.top_logic.knowledge.objects.CreateException;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 
 /**
@@ -69,10 +69,10 @@ public class GenericPersonContactCreateHandler extends MetaElementBasedUpdateHan
                 boolean isUser = ParseBooleanMapping.INSTANCE.map((String) aDO.getAttributeValue(IS_USER_COLUMN));
                 String  userID = (String) aDO.getAttributeValue(USER_ID_COLUMN);
                 if (isUser) {
-					userFactory.createPerson(userID, theContact.getString(PersonContact.ATT_FIRSTNAME),
+					userFactory.createPerson(userID, theContact.getString(PersonContact.FIRST_NAME),
 						theContact.getString(PersonContact.NAME_ATTRIBUTE),
-						theContact.getString(PersonContact.ATT_TITLE), "dbSecurity", "dbSecurity",
-						(Boolean) aDO.getAttributeValue(PersonAttributes.RESTRICTED_USER));
+						theContact.getString(PersonContact.TITLE), "dbSecurity", "dbSecurity",
+						(Boolean) aDO.getAttributeValue(Person.RESTRICTED_USER));
                 }
             }
         }

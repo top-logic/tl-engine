@@ -71,8 +71,8 @@ public class COSContactResourceProvider extends ContactResourceProvider {
     @Override
 	protected ResKey getTooltipForPerson(PersonContact aPerson) {
         String theName  = TagUtil.encodeXML(this.getLabel(aPerson));
-        String theMail  = TagUtil.encodeXML(aPerson.getMail());
-        String thePhone = TagUtil.encodeXML((String) aPerson.getValue(PersonContact.ATT_PHONE_OFFICE));
+        String theMail  = TagUtil.encodeXML(aPerson.getEMail());
+        String thePhone = TagUtil.encodeXML((String) aPerson.getValue(PersonContact.PHONE));
 
 		return com.top_logic.contact.layout.I18NConstants.PERSON_TOOLTIP__NAME_MAIL_PHONE.fill(theName, theMail,
 			thePhone);

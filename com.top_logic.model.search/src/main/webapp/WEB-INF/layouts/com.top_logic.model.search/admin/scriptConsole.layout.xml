@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="templates/contentTab.xml">
+	<components>
+		<component class="com.top_logic.model.search.ui.ScriptComponent"
+			name="SearchComponent"
+			resPrefix="%LAYOUT_RESPREFIX%"
+			showMaximize="true"
+			toolbar="true"
+		>
+			<components>
+				<include name="model/search/modelSearchExpertEditor.xml">
+					<buttons>
+						<button id="executeSearchConsole"
+							class="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							image="theme:tl-model-search.command.executeSearchConsole"
+							script-component="SearchComponent"
+						/>
+						<button id="updateSearchConsole"
+							class="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							clique="additional-apply"
+							group="Write"
+							image="theme:tl-model-search.command.updateSearchConsole"
+							script-component="SearchComponent"
+							with-commit="true"
+						/>
+					</buttons>
+				</include>
+				<include name="model/search/modelSearchResultTable.xml"/>
+			</components>
+		</component>
+	</components>
+</include>

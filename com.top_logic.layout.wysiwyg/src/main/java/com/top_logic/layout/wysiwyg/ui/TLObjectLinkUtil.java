@@ -39,9 +39,6 @@ public class TLObjectLinkUtil {
 	/** Parameter to jump to a specific section in the source code of the {@link StructuredText}. */
 	private static final String SECTION = "section";
 
-	/** {@link TLObject} link attribute defining if the link text was customized. */
-	public static final String DATA_CUSTOM = "data-custom";
-
 	/** {@link TLObject} link attribute defining the section of a page to go to. */
 	public static final String DATA_SECTION = "data-section";
 
@@ -70,8 +67,7 @@ public class TLObjectLinkUtil {
 		}
 		DefaultBookmarkHandler handler = (DefaultBookmarkHandler) CommandHandlerFactory.getInstance().getHandler(
 			DefaultBookmarkHandler.COMMAND_RESOLVE_BOOKMARK);
-		Wrapper object = (Wrapper) handler.getBookmarkObject(objectArguments);
-		return object;
+		return (Wrapper) handler.getBookmarkObject(objectArguments);
 	}
 
 	/**
@@ -113,17 +109,14 @@ public class TLObjectLinkUtil {
 	 * @return {@link String} with HTML Snippet of the link.
 	 */
 	public static String getLink(Wrapper object, String linkText, String goTo) {
-		boolean custom = false;
 		String pageName = MetaResourceProvider.INSTANCE.getLabel(object);
 		if (linkText == null) {
 			linkText = pageName;
-		} else if (!linkText.equals(pageName)) {
-			custom = true;
 		}
 		final ThemeImage image = MetaResourceProvider.INSTANCE.getImage(object, Flavor.DEFAULT);
 		StringWriter stringWriter = new StringWriter();
 
-		writeLink(stringWriter, object, goTo, custom, image, linkText);
+		writeLink(stringWriter, object, goTo, image, linkText);
 
 		return stringWriter.toString();
 	}
@@ -137,20 +130,17 @@ public class TLObjectLinkUtil {
 	 *        Target object of the link.
 	 * @param section
 	 *        Goto id inside of the {@link TLObject} source code.
-	 * @param custom
-	 *        If the {@link TLObject} link text is customized.
 	 * @param image
 	 *        Icon of the {@link TLObject}
 	 * @param linkText
 	 *        The text representing the link.
 	 */
 	private static void writeLink(StringWriter stringWriter, Wrapper targetObject,
-			String section, boolean custom, final ThemeImage image, String linkText) {
+			String section, final ThemeImage image, String linkText) {
 		try (TagWriter writer = new TagWriter(stringWriter)) {
 			writer.beginBeginTag(ANCHOR);
 			writer.writeAttribute(HREF_ATTR, getLinkDestination(targetObject, section));
 			writeGotoSection(writer, section);
-			writeLinkDataCustom(writer, custom);
 			writer.beginCssClasses();
 			writer.append(TL_OBJECT);
 			writer.endCssClasses();
@@ -196,17 +186,4 @@ public class TLObjectLinkUtil {
 		}
 	}
 
-	/**
-	 * Writes a {@link #DATA_CUSTOM} attribute.
-	 * 
-	 * @param custom
-	 *        If the {@link TLObject} link text is customized.
-	 * @throws IOException
-	 *         If writing to the underlying writer fails.
-	 */
-	private static void writeLinkDataCustom(TagWriter writer, boolean custom) throws IOException {
-		writer.beginAttribute(DATA_CUSTOM);
-		writer.writeAttributeText(Boolean.toString(custom));
-		writer.endAttribute();
-	}
 }

@@ -66,6 +66,7 @@
 							<property key="a">
 								<struct>
 									<property key="attributes">
+										<!-- 'data-custom' is listed here for backwards compatibility with documentation pages from before the removal of these attributes in #27590. -->
 										<string value="href, id, name, title, target, download, dir, lang, type, charset, rel, accesskey, tabindex, data-custom, data-section, data-object"/>
 									</property>
 									<property key="classes">
@@ -141,7 +142,7 @@
 						<string value="a{*}"/>
 					</property>
 					<property key="pasteFilter">
-						<string value="a[!href, id, name, title, target, download, dir, lang, type, charset, rel, accesskey, tabindex, data-custom, data-section, data-object](*);code em i(*);ol[start];table{width, height};img(*)[src, alt]{opacity, width, height};u s sub sup strong;span(*);div{width};h1;h2;h3;h4;h5;h6;ol;ul;li;dd;dl;b"/>
+						<string value="a[!href, id, name, title, target, download, dir, lang, type, charset, rel, accesskey, tabindex, data-section, data-object](*);code em i(*);ol[start];table{width, height};img(*)[src, alt]{opacity, width, height};u s sub sup strong;span(*);div{width};h1;h2;h3;h4;h5;h6;ol;ul;li;dd;dl;b"/>
 					</property>
 					<property key="fillEmptyBlocks  ">
 						<boolean value="false"/>

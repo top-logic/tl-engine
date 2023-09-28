@@ -31,7 +31,7 @@ public class PersonContactTest extends BasicTestCase {
 
         PersonContact thePerson = theFac.createNewPersonContact("Herberger","Seppl");
         assertNotNull(thePerson);
-        thePerson.setValue(PersonContact.ATT_TITLE,"Prof.Dr.");
+        thePerson.setValue(PersonContact.TITLE,"Prof.Dr.");
         
         assertEquals ("Prof.Dr. Seppl Herberger",thePerson.getFullname());
         KnowledgeBase theBase = thePerson.getKnowledgeBase();

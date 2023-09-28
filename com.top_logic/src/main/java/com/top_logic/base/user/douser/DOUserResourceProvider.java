@@ -25,7 +25,7 @@ public class DOUserResourceProvider extends DefaultResourceProvider {
             StringBuffer buffer = new StringBuffer(64);
             buffer.append("Name:");
 			TagUtil.beginTag(buffer, HTMLConstants.BOLD);
-			TagUtil.writeText(buffer, theUser.getLastName());
+			TagUtil.writeText(buffer, theUser.getName());
 			buffer.append(", ");
 			TagUtil.writeText(buffer, theUser.getFirstName());
 			buffer.append(" (");
@@ -46,7 +46,7 @@ public class DOUserResourceProvider extends DefaultResourceProvider {
 	public String getLabel(Object aObject) {
         if (aObject instanceof DOUser) {
             DOUser theUser = (DOUser) aObject;
-            return theUser.getLastName() + ", " + theUser.getFirstName() + " (" + theUser.getUserName() + ")"; 
+            return theUser.getName() + ", " + theUser.getFirstName() + " (" + theUser.getUserName() + ")"; 
         }
         return super.getLabel(aObject);
     }

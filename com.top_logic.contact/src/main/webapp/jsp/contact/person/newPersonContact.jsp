@@ -19,7 +19,7 @@ autoFlush="true"
 			titleKeySuffix="title"
 			type="<%= TLModelUtil.findType(ContactFactory.STRUCTURE_NAME, ContactFactory.PERSON_TYPE) %>"
 		>
-			<form:inputCell name="<%=PersonContact.ATT_FIRSTNAME%>"/>
+			<form:inputCell name="<%=PersonContact.FIRST_NAME%>"/>
 			<form:inputCell name="<%=PersonContact.NAME_ATTRIBUTE%>"/>
 		</form:formPage>
 	</layout:body>

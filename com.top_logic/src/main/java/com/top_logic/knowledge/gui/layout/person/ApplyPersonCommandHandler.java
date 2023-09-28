@@ -10,13 +10,10 @@ import static com.top_logic.basic.shared.string.StringServicesShared.*;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
-import com.top_logic.base.user.UserService;
-import com.top_logic.basic.Logger;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.dob.DataObject;
 import com.top_logic.event.ModelTrackingService;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.gui.MultiThemeFactory;
@@ -58,48 +55,6 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
     	}
     }
 
-
-	protected void updataDataAccessDevice(Person aPerson, String newDeviceID, FormContext aContext) {
-    	try {
-    		String personID = aPerson.getName();
-    		PersonDataAccessDevice oldDevice = SecurityDeviceFactory.getPersonAccessDevice(aPerson.getDataAccessDeviceID());
-    		PersonDataAccessDevice newDevice = SecurityDeviceFactory.getPersonAccessDevice(newDeviceID);
-
-    		if (newDevice == null) {
-    			Logger.error("The given new device was not found.", ApplyPersonCommandHandler.class);
-				throw new IllegalArgumentException("The given new device was not found.");
-    		}
-    		if (newDevice.userExists(personID)) {
-    			aPerson.setDataAccessDeviceID(newDeviceID);
-    		}
-    		else {
-    			if (newDevice.isReadOnly()) {
-					throw new TopLogicException(ApplyPersonCommandHandler.class, "noSuchUserInGivenDevice");
-    			}
-    			else {
-    				aPerson.setDataAccessDeviceID(newDeviceID);
-    				DataObject userData = newDevice.getUserData(personID);
-    				if (userData == null) {
-    					userData = UserService.getNewUserDO(personID);
-						boolean ok = newDevice.createUserEntry(userData);
-						if (!ok) {
-							throw new TopLogicException(
-								com.top_logic.knowledge.wrap.person.I18NConstants.ERROR_NO_MORE_USERS);
-						}
-						Person.copyAnyThingExceptID(aPerson.getUser(), userData);
-    				}
-    			}
-    		}
-    		if (oldDevice != null && !oldDevice.isReadOnly()) {
-    			oldDevice.deleteUserData(personID);
-    		}
-    		aPerson.refetchWrapper();
-    	}
-    	catch (Exception e) {
-			throw new TopLogicException(ApplyPersonCommandHandler.class, "update.dataAccessDevice", e);
-    	}
-    }
-
     @Override
 	protected boolean storeChanges(LayoutComponent aComponent, FormContext aContext, Object aModel) {
         boolean hasSuccess = (aModel instanceof Person) && aContext.checkAll();
@@ -107,14 +62,12 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
         if (hasSuccess) {
             Person  thePerson               = (Person) aModel;
             String  thePersonsDadID         = thePerson.getDataAccessDeviceID();
-            String  newDataAccessDevice     = (String) ((SelectField)aContext.getField(PersonAttributes.DATA_ACCESS_DEVICE_ID)).getSingleSelection();
-            String  newAuthenticationDevice = (String) ((SelectField)aContext.getField(PersonAttributes.AUTHENTICATION_DEVICE_ID)).getSingleSelection();
+            String  newDataAccessDevice     = (String) ((SelectField)aContext.getField(Person.DATA_ACCESS_DEVICE_ID)).getSingleSelection();
+            String  newAuthenticationDevice = (String) ((SelectField)aContext.getField(Person.AUTHENTICATION_DEVICE_ID)).getSingleSelection();
             PersonDataAccessDevice theDevice = SecurityDeviceFactory.getPersonAccessDevice(thePersonsDadID);
 
 			if (!thePersonsDadID.equals(newDataAccessDevice)) {
-				updataDataAccessDevice(thePerson, newDataAccessDevice, aContext);
-				thePersonsDadID = thePerson.getDataAccessDeviceID();
-				theDevice = SecurityDeviceFactory.getPersonAccessDevice(thePersonsDadID);
+				throw new UnsupportedOperationException("Cannot change device.");
 			}
             this.updataAuthenticationDeviceID(thePerson,newAuthenticationDevice,aContext);
             // Store changes to person 
@@ -202,8 +155,8 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
     /**
 	 * Update the admin fields of the given person.
 	 * 
-	 * The admin fields are {@link PersonAttributes#SUR_NAME}, {@link PersonAttributes#GIVEN_NAME},
-	 * {@link PersonAttributes#TITLE}.
+	 * The admin fields are {@link UserInterface#FIRST_NAME}, {@link UserInterface#NAME},
+	 * {@link UserInterface#TITLE}.
 	 * 
 	 * @param aPerson
 	 *        The person to be changed.
@@ -211,9 +164,10 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
 	 *        The form context containing the values to be set.
 	 */
 	protected void updateAdminFields(Person aPerson, FormContext aContext) {
-        this.setAttribute(aPerson, PersonAttributes.SUR_NAME   , aContext);
-        this.setAttribute(aPerson, PersonAttributes.GIVEN_NAME , aContext);
-        this.setAttribute(aPerson, PersonAttributes.TITLE      , aContext);
+		UserInterface user = aPerson.getUser();
+		user.setName((String) this.getChangedValue(aContext, UserInterface.FIRST_NAME));
+		user.setFirstName((String) this.getChangedValue(aContext, UserInterface.NAME));
+		user.setTitle((String) this.getChangedValue(aContext, UserInterface.TITLE));
     }
 
     /**
@@ -223,8 +177,9 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
      * @param    aContext    The form context containing the values to be set.
      */
 	protected void updateUserFields(Person aPerson, FormContext aContext) {
-    	this.setAttribute(aPerson, PersonAttributes.INTERNAL_NR   , aContext);
-    	this.setAttribute(aPerson, PersonAttributes.MAIL_NAME     , aContext);
+		UserInterface user = aPerson.getUser();
+		user.setPhone((String) this.getChangedValue(aContext, UserInterface.PHONE));
+		user.setEMail((String) this.getChangedValue(aContext, UserInterface.EMAIL));
     }
     
     /**
@@ -234,7 +189,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
      * @param    aContext    The form context containing the values to be set.
      */
 	protected void updateNonUserFields(Person aPerson, FormContext aContext) {
-        Boolean changedValue = (Boolean) getChangedValue(aContext, PersonAttributes.RESTRICTED_USER);
+        Boolean changedValue = (Boolean) getChangedValue(aContext, Person.RESTRICTED_USER);
         if (changedValue != null) {
             aPerson.setRestrictedUser(changedValue);
         }
@@ -266,27 +221,5 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
 		String themeString = MetaLabelProvider.INSTANCE.getLabel(theme);
 		InfoService.showInfo(I18NConstants.CHANGED_THEME_RELOGIN_NECESSARY__THEME.fill(themeString));
 	}
-
-	/**
-	 * Set attribute from given constraint.
-	 * 
-	 * Update some DataObject from a constraint.
-	 * 
-	 * @return The value to be set or <code>null</code>, if not changed.
-	 */
-	protected Object setAttribute(Person aModel, String aKey, FormContext aContext) {
-        Object theValue = this.getChangedValue(aContext, aKey);
-
-        if (theValue != null) {
-            Person.getUser(aModel).setAttributeValue(aKey, theValue);
-        }else{
-            FormField theField = aContext.getField(aKey);
-            if(theField!=null){
-                theValue = theField.getValue();
-            }
-        }    
-
-        return (theValue);
-    }
 
 }

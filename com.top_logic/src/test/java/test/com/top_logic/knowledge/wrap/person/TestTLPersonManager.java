@@ -161,7 +161,7 @@ public class TestTLPersonManager extends BasicTestCase {
 		secondNodeKnowledgeBase.refetch();
 		Person fooPersonNode2 = secondNodePersonManager.getPersonByName(personName);
 		assertNotNull(fooPersonNode2);
-		UserInterface fooUserNode2 = Person.getUser(fooPersonNode2);
+		UserInterface fooUserNode2 = Person.userOrNull(fooPersonNode2);
 		Transaction deleteTx = secondNodeKnowledgeBase.beginTransaction();
 		secondNodePersonManager.deleteUser(fooPersonNode2);
 		deleteTx.commit();

@@ -88,7 +88,7 @@ public class ContactFactory extends AbstractWrapperResolver {
             throw new IllegalArgumentException ("Name and firstname must not be null.");
         }
         PersonContact theContact = (PersonContact)createNewContact(aName, PERSON_TYPE);
-        theContact.setValue(PersonContact.ATT_FIRSTNAME, aFirstname);
+        theContact.setValue(PersonContact.FIRST_NAME, aFirstname);
         return theContact;
     }   
 

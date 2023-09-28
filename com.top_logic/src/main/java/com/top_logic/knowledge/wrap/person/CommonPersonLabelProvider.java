@@ -51,13 +51,13 @@ public class CommonPersonLabelProvider implements LabelProvider {
 			return null;
 		}
 
-		UserInterface user = Person.getUser(person);
+		UserInterface user = Person.userOrNull(person);
 		if (user == null) {
 			return null;
 		}
 
 		StringBuffer name = new StringBuffer();
-		name.append(user.getLastName()).append(", ");
+		name.append(user.getName()).append(", ");
 		if (includeTitle) {
 			name.append(user.getTitle()).append(' ');
 		}

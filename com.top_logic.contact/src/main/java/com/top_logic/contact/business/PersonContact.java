@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
@@ -38,26 +39,22 @@ import com.top_logic.util.TLContext;
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
-public class PersonContact extends AbstractContact {
+public class PersonContact extends AbstractContact implements UserInterface {
 
 	public static final String META_ELEMENT = "Contact.Person";
 
-    public static final String ATT_FIRSTNAME = "firstname";
     public static final String ASS_NAME_TO_PERSON = "representsUser";
     
     //values for these are to be delivered by the contacts person if:
     // - this contact currently belongs to a person
     // - this contact has no own value for the given attribute
-    public static final String ATT_TITLE = "title";
-	public static final String ATT_PHONE_MOBILE = "phone_mobile";
-	public static final String ATT_PHONE_PRIVATE = "phone_private";
-	public static final String ATT_PHONE_OFFICE = "phone";
-	public static final String ATT_MAIL = "email";
-	public static final String ATT_FULLNAME = "fullName";
-	public static final String ATT_POSITION = "position";
-	public static final String ATT_BOSS = "boss";
-	public static final String ATT_COMPANY = "company";
-	public static final String ATT_FAX = "fax";
+	public static final String PHONE_MOBILE = "phone_mobile";
+	public static final String PHONE_PRIVATE = "phone_private";
+	public static final String FULLNAME = "fullName";
+	public static final String POSITION = "position";
+	public static final String BOSS = "boss";
+	public static final String COMPANY = "company";
+	public static final String FAX = "fax";
 
 	private static final AssociationSetQuery<KnowledgeAssociation> PERSON_ATTR = AssociationQuery.createOutgoingQuery(
 		"person", ASS_NAME_TO_PERSON);
@@ -66,6 +63,11 @@ public class PersonContact extends AbstractContact {
     public PersonContact(KnowledgeObject ko) {
         super(ko);
     }
+
+	@Override
+	public String getName() {
+		return super.getName();
+	}
 
     /** 
      * Use global security
@@ -92,7 +94,7 @@ public class PersonContact extends AbstractContact {
 	 */
 	@Override
 	public Object getValue(String anAttribute) {
-		if(ATT_FULLNAME.equals(anAttribute)){ //used for tables. Better give those tables an accessor, and remove this code here
+		if(FULLNAME.equals(anAttribute)){ //used for tables. Better give those tables an accessor, and remove this code here
 			return this.getFullname();
 		}
         else {
@@ -106,38 +108,71 @@ public class PersonContact extends AbstractContact {
 	 * 
 	 * <p>
 	 * This method is used as method of the calculated {@link TLStructuredTypePart}
-	 * {@link PersonContact#ATT_FULLNAME}.
+	 * {@link PersonContact#FULLNAME}.
 	 * </p>
 	 * 
 	 * @return The full name, never <code>null</code>.
 	 */
 	@CalledByReflection
 	public String getFullname() {
-        String       theTitle  = (String) this.getValue(ATT_TITLE);
+        String       theTitle  = (String) this.getValue(TITLE);
         StringBuffer theResult = new StringBuffer (64);
 
         if (!StringServices.isEmpty(theTitle)) {
             theResult.append(theTitle).append(' ');
         }
 
-        theResult.append((String) this.getValue(ATT_FIRSTNAME)).append(' ')
+        theResult.append((String) this.getValue(FIRST_NAME)).append(' ')
                  .append((String) this.getValue(NAME_ATTRIBUTE));
 
         return (theResult.toString());
     }
 
-	public String getFirstName() {
-	    return (String)getValue(PersonContact.ATT_FIRSTNAME);
+	@Override
+	public String getTitle() {
+		return (String) getValue(PersonContact.TITLE);
 	}
 
-    /** 
-     * Return the mail address of the contact.
-     * 
-     * @return    The mail address or <code>null</code>, if no mail configured.
-     */
-    public String getMail() {
-        return ((String) this.getValue(ATT_MAIL));
+	@Override
+	public void setTitle(String value) {
+		setValue(TITLE, value);
+	}
+
+	@Override
+	public String getFirstName() {
+	    return (String)getValue(PersonContact.FIRST_NAME);
+	}
+
+	@Override
+	public void setFirstName(String value) {
+		setValue(FIRST_NAME, value);
+	}
+
+	@Override
+	public String getEMail() {
+        return ((String) this.getValue(EMAIL));
     }
+
+	@Override
+	public void setEMail(String value) {
+		setValue(EMAIL, value);
+	}
+
+	@Override
+	public String getPhone() {
+		return ((String) this.getValue(PHONE));
+	}
+
+	@Override
+	public void setPhone(String value) {
+		setValue(PHONE, value);
+	}
+
+	@Override
+	public String getUserName() {
+		Person person = getPerson();
+		return person == null ? null : person.getName();
+	}
 
     /**
      * if this person contact is connected to a person, this person is returned, null otherwise.
@@ -227,10 +262,10 @@ public class PersonContact extends AbstractContact {
                 if (fName == null) { // Person         _does_  allow null FirstName
                     fName = "";      // PersonContact does not allow null FirstName.
                 }
-                this.setValue(ATT_FIRSTNAME      ,fName);
-                this.setValue(ATT_TITLE          ,myPerson.getTitle());
-                this.setValue(ATT_MAIL           ,myPerson.getInternalMail());
-                this.setValue(ATT_PHONE_OFFICE   ,myPerson.getInternalNumber());
+                this.setValue(FIRST_NAME      ,fName);
+                this.setValue(TITLE          ,myPerson.getTitle());
+                this.setValue(EMAIL           ,myPerson.getInternalMail());
+                this.setValue(PHONE   ,myPerson.getInternalNumber());
             }
             catch (Exception ex) {
                 Logger.error("Failed to copyPersonAttributesToContact", ex, this);
@@ -283,6 +318,6 @@ public class PersonContact extends AbstractContact {
 	/** Convenient comparator to sort PersonContacts in "natural" order */
 	public static Comparator getComparator() {
 		// Note: Make not static, since it depends on the current locale.
-		return new StringWrapperAttributeComparator(NAME_ATTRIBUTE, ATT_FIRSTNAME, /* ascending */ true);
+		return new StringWrapperAttributeComparator(NAME_ATTRIBUTE, FIRST_NAME, /* ascending */ true);
 	}
 }

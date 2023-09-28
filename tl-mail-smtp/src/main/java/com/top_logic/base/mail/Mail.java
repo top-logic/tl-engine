@@ -420,11 +420,11 @@ public class Mail {
      */
     public static String getCurrentUserAddress() {
         
-		UserInterface theUser = Person.getUser(TLContext.currentUser());
+		UserInterface theUser = Person.userOrNull(TLContext.currentUser());
         String theAddress = null;
         if (theUser != null) {
             //anAddress = theUser.getUserName();
-            theAddress = theUser.getMail();
+            theAddress = theUser.getEMail();
             if (theAddress == null || theAddress.length() < 2){
                 theAddress = theUser.getUserName();
             }

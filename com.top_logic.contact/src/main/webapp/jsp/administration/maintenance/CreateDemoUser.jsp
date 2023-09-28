@@ -105,8 +105,7 @@ private static final int MAX_INT = 10000;
 	%><%@page import="com.top_logic.basic.xml.TagWriter"
 	%><%@page import="com.top_logic.knowledge.wrap.person.infouser.LicenceOverviewUtil"%>
 	
-	<%!
-	private String formatSuffix(int suffix) {
+	<%!private String formatSuffix(int suffix) {
 		return (suffix < 100 ? "0" : "") + (suffix < 10 ? "0" : "") + suffix;
 	}
 	
@@ -170,7 +169,7 @@ private static final int MAX_INT = 10000;
 			// Existing mails
 			Set<String> emails = CollectionUtil.newSet(contacts.size());
 			for (Iterator<PersonContact> it = contacts.iterator(); it.hasNext();) {
-				String mail = StringServices.trim(it.next().getMail());
+				String mail = StringServices.trim(it.next().getEMail());
 				if (!StringServices.isEmpty(mail)) {
 					emails.add(mail.toLowerCase());
 				}
@@ -199,7 +198,7 @@ private static final int MAX_INT = 10000;
 						while (emails.contains(genMail));
 					}
 					Person person = personHandler.createPerson(loginName, pFistNamePrefix + formSuffix, pLastNamePrefix + formSuffix, null, "dbSecurity", null, false);
-					Person.getUser(person).setAttributeValue(PersonAttributes.MAIL_NAME, genMail);
+					Person.userOrNull(person).setAttributeValue(PersonAttributes.MAIL_NAME, genMail);
 					PersonManager.getManager().handleRefreshPerson(person);
 					emails.add(genMail);
 				}
@@ -227,7 +226,7 @@ private static final int MAX_INT = 10000;
 					while (emails.contains(genMail));
 				}
 				PersonContact contact = contactHandler.createPersonContact(cLastNamePrefix + formSuffix, cFistNamePrefix + formSuffix);
-				contact.setValue(PersonContact.ATT_MAIL, genMail);
+				contact.setValue(PersonContact.EMAIL, genMail);
 				emails.add(genMail);
 			}
 			
@@ -241,9 +240,7 @@ private static final int MAX_INT = 10000;
 			printError(e.toString(), e);
 			rollback();
 		}
-	}
-	
-	%>
+	}%>
 	<layout:body>
 		<basic:access>
 			<%

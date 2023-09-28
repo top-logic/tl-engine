@@ -114,7 +114,7 @@ public class UserMailBatch extends BatchImpl {
 
             while (theNameIter.hasNext()){
                 String        theName = (String) theNameIter.next();
-                UserInterface theUser = Person.getUser(PersonManager.getManager().getPersonByName(theName));
+                UserInterface theUser = Person.userOrNull(PersonManager.getManager().getPersonByName(theName));
                 if (theUser != null){
                     theRecipients.add(theUser); 
                 }

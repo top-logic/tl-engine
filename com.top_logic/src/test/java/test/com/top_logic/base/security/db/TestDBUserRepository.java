@@ -19,7 +19,6 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.accesscontrol.Login;
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.db.DBUserRepository;
 import com.top_logic.base.security.password.hashing.VerificationResult;
 import com.top_logic.base.security.util.SignatureService;
@@ -72,7 +71,6 @@ public class TestDBUserRepository extends BasicTestCase {
 
 		Map map = new HashMap(32);
 		map.put("username", "jhi");
-		map.put(PersonAttributes.PASSWORD, sign("bup"));
 		map.put("userrole", "role1");
 		map.put("initials", "jhiinitials");
 		map.put("givenName", "Jochen");
@@ -96,7 +94,6 @@ public class TestDBUserRepository extends BasicTestCase {
 
 		// another user
 		map.put("username"    , "jhi1");
-		map.put(PersonAttributes.PASSWORD, sign("bubbeldidubbel"));
 		UserDataObject userDO2 = new UserDataObject(map);
 		userRep.createUser(this.statementCache, userDO2);
 		statementCache.commit();
@@ -178,7 +175,6 @@ public class TestDBUserRepository extends BasicTestCase {
         try {
             Map map = new HashMap(32);
             map.put("username"    , "kha");
-			map.put(PersonAttributes.PASSWORD, sign("miregal"));
             map.put("userrole"    , "rückwärts");
             map.put("initials"    , "kha");
             map.put("givenName"   , "Klaus");
@@ -201,7 +197,6 @@ public class TestDBUserRepository extends BasicTestCase {
 
             // another user
             map.put("username"    , "kha2");
-			map.put(PersonAttributes.PASSWORD, sign("knubbeldoppel"));
             UserDataObject userKHA2 = new UserDataObject(map);
             Thread.sleep(MYSQL_SLEEP);  // Provoke mySQL timeout
             userRep.createUser(this.statementCache, userKHA2);
@@ -289,7 +284,6 @@ public class TestDBUserRepository extends BasicTestCase {
 
 		Map map = new HashMap(32);
 		map.put("username", "xxx");
-		map.put(PersonAttributes.PASSWORD, sign("bup"));
 		map.put("userrole", "role1");
 		map.put("initials", "jhiinitials");
 		map.put("givenName", "Jochen");

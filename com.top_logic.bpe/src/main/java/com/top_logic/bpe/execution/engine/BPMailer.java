@@ -89,7 +89,7 @@ public class BPMailer {
 	private List<String> getReceivers() {
 		List<String> adresses = new ArrayList<>();
 		for (PersonContact contact : getReceiverContacts()) {
-			String mail = contact.getMail();
+			String mail = contact.getEMail();
 			if (!StringServices.isEmpty(mail)) {
 				adresses.add(mail);
 			}

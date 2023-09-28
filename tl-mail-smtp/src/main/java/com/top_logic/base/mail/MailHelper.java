@@ -272,14 +272,14 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
      */
     protected String internalGetEmailAddress(Object anObject) {
 		if (anObject instanceof PersonContact) {
-			return ((PersonContact) anObject).getMail();
+			return ((PersonContact) anObject).getEMail();
 		} else if (anObject instanceof ExternalContact) {
 			return ((ExternalContact) anObject).getEMail();
 		} else if (anObject instanceof String) {
             return (String) anObject;
         }
         else if (anObject instanceof UserInterface) {
-			return this.getEmailAddress(((UserInterface) anObject).getMail());
+			return this.getEmailAddress(((UserInterface) anObject).getEMail());
         }
         else if (anObject instanceof Person) {
 			return this.getEmailAddress(((Person) anObject).getInternalMail());

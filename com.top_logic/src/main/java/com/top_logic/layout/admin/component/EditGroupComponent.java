@@ -180,7 +180,7 @@ public class EditGroupComponent extends EditComponent {
         
 		List<Person> possibleMembers = PersonManager.getManager().getAllAlivePersons();
 		SelectField memberField = newSelectField(FORM_FIELD_MEMBERS, possibleMembers, MULTIPLE, members, !IMMUTABLE);
-		memberField.setOptionComparator(new PersonComparator());
+		memberField.setOptionComparator(PersonComparator.getInstance());
 		makeConfigurable(memberField);
 		theFC.addMember(memberField);
         

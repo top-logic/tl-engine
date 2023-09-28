@@ -5,8 +5,8 @@
 		<param name="namePrefix"/>
 		<param name="columnDefinitions">
 			<columns>
-				<column name="givenName"/>
-				<column name="sn"/>
+				<column name="firstname"/>
+				<column name="name"/>
 				<column name="username"
 					visible="false"
 				/>
@@ -49,7 +49,7 @@
 			</columns>
 		</param>
 		<param name="columns"
-			value="sn,givenName"
+			value="firstname,name"
 		/>
 		<param name="fixedColumns"
 			value="0"

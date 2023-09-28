@@ -8,9 +8,9 @@ package com.top_logic.knowledge.gui.layout.person;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.db.DBUserRepository;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.MOStructureImpl;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.infouser.InfoUserConstraint;
 import com.top_logic.layout.ModelSpec;
@@ -84,7 +85,7 @@ public class NewPersonComponent extends AbstractCreateComponent {
     @Override
 	public FormContext createFormContext() {
         FormContext formContext = new FormContext("NewPersonFormContext", getResPrefix());
-		StringField userField = newStringField(PersonAttributes.USER_NAME, 1, _userMO);
+		StringField userField = newStringField(UserInterface.USER_NAME, 1, _userMO);
         userField.setMandatory(true);
         userField.addConstraint(new Constraint() {
             @Override
@@ -111,17 +112,17 @@ public class NewPersonComponent extends AbstractCreateComponent {
         });
         
         formContext.addMember(userField);
-		StringField nameField = newStringField(PersonAttributes.GIVEN_NAME, 0, _userMO);
+		StringField nameField = newStringField(UserInterface.NAME, 0, _userMO);
 		nameField.setMandatory(true);
 		formContext.addMember(nameField);
-		StringField surField = newStringField(PersonAttributes.SUR_NAME, 1, _userMO);
+		StringField surField = newStringField(UserInterface.FIRST_NAME, 1, _userMO);
         surField.setMandatory(true);
         formContext.addMember(surField);
-		formContext.addMember(newStringField(PersonAttributes.TITLE, 0, _userMO));
-		formContext.addMember(newBooleanField(PersonAttributes.RESTRICTED_USER));
+		formContext.addMember(newStringField(UserInterface.TITLE, 0, _userMO));
+		formContext.addMember(newBooleanField(Person.RESTRICTED_USER));
 
 		Collection<?> allWritableDataDevices = TLSecurityDeviceManager.getInstance().getWritableSecurityDeviceIDs();
-        SelectField dataDevicesField = FormFactory.newSelectField(PersonAttributes.DATA_ACCESS_DEVICE_ID, new ArrayList(allWritableDataDevices), false, true, false, new SelectionSizeConstraint(1, 1));
+        SelectField dataDevicesField = FormFactory.newSelectField(Person.DATA_ACCESS_DEVICE_ID, new ArrayList(allWritableDataDevices), false, true, false, new SelectionSizeConstraint(1, 1));
         formContext.addMember(dataDevicesField);
 	    if (allWritableDataDevices.size() == 1) {
 	        dataDevicesField.setAsSingleSelection(allWritableDataDevices.iterator().next());

@@ -6,48 +6,99 @@
  */
 package com.top_logic.base.user;
 
-import com.top_logic.dob.DataObject;
-
+import java.text.Collator;
+import java.util.Comparator;
+import java.util.Locale;
 
 /**
- * Interface for user information in <i>TopLogic</i>.
+ * Additional account information.
  *
  * @author <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
-public interface UserInterface extends DataObject {
+public interface UserInterface {
 
-    /**
-     * getter for username, i.e. the login-name.
-     * As such this is the unique ID of this user  which is the same
-     * as Person::getName() for the according person.
-     * This name / id connects a user to a person ! 
-     * @return the username of this user
-     */
-    public String getUserName ();
+    /** The attribute "username", i.e. login name */
+	String USER_NAME     = "username";
+
+	/** @see #getTitle() */
+	String TITLE = "title";
+
+	/** @see #getName() */
+	String NAME = "name";
+
+	/** @see #getFirstName() */
+	String FIRST_NAME = "firstname";
+
+	/** @see #getEMail() */
+	String EMAIL = "email";
+
+	/** @see #getPhone() */
+	String PHONE = "phone";
+
+	/**
+	 * Login ID of the user.
+	 */
+	String getUserName();
 
     /**
      * the firstname of this user
      */
-    public String getFirstName ();
+	String getFirstName();
+
+	/**
+	 * @see #getFirstName()
+	 */
+	void setFirstName(String value);
 
     /**
-     * the lastname of this user
-     */
-    public String getLastName ();
+	 * The family name the user.
+	 */
+	String getName();
+
+	/**
+	 * @see #getName()
+	 */
+	void setName(String value);
     
 	/**
 	 * The e-mail of the user that the system may send mails to, if the user must be notified.
 	 */
-	public String getMail();
+	String getEMail();
+
+	/**
+	 * @see #getEMail()
+	 */
+	void setEMail(String value);
 
     /**
      * the title of this user
      */
-    public String getTitle ();
+	String getTitle();
+
+	/**
+	 * @see #getTitle()
+	 */
+	void setTitle(String value);
 
     /**
      * the internal number of this user
      */
-    public String getInternalNumber ();
+	String getPhone();
+
+	/**
+	 * @see #getPhone()
+	 */
+	void setPhone(String value);
+
+	/**
+	 * {@link Comparator} establishing a convenient order for the UI.
+	 */
+	public static Comparator<? super UserInterface> comparator(Locale l) {
+		Collator collator = Collator.getInstance(l);
+		return Comparator
+			.comparing(UserInterface::getName, collator)
+			.thenComparing(UserInterface::getFirstName, collator)
+			.thenComparing(UserInterface::getTitle, collator);
+	}
 
 }

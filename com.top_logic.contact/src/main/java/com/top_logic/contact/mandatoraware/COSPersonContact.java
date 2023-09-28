@@ -139,7 +139,7 @@ public class COSPersonContact extends PersonContact implements COSContactConstan
 	   List theResult = new ArrayList();
 	   while (theIt.hasNext()) {
 		   PersonContact thePerson = (PersonContact) theIt.next();
-		   if (aFirstName.equals(thePerson.getValue(ATT_FIRSTNAME))) {
+		   if (aFirstName.equals(thePerson.getValue(FIRST_NAME))) {
 			   theResult.add(thePerson);
 		   }
 	   }

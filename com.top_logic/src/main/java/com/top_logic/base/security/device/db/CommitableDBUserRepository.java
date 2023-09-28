@@ -8,7 +8,7 @@ package com.top_logic.base.security.device.db;
 import java.util.Hashtable;
 import java.util.Iterator;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.PooledConnection;
@@ -122,9 +122,9 @@ public class CommitableDBUserRepository implements Committable {
 	 * @param anUserDO  The user to store in the Repository.
 	 */
 	public void createUser(DataObject anUserDO) throws DataObjectException {
-		this.created.put(anUserDO.getAttributeValue(PersonAttributes.USER_NAME),anUserDO);
-		this.deleted.remove(anUserDO.getAttributeValue(PersonAttributes.USER_NAME));
-		this.changed.remove(anUserDO.getAttributeValue(PersonAttributes.USER_NAME));
+		this.created.put(anUserDO.getAttributeValue(UserInterface.USER_NAME),anUserDO);
+		this.deleted.remove(anUserDO.getAttributeValue(UserInterface.USER_NAME));
+		this.changed.remove(anUserDO.getAttributeValue(UserInterface.USER_NAME));
 	}
 
 	/** 
@@ -133,7 +133,7 @@ public class CommitableDBUserRepository implements Committable {
 	 * the deleted - cache
 	 */
 	public boolean deleteUser(DataObject anUserDO) throws DataObjectException {
-        Object name = anUserDO.getAttributeValue(PersonAttributes.USER_NAME);
+        Object name = anUserDO.getAttributeValue(UserInterface.USER_NAME);
 		this.deleted.put   (name,anUserDO);
 		this.changed.remove(name);
 		this.created.remove(name);
@@ -168,8 +168,8 @@ public class CommitableDBUserRepository implements Committable {
 	 * @param anUserDO - the DO with changed attribute values
 	 */
 	public void updateUser(DataObject anUserDO) throws DataObjectException {
-		if(!this.deleted.containsKey(anUserDO.getAttributeValue(PersonAttributes.USER_NAME))){
-			this.changed.put(anUserDO.getAttributeValue(PersonAttributes.USER_NAME),anUserDO);	
+		if(!this.deleted.containsKey(anUserDO.getAttributeValue(UserInterface.USER_NAME))){
+			this.changed.put(anUserDO.getAttributeValue(UserInterface.USER_NAME),anUserDO);	
 		}
 	
 	}

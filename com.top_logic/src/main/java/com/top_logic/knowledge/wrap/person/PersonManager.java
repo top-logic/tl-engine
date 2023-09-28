@@ -50,6 +50,7 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.dob.DataObject;
 import com.top_logic.dob.persist.DataManager;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryManager;
@@ -583,8 +584,9 @@ public class PersonManager extends ManagedClass {
 			throw new IllegalStateException("Person '" + aName + "' already exists");
 		}
 		if (user == null) {
-			user = DOUser.getInstance(UserService.getNewUserDO(aName));
-			boolean ok = theDataDevice.createUserEntry(user);
+			DataObject newUserData = UserService.getNewUserDO(aName);
+			user = DOUser.getInstance(newUserData);
+			boolean ok = theDataDevice.createUserEntry(newUserData);
 			if (!ok) {
 				throw new TopLogicException(I18NConstants.ERROR_NO_MORE_USERS);
 			}
@@ -1072,7 +1074,7 @@ public class PersonManager extends ManagedClass {
 
 	private void sortPersons(List<Person> persons) {
 		try {
-			Collections.sort(persons, new PersonComparator());
+			Collections.sort(persons, PersonComparator.getInstance());
 		} catch (Exception e) {
 			Logger.error("Failed to sort persons", e, PersonManager.class);
 		}

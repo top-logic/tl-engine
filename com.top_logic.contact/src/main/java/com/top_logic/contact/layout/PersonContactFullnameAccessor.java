@@ -25,7 +25,7 @@ public class PersonContactFullnameAccessor extends ReadOnlyAccessor<PersonContac
      */
     @Override
 	public Object getValue(PersonContact aObject, String aProperty) {
-		return aObject.getName() + ", " + aObject.getValue(PersonContact.ATT_FIRSTNAME);
+		return aObject.getName() + ", " + aObject.getValue(PersonContact.FIRST_NAME);
     }
 
 }

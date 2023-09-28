@@ -24,7 +24,6 @@ import javax.naming.directory.SearchResult;
 
 import com.top_logic.base.security.attributes.GroupAttributes;
 import com.top_logic.base.security.attributes.LDAPAttributes;
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.DeviceMapping;
 import com.top_logic.base.security.device.interfaces.SecurityDevice;
 import com.top_logic.base.security.device.ldap.LDAPDataObject;
@@ -551,7 +550,7 @@ public class LDAPAccessService {
 				try {
 					memberName = null;
 					if (aMemberDO != null) {
-						memberName = (String) aMemberDO.getAttributeValue(PersonAttributes.USER_NAME);
+						memberName = (String) aMemberDO.getAttributeValue(UserInterface.USER_NAME);
 					}
 					if (StringServices.isEmpty(memberName) || !memberName.equals(aName)) {
 						allMembersDNs.remove();

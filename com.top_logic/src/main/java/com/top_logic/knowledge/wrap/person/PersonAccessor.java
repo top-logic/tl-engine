@@ -5,17 +5,12 @@
  */
 package com.top_logic.knowledge.wrap.person;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.top_logic.base.security.attributes.PersonAttributes;
-import com.top_logic.basic.Logger;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.knowledge.wrap.WrapperAccessor;
 import com.top_logic.layout.Accessor;
 
 /**
- * Access to forward all {@link PersonAttributes#PERSON_INFO}s to {@link Person#getUser()}.
+ * Access to all properties ofa a {@link Person}.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
@@ -24,21 +19,32 @@ public class PersonAccessor implements Accessor<Person> {
 	/** Singleton instance to be used. */
 	public static final PersonAccessor INSTANCE = new PersonAccessor();
 
-	/** {@link PersonAttributes#PERSON_INFO} converted to a Set */
-	private static final Set<String> PERSON_INFOS = new HashSet<>(Arrays.asList(PersonAttributes.PERSON_INFO));
-
 	@Override
 	public Object getValue(Person person, String property) {
 		if (!person.tValid()) {
 			return null;
 		}
-		else if (PersonAccessor.PERSON_INFOS.contains(property)) {
-            try {
-				return Person.getUser(person).getAttributeValue(property);
-			} catch (Exception ex) {
-				Logger.error("Failed to get person attribute from user object: " + property, ex, PersonAccessor.class);
-            }
-        }
+
+		switch (property) {
+			case UserInterface.USER_NAME:
+				return person.getName();
+			case UserInterface.NAME:
+				return person.getUser().getFirstName();
+			case UserInterface.FIRST_NAME:
+				return person.getUser().getName();
+			case UserInterface.TITLE:
+				return person.getUser().getTitle();
+			case UserInterface.PHONE:
+				return person.getUser().getPhone();
+			case UserInterface.EMAIL:
+				return person.getUser().getEMail();
+			case Person.LOCALE:
+				return person.getLocale();
+			case Person.DATA_ACCESS_DEVICE_ID:
+				return person.getDataAccessDeviceID();
+			case Person.RESTRICTED_USER:
+				return person.isRestrictedUser();
+		}
 
 		return WrapperAccessor.INSTANCE.getValue(person, property);
     }

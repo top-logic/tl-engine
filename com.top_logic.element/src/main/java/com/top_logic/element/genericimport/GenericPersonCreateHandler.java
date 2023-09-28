@@ -7,7 +7,7 @@ package com.top_logic.element.genericimport;
 
 import java.util.Properties;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.element.genericimport.interfaces.GenericCreateHandler;
 import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 import com.top_logic.knowledge.gui.layout.person.NewPersonCommandHandler;
@@ -31,10 +31,10 @@ public class GenericPersonCreateHandler extends WrapperUpdateHandler implements 
 	public Object createBusinessObject(GenericValueMap aDO, String aFKeyAttr) throws CreateException {
 		{
             String login     = (String) aDO.getAttributeValue(Person.NAME_ATTRIBUTE);
-            String firstName = (String) aDO.getAttributeValue(PersonAttributes.GIVEN_NAME);
-            String lastName  = (String) aDO.getAttributeValue(PersonAttributes.SUR_NAME);
-            String title     = (String) aDO.getAttributeValue(PersonAttributes.TITLE);
-			Boolean isRestricted = (Boolean) aDO.getAttributeValue(PersonAttributes.RESTRICTED_USER);
+            String firstName = (String) aDO.getAttributeValue(UserInterface.NAME);
+            String lastName  = (String) aDO.getAttributeValue(UserInterface.FIRST_NAME);
+            String title     = (String) aDO.getAttributeValue(UserInterface.TITLE);
+			Boolean isRestricted = (Boolean) aDO.getAttributeValue(Person.RESTRICTED_USER);
             
 			Person person =
 				factory.createPerson(login, firstName, lastName, title, "dbSecurity", "dbSecurity", isRestricted);

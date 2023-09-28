@@ -50,19 +50,4 @@ public interface UserInterface extends DataObject {
      */
     public String getInternalNumber ();
 
-    /**
-     * the external number of this user
-     */
-    public String getExternalNumber ();
-
-    /**
-     * the mobile number of this user
-     */
-    public String getMobileNumber ();
-
-    /**
-     * the private number of this user
-     */
-    public String getPrivateNumber ();
-
 }

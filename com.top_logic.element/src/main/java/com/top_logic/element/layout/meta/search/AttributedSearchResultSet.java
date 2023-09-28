@@ -13,6 +13,8 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.knowledge.searching.SearchResultSet;
+import com.top_logic.layout.table.provider.generic.TableConfigModelInfoProvider;
+import com.top_logic.layout.table.provider.generic.TableConfigModelService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 
@@ -52,7 +54,15 @@ public class AttributedSearchResultSet implements SearchResultSet {
         this.result      = new ArrayList<>(aResult.size());
 		_types = types;
         this.messages    = someMessages == null ? Collections.emptyList()         : someMessages;
-        this.columns     = someColumns == null  ? Collections.<String>emptyList() : someColumns;
+		if (someColumns != null) {
+			columns = someColumns;
+		} else {
+			if (types.isEmpty()) {
+				columns = Collections.emptyList();
+			} else {
+				columns = getDefaultColumns(types);
+			}
+		}
 
 		for (TLObject theAttributed : aResult) {
 			if (theAttributed == null) {
@@ -61,6 +71,12 @@ public class AttributedSearchResultSet implements SearchResultSet {
             this.result.add(new AttributedSearchResult(theAttributed));
         }
     }
+
+	private List<String> getDefaultColumns(Set<? extends TLClass> types) {
+		TableConfigModelInfoProvider modelInfoProvider = TableConfigModelService.getInstance().getModelInfoProvider();
+
+		return new ArrayList<>(modelInfoProvider.getModelInfo(types).getMainColumns());
+	}
 
     /**
      * @see com.top_logic.knowledge.searching.SearchResultSet#getSearchMessages()

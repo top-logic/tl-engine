@@ -182,15 +182,9 @@ public class TestComparableFilter extends AbstractLayoutTest {
 
 		view.applyFilterSettings();
 
-		assertResettedPatternAndOperator(filterConfiguration.getPrimaryFilterPattern(), filterConfiguration.getOperator());
-	}
-
-	private void assertResettedPatternAndOperator(Comparable<?> filterPattern, Operators operator) {
-		assertEquals("Filter pattern must be set to null, in case filter has been resetted!", null,
-			filterPattern);
-		assertEquals(
-			"Operator must be resetted to standard, in case filter pattern is set to null!",
-			Operators.EQUALS, operator);
+		assertEquals(null, filterConfiguration.getPrimaryFilterPattern());
+		assertEquals("Operator should stay the same in case filter pattern is set to null.",
+			Operators.GREATER_THAN, filterConfiguration.getOperator());
 	}
 
 	private void setupConfig(Comparable<?> filterPattern, Operators operator) {
@@ -215,9 +209,13 @@ public class TestComparableFilter extends AbstractLayoutTest {
 
 		filter.clearFilterConfiguration();
 
-		ComparableFilterViewFormFields dialogFormFields = getFilterViewFormFields();
-		assertResettedPatternAndOperator((Comparable<?>) dialogFormFields.getPrimaryFilterPatternField().getValue(),
-			(Operators) dialogFormFields.getOperatorField().getSingleSelection());
+		ComparableFilterViewFormFields fields = getFilterViewFormFields();
+		Comparable<?> filterPattern = (Comparable<?>) fields.getPrimaryFilterPatternField().getValue();
+		Operators operator = (Operators) fields.getOperatorField().getSingleSelection();
+
+		assertEquals("Filter pattern must be set to null, in case filter has been resetted!", null, filterPattern);
+		assertEquals("Operator must be resetted to standard, in case filter pattern is set to null!",
+			filterConfiguration.getDefaultOperator(), operator);
 	}
 
 	public static Test suite() {

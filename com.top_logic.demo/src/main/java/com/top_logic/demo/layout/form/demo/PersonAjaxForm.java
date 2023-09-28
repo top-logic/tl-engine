@@ -203,7 +203,7 @@ public class PersonAjaxForm extends EditComponent {
 				return null;
 			}
 			UserInterface user = Person.getUser(p);
-			return user.getInternalMail();
+			return user.getMail();
 		}
 
 	}

@@ -137,7 +137,7 @@ public class DOUser implements UserInterface, PersonAttributes {
      * the internal email of this user
      */
     @Override
-	public String getInternalMail () {
+	public String getMail () {
         try {
             return(String)(internalUser.getAttributeValue (MAIL_NAME));                
         }catch (NoSuchAttributeException nae) {

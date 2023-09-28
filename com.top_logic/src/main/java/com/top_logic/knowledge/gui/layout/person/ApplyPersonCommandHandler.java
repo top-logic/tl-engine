@@ -227,7 +227,6 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
     	this.setAttribute(aPerson, PersonAttributes.MOBILE_NR     , aContext);
     	this.setAttribute(aPerson, PersonAttributes.EXTERNAL_NR   , aContext);
     	this.setAttribute(aPerson, PersonAttributes.PRIVATE_NR    , aContext);
-    	this.setAttribute(aPerson, PersonAttributes.ORG_UNIT      , aContext);
     	this.setAttribute(aPerson, PersonAttributes.MAIL_NAME     , aContext);
     }
     

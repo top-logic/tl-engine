@@ -291,9 +291,6 @@ public class EditPersonComponent extends EditComponent {
 			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.SUR_NAME, false);
             formContext.addMember(FormFactory.newStringField(PersonAttributes.SUR_NAME, false, false, new StringLengthConstraint(1, theSize)));
 
-			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.ORG_UNIT, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.ORG_UNIT, false, false, new StringLengthConstraint(0, theSize))); // used for org unit
-
 			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.MOBILE_NR, false);
             formContext.addMember(FormFactory.newStringField(PersonAttributes.MOBILE_NR, false, false, new StringLengthConstraint(0, theSize)));
             
@@ -349,7 +346,6 @@ public class EditPersonComponent extends EditComponent {
 					formContext.addMember(givenNameField(thePerson, deviceReadonly));
 					formContext.addMember(titleField(thePerson, deviceReadonly));
 					formContext.addMember(surnameField(thePerson, deviceReadonly));
-                	formContext.addMember(newPersonField(PersonAttributes.ORG_UNIT, thePerson.getOrgUnit(), deviceReadonly)); // description used for org unit
 					formContext.addMember(newPersonField(PersonAttributes.MOBILE_NR, thePerson.getMobileNumber(),
 						deviceReadonly));
 					formContext.addMember(newPersonField(PersonAttributes.INTERNAL_NR, thePerson.getInternalNumber(),
@@ -379,10 +375,6 @@ public class EditPersonComponent extends EditComponent {
 								.getLastName());
 					surNameField.setMandatory(true);
 					formContext.addMember(surNameField);
-					formContext
-						.addMember(newSizedFormConstraint(PersonAttributes.ORG_UNIT, deviceReadonly, 0,
-							getSizeForMOAttribute(_userMO, PersonAttributes.ORG_UNIT, deviceReadonly),
-							thePerson.getOrgUnit())); // description used for org unit
 					formContext.addMember(newSizedFormConstraint(PersonAttributes.MOBILE_NR, deviceReadonly, 0,
 						getSizeForMOAttribute(_userMO, PersonAttributes.MOBILE_NR, deviceReadonly),
 						thePerson.getMobileNumber()));

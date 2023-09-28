@@ -505,13 +505,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     }
 
     /**
-     * the organization unit of this user
-     */
-	public String getOrgUnit() {
-		return getUser().getOrgUnit();
-    }
-
-    /**
      * the private number of this user
      */
 	public String getPrivateNumber() {

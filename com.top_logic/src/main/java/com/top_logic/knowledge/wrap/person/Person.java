@@ -425,13 +425,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     }
 
     /**
-     * the external email of this user
-     */
-	public String getExternalMail() {
-		return getUser().getExternalMail();
-    }
-
-    /**
      * the external number of this user
      */
 	public String getExternalNumber() {

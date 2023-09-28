@@ -312,8 +312,6 @@ public class EditPersonComponent extends EditComponent {
 			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.MAIL_NAME, false);
             formContext.addMember(FormFactory.newStringField(PersonAttributes.MAIL_NAME, false, false, new StringLengthConstraint(0, theSize)));
 
-			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.EXTERNAL_MAIL, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.EXTERNAL_MAIL, false, false, new StringLengthConstraint(0, theSize)));
 			restrictedUser = FormFactory.newBooleanField(PersonAttributes.RESTRICTED_USER, Boolean.FALSE, false);
 			formContext.addMember(restrictedUser);
         }
@@ -367,8 +365,6 @@ public class EditPersonComponent extends EditComponent {
 						deviceReadonly));
 					formContext.addMember(newPersonField(PersonAttributes.MAIL_NAME, thePerson.getInternalMail(),
 						deviceReadonly));
-					formContext.addMember(newPersonField(PersonAttributes.EXTERNAL_MAIL, thePerson.getExternalMail(),
-						deviceReadonly));
                 }
                 else {
 					int givenNameSize = getSizeForMOAttribute(_userMO, PersonAttributes.GIVEN_NAME, deviceReadonly);
@@ -410,9 +406,6 @@ public class EditPersonComponent extends EditComponent {
 					formContext.addMember(newSizedFormConstraint(PersonAttributes.MAIL_NAME, deviceReadonly, 0,
 						getSizeForMOAttribute(_userMO, PersonAttributes.MAIL_NAME, deviceReadonly),
 						thePerson.getInternalMail()));
-					formContext.addMember(newSizedFormConstraint(PersonAttributes.EXTERNAL_MAIL, deviceReadonly, 0,
-						getSizeForMOAttribute(_userMO, PersonAttributes.EXTERNAL_MAIL, deviceReadonly),
-						thePerson.getExternalMail()));
                 }
                 formContext.addMember(dataDevicesField);
                 formContext.addMember(authDevicesField);

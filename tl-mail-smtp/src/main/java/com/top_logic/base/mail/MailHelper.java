@@ -279,18 +279,10 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
             return (String) anObject;
         }
         else if (anObject instanceof UserInterface) {
-            String theAddress = this.getEmailAddress(((UserInterface) anObject).getInternalMail());
-            if (! checkAddressFormat(theAddress)) {
-                theAddress = this.getEmailAddress(((UserInterface) anObject).getExternalMail());
-            }
-            return theAddress;
+			return this.getEmailAddress(((UserInterface) anObject).getInternalMail());
         }
         else if (anObject instanceof Person) {
-            String theAddress = this.getEmailAddress(((Person) anObject).getInternalMail());
-            if (! checkAddressFormat(theAddress)) {
-                theAddress = this.getEmailAddress(((Person) anObject).getExternalMail());
-            }
-            return theAddress;
+			return this.getEmailAddress(((Person) anObject).getInternalMail());
         }
         return null;
     }

@@ -7,7 +7,7 @@ package com.top_logic.knowledge.gui.layout.person;
 
 import java.util.Map;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.event.ModelTrackingService;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -37,7 +37,7 @@ public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
 
 	@Override
 	protected void validateAdditional(LayoutComponent component, FormContext formContext, Object model) {
-		Boolean isRestricted = (Boolean) formContext.getField(PersonAttributes.RESTRICTED_USER).getValue();
+		Boolean isRestricted = (Boolean) formContext.getField(Person.RESTRICTED_USER).getValue();
 		if (!LicenseTool.moreUsersAllowed(LicenseTool.getInstance().getLicense(), isRestricted)) {
 			throw new TopLogicException(I18NConstants.ERROR_MAXIMUM_USERS_REACHED);
 		}
@@ -46,12 +46,12 @@ public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
 	@Override
 	public Object createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
 			Map<String, Object> arguments) {
-        String theID           = (String) formContainer.getField(PersonAttributes.USER_NAME) .getValue();
-        String theFirst        = (String) formContainer.getField(PersonAttributes.GIVEN_NAME).getValue();
-        String theSur          = (String) formContainer.getField(PersonAttributes.SUR_NAME)  .getValue();
-        String theTitle        = (String) formContainer.getField(PersonAttributes.TITLE)     .getValue();
-		Boolean isRestricted = (Boolean) formContainer.getField(PersonAttributes.RESTRICTED_USER).getValue();
-        String theDataDeviceID = (String) ((SelectField) formContainer.getField(PersonAttributes.DATA_ACCESS_DEVICE_ID)).getSingleSelection();
+        String theID           = (String) formContainer.getField(UserInterface.USER_NAME) .getValue();
+        String theFirst        = (String) formContainer.getField(UserInterface.NAME).getValue();
+        String theSur          = (String) formContainer.getField(UserInterface.FIRST_NAME)  .getValue();
+        String theTitle        = (String) formContainer.getField(UserInterface.TITLE)     .getValue();
+		Boolean isRestricted = (Boolean) formContainer.getField(Person.RESTRICTED_USER).getValue();
+        String theDataDeviceID = (String) ((SelectField) formContainer.getField(Person.DATA_ACCESS_DEVICE_ID)).getSingleSelection();
 
 		Person thePerson = this.createPerson(theID, theFirst, theSur, theTitle, theDataDeviceID, null, isRestricted);
         this.sendEvent(thePerson);
@@ -65,7 +65,7 @@ public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
 		if (thePerson == null) {
 			throw new TopLogicException(I18NConstants.REFRESH_ACCOUNTS_FAILED);
         }
-		thePerson.setValue(PersonAttributes.RESTRICTED_USER, isRestricted);
+		thePerson.setValue(Person.RESTRICTED_USER, isRestricted);
         return thePerson;
     }
 

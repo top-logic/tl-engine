@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.AbstractAuthenticationAccessDevice;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.base.user.UserDataObject;
@@ -44,6 +43,7 @@ import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.AbstractStartStopListener;
 import com.top_logic.util.TLContext;
@@ -261,7 +261,7 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 				// Extra checks in case the current thread is part of a transaction
 				if(myCommitable != null) {
 				    
-	                String theName = (String) aDO.getAttributeValue(PersonAttributes.USER_NAME);
+	                String theName = (String) aDO.getAttributeValue(UserInterface.USER_NAME);
 
 	                if(myCommitable.isDeleted(theName)){
 	                    it.remove();
@@ -272,7 +272,7 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 	                    aDO = tmpDo;
 	                }
 				}
-				aDO.setAttributeValue(PersonAttributes.DATA_ACCESS_DEVICE_ID,deviceId);
+				aDO.setAttributeValue(Person.DATA_ACCESS_DEVICE_ID,deviceId);
 			}
 		} catch (Exception ex) {
 			Logger.error("Unable to get all users from DBUserreporsitory", ex,
@@ -302,7 +302,7 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 					theResult = null;
 				}
 				if(theResult!=null){
-					theResult.setAttributeValue(PersonAttributes.DATA_ACCESS_DEVICE_ID,this.getDeviceID());
+					theResult.setAttributeValue(Person.DATA_ACCESS_DEVICE_ID,this.getDeviceID());
 				}
 				return DOUser.getInstance(theResult);
 			} catch (Exception e) {
@@ -325,12 +325,12 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 
 	private boolean internalCreate(DataObject anObject) {
 		Boolean isRestricted =
-			(Boolean) ((UserDataObject) anObject).getAttributeValue(PersonAttributes.RESTRICTED_USER);
+			(Boolean) ((UserDataObject) anObject).getAttributeValue(Person.RESTRICTED_USER);
 		if (!LicenseTool.moreUsersAllowed(LicenseTool.getInstance().getLicense(), isRestricted)) {
 			return false;
 		}
 		// just make sure, deviceID of DO reflects this device
-		anObject.setAttributeValue(PersonAttributes.DATA_ACCESS_DEVICE_ID, this.getDeviceID());
+		anObject.setAttributeValue(Person.DATA_ACCESS_DEVICE_ID, this.getDeviceID());
 		CommitableDBUserRepository.getInstance((CommitHandler) _kb, _repository).createUser(anObject);
 		return true;
 	}
@@ -346,8 +346,8 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 		String aName = "";
 		try {
 			aName = (String) anObject
-					.getAttributeValue(PersonAttributes.USER_NAME);
-			anObject.setAttributeValue(PersonAttributes.DATA_ACCESS_DEVICE_ID,this.getDeviceID()); //just make sure, objects deviceId reflects this device
+					.getAttributeValue(UserInterface.USER_NAME);
+			anObject.setAttributeValue(Person.DATA_ACCESS_DEVICE_ID,this.getDeviceID()); //just make sure, objects deviceId reflects this device
 			if (_kb instanceof CommitHandler) {
 				CommitableDBUserRepository.getInstance((CommitHandler) _kb, _repository).updateUser(anObject);
             } else {

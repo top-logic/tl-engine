@@ -11,7 +11,6 @@ import java.util.Random;
 
 import test.com.top_logic.basic.DemoPersonNames;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.contact.business.ContactFactory;
@@ -89,9 +88,9 @@ public class DemoContactGenerator implements DemoPersonNames {
             String firstName, String lastName, int i) {
          String name = "" + lastName.charAt(0) + firstName.charAt(0) + Integer.toString(i);
 			Person p = pmgr.createPerson(name, accessID, authID, Boolean.FALSE);
-         UserInterface user =  Person.getUser(p);
-         user.setAttributeValue(PersonAttributes.SUR_NAME  , lastName );
-         user.setAttributeValue(PersonAttributes.GIVEN_NAME, firstName);
+         UserInterface user =  Person.userOrNull(p);
+			user.setName(lastName);
+			user.setFirstName(firstName);
          return  p;
     }
 

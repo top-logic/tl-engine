@@ -69,83 +69,83 @@
 		<basic:access>
 			<%
 			String message = "";
-			if (request.getParameter("CREATE") != null) {
-				String[] femaleForenames = {"Brigitte", "Heike", "Steffi", "Gabriela",
-					"Sabine", "Barbara", "Claudia", "Maria",
-				"Sandra", "Monika"};
-				String[] maleForenames = {"Heinz", "Herbert", "Dirk", "Steffen",
-					"Siegfried", "Andreas", "Erik", "Christian",
-				"Matthias", "Alexander"};
-				String[] surNames = {"Schmidt", "Krause", "Schubert", "Klein",
-					"Rose", "Schill", "Vogler", "Ganter",
-					"Brunner", "Lehner", "Härtig", "Aßmann",
-					"Baader", "Spallek", "Nagel", "Hochberger",
-				"Pfitzmann", "Petersohn", "Flach", "Meißner"};
-				
-				
-				int testUserAmount = 0;
-				String rawAmountValue = request.getParameter("testUserAmount");
-				if(!StringServices.isEmpty(rawAmountValue)) {
-					testUserAmount = Integer.parseInt(rawAmountValue);
-				}
-				if(testUserAmount > 0) {
-					KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
-					try (Transaction transaction = knowledgeBase.beginTransaction()) {
-						int stop = 0;
-						PersonManager persMan = PersonManager.getManager();
-						boolean addPrefix = "true".equals(request.getParameter("PREFIX"));
-						char[] initialPassword = StringServices.nonNull(request.getParameter("PWD")).toCharArray();
-						int surNameCount = surNames.length;
-						int foreNameCount = femaleForenames.length; // asserts femaleForenames.length == maleForenames.length;
-						for(int i = 0; i < testUserAmount; i++) {
-							stop = i+1;
-							float surNameRandomNumber = (float)Math.random();
-							float foreNameRandomNumber = (float)Math.random();
-							int surNameIndex = Math.round(surNameRandomNumber * (surNameCount-1));
-							String surName = surNames[surNameIndex];
-							int foreNameIndex = Math.round(foreNameRandomNumber * (foreNameCount-1));
-							String foreName;
-							if(foreNameRandomNumber > 0.5) {
-								foreName = maleForenames[foreNameIndex];
+				if (request.getParameter("CREATE") != null) {
+					String[] femaleForenames = {"Brigitte", "Heike", "Steffi", "Gabriela",
+						"Sabine", "Barbara", "Claudia", "Maria",
+					"Sandra", "Monika"};
+					String[] maleForenames = {"Heinz", "Herbert", "Dirk", "Steffen",
+						"Siegfried", "Andreas", "Erik", "Christian",
+					"Matthias", "Alexander"};
+					String[] surNames = {"Schmidt", "Krause", "Schubert", "Klein",
+						"Rose", "Schill", "Vogler", "Ganter",
+						"Brunner", "Lehner", "Härtig", "Aßmann",
+						"Baader", "Spallek", "Nagel", "Hochberger",
+					"Pfitzmann", "Petersohn", "Flach", "Meißner"};
+					
+					
+					int testUserAmount = 0;
+					String rawAmountValue = request.getParameter("testUserAmount");
+					if(!StringServices.isEmpty(rawAmountValue)) {
+						testUserAmount = Integer.parseInt(rawAmountValue);
+					}
+					if(testUserAmount > 0) {
+						KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
+						try (Transaction transaction = knowledgeBase.beginTransaction()) {
+							int stop = 0;
+							PersonManager persMan = PersonManager.getManager();
+							boolean addPrefix = "true".equals(request.getParameter("PREFIX"));
+							char[] initialPassword = StringServices.nonNull(request.getParameter("PWD")).toCharArray();
+							int surNameCount = surNames.length;
+							int foreNameCount = femaleForenames.length; // asserts femaleForenames.length == maleForenames.length;
+							for(int i = 0; i < testUserAmount; i++) {
+								stop = i+1;
+								float surNameRandomNumber = (float)Math.random();
+								float foreNameRandomNumber = (float)Math.random();
+								int surNameIndex = Math.round(surNameRandomNumber * (surNameCount-1));
+								String surName = surNames[surNameIndex];
+								int foreNameIndex = Math.round(foreNameRandomNumber * (foreNameCount-1));
+								String foreName;
+								if(foreNameRandomNumber > 0.5) {
+									foreName = maleForenames[foreNameIndex];
+								}
+								else {
+									foreName = femaleForenames[foreNameIndex];
+								}
+								Person person = persMan.createPerson(createUserName(addPrefix, foreName, surName), "dbSecurity", null, false);
+								Person.userOrNull(person).setAttributeValue(PersonAttributes.GIVEN_NAME, foreName);
+								Person.userOrNull(person).setAttributeValue(PersonAttributes.SUR_NAME, surName);
+								if (initialPassword.length > 0) {
+									PasswordManager.getInstance().setPassword(LoginCredentials.fromUserAndPassword(person, initialPassword));
+								}
+								PersonContact pc = PersonContact.getPersonContact(person);
+								pc.copyPersonAttributesToContact(person);
 							}
-							else {
-								foreName = femaleForenames[foreNameIndex];
-							}
-							Person person = persMan.createPerson(createUserName(addPrefix, foreName, surName), "dbSecurity", null, false);
-							Person.getUser(person).setAttributeValue(PersonAttributes.GIVEN_NAME, foreName);
-							Person.getUser(person).setAttributeValue(PersonAttributes.SUR_NAME, surName);
-							if (initialPassword.length > 0) {
-								PasswordManager.getInstance().setPassword(LoginCredentials.fromUserAndPassword(person, initialPassword));
-							}
-							PersonContact pc = PersonContact.getPersonContact(person);
-							pc.copyPersonAttributesToContact(person);
+							transaction.commit();
+							message = "Created " + stop + " user";
+							message = message + (StringServices.isEmpty(initialPassword) ? "" : " with initial password '" + new String(initialPassword) + "'");
+							message = message + (addPrefix ? " with prefixed username." : ".");
+							} catch (Exception ex) {
+							message = "ERROR: " + ex.getLocalizedMessage();
 						}
-						transaction.commit();
-						message = "Created " + stop + " user";
-						message = message + (StringServices.isEmpty(initialPassword) ? "" : " with initial password '" + new String(initialPassword) + "'");
-						message = message + (addPrefix ? " with prefixed username." : ".");
-						} catch (Exception ex) {
-						message = "ERROR: " + ex.getLocalizedMessage();
 					}
 				}
-			}
-			
-			else if (request.getParameter("DELETE_ALL") != null) {
-				int delCount = 0;
-				PersonManager persMan = PersonManager.getManager();
-				KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
-				Transaction transaction = knowledgeBase.beginTransaction();
-				List<Person> persons = persMan.getAllPersonsList();
-				for(Person person : persons) {
-					if(Person.getUser(person).getUserName().startsWith(testUserPrefix)) {
-						delCount++;
-						persMan.deleteUser(person);
-						person.tDelete();
+				
+				else if (request.getParameter("DELETE_ALL") != null) {
+					int delCount = 0;
+					PersonManager persMan = PersonManager.getManager();
+					KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
+					Transaction transaction = knowledgeBase.beginTransaction();
+					List<Person> persons = persMan.getAllPersonsList();
+					for(Person person : persons) {
+						if(Person.userOrNull(person).getUserName().startsWith(testUserPrefix)) {
+							delCount++;
+							persMan.deleteUser(person);
+							person.tDelete();
+						}
 					}
+					transaction.commit();
+					message = "Deleted "+delCount+" user with prefixed username.";
 				}
-				transaction.commit();
-				message = "Deleted "+delCount+" user with prefixed username.";
-			}
 			%>
 			<h1>
 				Test User Generator

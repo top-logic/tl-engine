@@ -202,8 +202,8 @@ public class PersonAjaxForm extends EditComponent {
 			if (p == null) {
 				return null;
 			}
-			UserInterface user = Person.getUser(p);
-			return user.getMail();
+			UserInterface user = Person.userOrNull(p);
+			return user.getEMail();
 		}
 
 	}

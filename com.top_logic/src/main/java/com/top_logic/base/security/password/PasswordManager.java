@@ -12,7 +12,6 @@ import java.util.List;
 
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.db.DBUserRepository;
 import com.top_logic.base.security.password.PasswordValidator.ValidationResult;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
@@ -23,7 +22,6 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.dob.DataObject;
 import com.top_logic.knowledge.wrap.person.Person;
 
 
@@ -106,12 +104,10 @@ public class PasswordManager extends AbstractConfiguredInstance<PasswordManager.
             return false;
         }
 		try {
-			DataObject userData = Person.getUser(account);
 			/* returns pass signed with leading '#', or the initial password hash */
-			String theOldPwd = (String) userData.getAttributeValue(PersonAttributes.PASSWORD);
+			String theOldPwd = getPasswordHash(account);
 
-			userData.setAttributeValue(PersonAttributes.PASSWORD,
-				PasswordHashingService.getInstance().createHash(password));
+			setPasswordHash(account, PasswordHashingService.getInstance().createHash(password));
 
 			if (!DBUserRepository.NO_PASSWORD.equals(theOldPwd)) {
 				addPwdToHistory(account, theOldPwd);
@@ -123,6 +119,38 @@ public class PasswordManager extends AbstractConfiguredInstance<PasswordManager.
 			Logger.error("Failed to set new password.", e, PasswordManager.class);
 		}
         return false;
+	}
+
+	/**
+	 * The currently stored password hash for the given account.
+	 *
+	 * @param account
+	 *        The account whose password should be checked.
+	 * @return The password hash for the given account, or <code>null</code>, if the account cannot
+	 *         log in with a password.
+	 */
+	public String getPasswordHash(Person account) {
+		// TODO: Automatically created
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * Updates the password hash of the given account.
+	 * 
+	 * <p>
+	 * Note: Must be called in a transaction context.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account to assign a new password to.
+	 * @param hash
+	 *        The new password hash for the given account.
+	 * 
+	 * @see #getPasswordHash(Person)
+	 */
+	public void setPasswordHash(Person account, String hash) {
+		// TODO: Automatically created
+		throw new UnsupportedOperationException();
 	}
 
 	/**

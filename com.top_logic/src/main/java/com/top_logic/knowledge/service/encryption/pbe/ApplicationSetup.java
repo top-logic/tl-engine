@@ -8,36 +8,23 @@ package com.top_logic.knowledge.service.encryption.pbe;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.top_logic.base.security.attributes.PersonAttributes;
 import com.top_logic.base.security.device.db.DBUserRepository;
-import com.top_logic.base.security.util.SignatureService;
-import com.top_logic.base.security.util.SignatureService.Module;
-import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
-import com.top_logic.basic.encryption.EncryptionService;
 import com.top_logic.basic.module.ModuleException;
-import com.top_logic.basic.module.ModuleUtil;
-import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
-import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.DBOperation;
 import com.top_logic.basic.version.Version;
-import com.top_logic.dob.DataObject;
-import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.knowledge.objects.meta.DefaultMOFactory;
@@ -58,7 +45,7 @@ import com.top_logic.util.TLContext;
 public class ApplicationSetup {
 
 	private enum Phase {
-		KEY_INPUT, PASSWORD_INPUT, USER_SETUP, FINISHED
+		KEY_INPUT, PASSWORD_INPUT, FINISHED
 	}
 
 	private final ServletContext _application;
@@ -155,51 +142,12 @@ public class ApplicationSetup {
 			phase(Phase.FINISHED);
 			return;
 		}
-		
-		phase(Phase.USER_SETUP);
-		
-		final DBUserRepository userRepository = newDBUserRepository();
-		final List<UserInterface> userDatas =
-			TLContext.inSystemContext(this.getClass(), new Computation<List<UserInterface>>() {
-			@Override
-			public List<UserInterface> run() {
-				try {
-					return userRepository.getAllUsers(ConnectionPoolRegistry.getDefaultConnectionPool());
-				} catch (SQLException ex) {
-					return Collections.emptyList();
-				}
-			}
-		});
-		
-		boolean missingPassword = false;
-		_accounts = new LinkedHashMap<>();
-		for (DataObject userData : userDatas) {
-			Account user = new Account((String) userData.getAttributeValue(PersonAttributes.USER_NAME));
-
-			user.setPassword(param("password-" + user.getId()));
-			user.setPasswordTwice(param("passwordTwice-" + user.getId()));
-
-			if (user.hasPassword()) {
-				if (!user.hasMatchingPasswords()) {
-					_errorPasswordMissmatch = true;
-				}
-			} else {
-				missingPassword = true;
-			}
-
-			_accounts.put(user.getId(), user);
-		}
-
-		if (missingPassword || errorPasswordMissmatch()) {
-			return;
-		}
 
 		TLContext.inSystemContext(ApplicationSetup.class, new DBOperation() {
 			@Override
 			protected void update(PooledConnection connection) throws ModuleException, InvalidPasswordException, SQLException {
 				{
 					installKey(connection);
-					setupUserPasswords(connection);
 				}
 			}
 
@@ -209,36 +157,6 @@ public class ApplicationSetup {
 
 				// Starting the encryption service requires the encryption key to be set up.
 				connection.commit();
-			}
-
-			private void setupUserPasswords(PooledConnection connection)
-					throws ModuleException, InvalidPasswordException,
-					DataObjectException, SQLException {
-
-				// Temporarily start the encryption service to be able to sign passwords.
-				PasswordBasedEncryptionService.startUp(getNewPassword().toCharArray());
-				try {
-					ModuleUtil modules = ModuleUtil.INSTANCE;
-					Module signatureModule = SignatureService.Module.INSTANCE;
-					modules.startUp(signatureModule);
-					try {
-						SignatureService signatureService = SignatureService.getInstance();
-			
-						for (DataObject userData : userDatas) {
-							String userName = (String) userData.getAttributeValue(PersonAttributes.USER_NAME);
-							Account user = getAccount(userName);
-							String password = user.getPassword();
-							String signedPassword = signatureService.sign(password);
-							userData.setAttributeValue(PersonAttributes.PASSWORD, signedPassword);
-			
-							userRepository.updateUser(connection, userData);
-						}
-					} finally {
-						modules.shutDown(signatureModule);
-					}
-				} finally {
-					EncryptionService.stop();
-				}
 			}
 		}).reportProblem();
 
@@ -409,14 +327,6 @@ public class ApplicationSetup {
 	@CalledFromJSP
 	public boolean phasePasswordInput() {
 		return phase() == Phase.PASSWORD_INPUT;
-	}
-
-	/**
-	 * Whether the setup is initializing accounts.
-	 */
-	@CalledFromJSP
-	public boolean phaseUserSetup() {
-		return phase() == Phase.USER_SETUP;
 	}
 
 	/**

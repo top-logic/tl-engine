@@ -20,6 +20,9 @@ import com.top_logic.contact.business.PersonContact;
 import com.top_logic.knowledge.gui.layout.person.EditPersonComponent;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.util.TLContext;
 
 /**
  * The EditRelatedPersonComponent contains additional a related {@link PersonContact}
@@ -27,7 +30,6 @@ import com.top_logic.layout.form.model.FormContext;
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
-@Deprecated
 public class EditRelatedPersonComponent extends EditPersonComponent {
 
 	/**
@@ -41,8 +43,12 @@ public class EditRelatedPersonComponent extends EditPersonComponent {
 		boolean getAllowManualContactAssigning();
 	}
 
+	/** The related person contact for the person. */
+	public static final String FIELD_NAME_RELATED_CONTACT = "correspondingContact";
+
     /** If <code>true</code>, super user can change the person contact of an account. */
     private final boolean allowManualContactAssigning;
+
 
 	/**
 	 * Creates a new {@link EditRelatedPersonComponent}.
@@ -74,6 +80,22 @@ public class EditRelatedPersonComponent extends EditPersonComponent {
             	}
             	return theResult;
             }};
+
+		boolean immutable = !allowManualContactAssigning || !TLContext.isAdmin();
+		SelectField relatedContactField =
+			FormFactory.newSelectField(FIELD_NAME_RELATED_CONTACT, allContacts, false, immutable);
+
+		if (this.getModel() != null) {
+			Person thePerson = (Person) this.getModel();
+			{
+				PersonContact contactForPerson = ContactFactory.getInstance().getContactForPerson(thePerson);
+
+				if (contactForPerson != null) {
+					relatedContactField.setAsSingleSelection(contactForPerson);
+				}
+			}
+		}
+		formContext.addMember(relatedContactField);
 
         return formContext;
     }

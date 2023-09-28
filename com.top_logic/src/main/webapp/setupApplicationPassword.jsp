@@ -218,53 +218,6 @@ try {
 							<%
 						}
 						%>
-						
-						<%
-						if (model.phaseUserSetup()) {
-							for (Account user : model.getAccounts()) {
-								%>
-								<basic:fieldset>
-									<basic:legend>
-										<basic:text i18n="tl.setup.legendUserPassword"/>
-										<basic:text value="<%=user.getId()%>"/>
-									</basic:legend>
-
-									<p>
-										<div>
-											<basic:text i18n="tl.setup.userPassword"/>
-										</div>
-										<div>
-											<input name="password-<%=TagUtil.encodeXMLAttribute(user.getId()) %>"
-												autocomplete="off"
-												type="password"
-											/>
-										</div>
-									</p>
-
-									<p>
-										<div>
-											<basic:text i18n="tl.setup.retypeUserPassword"/>
-										</div>
-										<div>
-											<input name="passwordTwice-<%=TagUtil.encodeXMLAttribute(user.getId()) %>"
-												autocomplete="off"
-												type="password"
-											/>
-										</div>
-									</p>
-								</basic:fieldset>
-								<%
-							}
-							%>
-							<div>
-								<input
-									type="submit"
-									value="<%=TextTag.attributeText(ResKey.legacy("tl.setup.buttonFinishSetup")) %>"
-								/>
-							</div>
-							<%
-						}
-						%>
 					</form>
 				</div>
 			</div>

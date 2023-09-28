@@ -27,7 +27,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-element</artifactId>
+      <artifactId>tl-model-search</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

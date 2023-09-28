@@ -305,6 +305,7 @@
 					
 					<method name="translate" class="com.top_logic.model.search.expr.config.operations.string.Translate$Builder"/>
 					<method name="internationalize" class="com.top_logic.model.search.expr.config.operations.string.Internationalize$Builder"/>
+					<method name="localize" class="com.top_logic.model.search.expr.config.operations.string.Localize$Builder"/>
 
 					<method name="binary" class="com.top_logic.model.search.expr.config.operations.binary.Binary$Builder"/>
 					<method name="zipArchive" class="com.top_logic.model.search.expr.config.operations.binary.ZipArchive$Builder"/>

@@ -291,17 +291,8 @@ public class EditPersonComponent extends EditComponent {
 			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.SUR_NAME, false);
             formContext.addMember(FormFactory.newStringField(PersonAttributes.SUR_NAME, false, false, new StringLengthConstraint(1, theSize)));
 
-			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.MOBILE_NR, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.MOBILE_NR, false, false, new StringLengthConstraint(0, theSize)));
-            
 			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.INTERNAL_NR, false);
             formContext.addMember(FormFactory.newStringField(PersonAttributes.INTERNAL_NR, false, false, new StringLengthConstraint(0, theSize)));
-
-			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.EXTERNAL_NR, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.EXTERNAL_NR, false, false, new StringLengthConstraint(0, theSize)));
-
-			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.PRIVATE_NR, false);
-            formContext.addMember(FormFactory.newStringField(PersonAttributes.PRIVATE_NR, false, false, new StringLengthConstraint(0, theSize)));
 
 			theSize = getSizeForMOAttribute(_userMO, PersonAttributes.MAIL_NAME, false);
             formContext.addMember(FormFactory.newStringField(PersonAttributes.MAIL_NAME, false, false, new StringLengthConstraint(0, theSize)));
@@ -346,13 +337,7 @@ public class EditPersonComponent extends EditComponent {
 					formContext.addMember(givenNameField(thePerson, deviceReadonly));
 					formContext.addMember(titleField(thePerson, deviceReadonly));
 					formContext.addMember(surnameField(thePerson, deviceReadonly));
-					formContext.addMember(newPersonField(PersonAttributes.MOBILE_NR, thePerson.getMobileNumber(),
-						deviceReadonly));
 					formContext.addMember(newPersonField(PersonAttributes.INTERNAL_NR, thePerson.getInternalNumber(),
-						deviceReadonly));
-					formContext.addMember(newPersonField(PersonAttributes.EXTERNAL_NR, thePerson.getExternalNumber(),
-						deviceReadonly));
-					formContext.addMember(newPersonField(PersonAttributes.PRIVATE_NR, thePerson.getPrivateNumber(),
 						deviceReadonly));
 					formContext.addMember(newPersonField(PersonAttributes.MAIL_NAME, thePerson.getInternalMail(),
 						deviceReadonly));
@@ -375,18 +360,9 @@ public class EditPersonComponent extends EditComponent {
 								.getLastName());
 					surNameField.setMandatory(true);
 					formContext.addMember(surNameField);
-					formContext.addMember(newSizedFormConstraint(PersonAttributes.MOBILE_NR, deviceReadonly, 0,
-						getSizeForMOAttribute(_userMO, PersonAttributes.MOBILE_NR, deviceReadonly),
-						thePerson.getMobileNumber()));
 					formContext.addMember(newSizedFormConstraint(PersonAttributes.INTERNAL_NR, deviceReadonly, 0,
 						getSizeForMOAttribute(_userMO, PersonAttributes.INTERNAL_NR, deviceReadonly),
 						thePerson.getInternalNumber()));
-					formContext.addMember(newSizedFormConstraint(PersonAttributes.EXTERNAL_NR, deviceReadonly, 0,
-						getSizeForMOAttribute(_userMO, PersonAttributes.EXTERNAL_NR, deviceReadonly),
-						thePerson.getExternalNumber()));
-					formContext.addMember(newSizedFormConstraint(PersonAttributes.PRIVATE_NR, deviceReadonly, 0,
-						getSizeForMOAttribute(_userMO, PersonAttributes.PRIVATE_NR, deviceReadonly),
-						thePerson.getPrivateNumber()));
 					formContext.addMember(newSizedFormConstraint(PersonAttributes.MAIL_NAME, deviceReadonly, 0,
 						getSizeForMOAttribute(_userMO, PersonAttributes.MAIL_NAME, deviceReadonly),
 						thePerson.getInternalMail()));

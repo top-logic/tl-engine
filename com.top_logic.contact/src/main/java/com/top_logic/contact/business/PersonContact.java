@@ -230,8 +230,6 @@ public class PersonContact extends AbstractContact {
                 this.setValue(ATT_FIRSTNAME      ,fName);
                 this.setValue(ATT_TITLE          ,myPerson.getTitle());
                 this.setValue(ATT_MAIL           ,myPerson.getInternalMail());
-                this.setValue(ATT_PHONE_MOBILE   ,myPerson.getMobileNumber());
-                this.setValue(ATT_PHONE_PRIVATE  ,myPerson.getPrivateNumber());
                 this.setValue(ATT_PHONE_OFFICE   ,myPerson.getInternalNumber());
             }
             catch (Exception ex) {

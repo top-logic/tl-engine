@@ -418,13 +418,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     }
     
     /**
-     * the external number of this user
-     */
-	public String getExternalNumber() {
-		return getUser().getExternalNumber();
-    }
-
-    /**
      * the firstname of this user
      */
 	public String getFirstName() {
@@ -495,20 +488,6 @@ public class Person extends AbstractBoundWrapper implements Author {
      */
 	public String getLastName() {
 		return getUser().getLastName();
-    }
-
-    /**
-     * the mobile number of this user
-     */
-	public String getMobileNumber() {
-		return getUser().getMobileNumber();
-    }
-
-    /**
-     * the private number of this user
-     */
-	public String getPrivateNumber() {
-		return getUser().getPrivateNumber();
     }
 
     /**

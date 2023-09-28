@@ -224,9 +224,6 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
      */
 	protected void updateUserFields(Person aPerson, FormContext aContext) {
     	this.setAttribute(aPerson, PersonAttributes.INTERNAL_NR   , aContext);
-    	this.setAttribute(aPerson, PersonAttributes.MOBILE_NR     , aContext);
-    	this.setAttribute(aPerson, PersonAttributes.EXTERNAL_NR   , aContext);
-    	this.setAttribute(aPerson, PersonAttributes.PRIVATE_NR    , aContext);
     	this.setAttribute(aPerson, PersonAttributes.MAIL_NAME     , aContext);
     }
     

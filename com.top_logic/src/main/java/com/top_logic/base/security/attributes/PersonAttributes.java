@@ -34,15 +34,6 @@ public interface PersonAttributes extends LDAPAttributes {
     /** The attribute "internal number". */
     public static final String INTERNAL_NR   = "telephoneNumber";
 
-    /** The attribute "external number". */
-    public static final String EXTERNAL_NR   = "otherTelephone";
-
-    /** The attribute "mobile number". */
-    public static final String MOBILE_NR     = "mobile";
-
-    /** The attribute "private number". */
-    public static final String PRIVATE_NR    = "privateNumber";
-
     /** The attribute "locale". */
     public static final String LOCALE        = "locale";
     
@@ -62,7 +53,6 @@ public interface PersonAttributes extends LDAPAttributes {
     public static final String [] PERSON_INFO = {
 		USER_NAME, GIVEN_NAME,
 		SUR_NAME, TITLE, INTERNAL_NR,
-            MOBILE_NR, EXTERNAL_NR,     PRIVATE_NR,
 		MAIL_NAME, OBJECT_CLASS,
 		LOCALE, PASSWORD, DATA_ACCESS_DEVICE_ID, RESTRICTED_USER
     };

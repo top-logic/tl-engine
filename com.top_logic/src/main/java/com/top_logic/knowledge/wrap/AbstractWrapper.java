@@ -57,7 +57,7 @@ import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 /**
  * Basic class for all wrappers.
  * 
- * Serializable will only work for valid objetcs when writing.
+ * Serializable will only work for valid objects when writing.
  * Reading will not work when using custom WrapperFactories,
  * or when Knowledgebase has changed meanwhile.
  *

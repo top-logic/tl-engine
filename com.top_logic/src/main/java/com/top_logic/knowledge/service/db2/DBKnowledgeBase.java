@@ -1612,7 +1612,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 				if (results.hasNext()) {
 					throw new IllegalStateException(
 						"There is more than one object in table '" + typeName + "' with value '" + value
-							+ "' in attribute '" + attrName + "', only one such objet is expected.");
+							+ "' in attribute '" + attrName + "', only one such object is expected.");
 				}
 				return result;
 			} else {

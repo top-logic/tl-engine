@@ -5,9 +5,9 @@
 		value="/mimetypes/tl/StoredQuery.png"
 	/>
 	<icon name="tl-model-search.command.updateSearchConsole"
-		value="css:fas fa-save"
+		value="colored:fas fa-database overlay-export"
 	/>
 	<icon name="tl-model-search.command.executeSearchConsole"
-		value="css:fas fa-search"
+		value="css:fas fa-play"
 	/>
 </settings>

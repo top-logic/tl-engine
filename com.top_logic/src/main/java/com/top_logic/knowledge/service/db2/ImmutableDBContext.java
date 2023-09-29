@@ -10,7 +10,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.message.Message;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.DataObjectException;
@@ -61,8 +63,7 @@ public class ImmutableDBContext extends DBContext {
 	}
 
 	private IllegalStateException unmodifiable(Object... args) {
-		throw new IllegalStateException("This context '" + this + "' is not modifiable: calling arguments: "
-			+ Arrays.deepToString(args) + ".");
+		throw new I18NRuntimeException(I18NConstants.ACCESS_TO_IMMUTABLE_CONTEXT__ARGS.fill(Arrays.deepToString(args)));
 	}
 
 	@Override
@@ -122,7 +123,7 @@ public class ImmutableDBContext extends DBContext {
 
 	@Override
 	void putNewObjects(Iterable<? extends DBKnowledgeItem> items) {
-		throw unmodifiable(items);
+		throw unmodifiable((Object[]) CollectionUtil.toList(items).toArray(new DBKnowledgeItem[0]));
 	}
 
 	@Override

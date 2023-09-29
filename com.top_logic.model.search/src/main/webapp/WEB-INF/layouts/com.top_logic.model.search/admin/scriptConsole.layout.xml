@@ -18,7 +18,6 @@
 						/>
 						<button id="updateSearchConsole"
 							class="com.top_logic.model.search.providers.ScriptConsoleHandler"
-							clique="additional-apply"
 							group="Write"
 							image="theme:tl-model-search.command.updateSearchConsole"
 							script-component="SearchComponent"

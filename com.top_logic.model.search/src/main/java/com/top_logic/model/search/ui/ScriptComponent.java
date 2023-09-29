@@ -18,6 +18,7 @@ import com.top_logic.element.layout.meta.search.AttributedSearchResultSet;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.TypedChannelSPI;
@@ -67,14 +68,25 @@ public class ScriptComponent extends BoundLayout {
 	}
 
 	/**
-	 * Executes the given model based search model part and propagates the result on the
-	 * corresponding channel.
+	 * Executes the given {@link SearchExpression} and propagates the result on the
+	 * {@link #getResultChannel() result} channel.
 	 * 
 	 * @param expression
 	 *        Search model.
+	 * @param withCommit
+	 *        Whether data changes made by the expression are allowed. If changes are made, they are
+	 *        stored. Otherwise executing the expression fails.
 	 */
-	public void search(SearchExpression expression) {
-		Collection<?> results = getResults(expression);
+	public void execute(SearchExpression expression, boolean withCommit) {
+		Collection<?> results;
+		if (withCommit) {
+			try (Transaction tx = kb().beginTransaction()) {
+				results = getResults(expression);
+				tx.commit();
+			}
+		} else {
+			results = kb().withoutModifications(() -> getResults(expression));
+		}
 
 		Set<TLClass> searchedTypes = SearchUtil.getSearchedTypes(expression);
 		if (searchedTypes.isEmpty() && !results.isEmpty()) {
@@ -116,7 +128,7 @@ public class ScriptComponent extends BoundLayout {
 	}
 
 	private Collection<?> getResults(SearchExpression expression) {
-		KnowledgeBase defaultKnowledgeBase = PersistencyLayer.getKnowledgeBase();
+		KnowledgeBase defaultKnowledgeBase = kb();
 		TLModel defaultTLModel = ModelService.getApplicationModel();
 		Object result = QueryExecutor.compile(defaultKnowledgeBase, defaultTLModel, expression).execute();
 
@@ -125,6 +137,10 @@ public class ScriptComponent extends BoundLayout {
 		} else {
 			return Collections.singleton(result);
 		}
+	}
+
+	private KnowledgeBase kb() {
+		return PersistencyLayer.getKnowledgeBase();
 	}
 
 }

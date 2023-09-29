@@ -89,15 +89,19 @@ $item;
 }]]></value>
 					</value>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-					command-label="Script ausführen"
-					command-name="executeSearchConsole"
-					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
+					expected-failure-message="Unzulässiger Änderungszugriff. Derzeit sind keine Änderungen erlaubt. Argumente: []"
 				>
-					<arguments/>
+					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+						command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+						command-label="Script ausführen"
+						command-name="executeSearchConsole"
+						component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+						component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+						user-id="root"
+					>
+						<arguments/>
+					</failure-action>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
 					user-id="root"

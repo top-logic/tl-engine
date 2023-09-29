@@ -232,7 +232,7 @@ public class SearchSelectorComponent extends ExpressionSelectorComponent<SearchE
 
 					HandlerResult result = ((SearchExpressionEditor) child).search(expr -> {
 						if (expr != null) {
-							searchComponent.search(expr);
+							searchComponent.execute(expr, false);
 						}
 						return HandlerResult.DEFAULT_RESULT;
 					});

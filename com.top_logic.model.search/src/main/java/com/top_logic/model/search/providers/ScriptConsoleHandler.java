@@ -9,7 +9,6 @@ import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -66,22 +65,13 @@ public class ScriptConsoleHandler extends AbstractCommandHandler {
 	@Override
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
-		HandlerResult result;
-		if (config().isWithCommit()) {
-			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-				result = search(aComponent);
-				tx.commit();
-			}
-		} else {
-			result = search(aComponent);
-		}
-		return result;
+		return search(aComponent);
 	}
 
 	private HandlerResult search(LayoutComponent searchEditor) {
 		return ((SearchExpressionEditor) searchEditor).search(expr -> {
 			if (expr != null) {
-				_scriptComponent.search(expr);
+				_scriptComponent.execute(expr, config().isWithCommit());
 			}
 			return HandlerResult.DEFAULT_RESULT;
 		});

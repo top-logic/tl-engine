@@ -205,7 +205,7 @@
 			>
 				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Modellbasierte Suche > Suchergebnis"
+						tab-path="Modellbasierte Suche > Ergebnis"
 					/>
 					<path>
 						<named-member name="result"/>

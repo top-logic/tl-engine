@@ -2824,14 +2824,7 @@
 					user-id="root"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Modellbasierte Suche"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Modellbasierte Suche > Expert"
+						tab-path="Administration > Development > Script Konsole"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -2841,7 +2834,7 @@
 						label="Suchausdruck"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Modellbasierte Suche > Expert"
+							tab-path="Administration > Development > Script Konsole > Editor"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -2856,11 +2849,11 @@
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
-					command-label="Suchergebnisse aktualisieren"
-					command-name="refreshSearch"
-					component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
-					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen und Änderungen speichern"
+					command-name="updateSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
 					user-id="root"
 				>
 					<arguments/>
@@ -2875,8 +2868,7 @@
 					>
 						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
-								tab-path="Modellbasierte Suche"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
 							<path>
 								<named-member name="result"/>
@@ -2986,7 +2978,7 @@
 					user-id="root"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Modellbasierte Suche"
+						tab-path="Administration > Development > Script Konsole"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -2996,7 +2988,7 @@
 						label="Suchausdruck"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Modellbasierte Suche > Expert"
+							tab-path="Administration > Development > Script Konsole > Editor"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -3007,11 +2999,11 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","boolean","long"]);
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
-					command-label="Suchergebnisse aktualisieren"
-					command-name="refreshSearch"
-					component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
-					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen und Änderungen speichern"
+					command-name="updateSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
 					user-id="root"
 				>
 					<arguments/>
@@ -3026,8 +3018,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","boolean","long"]);
 					>
 						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
-								tab-path="Modellbasierte Suche"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
 							<path>
 								<named-member name="result"/>
@@ -3102,7 +3093,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","boolean","long"]);
 					user-id="root"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Modellbasierte Suche"
+						tab-path="Administration > Development > Script Konsole"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -3112,7 +3103,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","boolean","long"]);
 						label="Suchausdruck"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Modellbasierte Suche > Expert"
+							tab-path="Administration > Development > Script Konsole > Editor"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -3123,11 +3114,11 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
-					command-label="Suchergebnisse aktualisieren"
-					command-name="refreshSearch"
-					component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
-					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
 					user-id="root"
 				>
 					<arguments/>
@@ -3142,8 +3133,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 					>
 						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
-								tab-path="Modellbasierte Suche"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
 							<path>
 								<named-member name="result"/>
@@ -3164,7 +3154,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 						label="Suchausdruck"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Modellbasierte Suche > Expert"
+							tab-path="Administration > Development > Script Konsole > Editor"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -3172,11 +3162,11 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
-					command-label="Suchergebnisse aktualisieren"
-					command-name="refreshSearch"
-					component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
-					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen und Änderungen speichern"
+					command-name="updateSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
 					user-id="root"
 				>
 					<arguments/>
@@ -3191,8 +3181,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 					>
 						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
-								tab-path="Modellbasierte Suche"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
 							<path>
 								<named-member name="result"/>
@@ -3245,7 +3234,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 						label="Suchausdruck"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Modellbasierte Suche > Expert"
+							tab-path="Administration > Development > Script Konsole > Editor"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -3253,11 +3242,11 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
-					command-label="Suchergebnisse aktualisieren"
-					command-name="refreshSearch"
-					component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
-					component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen und Änderungen speichern"
+					command-name="updateSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
 					user-id="root"
 				>
 					<arguments/>
@@ -3272,8 +3261,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 					>
 						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
-								tab-path="Modellbasierte Suche"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
 							<path>
 								<named-member name="result"/>
@@ -3590,7 +3578,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Modellbasierte Suche"
+								tab-path="Administration > Development > Script Konsole"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -3600,7 +3588,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 								label="Suchausdruck"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Modellbasierte Suche > Expert"
+									tab-path="Administration > Development > Script Konsole > Editor"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -3608,11 +3596,11 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 							</value>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
-							command-label="Suchergebnisse aktualisieren"
-							command-name="refreshSearch"
-							component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
-							component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+							command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							command-label="Script ausführen"
+							command-name="executeSearchConsole"
+							component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+							component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
 							user-id="root"
 						>
 							<arguments/>
@@ -3627,8 +3615,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 							>
 								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
-										tab-path="Modellbasierte Suche"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
 									<path>
 										<named-member name="result"/>
@@ -3649,7 +3636,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 								label="Suchausdruck"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Modellbasierte Suche > Expert"
+									tab-path="Administration > Development > Script Konsole > Editor"
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -3657,11 +3644,11 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 							</value>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
-							command-label="Suchergebnisse aktualisieren"
-							command-name="refreshSearch"
-							component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
-							component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+							command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							command-label="Script ausführen"
+							command-name="executeSearchConsole"
+							component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+							component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
 							user-id="root"
 						>
 							<arguments/>
@@ -3676,8 +3663,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 							>
 								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
-										tab-path="Modellbasierte Suche"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
 									<path>
 										<named-member name="result"/>
@@ -3701,8 +3687,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 							>
 								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
-										tab-path="Modellbasierte Suche"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
 									<path>
 										<named-member name="result"/>
@@ -3724,8 +3709,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowOfObject">
 								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
-										tab-path="Modellbasierte Suche"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
 									<path>
 										<named-member name="result"/>
@@ -3749,8 +3733,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 							>
 								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
-										tab-path="Modellbasierte Suche"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
 									<path>
 										<named-member name="result"/>
@@ -3884,7 +3867,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 					user-id="root"
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration"
+						tab-path="Administration > Development > Service Editor"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"

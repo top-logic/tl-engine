@@ -520,27 +520,42 @@ public class TTypeRewriter extends ConfiguredRewritingEventVisitor<TTypeRewriter
 		}
 		/* Don't map the "source" attribute: It is the container/owner of the mapped value and must
 		 * therefore not be mapped. */
-		Object dest = values.get(DBKnowledgeAssociation.REFERENCE_DEST_NAME);
-		Object destMapped = mapValue(sourceType, sourceAttributeName, dest);
-		if (destMapped instanceof ExtReference) {
-			ExtReference mappedExtRef = (ExtReference) destMapped;
-			ObjectKey targetDestTypeName = typeMapping(mappedExtRef.getObjectType());
-			if (targetDestTypeName == null) {
-				logInfo("Skipped '" + objectType.getName() + "' (Type '" + sourceType + "' of association destination '"
-					+ objectType.getName() + "' not imported).");
-				return SKIP_EVENT;
-			}
-			getResolveTypes(targetDestTypeName).add(new ResolveExtReference(mappedExtRef,
-				new SetAttributeValue(values, DBKnowledgeAssociation.REFERENCE_DEST_NAME)));
-		} else {
-			TLObject destTLObject = (TLObject) destMapped;
-			values.put(DBKnowledgeAssociation.REFERENCE_DEST_NAME, destTLObject.tId());
+		Object destinationResult = handleAssociationDestination(objectType, values, sourceType, sourceAttributeName);
+		if (destinationResult == SKIP_EVENT) {
+			return SKIP_EVENT;
 		}
 		getResolveTypes(targetSourceTypeName).add(new ResolveExtReference(source,
 			new SetAttributeValue(values, DBKnowledgeAssociation.REFERENCE_SOURCE_NAME)));
 		getResolveTypes(targetSourceTypeName).add(type -> setAttributeId(values, type, targetAttributeName));
 		return APPLY_EVENT;
 
+	}
+
+	private Object handleAssociationDestination(MetaObject objectType, Map<String, Object> values, String sourceType,
+			String sourceAttributeName) {
+		try {
+			Object dest = values.get(DBKnowledgeAssociation.REFERENCE_DEST_NAME);
+			Object destMapped = mapValue(sourceType, sourceAttributeName, dest);
+			if (destMapped instanceof ExtReference) {
+				ExtReference mappedExtRef = (ExtReference) destMapped;
+				ObjectKey targetDestTypeName = typeMapping(mappedExtRef.getObjectType());
+				if (targetDestTypeName == null) {
+					logInfo("Skipped '" + objectType.getName() + "' (Type '" + sourceType + "' of association destination '"
+						+ objectType.getName() + "' not imported).");
+					return SKIP_EVENT;
+				}
+				getResolveTypes(targetDestTypeName).add(new ResolveExtReference(mappedExtRef,
+					new SetAttributeValue(values, DBKnowledgeAssociation.REFERENCE_DEST_NAME)));
+			} else {
+				TLObject destTLObject = (TLObject) destMapped;
+				values.put(DBKnowledgeAssociation.REFERENCE_DEST_NAME, destTLObject.tId());
+			}
+			return APPLY_EVENT;
+		} catch (RuntimeException exception) {
+			String message = "Failed to handle assocation destination. MetaObject: " + objectType + ". Source type: "
+				+ sourceType + ". Source attribute name: " + sourceAttributeName;
+			throw new RuntimeException(message, exception);
+		}
 	}
 
 	private String targetAttribute(String sourceType, String sourceAttributeName) {
@@ -581,22 +596,41 @@ public class TTypeRewriter extends ConfiguredRewritingEventVisitor<TTypeRewriter
 		String sourceTypeName = extReference.getObjectType();
 		List<Entry<String, Object>> additionalEntries = null;
 		for (Iterator<Entry<String, Object>> it = values.entrySet().iterator(); it.hasNext();) {
-			Entry<String, Object> entry = it.next();
-			String sourceAttributeName = entry.getKey();
+			Entry<String, Object> additionalEntry = handleAttribute(values, it, sourceTypeName);
+			if (additionalEntry == null) {
+				continue;
+			}
+			if (additionalEntries == null) {
+				additionalEntries = new ArrayList<>();
+			}
+			additionalEntries.add(additionalEntry);
+		}
+		if (additionalEntries != null) {
+			for (Entry<String, Object> entry : additionalEntries) {
+				values.put(entry.getKey(), entry.getValue());
+			}
+		}
+	}
+
+	private Entry<String, Object> handleAttribute(Map<String, Object> values, Iterator<Entry<String, Object>> it,
+			String sourceTypeName) {
+		Entry<String, Object> entry = it.next();
+		String sourceAttributeName = entry.getKey();
+		Object value = entry.getValue();
+		try {
 			if (sourceAttributeName.equals(TypeFilterRewriter.EXT_REFERENCE_ATTRIBUTE)) {
 				/* Keep this attribute as it will be used later to identify this changeset: When
 				 * changes for objects are removed, which don't exist locally, this attribute is
 				 * used to identify this changeset. */
-				continue;
+				return null;
 			}
 			String targetAttributeName = targetAttribute(sourceTypeName, sourceAttributeName);
 			if (targetAttributeName == null) {
 				it.remove();
 				// source attribute not imported
-				continue;
+				return null;
 			}
 
-			Object value = entry.getValue();
 			Object mappedValue = mapValue(sourceTypeName, targetAttributeName, value);
 			if (mappedValue instanceof TLObject) {
 				mappedValue = ((TLObject) mappedValue).tId();
@@ -608,49 +642,50 @@ public class TTypeRewriter extends ConfiguredRewritingEventVisitor<TTypeRewriter
 					Object ownerRef = values.get(TypeFilterRewriter.EXT_REFERENCE_ATTRIBUTE);
 					logDebugAttributeValueNotImported(ownerRef, sourceTypeName, targetAttributeName, extRef);
 					it.remove();
-					continue;
+					return null;
 				}
 				getResolveTypes(typeKey)
 					.add(new ResolveExtReference(extRef, new SetAttributeValue(values, targetAttributeName)));
 				// Remove ExtReference, it is later reinstalled.
 				it.remove();
-				continue;
+				return null;
 			}
 			if (sourceAttributeName.equals(targetAttributeName) && Objects.equals(mappedValue, value)) {
 				// No change
-				continue;
+				return null;
 			}
 			// source attribute has been renamed.
 			it.remove();
 			// Can not modify values due to concurrent modification.
-			if (additionalEntries == null) {
-				additionalEntries = new ArrayList<>();
-			}
-			additionalEntries.add(new AbstractMap.SimpleImmutableEntry<>(targetAttributeName, mappedValue));
-		}
-		if (additionalEntries != null) {
-			for (Entry<String, Object> entry : additionalEntries) {
-				values.put(entry.getKey(), entry.getValue());
-			}
+			return new AbstractMap.SimpleImmutableEntry<>(targetAttributeName, mappedValue);
+		} catch (RuntimeException exception) {
+			throw new RuntimeException("Failed to handle attribute " + sourceTypeName + "." + sourceAttributeName
+				+ ". Value: " + debug(value));
 		}
 	}
 
 	private Object mapValue(String qualifiedOwnerTypeName, String tlAttribute, Object value) {
-		Function<Object, ?> valueMapping = getValueMapping(qualifiedOwnerTypeName, tlAttribute);
-		if (valueMapping == null) {
-			return value;
+		try {
+			Function<Object, ?> valueMapping = getValueMapping(qualifiedOwnerTypeName, tlAttribute);
+			if (valueMapping == null) {
+				return value;
+			}
+			if (value instanceof ExtReference) {
+				logError("It is not supported to map an ExtReference."
+					+ "Value mappings are used to convert a value in a different form"
+					+ " that contains the necessary data to reconstruct it."
+					+ " But ExtReferences don't contain any data."
+					+ " Therefore, it does not make sense to map an ExtReference."
+					+ " Type: " + qualifiedOwnerTypeName + ". Attribute: " + tlAttribute + ". Value: " + value);
+				/* Don't break the transmission, just drop the value. */
+				return null;
+			}
+			return valueMapping.apply(value);
+		} catch (RuntimeException exception) {
+			String message = "Failed to map value of attribute " + tlAttribute + " on type " + qualifiedOwnerTypeName
+				+ ". Value: " + debug(value);
+			throw new RuntimeException(message, exception);
 		}
-		if (value instanceof ExtReference) {
-			logError("It is not supported to map an ExtReference."
-				+ "Value mappings are used to convert a value in a different form"
-				+ " that contains the necessary data to reconstruct it."
-				+ " But ExtReferences don't contain any data."
-				+ " Therefore, it does not make sense to map an ExtReference."
-				+ " Type: " + qualifiedOwnerTypeName + ". Attribute: " + tlAttribute + ". Value: " + value);
-			/* Don't break the transmission, just drop the value. */
-			return null;
-		}
-		return valueMapping.apply(value);
 	}
 
 	private Function<Object, ?> getValueMapping(String qualifiedOwnerTypeName, String tlAttribute) {

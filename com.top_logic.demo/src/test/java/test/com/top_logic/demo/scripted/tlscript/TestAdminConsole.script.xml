@@ -18,7 +18,7 @@
 			user-id="root"
 		>
 			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Development > TL-Script Konsole"
+				tab-path="Administration > Development > Script Konsole"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -28,7 +28,7 @@
 				label="Suchausdruck"
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > TL-Script Konsole > Editor"
+					tab-path="Administration > Development > Script Konsole > Editor"
 				/>
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -37,7 +37,7 @@
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Suchausdruck auswerten"
+			command-label="Script ausführen"
 			command-name="executeSearchConsole"
 			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
 			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
@@ -55,7 +55,7 @@
 			>
 				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > TL-Script Konsole > Suchergebnis"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
 					<path>
 						<named-member name="result"/>
@@ -78,7 +78,7 @@
 						label="Suchausdruck"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > TL-Script Konsole > Editor"
+							tab-path="Administration > Development > Script Konsole > Editor"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -91,7 +91,7 @@ $item;
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-					command-label="Suchausdruck auswerten"
+					command-label="Script ausführen"
 					command-name="executeSearchConsole"
 					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
 					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
@@ -106,7 +106,7 @@ $item;
 						label="Suchausdruck"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > TL-Script Konsole > Editor"
+							tab-path="Administration > Development > Script Konsole > Editor"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -115,7 +115,7 @@ $item;
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-					command-label="Suchausdruck auswerten"
+					command-label="Script ausführen"
 					command-name="executeSearchConsole"
 					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
 					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
@@ -131,7 +131,7 @@ $item;
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
 						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Development > TL-Script Konsole > Suchergebnis"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
 							<path>
 								<named-member name="result"/>
@@ -153,7 +153,7 @@ $item;
 						label="Suchausdruck"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > TL-Script Konsole > Editor"
+							tab-path="Administration > Development > Script Konsole > Editor"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -166,7 +166,7 @@ $item;
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-					command-label="Suchausdruck auswerten und Änderungen festschreiben"
+					command-label="Script ausführen und Änderungen speichern"
 					command-name="updateSearchConsole"
 					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
 					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
@@ -181,7 +181,7 @@ $item;
 						label="Suchausdruck"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > TL-Script Konsole > Editor"
+							tab-path="Administration > Development > Script Konsole > Editor"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -190,7 +190,7 @@ $item;
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-					command-label="Suchausdruck auswerten"
+					command-label="Script ausführen"
 					command-name="executeSearchConsole"
 					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
 					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
@@ -206,7 +206,7 @@ $item;
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
 						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Development > TL-Script Konsole > Suchergebnis"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
 							<path>
 								<named-member name="result"/>
@@ -226,7 +226,7 @@ $item;
 				label="Suchausdruck"
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > TL-Script Konsole > Editor"
+					tab-path="Administration > Development > Script Konsole > Editor"
 				/>
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -238,7 +238,7 @@ $item.delete();
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Suchausdruck auswerten und Änderungen festschreiben"
+			command-label="Script ausführen und Änderungen speichern"
 			command-name="updateSearchConsole"
 			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
 			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
@@ -253,7 +253,7 @@ $item.delete();
 				label="Suchausdruck"
 			>
 				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > TL-Script Konsole > Editor"
+					tab-path="Administration > Development > Script Konsole > Editor"
 				/>
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
@@ -262,7 +262,7 @@ $item.delete();
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Suchausdruck auswerten"
+			command-label="Script ausführen"
 			command-name="executeSearchConsole"
 			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
 			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
@@ -278,7 +278,7 @@ $item.delete();
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
 				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > TL-Script Konsole > Suchergebnis"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
 					<path>
 						<named-member name="result"/>

@@ -12,7 +12,7 @@
 .tlTabScrollContainer {
 	display: flex;
 	flex-wrap: nowrap;
-	height: 2.5rem;
+	height: var(--tabbar-height);
   	overflow-x: auto;
 	scrollbar-width: none;	/* Hides the scrollbar. */
 }
@@ -34,8 +34,8 @@
  	flex-shrink: 0;
 	cursor: pointer;
   	font-size: 16px;
-  	width: 2.5rem;
-  	height: 2.5rem;
+  	width: var(--tabbar-height);
+  	height: var(--tabbar-height);
 }
 
 /* Line tabs */
@@ -46,7 +46,7 @@
 	align-items: center;
 	flex-shrink: 0;
 	cursor: pointer;
-  	height: 2.5rem;
+  	height: var(--tabbar-height);
 	padding: var(--spacing-02) var(--spacing-03);
 	background: transparent;
 	width: auto;
@@ -100,7 +100,7 @@
 	align-items: center;
 	flex-shrink: 0;
 	padding: var(--spacing-02) var(--spacing-03);
-	height: 2.5rem;
+	height: var(--tabbar-height);
 	border: none;
 	cursor: pointer;
 }

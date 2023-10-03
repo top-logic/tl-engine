@@ -153,14 +153,7 @@ div.ace_tooltip>code.inlineCode {
 ****	Popup Styles	****
 ****					****
 */
-
-/*.pdlgWindow, .pdlgContent, div, popupMenupopupMenupopupMenu, 
-.pdlgWindow .pdlgContent div {
-	display: flex;
-	flex-direction: column;
-} */
-
-.pdlgWindow, .dlgWindow ,.dlgBackground, #pdlgPopupDialogPane, #waitPane {
+.pdlgWindow, .dlgWindow ,.dlgBackground, #pdlgPopupDialogPane, #waitPane, #pdlgPopupDialogs {
 	/*
 	 * Popup dialogs has to be stacked upon the current view. Because the table header has z-index 1, 
 	 * the popup dialogs should have at least z-index 2 to be stacked upon table headers.
@@ -175,6 +168,10 @@ div.ace_tooltip>code.inlineCode {
 	 * Details: https://developer.mozilla.org/en-US/docs/Web/CSS/z-index
 	 */
 	z-index: 2;
+}
+
+#pdlgPopupDialogs {
+	position: relative;
 }
 
 .pdlgPopupDialogPane_visible {

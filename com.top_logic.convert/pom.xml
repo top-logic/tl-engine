@@ -63,10 +63,6 @@
 	    <artifactId>jsoup</artifactId>
 	</dependency>
 	<dependency>
-	    <groupId>net.sourceforge.jexcelapi</groupId>
-	    <artifactId>jxl</artifactId>
-	</dependency>
-	<dependency>
 		<groupId>de.haumacher</groupId>
 		<artifactId>tm-extractors</artifactId>
 	</dependency>

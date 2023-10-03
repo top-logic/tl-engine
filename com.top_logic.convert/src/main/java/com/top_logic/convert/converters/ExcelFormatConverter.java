@@ -8,9 +8,8 @@ package com.top_logic.convert.converters;
 import java.io.InputStream;
 import java.util.Collection;
 
-import jxl.Cell;
-import jxl.Sheet;
-import jxl.Workbook;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.xssf.extractor.XSSFExcelExtractor;
 
 import com.top_logic.convert.ConverterMapping;
 
@@ -21,7 +20,7 @@ import com.top_logic.convert.ConverterMapping;
  */
 public class ExcelFormatConverter extends AbstractStringBasedConverter {
 
-    public static final String EXCEL_MIMETYPE = "application/vnd.ms-excel";
+	public static final String EXCEL_MIMETYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     
     /**
      * This method extracts all the text from a given excel-data stream into a string.
@@ -31,24 +30,14 @@ public class ExcelFormatConverter extends AbstractStringBasedConverter {
      */
     @Override
 	protected String getContentFromStream(InputStream inData) throws FormatConverterException {
-        StringBuffer theContent = new StringBuffer();
-        try {
-            Workbook workbook = Workbook.getWorkbook(inData);
-            Sheet[] sheets = workbook.getSheets(); 
-            for (int i = 0; i < sheets.length; i++) {
-                Sheet sheet = sheets[i];
-                int nbCol = sheet.getColumns();
-                for (int j = 0; j < nbCol; j++) {
-                    Cell[] cells = sheet.getColumn(j);
-                    for (int k = 0; k < cells.length; k++) {
-                        theContent.append(cells[k].getContents() + " ");
-                    }
-                }
-            }
+		try {
+			OPCPackage thePack = OPCPackage.open(inData);
+			XSSFExcelExtractor theExtr = new XSSFExcelExtractor(thePack);
+			String contents = theExtr.getText();
+			return contents;
         } catch (Exception e) {
             throw new FormatConverterException(e);
-        } 
-        return theContent.toString();
+		}
     }
     
     @Override

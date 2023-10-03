@@ -27,10 +27,13 @@
 		value="70"
 	/>
 	<int name="MAIN_TAB_BAR_HEIGHT"
-		value="60"
+		value="50"
 	/>
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
-		value="50"
+		value="40"
+	/>
+	<size name="tabbar-height"
+		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%px"
 	/>
 	<icon name="ICONS_BUTTON_SEARCH"
 		value="css:bi bi-search"

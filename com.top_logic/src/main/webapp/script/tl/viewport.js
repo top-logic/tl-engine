@@ -763,28 +763,28 @@ services.viewport = {
 		  isScrolling = false;
 		});
 		
-		scrollContainer.addEventListener("mousedown", function() {
-    		isScrolling = true;
-    		document.addEventListener("mousemove", onMouseMove);
-		});
-		
-		scrollContainer.addEventListener("mouseup", function() {
-			isScrolling = false;
-		  	scrollContainer.classList.remove("scrolling");
-		  	document.removeEventListener("mousemove", onMouseMove);
-		});
-		
-		document.addEventListener("mouseup", function() {
-			isScrolling = false;
-		    scrollContainer.classList.remove("scrolling");
-		    document.removeEventListener("mousemove", onMouseMove);
-		});
-		
-		function onMouseMove(e) {
-			if (!isScrolling) return;
-		    scrollContainer.classList.add("scrolling");
-		    scrollContainer.scrollLeft -= e.movementX;
-		}
+		scrollContainer.addEventListener("mousedown", function(e) {
+	        isScrolling = true;
+	        const initialX = e.clientX;
+	        
+	        const moveHandler = function(e) {
+	            if (!isScrolling) return;
+	            if (Math.abs(initialX - e.clientX) > 5) { 
+	                scrollContainer.classList.add("scrolling");
+	                scrollContainer.scrollLeft -= e.movementX;
+	            }
+	        };
+	
+	        const upHandler = function() {
+	            isScrolling = false;
+	            scrollContainer.classList.remove("scrolling");
+	            document.removeEventListener("mousemove", moveHandler);
+	            document.removeEventListener("mouseup", upHandler);
+	        };
+	
+	        document.addEventListener("mousemove", moveHandler);
+	        document.addEventListener("mouseup", upHandler);
+	    });
 		
 		// Makes scolling with CTRL or SHIFT + mouse wheel possible.
 		scrollContainer.addEventListener('wheel', function(event) {

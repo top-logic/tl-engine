@@ -1686,7 +1686,6 @@ h5.card-title a {
 .BreadCrumbOuter .Left {
 	float: left;
 	padding: var(--spacing-02);
-	height: 35px;
 }
 
 .BreadCrumbOuter .Right {

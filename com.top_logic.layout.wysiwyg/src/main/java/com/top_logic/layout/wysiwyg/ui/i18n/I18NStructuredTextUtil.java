@@ -49,24 +49,39 @@ public class I18NStructuredTextUtil {
 	}
 
 	/**
-	 * Creates a new {@link I18NStructuredText} bases on the one.
+	 * Creates an {@link I18NStructuredText} which contains for the given {@link Locale}
+	 * {@link StructuredText} with the given source code. For all other {@link Locale}s, the
+	 * {@link StructuredText} from the given original {@link I18NStructuredText} are copied.
 	 * 
 	 * @param original
-	 *        Is not changed.
+	 *        The base {@link I18NStructuredText}. For all {@link Locale}'s except the specified
+	 *        one, the {@link StructuredText} values for the result are taken from this
+	 *        {@link I18NStructuredText}. May be <code>null</code> in which case the returned
+	 *        {@link I18NStructuredText} contains only an entry for the given {@link Locale}.
 	 * @param locale
-	 *        Is not allowed to be null.
+	 *        The {@link Locale} for which the source code is updated. Must not be
+	 *        <code>null</code>.
 	 * @param newSourceCode
-	 *        Is allowed to be null. The new value is passed without check or modification to the
+	 *        The new source code of the {@link StructuredText} for the given {@link Locale}. May be
+	 *        <code>null</code>. The new value is passed without check or modification to the
 	 *        {@link StructuredText}.
-	 * @return A new {@link I18NStructuredText} that shares only the Strings and {@link BinaryData}
-	 *         of the images, but not the {@link StructuredText}s, not the
+	 * 
+	 * @return A new {@link I18NStructuredText} that shares only the source code and
+	 *         {@link BinaryData} of the images, but not the {@link StructuredText}s, not the
 	 *         {@link I18NStructuredText#getEntries() entries} {@link Map} and not the image
 	 *         {@link Map}s.
 	 */
 	public static I18NStructuredText updateSourceCode(I18NStructuredText original, Locale locale, String newSourceCode) {
 		requireNonNull(locale);
-		Map<Locale, StructuredText> newContent = copyEntries(original);
-		Map<String, BinaryData> images = original.localizeImages(locale);
+		Map<Locale, StructuredText> newContent;
+		Map<String, BinaryData> images;
+		if (original != null) {
+			newContent = copyEntries(original);
+			images = original.localizeImages(locale);
+		} else {
+			newContent = map();
+			images = map();
+		}
 		newContent.put(locale, new StructuredText(newSourceCode, images));
 		return new I18NStructuredText(newContent);
 	}
@@ -134,7 +149,12 @@ public class I18NStructuredTextUtil {
 			StructuredText value) {
 		requireNonNull(locale);
 		I18NStructuredText oldContent = (I18NStructuredText) tlObject.tValueByName(attribute);
-		Map<Locale, StructuredText> newContent = copyEntries(oldContent);
+		Map<Locale, StructuredText> newContent;
+		if (oldContent != null) {
+			newContent = copyEntries(oldContent);
+		} else {
+			newContent = map();
+		}
 		StructuredText oldValue;
 		if (value == null) {
 			oldValue = newContent.remove(locale);

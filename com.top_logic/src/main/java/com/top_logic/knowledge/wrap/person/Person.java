@@ -10,7 +10,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.ConfigurationError;
@@ -503,7 +502,8 @@ public class Person extends AbstractBoundWrapper implements Author {
      * 
      */
 	void deleteUser() {
-        SecurityDeviceFactory.getPersonAccessDevice(getDataAccessDeviceID()).deleteUserData(this.getName());
+		TLSecurityDeviceManager.getInstance().getDataAccessDevice(getDataAccessDeviceID())
+			.deleteUserData(this.getName());
 		_user = null;
     }
 

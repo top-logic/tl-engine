@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.Map;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.device.SecurityDeviceFactory;
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.password.PasswordManager;
@@ -175,7 +175,7 @@ public class ChangePasswordComponent extends FormComponent {
 	protected boolean allowPwdChange(Person aPerson) {
 		{
 			String theID = aPerson.getAuthenticationDeviceID();
-			AuthenticationDevice theDevice = SecurityDeviceFactory.getAuthenticationDevice(theID);
+			AuthenticationDevice theDevice = TLSecurityDeviceManager.getInstance().getAuthenticationDevice(theID);
 			boolean hasChangeAccess = ((EditPersonComponent) getDialogParent()).hasDeleteAccess(aPerson);
 
 			return (theDevice != null)
@@ -336,13 +336,13 @@ public class ChangePasswordComponent extends FormComponent {
 	static AuthenticationDevice getAuthenticationDevice(Person person) {
 		String authDevice;
 		authDevice = person.getAuthenticationDeviceID();
-		AuthenticationDevice device = SecurityDeviceFactory.getAuthenticationDevice(authDevice);
+		AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getAuthenticationDevice(authDevice);
 		return device;
 	}
 
 	static PersonDataAccessDevice getPersonDataAccessDevice(Person person) {
 		String dataDevice = person.getDataAccessDeviceID();
-		PersonDataAccessDevice device = SecurityDeviceFactory.getPersonAccessDevice(dataDevice);
+		PersonDataAccessDevice device = TLSecurityDeviceManager.getInstance().getDataAccessDevice(dataDevice);
 		return device;
 	}
 

@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.top_logic.base.security.device.SecurityDeviceFactory;
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.password.PasswordManager;
 import com.top_logic.base.security.password.PasswordValidator;
 import com.top_logic.base.security.password.PasswordValidator.ValidationResult;
@@ -469,7 +469,7 @@ public class LoginPageServlet extends NoContextServlet {
 			PasswordValidator validator = PasswordManager.getInstance().getPwdValidator();
 			String authDevice = account.getAuthenticationDeviceID();
 			if (StringServices.isEmpty(authDevice)
-					|| !SecurityDeviceFactory.getAuthenticationDevice(authDevice).allowPwdChange()) {
+				|| !TLSecurityDeviceManager.getInstance().getAuthenticationDevice(authDevice).allowPwdChange()) {
 				// Account either has no authentication device or a write protected one (i.e.
 				// external). This means the password cannot be changed in the application. Therefor
 				// this application cannot request a password update.

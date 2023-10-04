@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import com.top_logic.base.bus.UserEvent;
-import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.db.DBUserRepository;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
@@ -308,7 +307,8 @@ public class EditPersonComponent extends EditComponent {
 			{
 				String dataAccessDeviceID = thePerson.getDataAccessDeviceID();
 				String authenticationDeviceID = thePerson.getAuthenticationDeviceID();
-				PersonDataAccessDevice theProxy = SecurityDeviceFactory.getPersonAccessDevice(dataAccessDeviceID);
+				PersonDataAccessDevice theProxy =
+					TLSecurityDeviceManager.getInstance().getDataAccessDevice(dataAccessDeviceID);
 				boolean deviceReadonly = (theProxy == null) || theProxy.isReadOnly();
 
 				Set<String> allDataDevices = TLSecurityDeviceManager.getInstance().getConfiguredDataAccessDeviceIDs();
@@ -429,7 +429,7 @@ public class EditPersonComponent extends EditComponent {
 
 	private static boolean noDataStorage(Person account) {
 		String dataDevice = account.getDataAccessDeviceID();
-		PersonDataAccessDevice device = SecurityDeviceFactory.getPersonAccessDevice(dataDevice);
+		PersonDataAccessDevice device = TLSecurityDeviceManager.getInstance().getDataAccessDevice(dataDevice);
 		if (device == null) {
 			return true;
 		}

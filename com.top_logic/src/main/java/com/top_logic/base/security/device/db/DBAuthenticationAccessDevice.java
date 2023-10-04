@@ -8,7 +8,6 @@ package com.top_logic.base.security.device.db;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +18,7 @@ import com.top_logic.base.security.device.AbstractSecurityDevice;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
-import com.top_logic.base.user.UserDataObject;
 import com.top_logic.base.user.UserInterface;
-import com.top_logic.base.user.douser.DOUser;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -49,7 +46,6 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.AbstractStartStopListener;
 import com.top_logic.util.TLContext;
-import com.top_logic.util.license.LicenseTool;
 
 /**
  * AuthenticationDevice and PersonDataAccessDevice for the DBUserRepository.
@@ -61,8 +57,7 @@ import com.top_logic.util.license.LicenseTool;
  * 
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
-public class DBAuthenticationAccessDevice extends AbstractSecurityDevice
-		implements PersonDataAccessDevice, AuthenticationDevice {
+public class DBAuthenticationAccessDevice extends AbstractSecurityDevice implements AuthenticationDevice {
 
 	private static final String INITIALIZED_VALUE = "true";
 	private static final String INITIALIZED_PROPERTY = "DBAuthenticationAccessDevice.initialized";
@@ -170,7 +165,6 @@ public class DBAuthenticationAccessDevice extends AbstractSecurityDevice
 		} catch (SQLException ex) {
 			Logger.error("Database access failed.", ex, DBAuthenticationAccessDevice.class);
 		}
-
 	}
 
 	private void initPassword(DataObject user, String superUserName) {
@@ -247,105 +241,6 @@ public class DBAuthenticationAccessDevice extends AbstractSecurityDevice
 		return (result);
 	}
 
-	/* (non-JavaDoc)
-	 * 
-	 * @see com.top_logic.base.security.device.interfaces.PersonDataAccessDevice#getAllUserData()
-	 * Note: also checks for possible states of the requested objects in the transient commit
-	 * context. That means this method reflects uncommited creations, changes or deletions */
-	@Override
-	public List<UserInterface> getAllUserData() {
-		List<UserInterface> result = Collections.emptyList();
-		CommitableDBUserRepository myCommitable = CommitableDBUserRepository.getForCurrentThread();
-		// query all users
-		try {
-			result = this._repository.getAllUsers(KBUtils.getConnectionPool(_kb));
-			Iterator<?> it = result.iterator();
-			String   deviceId = this.getDeviceID();
-			while(it.hasNext()) {
-				DataObject aDO = (DataObject)it.next();
-				// Extra checks in case the current thread is part of a transaction
-				if(myCommitable != null) {
-				    
-	                String theName = (String) aDO.getAttributeValue(UserInterface.USER_NAME);
-
-	                if(myCommitable.isDeleted(theName)){
-	                    it.remove();
-	                    continue;
-	                }
-	                DataObject tmpDo = myCommitable.searchUser(theName);
-	                if (tmpDo != null) {
-	                    aDO = tmpDo;
-	                }
-				}
-				aDO.setAttributeValue(Person.DATA_ACCESS_DEVICE_ID,deviceId);
-			}
-		} catch (Exception ex) {
-			Logger.error("Unable to get all users from DBUserreporsitory", ex,
-					this);
-		}
-		return result;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.top_logic.base.security.device.interfaces.PersonDataAccessDevice#getUserData(java.lang.String)
-	 * Note: also checks for possible states of the requested object in the transient commit context.
-	 * That means this method reflects uncommited creations, changes or deletions	 */
-	@Override
-	public UserInterface getUserData(String aName) {
-		if (StringServices.isEmpty(aName)) {
-			return null;
-		} else {
-			CommitableDBUserRepository myCommitable = CommitableDBUserRepository.getForCurrentThread();
-			try {
-				DataObject theResult = this._repository.searchUser(KBUtils.getConnectionPool(_kb), aName);
-				if(myCommitable!=null && myCommitable.searchUser(aName)!=null){
-					theResult = myCommitable.searchUser(aName);
-				}				
-				if(myCommitable!=null && myCommitable.isDeleted(aName)){
-					theResult = null;
-				}
-				if(theResult!=null){
-					theResult.setAttributeValue(Person.DATA_ACCESS_DEVICE_ID,this.getDeviceID());
-				}
-				return DOUser.getInstance(theResult);
-			} catch (Exception e) {
-				Logger.info("Could not get the entry for " + aName, e, this);
-				return null;
-			}
-		}
-	}
-
-	/**
-	 * @see com.top_logic.base.security.device.interfaces.PersonDataAccessDevice#createUserEntry(com.top_logic.dob.DataObject)
-	 *      NOTE: creates the given object in the transient commit context. It will be written to
-	 *      the DB once a commit is called for this thread. Or it will be cleaned up once a roll
-	 *      back is called for this thread
-	 */
-	@Override
-	public boolean createUserEntry(DataObject anObject) {
-		return internalCreate(anObject);
-	}
-
-	private boolean internalCreate(DataObject anObject) {
-		Boolean isRestricted =
-			(Boolean) ((UserDataObject) anObject).getAttributeValue(Person.RESTRICTED_USER);
-		if (!LicenseTool.moreUsersAllowed(LicenseTool.getInstance().getLicense(), isRestricted)) {
-			return false;
-		}
-		// just make sure, deviceID of DO reflects this device
-		anObject.setAttributeValue(Person.DATA_ACCESS_DEVICE_ID, this.getDeviceID());
-		CommitableDBUserRepository.getInstance((CommitHandler) _kb, _repository).createUser(anObject);
-		return true;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.top_logic.base.security.device.interfaces.PersonDataAccessDevice#updateUserData(com.top_logic.mig.dataobjects.DataObject)
-	 * NOTE: updates the given object in the transient commit context. It will be writteen to the DB once a commit is called for this thread.
-	 * Or it will be cleaned up once a rollback is called for this thread	 */
 	@Override
 	public boolean updateUserData(DataObject anObject) {
 		String aName = "";
@@ -367,53 +262,6 @@ public class DBAuthenticationAccessDevice extends AbstractSecurityDevice
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * note: this is not in the commit context yet
-	 * @see com.top_logic.base.security.device.interfaces.PersonDataAccessDevice#renameUserData(java.lang.String,
-	 *      java.lang.String)
-	 */
-	@Override
-	public boolean renameUserData(String oldID, String newID) {
-		if (StringServices.isEmpty(oldID) || StringServices.isEmpty(newID))
-			return false;
-		try {
-			return this._repository.renameUser(KBUtils.getConnectionPool(_kb), oldID, newID);
-		} catch (Exception e) {
-			Logger.info("Could not renameUser for " + oldID + '|' + newID, e,
-					this);
-		}
-		return false;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.top_logic.base.security.device.interfaces.PersonDataAccessDevice#deleteUserData(java.lang.String)
-	 * NOTE: deletes the given object in the transient commit context. It will be written to the DB once a commit is called for this thread.
-	 * Or it will be cleaned up once a rollback is called for this thread
-	 */
-	@Override
-	public boolean deleteUserData(String aName) {
-		if (StringServices.isEmpty(aName)) {
-			return false;
-		}
-		try {
-			DataObject theResult = this._repository.searchUser(KBUtils.getConnectionPool(_kb), aName);
-			CommitableDBUserRepository.getInstance((CommitHandler) _kb, _repository).deleteUser(theResult);
-		} catch (Exception ex) {
-			Logger.error("Unable to delete entry \"" + aName
-					+ "\", reason is: " + ex, this);
-		}
-		return false;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.top_logic.base.security.device.interfaces.AuthenticationDevice#authentify(java.lang.String,
-	 *      java.lang.String)
-	 */
 	@Override
 	public boolean authentify(LoginCredentials login) {
 		try {

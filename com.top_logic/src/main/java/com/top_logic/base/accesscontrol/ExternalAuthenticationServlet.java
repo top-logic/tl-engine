@@ -220,7 +220,9 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 		Person user = PersonManager.getManager().getPersonByName(userName);
 		if (user == null) {
 			throw new LoginDeniedException("User '" + userName + "' does not exist.");
-		} else if (user.isAlive()) {
+		} else if (!user.isAlive()) {
+			throw new LoginDeniedException("User '" + userName + "' is not alive.");
+		} else {
 			try {
 				String personDeviceId = user.getDataAccessDeviceID();
 				if (!personDeviceId.equals(deviceId)) {
@@ -230,8 +232,6 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 			} catch (Exception e) {
 				Logger.error("unable to get device Id from person", e, ExternalAuthenticationServlet.class);
 			}
-		} else {
-			throw new LoginDeniedException("User '" + userName + "' is not alive.");
 		}
 	    
 		Logger.debug(

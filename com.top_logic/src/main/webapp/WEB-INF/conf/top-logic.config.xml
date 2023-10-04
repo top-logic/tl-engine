@@ -40,7 +40,6 @@
 			       <module key="com.top_logic.base.administration.LoggerAdminBean$Module" value="true"/>
 			       <module key="com.top_logic.base.mail.MailSenderService$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.wrap.person.PersonManager$Module" value="true"/>
-			       <module key="com.top_logic.base.security.device.SecurityDeviceFactory$Module" value="true"/>
 			       <module key="com.top_logic.util.sched.Scheduler$Module" value="true"/>
 				   <module key="com.top_logic.tool.export.ExportHandlerRegistry$Module" value="false"/>
 			       <module key="com.top_logic.tool.export.ExportQueueManager$Module" value="true"/>

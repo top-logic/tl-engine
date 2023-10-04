@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
-import com.top_logic.base.security.device.SecurityDeviceFactory;
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.password.PasswordManager;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
@@ -370,7 +370,8 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			// Person has no device to authenticate against
 			throw new LoginDeniedException(FailedLogin.REASON_NO_AUTH_DEVICE);
 		}
-		AuthenticationDevice theDevice = SecurityDeviceFactory.getAuthenticationDevice(theAuthenticationDeviceId);
+		AuthenticationDevice theDevice =
+			TLSecurityDeviceManager.getInstance().getAuthenticationDevice(theAuthenticationDeviceId);
 		if (theDevice == null) {
 			String message = "Authentication device '" + theAuthenticationDeviceId + "' cannot be found.";
 			throw new LoginFailedException(message);
@@ -407,7 +408,8 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			return noLogin(person, aRequest, FailedLogin.REASON_NO_AUTH_DEVICE);
 		}
 		try {
-			AuthenticationDevice theDevice = SecurityDeviceFactory.getAuthenticationDevice(theAuthDevice);
+			AuthenticationDevice theDevice =
+				TLSecurityDeviceManager.getInstance().getAuthenticationDevice(theAuthDevice);
 
 			if (theDevice == null) {
 				Logger.error("Authentication device '" + theAuthDevice + "' cannot be found.", this);

@@ -95,17 +95,22 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 * @param aName - the internal unique username
 	 * @return true if data for this name is available from this device, false otherwise
 	 */
-	public boolean userExists(String aName);
-	
+	default boolean userExists(String aName) {
+		return this.getUserData(aName) != null;
+	}
 	
 	/**
 	 * @see PersonDataAccessDeviceConfig#isReadOnly()
 	 */
-	public boolean isReadOnly();
+	default boolean isReadOnly() {
+		return ((PersonDataAccessDeviceConfig) getConfig()).isReadOnly();
+	}
 
 	/**
 	 * @see PersonDataAccessDeviceConfig#isAllowExtAuthentication()
 	 */
-	public boolean allowExternalAuthentication();
+	default boolean allowExternalAuthentication() {
+		return ((PersonDataAccessDeviceConfig) getConfig()).isAllowExtAuthentication();
+	}
 	
 }

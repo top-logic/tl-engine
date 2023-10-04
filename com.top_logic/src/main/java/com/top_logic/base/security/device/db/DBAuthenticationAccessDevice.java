@@ -15,7 +15,9 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.device.AbstractAuthenticationAccessDevice;
+import com.top_logic.base.security.device.AbstractSecurityDevice;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
+import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.base.user.UserDataObject;
 import com.top_logic.base.user.UserInterface;
@@ -59,7 +61,8 @@ import com.top_logic.util.license.LicenseTool;
  * 
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
-public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDevice {
+public class DBAuthenticationAccessDevice extends AbstractSecurityDevice
+		implements PersonDataAccessDevice, AuthenticationDevice {
 
 	private static final String INITIALIZED_VALUE = "true";
 	private static final String INITIALIZED_PROPERTY = "DBAuthenticationAccessDevice.initialized";
@@ -67,7 +70,9 @@ public class DBAuthenticationAccessDevice extends AbstractAuthenticationAccessDe
 	/**
 	 * Configuration options for {@link DBAuthenticationAccessDevice}.
 	 */
-	public interface Config extends AbstractAuthenticationAccessDevice.Config {
+	public interface Config extends AbstractSecurityDevice.Config, PersonDataAccessDevice.PersonDataAccessDeviceConfig,
+			AuthenticationDevice.AuthenticationDeviceConfig {
+
 		/**
 		 * Name of the resource with initial users to load.
 		 */

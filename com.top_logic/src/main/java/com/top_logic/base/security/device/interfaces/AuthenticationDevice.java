@@ -44,7 +44,9 @@ public interface AuthenticationDevice extends SecurityDevice {
 	/**
 	 * @see AuthenticationDeviceConfig#isAllowPwdChange()
 	 */
-	public boolean allowPwdChange();	
+	default boolean allowPwdChange() {
+		return ((AuthenticationDeviceConfig) getConfig()).isAllowPwdChange();
+	}
 
 	/**
 	 * Stores the given user data, used to change the password in the authentication device

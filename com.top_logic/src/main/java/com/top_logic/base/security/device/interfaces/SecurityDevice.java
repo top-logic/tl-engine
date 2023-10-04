@@ -11,7 +11,6 @@ import java.util.Map;
 import com.top_logic.base.security.device.DeviceMapping;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.basic.config.ConfiguredInstance;
-import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
@@ -60,12 +59,6 @@ public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Securi
 		String getId();
 
 		/**
-		 * {@link DeviceType} of the configured {@link SecurityDevice}.
-		 */
-		@Mandatory
-		DeviceType getType();
-
-		/**
 		 * Property mappings.
 		 */
 		@MapBinding()
@@ -76,67 +69,6 @@ public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Securi
 		 */
 		boolean isDisabled();
 
-	}
-
-	/**
-	 * Kind of authentication device.
-	 * 
-	 * @see SecurityDeviceConfig#getType()
-	 */
-	public enum DeviceType implements ExternallyNamed {
-		/**
-		 * A {@link SecurityDevice} for authentication only.
-		 */
-		AUTH("auth", true, false),
-
-		/**
-		 * A {@link SecurityDevice} providing user data only.
-		 */
-		DATA("data", false, true),
-
-		/**
-		 * A {@link SecurityDevice} for authentication and user data.
-		 */
-		AUTH_WITH_DATA("auth-with-data", true, true),
-
-		/**
-		 * A disabled {@link SecurityDevice}.
-		 */
-		DISABLED("disabled", false, false);
-
-		private String _name;
-
-		private boolean _supportsAuth;
-
-		private boolean _supportsData;
-
-		/**
-		 * Creates a {@link SecurityDevice.DeviceType}.
-		 */
-		private DeviceType(String name, boolean supportsAuth, boolean supportsData) {
-			_name = name;
-			_supportsAuth = supportsAuth;
-			_supportsData = supportsData;
-		}
-
-		@Override
-		public String getExternalName() {
-			return _name;
-		}
-
-		/**
-		 * Whether the {@link SecurityDevice} supports authentication.
-		 */
-		public boolean supportsAuth() {
-			return _supportsAuth;
-		}
-
-		/**
-		 * Whether the {@link SecurityDevice} supports user dataS.
-		 */
-		public boolean supportsData() {
-			return _supportsData;
-		}
 	}
 
 	/**

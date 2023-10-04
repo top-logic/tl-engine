@@ -101,7 +101,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	/**
 	 * Map to hold instances of the data access devices with their deviceID as key
 	 */
-	private Map<String, SecurityDevice> _dataAccessDevices;
+	private Map<String, PersonDataAccessDevice> _dataAccessDevices;
 
 	private SecurityDevice _defaultDataAccessDevice;
 
@@ -150,17 +150,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 				continue;
 			}
 
-			if (!deviceConfig.getType().supportsAuth()) {
-				continue;
-			}
-
 			if (!(device instanceof AuthenticationDevice)) {
-				StringBuilder noAuthentication = new StringBuilder();
-				noAuthentication.append("Configured device '");
-				noAuthentication.append(id);
-				noAuthentication.append("' is not an AuthenticationDevice. Class: ");
-				noAuthentication.append(device.getClass());
-				log.error(noAuthentication.toString());
 				continue;
 			}
 
@@ -205,9 +195,9 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		return defaultAuthenticationDevice;
 	}
 
-	private Map<String, SecurityDevice> getDataAccessDevices(Log log, Map<String, SecurityDevice> allDevices) {
+	private Map<String, PersonDataAccessDevice> getDataAccessDevices(Log log, Map<String, SecurityDevice> allDevices) {
 		checkSecurityDevices(allDevices);
-		Map<String, SecurityDevice> result = new HashMap<>();
+		Map<String, PersonDataAccessDevice> result = new HashMap<>();
 		for (Entry<String, SecurityDevice> entry : allDevices.entrySet()) {
 			String id = entry.getKey();
 			SecurityDevice device = entry.getValue();
@@ -217,11 +207,11 @@ public class TLSecurityDeviceManager extends ManagedClass {
 				continue;
 			}
 
-			if (!deviceConfig.getType().supportsData()) {
+			if (!(device instanceof PersonDataAccessDevice)) {
 				continue;
 			}
 
-			result.put(id, device);
+			result.put(id, (PersonDataAccessDevice) device);
 		}
 		if (result.isEmpty()) {
 			log.error("No data access device configured.");
@@ -229,9 +219,9 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		return result;
 	}
 
-	private SecurityDevice getDefaultAccessDevice(Log log, Config config,
-			Map<String, SecurityDevice> dataAccessDevices) {
-		SecurityDevice defaultDataAccessDevice;
+	private PersonDataAccessDevice getDefaultAccessDevice(Log log, Config config,
+			Map<String, PersonDataAccessDevice> dataAccessDevices) {
+		PersonDataAccessDevice defaultDataAccessDevice;
 		String defaultAccessDeviceId = config.getDefaultDataAccessDevice();
 		if (defaultAccessDeviceId.isEmpty()) {
 			if (dataAccessDevices.size() != 1) {
@@ -323,7 +313,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	 */
 	public PersonDataAccessDevice getDataAccessDevice(String deviceID){
 		try{
-			return (PersonDataAccessDevice) _dataAccessDevices.get(deviceID);
+			return _dataAccessDevices.get(deviceID);
 		}catch(ClassCastException e){
 			Logger.warn("DataAccessDevice "+deviceID+" is configured with a class that does not implement PersonDataAccessDevice",e,this);
 			// no person data access device with that ID

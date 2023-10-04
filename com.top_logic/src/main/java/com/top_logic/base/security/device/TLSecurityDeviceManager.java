@@ -389,11 +389,4 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		}
 
 	}
-
-	/**
-	 * Prevent implementations outside of this package.
-	 */
-	public Unimplementable unimplementable() {
-		return null;
-	}
 }

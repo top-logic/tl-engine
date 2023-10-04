@@ -10,7 +10,7 @@ import static com.top_logic.basic.shared.string.StringServicesShared.*;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.top_logic.base.security.device.SecurityDeviceFactory;
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.InstantiationContext;
@@ -64,7 +64,8 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
             String  thePersonsDadID         = thePerson.getDataAccessDeviceID();
             String  newDataAccessDevice     = (String) ((SelectField)aContext.getField(Person.DATA_ACCESS_DEVICE_ID)).getSingleSelection();
             String  newAuthenticationDevice = (String) ((SelectField)aContext.getField(Person.AUTHENTICATION_DEVICE_ID)).getSingleSelection();
-            PersonDataAccessDevice theDevice = SecurityDeviceFactory.getPersonAccessDevice(thePersonsDadID);
+			PersonDataAccessDevice theDevice =
+				TLSecurityDeviceManager.getInstance().getDataAccessDevice(thePersonsDadID);
 
 			if (!thePersonsDadID.equals(newDataAccessDevice)) {
 				throw new UnsupportedOperationException("Cannot change device.");
@@ -92,7 +93,8 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
                 }
     
                 try {
-                    if(!SecurityDeviceFactory.getPersonAccessDevice(thePerson.getDataAccessDeviceID()).isReadOnly()){
+					if (!TLSecurityDeviceManager.getInstance().getDataAccessDevice(thePerson.getDataAccessDeviceID())
+						.isReadOnly()) {
                         thePerson.updateUserData();
                     }
                 }

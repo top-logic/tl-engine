@@ -8,6 +8,7 @@ package com.top_logic.model.search.expr.html;
 import java.io.IOException;
 
 import com.top_logic.basic.exception.I18NException;
+import com.top_logic.basic.html.HTMLChecker;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.basic.xml.TagWriter.State;
@@ -57,7 +58,7 @@ public class AttributeMacro extends RenderExpression {
 	/**
 	 * Whether the attribute is written with buffering to dynamically check its contents for safety.
 	 * 
-	 * @see SafeHTML#checkAttribute(String, String, String)
+	 * @see HTMLChecker#checkAttribute(String, String, String)
 	 */
 	public boolean useDynamicSafety() {
 		return _dynamicSafety;

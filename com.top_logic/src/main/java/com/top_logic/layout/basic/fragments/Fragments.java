@@ -781,7 +781,7 @@ public class Fragments {
 	 * think about usage of {@link SafeHTML}.</b>
 	 * </p>
 	 * 
-	 * @see SafeHTML#check(String)
+	 * @see SafeHTML
 	 * 
 	 * @param html
 	 *        The HTML source code, <code>null</code> means {@link #empty()}.

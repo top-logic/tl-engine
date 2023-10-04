@@ -16,6 +16,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.exception.I18NFailure;
+import com.top_logic.basic.html.HTMLChecker;
 import com.top_logic.basic.html.I18NConstants;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.util.ResKey;
@@ -50,7 +51,7 @@ public class TestSafeHTML extends BasicTestCase {
 
 	private static final String HELLO_WORLD_TEXT = "Hello World";
 
-	private SafeHTML _safeHTML;
+	private HTMLChecker _safeHTML;
 
 	@Override
 	protected void setUp() throws Exception {

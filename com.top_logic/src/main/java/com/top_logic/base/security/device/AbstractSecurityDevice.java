@@ -27,7 +27,7 @@ public abstract class AbstractSecurityDevice implements SecurityDevice {
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends SecurityDeviceConfig {
+	public interface Config extends SecurityDevice.SecurityDeviceConfig {
 
 	}
 
@@ -103,20 +103,11 @@ public abstract class AbstractSecurityDevice implements SecurityDevice {
 		return theMapping;
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.top_logic.base.security.device.interfaces.SecurityDevice#getDomainName()
-	 */
 	@Override
 	public String getDomainName() {
 		return _config.getDomain();
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see com.top_logic.base.security.device.interfaces.SecurityDevice#getDeviceID()
-	 */
 	@Override
 	public String getDeviceID() {
 		return _config.getId();

@@ -64,7 +64,7 @@
 					<attribute name="class" />
 					<attribute name="colspan" />
 					<attribute name="contenteditable" />
-					<attribute name="data-custom" />
+					<attribute name="data-custom" /> <!-- For backwards compatibility with documentation pages from before the removal of these attributes in #27590. -->
 					<attribute name="data-object" />
 					<attribute name="data-section" />
 					<attribute name="data-tooltip" />

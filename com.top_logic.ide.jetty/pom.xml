@@ -42,5 +42,9 @@
 	    <groupId>com.h2database</groupId>
 	    <artifactId>h2</artifactId>
   	</dependency>
+  	<dependency>
+	    <groupId>com.manticore-projects.tools</groupId>
+	    <artifactId>h2migrationtool</artifactId>
+	</dependency>
   </dependencies>
 </project>

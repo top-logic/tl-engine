@@ -164,10 +164,4 @@ public class TLSecurityDeviceProxy implements PersonDataAccessDevice, Authentica
 		return this.sdm.getSecurityDevice(getDeviceID());
 	}
 
-	/**
-	 * Prevent implementations outside of this package.
-	 */
-	public Unimplementable unimplementable() {
-		return null;
-	}
 }

@@ -20,7 +20,6 @@ import java.util.regex.Pattern;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.base.locking.Lock;
 import com.top_logic.base.locking.LockService;
-import com.top_logic.base.security.device.SecurityDeviceFactory;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.services.InitialGroupManager;
@@ -93,7 +92,6 @@ import com.top_logic.util.license.LicenseTool;
  *  
  */
 @ServiceDependencies({
-	SecurityDeviceFactory.Module.class,
 	PersistencyLayer.Module.class, 
 	ApplicationConfig.Module.class,
 	LockService.Module.class,
@@ -578,7 +576,8 @@ public class PersonManager extends ManagedClass {
 			}
 		}
 		Person thePerson = getPersonByName(aName, aKnowledgeBase);
-		PersonDataAccessDevice theDataDevice = SecurityDeviceFactory.getPersonAccessDevice(dataAccessDeviceID);
+		PersonDataAccessDevice theDataDevice =
+			TLSecurityDeviceManager.getInstance().getDataAccessDevice(dataAccessDeviceID);
 		UserInterface user = theDataDevice.getUserData(aName);
 		if (thePerson != null && thePerson.isAlive()) {
 			throw new IllegalStateException("Person '" + aName + "' already exists");

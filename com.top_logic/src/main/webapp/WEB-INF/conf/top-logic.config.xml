@@ -2288,17 +2288,6 @@
 			useWaitPaneInFormula="false"
 			waitPaneDelay="1s"
 		/>
-	
-		<config config:interface="com.top_logic.layout.form.control.IconInputControl$Config">
-			<resources>
-				<resource name="icons" resource="/themes/default/iconIndex.json">
-					<icon-mappings>	
-						<icon-mapping style="active" encoded-icon="${name}.png" />
-						<icon-mapping style="disabled" encoded-icon="${name}Disabled.png" />		
-					</icon-mappings>
-				</resource>
-			</resources>
-		</config>
 		
 		<config config:interface="com.top_logic.layout.editor.AbstractComponentConfigurationDialogBuilder$GlobalConfig">
 			<customizations>

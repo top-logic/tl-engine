@@ -641,6 +641,11 @@
 			    <artifactId>h2</artifactId>
 			    <version>2.2.224</version>
 		  	</dependency>
+		  	<dependency>
+			    <groupId>com.manticore-projects.tools</groupId>
+			    <artifactId>h2migrationtool</artifactId>
+			    <version>1.4</version>
+			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>ext-com-ibm-db2</artifactId>

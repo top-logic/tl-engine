@@ -54,6 +54,11 @@
       <scope>provided</scope>
     </dependency>
     
+    <dependency>
+	    <groupId>com.manticore-projects.tools</groupId>
+	    <artifactId>h2migrationtool</artifactId>
+	</dependency>
+    
 	<dependency>
 	    <groupId>commons-codec</groupId>
 	    <artifactId>commons-codec</artifactId>

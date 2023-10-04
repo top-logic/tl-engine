@@ -92,6 +92,11 @@
 		    <artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+		    <groupId>com.manticore-projects.tools</groupId>
+		    <artifactId>h2migrationtool</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

@@ -9,6 +9,10 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.StringServices;
@@ -24,15 +28,25 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.ResPrefix;
+import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.ComponentCommandModel;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
+import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.editor.config.OptionalTypeTemplateParameters;
 import com.top_logic.layout.form.FormContainer;
+import com.top_logic.layout.form.boxes.reactive_tag.AbstractGroupSettings;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.form.template.model.FieldSetBoxTemplate;
+import com.top_logic.layout.form.template.model.Member;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
+import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -43,6 +57,7 @@ import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * {@link AbstractFormElementProvider} for {@link ForeignObjects}.
@@ -78,7 +93,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 
 	@Override
 	public DisplayDimension getDialogWidth() {
-		return DisplayDimension.dim(350, DisplayUnit.PIXEL);
+		return DisplayDimension.dim(650, DisplayUnit.PIXEL);
 	}
 
 	@Override
@@ -145,11 +160,37 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 					.build();
 				contentTemplate = localLayout.createContentTemplate(innerContext);
 			}
-			templates[index] = Templates.fieldsetBoxWrap(legend, member(innerGroup, contentTemplate),
-				ConfigKey.derived(personalizationKey, itemID));
+			ConfigKey derivedKey = ConfigKey.derived(personalizationKey, itemID);
+			Member content = member(innerGroup, contentTemplate);
+			FieldSetBoxTemplate finalTemplate = Templates.fieldsetBoxWrap(legend, content, derivedKey);
+			addButtons(finalTemplate, item, false);
+			templates[index] = finalTemplate;
 			index++;
 		}
 		return contentBox(div(templates));
+	}
+
+	private void addButtons(AbstractGroupSettings<?> template, TLObject targetModel, boolean designMode) {
+		List<CommandHandler> buttons = TypedConfigUtil.createInstanceList(getConfig().getButtons());
+		if (buttons.isEmpty()) {
+			return;
+		}
+
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+		LayoutComponent component = MainLayout.getComponent(displayContext);
+
+		Map<String, Object> args = ContextMenuUtil.createArguments(targetModel);
+		Stream<ComponentCommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(component, args, buttons);
+		Menu menu;
+		if (designMode) {
+			List<List<? extends CommandModel>> deactivated = ContextMenuUtil.groupAndSort(buttonsStream)
+				.map(DeactivatedCommandModel::deactivateCommands)
+				.collect(Collectors.toList());
+			menu = Menu.create(deactivated);
+		} else {
+			menu = ContextMenuUtil.toContextMenu(buttonsStream);
+		}
+		template.setMenu(menu);
 	}
 
 	private boolean displayReadOnly(QueryExecutor readOnlyExpr, TLObject item, TLObject baseModel) {
@@ -162,7 +203,11 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		return readOnly;
 	}
 
-	private String label(QueryExecutor labelExpr, TLObject item) {
+	private static String label(QueryExecutor labelExpr, TLObject item) {
+		return StringServices.nonNull(labelRaw(labelExpr, item));
+	}
+
+	private static String labelRaw(QueryExecutor labelExpr, TLObject item) {
 		if (labelExpr == null) {
 			return MetaLabelProvider.INSTANCE.getLabel(item);
 		} else {
@@ -189,7 +234,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 			contentTemplate = resource(I18NConstants.FOREIGN_OBJECTS_NO_DISPLAY_DEFINED);
 		} else {
 			/* The input elements for objects of a different type are created, without having the
-			 * foreign object. Therfore a domain must be set. */
+			 * foreign object. Therefore a domain must be set. */
 			context = new FormEditorContext.Builder(context)
 				.formType(targetType)
 				.model(null)
@@ -198,9 +243,12 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 				.build();
 			contentTemplate = layout.createContentTemplate(context);
 		}
+		FieldSetBoxTemplate finalTemplate = Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none());
 		/* Lock content of the preview fieldset box. It must not be possible to drop elements in the
 		 * box. */
-		return Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none()).setCssClass("locked");
+		finalTemplate.setCssClass("locked");
+		addButtons(finalTemplate, null, true);
+		return finalTemplate;
 	}
 
 	@Override

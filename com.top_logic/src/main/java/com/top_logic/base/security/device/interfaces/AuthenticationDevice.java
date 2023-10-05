@@ -7,7 +7,6 @@ package com.top_logic.base.security.device.interfaces;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.password.PasswordValidator;
-import com.top_logic.dob.DataObject;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
@@ -39,11 +38,6 @@ public interface AuthenticationDevice extends SecurityDevice {
 	 * @see #setPassword(Person, char[])
 	 */
 	boolean allowPwdChange();
-
-	/**
-	 * Stores the given user data, used to change the password in the authentication device
-	 */
-	public boolean updateUserData(DataObject theDo);
 
 	/**
 	 * Updates the password for the given account.

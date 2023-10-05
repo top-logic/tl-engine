@@ -23,8 +23,7 @@ import java.util.TimeZone;
 
 import com.top_logic.base.bus.UserEvent;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
-import com.top_logic.base.security.device.db.DBUserRepository;
-import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Configuration;
 import com.top_logic.basic.Configuration.IterableConfiguration;
@@ -155,7 +154,8 @@ public class EditPersonComponent extends EditComponent {
 		super(context, config);
 		MOStructureImpl userMetaObject;
 		try {
-			userMetaObject = DBUserRepository.getUserMetaObject(PersistencyLayer.getKnowledgeBase());
+			userMetaObject = (MOStructureImpl) PersistencyLayer.getKnowledgeBase().getMORepository()
+				.getMetaObject(Person.OBJECT_NAME);
 		} catch (UnknownTypeException ex) {
 			context.error("Unable to get meta object for user data.", ex);
 			userMetaObject = null;
@@ -278,7 +278,7 @@ public class EditPersonComponent extends EditComponent {
 		if (thePerson == null) {
             //this is for create new user, null-selection in list is not expected
 
-			int theSize = getSizeForMOAttribute(_userMO, UserInterface.USER_NAME, false);
+			int theSize = getSizeForMOAttribute(_userMO, Person.NAME, false);
             formContext.addMember(FormFactory.newStringField(UserInterface.USER_NAME, true, false, new StringLengthConstraint(1, theSize)));
 
 			theSize = getSizeForMOAttribute(_userMO, UserInterface.NAME, false);
@@ -305,20 +305,10 @@ public class EditPersonComponent extends EditComponent {
 				|| Group.isMemberOfAnyGroup(TLContext.getContext().getCurrentPersonWrapper(), getAllowedGroups());
 
 			{
-				String dataAccessDeviceID = thePerson.getDataAccessDeviceID();
 				String authenticationDeviceID = thePerson.getAuthenticationDeviceID();
-				PersonDataAccessDevice theProxy =
-					TLSecurityDeviceManager.getInstance().getDataAccessDevice(dataAccessDeviceID);
-				boolean deviceReadonly = (theProxy == null) || theProxy.isReadOnly();
 
 				Set<String> allDataDevices = TLSecurityDeviceManager.getInstance().getConfiguredDataAccessDeviceIDs();
                 ArrayList<String> options = new ArrayList<>(allDataDevices);
-				if (!StringServices.isEmpty(dataAccessDeviceID) && !allDataDevices.contains(dataAccessDeviceID)) {
-					options.add(0, dataAccessDeviceID);
-				}
-				SelectField dataDevicesField = FormFactory.newSelectField(Person.DATA_ACCESS_DEVICE_ID, options, false, true, false, constraintSelectOne);
-				if (!StringServices.isEmpty(dataAccessDeviceID))
-					dataDevicesField.initSingleSelection(dataAccessDeviceID);
 
                 Set<String> allAuthDevices   = TLSecurityDeviceManager.getInstance().getConfiguredAuthenticationDeviceIDs();
 				options = new ArrayList<>(allAuthDevices);
@@ -329,9 +319,8 @@ public class EditPersonComponent extends EditComponent {
 				if (!StringServices.isEmpty(authenticationDeviceID))
 					authDevicesField.initSingleSelection(authenticationDeviceID);
 
-				formContext.addMember(userNameField(thePerson, _userMO, deviceReadonly));
-                
-                // if the device is read only no constraints need to be set, because the following
+				boolean deviceReadonly = noDataStorage(thePerson);
+				// if the device is read only no constraints need to be set, because the following
 				// fields will be disabled anyway.
                 if (deviceReadonly) {
 					formContext.addMember(givenNameField(thePerson, deviceReadonly));
@@ -367,17 +356,14 @@ public class EditPersonComponent extends EditComponent {
 						getSizeForMOAttribute(_userMO, UserInterface.EMAIL, deviceReadonly),
 						thePerson.getInternalMail()));
                 }
-                formContext.addMember(dataDevicesField);
                 formContext.addMember(authDevicesField);
 
 				restrictedUser = createRestrictedUserField(thePerson);
 				formContext.addMember(restrictedUser);
 
                 if(ThreadContext.isAdmin()){
-					dataDevicesField.setDisabled(!BoundHelper.getInstance().isAllowChangeDeleteProtection());
 					authDevicesField.setDisabled(!BoundHelper.getInstance().isAllowChangeDeleteProtection());
                 } else {
-                    dataDevicesField.setVisible(false);
                     authDevicesField.setVisible(false);
                 }
 
@@ -428,12 +414,12 @@ public class EditPersonComponent extends EditComponent {
     }
 
 	private static boolean noDataStorage(Person account) {
-		String dataDevice = account.getDataAccessDeviceID();
-		PersonDataAccessDevice device = TLSecurityDeviceManager.getInstance().getDataAccessDevice(dataDevice);
+		String deviceId = account.getAuthenticationDeviceID();
+		AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getAuthenticationDevice(deviceId);
 		if (device == null) {
 			return true;
 		}
-		return device.isReadOnly();
+		return !device.allowPwdChange();
 	}
 
 	private SelectField createGroupsField(Person person) {

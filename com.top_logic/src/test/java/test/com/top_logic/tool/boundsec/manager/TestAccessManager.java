@@ -41,7 +41,6 @@ public class TestAccessManager  extends BasicTestCase {
      */
     public void testBoundSecurity() throws Exception {
         TLSecurityDeviceManager   sdm = TLSecurityDeviceManager.getInstance();
-        String personDataDeviceID     = sdm.getDefaultDataAccessDevice().getDeviceID();
         String authenticationDeviceID = sdm.getDefaultAuthenticationDevice().getDeviceID();
 
         Person personA = null;
@@ -55,15 +54,15 @@ public class TestAccessManager  extends BasicTestCase {
             // create three different persons
             personA = pMgr.getPersonByName("AA"); 
             if (personA == null) 
-                personA = pMgr.createPerson("AA", personDataDeviceID, authenticationDeviceID, Boolean.FALSE);
+                personA = pMgr.createPerson("AA", authenticationDeviceID, Boolean.FALSE);
             assertTrue(KBSetup.getKnowledgeBase().commit());
 
             personB = pMgr.getPersonByName("BB");
             if (personB == null) 
-				personB = pMgr.createPerson("BB", personDataDeviceID, authenticationDeviceID, Boolean.FALSE);
+				personB = pMgr.createPerson("BB", authenticationDeviceID, Boolean.FALSE);
             personC = pMgr.getPersonByName("CC");
             if (personC == null)  
-				personC = pMgr.createPerson("CC", personDataDeviceID, authenticationDeviceID, Boolean.FALSE);
+				personC = pMgr.createPerson("CC", authenticationDeviceID, Boolean.FALSE);
 
             assertTrue(KBSetup.getKnowledgeBase().commit());
 			TLContext context = TLContext.getContext();

@@ -67,11 +67,10 @@ public class PasswordHistoryFormat extends Format {
 			}
 			out.append(curr);
 		}
-
 	}
 
 	@Override
-	public Object parseObject(String source, ParsePosition pos) {
+	public List<String> parseObject(String source, ParsePosition pos) {
 		List<String> result = new ArrayList<>();
 		int len = source.length();
 		if (len <= pos.getIndex()) {

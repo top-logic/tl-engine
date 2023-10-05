@@ -248,7 +248,7 @@ public class TestGroup extends BasicTestCase {
 
 	private Person mkPerson() {
 		String name = mkName();
-		Person p = PersonManager.getManager().createPerson(name, "dbSecurity", "dbSecurity", Boolean.FALSE);
+		Person p = PersonManager.getManager().createPerson(name, "dbSecurity", Boolean.FALSE);
 		Person.createRepresentativeGroup(p);
 		return p;
 	}

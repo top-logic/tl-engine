@@ -40,7 +40,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.RefetchTimeout;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.exceptions.InvalidWrapperException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -56,21 +55,15 @@ public class TestTLPersonManager extends BasicTestCase {
 
 	private static final String SECOND_DEFAULT_KB_ID = "Default2";
 
-	private static final String DATA_ACCESS_DEVICE_ID = "dbSecurity";
+	private static final String AUTHENTICATION_DEVICE_ID = "dbSecurity";
 
 	private CollectingLogListener logListener;
 
 	private KnowledgeBase firstNodeKnowledgeBase;
 
-	private KnowledgeBase secondNodeKnowledgeBase;
-
 	private PersonManager firstNodePersonManager;
 
-	private PersonManager secondNodePersonManager;
-
 	private RefreshUsersTask firstNodeRefreshUsersTask;
-
-	private RefreshUsersTask secondNodeRefreshUsersTask;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -79,14 +72,8 @@ public class TestTLPersonManager extends BasicTestCase {
 		logListener = createLogListener();
 
 		firstNodeKnowledgeBase = createFirstNodeKnowlegdeBase();
-		secondNodeKnowledgeBase = createSecondNodeKnowlegdeBase();
-
 		firstNodePersonManager = createPersonManager(firstNodeKnowledgeBase);
-		secondNodePersonManager = createPersonManager(secondNodeKnowledgeBase);
-
 		firstNodeRefreshUsersTask = createFirstNodeRefreshUsersTask(firstNodeKnowledgeBase, firstNodePersonManager);
-		secondNodeRefreshUsersTask = createSecondNodeRefreshUsersTask(secondNodeKnowledgeBase, secondNodePersonManager);
-
 	}
 
 	private KnowledgeBase createFirstNodeKnowlegdeBase() {
@@ -100,9 +87,6 @@ public class TestTLPersonManager extends BasicTestCase {
 	private PersonManager createPersonManager(KnowledgeBase knowledgeBase) {
 		PersonManager.Config configItem = TypedConfiguration.newConfigItem(PersonManager.Config.class);
 		ConfigurationDescriptor descriptor = configItem.descriptor();
-		configItem.update(descriptor.getProperty(PersonManager.Config.KNOWLEDGE_BASE_PROPERTY),
-			new ConstantProvider<>(
-				knowledgeBase));
 		configItem.update(descriptor.getProperty(PersonManager.Config.TL_SECURITY_DEVICE_MANAGER_PROPERTY),
 			new ConstantProvider<>(
 				TLSecurityDeviceManager.getInstance()));
@@ -128,23 +112,14 @@ public class TestTLPersonManager extends BasicTestCase {
 		mockPersonDataAccessDevice.addUserData(user);
 
 		Transaction createTx = firstNodeKnowledgeBase.beginTransaction();
-		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(mockPersonDataAccessDevice.getDeviceID(),
-			user, Boolean.TRUE);
+		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(user.getUserName(),
+			Boolean.TRUE, AUTHENTICATION_DEVICE_ID);
 		createTx.commit();
 
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersons().contains(fooPerson));
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersonsSet().contains(fooPerson));
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersonsList().contains(fooPerson));
 		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllAlivePersons().contains(fooPerson));
-
-		secondNodeKnowledgeBase.refetch();
-		secondNodeRefreshUsersTask.run();
-		Person fooPersonNode2 =
-			(Person) WrapperFactory.getWrapper(fooPerson.getID(), Person.OBJECT_NAME, secondNodeKnowledgeBase);
-		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllPersons().contains(fooPersonNode2));
-		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllPersonsSet().contains(fooPersonNode2));
-		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllPersonsList().contains(fooPersonNode2));
-		assertTrue("Ticket #13195: ", secondNodePersonManager.getAllAlivePersons().contains(fooPersonNode2));
 	}
 
 	public void testDeletePerson() throws RefetchTimeout {
@@ -153,23 +128,14 @@ public class TestTLPersonManager extends BasicTestCase {
 		mockPersonDataAccessDevice.addUserData(user);
 
 		Transaction createTx = firstNodeKnowledgeBase.beginTransaction();
-		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(mockPersonDataAccessDevice.getDeviceID(),
-			user, Boolean.TRUE);
+		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(user.getUserName(),
+			Boolean.TRUE, AUTHENTICATION_DEVICE_ID);
 		createTx.commit();
 		String personName = fooPerson.getName();
 
-		secondNodeKnowledgeBase.refetch();
-		Person fooPersonNode2 = secondNodePersonManager.getPersonByName(personName);
-		assertNotNull(fooPersonNode2);
-		UserInterface fooUserNode2 = Person.userOrNull(fooPersonNode2);
-		Transaction deleteTx = secondNodeKnowledgeBase.beginTransaction();
-		secondNodePersonManager.deleteUser(fooPersonNode2);
+		Transaction deleteTx = firstNodeKnowledgeBase.beginTransaction();
+		fooPerson.tDelete();
 		deleteTx.commit();
-
-		assertFalse("Ticket #13195: ", secondNodePersonManager.getAllPersons().contains(fooPersonNode2));
-		assertFalse("Ticket #13195: ", secondNodePersonManager.getAllPersonsSet().contains(fooPersonNode2));
-		assertFalse("Ticket #13195: ", secondNodePersonManager.getAllPersonsList().contains(fooPersonNode2));
-		assertFalse("Ticket #13195: ", secondNodePersonManager.getAllAlivePersons().contains(fooPersonNode2));
 
 		firstNodeKnowledgeBase.refetch();
 		assertFalse("Ticket #13195: ", firstNodePersonManager.getAllPersons().contains(fooPerson));
@@ -185,8 +151,8 @@ public class TestTLPersonManager extends BasicTestCase {
 
 		assertNull(firstNodePersonManager.getPersonByName(fooUser.getUserName(), firstNodeKnowledgeBase));
 		Transaction tx = firstNodeKnowledgeBase.beginTransaction();
-		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(mockPersonDataAccessDevice.getDeviceID(),
-			fooUser, Boolean.TRUE);
+		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(fooUser.getUserName(),
+			Boolean.TRUE, AUTHENTICATION_DEVICE_ID);
 		fooPerson.setLocale(Locale.CHINA);
 		tx.commit();
 
@@ -194,7 +160,7 @@ public class TestTLPersonManager extends BasicTestCase {
 		// Dynamic locale may differ from set locale because a variant is included in Locale.
 		// assertEquals(Locale.CHINA, dynamicLocale);
 		Person refetchedPerson = firstNodePersonManager
-			.getOrCreatePersonForUser(mockPersonDataAccessDevice.getDeviceID(), fooUser, Boolean.TRUE);
+			.getOrCreatePersonForUser(fooUser.getUserName(), Boolean.TRUE, AUTHENTICATION_DEVICE_ID);
 		assertEquals("Ticket #11923: Fetching person for user changes locale.", dynamicLocale,
 			refetchedPerson.getLocale());
 	}
@@ -238,19 +204,11 @@ public class TestTLPersonManager extends BasicTestCase {
 		firstNodeRefreshUsersTask.run();
 		assertAllRegisteredUsers(firstNodePersonManager, rootUser, fooUser, barUser);
 
-		secondNodeKnowledgeBase.refetch();
-		secondNodeRefreshUsersTask.run();
-		assertAllRegisteredUsers(secondNodePersonManager, rootUser, fooUser, barUser);
-		
 		users.remove(0);
 		mockPersonDataAccessDevice.setAllUserData(users);
 		
 		firstNodeRefreshUsersTask.run();
 		assertAllRegisteredUsers(firstNodePersonManager, rootUser, barUser);
-
-		secondNodeKnowledgeBase.refetch();
-		secondNodeRefreshUsersTask.run();
-		assertAllRegisteredUsers(secondNodePersonManager, rootUser, barUser);
 
 		assertNoInvalidWrapperExceptionOccured("user update of PersonManager");
 	}
@@ -265,7 +223,7 @@ public class TestTLPersonManager extends BasicTestCase {
 	}
 
 	private UserInterface newUser() {
-		return MockUserInterface.newUserInterface(DATA_ACCESS_DEVICE_ID);
+		return MockUserInterface.newUserInterface(AUTHENTICATION_DEVICE_ID);
 	}
 
 	private RefreshUsersTask<?> createFirstNodeRefreshUsersTask(KnowledgeBase knowledgeBase,
@@ -289,7 +247,7 @@ public class TestTLPersonManager extends BasicTestCase {
 
 	private MockPersonDataAccessDevice getMockPersonDataAccessDevice() {
 		PersonDataAccessDevice dataAccessDevice =
-			TLSecurityDeviceManager.getInstance().getDataAccessDevice(DATA_ACCESS_DEVICE_ID);
+			TLSecurityDeviceManager.getInstance().getDataAccessDevice(AUTHENTICATION_DEVICE_ID);
 		assertInstanceof(dataAccessDevice, MockPersonDataAccessDevice.class);
 		return (MockPersonDataAccessDevice) dataAccessDevice;
 	}

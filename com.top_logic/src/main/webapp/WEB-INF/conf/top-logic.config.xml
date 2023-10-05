@@ -69,6 +69,7 @@
 			       <module key="com.top_logic.layout.editor.DynamicComponentService$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.commandhandlers.BookmarkService$Module" value="true"/>
 			       <module key="com.top_logic.util.LayoutBasedSecurity$Module" value="true"/>
+			       <module key="com.top_logic.base.security.setup.RootAccountCreation$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -604,12 +605,18 @@
 				<security-devices>
 					<security-device 
 						id="dbSecurity"
-						type="auth-with-data"
 						class="com.top_logic.base.security.device.db.DBAuthenticationAccessDevice"
 						read-only="false"
-						allow-pwd-change="true"
 						allow-ext-authentication="false"
 					>
+						<password-validator>
+							<enabled>true</enabled>
+							<expiry-period>365</expiry-period>
+							<repeat-cycle>3</repeat-cycle>
+							<min-password-length>8</min-password-length>
+							<criteria-count>2</criteria-count>
+							<exclude-uids></exclude-uids>
+						</password-validator>
 						<initial-user-resources>
 							<initial-user-resource name="/WEB-INF/database/Users.xml"/>
 						</initial-user-resources>
@@ -725,16 +732,6 @@
 		<config service-class="com.top_logic.base.accesscontrol.Login">
 			<instance class="com.top_logic.base.accesscontrol.Login">
 				<log-failed-logins>true</log-failed-logins>
-				<password-manager>
-					<password-validator>
-						<enabled>true</enabled>
-						<expiry-period>365</expiry-period>
-						<repeat-cycle>3</repeat-cycle>
-						<min-password-length>8</min-password-length>
-						<criteria-count>2</criteria-count>
-						<exclude-uids></exclude-uids>
-					</password-validator>
-				</password-manager>
 				
 				<component-leaving-maintenance-mode>com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml#exitMaintenanceWindow</component-leaving-maintenance-mode>
 				<command-group-leaving-maintenance-mode>Write</command-group-leaving-maintenance-mode>
@@ -1999,7 +1996,6 @@
 			            <declaration resource="webinf://kbase/ListMeta.xml" />
 			            <declaration resource="webinf://kbase/UnitMeta.xml" />
 			            <declaration resource="webinf://kbase/LogEntryMeta.xml" /> 
-			            <declaration resource="webinf://kbase/UsersMeta.xml" /> 
 			            <declaration resource="webinf://kbase/LayoutMeta.xml" /> 
 			            <declaration resource="webinf://kbase/TemplateLayoutMeta.xml" /> 
 					</declarations>
@@ -2020,7 +2016,6 @@
 						</provider>
 					</providers>
 					<data>
-						<definition resource="webinf://kbase/KBDataRoot.xml"/>
 						<definition resource="webinf://kbase/KBDataUnit.xml"/>
 						<definition resource="webinf://kbase/KBData.xml"/>
 					</data>

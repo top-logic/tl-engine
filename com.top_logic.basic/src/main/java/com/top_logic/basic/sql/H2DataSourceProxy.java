@@ -50,15 +50,17 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 
 	@Override
 	public Connection getConnection() throws SQLException {
-		try (Connection connection = super.getConnection()) {
-			// Check connection.
-		} catch (SQLException sqx) {
-			if (sqx.getMessage().contains("Unsupported database file version")) {
+		try {
+			return super.getConnection();
+		} catch (SQLException exception) {
+			if (exception.getMessage().contains("Unsupported database file version")) {
 				migrateDatabaseVersion();
+
+				return super.getConnection();
+			} else {
+				throw exception;
 			}
 		}
-
-		return super.getConnection();
 	}
 
 	private void migrateDatabaseVersion() {

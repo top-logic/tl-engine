@@ -33,7 +33,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-dob-persist</artifactId>
+      <artifactId>tl-basic-db-schema</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

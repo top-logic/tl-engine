@@ -41,13 +41,13 @@ import com.top_logic.dob.NamedValues;
 import com.top_logic.dob.attr.NextCommitNumberFuture;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.BasicTypes;
-import com.top_logic.dob.persist.DataManager;
+import com.top_logic.knowledge.service.FlexDataManager;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AddAttributeStatement.AddAttributeBatchCollector;
 import com.top_logic.knowledge.service.db2.MutableFlexData.ChangeType;
 
 /**
- * {@link DataManager} implementation that keeps all historic states of all of
- * its {@link NamedValues}.
+ * {@link FlexDataManager} implementation that keeps all historic states of all of its
+ * {@link NamedValues}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

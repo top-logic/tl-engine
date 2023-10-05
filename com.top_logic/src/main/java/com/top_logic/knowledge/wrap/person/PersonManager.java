@@ -46,7 +46,6 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.dob.persist.DataManager;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -61,38 +60,21 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.deletion.AllPersonDeletionPolicy;
 import com.top_logic.knowledge.wrap.person.deletion.PersonDeletionPolicy;
 import com.top_logic.knowledge.wrap.util.PersonComparator;
-import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.license.LicenseTool;
 
 /**
- * Superclass for person managers which also should create the various instances.
- * 
- * Usage of different PersonManagers can be done by subclasses of this class,
- * which are registered in the configuration in the section defined by the constants
- * below. Subclasses have to provide an empty constructor which needs to be
- * public if they are not placed in the same package as this class (which is not
- * recommended).
- * 
- * However, going this way, a call to getInstance() will always deliver the
- * correct implementation of PersonManager
- * 
- * TODO KHA/BHU/TRI we badly need a Call-back/Listener mechanism in case of
- *      Person creation/deletion, see the derived classes ....
+ * TopLogic account management.
  *
  * @author <a href="mailto:tri@top-logic.com">Thomas Richter </a>
- *  
  */
 @ServiceDependencies({
 	PersistencyLayer.Module.class, 
 	ApplicationConfig.Module.class,
 	LockService.Module.class,
 	TLSecurityDeviceManager.Module.class,
-	// Some group operations are dispatched to the corresponding command handlers.
-	CommandHandlerFactory.Module.class,
-	DataManager.Module.class,
 	InitialGroupManager.Module.class,
 	ResourcesModule.Module.class,
 })

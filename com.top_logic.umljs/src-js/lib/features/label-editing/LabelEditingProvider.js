@@ -1,4 +1,4 @@
-import { Label, Shape } from 'diagram-js/lib/model';
+import { isShape } from '../../util/ModelUtil';
 
 LabelEditingProvider.$inject = [
   'eventBus',
@@ -20,7 +20,7 @@ export default function LabelEditingProvider(eventBus, registry, directEditing, 
   eventBus.on('element.dblclick', function(event) {
     var element = event.element;
 
-    if(element instanceof Shape) {
+    if(isShape(element)) {
       directEditing.activate(element);
     }
   });

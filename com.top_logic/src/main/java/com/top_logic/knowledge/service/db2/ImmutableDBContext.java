@@ -12,7 +12,6 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.TLID;
-import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.message.Message;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.DataObjectException;
@@ -25,6 +24,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Immutable {@link DBContext}
@@ -62,8 +62,8 @@ public class ImmutableDBContext extends DBContext {
 		throw unmodifiable();
 	}
 
-	private IllegalStateException unmodifiable(Object... args) {
-		throw new I18NRuntimeException(I18NConstants.ACCESS_TO_IMMUTABLE_CONTEXT__ARGS.fill(Arrays.deepToString(args)));
+	private RuntimeException unmodifiable(Object... args) {
+		throw new TopLogicException(I18NConstants.ACCESS_TO_IMMUTABLE_CONTEXT__ARGS.fill(Arrays.deepToString(args)));
 	}
 
 	@Override

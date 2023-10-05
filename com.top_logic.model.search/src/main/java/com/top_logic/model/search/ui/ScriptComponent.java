@@ -16,6 +16,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.layout.meta.search.AttributedSearchResultSet;
 import com.top_logic.element.meta.TypeSpec;
+import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -79,13 +80,19 @@ public class ScriptComponent extends BoundLayout {
 	 */
 	public void execute(SearchExpression expression, boolean withCommit) {
 		Collection<?> results;
-		if (withCommit) {
-			try (Transaction tx = kb().beginTransaction()) {
-				results = getResults(expression);
-				tx.commit();
+		try {
+			if (withCommit) {
+				try (Transaction tx = kb().beginTransaction()) {
+					results = getResults(expression);
+					tx.commit();
+				}
+			} else {
+				results = kb().withoutModifications(() -> getResults(expression));
 			}
-		} else {
-			results = kb().withoutModifications(() -> getResults(expression));
+		} catch (RuntimeException ex) {
+			InfoService
+				.showError(InfoService.messages(I18NConstants.ERROR_EXECUTING_SEARCH__EXPR.fill(expression), ex));
+			return;
 		}
 
 		Set<TLClass> searchedTypes = SearchUtil.getSearchedTypes(expression);

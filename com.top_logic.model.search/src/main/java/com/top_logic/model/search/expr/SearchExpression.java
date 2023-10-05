@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
@@ -100,7 +101,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			return internalEval(context, args);
 		} catch (ScriptAbort ex) {
 			throw ex;
- 		} catch (TopLogicException ex) {
+		} catch (I18NRuntimeException ex) {
 			throw ex;
 		} catch (Error | Exception ex) {
 			throw new TopLogicException(

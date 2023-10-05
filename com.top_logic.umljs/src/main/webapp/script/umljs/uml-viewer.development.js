@@ -5,33 +5,128 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  *
- * Date: 2022-05-09
+ * Date: 2023-10-03
  */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global.UmlJS = factory());
-}(this, (function () { 'use strict';
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.UmlJS = factory());
+})(this, (function () { 'use strict';
+
+  function _mergeNamespaces$1(n, m) {
+    m.forEach(function (e) {
+      e && typeof e !== 'string' && !Array.isArray(e) && Object.keys(e).forEach(function (k) {
+        if (k !== 'default' && !(k in n)) {
+          var d = Object.getOwnPropertyDescriptor(e, k);
+          Object.defineProperty(n, k, d.get ? d : {
+            enumerable: true,
+            get: function () { return e[k]; }
+          });
+        }
+      });
+    });
+    return Object.freeze(n);
+  }
 
   /**
-   * Set attribute `name` to `val`, or get attr `name`.
+   * Flatten array, one level deep.
    *
-   * @param {Element} el
-   * @param {String} name
-   * @param {String} [val]
-   * @api public
+   * @param {Array<?>} arr
+   *
+   * @return {Array<?>}
    */
 
-  var indexOf = [].indexOf;
+  const nativeToString$1 = Object.prototype.toString;
+  const nativeHasOwnProperty$1 = Object.prototype.hasOwnProperty;
 
-  var indexof = function(arr, obj){
-    if (indexOf) return arr.indexOf(obj);
-    for (var i = 0; i < arr.length; ++i) {
-      if (arr[i] === obj) return i;
+  function isUndefined$1(obj) {
+    return obj === undefined;
+  }
+
+  function isArray$2(obj) {
+    return nativeToString$1.call(obj) === '[object Array]';
+  }
+
+  /**
+   * Return true, if target owns a property with the given key.
+   *
+   * @param {Object} target
+   * @param {String} key
+   *
+   * @return {Boolean}
+   */
+  function has$1(target, key) {
+    return nativeHasOwnProperty$1.call(target, key);
+  }
+
+
+  /**
+   * Iterate over collection; returning something
+   * (non-undefined) will stop iteration.
+   *
+   * @param  {Array|Object} collection
+   * @param  {Function} iterator
+   *
+   * @return {Object} return result that stopped the iteration
+   */
+  function forEach$1(collection, iterator) {
+
+    let val,
+        result;
+
+    if (isUndefined$1(collection)) {
+      return;
     }
-    return -1;
-  };
+
+    const convertKey = isArray$2(collection) ? toNum$1 : identity$1;
+
+    for (let key in collection) {
+
+      if (has$1(collection, key)) {
+        val = collection[key];
+
+        result = iterator(val, convertKey(key));
+
+        if (result === false) {
+          return val;
+        }
+      }
+    }
+  }
+
+
+  function identity$1(arg) {
+    return arg;
+  }
+
+  function toNum$1(arg) {
+    return Number(arg);
+  }
+
+  /**
+   * Assigns style attributes in a style-src compliant way.
+   *
+   * @param {Element} element
+   * @param {...Object} styleSources
+   *
+   * @return {Element} the element
+   */
+  function assign$1(element, ...styleSources) {
+    const target = element.style;
+
+    forEach$1(styleSources, function(style) {
+      if (!style) {
+        return;
+      }
+
+      forEach$1(style, function(value, key) {
+        target[key] = value;
+      });
+    });
+
+    return element;
+  }
 
   /**
    * Taken from https://github.com/component/classes
@@ -40,16 +135,10 @@
    */
 
   /**
-   * Whitespace regexp.
-   */
-
-  var re = /\s+/;
-
-  /**
    * toString reference.
    */
 
-  var toString = Object.prototype.toString;
+  const toString$1 = Object.prototype.toString;
 
   /**
    * Wrap `el` in a `ClassList`.
@@ -59,8 +148,8 @@
    * @api public
    */
 
-  function classes(el) {
-    return new ClassList(el);
+  function classes$1(el) {
+    return new ClassList$1(el);
   }
 
   /**
@@ -70,7 +159,7 @@
    * @api private
    */
 
-  function ClassList(el) {
+  function ClassList$1(el) {
     if (!el || !el.nodeType) {
       throw new Error('A DOM element reference is required');
     }
@@ -86,18 +175,8 @@
    * @api public
    */
 
-  ClassList.prototype.add = function (name) {
-    // classList
-    if (this.list) {
-      this.list.add(name);
-      return this;
-    }
-
-    // fallback
-    var arr = this.array();
-    var i = indexof(arr, name);
-    if (!~i) arr.push(name);
-    this.el.className = arr.join(' ');
+  ClassList$1.prototype.add = function(name) {
+    this.list.add(name);
     return this;
   };
 
@@ -111,22 +190,12 @@
    * @api public
    */
 
-  ClassList.prototype.remove = function (name) {
-    if ('[object RegExp]' == toString.call(name)) {
+  ClassList$1.prototype.remove = function(name) {
+    if ('[object RegExp]' == toString$1.call(name)) {
       return this.removeMatching(name);
     }
 
-    // classList
-    if (this.list) {
-      this.list.remove(name);
-      return this;
-    }
-
-    // fallback
-    var arr = this.array();
-    var i = indexof(arr, name);
-    if (~i) arr.splice(i, 1);
-    this.el.className = arr.join(' ');
+    this.list.remove(name);
     return this;
   };
 
@@ -138,9 +207,9 @@
    * @api private
    */
 
-  ClassList.prototype.removeMatching = function (re) {
-    var arr = this.array();
-    for (var i = 0; i < arr.length; i++) {
+  ClassList$1.prototype.removeMatching = function(re) {
+    const arr = this.array();
+    for (let i = 0; i < arr.length; i++) {
       if (re.test(arr[i])) {
         this.remove(arr[i]);
       }
@@ -160,34 +229,14 @@
    * @api public
    */
 
-  ClassList.prototype.toggle = function (name, force) {
-    // classList
-    if (this.list) {
-      if ('undefined' !== typeof force) {
-        if (force !== this.list.toggle(name, force)) {
-          this.list.toggle(name); // toggle again to correct
-        }
-      } else {
-        this.list.toggle(name);
-      }
-      return this;
-    }
-
-    // fallback
+  ClassList$1.prototype.toggle = function(name, force) {
     if ('undefined' !== typeof force) {
-      if (!force) {
-        this.remove(name);
-      } else {
-        this.add(name);
+      if (force !== this.list.toggle(name, force)) {
+        this.list.toggle(name); // toggle again to correct
       }
     } else {
-      if (this.has(name)) {
-        this.remove(name);
-      } else {
-        this.add(name);
-      }
+      this.list.toggle(name);
     }
-
     return this;
   };
 
@@ -198,12 +247,8 @@
    * @api public
    */
 
-  ClassList.prototype.array = function () {
-    var className = this.el.getAttribute('class') || '';
-    var str = className.replace(/^\s+|\s+$/g, '');
-    var arr = str.split(re);
-    if ('' === arr[0]) arr.shift();
-    return arr;
+  ClassList$1.prototype.array = function() {
+    return Array.from(this.list);
   };
 
   /**
@@ -214,14 +259,15 @@
    * @api public
    */
 
-  ClassList.prototype.has = ClassList.prototype.contains = function (name) {
-    return this.list ? this.list.contains(name) : !!~indexof(this.array(), name);
+  ClassList$1.prototype.has =
+  ClassList$1.prototype.contains = function(name) {
+    return this.list.contains(name);
   };
 
   /**
    * Remove all children from the given element.
    */
-  function clear(el) {
+  function clear$1(el) {
 
     var c;
 
@@ -234,57 +280,47 @@
   }
 
   /**
-   * Element prototype.
+   * @param { HTMLElement } element
+   * @param { String } selector
+   *
+   * @return { boolean }
    */
-
-  var proto = Element.prototype;
+  function matches(element, selector) {
+    return element && typeof element.matches === 'function' && element.matches(selector);
+  }
 
   /**
-   * Vendor function.
-   */
-
-  var vendor = proto.matchesSelector
-    || proto.webkitMatchesSelector
-    || proto.mozMatchesSelector
-    || proto.msMatchesSelector
-    || proto.oMatchesSelector;
-
-  /**
-   * Expose `match()`.
-   */
-
-  var matchesSelector = match;
-
-  /**
-   * Match `el` to `selector`.
+   * Closest
    *
    * @param {Element} el
    * @param {String} selector
-   * @return {Boolean}
-   * @api public
+   * @param {Boolean} checkYourSelf (optional)
    */
+  function closest(element, selector, checkYourSelf) {
+    var currentElem = checkYourSelf ? element : element.parentNode;
 
-  function match(el, selector) {
-    if (vendor) return vendor.call(el, selector);
-    var nodes = el.parentNode.querySelectorAll(selector);
-    for (var i = 0; i < nodes.length; ++i) {
-      if (nodes[i] == el) return true;
+    while (currentElem && currentElem.nodeType !== document.DOCUMENT_NODE &&
+        currentElem.nodeType !== document.DOCUMENT_FRAGMENT_NODE) {
+
+      if (matches(currentElem, selector)) {
+        return currentElem;
+      }
+
+      currentElem = currentElem.parentNode;
     }
-    return false;
+
+    return matches(currentElem, selector) ? currentElem : null;
   }
 
-  var closest = function (element, selector, checkYoSelf) {
-    var parent = checkYoSelf ? element : element.parentNode;
+  var componentEvent = {};
 
-    while (parent && parent !== document) {
-      if (matchesSelector(parent, selector)) return parent;
-      parent = parent.parentNode;
-    }
-  };
+  var bind$1, unbind$1, prefix;
 
-  var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',
-      unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
-      prefix = bind !== 'addEventListener' ? 'on' : '';
+  function detect () {
+    bind$1 = window.addEventListener ? 'addEventListener' : 'attachEvent';
+    unbind$1 = window.removeEventListener ? 'removeEventListener' : 'detachEvent';
+    prefix = bind$1 !== 'addEventListener' ? 'on' : '';
+  }
 
   /**
    * Bind `el` event `type` to `fn`.
@@ -297,8 +333,9 @@
    * @api public
    */
 
-  var bind_1 = function(el, type, fn, capture){
-    el[bind](prefix + type, fn, capture || false);
+  var bind_1 = componentEvent.bind = function(el, type, fn, capture){
+    if (!bind$1) detect();
+    el[bind$1](prefix + type, fn, capture || false);
     return fn;
   };
 
@@ -313,21 +350,24 @@
    * @api public
    */
 
-  var unbind_1 = function(el, type, fn, capture){
-    el[unbind](prefix + type, fn, capture || false);
+  var unbind_1 = componentEvent.unbind = function(el, type, fn, capture){
+    if (!unbind$1) detect();
+    el[unbind$1](prefix + type, fn, capture || false);
     return fn;
   };
 
-  var componentEvent = {
-  	bind: bind_1,
-  	unbind: unbind_1
-  };
+  var event = /*#__PURE__*/_mergeNamespaces$1({
+    __proto__: null,
+    bind: bind_1,
+    unbind: unbind_1,
+    'default': componentEvent
+  }, [componentEvent]);
 
   /**
    * Expose `parse`.
    */
 
-  var domify = parse;
+  var domify = parse$1;
 
   /**
    * Tests for browser support.
@@ -391,7 +431,7 @@
    * @api private
    */
 
-  function parse(html, doc) {
+  function parse$1(html, doc) {
     if ('string' != typeof html) throw new TypeError('String expected');
 
     // default to the global `document` object
@@ -413,7 +453,7 @@
     }
 
     // wrap map
-    var wrap = map[tag] || map._default;
+    var wrap = Object.prototype.hasOwnProperty.call(map, tag) ? map[tag] : map._default;
     var depth = wrap[0];
     var prefix = wrap[1];
     var suffix = wrap[2];
@@ -435,13 +475,7 @@
     return fragment;
   }
 
-  var proto$1 = typeof Element !== 'undefined' ? Element.prototype : {};
-  var vendor$1 = proto$1.matches
-    || proto$1.matchesSelector
-    || proto$1.webkitMatchesSelector
-    || proto$1.mozMatchesSelector
-    || proto$1.msMatchesSelector
-    || proto$1.oMatchesSelector;
+  var domify$1 = domify;
 
   function query(selector, el) {
     el = el || document;
@@ -449,6 +483,18 @@
     return el.querySelector(selector);
   }
 
+  /**
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   */
+
+
+
+  /**
+   * @param {Point} a
+   * @param {Point} b
+   * @return {Point}
+   */
   function delta(a, b) {
     return {
       x: a.x - b.x,
@@ -457,8 +503,9 @@
   }
 
   /**
-   * Get the logarithm of x with base 10
-   * @param  {Integer} value
+   * Get the logarithm of x with base 10.
+   *
+   * @param {number} x
    */
   function log10(x) {
     return Math.log(x) / Math.log(10);
@@ -467,9 +514,10 @@
   /**
    * Get step size for given range and number of steps.
    *
-   * @param {Object} range - Range.
-   * @param {number} range.min - Range minimum.
-   * @param {number} range.max - Range maximum.
+   * @param {Object} range
+   * @param {number} range.min
+   * @param {number} range.max
+   * @param {number} steps
    */
   function getStepSize(range, steps) {
 
@@ -481,6 +529,12 @@
     return absoluteLinearRange / steps;
   }
 
+  /**
+   * @param {Object} range
+   * @param {number} range.min
+   * @param {number} range.max
+   * @param {number} scale
+   */
   function cap(range, scale) {
     return Math.max(range.min, Math.min(range.max, scale));
   }
@@ -488,19 +542,21 @@
   /**
    * Flatten array, one level deep.
    *
-   * @param {Array<?>} arr
+   * @template T
    *
-   * @return {Array<?>}
+   * @param {T[][]} arr
+   *
+   * @return {T[]}
    */
 
-  var nativeToString = Object.prototype.toString;
-  var nativeHasOwnProperty = Object.prototype.hasOwnProperty;
+  const nativeToString = Object.prototype.toString;
+  const nativeHasOwnProperty = Object.prototype.hasOwnProperty;
 
   function isUndefined(obj) {
     return obj === undefined;
   }
 
-  function isArray(obj) {
+  function isArray$1(obj) {
     return nativeToString.call(obj) === '[object Array]';
   }
 
@@ -512,8 +568,21 @@
     return nativeToString.call(obj) === '[object Number]';
   }
 
+  /**
+   * @param {any} obj
+   *
+   * @return {boolean}
+   */
   function isFunction(obj) {
-    return nativeToString.call(obj) === '[object Function]';
+    const tag = nativeToString.call(obj);
+
+    return (
+      tag === '[object Function]' ||
+      tag === '[object AsyncFunction]' ||
+      tag === '[object GeneratorFunction]' ||
+      tag === '[object AsyncGeneratorFunction]' ||
+      tag === '[object Proxy]'
+    );
   }
 
   /**
@@ -529,53 +598,141 @@
   }
 
   /**
+   * @template T
+   * @typedef { (
+   *   ((e: T) => boolean) |
+   *   ((e: T, idx: number) => boolean) |
+   *   ((e: T, key: string) => boolean) |
+   *   string |
+   *   number
+   * ) } Matcher
+   */
+
+  /**
+   * @template T
+   * @template U
+   *
+   * @typedef { (
+   *   ((e: T) => U) | string | number
+   * ) } Extractor
+   */
+
+
+  /**
+   * @template T
+   * @typedef { (val: T, key: any) => boolean } MatchFn
+   */
+
+  /**
+   * @template T
+   * @typedef { T[] } ArrayCollection
+   */
+
+  /**
+   * @template T
+   * @typedef { { [key: string]: T } } StringKeyValueCollection
+   */
+
+  /**
+   * @template T
+   * @typedef { { [key: number]: T } } NumberKeyValueCollection
+   */
+
+  /**
+   * @template T
+   * @typedef { StringKeyValueCollection<T> | NumberKeyValueCollection<T> } KeyValueCollection
+   */
+
+  /**
+   * @template T
+   * @typedef { KeyValueCollection<T> | ArrayCollection<T> } Collection
+   */
+
+  /**
+   * Find element in collection.
+   *
+   * @template T
+   * @param {Collection<T>} collection
+   * @param {Matcher<T>} matcher
+   *
+   * @return {Object}
+   */
+  function find(collection, matcher) {
+
+    const matchFn = toMatcher(matcher);
+
+    let match;
+
+    forEach(collection, function(val, key) {
+      if (matchFn(val, key)) {
+        match = val;
+
+        return false;
+      }
+    });
+
+    return match;
+
+  }
+
+
+  /**
    * Iterate over collection; returning something
    * (non-undefined) will stop iteration.
    *
-   * @param  {Array|Object} collection
-   * @param  {Function} iterator
+   * @template T
+   * @param {Collection<T>} collection
+   * @param { ((item: T, idx: number) => (boolean|void)) | ((item: T, key: string) => (boolean|void)) } iterator
    *
-   * @return {Object} return result that stopped the iteration
+   * @return {T} return result that stopped the iteration
    */
   function forEach(collection, iterator) {
+
+    let val,
+        result;
 
     if (isUndefined(collection)) {
       return;
     }
 
-    var convertKey = isArray(collection) ? toNum : identity;
+    const convertKey = isArray$1(collection) ? toNum : identity;
 
-    for (var key in collection) {
+    for (let key in collection) {
 
       if (has(collection, key)) {
-        var val = collection[key];
+        val = collection[key];
 
-        var result = iterator(val, convertKey(key));
+        result = iterator(val, convertKey(key));
 
         if (result === false) {
-          return;
+          return val;
         }
       }
     }
   }
 
+
   /**
    * Reduce collection, returning a single result.
    *
-   * @param  {Object|Array} collection
-   * @param  {Function} iterator
-   * @param  {Any} result
+   * @template T
+   * @template V
    *
-   * @return {Any} result returned from last iterator
+   * @param {Collection<T>} collection
+   * @param {(result: V, entry: T, index: any) => V} iterator
+   * @param {V} result
+   *
+   * @return {V} result returned from last iterator
    */
   function reduce(collection, iterator, result) {
 
-    forEach(collection, function (value, idx) {
+    forEach(collection, function(value, idx) {
       result = iterator(result, value, idx);
     });
 
     return result;
   }
+
 
   /**
    * Return true if every element in the collection
@@ -588,10 +745,24 @@
    */
   function every(collection, matcher) {
 
-    return reduce(collection, function (matches, val, key) {
+    return !!reduce(collection, function(matches, val, key) {
       return matches && matcher(val, key);
     }, true);
   }
+
+
+  /**
+   * @template T
+   * @param {Matcher<T>} matcher
+   *
+   * @return {MatchFn<T>}
+   */
+  function toMatcher(matcher) {
+    return isFunction(matcher) ? matcher : (e) => {
+      return e === matcher;
+    };
+  }
+
 
   function identity(arg) {
     return arg;
@@ -601,29 +772,42 @@
     return Number(arg);
   }
 
+  /* global setTimeout clearTimeout */
+
   /**
-   * Debounce fn, calling it only once if
-   * the given time elapsed between calls.
+   * @typedef { {
+   *   (...args: any[]): any;
+   *   flush: () => void;
+   *   cancel: () => void;
+   * } } DebouncedFunction
+   */
+
+  /**
+   * Debounce fn, calling it only once if the given time
+   * elapsed between calls.
+   *
+   * Lodash-style the function exposes methods to `#clear`
+   * and `#flush` to control internal behavior.
    *
    * @param  {Function} fn
    * @param  {Number} timeout
    *
-   * @return {Function} debounced function
+   * @return {DebouncedFunction} debounced function
    */
   function debounce(fn, timeout) {
 
-    var timer;
+    let timer;
 
-    var lastArgs;
-    var lastThis;
+    let lastArgs;
+    let lastThis;
 
-    var lastNow;
+    let lastNow;
 
-    function fire() {
+    function fire(force) {
 
-      var now = Date.now();
+      let now = Date.now();
 
-      var scheduledDiff = lastNow + timeout - now;
+      let scheduledDiff = force ? 0 : (lastNow + timeout) - now;
 
       if (scheduledDiff > 0) {
         return schedule(scheduledDiff);
@@ -631,20 +815,34 @@
 
       fn.apply(lastThis, lastArgs);
 
-      timer = lastNow = lastArgs = lastThis = undefined;
+      clear();
     }
 
     function schedule(timeout) {
       timer = setTimeout(fire, timeout);
     }
 
-    return function () {
-
-      lastNow = Date.now();
-
-      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
+    function clear() {
+      if (timer) {
+        clearTimeout(timer);
       }
+
+      timer = lastNow = lastArgs = lastThis = undefined;
+    }
+
+    function flush() {
+      if (timer) {
+        fire(true);
+      }
+
+      clear();
+    }
+
+    /**
+     * @type { DebouncedFunction }
+     */
+    function callback(...args) {
+      lastNow = Date.now();
 
       lastArgs = args;
       lastThis = this;
@@ -653,7 +851,12 @@
       if (!timer) {
         schedule(timeout);
       }
-    };
+    }
+
+    callback.flush = flush;
+    callback.cancel = clear;
+
+    return callback;
   }
 
   /**
@@ -664,11 +867,9 @@
    *
    * @return {Function} bound function
    */
-  function bind$2(fn, target) {
+  function bind(fn, target) {
     return fn.bind(target);
   }
-
-  var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
   /**
    * Convenience wrapper for `Object.assign`.
@@ -678,13 +879,16 @@
    *
    * @return {Object} the target
    */
-  function assign(target) {
-    for (var _len = arguments.length, others = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      others[_key - 1] = arguments[_key];
-    }
-
-    return _extends.apply(undefined, [target].concat(others));
+  function assign(target, ...others) {
+    return Object.assign(target, ...others);
   }
+
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   *
+   * @typedef {import('../../util/Types').Point} Point
+   */
 
   var sign = Math.sign || function(n) {
     return n >= 0 ? 1 : -1;
@@ -705,8 +909,8 @@
    * the {@link toggle(enabled)} method.
    *
    * @param {Object} [config]
-   * @param {Boolean} [config.enabled=true] default enabled state
-   * @param {Number} [config.scale=.75] scroll sensivity
+   * @param {boolean} [config.enabled=true] default enabled state
+   * @param {number} [config.scale=.75] scroll sensivity
    * @param {EventBus} eventBus
    * @param {Canvas} canvas
    */
@@ -719,7 +923,7 @@
     this._canvas = canvas;
     this._container = canvas._container;
 
-    this._handleWheel = bind$2(this._handleWheel, this);
+    this._handleWheel = bind(this._handleWheel, this);
 
     this._totalDelta = 0;
     this._scale = config.scale || DEFAULT_SCALE;
@@ -737,8 +941,11 @@
     'canvas'
   ];
 
-  ZoomScroll.prototype.scroll = function scroll(delta$$1) {
-    this._canvas.scroll(delta$$1);
+  /**
+   * @param {Point} delta
+   */
+  ZoomScroll.prototype.scroll = function scroll(delta) {
+    this._canvas.scroll(delta);
   };
 
 
@@ -749,19 +956,19 @@
   /**
    * Zoom depending on delta.
    *
-   * @param {number} delta - Zoom delta.
-   * @param {Object} position - Zoom position.
+   * @param {number} delta
+   * @param {Point} position
    */
-  ZoomScroll.prototype.zoom = function zoom(delta$$1, position) {
+  ZoomScroll.prototype.zoom = function zoom(delta, position) {
 
     // zoom with half the step size of stepZoom
     var stepSize = getStepSize(RANGE, NUM_STEPS * 2);
 
     // add until threshold reached
-    this._totalDelta += delta$$1;
+    this._totalDelta += delta;
 
     if (Math.abs(this._totalDelta) > DELTA_THRESHOLD) {
-      this._zoom(delta$$1, position, stepSize);
+      this._zoom(delta, position, stepSize);
 
       // reset
       this._totalDelta = 0;
@@ -769,92 +976,93 @@
   };
 
 
-  ZoomScroll.prototype._handleWheel = function handleWheel(event$$1) {
+  ZoomScroll.prototype._handleWheel = function handleWheel(event) {
+
     // event is already handled by '.djs-scrollable'
-    if (closest(event$$1.target, '.djs-scrollable', true)) {
+    if (closest(event.target, '.djs-scrollable', true)) {
       return;
     }
 
     var element = this._container;
 
-    event$$1.preventDefault();
+    event.preventDefault();
 
     // pinch to zoom is mapped to wheel + ctrlKey = true
     // in modern browsers (!)
 
-    var isZoom = event$$1.ctrlKey;
+    var isZoom = event.ctrlKey;
 
-    var isHorizontalScroll = event$$1.shiftKey;
+    var isHorizontalScroll = event.shiftKey;
 
     var factor = -1 * this._scale,
-        delta$$1;
+        delta;
 
     if (isZoom) {
-      factor *= event$$1.deltaMode === 0 ? 0.020 : 0.32;
+      factor *= event.deltaMode === 0 ? 0.020 : 0.32;
     } else {
-      factor *= event$$1.deltaMode === 0 ? 1.0 : 16.0;
+      factor *= event.deltaMode === 0 ? 1.0 : 16.0;
     }
 
     if (isZoom) {
       var elementRect = element.getBoundingClientRect();
 
       var offset = {
-        x: event$$1.clientX - elementRect.left,
-        y: event$$1.clientY - elementRect.top
+        x: event.clientX - elementRect.left,
+        y: event.clientY - elementRect.top
       };
 
-      delta$$1 = (
+      delta = (
         Math.sqrt(
-          Math.pow(event$$1.deltaY, 2) +
-          Math.pow(event$$1.deltaX, 2)
-        ) * sign(event$$1.deltaY) * factor
+          Math.pow(event.deltaY, 2) +
+          Math.pow(event.deltaX, 2)
+        ) * sign(event.deltaY) * factor
       );
 
       // zoom in relative to diagram {x,y} coordinates
-      this.zoom(delta$$1, offset);
+      this.zoom(delta, offset);
     } else {
 
       if (isHorizontalScroll) {
-        delta$$1 = {
-          dx: factor * event$$1.deltaY,
+        delta = {
+          dx: factor * event.deltaY,
           dy: 0
         };
       } else {
-        delta$$1 = {
-          dx: factor * event$$1.deltaX,
-          dy: factor * event$$1.deltaY
+        delta = {
+          dx: factor * event.deltaX,
+          dy: factor * event.deltaY
         };
       }
 
-      this.scroll(delta$$1);
+      this.scroll(delta);
     }
   };
 
   /**
    * Zoom with fixed step size.
    *
-   * @param {number} delta - Zoom delta (1 for zooming in, -1 for out).
-   * @param {Object} position - Zoom position.
+   * @param {number} delta Zoom delta (1 for zooming in, -1 for zooming out).
+   * @param {Point} position
    */
-  ZoomScroll.prototype.stepZoom = function stepZoom(delta$$1, position) {
+  ZoomScroll.prototype.stepZoom = function stepZoom(delta, position) {
 
     var stepSize = getStepSize(RANGE, NUM_STEPS);
 
-    this._zoom(delta$$1, position, stepSize);
+    this._zoom(delta, position, stepSize);
   };
 
 
   /**
    * Zoom in/out given a step size.
    *
-   * @param {number} delta - Zoom delta. Can be positive or negative.
-   * @param {Object} position - Zoom position.
-   * @param {number} stepSize - Step size.
+   * @param {number} delta
+   * @param {Point} position
+   * @param {number} stepSize
    */
-  ZoomScroll.prototype._zoom = function(delta$$1, position, stepSize) {
+  ZoomScroll.prototype._zoom = function(delta, position, stepSize) {
     var canvas = this._canvas;
 
-    var direction = delta$$1 > 0 ? 1 : -1;
+    var direction = delta > 0 ? 1 : -1;
 
     var currentLinearZoomLevel = log10(canvas.zoom());
 
@@ -875,7 +1083,7 @@
   /**
    * Toggle the zoom scroll ability via mouse wheel.
    *
-   * @param  {Boolean} [newEnabled] new enabled state
+   * @param {boolean} [newEnabled] new enabled state
    */
   ZoomScroll.prototype.toggle = function toggle(newEnabled) {
 
@@ -893,7 +1101,7 @@
 
       // add or remove wheel listener based on
       // changed enabled state
-      componentEvent[newEnabled ? 'bind' : 'unbind'](element, 'wheel', handleWheel, false);
+      event[newEnabled ? 'bind' : 'unbind'](element, 'wheel', handleWheel, false);
     }
 
     this._enabled = newEnabled;
@@ -906,6 +1114,9 @@
     this.toggle(newEnabled);
   };
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var ZoomScrollModule = {
     __init__: [ 'zoomScroll' ],
     zoomScroll: [ 'type', ZoomScroll ]
@@ -913,27 +1124,36 @@
 
   var CURSOR_CLS_PATTERN = /^djs-cursor-.*$/;
 
+  /**
+   * @param {string} mode
+   */
+  function set$1(mode) {
+    var classes = classes$1(document.body);
 
-  function set(mode) {
-    var classes$$1 = classes(document.body);
-
-    classes$$1.removeMatching(CURSOR_CLS_PATTERN);
+    classes.removeMatching(CURSOR_CLS_PATTERN);
 
     if (mode) {
-      classes$$1.add('djs-cursor-' + mode);
+      classes.add('djs-cursor-' + mode);
     }
   }
 
   function unset() {
-    set(null);
+    set$1(null);
   }
+
+  /**
+   * @typedef {import('../core/EventBus').EventBus} EventBus
+   */
 
   var TRAP_PRIORITY = 5000;
 
   /**
    * Installs a click trap that prevents a ghost click following a dragging operation.
    *
-   * @return {Function} a function to immediately remove the installed trap.
+   * @param {EventBus} eventBus
+   * @param {string} [eventName='element.click']
+   *
+   * @return {() => void} a function to immediately remove the installed trap.
    */
   function install(eventBus, eventName) {
 
@@ -950,6 +1170,16 @@
     };
   }
 
+  /**
+   * @typedef {import('../util/Types').Point} Point
+   */
+
+
+  /**
+   * @param {Event} event
+   *
+   * @return {Point|null}
+   */
   function toPoint(event) {
 
     if (event.pointers && event.pointers.length) {
@@ -965,6 +1195,11 @@
       y: event.clientY
     } : null;
   }
+
+  /**
+   * @typedef {import('../../core/Canvas').default} Canvas
+   * @typedef {import('../../core/EventBus').default} EventBus
+   */
 
   var THRESHOLD = 15;
 
@@ -988,70 +1223,81 @@
     });
 
 
-    function handleMove(event$$1) {
+    function handleMove(event) {
 
       var start = context.start,
-          position = toPoint(event$$1),
-          delta$$1 = delta(position, start);
+          button = context.button,
+          position = toPoint(event),
+          delta$1 = delta(position, start);
 
-      if (!context.dragging && length(delta$$1) > THRESHOLD) {
+      if (!context.dragging && length(delta$1) > THRESHOLD) {
         context.dragging = true;
 
-        install(eventBus);
+        if (button === 0) {
+          install(eventBus);
+        }
 
-        set('grab');
+        set$1('grab');
       }
 
       if (context.dragging) {
 
         var lastPosition = context.last || context.start;
 
-        delta$$1 = delta(position, lastPosition);
+        delta$1 = delta(position, lastPosition);
 
         canvas.scroll({
-          dx: delta$$1.x,
-          dy: delta$$1.y
+          dx: delta$1.x,
+          dy: delta$1.y
         });
 
         context.last = position;
       }
 
       // prevent select
-      event$$1.preventDefault();
+      event.preventDefault();
     }
 
 
-    function handleEnd(event$$1) {
-      componentEvent.unbind(document, 'mousemove', handleMove);
-      componentEvent.unbind(document, 'mouseup', handleEnd);
+    function handleEnd(event$1) {
+      event.unbind(document, 'mousemove', handleMove);
+      event.unbind(document, 'mouseup', handleEnd);
 
       context = null;
 
       unset();
     }
 
-    function handleStart(event$$1) {
+    function handleStart(event$1) {
+
       // event is already handled by '.djs-draggable'
-      if (closest(event$$1.target, '.djs-draggable')) {
+      if (closest(event$1.target, '.djs-draggable')) {
         return;
       }
 
+      var button = event$1.button;
 
-      // reject non-left left mouse button or modifier key
-      if (event$$1.button || event$$1.ctrlKey || event$$1.shiftKey || event$$1.altKey) {
+      // reject right mouse button or modifier key
+      if (button >= 2 || event$1.ctrlKey || event$1.shiftKey || event$1.altKey) {
         return;
       }
 
       context = {
-        start: toPoint(event$$1)
+        button: button,
+        start: toPoint(event$1)
       };
 
-      componentEvent.bind(document, 'mousemove', handleMove);
-      componentEvent.bind(document, 'mouseup', handleEnd);
+      event.bind(document, 'mousemove', handleMove);
+      event.bind(document, 'mouseup', handleEnd);
 
       // we've handled the event
       return true;
     }
+
+    this.isActive = function() {
+      return !!context;
+    };
+
   }
 
 
@@ -1068,39 +1314,51 @@
     return Math.sqrt(Math.pow(point.x, 2) + Math.pow(point.y, 2));
   }
 
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
   var MoveCanvasModule = {
     __init__: [ 'moveCanvas' ],
     moveCanvas: [ 'type', MoveCanvas ]
   };
 
-  var DEFAULT_RENDER_PRIORITY = 1000;
+  var DEFAULT_RENDER_PRIORITY$1 = 1000;
+
+  /**
+   * @typedef {import('../core/Types').ElementLike} Element
+   * @typedef {import('../core/Types').ConnectionLike} Connection
+   * @typedef {import('../core/Types').ShapeLike} Shape
+   *
+   * @typedef {import('../core/EventBus').default} EventBus
+   */
 
   /**
    * The base implementation of shape and connection renderers.
    *
    * @param {EventBus} eventBus
-   * @param {Number} [renderPriority=1000]
+   * @param {number} [renderPriority=1000]
    */
   function BaseRenderer(eventBus, renderPriority) {
     var self = this;
 
-    renderPriority = renderPriority || DEFAULT_RENDER_PRIORITY;
+    renderPriority = renderPriority || DEFAULT_RENDER_PRIORITY$1;
 
     eventBus.on([ 'render.shape', 'render.connection' ], renderPriority, function(evt, context) {
       var type = evt.type,
           element = context.element,
-          visuals = context.gfx;
+          visuals = context.gfx,
+          attrs = context.attrs;
 
       if (self.canRender(element)) {
         if (type === 'render.shape') {
-          return self.drawShape(visuals, element);
+          return self.drawShape(visuals, element, attrs);
         } else {
-          return self.drawConnection(visuals, element);
+          return self.drawConnection(visuals, element, attrs);
         }
       }
     });
 
-    eventBus.on([ 'render.getShapePath', 'render.getConnectionPath'], renderPriority, function(evt, element) {
+    eventBus.on([ 'render.getShapePath', 'render.getConnectionPath' ], renderPriority, function(evt, element) {
       if (self.canRender(element)) {
         if (evt.type === 'render.getShapePath') {
           return self.getShapePath(element);
@@ -1112,60 +1370,61 @@
   }
 
   /**
-   * Should check whether *this* renderer can render
-   * the element/connection.
+   * Checks whether an element can be rendered.
    *
-   * @param {element} element
+   * @param {Element} element The element to be rendered.
    *
-   * @returns {Boolean}
+   * @return {boolean} Whether the element can be rendered.
    */
-  BaseRenderer.prototype.canRender = function() {};
+  BaseRenderer.prototype.canRender = function(element) {};
 
   /**
-   * Provides the shape's snap svg element to be drawn on the `canvas`.
+   * Draws a shape.
    *
-   * @param {djs.Graphics} visuals
-   * @param {Shape} shape
+   * @param {SVGElement} visuals The SVG element to draw the shape into.
+   * @param {Shape} shape The shape to be drawn.
    *
-   * @returns {Snap.svg} [returns a Snap.svg paper element ]
+   * @return {SVGElement} The SVG element of the shape drawn.
    */
-  BaseRenderer.prototype.drawShape = function() {};
+  BaseRenderer.prototype.drawShape = function(visuals, shape) {};
 
   /**
-   * Provides the shape's snap svg element to be drawn on the `canvas`.
+   * Draws a connection.
    *
-   * @param {djs.Graphics} visuals
-   * @param {Connection} connection
+   * @param {SVGElement} visuals The SVG element to draw the connection into.
+   * @param {Connection} connection The connection to be drawn.
    *
-   * @returns {Snap.svg} [returns a Snap.svg paper element ]
+   * @return {SVGElement} The SVG element of the connection drawn.
    */
-  BaseRenderer.prototype.drawConnection = function() {};
+  BaseRenderer.prototype.drawConnection = function(visuals, connection) {};
 
   /**
-   * Gets the SVG path of a shape that represents it's visual bounds.
+   * Gets the SVG path of the graphical representation of a shape.
    *
-   * @param {Shape} shape
+   * @param {Shape} shape The shape.
    *
-   * @return {string} svg path
+   * @return {string} The SVG path of the shape.
    */
-  BaseRenderer.prototype.getShapePath = function() {};
+  BaseRenderer.prototype.getShapePath = function(shape) {};
 
   /**
-   * Gets the SVG path of a connection that represents it's visual bounds.
+   * Gets the SVG path of the graphical representation of a connection.
    *
-   * @param {Connection} connection
+   * @param {Connection} connection The connection.
    *
-   * @return {string} svg path
+   * @return {string} The SVG path of the connection.
    */
-  BaseRenderer.prototype.getConnectionPath = function() {};
+  BaseRenderer.prototype.getConnectionPath = function(connection) {};
 
   function ensureImported(element, target) {
 
     if (element.ownerDocument !== target.ownerDocument) {
       try {
+
         // may fail on webkit
         return target.ownerDocument.importNode(element, true);
       } catch (e) {
+
         // ignore
       }
     }
@@ -1291,6 +1550,7 @@
     var type = CSS_PROPERTIES[hyphenated];
 
     if (type) {
+
       // append pixel unit, unless present
       if (type === LENGTH_ATTR && typeof value === 'number') {
         value = String(value) + 'px';
@@ -1321,7 +1581,7 @@
    *
    * @return {String}
    */
-  function attr$1(node, name, value) {
+  function attr(node, name, value) {
     if (typeof name === 'string') {
       if (value !== undefined) {
         setAttribute(node, name, value);
@@ -1336,44 +1596,30 @@
   }
 
   /**
-   * Clear utility
+   * Taken from https://github.com/component/classes
+   *
+   * Without the component bits.
    */
-  function index(arr, obj) {
-    if (arr.indexOf) {
-      return arr.indexOf(obj);
-    }
-
-
-    for (var i = 0; i < arr.length; ++i) {
-      if (arr[i] === obj) {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
-  var re$1 = /\s+/;
-
-  var toString$1 = Object.prototype.toString;
-
-  function defined(o) {
-    return typeof o !== 'undefined';
-  }
 
   /**
-   * Wrap `el` in a `ClassList`.
-   *
-   * @param {Element} el
-   * @return {ClassList}
-   * @api public
+   * toString reference.
    */
 
-  function classes$1(el) {
-    return new ClassList$1(el);
+  const toString = Object.prototype.toString;
+
+  /**
+    * Wrap `el` in a `ClassList`.
+    *
+    * @param {Element} el
+    * @return {ClassList}
+    * @api public
+    */
+
+  function classes(el) {
+    return new ClassList(el);
   }
 
-  function ClassList$1(el) {
+  function ClassList(el) {
     if (!el || !el.nodeType) {
       throw new Error('A DOM element reference is required');
     }
@@ -1382,79 +1628,48 @@
   }
 
   /**
-   * Add class `name` if not already present.
-   *
-   * @param {String} name
-   * @return {ClassList}
-   * @api public
-   */
+    * Add class `name` if not already present.
+    *
+    * @param {String} name
+    * @return {ClassList}
+    * @api public
+    */
 
-  ClassList$1.prototype.add = function(name) {
-
-    // classList
-    if (this.list) {
-      this.list.add(name);
-      return this;
-    }
-
-    // fallback
-    var arr = this.array();
-    var i = index(arr, name);
-    if (!~i) {
-      arr.push(name);
-    }
-
-    if (defined(this.el.className.baseVal)) {
-      this.el.className.baseVal = arr.join(' ');
-    } else {
-      this.el.className = arr.join(' ');
-    }
-
+  ClassList.prototype.add = function(name) {
+    this.list.add(name);
     return this;
   };
 
   /**
-   * Remove class `name` when present, or
-   * pass a regular expression to remove
-   * any which match.
-   *
-   * @param {String|RegExp} name
-   * @return {ClassList}
-   * @api public
-   */
+    * Remove class `name` when present, or
+    * pass a regular expression to remove
+    * any which match.
+    *
+    * @param {String|RegExp} name
+    * @return {ClassList}
+    * @api public
+    */
 
-  ClassList$1.prototype.remove = function(name) {
-    if ('[object RegExp]' === toString$1.call(name)) {
+  ClassList.prototype.remove = function(name) {
+    if ('[object RegExp]' == toString.call(name)) {
       return this.removeMatching(name);
     }
 
-    // classList
-    if (this.list) {
-      this.list.remove(name);
-      return this;
-    }
-
-    // fallback
-    var arr = this.array();
-    var i = index(arr, name);
-    if (~i) {
-      arr.splice(i, 1);
-    }
-    this.el.className.baseVal = arr.join(' ');
+    this.list.remove(name);
     return this;
   };
 
   /**
-   * Remove all classes matching `re`.
-   *
-   * @param {RegExp} re
-   * @return {ClassList}
-   * @api private
-   */
+    * Remove all classes matching `re`.
+    *
+    * @param {RegExp} re
+    * @return {ClassList}
+    * @api private
+    */
 
-  ClassList$1.prototype.removeMatching = function(re) {
-    var arr = this.array();
-    for (var i = 0; i < arr.length; i++) {
+  ClassList.prototype.removeMatching = function(re) {
+    const arr = this.array();
+    for (let i = 0; i < arr.length; i++) {
       if (re.test(arr[i])) {
         this.remove(arr[i]);
       }
@@ -1463,81 +1678,51 @@
   };
 
   /**
-   * Toggle class `name`, can force state via `force`.
-   *
-   * For browsers that support classList, but do not support `force` yet,
-   * the mistake will be detected and corrected.
-   *
-   * @param {String} name
-   * @param {Boolean} force
-   * @return {ClassList}
-   * @api public
-   */
+    * Toggle class `name`, can force state via `force`.
+    *
+    * For browsers that support classList, but do not support `force` yet,
+    * the mistake will be detected and corrected.
+    *
+    * @param {String} name
+    * @param {Boolean} force
+    * @return {ClassList}
+    * @api public
+    */
 
-  ClassList$1.prototype.toggle = function(name, force) {
-    // classList
-    if (this.list) {
-      if (defined(force)) {
-        if (force !== this.list.toggle(name, force)) {
-          this.list.toggle(name); // toggle again to correct
-        }
-      } else {
-        this.list.toggle(name);
-      }
-      return this;
-    }
-
-    // fallback
-    if (defined(force)) {
-      if (!force) {
-        this.remove(name);
-      } else {
-        this.add(name);
+  ClassList.prototype.toggle = function(name, force) {
+    if ('undefined' !== typeof force) {
+      if (force !== this.list.toggle(name, force)) {
+        this.list.toggle(name); // toggle again to correct
       }
     } else {
-      if (this.has(name)) {
-        this.remove(name);
-      } else {
-        this.add(name);
-      }
+      this.list.toggle(name);
     }
-
     return this;
   };
 
   /**
-   * Return an array of classes.
-   *
-   * @return {Array}
-   * @api public
-   */
+    * Return an array of classes.
+    *
+    * @return {Array}
+    * @api public
+    */
 
-  ClassList$1.prototype.array = function() {
-    var className = this.el.getAttribute('class') || '';
-    var str = className.replace(/^\s+|\s+$/g, '');
-    var arr = str.split(re$1);
-    if ('' === arr[0]) {
-      arr.shift();
-    }
-    return arr;
+  ClassList.prototype.array = function() {
+    return Array.from(this.list);
   };
 
   /**
-   * Check if class `name` is present.
-   *
-   * @param {String} name
-   * @return {ClassList}
-   * @api public
-   */
+    * Check if class `name` is present.
+    *
+    * @param {String} name
+    * @return {ClassList}
+    * @api public
+    */
 
-  ClassList$1.prototype.has =
-  ClassList$1.prototype.contains = function(name) {
-    return (
-      this.list ?
-        this.list.contains(name) :
-        !! ~index(this.array(), name)
-    );
-  };
+  ClassList.prototype.has =
+   ClassList.prototype.contains = function(name) {
+     return this.list.contains(name);
+   };
 
   function remove$1(element) {
     var parent = element.parentNode;
@@ -1559,7 +1744,7 @@
    * @param  {DOMElement} element
    * @return {DOMElement} the element (for chaining)
    */
-  function clear$1(element) {
+  function clear(element) {
     var child;
 
     while ((child = element.firstChild)) {
@@ -1579,7 +1764,7 @@
 
   var SVG_START = '<svg xmlns="' + ns.svg + '"';
 
-  function parse$1(svg) {
+  function parse(svg) {
 
     var unwrap = false;
 
@@ -1589,6 +1774,7 @@
         svg = SVG_START + svg.substring(4);
       }
     } else {
+
       // namespace svg
       svg = SVG_START + '>' + svg + '</svg>';
       unwrap = true;
@@ -1635,18 +1821,18 @@
    *
    * @returns {SVGElement}
    */
-  function create(name, attrs) {
+  function create$1(name, attrs) {
     var element;
 
     if (name.charAt(0) === '<') {
-      element = parse$1(name).firstChild;
+      element = parse(name).firstChild;
       element = document.importNode(element, true);
     } else {
       element = document.createElementNS(ns.svg, name);
     }
 
     if (attrs) {
-      attr$1(element, attrs);
+      attr(element, attrs);
     }
 
     return element;
@@ -1657,9 +1843,17 @@
    */
 
   // fake node used to instantiate svg geometry elements
-  var node = create('svg');
+  var node = null;
 
-  function extend(object, props) {
+  function getNode() {
+    if (node === null) {
+      node = create$1('svg');
+    }
+
+    return node;
+  }
+
+  function extend$1(object, props) {
     var i, k, keys = Object.keys(props);
 
     for (i = 0; (k = keys[i]); i++) {
@@ -1681,15 +1875,15 @@
    * @return {SVGMatrix}
    */
   function createMatrix(a, b, c, d, e, f) {
-    var matrix = node.createSVGMatrix();
+    var matrix = getNode().createSVGMatrix();
 
     switch (arguments.length) {
     case 0:
       return matrix;
     case 1:
-      return extend(matrix, a);
+      return extend$1(matrix, a);
     case 6:
-      return extend(matrix, {
+      return extend$1(matrix, {
         a: a,
         b: b,
         c: c,
@@ -1702,9 +1896,9 @@
 
   function createTransform(matrix) {
     if (matrix) {
-      return node.createSVGTransformFromMatrix(matrix);
+      return getNode().createSVGTransformFromMatrix(matrix);
     } else {
-      return node.createSVGTransform();
+      return getNode().createSVGTransform();
     }
   }
 
@@ -1736,8 +1930,10 @@
     var i, len, attrMap, attrNode, childNodes;
 
     switch (node.nodeType) {
+
     // TEXT
     case 3:
+
       // replace special XML characters
       output.push(escape(node.textContent, TEXT_ENTITIES));
       break;
@@ -1789,23 +1985,24 @@
    */
 
 
-  function set$1(element, svg) {
+  function set(element, svg) {
 
-    var parsed = parse$1(svg);
+    var parsed = parse(svg);
 
     // clear element contents
-    clear$1(element);
+    clear(element);
 
     if (!svg) {
       return;
     }
 
     if (!isFragment(parsed)) {
+
       // extract <svg> from parsed document
       parsed = parsed.documentElement;
     }
 
-    var nodes = slice(parsed.childNodes);
+    var nodes = slice$1(parsed.childNodes);
 
     // import + append each node
     for (var i = 0; i < nodes.length; i++) {
@@ -1835,7 +2032,7 @@
     if (svg !== undefined) {
 
       try {
-        set$1(element, svg);
+        set(element, svg);
       } catch (e) {
         throw new Error('error parsing SVG: ' + e.message);
       }
@@ -1847,7 +2044,7 @@
   }
 
 
-  function slice(arr) {
+  function slice$1(arr) {
     return Array.prototype.slice.call(arr);
   }
 
@@ -1904,45 +2101,173 @@
     }
   }
 
+  /**
+   * @typedef {(string|number)[]} Component
+   *
+   * @typedef {import('../util/Types').Point} Point
+   */
+
+  /**
+   * @param {Component[] | Component[][]} elements
+   *
+   * @return {string}
+   */
   function componentsToPath(elements) {
-    return elements.join(',').replace(/,?([A-z]),?/g, '$1');
+    return elements.flat().join(',').replace(/,?([A-z]),?/g, '$1');
   }
 
-  function toSVGPoints(points) {
-    var result = '';
-
-    for (var i = 0, p; (p = points[i]); i++) {
-      result += p.x + ',' + p.y + ' ';
-    }
-
-    return result;
+  /**
+   * @param {Point} point
+   *
+   * @return {Component[]}
+   */
+  function move(point) {
+    return [ 'M', point.x, point.y ];
   }
 
-  function createLine(points, attrs) {
+  /**
+   * @param {Point} point
+   *
+   * @return {Component[]}
+   */
+  function lineTo(point) {
+    return [ 'L', point.x, point.y ];
+  }
 
-    var line = create('polyline');
-    attr$1(line, { points: toSVGPoints(points) });
+  /**
+   * @param {Point} p1
+   * @param {Point} p2
+   * @param {Point} p3
+   *
+   * @return {Component[]}
+   */
+  function curveTo(p1, p2, p3) {
+    return [ 'C', p1.x, p1.y, p2.x, p2.y, p3.x, p3.y ];
+  }
 
-    if (attrs) {
-      attr$1(line, attrs);
+  /**
+   * @param {Point[]} waypoints
+   * @param {number} [cornerRadius]
+   * @return {Component[][]}
+   */
+  function drawPath$1(waypoints, cornerRadius) {
+    const pointCount = waypoints.length;
+
+    const path = [ move(waypoints[0]) ];
+
+    for (let i = 1; i < pointCount; i++) {
+
+      const pointBefore = waypoints[i - 1];
+      const point = waypoints[i];
+      const pointAfter = waypoints[i + 1];
+
+      if (!pointAfter || !cornerRadius) {
+        path.push(lineTo(point));
+
+        continue;
+      }
+
+      const effectiveRadius = Math.min(
+        cornerRadius,
+        vectorLength(point.x - pointBefore.x, point.y - pointBefore.y),
+        vectorLength(pointAfter.x - point.x, pointAfter.y - point.y)
+      );
+
+      if (!effectiveRadius) {
+        path.push(lineTo(point));
+
+        continue;
+      }
+
+      const beforePoint = getPointAtLength(point, pointBefore, effectiveRadius);
+      const beforePoint2 = getPointAtLength(point, pointBefore, effectiveRadius * .5);
+
+      const afterPoint = getPointAtLength(point, pointAfter, effectiveRadius);
+      const afterPoint2 = getPointAtLength(point, pointAfter, effectiveRadius * .5);
+
+      path.push(lineTo(beforePoint));
+      path.push(curveTo(beforePoint2, afterPoint2, afterPoint));
     }
 
-    return line;
+    return path;
+  }
+
+  function getPointAtLength(start, end, length) {
+
+    const deltaX = end.x - start.x;
+    const deltaY = end.y - start.y;
+
+    const totalLength = vectorLength(deltaX, deltaY);
+
+    const percent = length / totalLength;
+
+    return {
+      x: start.x + deltaX * percent,
+      y: start.y + deltaY * percent
+    };
+  }
+
+  function vectorLength(x, y) {
+    return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+  }
+
+  /**
+   * @param {Point[]} points
+   * @param {number|Object} [attrs]
+   * @param {number} [radius]
+   *
+   * @return {SVGElement}
+   */
+  function createLine(points, attrs, radius) {
+
+    if (isNumber(attrs)) {
+      radius = attrs;
+      attrs = null;
+    }
+
+    if (!attrs) {
+      attrs = {};
+    }
+
+    const line = create$1('path', attrs);
+
+    if (isNumber(radius)) {
+      line.dataset.cornerRadius = String(radius);
+    }
+
+    return updateLine(line, points);
+  }
+
+  /**
+   * @param {SVGElement} gfx
+   * @param {Point[]} points
+   *
+   * @return {SVGElement}
+   */
+  function updateLine(gfx, points) {
+
+    const cornerRadius = parseInt(gfx.dataset.cornerRadius, 10) || 0;
+
+    attr(gfx, {
+      d: componentsToPath(drawPath$1(points, cornerRadius))
+    });
+
+    return gfx;
   }
 
   function drawText(parentGfx, text, options, textRenderer) {
     var svgText = textRenderer.createText(text, options);
 
-    classes$1(svgText).add('djs-label');
+    classes(svgText).add('djs-label');
     append(parentGfx, svgText);
 
     return svgText;
   }
 
   function drawLine(parentGfx, source, target) {
-    var line = create('line');
+    var line = create$1('line');
 
-    attr$1(line, {
+    attr(line, {
       x1: source.x,
       y1: source.y,
       x2: target.x,
@@ -1977,7 +2302,7 @@
   }
 
   function getPath(d, attributes) {
-    var path = create('path');
+    var path = create$1('path');
 
     addPath(path, d);
     addPathMarkers(path, attributes);
@@ -2012,7 +2337,7 @@
     return pathData;
   }
   function getGroup(elements) {
-      var group = create('g');
+      var group = create$1('g');
 
       elements.forEach(function(element) {
           append(group, element);
@@ -2021,41 +2346,41 @@
       return group;
   }
   function addPath(path, d) {
-    attr$1(path, { d: d });
+    attr(path, { d: d });
   }
   function addPathTransformation(path, attributes) {
     if('transform' in attributes) {
-      attr$1(path, { transform: attributes.transform });
+      attr(path, { transform: attributes.transform });
     }
   }
   function addStyles(svgElement, attributes) {
     if('stroke' in attributes) {
-      attr$1(svgElement, { stroke: attributes.stroke });
+      attr(svgElement, { stroke: attributes.stroke });
     }
 
     if('stroke-width' in attributes) {
-      attr$1(svgElement, { 'stroke-width': attributes['stroke-width'] });
+      attr(svgElement, { 'stroke-width': attributes['stroke-width'] });
     }
 
     if('fill' in attributes) {
-      attr$1(svgElement, { fill: attributes.fill });
+      attr(svgElement, { fill: attributes.fill });
     }
 
     if('stroke-dasharray' in attributes) {
-      attr$1(svgElement, { 'stroke-dasharray': attributes['stroke-dasharray'] });
+      attr(svgElement, { 'stroke-dasharray': attributes['stroke-dasharray'] });
     }
   }
   function addPathMarkers(path, attributes) {
     if('markerEnd' in attributes) {
-      attr$1(path, { 'marker-end': 'url(#' + attributes.markerEnd + ')' });
+      attr(path, { 'marker-end': 'url(#' + attributes.markerEnd + ')' });
     }
 
     if('markerStart' in attributes) {
-      attr$1(path, { 'marker-start': 'url(#' + attributes.markerStart + ')' });
+      attr(path, { 'marker-start': 'url(#' + attributes.markerStart + ')' });
     }
   }
   function getRectangle(width, height, attributes) {
-    var rectangle = create('rect');
+    var rectangle = create$1('rect');
 
     addSize(rectangle, width, height);
     addStyles(rectangle, attributes);
@@ -2063,7 +2388,7 @@
     return rectangle;
   }
   function addSize(shape, width, height) {
-    attr$1(shape, {
+    attr(shape, {
       width: width,
       height: height
     });
@@ -2086,7 +2411,7 @@
   }
 
   function drawClass(parentGfx, element, textRenderer) {
-    var businessObject = element.businessObject || {};
+    element.businessObject || {};
 
     var rectangle = drawRectangle(parentGfx, element.width, element.height, {
       fill: 'none',
@@ -2250,7 +2575,7 @@
     var defs = query('defs', canvas._svg);
 
     if (!defs) {
-      defs = create('defs');
+      defs = create$1('defs');
 
       append(canvas._svg, defs);
     }
@@ -2264,11 +2589,11 @@
   }
 
   function addMarkerDefinition(definitions, id, markerElement, atStart) {
-    var svgMarker = create('marker');
+    var svgMarker = create$1('marker');
 
     append(svgMarker, markerElement);
 
-    attr$1(svgMarker, {
+    attr(svgMarker, {
       id: id,
       viewBox: '0 0 10 10',
       refX: getMarkerRefX(atStart),
@@ -2288,37 +2613,63 @@
     }
   }
 
-  function createCommonjsModule(fn, module) {
-  	return module = { exports: {} }, fn(module, module.exports), module.exports;
+  function getDefaultExportFromCjs (x) {
+  	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
   }
 
-  var inherits_browser = createCommonjsModule(function (module) {
-  if (typeof Object.create === 'function') {
-    // implementation from standard node.js 'util' module
-    module.exports = function inherits(ctor, superCtor) {
-      ctor.super_ = superCtor;
-      ctor.prototype = Object.create(superCtor.prototype, {
-        constructor: {
-          value: ctor,
-          enumerable: false,
-          writable: true,
-          configurable: true
-        }
-      });
-    };
-  } else {
-    // old school shim for old browsers
-    module.exports = function inherits(ctor, superCtor) {
-      ctor.super_ = superCtor;
-      var TempCtor = function () {};
-      TempCtor.prototype = superCtor.prototype;
-      ctor.prototype = new TempCtor();
-      ctor.prototype.constructor = ctor;
-    };
-  }
-  });
+  var inherits$1 = {exports: {}};
 
-  inherits_browser(UmlRenderer, BaseRenderer);
+  var inherits_browser = {exports: {}};
+
+  var hasRequiredInherits_browser;
+
+  function requireInherits_browser () {
+  	if (hasRequiredInherits_browser) return inherits_browser.exports;
+  	hasRequiredInherits_browser = 1;
+  	if (typeof Object.create === 'function') {
+  	  // implementation from standard node.js 'util' module
+  	  inherits_browser.exports = function inherits(ctor, superCtor) {
+  	    if (superCtor) {
+  	      ctor.super_ = superCtor;
+  	      ctor.prototype = Object.create(superCtor.prototype, {
+  	        constructor: {
+  	          value: ctor,
+  	          enumerable: false,
+  	          writable: true,
+  	          configurable: true
+  	        }
+  	      });
+  	    }
+  	  };
+  	} else {
+  	  // old school shim for old browsers
+  	  inherits_browser.exports = function inherits(ctor, superCtor) {
+  	    if (superCtor) {
+  	      ctor.super_ = superCtor;
+  	      var TempCtor = function () {};
+  	      TempCtor.prototype = superCtor.prototype;
+  	      ctor.prototype = new TempCtor();
+  	      ctor.prototype.constructor = ctor;
+  	    }
+  	  };
+  	}
+  	return inherits_browser.exports;
+  }
+
+  try {
+    var util = require('util');
+    /* istanbul ignore next */
+    if (typeof util.inherits !== 'function') throw '';
+    inherits$1.exports = util.inherits;
+  } catch (e) {
+    /* istanbul ignore next */
+    inherits$1.exports = requireInherits_browser();
+  }
+
+  var inheritsExports = inherits$1.exports;
+  var inherits = /*@__PURE__*/getDefaultExportFromCjs(inheritsExports);
+
+  inherits(UmlRenderer, BaseRenderer);
 
   UmlRenderer.$inject = ['eventBus', 'canvas', 'textRenderer'];
 
@@ -2374,11 +2725,11 @@
   }
 
   TextRenderer.prototype.createText = function(text, options) {
-    var svgText = create('text');
+    var svgText = create$1('text');
 
     var options = assign(options, this._style);
 
-    attr$1(svgText, options);
+    attr(svgText, options);
 
     innerSVG(svgText, text);
 
@@ -2386,9 +2737,9 @@
   };
 
   TextRenderer.prototype.getDimensions  = function(text, options) {
-      var helperText = create('text');
+      var helperText = create$1('text');
 
-      attr$1(helperText, this._style);
+      attr(helperText, this._style);
 
       var helperSvg = getHelperSvg();
 
@@ -2420,9 +2771,9 @@
     return helperSvg;
   }
   function createHelperSvg() {
-    var helperSvg = create('svg');
+    var helperSvg = create$1('svg');
 
-    attr$1(helperSvg, getHelperSvgOptions());
+    attr(helperSvg, getHelperSvgOptions());
 
     document.body.appendChild(helperSvg);
 
@@ -2437,19 +2788,25 @@
     };
   }
 
-  var DrawModule = {
+  var DrawModule$1 = {
     __init__: [ 'umlRenderer'],
     umlRenderer: ['type', UmlRenderer],
     textRenderer: [ 'type', TextRenderer]
   };
 
   /**
-   * Computes the distance between two points
+   * @typedef {import('../util/Types').Axis} Axis
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   */
+
+  /**
+   * Computes the distance between two points.
    *
-   * @param  {Point}  p
-   * @param  {Point}  q
+   * @param {Point} a
+   * @param {Point} b
    *
-   * @return {Number}  distance
+   * @return {number} The distance between the two points.
    */
   function pointDistance(a, b) {
     if (!a || !b) {
@@ -2464,14 +2821,14 @@
 
 
   /**
-   * Returns true if the point r is on the line between p and q
+   * Returns true if the point r is on the line between p and q.
    *
-   * @param  {Point}  p
-   * @param  {Point}  q
-   * @param  {Point}  r
-   * @param  {Number} [accuracy=5] accuracy for points on line check (lower is better)
+   * @param {Point} p
+   * @param {Point} q
+   * @param {Point} r
+   * @param {number} [accuracy=5] The accuracy with which to check (lower is better).
    *
-   * @return {Boolean}
+   * @return {boolean}
    */
   function pointsOnLine(p, q, r, accuracy) {
 
@@ -2491,22 +2848,11 @@
   }
 
   /**
-   * This file contains portions that got extraced from Snap.svg (licensed Apache-2.0).
-   *
-   * @see https://github.com/adobe-webplatform/Snap.svg/blob/master/src/path.js
-   */
-
-  /* eslint no-fallthrough: "off" */
-
-  var math = Math,
-      PI = math.PI;
-
-  /**
    * Convert the given bounds to a { top, left, bottom, right } descriptor.
    *
-   * @param {Bounds|Point} bounds
+   * @param {Point|Rect} bounds
    *
-   * @return {Object}
+   * @return {RectTRBL}
    */
   function asTRBL(bounds) {
     return {
@@ -2517,7 +2863,6 @@
     };
   }
 
-
   // orientation utils //////////////////////
 
   /**
@@ -2527,11 +2872,11 @@
    * A padding (positive or negative) may be passed to influence
    * horizontal / vertical orientation and intersection.
    *
-   * @param {Bounds} rect
-   * @param {Bounds} reference
-   * @param {Point|Number} padding
+   * @param {Rect} rect
+   * @param {Rect} reference
+   * @param {Point|number} padding
    *
-   * @return {String} the orientation; one of top, top-left, left, ..., bottom, right or intersect.
+   * @return {DirectionTRBL} the orientation; one of top, top-left, left, ..., bottom, right or intersect.
    */
   function getOrientation(rect, reference, padding) {
 
@@ -2562,10 +2907,15 @@
     }
   }
 
+  /**
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   */
+
   var MIN_SEGMENT_LENGTH = 20,
       POINT_ORIENTATION_PADDING = 5;
 
-  var round = Math.round;
+  var round$1 = Math.round;
 
   function needsTurn(orientation, startDirection) {
     return !{
@@ -2594,8 +2944,8 @@
 
     var startDirection = directions.split(':')[0];
 
-    var xmid = round((b.x - a.x) / 2 + a.x),
-        ymid = round((b.y - a.y) / 2 + a.y);
+    var xmid = round$1((b.x - a.x) / 2 + a.x),
+        ymid = round$1((b.y - a.y) / 2 + a.y);
 
     var segmentEnd, segmentDirections;
 
@@ -2697,8 +3047,8 @@
    */
   function getSimpleBendpoints(a, b, directions) {
 
-    var xmid = round((b.x - a.x) / 2 + a.x),
-        ymid = round((b.y - a.y) / 2 + a.y);
+    var xmid = round$1((b.x - a.x) / 2 + a.x),
+        ymid = round$1((b.y - a.y) / 2 + a.y);
 
     // one point, right or left from a
     if (directions === 'h:v') {
@@ -2751,11 +3101,11 @@
    *         |
    *    [b]-[x]
    *
-   * @param  {Point} a
-   * @param  {Point} b
-   * @param  {String} directions
+   * @param {Point} a
+   * @param {Point} b
+   * @param {string} directions
    *
-   * @return {Array<Point>}
+   * @return {Point[]}
    */
   function getBendpoints(a, b, directions) {
     directions = directions || 'h:h';
@@ -2792,11 +3142,11 @@
    *
    * @param {Point} a
    * @param {Point} b
+   * @param {string} [directions='h:h'] Specifies manhattan directions for each
+   * point as {direction}:{direction}. A direction for a point is either
+   * `h` (horizontal) or `v` (vertical).
    *
-   * @param {String} [directions='h:h'] specifies manhattan directions for each point as {adirection}:{bdirection}.
-                     A directionfor a point is either `h` (horizontal) or `v` (vertical)
-   *
-   * @return {Array<Point>}
+   * @return {Point[]}
    */
   function connectPoints(a, b, directions) {
 
@@ -2834,9 +3184,9 @@
    *                         |
    *                        [x] ----------- [x]
    *
-   * @param  {Array<Point>} waypoints
+   * @param {Point[]} waypoints
    *
-   * @return {Array<Point>}
+   * @return {Point[]}
    */
   function withoutRedundantPoints(waypoints) {
     return waypoints.reduce(function(points, p, idx) {
@@ -2868,7 +3218,7 @@
     var elementFactory = this.elementFactory;
     var canvas = this.canvas;
     var modeling = this.modeling;
-    var layouter = this.layouter;
+    this.layouter;
     var commandStack = this.commandStack;
 
     var root = elementFactory.createRoot();
@@ -2901,7 +3251,7 @@
 
       assign(attrs, getEdgeLabels(edge));
 
-      var connection = modeling.createConnection(nodeMap.get(edge.source), nodeMap.get(edge.target), attrs, root);
+      modeling.createConnection(nodeMap.get(edge.source), nodeMap.get(edge.target), attrs, root);
     });
   }
   function addLabel(labelName, fromObject, toObject) {
@@ -2949,36 +3299,70 @@
     umlImporter: [ 'type', UmlImporter ]
   };
 
-  var CoreModule = {
+  var CoreModule$1 = {
     __depends__: [
-      DrawModule,
+      DrawModule$1,
       ImporterModule
     ]
   };
 
-  var CLASS_PATTERN = /^class /;
+  const CLASS_PATTERN = /^class[ {]/;
 
+
+  /**
+   * @param {function} fn
+   *
+   * @return {boolean}
+   */
   function isClass(fn) {
     return CLASS_PATTERN.test(fn.toString());
   }
 
-  function isArray$1(obj) {
-    return Object.prototype.toString.call(obj) === '[object Array]';
+  /**
+   * @param {any} obj
+   *
+   * @return {boolean}
+   */
+  function isArray(obj) {
+    return Array.isArray(obj);
   }
 
-  function annotate() {
-    var args = Array.prototype.slice.call(arguments);
+  /**
+   * @param {any} obj
+   * @param {string} prop
+   *
+   * @return {boolean}
+   */
+  function hasOwnProp(obj, prop) {
+    return Object.prototype.hasOwnProperty.call(obj, prop);
+  }
 
-    if (args.length === 1 && isArray$1(args[0])) {
+  /**
+   * @typedef {import('./index').InjectAnnotated } InjectAnnotated
+   */
+
+  /**
+   * @template T
+   *
+   * @params {[...string[], T] | ...string[], T} args
+   *
+   * @return {T & InjectAnnotated}
+   */
+  function annotate(...args) {
+
+    if (args.length === 1 && isArray(args[0])) {
       args = args[0];
     }
 
-    var fn = args.pop();
+    args = [ ...args ];
+
+    const fn = args.pop();
 
     fn.$inject = args;
 
     return fn;
   }
+
 
   // Current limitations:
   // - can't put into "function arg" comments
@@ -2993,93 +3377,85 @@
   // first constructor(...) pattern found which may be the one
   // of a nested class, too.
 
-  var CONSTRUCTOR_ARGS = /constructor\s*[^(]*\(\s*([^)]*)\)/m;
-  var FN_ARGS = /^function\s*[^(]*\(\s*([^)]*)\)/m;
-  var FN_ARG = /\/\*([^*]*)\*\//m;
+  const CONSTRUCTOR_ARGS = /constructor\s*[^(]*\(\s*([^)]*)\)/m;
+  const FN_ARGS = /^(?:async\s+)?(?:function\s*[^(]*)?(?:\(\s*([^)]*)\)|(\w+))/m;
+  const FN_ARG = /\/\*([^*]*)\*\//m;
 
-  function parse$2(fn) {
+  /**
+   * @param {unknown} fn
+   *
+   * @return {string[]}
+   */
+  function parseAnnotations(fn) {
 
     if (typeof fn !== 'function') {
-      throw new Error('Cannot annotate "' + fn + '". Expected a function!');
+      throw new Error(`Cannot annotate "${fn}". Expected a function!`);
     }
 
-    var match = fn.toString().match(isClass(fn) ? CONSTRUCTOR_ARGS : FN_ARGS);
+    const match = fn.toString().match(isClass(fn) ? CONSTRUCTOR_ARGS : FN_ARGS);
 
     // may parse class without constructor
     if (!match) {
       return [];
     }
 
-    return match[1] && match[1].split(',').map(function (arg) {
-      match = arg.match(FN_ARG);
-      return match ? match[1].trim() : arg.trim();
+    const args = match[1] || match[2];
+
+    return args && args.split(',').map(arg => {
+      const argMatch = arg.match(FN_ARG);
+      return (argMatch && argMatch[1] || arg).trim();
     }) || [];
   }
 
-  function Module() {
-    var providers = [];
+  /**
+   * @typedef { import('./index').ModuleDeclaration } ModuleDeclaration
+   * @typedef { import('./index').ModuleDefinition } ModuleDefinition
+   * @typedef { import('./index').InjectorContext } InjectorContext
+   */
 
-    this.factory = function (name, factory) {
-      providers.push([name, 'factory', factory]);
-      return this;
-    };
-
-    this.value = function (name, value) {
-      providers.push([name, 'value', value]);
-      return this;
-    };
-
-    this.type = function (name, type) {
-      providers.push([name, 'type', type]);
-      return this;
-    };
-
-    this.forEach = function (iterator) {
-      providers.forEach(iterator);
-    };
-  }
-
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-  function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
+  /**
+   * Create a new injector with the given modules.
+   *
+   * @param {ModuleDefinition[]} modules
+   * @param {InjectorContext} [parent]
+   */
   function Injector(modules, parent) {
     parent = parent || {
-      get: function get(name, strict) {
+      get: function(name, strict) {
         currentlyResolving.push(name);
 
         if (strict === false) {
           return null;
         } else {
-          throw error('No provider for "' + name + '"!');
+          throw error(`No provider for "${ name }"!`);
         }
       }
     };
 
-    var currentlyResolving = [];
-    var providers = this._providers = Object.create(parent._providers || null);
-    var instances = this._instances = Object.create(null);
+    const currentlyResolving = [];
+    const providers = this._providers = Object.create(parent._providers || null);
+    const instances = this._instances = Object.create(null);
 
-    var self = instances.injector = this;
+    const self = instances.injector = this;
 
-    var error = function error(msg) {
-      var stack = currentlyResolving.join(' -> ');
+    const error = function(msg) {
+      const stack = currentlyResolving.join(' -> ');
       currentlyResolving.length = 0;
-      return new Error(stack ? msg + ' (Resolving: ' + stack + ')' : msg);
+      return new Error(stack ? `${ msg } (Resolving: ${ stack })` : msg);
     };
 
     /**
      * Return a named service.
      *
-     * @param {String} name
-     * @param {Boolean} [strict=true] if false, resolve missing services to null
+     * @param {string} name
+     * @param {boolean} [strict=true] if false, resolve missing services to null
      *
-     * @return {Object}
+     * @return {any}
      */
-    var get = function get(name, strict) {
+    function get(name, strict) {
       if (!providers[name] && name.indexOf('.') !== -1) {
-        var parts = name.split('.');
-        var pivot = get(parts.shift());
+        const parts = name.split('.');
+        let pivot = get(parts.shift());
 
         while (parts.length) {
           pivot = pivot[parts.shift()];
@@ -3088,11 +3464,11 @@
         return pivot;
       }
 
-      if (hasProp(instances, name)) {
+      if (hasOwnProp(instances, name)) {
         return instances[name];
       }
 
-      if (hasProp(providers, name)) {
+      if (hasOwnProp(providers, name)) {
         if (currentlyResolving.indexOf(name) !== -1) {
           currentlyResolving.push(name);
           throw error('Cannot resolve circular dependency!');
@@ -3106,22 +3482,25 @@
       }
 
       return parent.get(name, strict);
-    };
+    }
 
-    var fnDef = function fnDef(fn) {
-      var locals = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    function fnDef(fn, locals) {
+
+      if (typeof locals === 'undefined') {
+        locals = {};
+      }
 
       if (typeof fn !== 'function') {
-        if (isArray$1(fn)) {
+        if (isArray(fn)) {
           fn = annotate(fn.slice());
         } else {
-          throw new Error('Cannot invoke "' + fn + '". Expected a function!');
+          throw error(`Cannot invoke "${ fn }". Expected a function!`);
         }
       }
 
-      var inject = fn.$inject || parse$2(fn);
-      var dependencies = inject.map(function (dep) {
-        if (hasProp(locals, dep)) {
+      const inject = fn.$inject || parseAnnotations(fn);
+      const dependencies = inject.map(dep => {
+        if (hasOwnProp(locals, dep)) {
           return locals[dep];
         } else {
           return get(dep);
@@ -3132,44 +3511,59 @@
         fn: fn,
         dependencies: dependencies
       };
-    };
+    }
 
-    var instantiate = function instantiate(Type) {
-      var _fnDef = fnDef(Type),
-          dependencies = _fnDef.dependencies,
-          fn = _fnDef.fn;
+    function instantiate(Type) {
+      const {
+        fn,
+        dependencies
+      } = fnDef(Type);
 
-      return new (Function.prototype.bind.apply(fn, [null].concat(_toConsumableArray(dependencies))))();
-    };
+      // instantiate var args constructor
+      const Constructor = Function.prototype.bind.apply(fn, [ null ].concat(dependencies));
 
-    var invoke = function invoke(func, context, locals) {
-      var _fnDef2 = fnDef(func, locals),
-          dependencies = _fnDef2.dependencies,
-          fn = _fnDef2.fn;
+      return new Constructor();
+    }
 
-      return fn.call.apply(fn, [context].concat(_toConsumableArray(dependencies)));
-    };
+    function invoke(func, context, locals) {
+      const {
+        fn,
+        dependencies
+      } = fnDef(func, locals);
 
-    var createPrivateInjectorFactory = function createPrivateInjectorFactory(privateChildInjector) {
-      return annotate(function (key) {
-        return privateChildInjector.get(key);
-      });
-    };
+      return fn.apply(context, dependencies);
+    }
 
-    var createChild = function createChild(modules, forceNewInstances) {
+    /**
+     * @param {Injector} childInjector
+     *
+     * @return {Function}
+     */
+    function createPrivateInjectorFactory(childInjector) {
+      return annotate(key => childInjector.get(key));
+    }
+
+    /**
+     * @param {ModuleDefinition[]} modules
+     * @param {string[]} [forceNewInstances]
+     *
+     * @return {Injector}
+     */
+    function createChild(modules, forceNewInstances) {
       if (forceNewInstances && forceNewInstances.length) {
-        var fromParentModule = Object.create(null);
-        var matchedScopes = Object.create(null);
+        const fromParentModule = Object.create(null);
+        const matchedScopes = Object.create(null);
 
-        var privateInjectorsCache = [];
-        var privateChildInjectors = [];
-        var privateChildFactories = [];
+        const privateInjectorsCache = [];
+        const privateChildInjectors = [];
+        const privateChildFactories = [];
 
-        var provider;
-        var cacheIdx;
-        var privateChildInjector;
-        var privateChildInjectorFactory;
-        for (var name in providers) {
+        let provider;
+        let cacheIdx;
+        let privateChildInjector;
+        let privateChildInjectorFactory;
+
+        for (let name in providers) {
           provider = providers[name];
 
           if (forceNewInstances.indexOf(name) !== -1) {
@@ -3181,28 +3575,28 @@
                 privateInjectorsCache.push(provider[3]);
                 privateChildInjectors.push(privateChildInjector);
                 privateChildFactories.push(privateChildInjectorFactory);
-                fromParentModule[name] = [privateChildInjectorFactory, name, 'private', privateChildInjector];
+                fromParentModule[name] = [ privateChildInjectorFactory, name, 'private', privateChildInjector ];
               } else {
-                fromParentModule[name] = [privateChildFactories[cacheIdx], name, 'private', privateChildInjectors[cacheIdx]];
+                fromParentModule[name] = [ privateChildFactories[cacheIdx], name, 'private', privateChildInjectors[cacheIdx] ];
               }
             } else {
-              fromParentModule[name] = [provider[2], provider[1]];
+              fromParentModule[name] = [ provider[2], provider[1] ];
             }
             matchedScopes[name] = true;
           }
 
           if ((provider[2] === 'factory' || provider[2] === 'type') && provider[1].$scope) {
             /* jshint -W083 */
-            forceNewInstances.forEach(function (scope) {
+            forceNewInstances.forEach(scope => {
               if (provider[1].$scope.indexOf(scope) !== -1) {
-                fromParentModule[name] = [provider[2], provider[1]];
+                fromParentModule[name] = [ provider[2], provider[1] ];
                 matchedScopes[scope] = true;
               }
             });
           }
         }
 
-        forceNewInstances.forEach(function (scope) {
+        forceNewInstances.forEach(scope => {
           if (!matchedScopes[scope]) {
             throw new Error('No provider for "' + scope + '". Cannot use provider from the parent!');
           }
@@ -3212,83 +3606,266 @@
       }
 
       return new Injector(modules, self);
-    };
+    }
 
-    var factoryMap = {
+    const factoryMap = {
       factory: invoke,
       type: instantiate,
-      value: function value(_value) {
-        return _value;
+      value: function(value) {
+        return value;
       }
     };
 
-    modules.forEach(function (module) {
+    /**
+     * @param {ModuleDefinition} moduleDefinition
+     * @param {Injector} injector
+     */
+    function createInitializer(moduleDefinition, injector) {
 
-      function arrayUnwrap(type, value) {
-        if (type !== 'value' && isArray$1(value)) {
-          value = annotate(value.slice());
-        }
+      const initializers = moduleDefinition.__init__ || [];
 
-        return value;
-      }
+      return function() {
+        initializers.forEach(initializer => {
 
-      // (vojta): handle wrong inputs (modules)
-      if (module instanceof Module) {
-        module.forEach(function (provider) {
-          var name = provider[0];
-          var type = provider[1];
-          var value = provider[2];
-
-          providers[name] = [factoryMap[type], arrayUnwrap(type, value), type];
+          // eagerly resolve component (fn or string)
+          if (typeof initializer === 'string') {
+            injector.get(initializer);
+          } else {
+            injector.invoke(initializer);
+          }
         });
-      } else if ((typeof module === 'undefined' ? 'undefined' : _typeof(module)) === 'object') {
-        if (module.__exports__) {
-          var clonedModule = Object.keys(module).reduce(function (m, key) {
-            if (key.substring(0, 2) !== '__') {
-              m[key] = module[key];
-            }
-            return m;
-          }, Object.create(null));
+      };
+    }
 
-          var privateInjector = new Injector((module.__modules__ || []).concat([clonedModule]), self);
-          var getFromPrivateInjector = annotate(function (key) {
-            return privateInjector.get(key);
-          });
-          module.__exports__.forEach(function (key) {
-            providers[key] = [getFromPrivateInjector, key, 'private', privateInjector];
-          });
-        } else {
-          Object.keys(module).forEach(function (name) {
-            if (module[name][2] === 'private') {
-              providers[name] = module[name];
-              return;
-            }
+    /**
+     * @param {ModuleDefinition} moduleDefinition
+     */
+    function loadModule(moduleDefinition) {
 
-            var type = module[name][0];
-            var value = module[name][1];
+      const moduleExports = moduleDefinition.__exports__;
 
-            providers[name] = [factoryMap[type], arrayUnwrap(type, value), type];
-          });
-        }
+      // private module
+      if (moduleExports) {
+        const nestedModules = moduleDefinition.__modules__;
+
+        const clonedModule = Object.keys(moduleDefinition).reduce((clonedModule, key) => {
+
+          if (key !== '__exports__' && key !== '__modules__' && key !== '__init__' && key !== '__depends__') {
+            clonedModule[key] = moduleDefinition[key];
+          }
+
+          return clonedModule;
+        }, Object.create(null));
+
+        const childModules = (nestedModules || []).concat(clonedModule);
+
+        const privateInjector = createChild(childModules);
+        const getFromPrivateInjector = annotate(function(key) {
+          return privateInjector.get(key);
+        });
+
+        moduleExports.forEach(function(key) {
+          providers[key] = [ getFromPrivateInjector, key, 'private', privateInjector ];
+        });
+
+        // ensure child injector initializes
+        const initializers = (moduleDefinition.__init__ || []).slice();
+
+        initializers.unshift(function() {
+          privateInjector.init();
+        });
+
+        moduleDefinition = Object.assign({}, moduleDefinition, {
+          __init__: initializers
+        });
+
+        return createInitializer(moduleDefinition, privateInjector);
       }
-    });
+
+      // normal module
+      Object.keys(moduleDefinition).forEach(function(key) {
+
+        if (key === '__init__' || key === '__depends__') {
+          return;
+        }
+
+        if (moduleDefinition[key][2] === 'private') {
+          providers[key] = moduleDefinition[key];
+          return;
+        }
+
+        const type = moduleDefinition[key][0];
+        const value = moduleDefinition[key][1];
+
+        providers[key] = [ factoryMap[type], arrayUnwrap(type, value), type ];
+      });
+
+      return createInitializer(moduleDefinition, self);
+    }
+
+    /**
+     * @param {ModuleDefinition[]} moduleDefinitions
+     * @param {ModuleDefinition} moduleDefinition
+     *
+     * @return {ModuleDefinition[]}
+     */
+    function resolveDependencies(moduleDefinitions, moduleDefinition) {
+
+      if (moduleDefinitions.indexOf(moduleDefinition) !== -1) {
+        return moduleDefinitions;
+      }
+
+      moduleDefinitions = (moduleDefinition.__depends__ || []).reduce(resolveDependencies, moduleDefinitions);
+
+      if (moduleDefinitions.indexOf(moduleDefinition) !== -1) {
+        return moduleDefinitions;
+      }
+
+      return moduleDefinitions.concat(moduleDefinition);
+    }
+
+    /**
+     * @param {ModuleDefinition[]} moduleDefinitions
+     *
+     * @return { () => void } initializerFn
+     */
+    function bootstrap(moduleDefinitions) {
+
+      const initializers = moduleDefinitions
+        .reduce(resolveDependencies, [])
+        .map(loadModule);
+
+      let initialized = false;
+
+      return function() {
+
+        if (initialized) {
+          return;
+        }
+
+        initialized = true;
+
+        initializers.forEach(initializer => initializer());
+      };
+    }
 
     // public API
     this.get = get;
     this.invoke = invoke;
     this.instantiate = instantiate;
     this.createChild = createChild;
+
+    // setup
+    this.init = bootstrap(modules);
   }
 
-  // helpers /////////////////
 
-  function hasProp(obj, prop) {
-    return Object.hasOwnProperty.call(obj, prop);
+  // helpers ///////////////
+
+  function arrayUnwrap(type, value) {
+    if (type !== 'value' && isArray(value)) {
+      value = annotate(value.slice());
+    }
+
+    return value;
   }
+
+  function e(e,t){t&&(e.super_=t,e.prototype=Object.create(t.prototype,{constructor:{value:e,enumerable:!1,writable:!0,configurable:!0}}));}
+
+  /**
+   * Returns the surrounding bbox for all elements in
+   * the array or the element primitive.
+   *
+   * @param {Element|Element[]} elements
+   * @param {boolean} [stopRecursion=false]
+   *
+   * @return {Rect}
+   */
+  function getBBox(elements, stopRecursion) {
+
+    stopRecursion = !!stopRecursion;
+    if (!isArray$1(elements)) {
+      elements = [ elements ];
+    }
+
+    var minX,
+        minY,
+        maxX,
+        maxY;
+
+    forEach(elements, function(element) {
+
+      // If element is a connection the bbox must be computed first
+      var bbox = element;
+      if (element.waypoints && !stopRecursion) {
+        bbox = getBBox(element.waypoints, true);
+      }
+
+      var x = bbox.x,
+          y = bbox.y,
+          height = bbox.height || 0,
+          width = bbox.width || 0;
+
+      if (x < minX || minX === undefined) {
+        minX = x;
+      }
+      if (y < minY || minY === undefined) {
+        minY = y;
+      }
+
+      if ((x + width) > maxX || maxX === undefined) {
+        maxX = x + width;
+      }
+      if ((y + height) > maxY || maxY === undefined) {
+        maxY = y + height;
+      }
+    });
+
+    return {
+      x: minX,
+      y: minY,
+      height: maxY - minY,
+      width: maxX - minX
+    };
+  }
+
+  /**
+   * Get the element's type
+   *
+   * @param {Element} element
+   *
+   * @return {'connection' | 'shape' | 'root'}
+   */
+  function getType(element) {
+
+    if ('waypoints' in element) {
+      return 'connection';
+    }
+
+    if ('x' in element) {
+      return 'shape';
+    }
+
+    return 'root';
+  }
+
+  /**
+   * @param {Element} element
+   *
+   * @return {boolean}
+   */
+  function isFrameElement(element) {
+    return !!(element && element.isFrame);
+  }
+
+  /**
+   * @typedef {import('../core/EventBus').default} EventBus
+   * @typedef {import('./Styles').default} Styles
+   */
 
   // apply default renderer with lowest possible priority
   // so that it only kicks in if noone else could render
-  var DEFAULT_RENDER_PRIORITY$1 = 1;
+  var DEFAULT_RENDER_PRIORITY = 1;
 
   /**
    * The default renderer used for shapes and connections.
@@ -3297,44 +3874,62 @@
    * @param {Styles} styles
    */
   function DefaultRenderer(eventBus, styles) {
-    //
-    BaseRenderer.call(this, eventBus, DEFAULT_RENDER_PRIORITY$1);
+
+    BaseRenderer.call(this, eventBus, DEFAULT_RENDER_PRIORITY);
 
     this.CONNECTION_STYLE = styles.style([ 'no-fill' ], { strokeWidth: 5, stroke: 'fuchsia' });
     this.SHAPE_STYLE = styles.style({ fill: 'white', stroke: 'fuchsia', strokeWidth: 2 });
+    this.FRAME_STYLE = styles.style([ 'no-fill' ], { stroke: 'fuchsia', strokeDasharray: 4, strokeWidth: 2 });
   }
 
-  inherits_browser(DefaultRenderer, BaseRenderer);
+  e(DefaultRenderer, BaseRenderer);
 
 
+  /**
+   * @private
+   */
   DefaultRenderer.prototype.canRender = function() {
     return true;
   };
 
-  DefaultRenderer.prototype.drawShape = function drawShape(visuals, element) {
+  /**
+   * @private
+   */
+  DefaultRenderer.prototype.drawShape = function drawShape(visuals, element, attrs) {
+    var rect = create$1('rect');
 
-    var rect = create('rect');
-    attr$1(rect, {
+    attr(rect, {
       x: 0,
       y: 0,
       width: element.width || 0,
       height: element.height || 0
     });
-    attr$1(rect, this.SHAPE_STYLE);
+
+    if (isFrameElement(element)) {
+      attr(rect, assign({}, this.FRAME_STYLE, attrs || {}));
+    } else {
+      attr(rect, assign({}, this.SHAPE_STYLE, attrs || {}));
+    }
 
     append(visuals, rect);
 
     return rect;
   };
 
-  DefaultRenderer.prototype.drawConnection = function drawConnection(visuals, connection) {
+  /**
+   * @private
+   */
+  DefaultRenderer.prototype.drawConnection = function drawConnection(visuals, connection, attrs) {
 
-    var line = createLine(connection.waypoints, this.CONNECTION_STYLE);
+    var line = createLine(connection.waypoints, assign({}, this.CONNECTION_STYLE, attrs || {}));
     append(visuals, line);
 
     return line;
   };
 
+  /**
+   * @private
+   */
   DefaultRenderer.prototype.getShapePath = function getShapePath(shape) {
 
     var x = shape.x,
@@ -3343,16 +3938,19 @@
         height = shape.height;
 
     var shapePath = [
-      ['M', x, y],
-      ['l', width, 0],
-      ['l', 0, height],
-      ['l', -width, 0],
-      ['z']
+      [ 'M', x, y ],
+      [ 'l', width, 0 ],
+      [ 'l', 0, height ],
+      [ 'l', -width, 0 ],
+      [ 'z' ]
     ];
 
     return componentsToPath(shapePath);
   };
 
+  /**
+   * @private
+   */
   DefaultRenderer.prototype.getConnectionPath = function getConnectionPath(connection) {
     var waypoints = connection.waypoints;
 
@@ -3369,7 +3967,6 @@
 
     return componentsToPath(connectionPath);
   };
-
 
   DefaultRenderer.$inject = [ 'eventBus', 'styles' ];
 
@@ -3394,13 +3991,14 @@
     var self = this;
 
     /**
-     * Builds a style definition from a className, a list of traits and an object of additional attributes.
+     * Builds a style definition from a className, a list of traits and an object
+     * of additional attributes.
      *
-     * @param  {String} className
-     * @param  {Array<String>} traits
-     * @param  {Object} additionalAttrs
+     * @param {string} className
+     * @param {string[]} [traits]
+     * @param {Object} [additionalAttrs]
      *
-     * @return {Object} the style defintion
+     * @return {Object} the style definition
      */
     this.cls = function(className, traits, additionalAttrs) {
       var attrs = this.style(traits, additionalAttrs);
@@ -3409,16 +4007,17 @@
     };
 
     /**
-     * Builds a style definition from a list of traits and an object of additional attributes.
+     * Builds a style definition from a list of traits and an object of additional
+     * attributes.
      *
-     * @param  {Array<String>} traits
-     * @param  {Object} additionalAttrs
+     * @param {string[]} [traits]
+     * @param {Object} additionalAttrs
      *
-     * @return {Object} the style defintion
+     * @return {Object} the style definition
      */
     this.style = function(traits, additionalAttrs) {
 
-      if (!isArray(traits) && !additionalAttrs) {
+      if (!isArray$1(traits) && !additionalAttrs) {
         additionalAttrs = traits;
         traits = [];
       }
@@ -3430,8 +4029,19 @@
       return additionalAttrs ? assign(attrs, additionalAttrs) : attrs;
     };
 
+
+    /**
+     * Computes a style definition from a list of traits and an object of
+     * additional attributes, with custom style definition object.
+     *
+     * @param {Object} custom
+     * @param {string[]} [traits]
+     * @param {Object} defaultStyles
+     *
+     * @return {Object} the style definition
+     */
     this.computeStyle = function(custom, traits, defaultStyles) {
-      if (!isArray(traits)) {
+      if (!isArray$1(traits)) {
         defaultStyles = traits;
         traits = [];
       }
@@ -3440,7 +4050,10 @@
     };
   }
 
-  var DrawModule$1 = {
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
+  var DrawModule = {
     __init__: [ 'defaultRenderer' ],
     defaultRenderer: [ 'type', DefaultRenderer ],
     styles: [ 'type', Styles ]
@@ -3449,12 +4062,12 @@
   /**
    * Failsafe remove an element from a collection
    *
-   * @param  {Array<Object>} [collection]
-   * @param  {Object} [element]
+   * @param {Array<Object>} [collection]
+   * @param {Object} [element]
    *
-   * @return {Number} the previous index of the element
+   * @return {number} the previous index of the element
    */
-  function remove$2(collection, element) {
+  function remove(collection, element) {
 
     if (!collection || !element) {
       return -1;
@@ -3475,7 +4088,7 @@
    *
    * @param {Array<Object>} collection
    * @param {Object} element
-   * @param {Number} idx
+   * @param {number} [idx]
    */
   function add(collection, element, idx) {
 
@@ -3492,14 +4105,17 @@
     if (currentIdx !== -1) {
 
       if (currentIdx === idx) {
+
         // nothing to do, position has not changed
         return;
       } else {
 
         if (idx !== -1) {
+
           // remove from current position
           collection.splice(currentIdx, 1);
         } else {
+
           // already exists in collection
           return;
         }
@@ -3507,28 +4123,57 @@
     }
 
     if (idx !== -1) {
+
       // insert at specified position
       collection.splice(idx, 0, element);
     } else {
+
       // push to end
       collection.push(element);
     }
   }
 
-  function getType(element) {
+  /**
+   * @typedef {import('./Types').ConnectionLike} ConnectionLike
+   * @typedef {import('./Types').RootLike} RootLike
+   * @typedef {import('./Types').ParentLike } ParentLike
+   * @typedef {import('./Types').ShapeLike} ShapeLike
+   *
+   * @typedef { {
+   *   container?: HTMLElement;
+   *   deferUpdate?: boolean;
+   *   width?: number;
+   *   height?: number;
+   * } } CanvasConfig
+   * @typedef { {
+   *   group: SVGElement;
+   *   index: number;
+   *   visible: boolean;
+   * } } CanvasLayer
+   * @typedef { {
+   *   [key: string]: CanvasLayer;
+   * } } CanvasLayers
+   * @typedef { {
+   *   rootElement: ShapeLike;
+   *   layer: CanvasLayer;
+   * } } CanvasPlane
+   * @typedef { {
+   *   scale: number;
+   *   inner: Rect;
+   *   outer: Dimensions;
+   * } & Rect } CanvasViewbox
+   *
+   * @typedef {import('./ElementRegistry').default} ElementRegistry
+   * @typedef {import('./EventBus').default} EventBus
+   * @typedef {import('./GraphicsFactory').default} GraphicsFactory
+   *
+   * @typedef {import('../util/Types').Dimensions} Dimensions
+   * @typedef {import('../util/Types').Point} Point
+   * @typedef {import('../util/Types').Rect} Rect
+   * @typedef {import('../util/Types').RectTRBL} RectTRBL
+   */
 
-    if ('waypoints' in element) {
-      return 'connection';
-    }
-
-    if ('x' in element) {
-      return 'shape';
-    }
-
-    return 'root';
-  }
-
-  function round$1(number, resolution) {
+  function round(number, resolution) {
     return Math.round(number * resolution) / resolution;
   }
 
@@ -3536,26 +4181,35 @@
     return isNumber(number) ? number + 'px' : number;
   }
 
+  function findRoot(element) {
+    while (element.parent) {
+      element = element.parent;
+    }
+
+    return element;
+  }
+
   /**
    * Creates a HTML container element for a SVG element with
    * the given configuration
    *
-   * @param  {Object} options
+   * @param {CanvasConfig} options
+   *
    * @return {HTMLElement} the container element
    */
   function createContainer(options) {
 
     options = assign({}, { width: '100%', height: '100%' }, options);
 
-    var container = options.container || document.body;
+    const container = options.container || document.body;
 
     // create a <div> around the svg element with the respective size
     // this way we can always get the correct container size
     // (this is impossible for <svg> elements at the moment)
-    var parent = document.createElement('div');
-    parent.setAttribute('class', 'djs-container');
+    const parent = document.createElement('div');
+    parent.setAttribute('class', 'djs-container djs-parent');
 
-    assign(parent.style, {
+    assign$1(parent, {
       position: 'relative',
       overflow: 'hidden',
       width: ensurePx(options.width),
@@ -3568,10 +4222,10 @@
   }
 
   function createGroup(parent, cls, childIndex) {
-    var group = create('g');
-    classes$1(group).add(cls);
+    const group = create$1('g');
+    classes(group).add(cls);
 
-    var index = childIndex !== undefined ? childIndex : parent.childNodes.length - 1;
+    const index = childIndex !== undefined ? childIndex : parent.childNodes.length - 1;
 
     // must ensure second argument is node or _null_
     // cf. https://developer.mozilla.org/en-US/docs/Web/API/Node/insertBefore
@@ -3580,10 +4234,14 @@
     return group;
   }
 
-  var BASE_LAYER = 'base';
+  const BASE_LAYER = 'base';
+
+  // render plane contents behind utility layers
+  const PLANE_LAYER_INDEX = 0;
+  const UTILITY_LAYER_INDEX = 1;
 
 
-  var REQUIRED_MODEL_ATTRS = {
+  const REQUIRED_MODEL_ATTRS = {
     shape: [ 'x', 'y', 'width', 'height' ],
     connection: [ 'waypoints' ]
   };
@@ -3596,16 +4254,35 @@
    *
    * @emits Canvas#canvas.init
    *
-   * @param {Object} config
+   * @param {CanvasConfig|null} config
    * @param {EventBus} eventBus
    * @param {GraphicsFactory} graphicsFactory
    * @param {ElementRegistry} elementRegistry
    */
   function Canvas(config, eventBus, graphicsFactory, elementRegistry) {
-
     this._eventBus = eventBus;
     this._elementRegistry = elementRegistry;
     this._graphicsFactory = graphicsFactory;
+
+    /**
+     * @type {number}
+     */
+    this._rootsIdx = 0;
+
+    /**
+     * @type {CanvasLayers}
+     */
+    this._layers = {};
+
+    /**
+     * @type {CanvasPlane[]}
+     */
+    this._planes = [];
+
+    /**
+     * @type {RootLike|null}
+     */
+    this._rootElement = null;
 
     this._init(config || {});
   }
@@ -3617,42 +4294,42 @@
     'elementRegistry'
   ];
 
+  /**
+   * Creates a <svg> element that is wrapped into a <div>.
+   * This way we are always able to correctly figure out the size of the svg element
+   * by querying the parent node.
 
+   * (It is not possible to get the size of a svg element cross browser @ 2014-04-01)
+
+   * <div class="djs-container" style="width: {desired-width}, height: {desired-height}">
+   *   <svg width="100%" height="100%">
+   *    ...
+   *   </svg>
+   * </div>
+   *
+   * @param {CanvasConfig} config
+   */
   Canvas.prototype._init = function(config) {
 
-    var eventBus = this._eventBus;
-
-    // Creates a <svg> element that is wrapped into a <div>.
-    // This way we are always able to correctly figure out the size of the svg element
-    // by querying the parent node.
-    //
-    // (It is not possible to get the size of a svg element cross browser @ 2014-04-01)
-    //
-    // <div class="djs-container" style="width: {desired-width}, height: {desired-height}">
-    //   <svg width="100%" height="100%">
-    //    ...
-    //   </svg>
-    // </div>
+    const eventBus = this._eventBus;
 
     // html container
-    var container = this._container = createContainer(config);
+    const container = this._container = createContainer(config);
 
-    var svg = this._svg = create('svg');
-    attr$1(svg, { width: '100%', height: '100%' });
+    const svg = this._svg = create$1('svg');
+    attr(svg, { width: '100%', height: '100%' });
 
     append(container, svg);
 
-    var viewport = this._viewport = createGroup(svg, 'viewport');
+    const viewport = this._viewport = createGroup(svg, 'viewport');
 
-    this._layers = {};
-
-    // debounce canvas.viewbox.changed events
-    // for smoother diagram interaction
-    if (config.deferUpdate !== false) {
-      this._viewboxChanged = debounce(bind$2(this._viewboxChanged, this), 300);
+    // debounce canvas.viewbox.changed events when deferUpdate is set
+    // to help with potential performance issues
+    if (config.deferUpdate) {
+      this._viewboxChanged = debounce(bind(this._viewboxChanged, this), 300);
     }
 
-    eventBus.on('diagram.init', function() {
+    eventBus.on('diagram.init', () => {
 
       /**
        * An event indicating that the canvas is ready to be drawn on.
@@ -3670,7 +4347,7 @@
         viewport: viewport
       });
 
-    }, this);
+    });
 
     // reset viewbox on shape changes to
     // recompute the viewbox
@@ -3679,22 +4356,23 @@
       'connection.added',
       'shape.removed',
       'connection.removed',
-      'elements.changed'
-    ], function() {
+      'elements.changed',
+      'root.set'
+    ], () => {
       delete this._cachedViewbox;
-    }, this);
+    });
 
     eventBus.on('diagram.destroy', 500, this._destroy, this);
     eventBus.on('diagram.clear', 500, this._clear, this);
   };
 
-  Canvas.prototype._destroy = function(emit) {
+  Canvas.prototype._destroy = function() {
     this._eventBus.fire('canvas.destroy', {
       svg: this._svg,
       viewport: this._viewport
     });
 
-    var parent = this._container.parentNode;
+    const parent = this._container.parentNode;
 
     if (parent) {
       parent.removeChild(this._container);
@@ -3703,26 +4381,29 @@
     delete this._svg;
     delete this._container;
     delete this._layers;
+    delete this._planes;
     delete this._rootElement;
     delete this._viewport;
   };
 
   Canvas.prototype._clear = function() {
 
-    var self = this;
-
-    var allElements = this._elementRegistry.getAll();
+    const allElements = this._elementRegistry.getAll();
 
     // remove all elements
-    allElements.forEach(function(element) {
-      var type = getType(element);
+    allElements.forEach(element => {
+      const type = getType(element);
 
       if (type === 'root') {
-        self.setRootElement(null, true);
+        this.removeRootElement(element);
       } else {
-        self._removeElement(element, type);
+        this._removeElement(element, type);
       }
     });
+
+    // remove all planes
+    this._planes = [];
+    this._rootElement = null;
 
     // force recomputation of view box
     delete this._cachedViewbox;
@@ -3732,10 +4413,10 @@
    * Returns the default layer on which
    * all elements are drawn.
    *
-   * @returns {SVGElement}
+   * @return {SVGElement}  The SVG element of the layer.
    */
   Canvas.prototype.getDefaultLayer = function() {
-    return this.getLayer(BASE_LAYER, 0);
+    return this.getLayer(BASE_LAYER, PLANE_LAYER_INDEX);
   };
 
   /**
@@ -3748,10 +4429,10 @@
    * A layer with a certain index is always created above all
    * existing layers with the same index.
    *
-   * @param {String} name
-   * @param {Number} index
+   * @param {string} name The name of the layer.
+   * @param {number} [index] The index of the layer.
    *
-   * @returns {SVGElement}
+   * @return {SVGElement} The SVG element of the layer.
    */
   Canvas.prototype.getLayer = function(name, index) {
 
@@ -3759,7 +4440,7 @@
       throw new Error('must specify a name');
     }
 
-    var layer = this._layers[name];
+    let layer = this._layers[name];
 
     if (!layer) {
       layer = this._layers[name] = this._createLayer(name, index);
@@ -3775,39 +4456,191 @@
   };
 
   /**
-   * Creates a given layer and returns it.
+   * For a given index, return the number of layers that have a higher index and
+   * are visible.
    *
-   * @param {String} name
-   * @param {Number} [index=0]
+   * This is used to determine the node a layer should be inserted at.
    *
-   * @return {Object} layer descriptor with { index, group: SVGGroup }
+   * @param {number} index
+   *
+   * @return {number}
    */
-  Canvas.prototype._createLayer = function(name, index) {
-
-    if (!index) {
-      index = 0;
-    }
-
-    var childIndex = reduce(this._layers, function(childIndex, layer) {
-      if (index >= layer.index) {
+  Canvas.prototype._getChildIndex = function(index) {
+    return reduce(this._layers, function(childIndex, layer) {
+      if (layer.visible && index >= layer.index) {
         childIndex++;
       }
 
       return childIndex;
     }, 0);
+  };
+
+  /**
+   * Creates a given layer and returns it.
+   *
+   * @param {string} name
+   * @param {number} [index=0]
+   *
+   * @return {CanvasLayer}
+   */
+  Canvas.prototype._createLayer = function(name, index) {
+
+    if (typeof index === 'undefined') {
+      index = UTILITY_LAYER_INDEX;
+    }
+
+    const childIndex = this._getChildIndex(index);
 
     return {
       group: createGroup(this._viewport, 'layer-' + name, childIndex),
-      index: index
+      index: index,
+      visible: true
     };
-
   };
+
+
+  /**
+   * Shows a given layer.
+   *
+   * @param {string} name The name of the layer.
+   *
+   * @return {SVGElement} The SVG element of the layer.
+   */
+  Canvas.prototype.showLayer = function(name) {
+
+    if (!name) {
+      throw new Error('must specify a name');
+    }
+
+    const layer = this._layers[name];
+
+    if (!layer) {
+      throw new Error('layer <' + name + '> does not exist');
+    }
+
+    const viewport = this._viewport;
+    const group = layer.group;
+    const index = layer.index;
+
+    if (layer.visible) {
+      return group;
+    }
+
+    const childIndex = this._getChildIndex(index);
+
+    viewport.insertBefore(group, viewport.childNodes[childIndex] || null);
+
+    layer.visible = true;
+
+    return group;
+  };
+
+  /**
+   * Hides a given layer.
+   *
+   * @param {string} name The name of the layer.
+   *
+   * @return {SVGElement} The SVG element of the layer.
+   */
+  Canvas.prototype.hideLayer = function(name) {
+
+    if (!name) {
+      throw new Error('must specify a name');
+    }
+
+    const layer = this._layers[name];
+
+    if (!layer) {
+      throw new Error('layer <' + name + '> does not exist');
+    }
+
+    const group = layer.group;
+
+    if (!layer.visible) {
+      return group;
+    }
+
+    remove$1(group);
+
+    layer.visible = false;
+
+    return group;
+  };
+
+
+  Canvas.prototype._removeLayer = function(name) {
+
+    const layer = this._layers[name];
+
+    if (layer) {
+      delete this._layers[name];
+
+      remove$1(layer.group);
+    }
+  };
+
+  /**
+   * Returns the currently active layer. Can be null.
+   *
+   * @return {CanvasLayer|null} The active layer of `null`.
+   */
+  Canvas.prototype.getActiveLayer = function() {
+    const plane = this._findPlaneForRoot(this.getRootElement());
+
+    if (!plane) {
+      return null;
+    }
+
+    return plane.layer;
+  };
+
+
+  /**
+   * Returns the plane which contains the given element.
+   *
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   *
+   * @return {RootLike|undefined} The root of the element.
+   */
+  Canvas.prototype.findRoot = function(element) {
+    if (typeof element === 'string') {
+      element = this._elementRegistry.get(element);
+    }
+
+    if (!element) {
+      return;
+    }
+
+    const plane = this._findPlaneForRoot(
+      findRoot(element)
+    ) || {};
+
+    return plane.rootElement;
+  };
+
+  /**
+   * Return a list of all root elements on the diagram.
+   *
+   * @return {(RootLike)[]} The list of root elements.
+   */
+  Canvas.prototype.getRootElements = function() {
+    return this._planes.map(function(plane) {
+      return plane.rootElement;
+    });
+  };
+
+  Canvas.prototype._findPlaneForRoot = function(rootElement) {
+    return find(this._planes, function(plane) {
+      return plane.rootElement === rootElement;
+    });
+  };
+
 
   /**
    * Returns the html element that encloses the
    * drawing canvas.
    *
-   * @return {DOMNode}
+   * @return {HTMLElement} The HTML element of the container.
    */
   Canvas.prototype.getContainer = function() {
     return this._container;
@@ -3816,8 +4649,8 @@
 
   // markers //////////////////////
 
-  Canvas.prototype._updateMarker = function(element, marker, add$$1) {
-    var container;
+  Canvas.prototype._updateMarker = function(element, marker, add) {
+    let container;
 
     if (!element.id) {
       element = this._elementRegistry.get(element);
@@ -3832,11 +4665,12 @@
 
     forEach([ container.gfx, container.secondaryGfx ], function(gfx) {
       if (gfx) {
+
         // invoke either addClass or removeClass based on mode
-        if (add$$1) {
-          classes$1(gfx).add(marker);
+        if (add) {
+          classes(gfx).add(marker);
         } else {
-          classes$1(gfx).remove(marker);
+          classes(gfx).remove(marker);
         }
       }
     });
@@ -3846,12 +4680,12 @@
      *
      * @event element.marker.update
      * @type {Object}
-     * @property {djs.model.Element} element the shape
-     * @property {Object} gfx the graphical representation of the shape
-     * @property {String} marker
-     * @property {Boolean} add true if the marker was added, false if it got removed
+     * @property {Element} element the shape
+     * @property {SVGElement} gfx the graphical representation of the shape
+     * @property {string} marker
+     * @property {boolean} add true if the marker was added, false if it got removed
      */
-    this._eventBus.fire('element.marker.update', { element: element, gfx: container.gfx, marker: marker, add: !!add$$1 });
+    this._eventBus.fire('element.marker.update', { element: element, gfx: container.gfx, marker: marker, add: !!add });
   };
 
 
@@ -3862,14 +4696,17 @@
    * integrate extension into the marker life-cycle, too.
    *
    * @example
+   *
+   * ```javascript
    * canvas.addMarker('foo', 'some-marker');
    *
-   * var fooGfx = canvas.getGraphics('foo');
+   * const fooGfx = canvas.getGraphics('foo');
    *
    * fooGfx; // <g class="... some-marker"> ... </g>
+   * ```
    *
-   * @param {String|djs.model.Base} element
-   * @param {String} marker
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   * @param {string} marker The marker.
    */
   Canvas.prototype.addMarker = function(element, marker) {
     this._updateMarker(element, marker, true);
@@ -3882,27 +4719,27 @@
    * Fires the element.marker.update event, making it possible to
    * integrate extension into the marker life-cycle, too.
    *
-   * @param  {String|djs.model.Base} element
-   * @param  {String} marker
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   * @param {string} marker The marker.
    */
   Canvas.prototype.removeMarker = function(element, marker) {
     this._updateMarker(element, marker, false);
   };
 
   /**
-   * Check the existence of a marker on element.
+   * Check whether an element has a given marker.
    *
-   * @param  {String|djs.model.Base} element
-   * @param  {String} marker
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   * @param {string} marker The marker.
    */
   Canvas.prototype.hasMarker = function(element, marker) {
     if (!element.id) {
       element = this._elementRegistry.get(element);
     }
 
-    var gfx = this.getGraphics(element);
+    const gfx = this.getGraphics(element);
 
-    return classes$1(gfx).has(marker);
+    return classes(gfx).has(marker);
   };
 
   /**
@@ -3911,8 +4748,8 @@
    * Fires the element.marker.update event, making it possible to
    * integrate extension into the marker life-cycle, too.
    *
-   * @param  {String|djs.model.Base} element
-   * @param  {String} marker
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   * @param {string} marker The marker.
    */
   Canvas.prototype.toggleMarker = function(element, marker) {
     if (this.hasMarker(element, marker)) {
@@ -3922,68 +4759,195 @@
     }
   };
 
+  /**
+   * Returns the current root element.
+   *
+   * Supports two different modes for handling root elements:
+   *
+   * 1. if no root element has been added before, an implicit root will be added
+   * and returned. This is used in applications that don't require explicit
+   * root elements.
+   *
+   * 2. when root elements have been added before calling `getRootElement`,
+   * root elements can be null. This is used for applications that want to manage
+   * root elements themselves.
+   *
+   * @return {RootLike} The current root element.
+   */
   Canvas.prototype.getRootElement = function() {
-    if (!this._rootElement) {
-      this.setRootElement({ id: '__implicitroot', children: [] });
+    const rootElement = this._rootElement;
+
+    // can return null if root elements are present but none was set yet
+    if (rootElement || this._planes.length) {
+      return rootElement;
     }
 
-    return this._rootElement;
+    return this.setRootElement(this.addRootElement(null));
   };
 
+  /**
+   * Adds a given root element and returns it.
+   *
+   * @param {RootLike} [rootElement] The root element to be added.
+   *
+   * @return {RootLike} The added root element or an implicit root element.
+   */
+  Canvas.prototype.addRootElement = function(rootElement) {
+    const idx = this._rootsIdx++;
 
+    if (!rootElement) {
+      rootElement = {
+        id: '__implicitroot_' + idx,
+        children: [],
+        isImplicit: true
+      };
+    }
 
-  // root element handling //////////////////////
+    const layerName = rootElement.layer = 'root-' + idx;
+
+    this._ensureValid('root', rootElement);
+
+    const layer = this.getLayer(layerName, PLANE_LAYER_INDEX);
+
+    this.hideLayer(layerName);
+
+    this._addRoot(rootElement, layer);
+
+    this._planes.push({
+      rootElement: rootElement,
+      layer: layer
+    });
+
+    return rootElement;
+  };
+
+  /**
+   * Removes a given root element and returns it.
+   *
+   * @param {RootLike|string} rootElement element or element ID
+   *
+   * @return {RootLike|undefined} removed element
+   */
+  Canvas.prototype.removeRootElement = function(rootElement) {
+
+    if (typeof rootElement === 'string') {
+      rootElement = this._elementRegistry.get(rootElement);
+    }
+
+    const plane = this._findPlaneForRoot(rootElement);
+
+    if (!plane) {
+      return;
+    }
+
+    // hook up life-cycle events
+    this._removeRoot(rootElement);
+
+    // clean up layer
+    this._removeLayer(rootElement.layer);
+
+    // clean up plane
+    this._planes = this._planes.filter(function(plane) {
+      return plane.rootElement !== rootElement;
+    });
+
+    // clean up active root
+    if (this._rootElement === rootElement) {
+      this._rootElement = null;
+    }
+
+    return rootElement;
+  };
+
 
   /**
    * Sets a given element as the new root element for the canvas
    * and returns the new root element.
    *
-   * @param {Object|djs.model.Root} element
-   * @param {Boolean} [override] whether to override the current root element, if any
+   * @param {RootLike} rootElement The root element to be set.
    *
-   * @return {Object|djs.model.Root} new root element
+   * @return {RootLike} The set root element.
    */
-  Canvas.prototype.setRootElement = function(element, override) {
+  Canvas.prototype.setRootElement = function(rootElement) {
 
-    if (element) {
-      this._ensureValid('root', element);
+    if (rootElement === this._rootElement) {
+      return;
     }
 
-    var currentRoot = this._rootElement,
-        elementRegistry = this._elementRegistry,
-        eventBus = this._eventBus;
+    let plane;
 
-    if (currentRoot) {
-      if (!override) {
-        throw new Error('rootElement already set, need to specify override');
-      }
-
-      // simulate element remove event sequence
-      eventBus.fire('root.remove', { element: currentRoot });
-      eventBus.fire('root.removed', { element: currentRoot });
-
-      elementRegistry.remove(currentRoot);
+    if (!rootElement) {
+      throw new Error('rootElement required');
     }
 
-    if (element) {
-      var gfx = this.getDefaultLayer();
+    plane = this._findPlaneForRoot(rootElement);
 
-      // resemble element add event sequence
-      eventBus.fire('root.add', { element: element });
-
-      elementRegistry.add(element, gfx, this._svg);
-
-      eventBus.fire('root.added', { element: element, gfx: gfx });
+    // give set add semantics for backwards compatibility
+    if (!plane) {
+      rootElement = this.addRootElement(rootElement);
     }
 
-    this._rootElement = element;
+    this._setRoot(rootElement);
 
-    return element;
+    return rootElement;
   };
 
 
+  Canvas.prototype._removeRoot = function(element) {
+    const elementRegistry = this._elementRegistry,
+          eventBus = this._eventBus;
 
-  // add functionality //////////////////////
+    // simulate element remove event sequence
+    eventBus.fire('root.remove', { element: element });
+    eventBus.fire('root.removed', { element: element });
+
+    elementRegistry.remove(element);
+  };
+
+
+  Canvas.prototype._addRoot = function(element, gfx) {
+    const elementRegistry = this._elementRegistry,
+          eventBus = this._eventBus;
+
+    // resemble element add event sequence
+    eventBus.fire('root.add', { element: element });
+
+    elementRegistry.add(element, gfx);
+
+    eventBus.fire('root.added', { element: element, gfx: gfx });
+  };
+
+
+  Canvas.prototype._setRoot = function(rootElement, layer) {
+
+    const currentRoot = this._rootElement;
+
+    if (currentRoot) {
+
+      // un-associate previous root element <svg>
+      this._elementRegistry.updateGraphics(currentRoot, null, true);
+
+      // hide previous layer
+      this.hideLayer(currentRoot.layer);
+    }
+
+    if (rootElement) {
+
+      if (!layer) {
+        layer = this._findPlaneForRoot(rootElement).layer;
+      }
+
+      // associate element with <svg>
+      this._elementRegistry.updateGraphics(rootElement, this._svg, true);
+
+      // show root layer
+      this.showLayer(rootElement.layer);
+    }
+
+    this._rootElement = rootElement;
+
+    this._eventBus.fire('root.set', { element: rootElement });
+  };
 
   Canvas.prototype._ensureValid = function(type, element) {
     if (!element.id) {
@@ -3991,13 +4955,13 @@
     }
 
     if (this._elementRegistry.get(element.id)) {
-      throw new Error('element with id ' + element.id + ' already exists');
+      throw new Error('element <' + element.id + '> already exists');
     }
 
-    var requiredAttrs = REQUIRED_MODEL_ATTRS[type];
+    const requiredAttrs = REQUIRED_MODEL_ATTRS[type];
 
-    var valid = every(requiredAttrs, function(attr$$1) {
-      return typeof element[attr$$1] !== 'undefined';
+    const valid = every(requiredAttrs, function(attr) {
+      return typeof element[attr] !== 'undefined';
     });
 
     if (!valid) {
@@ -4024,19 +4988,19 @@
    *
    * Extensions may hook into these events to perform their magic.
    *
-   * @param {String} type
-   * @param {Object|djs.model.Base} element
-   * @param {Object|djs.model.Base} [parent]
-   * @param {Number} [parentIndex]
+   * @param {string} type
+   * @param {ConnectionLike|ShapeLike} element
+   * @param {ShapeLike} [parent]
+   * @param {number} [parentIndex]
    *
-   * @return {Object|djs.model.Base} the added element
+   * @return {ConnectionLike|ShapeLike} The added element.
    */
   Canvas.prototype._addElement = function(type, element, parent, parentIndex) {
 
     parent = parent || this.getRootElement();
 
-    var eventBus = this._eventBus,
-        graphicsFactory = this._graphicsFactory;
+    const eventBus = this._eventBus,
+          graphicsFactory = this._graphicsFactory;
 
     this._ensureValid(type, element);
 
@@ -4045,7 +5009,7 @@
     this._setParent(element, parent, parentIndex);
 
     // create graphics
-    var gfx = graphicsFactory.create(type, element, parentIndex);
+    const gfx = graphicsFactory.create(type, element, parentIndex);
 
     this._elementRegistry.add(element, gfx);
 
@@ -4058,26 +5022,26 @@
   };
 
   /**
-   * Adds a shape to the canvas
+   * Adds a shape to the canvas.
    *
-   * @param {Object|djs.model.Shape} shape to add to the diagram
-   * @param {djs.model.Base} [parent]
-   * @param {Number} [parentIndex]
+   * @param {ShapeLike} shape The shape to be added
+   * @param {ParentLike} [parent] The shape's parent.
+   * @param {number} [parentIndex] The index at which to add the shape to the parent's children.
    *
-   * @return {djs.model.Shape} the added shape
+   * @return {ShapeLike} The added shape.
    */
   Canvas.prototype.addShape = function(shape, parent, parentIndex) {
     return this._addElement('shape', shape, parent, parentIndex);
   };
 
   /**
-   * Adds a connection to the canvas
+   * Adds a connection to the canvas.
    *
-   * @param {Object|djs.model.Connection} connection to add to the diagram
-   * @param {djs.model.Base} [parent]
-   * @param {Number} [parentIndex]
+   * @param {ConnectionLike} connection The connection to be added.
+   * @param {ParentLike} [parent] The connection's parent.
+   * @param {number} [parentIndex] The index at which to add the connection to the parent's children.
    *
-   * @return {djs.model.Connection} the added connection
+   * @return {ConnectionLike} The added connection.
    */
   Canvas.prototype.addConnection = function(connection, parent, parentIndex) {
     return this._addElement('connection', connection, parent, parentIndex);
@@ -4089,13 +5053,14 @@
    */
   Canvas.prototype._removeElement = function(element, type) {
 
-    var elementRegistry = this._elementRegistry,
-        graphicsFactory = this._graphicsFactory,
-        eventBus = this._eventBus;
+    const elementRegistry = this._elementRegistry,
+          graphicsFactory = this._graphicsFactory,
+          eventBus = this._eventBus;
 
     element = elementRegistry.get(element.id || element);
 
     if (!element) {
+
       // element was removed already
       return;
     }
@@ -4105,7 +5070,7 @@
     graphicsFactory.remove(element);
 
     // unset parent <-> child relationship
-    remove$2(element.parent && element.parent.children, element);
+    remove(element.parent && element.parent.children, element);
     element.parent = null;
 
     eventBus.fire(type + '.removed', { element: element });
@@ -4117,11 +5082,14 @@
 
 
   /**
-   * Removes a shape from the canvas
+   * Removes a shape from the canvas.
    *
-   * @param {String|djs.model.Shape} shape or shape id to be removed
+   * @fires ShapeRemoveEvent
+   * @fires ShapeRemovedEvent
    *
-   * @return {djs.model.Shape} the removed shape
+   * @param {ShapeLike|string} shape The shape or its ID.
+   *
+   * @return {ShapeLike} The removed shape.
    */
   Canvas.prototype.removeShape = function(shape) {
 
@@ -4130,10 +5098,10 @@
      *
      * @memberOf Canvas
      *
-     * @event shape.remove
+     * @event ShapeRemoveEvent
      * @type {Object}
-     * @property {djs.model.Shape} element the shape descriptor
-     * @property {Object} gfx the graphical representation of the shape
+     * @property {ShapeLike} element The shape.
+     * @property {SVGElement} gfx The graphical element.
      */
 
     /**
@@ -4141,21 +5109,24 @@
      *
      * @memberOf Canvas
      *
-     * @event shape.removed
+     * @event ShapeRemovedEvent
      * @type {Object}
-     * @property {djs.model.Shape} element the shape descriptor
-     * @property {Object} gfx the graphical representation of the shape
+     * @property {ShapeLike} element The shape.
+     * @property {SVGElement} gfx The graphical element.
      */
     return this._removeElement(shape, 'shape');
   };
 
 
   /**
-   * Removes a connection from the canvas
+   * Removes a connection from the canvas.
    *
-   * @param {String|djs.model.Connection} connection or connection id to be removed
+   * @fires ConnectionRemoveEvent
+   * @fires ConnectionRemovedEvent
    *
-   * @return {djs.model.Connection} the removed connection
+   * @param {ConnectionLike|string} connection The connection or its ID.
+   *
+   * @return {ConnectionLike} The removed connection.
    */
   Canvas.prototype.removeConnection = function(connection) {
 
@@ -4164,10 +5135,10 @@
      *
      * @memberOf Canvas
      *
-     * @event connection.remove
+     * @event ConnectionRemoveEvent
      * @type {Object}
-     * @property {djs.model.Connection} element the connection descriptor
-     * @property {Object} gfx the graphical representation of the connection
+     * @property {ConnectionLike} element The connection.
+     * @property {SVGElement} gfx The graphical element.
      */
 
     /**
@@ -4175,22 +5146,22 @@
      *
      * @memberOf Canvas
      *
-     * @event connection.removed
+     * @event ConnectionRemovedEvent
      * @type {Object}
-     * @property {djs.model.Connection} element the connection descriptor
-     * @property {Object} gfx the graphical representation of the connection
+     * @property {ConnectionLike} element The connection.
+     * @property {SVGElement} gfx The graphical element.
      */
     return this._removeElement(connection, 'connection');
   };
 
 
   /**
-   * Return the graphical object underlaying a certain diagram element
+   * Returns the graphical element of an element.
    *
-   * @param {String|djs.model.Base} element descriptor of the element
-   * @param {Boolean} [secondary=false] whether to return the secondary connected element
+   * @param {ShapeLike|ConnectionLike|string} element The element or its ID.
+   * @param {boolean} [secondary=false] Whether to return the secondary graphical element.
    *
-   * @return {SVGElement}
+   * @return {SVGElement} The graphical element.
    */
   Canvas.prototype.getGraphics = function(element, secondary) {
     return this._elementRegistry.getGraphics(element, secondary);
@@ -4234,12 +5205,13 @@
    *
    * @example
    *
+   * ```javascript
    * canvas.viewbox({ x: 100, y: 100, width: 500, height: 500 })
    *
    * // sets the visible area of the diagram to (100|100) -> (600|100)
    * // and and scales it according to the diagram width
    *
-   * var viewbox = canvas.viewbox(); // pass `false` to force recomputing the box.
+   * const viewbox = canvas.viewbox(); // pass `false` to force recomputing the box.
    *
    * console.log(viewbox);
    * // {
@@ -4253,7 +5225,7 @@
    * // if the current diagram is zoomed and scrolled, you may reset it to the
    * // default zoom via this method, too:
    *
-   * var zoomedAndScrolledViewbox = canvas.viewbox();
+   * const zoomedAndScrolledViewbox = canvas.viewbox();
    *
    * canvas.viewbox({
    *   x: 0,
@@ -4261,14 +5233,11 @@
    *   width: zoomedAndScrolledViewbox.outer.width,
    *   height: zoomedAndScrolledViewbox.outer.height
    * });
+   * ```
    *
-   * @param  {Object} [box] the new view box to set
-   * @param  {Number} box.x the top left X coordinate of the canvas visible in view box
-   * @param  {Number} box.y the top left Y coordinate of the canvas visible in view box
-   * @param  {Number} box.width the visible width
-   * @param  {Number} box.height
+   * @param {Rect} [box] The viewbox to be set.
    *
-   * @return {Object} the current view box
+   * @return {CanvasViewbox} The set viewbox.
    */
   Canvas.prototype.viewbox = function(box) {
 
@@ -4276,26 +5245,30 @@
       return this._cachedViewbox;
     }
 
-    var viewport = this._viewport,
-        innerBox,
-        outerBox = this.getSize(),
+    const viewport = this._viewport,
+          outerBox = this.getSize();
+    let innerBox,
         matrix,
-        transform$$1,
+        activeLayer,
+        transform$1,
         scale,
         x, y;
 
     if (!box) {
+
       // compute the inner box based on the
-      // diagrams default layer. This allows us to exclude
+      // diagrams active layer. This allows us to exclude
       // external components, such as overlays
-      innerBox = this.getDefaultLayer().getBBox();
 
-      transform$$1 = transform(viewport);
-      matrix = transform$$1 ? transform$$1.matrix : createMatrix();
-      scale = round$1(matrix.a, 1000);
+      activeLayer = this._rootElement ? this.getActiveLayer() : null;
+      innerBox = activeLayer && activeLayer.getBBox() || {};
 
-      x = round$1(-matrix.e || 0, 1000);
-      y = round$1(-matrix.f || 0, 1000);
+      transform$1 = transform(viewport);
+      matrix = transform$1 ? transform$1.matrix : createMatrix();
+      scale = round(matrix.a, 1000);
+
+      x = round(-matrix.e || 0, 1000);
+      y = round(-matrix.f || 0, 1000);
 
       box = this._cachedViewbox = {
         x: x ? x / scale : 0,
@@ -4304,10 +5277,10 @@
         height: outerBox.height / scale,
         scale: scale,
         inner: {
-          width: innerBox.width,
-          height: innerBox.height,
-          x: innerBox.x,
-          y: innerBox.y
+          width: innerBox.width || 0,
+          height: innerBox.height || 0,
+          x: innerBox.x || 0,
+          y: innerBox.y || 0
         },
         outer: outerBox
       };
@@ -4318,7 +5291,7 @@
       this._changeViewbox(function() {
         scale = Math.min(outerBox.width / box.width, outerBox.height / box.height);
 
-        var matrix = this._svg.createSVGMatrix()
+        const matrix = this._svg.createSVGMatrix()
           .scale(scale)
           .translate(-box.x, -box.y);
 
@@ -4333,15 +5306,14 @@
   /**
    * Gets or sets the scroll of the canvas.
    *
-   * @param {Object} [delta] the new scroll to apply.
+   * @param {Point} [delta] The scroll to be set.
    *
-   * @param {Number} [delta.dx]
-   * @param {Number} [delta.dy]
+   * @return {Point}
    */
   Canvas.prototype.scroll = function(delta) {
 
-    var node = this._viewport;
-    var matrix = node.getCTM();
+    const node = this._viewport;
+    let matrix = node.getCTM();
 
     if (delta) {
       this._changeViewbox(function() {
@@ -4356,19 +5328,95 @@
     return { x: matrix.e, y: matrix.f };
   };
 
+  /**
+   * Scrolls the viewbox to contain the given element.
+   * Optionally specify a padding to be applied to the edges.
+   *
+   * @param {ShapeLike|ConnectionLike|string} element The element to scroll to or its ID.
+   * @param {RectTRBL|number} [padding=100] The padding to be applied. Can also specify top, bottom, left and right.
+   */
+  Canvas.prototype.scrollToElement = function(element, padding) {
+    let defaultPadding = 100;
+
+    if (typeof element === 'string') {
+      element = this._elementRegistry.get(element);
+    }
+
+    // set to correct rootElement
+    const rootElement = this.findRoot(element);
+
+    if (rootElement !== this.getRootElement()) {
+      this.setRootElement(rootElement);
+    }
+
+    // element is rootElement, do not change viewport
+    if (rootElement === element) {
+      return;
+    }
+
+    if (!padding) {
+      padding = {};
+    }
+    if (typeof padding === 'number') {
+      defaultPadding = padding;
+    }
+
+    padding = {
+      top: padding.top || defaultPadding,
+      right: padding.right || defaultPadding,
+      bottom: padding.bottom || defaultPadding,
+      left: padding.left || defaultPadding
+    };
+
+    const elementBounds = getBBox(element),
+          elementTrbl = asTRBL(elementBounds),
+          viewboxBounds = this.viewbox(),
+          zoom = this.zoom();
+    let dx, dy;
+
+    // shrink viewboxBounds with padding
+    viewboxBounds.y += padding.top / zoom;
+    viewboxBounds.x += padding.left / zoom;
+    viewboxBounds.width -= (padding.right + padding.left) / zoom;
+    viewboxBounds.height -= (padding.bottom + padding.top) / zoom;
+
+    const viewboxTrbl = asTRBL(viewboxBounds);
+
+    const canFit = elementBounds.width < viewboxBounds.width && elementBounds.height < viewboxBounds.height;
+
+    if (!canFit) {
+
+      // top-left when element can't fit
+      dx = elementBounds.x - viewboxBounds.x;
+      dy = elementBounds.y - viewboxBounds.y;
+
+    } else {
+
+      const dRight = Math.max(0, elementTrbl.right - viewboxTrbl.right),
+            dLeft = Math.min(0, elementTrbl.left - viewboxTrbl.left),
+            dBottom = Math.max(0, elementTrbl.bottom - viewboxTrbl.bottom),
+            dTop = Math.min(0, elementTrbl.top - viewboxTrbl.top);
+
+      dx = dRight || dLeft;
+      dy = dBottom || dTop;
+
+    }
+
+    this.scroll({ dx: -dx * zoom, dy: -dy * zoom });
+  };
 
   /**
-   * Gets or sets the current zoom of the canvas, optionally zooming
-   * to the specified position.
+   * Gets or sets the current zoom of the canvas, optionally zooming to the
+   * specified position.
    *
-   * The getter may return a cached zoom level. Call it with `false` as
-   * the first argument to force recomputation of the current level.
+   * The getter may return a cached zoom level. Call it with `false` as the first
+   * argument to force recomputation of the current level.
    *
-   * @param {String|Number} [newScale] the new zoom level, either a number, i.e. 0.9,
-   *                                   or `fit-viewport` to adjust the size to fit the current viewport
-   * @param {String|Point} [center] the reference point { x: .., y: ..} to zoom to, 'auto' to zoom into mid or null
+   * @param {number|'fit-viewport'} [newScale] The new zoom level, either a number,
+   * i.e. 0.9, or `fit-viewport` to adjust the size to fit the current viewport.
+   * @param {Point} [center] The reference point { x: ..., y: ...} to zoom to.
    *
-   * @return {Number} the current scale
+   * @return {number} The set zoom level.
    */
   Canvas.prototype.zoom = function(newScale, center) {
 
@@ -4380,7 +5428,7 @@
       return this._fitViewport(center);
     }
 
-    var outer,
+    let outer,
         matrix;
 
     this._changeViewbox(function() {
@@ -4397,20 +5445,20 @@
       matrix = this._setZoom(newScale, center);
     });
 
-    return round$1(matrix.a, 1000);
+    return round(matrix.a, 1000);
   };
 
   function setCTM(node, m) {
-    var mstr = 'matrix(' + m.a + ',' + m.b + ',' + m.c + ',' + m.d + ',' + m.e + ',' + m.f + ')';
+    const mstr = 'matrix(' + m.a + ',' + m.b + ',' + m.c + ',' + m.d + ',' + m.e + ',' + m.f + ')';
     node.setAttribute('transform', mstr);
   }
 
   Canvas.prototype._fitViewport = function(center) {
 
-    var vbox = this.viewbox(),
-        outer = vbox.outer,
-        inner = vbox.inner,
-        newScale,
+    const vbox = this.viewbox(),
+          outer = vbox.outer,
+          inner = vbox.inner;
+    let newScale,
         newViewbox;
 
     // display the complete diagram without zooming in.
@@ -4451,13 +5499,13 @@
 
   Canvas.prototype._setZoom = function(scale, center) {
 
-    var svg = this._svg,
-        viewport = this._viewport;
+    const svg = this._svg,
+          viewport = this._viewport;
 
-    var matrix = svg.createSVGMatrix();
-    var point = svg.createSVGPoint();
+    const matrix = svg.createSVGMatrix();
+    const point = svg.createSVGPoint();
 
-    var centerPoint,
+    let centerPoint,
         originalPoint,
         currentMatrix,
         scaleMatrix,
@@ -4465,7 +5513,7 @@
 
     currentMatrix = viewport.getCTM();
 
-    var currentScale = currentMatrix.a;
+    const currentScale = currentMatrix.a;
 
     if (center) {
       centerPoint = assign(point, center);
@@ -4491,9 +5539,9 @@
 
 
   /**
-   * Returns the size of the canvas
+   * Returns the size of the canvas.
    *
-   * @return {Dimensions}
+   * @return {Dimensions} The size of the canvas.
    */
   Canvas.prototype.getSize = function() {
     return {
@@ -4504,37 +5552,38 @@
 
 
   /**
-   * Return the absolute bounding box for the given element
+   * Returns the absolute bounding box of an element.
    *
-   * The absolute bounding box may be used to display overlays in the
-   * callers (browser) coordinate system rather than the zoomed in/out
-   * canvas coordinates.
+   * The absolute bounding box may be used to display overlays in the callers
+   * (browser) coordinate system rather than the zoomed in/out canvas coordinates.
    *
-   * @param  {ElementDescriptor} element
-   * @return {Bounds} the absolute bounding box
+   * @param {ShapeLike|ConnectionLike} element The element.
+   *
+   * @return {Rect} The element's absolute bounding box.
    */
   Canvas.prototype.getAbsoluteBBox = function(element) {
-    var vbox = this.viewbox();
-    var bbox;
+    const vbox = this.viewbox();
+    let bbox;
 
     // connection
     // use svg bbox
     if (element.waypoints) {
-      var gfx = this.getGraphics(element);
+      const gfx = this.getGraphics(element);
 
       bbox = gfx.getBBox();
     }
+
     // shapes
     // use data
     else {
       bbox = element;
     }
 
-    var x = bbox.x * vbox.scale - vbox.x * vbox.scale;
-    var y = bbox.y * vbox.scale - vbox.y * vbox.scale;
+    const x = bbox.x * vbox.scale - vbox.x * vbox.scale;
+    const y = bbox.y * vbox.scale - vbox.y * vbox.scale;
 
-    var width = bbox.width * vbox.scale;
-    var height = bbox.height * vbox.scale;
+    const width = bbox.width * vbox.scale;
+    const height = bbox.height * vbox.scale;
 
     return {
       x: x,
@@ -4545,8 +5594,7 @@
   };
 
   /**
-   * Fires an event in order other modules can react to the
-   * canvas resizing
+   * Fires an event so other modules can react to the canvas resizing.
    */
   Canvas.prototype.resized = function() {
 
@@ -4558,13 +5606,34 @@
 
   var ELEMENT_ID = 'data-element-id';
 
+  /**
+   * @typedef {import('./Types').ElementLike} ElementLike
+   *
+   * @typedef {import('./EventBus').default} EventBus
+   *
+   * @typedef { (element: ElementLike, gfx: SVGElement) => boolean|any } ElementRegistryFilterCallback
+   * @typedef { (element: ElementLike, gfx: SVGElement) => any } ElementRegistryForEachCallback
+   */
 
   /**
-   * @class
-   *
    * A registry that keeps track of all shapes in the diagram.
+   *
+   * @class
+   * @constructor
+   *
+   * @param {EventBus} eventBus
    */
   function ElementRegistry(eventBus) {
+
+    /**
+     * @type { {
+     *   [id: string]: {
+     *     element: ElementLike;
+     *     gfx?: SVGElement;
+     *     secondaryGfx?: SVGElement;
+     *   }
+     * } }
+     */
     this._elements = {};
 
     this._eventBus = eventBus;
@@ -4573,11 +5642,11 @@
   ElementRegistry.$inject = [ 'eventBus' ];
 
   /**
-   * Register a pair of (element, gfx, (secondaryGfx)).
+   * Add an element and its graphical representation(s) to the registry.
    *
-   * @param {djs.model.Base} element
-   * @param {SVGElement} gfx
-   * @param {SVGElement} [secondaryGfx] optional other element to register, too
+   * @param {ElementLike} element The element to be added.
+   * @param {SVGElement} gfx The primary graphical representation.
+   * @param {SVGElement} [secondaryGfx] The secondary graphical representation.
    */
   ElementRegistry.prototype.add = function(element, gfx, secondaryGfx) {
 
@@ -4586,19 +5655,19 @@
     this._validateId(id);
 
     // associate dom node with element
-    attr$1(gfx, ELEMENT_ID, id);
+    attr(gfx, ELEMENT_ID, id);
 
     if (secondaryGfx) {
-      attr$1(secondaryGfx, ELEMENT_ID, id);
+      attr(secondaryGfx, ELEMENT_ID, id);
     }
 
     this._elements[id] = { element: element, gfx: gfx, secondaryGfx: secondaryGfx };
   };
 
   /**
-   * Removes an element from the registry.
+   * Remove an element from the registry.
    *
-   * @param {djs.model.Base} element
+   * @param {ElementLike|string} element
    */
   ElementRegistry.prototype.remove = function(element) {
     var elements = this._elements,
@@ -4608,10 +5677,10 @@
     if (container) {
 
       // unset element id on gfx
-      attr$1(container.gfx, ELEMENT_ID, '');
+      attr(container.gfx, ELEMENT_ID, '');
 
       if (container.secondaryGfx) {
-        attr$1(container.secondaryGfx, ELEMENT_ID, '');
+        attr(container.secondaryGfx, ELEMENT_ID, '');
       }
 
       delete elements[id];
@@ -4619,10 +5688,10 @@
   };
 
   /**
-   * Update the id of an element
+   * Update an elements ID.
    *
-   * @param {djs.model.Base} element
-   * @param {String} newId
+   * @param {ElementLike|string} element The element or its ID.
+   * @param {string} newId The new ID.
    */
   ElementRegistry.prototype.updateId = function(element, newId) {
 
@@ -4648,17 +5717,44 @@
   };
 
   /**
-   * Return the model element for a given id or graphics.
+   * Update the graphical representation of an element.
+   *
+   * @param {ElementLike|string} filter The element or its ID.
+   * @param {SVGElement} gfx The new graphical representation.
+   * @param {boolean} [secondary=false] Whether to update the secondary graphical representation.
+   */
+  ElementRegistry.prototype.updateGraphics = function(filter, gfx, secondary) {
+    var id = filter.id || filter;
+
+    var container = this._elements[id];
+
+    if (secondary) {
+      container.secondaryGfx = gfx;
+    } else {
+      container.gfx = gfx;
+    }
+
+    if (gfx) {
+      attr(gfx, ELEMENT_ID, id);
+    }
+
+    return gfx;
+  };
+
+  /**
+   * Get the element with the given ID or graphical representation.
    *
    * @example
    *
+   * ```javascript
    * elementRegistry.get('SomeElementId_1');
+   *
    * elementRegistry.get(gfx);
+   * ```
    *
+   * @param {string|SVGElement} filter The elements ID or graphical representation.
    *
-   * @param {String|SVGElement} filter for selecting the element
-   *
-   * @return {djs.model.Base}
+   * @return {ElementLike|undefined} The element.
    */
   ElementRegistry.prototype.get = function(filter) {
     var id;
@@ -4666,7 +5762,7 @@
     if (typeof filter === 'string') {
       id = filter;
     } else {
-      id = filter && attr$1(filter, ELEMENT_ID);
+      id = filter && attr(filter, ELEMENT_ID);
     }
 
     var container = this._elements[id];
@@ -4676,9 +5772,9 @@
   /**
    * Return all elements that match a given filter function.
    *
-   * @param {Function} fn
+   * @param {ElementRegistryFilterCallback} fn The filter function.
    *
-   * @return {Array<djs.model.Base>}
+   * @return {ElementLike[]} The matching elements.
    */
   ElementRegistry.prototype.filter = function(fn) {
 
@@ -4694,18 +5790,41 @@
   };
 
   /**
-   * Return all rendered model elements.
+   * Return the first element that matches the given filter function.
    *
-   * @return {Array<djs.model.Base>}
+   * @param {ElementRegistryFilterCallback} fn The filter function.
+   *
+   * @return {ElementLike|undefined} The matching element.
+   */
+  ElementRegistry.prototype.find = function(fn) {
+    var map = this._elements,
+        keys = Object.keys(map);
+
+    for (var i = 0; i < keys.length; i++) {
+      var id = keys[i],
+          container = map[id],
+          element = container.element,
+          gfx = container.gfx;
+
+      if (fn(element, gfx)) {
+        return element;
+      }
+    }
+  };
+
+  /**
+   * Get all elements.
+   *
+   * @return {ElementLike[]} All elements.
    */
   ElementRegistry.prototype.getAll = function() {
     return this.filter(function(e) { return e; });
   };
 
   /**
-   * Iterate over all diagram elements.
+   * Execute a given function for each element.
    *
-   * @param {Function} fn
+   * @param {ElementRegistryForEachCallback} fn The function to execute.
    */
   ElementRegistry.prototype.forEach = function(fn) {
 
@@ -4721,19 +5840,22 @@
   };
 
   /**
-   * Return the graphical representation of an element or its id.
+   * Return the graphical representation of an element.
    *
    * @example
+   *
+   * ```javascript
    * elementRegistry.getGraphics('SomeElementId_1');
+   *
    * elementRegistry.getGraphics(rootElement); // <g ...>
    *
    * elementRegistry.getGraphics(rootElement, true); // <svg ...>
+   * ```
    *
+   * @param {ElementLike|string} filter The element or its ID.
+   * @param {boolean} [secondary=false] Whether to return the secondary graphical representation.
    *
-   * @param {String|djs.model.Base} filter
-   * @param {Boolean} [secondary=false] whether to return the secondary connected element
-   *
-   * @return {SVGElement}
+   * @return {SVGElement} The graphical representation.
    */
   ElementRegistry.prototype.getGraphics = function(filter, secondary) {
     var id = filter.id || filter;
@@ -4743,12 +5865,11 @@
   };
 
   /**
-   * Validate the suitability of the given id and signals a problem
-   * with an exception.
+   * Validate an ID and throw an error if invalid.
    *
-   * @param {String} id
+   * @param {string} id
    *
-   * @throws {Error} if id is empty or already assigned
+   * @throws {Error} Error indicating that the ID is invalid or already assigned.
    */
   ElementRegistry.prototype._validateId = function(id) {
     if (!id) {
@@ -4759,6 +5880,10 @@
       throw new Error('element with id ' + id + ' already added');
     }
   };
+
+  var objectRefs = {exports: {}};
+
+  var collection = {};
 
   /**
    * An empty collection stub. Use {@link RefsCollection.extend} to extend a
@@ -4780,7 +5905,7 @@
    *
    * @return {RefsCollection<Object>} the extended array
    */
-  function extend$1(collection, refs, property, target) {
+  function extend(collection, refs, property, target) {
 
     var inverseProperty = property.inverse;
 
@@ -4875,14 +6000,11 @@
     return collection.__refs_collection === true;
   }
 
-  var extend_1 = extend$1;
+  collection.extend = extend;
 
-  var isExtended_1 = isExtended;
+  collection.isExtended = isExtended;
 
-  var collection = {
-  	extend: extend_1,
-  	isExtended: isExtended_1
-  };
+  var Collection = collection;
 
   function hasOwnProperty(e, property) {
     return Object.prototype.hasOwnProperty.call(e, property.name || property);
@@ -4890,16 +6012,16 @@
 
   function defineCollectionProperty(ref, property, target) {
 
-    var collection$$1 = collection.extend(target[property.name] || [], ref, property, target);
+    var collection = Collection.extend(target[property.name] || [], ref, property, target);
 
     Object.defineProperty(target, property.name, {
       enumerable: property.enumerable,
-      value: collection$$1
+      value: collection
     });
 
-    if (collection$$1.length) {
+    if (collection.length) {
 
-      collection$$1.forEach(function(o) {
+      collection.forEach(function(o) {
         ref.set(o, property.inverse, target);
       });
     }
@@ -4989,10 +6111,10 @@
    *
    * wheels[0].car // undefined
    */
-  function Refs(a, b) {
+  function Refs$1(a, b) {
 
-    if (!(this instanceof Refs)) {
-      return new Refs(a, b);
+    if (!(this instanceof Refs$1)) {
+      return new Refs$1(a, b);
     }
 
     // link
@@ -5013,7 +6135,7 @@
    * @param  {Object} target
    * @param  {String} property
    */
-  Refs.prototype.bind = function(target, property) {
+  Refs$1.prototype.bind = function(target, property) {
     if (typeof property === 'string') {
       if (!this.props[property]) {
         throw new Error('no property <' + property + '> in ref');
@@ -5028,24 +6150,24 @@
     }
   };
 
-  Refs.prototype.ensureRefsCollection = function(target, property) {
+  Refs$1.prototype.ensureRefsCollection = function(target, property) {
 
-    var collection$$1 = target[property.name];
+    var collection = target[property.name];
 
-    if (!collection.isExtended(collection$$1)) {
+    if (!Collection.isExtended(collection)) {
       defineCollectionProperty(this, property, target);
     }
 
-    return collection$$1;
+    return collection;
   };
 
-  Refs.prototype.ensureBound = function(target, property) {
+  Refs$1.prototype.ensureBound = function(target, property) {
     if (!hasOwnProperty(target, property)) {
       this.bind(target, property);
     }
   };
 
-  Refs.prototype.unset = function(target, property, value) {
+  Refs$1.prototype.unset = function(target, property, value) {
 
     if (target) {
       this.ensureBound(target, property);
@@ -5058,7 +6180,7 @@
     }
   };
 
-  Refs.prototype.set = function(target, property, value) {
+  Refs$1.prototype.set = function(target, property, value) {
 
     if (target) {
       this.ensureBound(target, property);
@@ -5071,40 +6193,41 @@
     }
   };
 
-  var refs = Refs;
+  var refs = Refs$1;
 
-  var objectRefs = refs;
+  objectRefs.exports = refs;
 
-  var Collection = collection;
-  objectRefs.Collection = Collection;
+  objectRefs.exports.Collection = collection;
 
-  var parentRefs = new objectRefs({ name: 'children', enumerable: true, collection: true }, { name: 'parent' }),
-      labelRefs = new objectRefs({ name: 'labels', enumerable: true, collection: true }, { name: 'labelTarget' }),
-      attacherRefs = new objectRefs({ name: 'attachers', collection: true }, { name: 'host' }),
-      outgoingRefs = new objectRefs({ name: 'outgoing', collection: true }, { name: 'source' }),
-      incomingRefs = new objectRefs({ name: 'incoming', collection: true }, { name: 'target' });
+  var objectRefsExports = objectRefs.exports;
+  var Refs = /*@__PURE__*/getDefaultExportFromCjs(objectRefsExports);
 
-  /**
-   * @namespace djs.model
-   */
+  var parentRefs = new Refs({ name: 'children', enumerable: true, collection: true }, { name: 'parent' }),
+      labelRefs = new Refs({ name: 'labels', enumerable: true, collection: true }, { name: 'labelTarget' }),
+      attacherRefs = new Refs({ name: 'attachers', collection: true }, { name: 'host' }),
+      outgoingRefs = new Refs({ name: 'outgoing', collection: true }, { name: 'source' }),
+      incomingRefs = new Refs({ name: 'incoming', collection: true }, { name: 'target' });
 
   /**
-   * @memberOf djs.model
+   * @typedef {import('./Types').Element} Element
+   * @typedef {import('./Types').Shape} Shape
+   * @typedef {import('./Types').Root} Root
+   * @typedef {import('./Types').Label} Label
+   * @typedef {import('./Types').Connection} Connection
    */
 
   /**
    * The basic graphical representation
    *
    * @class
-   *
-   * @abstract
+   * @constructor
    */
-  function Base() {
+  function ElementImpl() {
 
     /**
      * The object that backs up the shape
      *
-     * @name Base#businessObject
+     * @name Element#businessObject
      * @type Object
      */
     Object.defineProperty(this, 'businessObject', {
@@ -5115,7 +6238,7 @@
     /**
      * Single label support, will mapped to multi label array
      *
-     * @name Base#label
+     * @name Element#label
      * @type Object
      */
     Object.defineProperty(this, 'label', {
@@ -5138,7 +6261,7 @@
     /**
      * The parent shape
      *
-     * @name Base#parent
+     * @name Element#parent
      * @type Shape
      */
     parentRefs.bind(this, 'parent');
@@ -5146,7 +6269,7 @@
     /**
      * The list of labels
      *
-     * @name Base#labels
+     * @name Element#labels
      * @type Label
      */
     labelRefs.bind(this, 'labels');
@@ -5154,7 +6277,7 @@
     /**
      * The list of outgoing connections
      *
-     * @name Base#outgoing
+     * @name Element#outgoing
      * @type Array<Connection>
      */
     outgoingRefs.bind(this, 'outgoing');
@@ -5162,7 +6285,7 @@
     /**
      * The list of incoming connections
      *
-     * @name Base#incoming
+     * @name Element#incoming
      * @type Array<Connection>
      */
     incomingRefs.bind(this, 'incoming');
@@ -5175,33 +6298,40 @@
    * @class
    * @constructor
    *
-   * @extends Base
+   * @extends ElementImpl
    */
-  function Shape() {
-    Base.call(this);
+  function ShapeImpl() {
+    ElementImpl.call(this);
+
+    /**
+     * Indicates frame shapes
+     *
+     * @name ShapeImpl#isFrame
+     * @type boolean
+     */
 
     /**
      * The list of children
      *
-     * @name Shape#children
-     * @type Array<Base>
+     * @name ShapeImpl#children
+     * @type Element[]
      */
     parentRefs.bind(this, 'children');
 
     /**
-     * @name Shape#host
+     * @name ShapeImpl#host
      * @type Shape
      */
     attacherRefs.bind(this, 'host');
 
     /**
-     * @name Shape#attachers
+     * @name ShapeImpl#attachers
      * @type Shape
      */
     attacherRefs.bind(this, 'attachers');
   }
 
-  inherits_browser(Shape, Base);
+  e(ShapeImpl, ElementImpl);
 
 
   /**
@@ -5210,13 +6340,21 @@
    * @class
    * @constructor
    *
-   * @extends Shape
+   * @extends ElementImpl
    */
-  function Root() {
-    Shape.call(this);
+  function RootImpl() {
+    ElementImpl.call(this);
+
+    /**
+     * The list of children
+     *
+     * @name RootImpl#children
+     * @type Element[]
+     */
+    parentRefs.bind(this, 'children');
   }
 
-  inherits_browser(Root, Shape);
+  e(RootImpl, ShapeImpl);
 
 
   /**
@@ -5225,21 +6363,21 @@
    * @class
    * @constructor
    *
-   * @extends Shape
+   * @extends ShapeImpl
    */
-  function Label() {
-    Shape.call(this);
+  function LabelImpl() {
+    ShapeImpl.call(this);
 
     /**
      * The labeled element
      *
-     * @name Label#labelTarget
-     * @type Base
+     * @name LabelImpl#labelTarget
+     * @type Element
      */
     labelRefs.bind(this, 'labelTarget');
   }
 
-  inherits_browser(Label, Shape);
+  e(LabelImpl, ShapeImpl);
 
 
   /**
@@ -5248,56 +6386,133 @@
    * @class
    * @constructor
    *
-   * @extends Base
+   * @extends ElementImpl
    */
-  function Connection() {
-    Base.call(this);
+  function ConnectionImpl() {
+    ElementImpl.call(this);
 
     /**
      * The element this connection originates from
      *
-     * @name Connection#source
-     * @type Base
+     * @name ConnectionImpl#source
+     * @type Element
      */
     outgoingRefs.bind(this, 'source');
 
     /**
      * The element this connection points to
      *
-     * @name Connection#target
-     * @type Base
+     * @name ConnectionImpl#target
+     * @type Element
      */
     incomingRefs.bind(this, 'target');
   }
 
-  inherits_browser(Connection, Base);
+  e(ConnectionImpl, ElementImpl);
 
 
   var types = {
-    connection: Connection,
-    shape: Shape,
-    label: Label,
-    root: Root
+    connection: ConnectionImpl,
+    shape: ShapeImpl,
+    label: LabelImpl,
+    root: RootImpl
   };
 
   /**
-   * Creates a new model element of the specified type
+   * Creates a root element.
    *
-   * @method create
+   * @overlord
    *
    * @example
    *
-   * var shape1 = Model.create('shape', { x: 10, y: 10, width: 100, height: 100 });
-   * var shape2 = Model.create('shape', { x: 210, y: 210, width: 100, height: 100 });
+   * ```javascript
+   * import * as Model from 'diagram-js/lib/model';
    *
-   * var connection = Model.create('connection', { waypoints: [ { x: 110, y: 55 }, {x: 210, y: 55 } ] });
+   * const root = Model.create('root', {
+   *   x: 100,
+   *   y: 100,
+   *   width: 100,
+   *   height: 100
+   * });
+   * ```
    *
-   * @param  {String} type lower-cased model name
-   * @param  {Object} attrs attributes to initialize the new model instance with
+   * @param {'root'} type
+   * @param {any} [attrs]
    *
-   * @return {Base} the new model instance
+   * @return {Root}
    */
-  function create$1(type, attrs) {
+
+  /**
+   * Creates a connection.
+   *
+   * @overlord
+   *
+   * @example
+   *
+   * ```javascript
+   * import * as Model from 'diagram-js/lib/model';
+   *
+   * const connection = Model.create('connection', {
+   *   waypoints: [
+   *     { x: 100, y: 100 },
+   *     { x: 200, y: 100 }
+   *   ]
+   * });
+   * ```
+   *
+   * @param {'connection'} type
+   * @param {any} [attrs]
+   *
+   * @return {Connection}
+   */
+
+  /**
+   * Creates a shape.
+   *
+   * @overlord
+   *
+   * @example
+   *
+   * ```javascript
+   * import * as Model from 'diagram-js/lib/model';
+   *
+   * const shape = Model.create('shape', {
+   *   x: 100,
+   *   y: 100,
+   *   width: 100,
+   *   height: 100
+   * });
+   * ```
+   *
+   * @param {'shape'} type
+   * @param {any} [attrs]
+   *
+   * @return {Shape}
+   */
+
+  /**
+   * Creates a label.
+   *
+   * @example
+   *
+   * ```javascript
+   * import * as Model from 'diagram-js/lib/model';
+   *
+   * const label = Model.create('label', {
+   *   x: 100,
+   *   y: 100,
+   *   width: 100,
+   *   height: 100,
+   *   labelTarget: shape
+   * });
+   * ```
+   *
+   * @param {'label'} type
+   * @param {Object} [attrs]
+   *
+   * @return {Label}
+   */
+  function create(type, attrs) {
     var Type = types[type];
     if (!Type) {
       throw new Error('unknown type: <' + type + '>');
@@ -5306,36 +6521,99 @@
   }
 
   /**
-   * A factory for diagram-js shapes
+   * @typedef {import('../model/Types').Element} Element
+   * @typedef {import('../model/Types').Connection} Connection
+   * @typedef {import('../model/Types').Label} Label
+   * @typedef {import('../model/Types').Root} Root
+   * @typedef {import('../model/Types').Shape} Shape
+   */
+
+  /**
+   * A factory for model elements.
+   *
+   * @template {Connection} [T=Connection]
+   * @template {Label} [U=Label]
+   * @template {Root} [V=Root]
+   * @template {Shape} [W=Shape]
    */
   function ElementFactory() {
     this._uid = 12;
   }
 
-
+  /**
+   * Create a root element.
+   *
+   * @param {Partial<Root>} [attrs]
+   *
+   * @return {V} The created root element.
+   */
   ElementFactory.prototype.createRoot = function(attrs) {
     return this.create('root', attrs);
   };
 
+  /**
+   * Create a label.
+   *
+   * @param {Partial<Label>} [attrs]
+   *
+   * @return {U} The created label.
+   */
   ElementFactory.prototype.createLabel = function(attrs) {
     return this.create('label', attrs);
   };
 
+  /**
+   * Create a shape.
+   *
+   * @param {Partial<Shape>} [attrs]
+   *
+   * @return {W} The created shape.
+   */
   ElementFactory.prototype.createShape = function(attrs) {
     return this.create('shape', attrs);
   };
 
+  /**
+   * Create a connection.
+   *
+   * @param {Partial<Connection>} [attrs]
+   *
+   * @return {T} The created connection.
+   */
   ElementFactory.prototype.createConnection = function(attrs) {
     return this.create('connection', attrs);
   };
 
   /**
-   * Create a model element with the given type and
-   * a number of pre-set attributes.
+   * Create a root element.
    *
-   * @param  {String} type
-   * @param  {Object} attrs
-   * @return {djs.model.Base} the newly created model instance
+   * @overlord
+   * @param {'root'} type
+   * @param {Partial<Root>} [attrs]
+   * @return {V}
+   */
+  /**
+   * Create a shape.
+   *
+   * @overlord
+   * @param {'shape'} type
+   * @param {Partial<Shape>} [attrs]
+   * @return {W}
+   */
+  /**
+   * Create a connection.
+   *
+   * @overlord
+   * @param {'connection'} type
+   * @param {Partial<Connection>} [attrs]
+   * @return {T}
+   */
+  /**
+   * Create a label.
+   *
+   * @param {'label'} type
+   * @param {Partial<Label>} [attrs]
+   * @return {U}
    */
   ElementFactory.prototype.create = function(type, attrs) {
 
@@ -5345,14 +6623,38 @@
       attrs.id = type + '_' + (this._uid++);
     }
 
-    return create$1(type, attrs);
+    return create(type, attrs);
   };
 
   var FN_REF = '__fn';
 
   var DEFAULT_PRIORITY = 1000;
 
-  var slice$1 = Array.prototype.slice;
+  var slice = Array.prototype.slice;
+
+  /**
+   * @typedef { {
+   *   stopPropagation(): void;
+   *   preventDefault(): void;
+   *   cancelBubble: boolean;
+   *   defaultPrevented: boolean;
+   *   returnValue: any;
+   * } } Event
+   */
+
+  /**
+   * @template E
+   *
+   * @typedef { (event: E & Event, ...any) => any } EventBusEventCallback
+   */
+
+  /**
+   * @typedef { {
+   *  priority: number;
+   *  next: EventBusListener | null;
+   *  callback: EventBusEventCallback<any>;
+   * } } EventBusListener
+   */
 
   /**
    * A general purpose event bus.
@@ -5438,6 +6740,10 @@
    * ```
    */
   function EventBus() {
+
+    /**
+     * @type { Record<string, EventBusListener> }
+     */
     this._listeners = {};
 
     // cleanup on destroy on lowest priority to allow
@@ -5458,14 +6764,16 @@
    *
    * Returning anything but `undefined` from a listener will stop the listener propagation.
    *
-   * @param {String|Array<String>} events
-   * @param {Number} [priority=1000] the priority in which this listener is called, larger is higher
-   * @param {Function} callback
-   * @param {Object} [that] Pass context (`this`) to the callback
+   * @template T
+   *
+   * @param {string|string[]} events to subscribe to
+   * @param {number} [priority=1000] listen priority
+   * @param {EventBusEventCallback<T>} callback
+   * @param {any} [that] callback context
    */
   EventBus.prototype.on = function(events, priority, callback, that) {
 
-    events = isArray(events) ? events : [ events ];
+    events = isArray$1(events) ? events : [ events ];
 
     if (isFunction(priority)) {
       that = callback;
@@ -5480,7 +6788,7 @@
     var actualCallback = callback;
 
     if (that) {
-      actualCallback = bind$2(callback, that);
+      actualCallback = bind(callback, that);
 
       // make sure we remember and are able to remove
       // bound callbacks via {@link #off} using the original
@@ -5499,15 +6807,17 @@
     });
   };
 
-
   /**
-   * Register an event listener that is executed only once.
+   * Register an event listener that is called only once.
    *
-   * @param {String} event the event name to register for
-   * @param {Function} callback the callback to execute
-   * @param {Object} [that] Pass context (`this`) to the callback
+   * @template T
+   *
+   * @param {string|string[]} events to subscribe to
+   * @param {number} [priority=1000] the listen priority
+   * @param {EventBusEventCallback<T>} callback
+   * @param {any} [that] callback context
    */
-  EventBus.prototype.once = function(event, priority, callback, that) {
+  EventBus.prototype.once = function(events, priority, callback, that) {
     var self = this;
 
     if (isFunction(priority)) {
@@ -5521,9 +6831,11 @@
     }
 
     function wrappedCallback() {
+      wrappedCallback.__isTomb = true;
+
       var result = callback.apply(that, arguments);
 
-      self.off(event, wrappedCallback);
+      self.off(events, wrappedCallback);
 
       return result;
     }
@@ -5533,7 +6845,7 @@
     // callback
     wrappedCallback[FN_REF] = callback;
 
-    this.on(event, priority, wrappedCallback);
+    this.on(events, priority, wrappedCallback);
   };
 
 
@@ -5542,12 +6854,12 @@
    *
    * If no callback is given, all listeners for a given event name are being removed.
    *
-   * @param {String|Array<String>} events
-   * @param {Function} [callback]
+   * @param {string|string[]} events
+   * @param {EventBusEventCallback} [callback]
    */
   EventBus.prototype.off = function(events, callback) {
 
-    events = isArray(events) ? events : [ events ];
+    events = isArray$1(events) ? events : [ events ];
 
     var self = this;
 
@@ -5559,11 +6871,11 @@
 
 
   /**
-   * Create an EventBus event.
+   * Create an event recognized be the event bus.
    *
-   * @param {Object} data
+   * @param {Object} data Event data.
    *
-   * @return {Object} event, recognized by the eventBus
+   * @return {Event} An event that will be recognized by the event bus.
    */
   EventBus.prototype.createEvent = function(data) {
     var event = new InternalEvent();
@@ -5575,10 +6887,11 @@
 
 
   /**
-   * Fires a named event.
+   * Fires an event.
    *
    * @example
    *
+   * ```javascript
    * // fire event by name
    * events.fire('foo');
    *
@@ -5596,26 +6909,25 @@
    * });
    *
    * events.fire({ type: 'foo' }, 'I am bar!');
+   * ```
    *
-   * @param {String} [name] the optional event name
-   * @param {Object} [event] the event object
-   * @param {...Object} additional arguments to be passed to the callback functions
+   * @param {string} [type] event type
+   * @param {Object} [data] event or event data
+   * @param {...any} [args] additional arguments the callback will be called with.
    *
-   * @return {Boolean} the events return value, if specified or false if the
-   *                   default action was prevented by listeners
+   * @return {any} The return value. Will be set to `false` if the default was prevented.
    */
   EventBus.prototype.fire = function(type, data) {
-
     var event,
         firstListener,
         returnValue,
         args;
 
-    args = slice$1.call(arguments);
+    args = slice.call(arguments);
 
     if (typeof type === 'object') {
-      event = type;
-      type = event.type;
+      data = type;
+      type = data.type;
     }
 
     if (!type) {
@@ -5631,6 +6943,7 @@
     // we make sure we fire instances of our home made
     // events here. We wrap them only once, though
     if (data instanceof InternalEvent) {
+
       // we are fine, we alread have an event
       event = data;
     } else {
@@ -5651,6 +6964,7 @@
     try {
       returnValue = this._invokeListeners(event, args, firstListener);
     } finally {
+
       // reset event type after delegation
       if (type !== originalType) {
         event.type = originalType;
@@ -5666,7 +6980,13 @@
     return returnValue;
   };
 
-
+  /**
+   * Handle an error by firing an event.
+   *
+   * @param {Error} error The error to be handled.
+   *
+   * @return {boolean} Whether the error was handled.
+   */
   EventBus.prototype.handleError = function(error) {
     return this.fire('error', { error: error }) === false;
   };
@@ -5676,6 +6996,13 @@
     this._listeners = {};
   };
 
+  /**
+   * @param {Event} event
+   * @param {any[]} args
+   * @param {EventBusListener} listener
+   *
+   * @return {any}
+   */
   EventBus.prototype._invokeListeners = function(event, args, listener) {
 
     var returnValue;
@@ -5695,11 +7022,23 @@
     return returnValue;
   };
 
+  /**
+   * @param {Event} event
+   * @param {any[]} args
+   * @param {EventBusListener} listener
+   *
+   * @return {any}
+   */
   EventBus.prototype._invokeListener = function(event, args, listener) {
 
     var returnValue;
 
+    if (listener.callback.__isTomb) {
+      return returnValue;
+    }
+
     try {
+
       // returning false prevents the default action
       returnValue = invokeFunction(listener.callback, args);
 
@@ -5713,19 +7052,18 @@
       if (returnValue === false) {
         event.preventDefault();
       }
-    } catch (e) {
-      if (!this.handleError(e)) {
-        console.error('unhandled error in event listener');
-        console.error(e.stack);
+    } catch (error) {
+      if (!this.handleError(error)) {
+        console.error('unhandled error in event listener', error);
 
-        throw e;
+        throw error;
       }
     }
 
     return returnValue;
   };
 
-  /*
+  /**
    * Add new listener with a certain priority to the list
    * of listeners (for the given event).
    *
@@ -5738,8 +7076,8 @@
    *    * before: [ 1500, 1500, 1000, 1000 ]
    *    * after: [ 1500, 1500, (new=1300), 1000, 1000, (new=1000) ]
    *
-   * @param {String} event
-   * @param {Object} listener { priority, callback }
+   * @param {string} event
+   * @param {EventBusListener} newListener
    */
   EventBus.prototype._addListener = function(event, newListener) {
 
@@ -5779,10 +7117,19 @@
   };
 
 
+  /**
+   * @param {string} name
+   *
+   * @return {EventBusListener}
+   */
   EventBus.prototype._getListeners = function(name) {
     return this._listeners[name];
   };
 
+  /**
+   * @param {string} name
+   * @param {EventBusListener} listener
+   */
   EventBus.prototype._setListeners = function(name, listener) {
     this._listeners[name] = listener;
   };
@@ -5795,6 +7142,7 @@
         listenerCallback;
 
     if (!callback) {
+
       // clear listeners
       this._setListeners(event, null);
 
@@ -5811,6 +7159,7 @@
         if (previousListener) {
           previousListener.next = nextListener;
         } else {
+
           // new first listener
           this._setListeners(event, nextListener);
         }
@@ -5843,9 +7192,9 @@
    * Invoke function. Be fast...
    *
    * @param {Function} fn
-   * @param {Array<Object>} args
+   * @param {any[]} args
    *
-   * @return {Any}
+   * @return {any}
    */
   function invokeFunction(fn, args) {
     return fn.apply(null, args);
@@ -5859,30 +7208,30 @@
    */
 
   /**
-   * Returns the visual part of a diagram element
+   * Returns the visual part of a diagram element.
    *
-   * @param {Snap<SVGElement>} gfx
+   * @param {SVGElement} gfx
    *
-   * @return {Snap<SVGElement>}
+   * @return {SVGElement}
    */
   function getVisual(gfx) {
-    return query('.djs-visual', gfx);
+    return gfx.childNodes[0];
   }
 
   /**
    * Returns the children for a given diagram element.
    *
-   * @param {Snap<SVGElement>} gfx
-   * @return {Snap<SVGElement>}
+   * @param {SVGElement} gfx
+   * @return {SVGElement}
    */
   function getChildren(gfx) {
     return gfx.parentNode.childNodes[1];
   }
 
   /**
-   * @param {SVGElement} element
-   * @param {Number} x
-   * @param {Number} y
+   * @param {SVGElement} gfx
+   * @param {number} x
+   * @param {number} y
    */
   function translate(gfx, x, y) {
     var translate = createTransform();
@@ -5892,7 +7241,16 @@
   }
 
   /**
-   * A factory that creates graphical elements
+   * @typedef {import('./Types').ConnectionLike} ConnectionLike
+   * @typedef {import('./Types').ElementLike} ElementLike
+   * @typedef {import('./Types').ShapeLike} ShapeLike
+   *
+   * @typedef {import('./ElementRegistry').default} ElementRegistry
+   * @typedef {import('./EventBus').default} EventBus
+   */
+
+  /**
+   * A factory that creates graphical elements.
    *
    * @param {EventBus} eventBus
    * @param {ElementRegistry} elementRegistry
@@ -5904,8 +7262,11 @@
 
   GraphicsFactory.$inject = [ 'eventBus' , 'elementRegistry' ];
 
-
-  GraphicsFactory.prototype._getChildren = function(element) {
+  /**
+   * @param { { parent?: any } } element
+   * @return {SVGElement}
+   */
+  GraphicsFactory.prototype._getChildrenContainer = function(element) {
 
     var gfx = this._elementRegistry.getGraphics(element);
 
@@ -5917,8 +7278,8 @@
     } else {
       childrenGfx = getChildren(gfx);
       if (!childrenGfx) {
-        childrenGfx = create('g');
-        classes$1(childrenGfx).add('djs-children');
+        childrenGfx = create$1('g');
+        classes(childrenGfx).add('djs-children');
 
         append(gfx.parentNode, childrenGfx);
       }
@@ -5934,7 +7295,7 @@
   GraphicsFactory.prototype._clear = function(gfx) {
     var visual = getVisual(gfx);
 
-    clear(visual);
+    clear$1(visual);
 
     return visual;
   };
@@ -5947,7 +7308,7 @@
    * <g class="djs-group">
    *
    *   <!-- the gfx -->
-   *   <g class="djs-element djs-(shape|connection)">
+   *   <g class="djs-element djs-(shape|connection|frame)">
    *     <g class="djs-visual">
    *       <!-- the renderer draws in here -->
    *     </g>
@@ -5959,41 +7320,64 @@
    *   <g class="djs-children"></g>
    * </g>
    *
-   * @param {Object} parent
-   * @param {String} type the type of the element, i.e. shape | connection
-   * @param {Number} [parentIndex] position to create container in parent
+   * @param {string} type the type of the element, i.e. shape | connection
+   * @param {SVGElement} childrenGfx
+   * @param {number} [parentIndex] position to create container in parent
+   * @param {boolean} [isFrame] is frame element
+   *
+   * @return {SVGElement}
    */
-  GraphicsFactory.prototype._createContainer = function(type, childrenGfx, parentIndex) {
-    var outerGfx = create('g');
-    classes$1(outerGfx).add('djs-group');
+  GraphicsFactory.prototype._createContainer = function(
+      type, childrenGfx, parentIndex, isFrame
+  ) {
+    var outerGfx = create$1('g');
+    classes(outerGfx).add('djs-group');
 
     // insert node at position
     if (typeof parentIndex !== 'undefined') {
-      prependTo$1(outerGfx, childrenGfx, childrenGfx.childNodes[parentIndex]);
+      prependTo(outerGfx, childrenGfx, childrenGfx.childNodes[parentIndex]);
     } else {
       append(childrenGfx, outerGfx);
     }
 
-    var gfx = create('g');
-    classes$1(gfx).add('djs-element');
-    classes$1(gfx).add('djs-' + type);
+    var gfx = create$1('g');
+    classes(gfx).add('djs-element');
+    classes(gfx).add('djs-' + type);
+
+    if (isFrame) {
+      classes(gfx).add('djs-frame');
+    }
 
     append(outerGfx, gfx);
 
     // create visual
-    var visual = create('g');
-    classes$1(visual).add('djs-visual');
+    var visual = create$1('g');
+    classes(visual).add('djs-visual');
 
     append(gfx, visual);
 
     return gfx;
   };
 
+  /**
+   * Create a graphical element.
+   *
+   * @param { 'shape' | 'connection' | 'label' | 'root' } type The type of the element.
+   * @param {ElementLike} element The element.
+   * @param {number} [parentIndex] The index at which to add the graphical element to its parent's children.
+   *
+   * @return {SVGElement} The graphical element.
+   */
   GraphicsFactory.prototype.create = function(type, element, parentIndex) {
-    var childrenGfx = this._getChildren(element.parent);
-    return this._createContainer(type, childrenGfx, parentIndex);
+    var childrenGfx = this._getChildrenContainer(element.parent);
+    return this._createContainer(type, childrenGfx, parentIndex, isFrameElement(element));
   };
 
+  /**
+   * Update the containments of the given elements.
+   *
+   * @param {ElementLike[]} elements The elements.
+   */
   GraphicsFactory.prototype.updateContainments = function(elements) {
 
     var self = this,
@@ -6019,42 +7403,80 @@
         return;
       }
 
-      var childGfx = self._getChildren(parent);
+      var childrenGfx = self._getChildrenContainer(parent);
 
-      forEach(children.slice().reverse(), function(c) {
-        var gfx = elementRegistry.getGraphics(c);
+      forEach(children.slice().reverse(), function(child) {
+        var childGfx = elementRegistry.getGraphics(child);
 
-        prependTo$1(gfx.parentNode, childGfx);
+        prependTo(childGfx.parentNode, childrenGfx);
       });
     });
   };
 
+  /**
+   * Draw a shape.
+   *
+   * @param {SVGElement} visual The graphical element.
+   * @param {ShapeLike} element The shape.
+   *
+   * @return {SVGElement}
+   */
   GraphicsFactory.prototype.drawShape = function(visual, element) {
     var eventBus = this._eventBus;
 
     return eventBus.fire('render.shape', { gfx: visual, element: element });
   };
 
+  /**
+   * Get the path of a shape.
+   *
+   * @param {ShapeLike} element The shape.
+   *
+   * @return {string} The path of the shape.
+   */
   GraphicsFactory.prototype.getShapePath = function(element) {
     var eventBus = this._eventBus;
 
     return eventBus.fire('render.getShapePath', element);
   };
 
+  /**
+   * Draw a connection.
+   *
+   * @param {SVGElement} visual The graphical element.
+   * @param {ConnectionLike} element The connection.
+   *
+   * @return {SVGElement}
+   */
   GraphicsFactory.prototype.drawConnection = function(visual, element) {
     var eventBus = this._eventBus;
 
     return eventBus.fire('render.connection', { gfx: visual, element: element });
   };
 
-  GraphicsFactory.prototype.getConnectionPath = function(waypoints) {
+  /**
+   * Get the path of a connection.
+   *
+   * @param {ConnectionLike} connection The connection.
+   *
+   * @return {string} The path of the connection.
+   */
+  GraphicsFactory.prototype.getConnectionPath = function(connection) {
     var eventBus = this._eventBus;
 
-    return eventBus.fire('render.getConnectionPath', waypoints);
+    return eventBus.fire('render.getConnectionPath', connection);
   };
 
+  /**
+   * Update an elements graphical representation.
+   *
+   * @param {'shape'|'connection'} type
+   * @param {ElementLike} element
+   * @param {SVGElement} gfx
+   */
   GraphicsFactory.prototype.update = function(type, element, gfx) {
-    // Do not update root element
+
+    // do NOT update root element
     if (!element.parent) {
       return;
     }
@@ -6075,12 +7497,17 @@
     }
 
     if (element.hidden) {
-      attr$1(gfx, 'display', 'none');
+      attr(gfx, 'display', 'none');
     } else {
-      attr$1(gfx, 'display', 'block');
+      attr(gfx, 'display', 'block');
     }
   };
 
+  /**
+   * Remove a graphical element.
+   *
+   * @param {ElementLike} element The element.
+   */
   GraphicsFactory.prototype.remove = function(element) {
     var gfx = this._elementRegistry.getGraphics(element);
 
@@ -6089,14 +7516,25 @@
   };
 
 
-  // helpers //////////////////////
+  // helpers //////////
 
-  function prependTo$1(newNode, parentNode, siblingNode) {
-    parentNode.insertBefore(newNode, siblingNode || parentNode.firstChild);
+  function prependTo(newNode, parentNode, siblingNode) {
+    var node = siblingNode || parentNode.firstChild;
+
+    // do not prepend node to itself to prevent IE from crashing
+    // https://github.com/bpmn-io/bpmn-js/issues/746
+    if (newNode === node) {
+      return;
+    }
+
+    parentNode.insertBefore(newNode, node);
   }
 
-  var CoreModule$1 = {
-    __depends__: [ DrawModule$1 ],
+  /**
+   * @type { import('didi').ModuleDeclaration }
+   */
+  var CoreModule = {
+    __depends__: [ DrawModule ],
     __init__: [ 'canvas' ],
     canvas: [ 'type', Canvas ],
     elementRegistry: [ 'type', ElementRegistry ],
@@ -6106,60 +7544,26 @@
   };
 
   /**
+   * @typedef {import('didi').InjectionContext} InjectionContext
+   * @typedef {import('didi').LocalsMap} LocalsMap
+   * @typedef {import('didi').ModuleDeclaration} ModuleDeclaration
+   *
+   * @typedef { {
+   *   modules?: ModuleDeclaration[];
+   * } & Record<string, any> } DiagramOptions
+   */
+
+  /**
    * Bootstrap an injector from a list of modules, instantiating a number of default components
    *
-   * @ignore
-   * @param {Array<didi.Module>} bootstrapModules
+   * @param {ModuleDeclaration[]} modules
    *
-   * @return {didi.Injector} a injector to use to access the components
+   * @return {Injector} a injector to use to access the components
    */
-  function bootstrap(bootstrapModules) {
-
-    var modules = [],
-        components = [];
-
-    function hasModule(m) {
-      return modules.indexOf(m) >= 0;
-    }
-
-    function addModule(m) {
-      modules.push(m);
-    }
-
-    function visit(m) {
-      if (hasModule(m)) {
-        return;
-      }
-
-      (m.__depends__ || []).forEach(visit);
-
-      if (hasModule(m)) {
-        return;
-      }
-
-      addModule(m);
-
-      (m.__init__ || []).forEach(function(c) {
-        components.push(c);
-      });
-    }
-
-    bootstrapModules.forEach(visit);
-
+  function bootstrap(modules) {
     var injector = new Injector(modules);
 
-    components.forEach(function(c) {
-
-      try {
-        // eagerly resolve component (fn or string)
-        injector[typeof c === 'string' ? 'get' : 'invoke'](c);
-      } catch (e) {
-        console.error('Failed to instantiate component');
-        console.error(e.stack);
-
-        throw e;
-      }
-    });
+    injector.init();
 
     return injector;
   }
@@ -6167,19 +7571,22 @@
   /**
    * Creates an injector from passed options.
    *
-   * @ignore
-   * @param  {Object} options
-   * @return {didi.Injector}
+   * @param {DiagramOptions} [options]
+   *
+   * @return {Injector}
    */
   function createInjector(options) {
 
     options = options || {};
 
+    /**
+     * @type { ModuleDeclaration }
+     */
     var configModule = {
-      'config': ['value', options]
+      'config': [ 'value', options ]
     };
 
-    var modules = [ configModule, CoreModule$1 ].concat(options.modules || []);
+    var modules = [ configModule, CoreModule ].concat(options.modules || []);
 
     return bootstrap(modules);
   }
@@ -6189,17 +7596,15 @@
    * The main diagram-js entry point that bootstraps the diagram with the given
    * configuration.
    *
-   * To register extensions with the diagram, pass them as Array<didi.Module> to the constructor.
+   * To register extensions with the diagram, pass them as Array<Module> to the constructor.
    *
-   * @class djs.Diagram
-   * @memberOf djs
+   * @class
    * @constructor
    *
-   * @example
+   * @example Creating a plug-in that logs whenever a shape is added to the canvas.
    *
-   * <caption>Creating a plug-in that logs whenever a shape is added to the canvas.</caption>
-   *
-   * // plug-in implemenentation
+   * ```javascript
+   * // plug-in implementation
    * function MyLoggingPlugin(eventBus) {
    *   eventBus.on('shape.added', function(event) {
    *     console.log('shape ', event.shape, ' was added to the diagram');
@@ -6211,10 +7616,11 @@
    *   __init__: [ 'myLoggingPlugin' ],
    *     myLoggingPlugin: [ 'type', MyLoggingPlugin ]
    * };
+   * ```
    *
+   * Use the plug-in in a Diagram instance:
    *
-   * // instantiate the diagram with the new plug-in
-   *
+   * ```javascript
    * import MyLoggingModule from 'path-to-my-logging-plugin';
    *
    * var diagram = new Diagram({
@@ -6229,35 +7635,39 @@
    * });
    *
    * // 'shape ... was added to the diagram' logged to console
+   * ```
    *
-   * @param {Object} options
-   * @param {Array<didi.Module>} [options.modules] external modules to instantiate with the diagram
-   * @param {didi.Injector} [injector] an (optional) injector to bootstrap the diagram with
+   * @param {DiagramOptions} [options]
+   * @param {Injector} [injector] An (optional) injector to bootstrap the diagram with.
    */
   function Diagram(options, injector) {
 
-    // create injector unless explicitly specified
-    this.injector = injector = injector || createInjector(options);
+    this._injector = injector = injector || createInjector(options);
 
     // API
 
     /**
-     * Resolves a diagram service
+     * Resolves a diagram service.
      *
-     * @method Diagram#get
+     * @template T
      *
-     * @param {String} name the name of the diagram service to be retrieved
-     * @param {Boolean} [strict=true] if false, resolve missing services to null
+     * @param {string} name The name of the service to get.
+     * @param {boolean} [strict=true] If false, resolve missing services to null.
+     *
+     * @return {T|null}
      */
     this.get = injector.get;
 
     /**
-     * Executes a function into which diagram services are injected
+     * Executes a function with its dependencies injected.
      *
-     * @method Diagram#invoke
+     * @template T
      *
-     * @param {Function|Object[]} fn the function to resolve
-     * @param {Object} locals a number of locals to use to resolve certain dependencies
+     * @param {Function} func function to be invoked
+     * @param {InjectionContext} [context] context of the invocation
+     * @param {LocalsMap} [locals] locals provided
+     *
+     * @return {T|null}
      */
     this.invoke = injector.invoke;
 
@@ -6277,9 +7687,11 @@
      *
      * @example
      *
+     * ```javascript
      * eventBus.on('diagram.init', function() {
      *   eventBus.fire('my-custom-event', { foo: 'BAR' });
      * });
+     * ```
      *
      * @type {Object}
      */
@@ -6289,8 +7701,6 @@
 
   /**
    * Destroys the diagram
-   *
-   * @method  Diagram#destroy
    */
   Diagram.prototype.destroy = function() {
     this.get('eventBus').fire('diagram.destroy');
@@ -6303,7 +7713,7 @@
     this.get('eventBus').fire('diagram.clear');
   };
 
-  inherits_browser(Viewer, Diagram);
+  inherits(Viewer, Diagram);
 
   function Viewer(options) {
     this._container = this._createContainer(options);
@@ -6312,7 +7722,7 @@
   }
 
   Viewer.prototype._coreModules = [
-    CoreModule
+    CoreModule$1
   ];
 
   Viewer.prototype._viewModules = [
@@ -6333,9 +7743,9 @@
     var container;
 
     if('containerID' in options) {
-      container = domify('<div id="' + options.containerID + '"class="umljs-container"></div>');
+      container = domify$1('<div id="' + options.containerID + '"class="umljs-container"></div>');
     } else {
-      container = domify('<div class="umljs-container"></div>');
+      container = domify$1('<div class="umljs-container"></div>');
     }
 
     assign(container.style, {
@@ -6404,4 +7814,4 @@
 
   return Viewer;
 
-})));
+}));

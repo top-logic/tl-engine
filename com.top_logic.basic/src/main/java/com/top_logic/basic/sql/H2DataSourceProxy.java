@@ -75,7 +75,7 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 
 			replaceDatabaseWithMigration(databasePath);
 		} catch (Exception exception) {
-			Logger.error("Database migration failed.", exception, this);
+			Logger.error("Database migration failed.", exception, H2DataSourceProxy.class);
 		}
 	}
 

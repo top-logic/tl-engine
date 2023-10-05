@@ -6,7 +6,6 @@
 package com.top_logic.knowledge.wrap.person;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -27,9 +26,6 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
-import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
-import com.top_logic.knowledge.wrap.exceptions.InvalidWrapperException;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.core.Author;
@@ -65,9 +61,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 **/
 	public static final String AUTHENTICATION_DEVICE_ID = "authDeviceID";
 
-	/** attribute to indicate to which data device the person or a user belongs to **/
-	public static final String DATA_ACCESS_DEVICE_ID = "dataDeviceID";
-
 	/** The attribute "locale". */
 	public static final String LOCALE = "locale";
 
@@ -92,11 +85,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 
     /** Attribute indicating whether the person has been notified about his unused account. */
     public static final String ATTR_UNUSED_NOTIFIED = "unusedNotified";
-
-	/**
-	 * Name of the {@link #getLastPasswordChange()} attribute.
-	 */
-	public static final String LAST_PWD_CHANGE = "lastPwdChange";
 
     protected static final String GLOBAL_ROLE_KA = "hasGlobalRole";
     
@@ -131,8 +119,6 @@ public class Person extends AbstractBoundWrapper implements Author {
      */
     private Group representativeGroup = null;
     
-	private PersonManager personManager;
-    
 	/**
 	 * A filter which accepts exactly the persons, which are declared as restricted user.
 	 * 
@@ -158,8 +144,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 			return aPerson != null && !aPerson.isRestrictedUser().booleanValue();
 		}
 	};
-
-	private Person _current;
 
     /**
      * Ctor to be used ONLY by WrapperFactory.
@@ -205,11 +189,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 *        The new {@link TimeZone}
 	 */
 	public void setTimeZone(TimeZone timeZone) {
-		if (this != _current) {
-			_current.setTimeZone(timeZone);
-			return;
-		}
-
 		if (timeZone == null) {
 			tSetData("timezone", null);
 			return;
@@ -233,11 +212,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 *        The new {@link Locale}.
 	 */
 	public void setLocale(Locale locale) {
-		if (this != _current) {
-			_current.setLocale(locale);
-    		return;
-    	}
-    	
 		if (locale == null) {
 			tSetData(Person.LOCALE, null);
 		} else {
@@ -255,17 +229,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     @Deprecated
 	public PersonalConfiguration getPersonalConfiguration(){
         return PersonalConfiguration.getPersonalConfiguration();
-    }
-    
-    /**
-     * the ID of the PersonDataAccessDevice, this person retrieves its data from
-     */
-	public String getDataAccessDeviceID() {
-        String theDeviceID = (String)getValue(Person.DATA_ACCESS_DEVICE_ID);
-        if(StringServices.isEmpty(theDeviceID) || PLACE_HOLDER_DEFAULT_DATA_ACCESS_ID.equals(theDeviceID)){ //happens only during the initial startup call
-            theDeviceID = TLSecurityDeviceManager.getInstance().getDefaultDataAccessDevice().getDeviceID();
-        }
-        return theDeviceID;
     }
 
     /**
@@ -367,10 +330,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 *         persons user has been deleted
 	 */
 	public UserInterface getUser() {
-		if (!tValid() || _current != this) {
-			return null;
-		}
-
 		return _user;
     }
 
@@ -406,11 +365,6 @@ public class Person extends AbstractBoundWrapper implements Author {
      * @throws DataObjectException if removal of the KA fails
      */
 	public void removeGlobalRole(BoundedRole aGlobalRole) throws DataObjectException {
-		if (this != _current) {
-			_current.removeGlobalRole(aGlobalRole);
-    		return;
-    	}
-    	
         if (aGlobalRole == null) {
             return;
         }
@@ -437,6 +391,9 @@ public class Person extends AbstractBoundWrapper implements Author {
      */
 	public String getFullName() {
 		UserInterface user = getUser();
+		if (user == null) {
+			return getName();
+		}
 
 		String title = user.getTitle();
 		String first = user.getFirstName();
@@ -497,64 +454,15 @@ public class Person extends AbstractBoundWrapper implements Author {
 		return getUser().getTitle();
     }
 
-    /**
-     * Deletes this persons user
-     * 
-     */
-	void deleteUser() {
-		TLSecurityDeviceManager.getInstance().getDataAccessDevice(getDataAccessDeviceID())
-			.deleteUserData(this.getName());
-		_user = null;
-    }
-
-    /**
-     * Forces the person to re-read its user from security. All caches are
-     * updated depending on the result
-     */
-     void resetUser() {
-			getPersonManager().disconnect(_current);
-        // reload the user to make sure it is cached again
-        // in the valid persons cache
-		getUser();
-    }
-     
-     @Override
-	public void refetchWrapper() {
-    	super.refetchWrapper();
-    	resetUser();
-    }
-
 	void setUser(UserInterface user) {
 		_user = user;
 	}
-
-    /**
-     * Can be used to change the security device of a person during its
-     * lifecycle, e.g. if this userID was first present in one active directory
-     * and is later moved into another
-     */
-	public void setDataAccessDeviceID(String securityDeviceName) {
-		if (this != _current) {
-			_current.setDataAccessDeviceID(securityDeviceName);
-    		return;
-    	} 
-		if(StringServices.isEmpty(securityDeviceName)){
-			Logger.warn("Attempting to set an empty dataAccessDeviceID. Will be ignored.",this);
-			return;
-		}
-		this.tSetData(Person.DATA_ACCESS_DEVICE_ID, securityDeviceName);
-    }
     
     /**
      * Can be used to change the AuthenticationDevice of a person during its
      * lifecycle
      */
 	public void setAuthenticationDeviceID(String securityDeviceName) {
-		if (this != _current) {
-			_current.setAuthenticationDeviceID(securityDeviceName);
-    		return;
-    	}
-    	
 		this.tSetData(Person.AUTHENTICATION_DEVICE_ID, securityDeviceName);
     }
 
@@ -570,45 +478,7 @@ public class Person extends AbstractBoundWrapper implements Author {
      *         would be still in backup mode, though.
      */
     public boolean isAlive() {
-		{
-            // all the getUser() call is for, is to force an update
-            // if this person should not be alive already. So it could have
-            // changed its state after calling this method
-			return tValid() && getUser() != null
-				&& getPersonManager().isKnown(_current);
-        }
-    }
-
-    /**
-     * Overridden do remove the Person from the allUser table.
-     * 
-     * @see com.top_logic.knowledge.wrap.AbstractWrapper#checkInvalid()
-     */
-    @Override
-	protected void checkInvalid() throws InvalidWrapperException {
-        try {
-            super.checkInvalid();
-        } catch (InvalidWrapperException e) {
-            // if this person is found to be invalid,
-            // remove it from the alive person cache
-			if (this == _current) {
-				getPersonManager().disconnect(_current);
-        	}
-            throw e;
-        }
-    }
-    
-    /**
-     * If this persons user data were changed through the application,
-     * this method triggers the person to write back the changed data into
-     * its data device
-     */
-	public void updateUserData() {
-		if (this != _current) {
-			_current.updateUserData();
-    		return;
-    	}
-        this.resetUser();
+		return tValid();
     }
     
     /**
@@ -650,10 +520,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 * @return <code>true</code> iff the value of this property changed.
 	 */
 	public boolean setRestrictedUser(Boolean isRestrictedUser) {
-		if (this != _current) {
-			return _current.setRestrictedUser(isRestrictedUser);
-    	}
-    	
 		Boolean currVal = getBoolean(Person.RESTRICTED_USER);
 
 		if (!isRestrictedUser.equals(currVal)) {
@@ -661,42 +527,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 			return true;
 		}
 		return false;
-	}
-
-	void init(PersonManager personManager, Person current) {
-		this.personManager = personManager;
-		this._current = current;
-	}
-
-	/**
-	 * The representative in the current revision.
-	 * 
-	 * @return The current version of this object, <code>null</code>, if this
-	 *         {@link Person} is deleted.
-	 */
-	public Person getCurrent() {
-		return _current;
-	}
-
-	private PersonManager getPersonManager() {
-		if (personManager == null) {
-			/* This may happen when this person object is not created or accessed using the
-			 * PersonManager but using the general WrapperFactory mechanism. */
-			Logger.info(
-				"Person '" + this + "' not already initialized, use default " + PersonManager.class.getSimpleName(),
-				Person.class);
-			Wrapper currentVersion = WrapperHistoryUtils.getCurrent(this);
-			init(PersonManager.getManager(), (Person) currentVersion);
-		}
-		return personManager;
-	}
-
-	@Override
-	protected void handleDelete() {
-		super.handleDelete();
-		if (personManager != null) {
-			personManager.disconnect(this);
-		}
 	}
 
 	/**
@@ -716,24 +546,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 */
 	public boolean isInGroup(Group group) {
 		return group.containsPerson(this);
-	}
-
-	/**
-	 * The date when the password for this account has changed last time.
-	 */
-	public Date getLastPasswordChange() {
-		Date lastChange = (Date) getValue(Person.LAST_PWD_CHANGE);
-		if (lastChange == null) {
-			return getCreated();
-	    }
-		return lastChange;
-	}
-
-	/**
-	 * @see #getLastPasswordChange()
-	 */
-	public void setLastPasswordChange(Date changeDate) {
-		setValue(Person.LAST_PWD_CHANGE, changeDate);
 	}
 
 	/**

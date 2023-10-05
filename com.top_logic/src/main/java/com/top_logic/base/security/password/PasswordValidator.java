@@ -5,12 +5,8 @@
  */ 
 package com.top_logic.base.security.password;
 
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
-import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -19,7 +15,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.Resources;
@@ -33,7 +28,8 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:tri@top-logic.com">tri@top-logic.com</a>
  */
-public class PasswordValidator extends AbstractConfiguredInstance<PasswordValidator.Config> {
+public class PasswordValidator extends AbstractConfiguredInstance<PasswordValidator.Config>
+		implements PasswordValidation {
 
 	/**
 	 * Configuration options for {@link PasswordValidator}
@@ -51,11 +47,11 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
 		boolean isEnabled();
 
 		/**
-		 * Password expiry period in days.
+		 * Number of days a password stays valid.
 		 * 
 		 * <p>
-		 * A password will expire after the given number of days. A value of zero means no expiry at
-		 * all.
+		 * A password will expire after the given number of days. After that period, a user has to
+		 * change his password. A value of zero means that a password never expires.
 		 * </p>
 		 */
 		@Name("expiry-period")
@@ -103,7 +99,7 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
 	}
 
 	/**
-	 * Potential results of {@link PasswordValidator#validatePwd(LoginCredentials) password
+	 * Potential results of {@link PasswordValidator#validatePassword(Person, char[]) password
 	 * validation}.
 	 */
 	public enum ValidationResult {
@@ -154,7 +150,7 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
     
 	private final boolean enabled;
 
-	private final int expiryPeriod;
+	private final int _expiryPeriod;
 
 	private final int repeatCycle;
 
@@ -177,7 +173,7 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
 		super(context, config);
 
 		this.enabled = config.isEnabled();
-		this.expiryPeriod = config.getExpiryPeriod();
+		this._expiryPeriod = config.getExpiryPeriod();
 		this.repeatCycle = config.getRepeatCycle();
 		this.minPwdLength = config.getMinPasswordLength();
 		this.numberContentCrit = Math.min(MAX_CONTENT_CRITERIA, config.getContentCriteriaCnt());
@@ -191,11 +187,13 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
         return this.repeatCycle;
     }
 
-	/**
-	 * @see Config#getExpiryPeriod()
-	 */
-    public int getExpiryPeriod(){
-        return this.expiryPeriod;
+	@Override
+	public int getExpiryPeriod() {
+		if (!enabled) {
+			return 0;
+		}
+
+		return _expiryPeriod;
     }
 
 	/**
@@ -212,14 +210,12 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
         return this.numberContentCrit;
 	}
 
-	/**
-	 * Checks whether the given account should be excluded from password policy requirements.
-	 *
-	 * @param account
-	 *        the account to check.
-	 * @return true if userID is in exclude list
-	 */
+	@Override
 	public boolean isExcluded(Person account) {
+		if (!enabled) {
+			return true;
+		}
+
 		String uid = account.getName();
 
 		for (int idx = 0; idx < this.excludeUIDs.size(); idx++) {
@@ -231,59 +227,25 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
 		return false;
 	}
 
-	/**
-	 * if password validation is enabled, false otherwise
-	 */
-    public boolean isEnabled() {
-		return enabled;
-	}
-
-	/**
-	 * Validates a password for a person.
-	 * 
-	 * @param login
-	 *        {@link LoginCredentials} to validate.
-	 * @return returns an int indicating the state of the pwd (refer constants of this class)
-	 */
-	public ValidationResult validatePwd(LoginCredentials login) throws IllegalArgumentException {
+	@Override
+	public ValidationResult validatePassword(Person account, char[] password) throws IllegalArgumentException {
         if(!enabled){
 			return ValidationResult.OK;
         }
-		Person account = login.getPerson();
 		if (this.isExcluded(account)) {
 			return ValidationResult.OK;
 		}
 
-		List<String> previousPwdHashes = PasswordManager.getInstance().getPWDHistory(account);
-		char[] password = login.getPassword();
 		boolean criteria_0 = password.length >= this.minPwdLength;
-		boolean criteria_1 = !alreadyUsed(previousPwdHashes, password);
 		boolean criteria_2 = checkContentCriterias(password) >= numberContentCrit;
 
-        if(criteria_0 && criteria_1 && criteria_2){
+		if (criteria_0 && criteria_2) {
 			return ValidationResult.OK;
         }else if(!criteria_0){
 			return ValidationResult.TO_SHORT;
-        }else if(!criteria_1){
-			return ValidationResult.USED_BEFORE;
         }else{
 			return ValidationResult.CONTENT_INVALID;
         }
-    }
-    
-	private boolean alreadyUsed(List<String> previousPwdHashes, char[] thePwd) {
-		if (repeatCycle <= 0) {
-			return false;
-		}
-		PasswordHashingService phs = PasswordHashingService.getInstance();
-		int hashCnt = previousPwdHashes.size();
-		List<String> relevantHashes = previousPwdHashes.subList(Math.max(0, hashCnt - repeatCycle), hashCnt);
-		for (String aPwdHash : relevantHashes) {
-			if (phs.verify(thePwd, aPwdHash).success()) {
-                return true;
-            }
-        }
-        return false;
     }
     
     /**
@@ -314,37 +276,6 @@ public class PasswordValidator extends AbstractConfiguredInstance<PasswordValida
         return containsDigit+containsLowerCaseLetter+containsUpperCaseLetter+containsSomethingElse;
     }
     
-	/**
-	 * Whether the password for the given account can expire.
-	 */
-	public boolean canExpire(Person account) {
-		return enabled && !isExcluded(account);
-	}
-
-	/**
-	 * Whether the password for the given account has expired and must be updated during next login.
-	 */
-	public boolean isPasswordExpired(Person account) {
-		if (!canExpire(account)) {
-			return false;
-		}
-
-		Date changeDate = account.getLastPasswordChange();
-		if (changeDate.getTime() == 0L) {
-			// Password was explicitly reset.
-			return true;
-		}
-
-		if (expiryPeriod <= 0) {
-			// No expire by default.
-			return false;
-		}
-
-		Calendar nextPasswordChange = CalendarUtil.createCalendar(changeDate);
-		nextPasswordChange.add(Calendar.DAY_OF_YEAR, expiryPeriod);
-		return System.currentTimeMillis() > nextPasswordChange.getTimeInMillis();
-	}
-
     /**
      * a human readable translation for the given pwd state
      */

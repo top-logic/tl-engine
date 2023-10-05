@@ -43,10 +43,10 @@ public class DemoContactGenerator implements DemoPersonNames {
     }
 
     /**
-     * Help setting Up a bunch of Demo {@link PersonContact}s.
-     * 
-     * Commiting the KBase is a Task for the Caller.
-     */
+	 * Help setting Up a bunch of Demo {@link PersonContact}s.
+	 * 
+	 * Committing the KBase is a Task for the Caller.
+	 */
 	public List/* <PersonContact> */ createDemoContacts(int numContacts, Random aRand) {
 
         if (personContacts != null){
@@ -57,11 +57,10 @@ public class DemoContactGenerator implements DemoPersonNames {
         
         personContacts = new ArrayList(numContacts);
         PersonManager pmgr = null;
-        String accessID = null, authID = null;
+		String authID = null;
         if (createPersons) {
             persons   = new ArrayList(numContacts);
             pmgr      = PersonManager.getManager();
-            accessID  = TLSecurityDeviceManager.getInstance().getDefaultDataAccessDevice().getDeviceID();
             authID    = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
         }
 
@@ -70,7 +69,7 @@ public class DemoContactGenerator implements DemoPersonNames {
             String lastName  = LASTNAMES [aRand.nextInt(LASTNAMES.length)];
             Person p = null;
             if (createPersons ) {
-                p = createPerson(aRand, pmgr, accessID, authID, firstName, lastName, i);
+				p = createPerson(aRand, pmgr, authID, firstName, lastName, i);
                 persons.add(p);
                 personContacts.add(cf.getContactForPerson(p));
             } else {
@@ -84,10 +83,10 @@ public class DemoContactGenerator implements DemoPersonNames {
     /** 
      * Create a new Person via the given PersonManager.
      */
-    private Person createPerson(Random aRand, PersonManager pmgr, String accessID, String authID,
-            String firstName, String lastName, int i) {
+	private Person createPerson(Random aRand, PersonManager pmgr, String authID, String firstName,
+			String lastName, int i) {
          String name = "" + lastName.charAt(0) + firstName.charAt(0) + Integer.toString(i);
-			Person p = pmgr.createPerson(name, accessID, authID, Boolean.FALSE);
+			Person p = pmgr.createPerson(name, authID, Boolean.FALSE);
          UserInterface user =  Person.userOrNull(p);
 			user.setName(lastName);
 			user.setFirstName(firstName);

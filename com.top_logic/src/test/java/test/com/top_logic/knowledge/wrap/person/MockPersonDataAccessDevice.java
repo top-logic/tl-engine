@@ -13,12 +13,14 @@ import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.device.DeviceMapping;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
+import com.top_logic.base.security.password.PasswordValidator;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.dob.DataObject;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
@@ -190,14 +192,31 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 
 	@Override
 	public boolean authentify(LoginCredentials login) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return false;
+		throw new UnsupportedOperationException("Method is not implemented");
 	}
 
 	@Override
 	public boolean allowPwdChange() {
-		return _config.isAllowPwdChange();
+		return false;
 	}
 
+	@Override
+	public void setPassword(Person account, char[] password) {
+		throw new UnsupportedOperationException("Method is not implemented");
+	}
+
+	@Override
+	public void expirePassword(Person account) {
+		throw new UnsupportedOperationException("Method is not implemented");
+	}
+
+	@Override
+	public PasswordValidator getPasswordValidator() {
+		throw new UnsupportedOperationException("Method is not implemented");
+	}
+
+	@Override
+	public boolean isPasswordChangeRequested(Person account, char[] password) {
+		return false;
+	}
 }

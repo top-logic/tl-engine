@@ -71,8 +71,7 @@ public class GenericPersonContactCreateHandler extends MetaElementBasedUpdateHan
                 if (isUser) {
 					userFactory.createPerson(userID, theContact.getString(PersonContact.FIRST_NAME),
 						theContact.getString(PersonContact.NAME_ATTRIBUTE),
-						theContact.getString(PersonContact.TITLE), "dbSecurity", "dbSecurity",
-						(Boolean) aDO.getAttributeValue(Person.RESTRICTED_USER));
+						theContact.getString(PersonContact.TITLE), "dbSecurity", (Boolean) aDO.getAttributeValue(Person.RESTRICTED_USER));
                 }
             }
         }

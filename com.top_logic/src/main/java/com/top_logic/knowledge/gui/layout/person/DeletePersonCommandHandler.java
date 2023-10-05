@@ -7,7 +7,6 @@ package com.top_logic.knowledge.gui.layout.person;
 
 import java.util.Map;
 
-import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.event.ModelTrackingService;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -29,9 +28,6 @@ public class DeletePersonCommandHandler extends AbstractDeleteCommandHandler {
 	public static final ExecutableState EXPLAIN_NO_SELF_DELETE =
 		ExecutableState.createDisabledState(I18NConstants.ERROR_CANNOT_DELETE_SELF);
 
-	public static final ExecutableState EXPLAIN_READONLY_DEVICE =
-		ExecutableState.createDisabledState(I18NConstants.READONLY_DEVICE);
-
 	public static final ExecutabilityRule DISALLOW_SELF_DELETE = new ExecutabilityRule() {
 		@Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
@@ -48,10 +44,6 @@ public class DeletePersonCommandHandler extends AbstractDeleteCommandHandler {
 			Person person = (Person) model;
 			if (person == null) {
 				return ExecutableState.NOT_EXEC_HIDDEN;
-			}
-			PersonDataAccessDevice dataDevice = ChangePasswordComponent.getPersonDataAccessDevice(person);
-			if (dataDevice == null || dataDevice.isReadOnly()) {
-				return EXPLAIN_READONLY_DEVICE;
 			}
 			return ExecutableState.EXECUTABLE;
 		}

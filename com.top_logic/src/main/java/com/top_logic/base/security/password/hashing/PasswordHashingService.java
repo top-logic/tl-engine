@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.top_logic.base.accesscontrol.Login;
-import com.top_logic.base.security.password.PasswordManager;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
@@ -134,11 +133,6 @@ public class PasswordHashingService extends AbstractConfiguredInstance<PasswordH
 	 *         be validated against the given hash value.
 	 */
 	public VerificationResult verify(char[] password, String hash) {
-		if (PasswordManager.INITIAL_PWD_HASH_PLACEHOLDER.equals(hash)) {
-			/* do not try to parse the initial placeholder value. instead always return false as
-			 * long as no explicit password has been set */
-			return VerificationResult.FAILED;
-		}
 		int indexOf = hash.indexOf(HASHING_ALGORITHM_SEPARATOR);
 		boolean hashedByDefaultAlgorithm;
 		PasswordHashingAlgorithm algorithm;

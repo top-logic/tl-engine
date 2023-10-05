@@ -51,7 +51,6 @@ public class TestBoundSecurity extends BasicTestCase {
      * Main tescase for now
      */
     public void testBoundSecurity() throws Exception {
-		String personDataDeviceID = TLSecurityDeviceManager.getInstance().getDefaultDataAccessDevice().getDeviceID();
 		String authenticationDeviceID = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
 
         Person personA = null;
@@ -63,13 +62,13 @@ public class TestBoundSecurity extends BasicTestCase {
             // create three different persons
             personA = pMgr.getPersonByName("AA"); 
             if (personA == null) 
-				personA = pMgr.createPerson("AA", personDataDeviceID, authenticationDeviceID, Boolean.FALSE);
+				personA = pMgr.createPerson("AA", authenticationDeviceID, Boolean.FALSE);
             personB = pMgr.getPersonByName("BB");
             if (personB == null) 
-				personB = pMgr.createPerson("BB", personDataDeviceID, authenticationDeviceID, Boolean.FALSE);
+				personB = pMgr.createPerson("BB", authenticationDeviceID, Boolean.FALSE);
             personC = pMgr.getPersonByName("CC");
             if (personC == null)  
-				personC = pMgr.createPerson("CC", personDataDeviceID, authenticationDeviceID, Boolean.FALSE);
+				personC = pMgr.createPerson("CC", authenticationDeviceID, Boolean.FALSE);
             assertTrue(personA.getKnowledgeBase().commit());
 			TLContext context = TLContext.getContext();
             context.setCurrentPerson(personA);

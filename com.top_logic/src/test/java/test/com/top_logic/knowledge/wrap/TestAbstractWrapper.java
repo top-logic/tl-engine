@@ -318,8 +318,9 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 			// Test that creator and modifier do not change after deleting the accounts.
 			assertEquals(p1Id, WrapperHistoryUtils.getUnversionedIdentity(w1[0].getCreator()));
 			assertEquals(p2Id, WrapperHistoryUtils.getUnversionedIdentity(w1[0].getModifier()));
-			assertFalse(w1[0].getCreator().isAlive());
-			assertFalse(w1[0].getModifier().isAlive());
+			// Test that no non-alive people are reported.
+			assertTrue(w1[0].getCreator().tValid());
+			assertTrue(w1[0].getModifier().tValid());
 		} else {
 			assertEquals(null, w1[0].getCreator());
 			assertEquals(null, w1[0].getModifier());
@@ -328,9 +329,8 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 
 	private Person createPerson(PersonManager pm, String personName) {
 		TLSecurityDeviceManager sdm = TLSecurityDeviceManager.getInstance();
-		String dataAccessDeviceID = sdm.getDefaultDataAccessDevice().getDeviceID();
 		String authenticationDeviceID = sdm.getDefaultAuthenticationDevice().getDeviceID();
-		return pm.createPerson(personName, dataAccessDeviceID, authenticationDeviceID, Boolean.FALSE);
+		return pm.createPerson(personName, authenticationDeviceID, Boolean.FALSE);
 	}
 
     /**

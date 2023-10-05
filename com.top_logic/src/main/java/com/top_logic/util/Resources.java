@@ -169,18 +169,21 @@ public class Resources extends DefaultBundle {
      * @return  The optimum locale as found in the DataObject.
      */
     public static Locale findBestLocale(DataObject anObject) {
-        Locale theLocale = null;
+		Locale locale = null;
         if (anObject != null) {
             try {
-                String theValue = (String) anObject.getAttributeValue(LOCALE);
-                theLocale = ResourcesModule.localeFromString(theValue);
+				String localeSetting = (String) anObject.getAttributeValue(LOCALE);
+				if (localeSetting == null || localeSetting.isEmpty()) {
+					return getDefaultLocale();
+				}
+				locale = ResourcesModule.localeFromString(localeSetting);
             }
             catch (Exception ex) {
                 Logger.error ("Unable to find best locale ", ex, Resources.class);
             }
         }
-        if (theLocale == null) {
-            theLocale = getDefaultLocale();
+		if (locale == null) {
+			locale = getDefaultLocale();
             if (anObject == null) {
                 Logger.info ("Using default locale, because no object given!", Resources.class);
             }
@@ -188,7 +191,7 @@ public class Resources extends DefaultBundle {
                 Logger.info ("No locale found, using default for " + anObject, Resources.class);
             }
         }
-        return theLocale;
+		return locale;
     }
 
     /**

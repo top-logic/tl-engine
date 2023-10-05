@@ -592,7 +592,6 @@
 						<declaration resource="webinf://kbase/TestJournalMeta.xml"/>
 					</declarations>
 					<data config:override="true">
-						<definition resource="webinf://kbase/KBDataRoot.xml"/>
 						<definition resource="webinf://kbase/KBDataTestAccounts.xml"/>
 						<definition resource="webinf://kbase/KBDataUnit.xml"/>
 						<definition resource="webinf://kbase/KBDataTestCurrency.xml"/>

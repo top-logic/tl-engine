@@ -15,7 +15,6 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
 import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
@@ -51,17 +50,16 @@ public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
         String theSur          = (String) formContainer.getField(UserInterface.FIRST_NAME)  .getValue();
         String theTitle        = (String) formContainer.getField(UserInterface.TITLE)     .getValue();
 		Boolean isRestricted = (Boolean) formContainer.getField(Person.RESTRICTED_USER).getValue();
-        String theDataDeviceID = (String) ((SelectField) formContainer.getField(Person.DATA_ACCESS_DEVICE_ID)).getSingleSelection();
 
-		Person thePerson = this.createPerson(theID, theFirst, theSur, theTitle, theDataDeviceID, null, isRestricted);
+		Person thePerson = this.createPerson(theID, theFirst, theSur, theTitle, null, isRestricted);
         this.sendEvent(thePerson);
         
         return thePerson;
 	}
 
-	public Person createPerson(String anID, String aFirst, String aSurname, String aTitle, String aDataDeviceID,
-			String aAuthDeviceID, Boolean isRestricted) {
-		Person thePerson = PersonManager.getManager().createPerson(anID, aDataDeviceID, aAuthDeviceID, isRestricted);
+	public Person createPerson(String anID, String aFirst, String aSurname, String aTitle, String aAuthDeviceID,
+			Boolean isRestricted) {
+		Person thePerson = PersonManager.getManager().createPerson(anID, aAuthDeviceID, isRestricted);
 		if (thePerson == null) {
 			throw new TopLogicException(I18NConstants.REFRESH_ACCOUNTS_FAILED);
         }

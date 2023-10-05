@@ -40,8 +40,6 @@ public class PersonAccessor implements Accessor<Person> {
 				return person.getUser().getEMail();
 			case Person.LOCALE:
 				return person.getLocale();
-			case Person.DATA_ACCESS_DEVICE_ID:
-				return person.getDataAccessDeviceID();
 			case Person.RESTRICTED_USER:
 				return person.isRestrictedUser();
 		}

@@ -95,12 +95,6 @@ public class DBAuthenticationAccessDevice extends AbstractSecurityDevice impleme
 	}
 
 	@Override
-	public boolean updateUserData(DataObject anObject) {
-		// TODO: Remove.
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public boolean authentify(LoginCredentials login) {
 		VerificationResult verification = checkPassword(login.getPerson(), login.getPassword());
 		return verification.success();

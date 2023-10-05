@@ -20,7 +20,6 @@ import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.NamedValues;
 import com.top_logic.dob.ex.NoSuchAttributeException;
-import com.top_logic.dob.persist.DataManager;
 import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AttributeLoader;
@@ -42,7 +41,7 @@ import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
  * 
  * This wrapper will check on every used attribute, if it is defined in the knowledge object or not.
  * If it is stored there, that object will be used for storing the attribute, if not, a generic data
- * object information storage through {@link DataManager}s.
+ * object information storage through {@link FlexDataManager}s.
  * 
  * <p>
  * Problems: Keys that differ in case only can not be stored with MySQL (as of now), since indexes

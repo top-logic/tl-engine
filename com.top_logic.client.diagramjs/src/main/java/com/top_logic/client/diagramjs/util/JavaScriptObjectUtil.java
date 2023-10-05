@@ -98,4 +98,11 @@ public class JavaScriptObjectUtil {
 	private static native void push(JavaScriptObject object, Collection<?> items) /*-{
 		object.push(getArray(items));
 	}-*/;
+
+	/**
+	 * Returns true, if the given object owns a property with the given name.
+	 */
+	public static native boolean has(JavaScriptObject object, String property) /*-{
+		return Object.prototype.hasOwnProperty.call(object, property);
+	}-*/;
 }

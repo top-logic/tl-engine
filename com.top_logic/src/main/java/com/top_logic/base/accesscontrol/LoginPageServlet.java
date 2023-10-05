@@ -26,9 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
-import com.top_logic.base.security.password.PasswordManager;
-import com.top_logic.base.security.password.PasswordValidator;
-import com.top_logic.base.security.password.PasswordValidator.ValidationResult;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -40,6 +38,7 @@ import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.knowledge.gui.layout.HttpSecureHeaderFilter;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.URLPathBuilder;
@@ -48,6 +47,7 @@ import com.top_logic.util.DeferredBootUtil;
 import com.top_logic.util.DispatchException;
 import com.top_logic.util.NoContextServlet;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * This class provides the functionality to get the LoginPage and send it
@@ -466,18 +466,20 @@ public class LoginPageServlet extends NoContextServlet {
 		String userName = aRequest.getParameter(Login.USER_NAME);
 		try{
 			Person account = PersonManager.getManager().getPersonByName(userName);
-			PasswordValidator validator = PasswordManager.getInstance().getPwdValidator();
-			String authDevice = account.getAuthenticationDeviceID();
-			if (StringServices.isEmpty(authDevice)
-				|| !TLSecurityDeviceManager.getInstance().getAuthenticationDevice(authDevice).allowPwdChange()) {
-				// Account either has no authentication device or a write protected one (i.e.
-				// external). This means the password cannot be changed in the application. Therefor
-				// this application cannot request a password update.
+			String deviceId = account.getAuthenticationDeviceID();
+			if (StringServices.isEmpty(deviceId)) {
+				// No password change possible, cannot request for a password update.
 				return true;
 			}
-			try (LoginCredentials login = LoginCredentials.fromUserAndPassword(account, aRequest.getParameter(Login.PASSWORD).toCharArray())) {
-				return validator.validatePwd(login) == ValidationResult.OK && !validator.isPasswordExpired(account);
+
+			AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getAuthenticationDevice(deviceId);
+			if (!device.allowPwdChange()) {
+				// No password change possible, cannot request for a password update.
+				return true;
 			}
+
+			char[] password = aRequest.getParameter(Login.PASSWORD).toCharArray();
+			return !device.isPasswordChangeRequested(account, password);
 	    }catch(Exception e){
 			Logger.error("Problem checking pwd validy for Person " + userName, e, this);
 	    	return true; //do not spoil the login, though
@@ -511,22 +513,15 @@ public class LoginPageServlet extends NoContextServlet {
 	    }else{
 			Person account = PersonManager.getManager().getPersonByName(username);
 			char[] newPassword = pwd1.toCharArray();
-			try (LoginCredentials login = LoginCredentials.fromUserAndPassword(account, newPassword)) {
-				PasswordManager pwdMgr = PasswordManager.getInstance();
-				PasswordValidator pwdValidator = pwdMgr.getPwdValidator();
-				ValidationResult validationResult = pwdValidator.validatePwd(login);
-				{
-					if (ValidationResult.OK == validationResult) {
-						pwdMgr.setPassword(login);
-						if (!account.tHandle().getKnowledgeBase().commit()) {
-							Logger.error("Failed to commit Person " + username, this);
-							return I18NConstants.COMMIT_FAILED;
-						}
-						return null;
-					} else {
-						return pwdValidator.getStateMessageKey(validationResult);
-					}
-				}
+			AuthenticationDevice device =
+				TLSecurityDeviceManager.getInstance().getAuthenticationDevice(account.getAuthenticationDeviceID());
+
+			try (Transaction tx = account.tHandle().getKnowledgeBase().beginTransaction()) {
+				device.setPassword(account, newPassword);
+				tx.commit();
+				return null;
+			} catch (TopLogicException ex) {
+				return ex.getErrorKey();
 			}
 	    }
 	}

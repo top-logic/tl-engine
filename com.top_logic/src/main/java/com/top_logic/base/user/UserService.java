@@ -54,7 +54,7 @@ public class UserService {
 			UserInterface.USER_NAME, UserInterface.NAME,
 			UserInterface.FIRST_NAME, UserInterface.TITLE, UserInterface.PHONE,
 			UserInterface.EMAIL, LDAPAttributes.OBJECT_CLASS,
-			Person.DATA_ACCESS_DEVICE_ID, Person.RESTRICTED_USER
+			Person.RESTRICTED_USER
 		};
         int      len        = attribs.length;
         HashMap<Object, Object>  new_person = new HashMap<>(len);

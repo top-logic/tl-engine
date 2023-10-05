@@ -328,9 +328,8 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 
 	private Person createPerson(PersonManager pm, String personName) {
 		TLSecurityDeviceManager sdm = TLSecurityDeviceManager.getInstance();
-		String dataAccessDeviceID = sdm.getDefaultDataAccessDevice().getDeviceID();
 		String authenticationDeviceID = sdm.getDefaultAuthenticationDevice().getDeviceID();
-		return pm.createPerson(personName, dataAccessDeviceID, authenticationDeviceID, Boolean.FALSE);
+		return pm.createPerson(personName, authenticationDeviceID, Boolean.FALSE);
 	}
 
     /**

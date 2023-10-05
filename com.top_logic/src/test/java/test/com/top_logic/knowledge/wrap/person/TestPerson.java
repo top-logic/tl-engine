@@ -339,10 +339,9 @@ public class TestPerson extends BasicTestCase {
 		Person root = personManager.getRoot();
 		Transaction transactionCreatePerson = root.getKnowledgeBase().beginTransaction();
 		try {
-			String dataAccessDeviceID = root.getDataAccessDeviceID();
 			String authenticationDeviceID = root.getAuthenticationDeviceID();
 			Person testPerson =
-				personManager.createPerson(personName, dataAccessDeviceID, authenticationDeviceID, Boolean.FALSE);
+				personManager.createPerson(personName, authenticationDeviceID, Boolean.FALSE);
 			transactionCreatePerson.commit();
 			return testPerson;
 		} finally {

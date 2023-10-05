@@ -224,9 +224,9 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 			throw new LoginDeniedException("User '" + userName + "' is not alive.");
 		} else {
 			try {
-				String personDeviceId = user.getDataAccessDeviceID();
+				String personDeviceId = user.getAuthenticationDeviceID();
 				if (!personDeviceId.equals(deviceId)) {
-					throw new LoginDeniedException("Missmatch of access device IDs, expected '" + personDeviceId
+					throw new LoginDeniedException("Missmatch of authentication device IDs, expected '" + personDeviceId
 						+ "', got '" + deviceId + "'.");
 				}
 			} catch (Exception e) {

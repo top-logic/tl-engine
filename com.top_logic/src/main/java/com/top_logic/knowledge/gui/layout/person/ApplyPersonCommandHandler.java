@@ -10,8 +10,6 @@ import static com.top_logic.basic.shared.string.StringServicesShared.*;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
-import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.event.ModelTrackingService;
@@ -61,15 +59,8 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
 
         if (hasSuccess) {
             Person  thePerson               = (Person) aModel;
-            String  thePersonsDadID         = thePerson.getDataAccessDeviceID();
-            String  newDataAccessDevice     = (String) ((SelectField)aContext.getField(Person.DATA_ACCESS_DEVICE_ID)).getSingleSelection();
             String  newAuthenticationDevice = (String) ((SelectField)aContext.getField(Person.AUTHENTICATION_DEVICE_ID)).getSingleSelection();
-			PersonDataAccessDevice theDevice =
-				TLSecurityDeviceManager.getInstance().getDataAccessDevice(thePersonsDadID);
 
-			if (!thePersonsDadID.equals(newDataAccessDevice)) {
-				throw new UnsupportedOperationException("Cannot change device.");
-			}
             this.updataAuthenticationDeviceID(thePerson,newAuthenticationDevice,aContext);
             // Store changes to person 
             this.updateLocale(thePerson,
@@ -81,8 +72,7 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
 			}
             this.updateNonUserFields(thePerson, aContext);       
 
-            if(theDevice != null && !theDevice.isReadOnly()){
-
+			{
                 // Store insecure changes to model 
                 this.updateUserFields(thePerson, aContext);       
                 this.updateAdminFields(thePerson, aContext);
@@ -90,16 +80,6 @@ public class ApplyPersonCommandHandler extends AbstractApplyCommandHandler {
                 // Store admin-accessible changes to model
 				if (TLContext.isAdmin()) {
                     this.updateRoles(thePerson, aContext);
-                }
-    
-                try {
-					if (!TLSecurityDeviceManager.getInstance().getDataAccessDevice(thePerson.getDataAccessDeviceID())
-						.isReadOnly()) {
-                        thePerson.updateUserData();
-                    }
-                }
-                catch (Exception ex) {
-					throw new TopLogicException(ApplyPersonCommandHandler.class, "update.userdata", ex);
                 }
             }
 

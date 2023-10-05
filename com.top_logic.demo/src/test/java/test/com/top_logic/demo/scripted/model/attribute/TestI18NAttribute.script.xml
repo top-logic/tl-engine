@@ -4,6 +4,13 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo"
+			/>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 			change-kind="ABSOLUTE"
 			user-id="root"
@@ -50,6 +57,135 @@
 							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
 						/>
 					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Modellbasierte Suche > Expert"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Suchausdruck"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Modellbasierte Suche > Expert"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="all(`DemoTypes:A`).filter(a -> $a.get(`DemoTypes:A#name`) == 'TestI18NAttribute').elementAt(0)"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
+							command-label="Suchergebnisse aktualisieren"
+							command-name="refreshSearch"
+							component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
+							component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+							columns="Name,boolean,string,float,date,i18NHTMLNormal"
+							label="true"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
+									tab-path="Modellbasierte Suche"
+								/>
+								<path>
+									<named-member name="result"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="i18NHTMLNormal"
+							>
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
+										tab-path="Modellbasierte Suche"
+									/>
+									<path>
+										<named-member name="result"/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="TestI18NAttribute"
+								/>
+							</actual-value>
+							<expected-value config:interface=""/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Suchausdruck"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Modellbasierte Suche > Expert"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="all(`DemoTypes:A`).filter(a -> $a.get(`DemoTypes:A#name`) == 'TestI18NAttribute').elementAt(0).get(`DemoTypes:A#i18NHTMLNormal`) == null"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.model.search.ui.RefreshSearchHandler"
+							command-label="Suchergebnisse aktualisieren"
+							command-name="refreshSearch"
+							component-implementation-comment="com.top_logic.model.search.ui.SearchComponent"
+							component-name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchComponent"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Result"
+							>
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
+										tab-path="Modellbasierte Suche"
+									/>
+									<path>
+										<named-member name="result"/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="0"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen"
+							/>
+						</action>
+					</actions>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"

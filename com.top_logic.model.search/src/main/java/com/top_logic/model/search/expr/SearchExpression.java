@@ -25,6 +25,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.search.expr.interpreter.SearchExpressionPart;
@@ -279,6 +280,36 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 				I18NConstants.ERROR_NOT_A_REFERENCE__EXPR_VALUE.fill(expr, value));
 		}
 		return (TLReference) value;
+	}
+
+	/**
+	 * Dynamic cast to {@link TLStructuredType} with user-readable error message and ensures the
+	 * value is not <code>null</code>.
+	 *
+	 * @param expr
+	 *        The evaluated expression.
+	 * @param value
+	 *        The evaluation value.
+	 * @return The given value cast to {@link TLStructuredType}.
+	 */
+	public static TLStructuredType asStructuredTypeNonNull(Object value, SearchExpression expr) {
+		return asStructuredType(notNull(expr, value), expr);
+	}
+
+	/**
+	 * Dynamic cast to {@link TLStructuredType} with user-readable error message.
+	 *
+	 * @param expr
+	 *        The evaluated expression.
+	 * @param value
+	 *        The evaluation value.
+	 * @return The given value cast to {@link TLStructuredType}.
+	 */
+	public static TLStructuredType asStructuredType(Object value, SearchExpression expr) {
+		if (!(value instanceof TLStructuredType)) {
+			throw new TopLogicException(I18NConstants.ERROR_NOT_A_TYPE__VAL_EXPR.fill(value, expr));
+		}
+		return (TLStructuredType) value;
 	}
 
 	/** 

@@ -25,8 +25,6 @@ public class CreateObject extends GenericMethod {
 
 	private static final String METHOD_NAME = "new";
 
-	private static final SearchExpression[] NO_ARGS = {};
-
 	/**
 	 * Creates a {@link CreateObject}.
 	 *
@@ -62,8 +60,9 @@ public class CreateObject extends GenericMethod {
 
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
+		TLClass type = (TLClass) asStructuredTypeNonNull(self, getSelf());
 		TLObject context = asTLObject(arguments.length > 0 ? arguments[0] : null);
-		return ModelService.getInstance().getFactory().createObject((TLClass) self, context, null);
+		return ModelService.getInstance().getFactory().createObject(type, context, null);
 	}
 
 	/**

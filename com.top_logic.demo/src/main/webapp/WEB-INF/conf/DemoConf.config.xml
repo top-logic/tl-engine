@@ -111,21 +111,6 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.base.accesscontrol.Login">
-			<instance>
-				<password-manager>
-					<password-validator>
-						<enabled>true</enabled>
-						<expiry-period>712</expiry-period>
-						<repeat-cycle>0</repeat-cycle>
-						<min-password-length>3</min-password-length>
-						<criteria-count>1</criteria-count>
-						<exclude-uids></exclude-uids>
-					</password-validator>
-				</password-manager>
-			</instance>
-		</config>
-
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
 	            <structures>

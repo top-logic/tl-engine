@@ -12,8 +12,7 @@ import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.TestFactoryProxy;
 import test.com.top_logic.basic.ThreadContextSetup;
 
-import com.top_logic.base.security.password.PasswordManager;
-import com.top_logic.base.security.util.SignatureService;
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -51,10 +50,10 @@ public class TestPersonSetup extends ThreadContextSetup {
 	protected void doSetUp() throws Exception {
 		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		{
-			_testPerson = PersonManager.getManager().createPerson(USER_ID, "dbSecurity", "dbSecurity", Boolean.FALSE);
+			_testPerson = PersonManager.getManager().createPerson(USER_ID, "dbSecurity", Boolean.FALSE);
 
-			PasswordManager.getInstance().setPasswordHash(_testPerson,
-				SignatureService.getInstance().sign(USER_PASSWORD));
+			TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity").setPassword(_testPerson,
+				USER_PASSWORD.toCharArray());
 			tx.commit();
 		}
 	}

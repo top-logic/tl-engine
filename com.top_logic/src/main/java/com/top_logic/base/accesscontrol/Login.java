@@ -14,7 +14,6 @@ import javax.servlet.http.HttpSession;
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
-import com.top_logic.base.security.password.PasswordManager;
 import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -66,12 +65,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 		 */
 		@Name("log-failed-logins")
 		boolean getLogFailedLogins();
-
-		/**
-		 * The {@link PasswordManager} to use.
-		 */
-		@Name("password-manager")
-		PolymorphicConfiguration<PasswordManager> getPasswordManager();
 
 		/**
 		 * The {@link PasswordHashingService} to use.
@@ -224,8 +217,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	/** Flag indicating to log failed logins. */
 	private boolean logFailedLogins = false;
 
-	private final PasswordManager _passwordManager;
-
 	private final PasswordHashingService _passwordHashing;
 
 	private final ComponentName _componentLeavingMaintenanceMode;
@@ -238,7 +229,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	public Login(InstantiationContext context, Config config) {
 		super(context, config);
 		logFailedLogins = config.getLogFailedLogins();
-		_passwordManager = context.getInstance(config.getPasswordManager());
 		_passwordHashing = context.getInstance(config.getPasswordHashing());
 
 		_componentLeavingMaintenanceMode = config.getComponentLeavingMaintenanceMode();
@@ -253,13 +243,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			}
 		}
 		_commandGroupLeavingMaintenanceMode = leavingCommandGoup;
-	}
-
-	/**
-	 * The {@link PasswordManager} to use.
-	 */
-	public PasswordManager getPasswordManager() {
-		return _passwordManager;
 	}
 
     /**
@@ -334,10 +317,9 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	public void loginFromExternalAuth(HttpServletRequest aRequest, HttpServletResponse response, Person aUser)
 			throws Exception {
         boolean debug = Logger.isDebugEnabled(this);
-		String theName = aUser.getDataAccessDeviceID() + "\\" + aUser.getName();
 		checkAllowedGroups(aUser);
         if (debug) {
-            Logger.debug("Get new Session for user "+ theName, this);
+			Logger.debug("Get new Session for user " + aUser.getName(), this);
         }
         // always get a new session for the User...
         SessionService.getInstance().loginUser(aRequest, response, aUser);

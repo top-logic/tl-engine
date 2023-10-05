@@ -37,7 +37,7 @@ public class GenericPersonCreateHandler extends WrapperUpdateHandler implements 
 			Boolean isRestricted = (Boolean) aDO.getAttributeValue(Person.RESTRICTED_USER);
             
 			Person person =
-				factory.createPerson(login, firstName, lastName, title, "dbSecurity", "dbSecurity", isRestricted);
+				factory.createPerson(login, firstName, lastName, title, "dbSecurity", isRestricted);
             super.updateBusinessObject(person, aDO, aFKeyAttr);
             return person;
         }

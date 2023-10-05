@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,8 +23,6 @@ import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.base.user.UserInterface;
-import com.top_logic.base.user.UserService;
-import com.top_logic.base.user.douser.DOUser;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -49,7 +46,6 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.dob.DataObject;
 import com.top_logic.dob.persist.DataManager;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryManager;
@@ -62,7 +58,6 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
-import com.top_logic.knowledge.wrap.exceptions.InvalidWrapperException;
 import com.top_logic.knowledge.wrap.person.deletion.AllPersonDeletionPolicy;
 import com.top_logic.knowledge.wrap.person.deletion.PersonDeletionPolicy;
 import com.top_logic.knowledge.wrap.util.PersonComparator;
@@ -70,7 +65,6 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
-import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.license.LicenseTool;
 
 /**
@@ -152,11 +146,6 @@ public class PersonManager extends ManagedClass {
 		static final int DEFAULT_TOKEN_TIMEOUT = 100000;
 
 		/**
-		 * @see #getKnowledgeBaseProvider()
-		 */
-		static final String KNOWLEDGE_BASE_PROPERTY = "knowledge-base";
-
-		/**
 		 * @see #getTLSecurityDeviceManagerProvider
 		 */
 		static final String TL_SECURITY_DEVICE_MANAGER_PROPERTY = "security-device-manager";
@@ -217,14 +206,6 @@ public class PersonManager extends ManagedClass {
 		@IntDefault(DEFAULT_TOKEN_TIMEOUT)
 		@Name(XML_KEY_TOKEN_TIMEOUT)
 		int getTokenTimeout();
-
-		/**
-		 * {@link KnowledgeBase}, to which changes, made by this task, will be committed to
-		 */
-		@InstanceDefault(DefaultKnowledgeBaseProvider.class)
-		@InstanceFormat
-		@Name(KNOWLEDGE_BASE_PROPERTY)
-		Provider<KnowledgeBase> getKnowledgeBaseProvider();
 	}
 
 	/**
@@ -258,8 +239,6 @@ public class PersonManager extends ManagedClass {
      */
 	private Map<String, Person> allUsers = new HashMap<>();
 
-	private final KnowledgeBase knowledgeBase;
-
 	private final Pattern userNamePattern;
 
 	private final int maxPersonNameLength;
@@ -284,7 +263,6 @@ public class PersonManager extends ManagedClass {
 		maxPersonNameLength = config.getPersonNameMaxLength();
 		superUserName = config.getSuperUserName();
 		tokenTimeout = config.getTokenTimeout();
-		knowledgeBase = config.getKnowledgeBaseProvider().get();
 		_tlSecurityDeviceManager = config.getTLSecurityDeviceManagerProvider().get();
 		_personDeletionPolicy = config.getPersonDeletionPolicy();
 		_resourcesModule = ResourcesModule.getInstance();
@@ -383,7 +361,7 @@ public class PersonManager extends ManagedClass {
 	 * @return The requested person, which is guaranteed to be a current object.
 	 */
 	public final Person getPersonByIdentifierCurrent(TLID anID) {
-		return getPersonByIdentifierCurrent(anID, getKnowledgeBase());
+		return getPersonByIdentifierCurrent(anID, PersistencyLayer.getKnowledgeBase());
 	}
     
 	/**
@@ -398,7 +376,6 @@ public class PersonManager extends ManagedClass {
 	public Person getPersonByIdentifierCurrent(TLID anID, KnowledgeBase aKB) {
 		Person currentPerson = (Person) WrapperFactory.getWrapper(anID, Person.OBJECT_NAME, aKB);
 		if (currentPerson != null) {
-			currentPerson.init(this, currentPerson);
 			return currentPerson;
 		} else {
 			return null;
@@ -415,7 +392,7 @@ public class PersonManager extends ManagedClass {
 	 * @return The requested person in the given history context.
 	 */
 	public final Person getPersonByIdentifier(TLID anID, Long historyContext) {
-		return getPersonByIdentifier(anID, getKnowledgeBase(), historyContext);
+		return getPersonByIdentifier(anID, PersistencyLayer.getKnowledgeBase(), historyContext);
 	}
 
 	/**
@@ -451,7 +428,6 @@ public class PersonManager extends ManagedClass {
 				}
 
 				Person currentPerson = getPersonByIdentifierCurrent(anID, aKB);
-				historicPerson.init(this, currentPerson);
 				return historicPerson;
 			}
 		}
@@ -466,14 +442,9 @@ public class PersonManager extends ManagedClass {
 	 *            the object to wrap.
 	 * @return The unique wrapper.
 	 */
-	public Person getPersonByKO(KnowledgeObject aKO) {
+	public static Person getPersonByKO(KnowledgeObject aKO) {
 		AbstractWrapper.verifyType(aKO, Person.OBJECT_NAME);
 		Person person = (Person) WrapperFactory.getWrapper(aKO);
-		if (aKO.getHistoryContext() == Revision.CURRENT_REV) {
-			person.init(this, person);
-		} else {
-			person.init(this, getPersonByKO((KnowledgeObject) HistoryUtils.getKnowledgeItem(Revision.CURRENT, aKO)));
-		}
 		return person;
 	}
 
@@ -514,11 +485,11 @@ public class PersonManager extends ManagedClass {
 	 * 
 	 * @return The requested wrapper or null if not matching person is found
 	 */
-	public Person getPersonByName(String aName, KnowledgeBase aKBase) {
+	public static Person getPersonByName(String aName, KnowledgeBase aKBase) {
 		if (StringServices.isEmpty(aName)) {
 			return null;
 		} else if (aKBase == null) {
-			aKBase = getKnowledgeBase();
+			aKBase = PersistencyLayer.getKnowledgeBase();
 		}
 		KnowledgeObject thePerson =
 			(KnowledgeObject) aKBase.getObjectByAttribute(Person.OBJECT_NAME, AbstractWrapper.NAME_ATTRIBUTE, aName);
@@ -543,9 +514,8 @@ public class PersonManager extends ManagedClass {
 	 * @return null when a person with the name already exists, the new person
 	 *         otherwise.
 	 */
-	public final Person createPerson(String aName, String dataAccessDeviceID, String authenticationDeviceID,
-			Boolean isRestricted) {
-		return createPerson(aName, getKnowledgeBase(), dataAccessDeviceID, authenticationDeviceID, isRestricted);
+	public Person createPerson(String aName, String authenticationDeviceID, Boolean isRestricted) {
+		return createPerson(aName, PersistencyLayer.getKnowledgeBase(), authenticationDeviceID, isRestricted);
 	}
 
 	/**
@@ -555,19 +525,16 @@ public class PersonManager extends ManagedClass {
 	 * @return null when a person with the name already exists, the new person
 	 *         otherwise.
 	 */
-	public synchronized Person createPerson(String aName, KnowledgeBase aKnowledgeBase, String dataAccessDeviceID,
-			String authenticationDeviceID, Boolean isRestricted) {
-		return internalCreatePerson(aName, aKnowledgeBase, dataAccessDeviceID, authenticationDeviceID, isRestricted);
+	public Person createPerson(String aName, KnowledgeBase aKnowledgeBase, String authenticationDeviceID,
+			Boolean isRestricted) {
+		return internalCreatePerson(aName, aKnowledgeBase, authenticationDeviceID, isRestricted);
 	}
 
-	private Person internalCreatePerson(String aName, KnowledgeBase aKnowledgeBase, String dataAccessDeviceID,
-			String authenticationDeviceID, Boolean isRestricted) {
-		if (StringServices.isEmpty(dataAccessDeviceID)) {
-			throw new IllegalArgumentException("Given dataAccessDeviceID must not be empty !");
-		}
+	private Person internalCreatePerson(String aName, KnowledgeBase aKnowledgeBase, String authenticationDeviceID,
+			Boolean isRestricted) {
 		if (!validatePersonName(aName)) {
 			int len = aName.length();
-			int max = this.getPersonNameMaxLength();
+			int max = getPersonNameMaxLength();
 			if (len < max) {
 				throw new IllegalArgumentException(
 					"Name '" + aName + "' does not match '" + getPersonNamePattern().pattern() + "'");
@@ -576,42 +543,22 @@ public class PersonManager extends ManagedClass {
 			}
 		}
 		Person thePerson = getPersonByName(aName, aKnowledgeBase);
-		PersonDataAccessDevice theDataDevice =
-			TLSecurityDeviceManager.getInstance().getDataAccessDevice(dataAccessDeviceID);
-		UserInterface user = theDataDevice.getUserData(aName);
 		if (thePerson != null && thePerson.isAlive()) {
 			throw new IllegalStateException("Person '" + aName + "' already exists");
 		}
-		if (user == null) {
-			DataObject newUserData = UserService.getNewUserDO(aName);
-			user = DOUser.getInstance(newUserData);
-			boolean ok = theDataDevice.createUserEntry(newUserData);
-			if (!ok) {
-				throw new TopLogicException(I18NConstants.ERROR_NO_MORE_USERS);
-			}
-		}
 		if (thePerson == null) { // creating new KO
 			thePerson =
-				getOrCreatePersonForUser(dataAccessDeviceID, user,
-					LicenseTool.moreUsersAllowed(LicenseTool.getInstance().getLicense(), isRestricted));
+				getOrCreatePersonForUser(aName,
+					LicenseTool.moreUsersAllowed(LicenseTool.getInstance().getLicense(), isRestricted), authenticationDeviceID);
 		} else { // reusing existing KO for new user
-			this._renamePerson(thePerson, aName); // make sure personname and username are same
+			_renamePerson(thePerson, aName); // make sure personname and username are same
 													// (dependingon DB possible upper/lowercase
 													// conflicts.)
-			thePerson.setDataAccessDeviceID(dataAccessDeviceID); // set datadevice to point to given
-																	// users device
 			ensureLocale(thePerson);
-			thePerson.resetUser(); // reload user
 			handleNewPerson(thePerson);
 		}
-		// set authenticationdevice
-		if (thePerson != null) { // will be null if licence limit reached
-			if (!StringServices.isEmpty(authenticationDeviceID)) { // if given set it, use default
-																	// otherwise
-				thePerson.setAuthenticationDeviceID(authenticationDeviceID);
-			} else {
-				thePerson.setAuthenticationDeviceID(getDefaultAuthenticationDeviceID(dataAccessDeviceID));
-			}
+		if (thePerson != null) {
+			thePerson.setAuthenticationDeviceID(authenticationDeviceID);
 		}
 		return (thePerson);
 	}
@@ -624,7 +571,6 @@ public class PersonManager extends ManagedClass {
 	 *            the Person
 	 */
 	public void deleteUser(Person aPerson) {
-		aPerson.deleteUser();
 		aPerson.tDelete();
 	}
 
@@ -694,31 +640,6 @@ public class PersonManager extends ManagedClass {
 		List<Person> thePersons = FilterUtil.filterList(Person.RESTRICTED_USER_FILTER, getAllPersonsList());
 		sortPersons(thePersons);
 		return thePersons;
-	}
-	
-	/**
-	 * This method makes sure all person wrappers which have become invalid by
-	 * now are removed from the system wide person cache. The same task is also
-	 * accomplished by initUserMap() but as this method also checks for changes
-	 * in the security systems (i.e. new or deleted users) it is slower than this
-	 * method.
-	 * 
-	 * This method only checks if the wrappers are valid not if the persons are
-	 * still alive (i.e. still have a user). The only reason for this method is
-	 * that it should not be necessary to call the relatively expensive
-	 * initUserMap() if its just the validation of the wrappers that matters.
-	 */
-	public void validatePersons() {
-		Iterator<Person> it = getAllPersons().iterator();
-		while (it.hasNext()) {
-			Person aPerson = it.next();
-			try {
-				aPerson.checkInvalid();
-			} catch (InvalidWrapperException ignored) {
-				// this is okay here do nothing. Check invalid already
-				// handled this exception
-			}
-		}
 	}
 
 	/**
@@ -808,7 +729,7 @@ public class PersonManager extends ManagedClass {
      * Disconnect given Person from its User.
      */
 	synchronized void disconnect(Person aPerson) {
-		allUsers.remove(aPerson.getName());
+		allUsers.remove(aPerson.getName(), aPerson);
     }
     
     /**
@@ -839,13 +760,6 @@ public class PersonManager extends ManagedClass {
 		return Module.INSTANCE.getImplementationInstance();
 	}
 
-	/**
-	 * default {@link KnowledgeBase}, defined by the {@link PersistencyLayer}
-	 */
-	protected final KnowledgeBase getKnowledgeBase() {
-		return knowledgeBase;
-	}
-
 	@Override
 	protected void startUp() {
 		super.startUp();
@@ -863,8 +777,7 @@ public class PersonManager extends ManagedClass {
 	 * Update all persons
 	 */
 	public void updatePersons(Message commitMessage) {
-		Transaction tx = getKnowledgeBase().beginTransaction(commitMessage);
-		try {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(commitMessage)) {
 			Lock lock = initUserMap();
 			if (lock != null) {
 				lock.unlock();
@@ -873,8 +786,6 @@ public class PersonManager extends ManagedClass {
 		} catch (KnowledgeBaseException ex) {
 			String msg = "Unable to commit transaction starting PersonManager.";
 			throw new KnowledgeBaseRuntimeException(msg, ex);
-		} finally {
-			tx.rollback();
 		}
 	}
 
@@ -895,7 +806,7 @@ public class PersonManager extends ManagedClass {
 	 * @return The list of KnowledgeObjects (!)
 	 */
 	private Collection<KnowledgeObject> getAllPersonKOs() {
-		return getKnowledgeBase().getAllKnowledgeObjects(Person.OBJECT_NAME);
+		return PersistencyLayer.getKnowledgeBase().getAllKnowledgeObjects(Person.OBJECT_NAME);
 	}
 
 	/**
@@ -906,21 +817,14 @@ public class PersonManager extends ManagedClass {
 	 *        the person (login) name
 	 * @param aKnowledgeBase
 	 *        the KBase
-	 * @param dataAccessDeviceID
-	 *        the security device that contains the userdata
 	 * @return the created person
 	 */
-	private Person createPersonInKBOnly(String aName, KnowledgeBase aKnowledgeBase, String dataAccessDeviceID,
-			String authenticationDeviceID) {
+	private Person createPersonInKBOnly(String aName, KnowledgeBase aKnowledgeBase, String authenticationDeviceID) {
 		{
 			KnowledgeObject theKO = aKnowledgeBase.createKnowledgeObject(Person.OBJECT_NAME);
 			theKO.setAttributeValue(AbstractWrapper.NAME_ATTRIBUTE, aName);
 			Person thePerson = getPersonByKO(theKO);
-			thePerson.setDataAccessDeviceID(dataAccessDeviceID);
-			if (!StringServices.isEmpty(authenticationDeviceID)) { // if there, set it- leave
-																	// default otherwise
-				thePerson.setAuthenticationDeviceID(authenticationDeviceID);
-			}
+			thePerson.setAuthenticationDeviceID(authenticationDeviceID);
 			return (thePerson);
 		}
 	}
@@ -945,47 +849,37 @@ public class PersonManager extends ManagedClass {
 	 * 
 	 * This method also returns null if no more persons are allowed because of the given license
 	 * 
-	 * @param theUser
-	 *        for which the person is requested The login name of the person.
+	 * @param userName
+	 *        The user ID to create an account for.
+	 * @param authenticationDeviceID TODO
+	 * 
 	 * @return The person or null.
 	 */
-	public synchronized Person getOrCreatePersonForUser(String dataAccessDeviceID, UserInterface theUser,
-			boolean morePersonsAllowed) {
-		return internalGetOrCreatePersonForUser(dataAccessDeviceID, theUser, morePersonsAllowed);
-	}
-
-	private Person internalGetOrCreatePersonForUser(String dataAccessDeviceID, UserInterface user,
-			boolean morePersonsAllowed) {
+	public synchronized Person getOrCreatePersonForUser(String userName, boolean morePersonsAllowed, String authenticationDeviceID) {
 		{
-			String theUserName = user.getUserName();
-			Person existingAccount = getPersonByName(theUserName);
+			Person existingAccount = getPersonByName(userName);
 			if (existingAccount != null) {
-				existingAccount.setUser(user);
 				enter(existingAccount);
 				ensureLocale(existingAccount);
 				return existingAccount;
 			} else {
-				if (personNameAlreadyUsed(theUserName)) {
-					Logger.info("Unable to create person for " + dataAccessDeviceID + "//" + theUserName
-						+ " as group with given name '" + theUserName + "' may already exist.", PersonManager.class);
+				if (personNameAlreadyUsed(userName)) {
+					Logger.info("Unable to create person " + userName
+						+ " as group with given name '" + userName + "' may already exist.", PersonManager.class);
 					return null;
 				}
 				if (morePersonsAllowed) {
-					String authenticationDeviceID = getDefaultAuthenticationDeviceID(dataAccessDeviceID);
 					Person createdPerson =
-						createPersonInKBOnly(theUserName, getKnowledgeBase(), dataAccessDeviceID,
-							authenticationDeviceID);
+						createPersonInKBOnly(userName, PersistencyLayer.getKnowledgeBase(), authenticationDeviceID);
 					ensureLocale(createdPerson);
-					createdPerson.setUser(user);
 					handleNewPerson(createdPerson);
 					return createdPerson;
 				} else {
-					Logger.warn("Unable to create person for " + dataAccessDeviceID + "//" + theUserName +
+					Logger.warn("Unable to create person " + userName +
 						" as license doesn't allow more than " + LicenseTool.getInstance().getLicense().getUsers()
 						+ " full users", PersonManager.class);
 					return null;
 				}
-
 			}
 		}
 	}
@@ -1010,6 +904,7 @@ public class PersonManager extends ManagedClass {
 
 		for (String deviceId : deviceManager.getConfiguredDataAccessDeviceIDs()) {
 			PersonDataAccessDevice device = deviceManager.getDataAccessDevice(deviceId);
+			String authenticationDeviceID = getDefaultAuthenticationDeviceID(deviceId);
 
 			for (UserInterface user : device.getAllUserData()) {
 				String userName = user.getUserName();
@@ -1018,7 +913,7 @@ public class PersonManager extends ManagedClass {
 					continue;
 				}
 
-				Person account = getOrCreatePersonForUser(deviceId, user, true);
+				Person account = getOrCreatePersonForUser(userName, true, authenticationDeviceID);
 				accountsToCheck.remove(account);
 			}
 		}

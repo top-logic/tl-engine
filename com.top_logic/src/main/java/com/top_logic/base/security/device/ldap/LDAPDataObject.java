@@ -29,7 +29,6 @@ import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.simple.AttributesDataObject;
 import com.top_logic.dob.simple.AttributesMetaObject;
-import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Extends the AttributesDataObject to Map Attribute names to other names.
@@ -83,7 +82,6 @@ public class LDAPDataObject extends AttributesDataObject {
         this.identifier = StringID.createRandomID (); 
         this.objectClass = _getObjectClass();
         
-        this.attributeValues.put(Person.DATA_ACCESS_DEVICE_ID.toLowerCase(), this.myDeviceID);
         //simplified attempt of resolving / retrieving values now to avoid LDAP connects during access
         //it doesn't take multivalue attributes into account, as  we just want to support the DO interface, its enough for now
         //we lowercase the key since the jndi key value mapping was not case sensitive so we don't want it to be now

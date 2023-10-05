@@ -14,26 +14,13 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.top_logic.base.security.device.db.DBUserRepository;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.config.ApplicationConfig;
-import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.DBOperation;
 import com.top_logic.basic.version.Version;
-import com.top_logic.dob.ex.UnknownTypeException;
-import com.top_logic.dob.meta.MORepository;
-import com.top_logic.knowledge.objects.meta.DefaultMOFactory;
-import com.top_logic.knowledge.service.KBUtils;
-import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
-import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
-import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.util.DeferredBootUtil;
 import com.top_logic.util.TLContext;
 
@@ -162,21 +149,6 @@ public class ApplicationSetup {
 
 		redirect("/applicationPassword.jsp");
 		phase(Phase.FINISHED);
-	}
-
-	private DBUserRepository newDBUserRepository() throws UnknownTypeException, ConfigurationException {
-		ApplicationConfig instance = ApplicationConfig.getInstance();
-		KnowledgeBaseFactoryConfig kbfConfig =
-			(KnowledgeBaseFactoryConfig) instance.getServiceConfiguration(KnowledgeBaseFactory.class);
-		KnowledgeBaseConfiguration defaultKBConfiguration =
-			kbfConfig.getKnowledgeBases().get(PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
-		if (defaultKBConfiguration == null) {
-			throw new KnowledgeBaseRuntimeException(
-				"No KnowledgeBaseConfiguration with name " + PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME + " found.");
-		}
-		SchemaSetup schemaConfig = KBUtils.getSchemaConfigResolved(defaultKBConfiguration);
-		MORepository repository = schemaConfig.createMORepository(DefaultMOFactory.INSTANCE);
-		return new DBUserRepository(repository);
 	}
 
 	private void redirect(String location) throws IOException {

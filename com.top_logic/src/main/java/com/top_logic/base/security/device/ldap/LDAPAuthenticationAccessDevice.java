@@ -17,6 +17,7 @@ import com.top_logic.base.dsa.ldap.ServiceProviderInfo;
 import com.top_logic.base.security.device.AbstractSecurityDevice;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
+import com.top_logic.base.security.password.PasswordValidator;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -24,6 +25,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.DataObject;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * AuthenticationDevice and PersonDataAccessDevice against LDAP.
@@ -121,6 +123,31 @@ public class LDAPAuthenticationAccessDevice extends AbstractSecurityDevice
 	}
 
 	@Override
+	public boolean allowPwdChange() {
+		return false;
+	}
+
+	@Override
+	public void setPassword(Person account, char[] password) {
+		throw new UnsupportedOperationException("Updating LDAP passwords not suppported.");
+	}
+
+	@Override
+	public boolean isPasswordChangeRequested(Person account, char[] password) {
+		return false;
+	}
+
+	@Override
+	public void expirePassword(Person account) {
+		// Ignore.
+	}
+
+	@Override
+	public PasswordValidator getPasswordValidator() {
+		throw new UnsupportedOperationException("LDAP passwords are not validated.");
+	}
+
+	@Override
 	public List<UserInterface> getAllUserData() {
 		return this.las.getAllUserData();
 	}
@@ -149,4 +176,5 @@ public class LDAPAuthenticationAccessDevice extends AbstractSecurityDevice
 	public boolean deleteUserData(String aName) {
 		throw new UnsupportedOperationException("LDAP users cannot be deleted.");
 	}
+
 }

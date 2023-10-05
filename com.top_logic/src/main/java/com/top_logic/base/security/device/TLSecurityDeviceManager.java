@@ -103,8 +103,6 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	 */
 	private Map<String, PersonDataAccessDevice> _dataAccessDevices;
 
-	private SecurityDevice _defaultDataAccessDevice;
-
 	/**
 	 * Map to hold instances of the authentication devices with their deviceID as key
 	 */
@@ -126,7 +124,6 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		_configuredDevices = TypedConfiguration.getInstanceMap(context, config.getSecurityDevices());
 		checkSecurityDevices(_configuredDevices);
 		_dataAccessDevices = getDataAccessDevices(context, _configuredDevices);
-		_defaultDataAccessDevice = getDefaultAccessDevice(context, config, _dataAccessDevices);
 		_authenticationDevices = getAuthenticationDevices(context, _configuredDevices);
 		_defaultAuthenticationDevice = getDefaultAuthenticationDevice(context, config, _authenticationDevices);
 	}
@@ -219,34 +216,6 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		return result;
 	}
 
-	private PersonDataAccessDevice getDefaultAccessDevice(Log log, Config config,
-			Map<String, PersonDataAccessDevice> dataAccessDevices) {
-		PersonDataAccessDevice defaultDataAccessDevice;
-		String defaultAccessDeviceId = config.getDefaultDataAccessDevice();
-		if (defaultAccessDeviceId.isEmpty()) {
-			if (dataAccessDevices.size() != 1) {
-				StringBuilder noDefaultAccessDevice = new StringBuilder();
-				noDefaultAccessDevice.append("There are more than one data access devices configured '");
-				noDefaultAccessDevice.append(dataAccessDevices.keySet());
-				noDefaultAccessDevice.append("' but no default data access device.");
-				log.error(noDefaultAccessDevice.toString());
-				defaultDataAccessDevice = null;
-			} else {
-				defaultDataAccessDevice = dataAccessDevices.values().iterator().next();
-			}
-		} else {
-			defaultDataAccessDevice = dataAccessDevices.get(defaultAccessDeviceId);
-			if (defaultDataAccessDevice == null) {
-				StringBuilder unknownDefaultDevice = new StringBuilder();
-				unknownDefaultDevice.append("There is not data access device with id '");
-				unknownDefaultDevice.append(defaultAccessDeviceId);
-				unknownDefaultDevice.append("' to use as default access device.");
-				log.error(unknownDefaultDevice.toString());
-			}
-		}
-		return defaultDataAccessDevice;
-	}
-
 	@Override
 	protected void startUp() {
 		super.startUp();
@@ -327,14 +296,6 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	 */
 	public AuthenticationDevice getAuthenticationDevice(String deviceID){
 		return _authenticationDevices.get(deviceID);
-	}
-	
-	/**
-	 * Used to initially assign a device to persons who dont have one (migration from older versions)
-	 * @return the configured DefaultDataAccessDevice
-	 */
-	public PersonDataAccessDevice getDefaultDataAccessDevice(){
-		return (PersonDataAccessDevice) _defaultDataAccessDevice;
 	}
 
 	/**

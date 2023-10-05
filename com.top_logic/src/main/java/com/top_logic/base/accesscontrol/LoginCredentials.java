@@ -143,7 +143,7 @@ public class LoginCredentials implements AutoCloseable {
 	 */
 	private static Person retrievePersonChecked(String loginName) {
 		if (StringServices.isEmpty(loginName)) {
-			throw new LoginDeniedException("No loginName was given.");
+			throw new LoginDeniedException("No login name was given.");
 		}
 		Person person = PersonManager.getManager().getPersonByName(loginName);
 		return checkPerson(person, loginName);
@@ -151,15 +151,11 @@ public class LoginCredentials implements AutoCloseable {
 
 	private static Person checkPerson(Person person) {
 		if (person == null) {
-			String message = "Person must not be null!";
+			String message = "Account must not be null.";
 			throw new LoginDeniedException(message);
 		}
 		if (!person.isAlive()) {
-			String message = "Person '" + person + "' is not alive!";
-			throw new LoginDeniedException(message);
-		}
-		if (Person.userOrNull(person) == null) {
-			String message = "No User for the person with login name '" + person.getName() + "' found!";
+			String message = "Account '" + person.getName() + "' is not alive.";
 			throw new LoginDeniedException(message);
 		}
 		return person;
@@ -167,15 +163,11 @@ public class LoginCredentials implements AutoCloseable {
 
 	private static Person checkPerson(Person person, String loginName) {
 		if (person == null) {
-			String message = "No Person with login name '" + loginName + "' found!";
+			String message = "No account with login name '" + loginName + "' found!";
 			throw new LoginDeniedException(message);
 		}
 		if (!person.isAlive()) {
-			String message = "Person with login name '" + loginName + "' is not alive!";
-			throw new LoginDeniedException(message);
-		}
-		if (Person.userOrNull(person) == null) {
-			String message = "No User for the person with login name '" + loginName + "' found!";
+			String message = "Account with login name '" + loginName + "' is not alive!";
 			throw new LoginDeniedException(message);
 		}
 		return person;

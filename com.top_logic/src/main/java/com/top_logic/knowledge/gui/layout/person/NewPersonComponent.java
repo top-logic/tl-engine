@@ -5,11 +5,6 @@
  */
 package com.top_logic.knowledge.gui.layout.person;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
-import com.top_logic.base.security.device.db.DBUserRepository;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -25,12 +20,10 @@ import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.component.AbstractCreateComponent;
-import com.top_logic.layout.form.constraints.SelectionSizeConstraint;
 import com.top_logic.layout.form.constraints.StringLengthConstraint;
 import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.util.Resources;
 
@@ -69,7 +62,8 @@ public class NewPersonComponent extends AbstractCreateComponent {
         super(context, atts);
 		MOStructureImpl userMetaObject;
 		try {
-			userMetaObject = DBUserRepository.getUserMetaObject(PersistencyLayer.getKnowledgeBase());
+			userMetaObject = (MOStructureImpl) PersistencyLayer.getKnowledgeBase().getMORepository()
+				.getMetaObject(Person.OBJECT_NAME);
 		} catch (UnknownTypeException ex) {
 			context.error("Unable to get meta object for user data.", ex);
 			userMetaObject = null;
@@ -85,7 +79,7 @@ public class NewPersonComponent extends AbstractCreateComponent {
     @Override
 	public FormContext createFormContext() {
         FormContext formContext = new FormContext("NewPersonFormContext", getResPrefix());
-		StringField userField = newStringField(UserInterface.USER_NAME, 1, _userMO);
+		StringField userField = newStringField(Person.NAME, 1, _userMO);
         userField.setMandatory(true);
         userField.addConstraint(new Constraint() {
             @Override
@@ -121,13 +115,6 @@ public class NewPersonComponent extends AbstractCreateComponent {
 		formContext.addMember(newStringField(UserInterface.TITLE, 0, _userMO));
 		formContext.addMember(newBooleanField(Person.RESTRICTED_USER));
 
-		Collection<?> allWritableDataDevices = TLSecurityDeviceManager.getInstance().getWritableSecurityDeviceIDs();
-        SelectField dataDevicesField = FormFactory.newSelectField(Person.DATA_ACCESS_DEVICE_ID, new ArrayList(allWritableDataDevices), false, true, false, new SelectionSizeConstraint(1, 1));
-        formContext.addMember(dataDevicesField);
-	    if (allWritableDataDevices.size() == 1) {
-	        dataDevicesField.setAsSingleSelection(allWritableDataDevices.iterator().next());
-	        dataDevicesField.setVisible(false);
-	    }
 		return formContext;
     }
 

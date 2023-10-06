@@ -22,6 +22,7 @@ import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
+import com.top_logic.services.jms.Consumer;
 import com.top_logic.services.jms.JMSService;
 import com.top_logic.services.jms.Producer;
 import com.top_logic.util.error.TopLogicException;
@@ -79,6 +80,12 @@ public class JMSSend extends GenericMethod {
 			producer.send(ToString.toString(rawData));
 		}
 		
+		Consumer consumer = jmsService.getConsumer(connectionName);
+		if (consumer == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_CONNECTION__NAME_EXPR.fill(connectionName, this));
+		}
+		consumer.receive();
+
 		return null;
 	}
 

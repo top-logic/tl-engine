@@ -10,7 +10,6 @@ import java.util.Arrays;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.basic.StringServices;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * The {@link LoginCredentials} are:
@@ -145,7 +144,7 @@ public class LoginCredentials implements AutoCloseable {
 		if (StringServices.isEmpty(loginName)) {
 			throw new LoginDeniedException("No login name was given.");
 		}
-		Person person = PersonManager.getManager().getPersonByName(loginName);
+		Person person = Person.byName(loginName);
 		return checkPerson(person, loginName);
 	}
 

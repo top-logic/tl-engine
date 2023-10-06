@@ -18,7 +18,7 @@ import com.top_logic.knowledge.journal.JournalResultEntry;
 import com.top_logic.knowledge.journal.MessageJournalResultAttributeEntry;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.DispatchingAccessor;
 import com.top_logic.layout.ReadOnlyPropertyAccessor;
@@ -61,7 +61,7 @@ public final class MessageJournalAccessor extends DispatchingAccessor {
 			@Override
 			public Object getValue(Object target) {
 				JournalResult jr = (JournalResult) target;
-				return PersonManager.getManager().getPersonByName(jr.userID);
+				return Person.byName(jr.userID);
 			}
 		});
 		accessors.put(MESSAGE_COLUMN, new ReadOnlyPropertyAccessor() {

@@ -26,7 +26,6 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.impl.generated.TLObjectBase;
 
 /**
@@ -574,8 +573,7 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 			}
 			TLID personId =
 				IdentifierUtil.fromExternalForm(contextId.substring(SessionContext.PERSON_ID_PREFIX.length()));
-			return PersonManager.getManager().getPersonByIdentifier(
-				personId, tKnowledgeBase(), revision.getCommitNumber());
+			return Person.byId(tKnowledgeBase(), revision.getCommitNumber(), personId);
 		}
 	}
 

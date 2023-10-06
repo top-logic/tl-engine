@@ -13,6 +13,7 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.InContext;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -105,7 +106,7 @@ public class ReportQueue extends Thread {
 				@Override
 				public void inContext() {
 					TLSubSessionContext session = TLContextManager.getSubSession();
-					session.setPerson(_personManager.getPersonByUser(requestUser));
+					session.setPerson(requestUser == null ? null : Person.byName(requestUser.getUserName()));
 					jobToExecute.prepare();
 					jobToExecute.processReport();
 					jobToExecute.finishReport();

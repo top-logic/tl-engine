@@ -33,7 +33,6 @@ import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * Test case for the {@link com.top_logic.knowledge.monitor.UserMonitor}.
@@ -126,7 +125,7 @@ public class TestUserMonitor extends BasicTestCase {
         UserSession       us     = UserSession.startSession(kb, 
             "TestUserSession", "xxxxx",  "127.0.0.1", start); 
 		String testUserName = TestPersonSetup.USER_ID;
-		Person dummy = PersonManager.getManager().getPersonByName(testUserName);
+		Person dummy = Person.byName(testUserName);
 		assertNotNull("Unable to get user for name " + testUserName, us);
         Sender            sender = new Sender("Testing", "TestUserMonitor");
         UserEvent         login  = new UserEvent(sender, dummy, "yyyyy", server, UserEvent.LOGGED_IN);

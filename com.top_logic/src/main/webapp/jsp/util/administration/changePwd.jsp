@@ -12,9 +12,8 @@
 %><%@page import="com.top_logic.layout.ResPrefix"
 %><%@page import="com.top_logic.tool.boundsec.commandhandlers.GotoHandler"
 %><%@page import="com.top_logic.util.Resources"
-%><%
-String uid = request.getParameter("username");
-Person account = PersonManager.getManager().getPersonByName(uid);
+%><%String uid = request.getParameter("username");
+Person account = PersonManager.getManager().byName(uid);
 PasswordValidator validator = PasswordManager.getInstance().getPwdValidator();
 String loginUrl = "/servlet/login";
 String contextPath = request.getContextPath();
@@ -30,8 +29,7 @@ boolean pwdExpired = validator.isPasswordExpired(account);
 //saving goto params to restore them in formular
 String paramComponent = StringServices.nonEmpty(request.getParameter(GotoHandler.COMMAND_PARAM_COMPONENT));
 String paramId = StringServices.nonEmpty(request.getParameter(GotoHandler.COMMAND_PARAM_ID));
-String paramType = StringServices.nonEmpty(request.getParameter(GotoHandler.COMMAND_PARAM_TYPE));
-%>
+String paramType = StringServices.nonEmpty(request.getParameter(GotoHandler.COMMAND_PARAM_TYPE));%>
 <basic:html>
 	<head>
 		<meta name="viewport"

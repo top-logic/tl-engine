@@ -319,8 +319,7 @@ INSPECT = {
 	 * Is that element within fixed column of a "frozen table"?
 	 */
 	isWithinFixedColumn: function(element) {
-		var controlIdOfSurroundingRow = INSPECT.findControlIdOfSurroundingRow(element);
-		return controlIdOfSurroundingRow.indexOf('fixed') != -1;
+		return TABLE.isFixed(INSPECT.findParentTag(element, 'td'));
 	},
 	
 	findControlIdOfSurroundingRow: function(element) {

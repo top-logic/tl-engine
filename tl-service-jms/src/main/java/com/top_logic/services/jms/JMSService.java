@@ -168,6 +168,8 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 
 	private Map<String, Producer> _producers = new HashMap<>();
 
+	private Map<String, Consumer> _consumers = new HashMap<>();
+
 	/**
 	 * Constructor for the service that establishes connections with the given config.
 	 * 
@@ -187,6 +189,8 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 			try {
 				Producer prod = new Producer(config);
 				_producers.put(config.getName(), prod);
+				Consumer cons = new Consumer(config);
+				_consumers.put(config.getName(), cons);
 			} catch (JMSException ex) {
 				InfoService.logError(I18NConstants.ERROR_ESTABLISH_CONNECTION__NAME.fill(config.getName()),
 					ex.getMessage(), ex, JMSService.class);
@@ -214,6 +218,17 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	 */
 	public Producer getProducer(String name) {
 		return _producers.get(name);
+	}
+
+	/**
+	 * Gets and returns the consumer from all consumers for the given name.
+	 * 
+	 * @param name
+	 *        Name of the Consumer
+	 * @return The requested Consumer
+	 */
+	public Consumer getConsumer(String name) {
+		return _consumers.get(name);
 	}
 
 	/**

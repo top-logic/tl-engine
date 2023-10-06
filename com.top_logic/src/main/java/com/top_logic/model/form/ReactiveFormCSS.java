@@ -66,5 +66,11 @@ public interface ReactiveFormCSS {
 	 * @see GroupCellControl#hasMenu()
 	 */
 	String RF_MENU = "rf_menu";
+
+	/**
+	 * CSS class for the form editor to mark an part at the GUI as "locked", i.e. it is not possible
+	 * to drag an form element into or out from the area.
+	 */
+	String RF_LOCKED = "rf_locked";
 }
 

@@ -11,10 +11,10 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.TLModelPart;
 
 /**
- * Annotation that defines the default {@link Visibility} of a {@link TLModelPart} durcing creation.
+ * Annotation that defines the default {@link Visibility} of a {@link TLModelPart} during creation.
  * 
  * <p>
- * When the annotation is absent, the value of {@link TLVisibility} is also used during creation
+ * When the annotation is absent, the value of {@link TLVisibility} is also used during creation.
  * </p>
  * 
  * @see TLVisibility

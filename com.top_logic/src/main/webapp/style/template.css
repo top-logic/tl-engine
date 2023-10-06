@@ -6602,13 +6602,13 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 /* do not mark locked areas */
-.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_content,
-.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_container,
-.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_dropTarget.rf_parent,
-.rf_highlighted .rf_dragged .locked .rf_container,
-.rf_dropArea .locked,
-.cFormEditorPreview.rf_highlighted .locked .rf_inputCell,  
-.cFormEditorPreview.rf_highlighted .locked .rf_dragElement .rf_table {
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_locked .rf_content,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_locked .rf_container,
+.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_locked .rf_dropTarget.rf_parent,
+.rf_highlighted .rf_dragged .rf_locked .rf_container,
+.rf_dropArea .rf_locked,
+.cFormEditorPreview.rf_highlighted .rf_locked .rf_inputCell,  
+.cFormEditorPreview.rf_highlighted .rf_locked .rf_dragElement .rf_table {
 	border: inherit;
 	background: var(--BODY_BACK);
 }

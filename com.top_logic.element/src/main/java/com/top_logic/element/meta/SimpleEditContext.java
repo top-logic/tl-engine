@@ -14,10 +14,12 @@ import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.DynamicLabel;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.util.TLModelI18N;
@@ -51,10 +53,6 @@ public class SimpleEditContext implements EditContext {
 				return editObject;
 			}
 
-			@Override
-			public TLStructuredType getType() {
-				return getObject().tType();
-			}
 		};
 	}
 
@@ -80,7 +78,25 @@ public class SimpleEditContext implements EditContext {
 
 	@Override
 	public ResKey getLabelKey() {
-		return TLModelI18N.getI18NKey(getAttribute());
+		TLStructuredTypePart attribute = getAttribute();
+		ResKey defaultLabelKey = TLModelI18N.getI18NKey(attribute);
+		if (getObject() != null) {
+			DynamicLabel annotation = getAnnotation(DynamicLabel.class);
+			if(annotation != null) {
+				Object dynamicLabel = annotation.getLabel().impl().apply(getObject(), defaultLabelKey, attribute);
+				if (dynamicLabel instanceof ResKey) {
+					return (ResKey) dynamicLabel;
+				}
+				String labelString;
+				if (dynamicLabel instanceof String) {
+					labelString = (String) dynamicLabel;
+				} else {
+					labelString = MetaLabelProvider.INSTANCE.getLabel(dynamicLabel);
+				}
+				return ResKey.text(labelString);
+			}
+		}
+		return defaultLabelKey;
 	}
 
 	@Override
@@ -153,7 +169,10 @@ public class SimpleEditContext implements EditContext {
 
 	@Override
 	public TLStructuredType getType() {
-		return null;
+		if (getObject() == null) {
+			return null;
+		}
+		return getObject().tType();
 	}
 
 	@Override

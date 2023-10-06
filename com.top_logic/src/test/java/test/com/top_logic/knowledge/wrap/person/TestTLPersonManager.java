@@ -29,7 +29,6 @@ import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger.LogEntry;
-import com.top_logic.basic.col.ConstantProvider;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -107,8 +106,7 @@ public class TestTLPersonManager extends BasicTestCase {
 		mockPersonDataAccessDevice.addUserData(user);
 
 		Transaction createTx = firstNodeKnowledgeBase.beginTransaction();
-		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(user.getUserName(),
-			Boolean.TRUE, AUTHENTICATION_DEVICE_ID);
+		Person fooPerson = Person.create(firstNodeKnowledgeBase, user.getUserName(), AUTHENTICATION_DEVICE_ID);
 		createTx.commit();
 
 		assertTrue("Ticket #13195: ", Person.all().contains(fooPerson));
@@ -120,8 +118,7 @@ public class TestTLPersonManager extends BasicTestCase {
 		mockPersonDataAccessDevice.addUserData(user);
 
 		Transaction createTx = firstNodeKnowledgeBase.beginTransaction();
-		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(user.getUserName(),
-			Boolean.TRUE, AUTHENTICATION_DEVICE_ID);
+		Person fooPerson = Person.create(firstNodeKnowledgeBase, user.getUserName(), AUTHENTICATION_DEVICE_ID);
 		createTx.commit();
 		String personName = fooPerson.getName();
 
@@ -140,18 +137,9 @@ public class TestTLPersonManager extends BasicTestCase {
 
 		assertNull(Person.byName(firstNodeKnowledgeBase, fooUser.getUserName()));
 		Transaction tx = firstNodeKnowledgeBase.beginTransaction();
-		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(fooUser.getUserName(),
-			Boolean.TRUE, AUTHENTICATION_DEVICE_ID);
+		Person fooPerson = Person.create(firstNodeKnowledgeBase, fooUser.getUserName(), AUTHENTICATION_DEVICE_ID);
 		fooPerson.setLocale(Locale.CHINA);
 		tx.commit();
-
-		Locale dynamicLocale = fooPerson.getLocale();
-		// Dynamic locale may differ from set locale because a variant is included in Locale.
-		// assertEquals(Locale.CHINA, dynamicLocale);
-		Person refetchedPerson = firstNodePersonManager
-			.getOrCreatePersonForUser(fooUser.getUserName(), Boolean.TRUE, AUTHENTICATION_DEVICE_ID);
-		assertEquals("Ticket #11923: Fetching person for user changes locale.", dynamicLocale,
-			refetchedPerson.getLocale());
 	}
 
 	public void testRemoveUsersByRefreshUsersTask() {
@@ -217,19 +205,12 @@ public class TestTLPersonManager extends BasicTestCase {
 
 	private RefreshUsersTask<?> createFirstNodeRefreshUsersTask(KnowledgeBase knowledgeBase,
 			PersonManager personManager) {
-		return createRefreshUsersTask("FirstNodeRefreshUsersTask", knowledgeBase, personManager);
+		return createRefreshUsersTask("FirstNodeRefreshUsersTask");
 	}
 
-	private RefreshUsersTask<?> createSecondNodeRefreshUsersTask(KnowledgeBase knowledgeBase,
-			PersonManager personManager) {
-		return createRefreshUsersTask("SecondNodeRefreshUsersTask", knowledgeBase, personManager);
-	}
-
-	private RefreshUsersTask createRefreshUsersTask(String taskName, final KnowledgeBase knowledgeBase, final PersonManager personManager) {
+	private RefreshUsersTask createRefreshUsersTask(String taskName) {
 		Config<?> config = TypedConfiguration.newConfigItem(RefreshUsersTask.Config.class);
 		config.setName(taskName);
-		config.setPersonManagerProvider(new ConstantProvider<>(personManager));
-		config.setKnowledgeBaseProvider(new ConstantProvider<>(knowledgeBase));
 		RefreshUsersTask<?> task = TypedConfigUtil.createInstance(config);
 		return TaskTestUtil.initTaskLog(task);
 	}

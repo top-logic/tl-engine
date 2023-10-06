@@ -1611,7 +1611,7 @@ public class TestElementAccessManager extends BasicTestCase {
         PersonManager pMgr = PersonManager.getManager();
         Person thePerson = Person.byName(aID);
         if (thePerson == null)
-			thePerson = pMgr.createPerson(aID, authenticationDeviceID, Boolean.FALSE);
+			thePerson = Person.create(PersistencyLayer.getKnowledgeBase(), aID, authenticationDeviceID);
         else fail("Person '" + aID + "' exists already.");
         return thePerson;
     }

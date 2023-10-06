@@ -15,9 +15,9 @@ import test.com.top_logic.basic.BasicTestCase;
 
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
@@ -247,10 +247,9 @@ public class TestGroup extends BasicTestCase {
 	}
 
 	private Person mkPerson() {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		String name = mkName();
-		Person p = PersonManager.getManager().createPerson(name, "dbSecurity", Boolean.FALSE);
-		Person.createRepresentativeGroup(p);
-		return p;
+		return Person.create(kb, name, "dbSecurity");
 	}
 	
 	private String mkName() {

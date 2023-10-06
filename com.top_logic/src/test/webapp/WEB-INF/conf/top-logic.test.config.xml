@@ -324,7 +324,6 @@
 					<handler id="applyPersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$ApplyPersonGroupCommand"/>
 					<handler id="savePersonGroup" class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent$SavePersonGroupCommand"/>
 					<handler id="switchToAJAXEdit" class="com.top_logic.layout.form.component.SwitchEditCommandHandler"/>
-					<handler id="refreshPersonsCommand" class="com.top_logic.knowledge.gui.layout.person.RefreshPersonsCommandHandler"/>
 					
 					<handler id="updateLogEntries" class="com.top_logic.event.layout.LogEntryFilterComponent$UpdateLogEntriesCommandHandler"/>
 					<handler id="configureLogEntries" class="com.top_logic.event.layout.ConfigureLogEntriesCommandHandler"/>

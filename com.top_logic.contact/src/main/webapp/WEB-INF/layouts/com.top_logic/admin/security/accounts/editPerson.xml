@@ -5,9 +5,6 @@
 		<include name="com.top_logic/admin/security/accounts/personTable.xml"
 			namePrefix="Admin"
 		>
-			<buttons>
-				<reference command-id="refreshPersonsCommand"/>
-			</buttons>
 			<inject>
 				<layoutInfo size="413"/>
 			</inject>

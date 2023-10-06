@@ -33,7 +33,7 @@
 	</index>
 </metaobject>
 
-<metaobject object_type="MOKnowledgeObject" object_name="Password" super_class="KnowledgeObject" db_name="PASSWORD">
+<metaobject object_type="MOKnowledgeObject" object_name="Password" super_class="KnowledgeObject" versioned="false" db_name="PASSWORD">
 	<annotations>
 		<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
 			<binding application-type="com.top_logic.knowledge.wrap.DefaultWrapper"/>
@@ -50,9 +50,9 @@
 	    	deletion-policy="delete-referer" 
 	    	target-type="Person"
 		/>
-		<mo_attribute att_name="password" att_type="String" db_size="254" db_name="USERPASSWORD" mandatory="true" />
-		<mo_attribute att_name="pwdhistory"	    att_type="String"	mandatory="false" db_size="1333" hidden="true" />
-		<mo_attribute att_name="lastPwdChange"	att_type="Date"	    mandatory="false" hidden="true"/>
+		<mo_attribute att_name="password" att_type="String" db_size="254" mandatory="true" />
+		<mo_attribute att_name="expired" att_type="Boolean" mandatory="false"/>
+		<mo_attribute att_name="history" att_type="String" mandatory="false" db_size="4095" hidden="true" />
 	</attributes>
 	<index>
 		<mo_index name="account" unique="true">

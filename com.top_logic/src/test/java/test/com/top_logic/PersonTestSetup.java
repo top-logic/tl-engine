@@ -11,7 +11,6 @@ import junit.framework.Test;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.TLContext;
 
 /**
@@ -46,7 +45,7 @@ public class PersonTestSetup extends TestSetup {
 			ThreadContext.inSystemContext(PersonTestSetup.class, new Computation<Person>() {
 				@Override
 				public Person run() {
-					return PersonManager.getManager().getPersonByName(userId);
+					return Person.byName(userId);
 				}
 			});
 		 

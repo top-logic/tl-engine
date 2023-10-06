@@ -15,6 +15,7 @@ import com.top_logic.contact.business.PersonContact;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.util.TLContext;
 
 /**
  * Interface for {@link #PROCESS_EXECUTION_TYPE} business objects.
@@ -56,7 +57,8 @@ public interface ProcessExecution extends ProcessExecutionBase {
 	 */
 	default Person calculateCreatedBy() {
 		if (KnowledgeItem.State.NEW == tHandle().getState()) {
-			return PersonManager.getManager().getCurrentPerson();
+			PersonManager r = PersonManager.getManager();
+			return TLContext.currentUser();
 		} else {
 			return tCreator();
 		}

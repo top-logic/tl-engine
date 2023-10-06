@@ -51,10 +51,10 @@ public class TestPerson extends BasicTestCase {
 
 	public void testDeletePerson() {
 		String personName = "newTestPerson";
-		Person formerPerson = PersonManager.getManager().getPersonByName(personName);
+		Person formerPerson = Person.byName(personName);
 		assertNull("Person '" + personName + "' is created in this test.", formerPerson);
 		Person newPerson = createPerson(personName);
-		assertEquals(newPerson, PersonManager.getManager().getPersonByName(personName));
+		assertEquals(newPerson, Person.byName(personName));
 
 		// delete the person without using PersonManager
 		KnowledgeBase kb = newPerson.getKnowledgeBase();
@@ -62,7 +62,7 @@ public class TestPerson extends BasicTestCase {
 		newPerson.tDelete();
 		deleteTx.commit();
 
-		Person stillKnownPerson = PersonManager.getManager().getPersonByName(personName);
+		Person stillKnownPerson = Person.byName(personName);
 		assertNull("Ticket #13195: Deleting person does not update person manager.", stillKnownPerson);
 	}
 
@@ -199,12 +199,12 @@ public class TestPerson extends BasicTestCase {
         {
 			KnowledgeObject thePersonKO =
 				kBase.getKnowledgeObject("Person", KBUtils.getWrappedObjectName(TestPersonSetup.getTestPerson()));
-            Person thePerson  = thePM.getPersonByKO(thePersonKO);
+            Person thePerson  = thePersonKO.getWrapper();
 
             assertNotNull(thePerson.toString());
             assertNotNull(thePerson.getLocale());  // should be Locale.EN ..    
 
-            Person thePerson2 = thePM.getPersonByKO(thePersonKO);
+            Person thePerson2 = thePersonKO.getWrapper();
 
             // the wrappers must be the same
             assertEquals("The wrappers are not the same.", thePerson, thePerson2);
@@ -225,7 +225,7 @@ public class TestPerson extends BasicTestCase {
 	 */
 	public void testToStringForDeletedKO() throws KnowledgeBaseException {
     	String personName = "dau";
-		Person p = PersonManager.getManager().getPersonByName(personName);
+		Person p = Person.byName(personName);
     	assertNotNull("There is no person with name " + personName, p);
 		Transaction delTx = KBSetup.getKnowledgeBase().beginTransaction();
 		p.tDelete();
@@ -248,7 +248,7 @@ public class TestPerson extends BasicTestCase {
 	 */
 	public void testRefetchPerson() throws DataObjectException {
 		String testPersonName = "testPerson";
-		Person existingTestPerson = PersonManager.getManager().getPersonByName(testPersonName);
+		Person existingTestPerson = Person.byName(testPersonName);
 		if (existingTestPerson != null) {
 			fail("Expected no person with name " + testPersonName);
 		}
@@ -305,12 +305,12 @@ public class TestPerson extends BasicTestCase {
 
 			Revision createRevision = WrapperHistoryUtils.getCreateRevision(testPerson);
 			Person testPersonHistoric = WrapperHistoryUtils.getWrapper(createRevision, testPerson);
-			assertNotNull(PersonManager.getManager().getPersonByName(personName));
+			assertNotNull(Person.byName(personName));
 
 			deletePersonNotUser(testPerson);
 
 			assertFalse(testPerson.tValid());
-			assertNull(PersonManager.getManager().getPersonByName(personName));
+			assertNull(Person.byName(personName));
 			assertNotNull(testPersonHistoric.getFullName());
 
 			logListener.assertNoErrorLogged("Assertion: No error is logged during test execution.");
@@ -354,7 +354,8 @@ public class TestPerson extends BasicTestCase {
 	 */
 	public static void deletePersonAndUser(Person person) {
 		Transaction deleteTx = person.getKnowledgeBase().beginTransaction();
-		PersonManager.getManager().deleteUser(person);
+		PersonManager r = PersonManager.getManager();
+		person.tDelete();
 		person.tDelete();
 		deleteTx.commit();
 	}

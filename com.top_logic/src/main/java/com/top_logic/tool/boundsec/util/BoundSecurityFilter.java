@@ -13,6 +13,7 @@ import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
+import com.top_logic.util.TLContext;
 
 /**
  * A Filter based checking BoundObjects.
@@ -42,7 +43,8 @@ public class BoundSecurityFilter implements Filter {
     public BoundSecurityFilter() {
 		{
             isSuperUser = ThreadContext.isAdmin();
-            person      = PersonManager.getManager().getCurrentPerson();
+			PersonManager r = PersonManager.getManager();
+            person      = TLContext.currentUser();
         }
     }
 

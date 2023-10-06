@@ -1609,7 +1609,7 @@ public class TestElementAccessManager extends BasicTestCase {
     private Person initPerson(String aID) {
         String authenticationDeviceID = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
         PersonManager pMgr = PersonManager.getManager();
-        Person thePerson = pMgr.getPersonByName(aID);
+        Person thePerson = Person.byName(aID);
         if (thePerson == null)
 			thePerson = pMgr.createPerson(aID, authenticationDeviceID, Boolean.FALSE);
         else fail("Person '" + aID + "' exists already.");
@@ -1628,7 +1628,8 @@ public class TestElementAccessManager extends BasicTestCase {
      */
 	private void removePerson(Person aPerson) {
         if (aPerson != null && aPerson.tValid()) {
-			PersonManager.getManager().deleteUser(aPerson);
+			PersonManager r = PersonManager.getManager();
+			aPerson.tDelete();
         }
     }
 

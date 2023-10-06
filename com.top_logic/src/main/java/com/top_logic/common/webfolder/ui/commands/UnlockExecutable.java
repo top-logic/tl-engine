@@ -10,7 +10,6 @@ import com.top_logic.common.webfolder.model.FolderContent;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -77,7 +76,7 @@ public class UnlockExecutable extends AbstractWebfolderAction {
                     String theUser = TLContext.getContext().getCurrentUserName();
 
                     if (!theUser.equals(theName)) {
-                        Person thePerson = PersonManager.getManager().getPersonByName(theName);
+                        Person thePerson = Person.byName(theName);
 
                         if (thePerson != null) {
                             theName = thePerson.getFullName();

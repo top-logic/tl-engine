@@ -71,7 +71,7 @@ public class ScriptConsoleHandler extends AbstractCommandHandler {
 	private HandlerResult search(LayoutComponent searchEditor) {
 		return ((SearchExpressionEditor) searchEditor).search(expr -> {
 			if (expr != null) {
-				_scriptComponent.execute(expr, config().isWithCommit());
+				return _scriptComponent.execute(expr, config().isWithCommit());
 			}
 			return HandlerResult.DEFAULT_RESULT;
 		});

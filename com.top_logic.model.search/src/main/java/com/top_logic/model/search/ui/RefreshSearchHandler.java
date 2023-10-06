@@ -39,7 +39,7 @@ public class RefreshSearchHandler extends AbstractCommandHandler {
 		SearchExpressionEditor selectedSearchEditor = searchComponent.getActiveSearchExpressionEditor();
 		return selectedSearchEditor.search(expr -> {
 			if (expr != null) {
-				searchComponent.execute(expr, false);
+				return searchComponent.execute(expr, false);
 			}
 			return HandlerResult.DEFAULT_RESULT;
 		});

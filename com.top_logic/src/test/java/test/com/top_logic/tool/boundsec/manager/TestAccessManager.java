@@ -15,6 +15,7 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.basic.Logger;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -54,15 +55,15 @@ public class TestAccessManager  extends BasicTestCase {
             // create three different persons
             personA = Person.byName("AA"); 
             if (personA == null) 
-                personA = pMgr.createPerson("AA", authenticationDeviceID, Boolean.FALSE);
+                personA = Person.create(PersistencyLayer.getKnowledgeBase(), "AA", authenticationDeviceID);
             assertTrue(KBSetup.getKnowledgeBase().commit());
 
             personB = Person.byName("BB");
             if (personB == null) 
-				personB = pMgr.createPerson("BB", authenticationDeviceID, Boolean.FALSE);
+				personB = Person.create(PersistencyLayer.getKnowledgeBase(), "BB", authenticationDeviceID);
             personC = Person.byName("CC");
             if (personC == null)  
-				personC = pMgr.createPerson("CC", authenticationDeviceID, Boolean.FALSE);
+				personC = Person.create(PersistencyLayer.getKnowledgeBase(), "CC", authenticationDeviceID);
 
             assertTrue(KBSetup.getKnowledgeBase().commit());
 			TLContext context = TLContext.getContext();

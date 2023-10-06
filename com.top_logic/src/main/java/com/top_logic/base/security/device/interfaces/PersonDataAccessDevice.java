@@ -112,5 +112,10 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	default boolean allowExternalAuthentication() {
 		return ((PersonDataAccessDeviceConfig) getConfig()).isAllowExtAuthentication();
 	}
+
+	/**
+	 * The authentication device to use for accounts created by this device.
+	 */
+	public String getAuthenticationDeviceID();
 	
 }

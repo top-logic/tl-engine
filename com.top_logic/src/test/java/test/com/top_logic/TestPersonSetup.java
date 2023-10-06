@@ -50,7 +50,8 @@ public class TestPersonSetup extends ThreadContextSetup {
 	protected void doSetUp() throws Exception {
 		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		{
-			_testPerson = PersonManager.getManager().createPerson(USER_ID, "dbSecurity", Boolean.FALSE);
+			PersonManager r = PersonManager.getManager();
+			_testPerson = Person.create(PersistencyLayer.getKnowledgeBase(), USER_ID, "dbSecurity");
 
 			TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity").setPassword(_testPerson,
 				USER_PASSWORD.toCharArray());

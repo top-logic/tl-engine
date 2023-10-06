@@ -31,7 +31,6 @@ import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
@@ -361,7 +360,7 @@ public class LiveActionExecutor {
 			String processId,
 			String accountName,
 			String password, boolean master) {
-		Person account = PersonManager.getManager().getPersonByName(accountName);
+		Person account = Person.byName(accountName);
 		if (account == null) {
 			throw ApplicationAssertions.fail(action, "Account '" + accountName + "' does not exist.");
 		}

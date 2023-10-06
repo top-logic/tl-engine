@@ -22,7 +22,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.DispatchException;
 import com.top_logic.util.Resources;
 
@@ -217,7 +216,7 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 			}
 		}
 	
-		Person user = PersonManager.getManager().getPersonByName(userName);
+		Person user = Person.byName(userName);
 		if (user == null) {
 			throw new LoginDeniedException("User '" + userName + "' does not exist.");
 		} else if (!user.isAlive()) {

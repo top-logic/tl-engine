@@ -41,6 +41,7 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link CommandHandler} to start a {@link ProcessExecution} and skip the first {@link Task} if it
@@ -144,7 +145,7 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler {
 	private Token findSingleToken(ProcessExecution pe) {
 		Set<? extends Token> tokens = pe.getUserRelevantTokens();
 		Filter filter = new Filter<Token>() {
-			Person _person = PersonManager.getManager().getCurrentPerson();
+			Person _person = TLContext.currentUser();
 
 			@Override
 			public boolean accept(Token token) {
@@ -161,7 +162,8 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler {
 
 	private void showActiveTask(LayoutComponent aComponent, ProcessExecution pe) {
 		Set<? extends Token> tokens = pe.getUserRelevantTokens();
-		Person person = PersonManager.getManager().getCurrentPerson();
+		PersonManager r = PersonManager.getManager();
+		Person person = TLContext.currentUser();
 		for (Token token : tokens) {
 			if (GuiEngine.getInstance().isActor(person, token)) {
 				LayoutComponent listComponent = componentByName(aComponent, config().getTokenTableName());

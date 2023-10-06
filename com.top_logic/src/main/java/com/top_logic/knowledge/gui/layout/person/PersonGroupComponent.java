@@ -71,7 +71,8 @@ public class PersonGroupComponent extends EditComponent {
     @Override
 	public boolean validateModel(DisplayContext context) {
 		if (getModel() == null) {
-			setModel((PersonManager.getManager().getCurrentPerson()));
+			PersonManager r = PersonManager.getManager();
+			setModel((TLContext.currentUser()));
 		}
 		return super.validateModel(context);
     }

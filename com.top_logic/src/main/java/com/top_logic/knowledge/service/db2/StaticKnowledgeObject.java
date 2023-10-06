@@ -28,7 +28,6 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.exceptions.InvalidWrapperException;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 
 /**
@@ -164,8 +163,8 @@ public class StaticKnowledgeObject extends StaticKnowledgeItem implements Knowle
 		}
 		TLID personId = IdentifierUtil.fromExternalForm(contextId.substring(SessionContext.PERSON_ID_PREFIX.length()));
 		long historyContext = HistoryUtils.getCreateRevision(contextObject).getCommitNumber();
-		return PersonManager.getManager().getPersonByIdentifier(personId, contextObject.getKnowledgeBase(),
-			historyContext);
+		return Person.byId(contextObject.getKnowledgeBase(), historyContext,
+			personId);
 	}
 
 	@Override

@@ -64,6 +64,7 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link CommandHandler} to finish a task. Shows a confirm-dialog before switching to the next
@@ -151,7 +152,8 @@ public class FinishTaskCommand extends AbstractCommandHandler {
 		if (target != null) {
 
 			Set<? extends Token> tokens = pe.getUserRelevantTokens();
-			Person person = PersonManager.getManager().getCurrentPerson();
+			PersonManager r = PersonManager.getManager();
+			Person person = TLContext.currentUser();
 			for (Token token : tokens) {
 				if (GuiEngine.getInstance().isActor(person, token)) {
 					if (token.getNode() == target) {

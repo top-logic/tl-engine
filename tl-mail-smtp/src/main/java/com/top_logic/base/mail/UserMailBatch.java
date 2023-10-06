@@ -17,7 +17,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.BatchImpl;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /** 
  * Class that will send E-mails to users/groups in a batch-job.
@@ -114,7 +113,7 @@ public class UserMailBatch extends BatchImpl {
 
             while (theNameIter.hasNext()){
                 String        theName = (String) theNameIter.next();
-                UserInterface theUser = Person.userOrNull(PersonManager.getManager().getPersonByName(theName));
+                UserInterface theUser = Person.userOrNull(Person.byName(theName));
                 if (theUser != null){
                     theRecipients.add(theUser); 
                 }

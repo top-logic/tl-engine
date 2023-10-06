@@ -18,7 +18,6 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.CharDefault;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.importer.excel.transformer.FastListElementTransformer;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
@@ -41,7 +40,7 @@ public class WrapperImportParser {
 
         @Override
         public com.top_logic.knowledge.wrap.person.Person map(String input) {
-            return PersonManager.getManager().getPersonByName(input);
+            return com.top_logic.knowledge.wrap.person.Person.byName(input);
         }
     }
 

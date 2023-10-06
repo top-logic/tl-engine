@@ -62,7 +62,8 @@ public class TestPersonSetup extends ThreadContextSetup {
 	protected void doTearDown() throws Exception {
 		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
 		{
-			PersonManager.getManager().deleteUser(_testPerson);
+			PersonManager r = PersonManager.getManager();
+			_testPerson.tDelete();
 			tx.commit();
 		}
 	}

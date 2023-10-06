@@ -123,7 +123,7 @@ public class UnusedAccountCheck extends AbstractConfiguredInstance<UnusedAccount
 		int notifyDayCount = getConfig().getNotifyDayCount();
 		int deleteDayCount = getConfig().getDeleteDayCount();
 		Set<String> ignoreAccounts = getConfig().getExcludeUIDs();
-		List<Person> persons = _personManager.getAllAlivePersons();
+		List<Person> persons = Person.all();
 		for (Person person : persons) {
 			String username = person.getName();
 			if (ignoreAccounts.contains(username))
@@ -242,7 +242,7 @@ public class UnusedAccountCheck extends AbstractConfiguredInstance<UnusedAccount
 		msg.append(dayDiff);
 		msg.append(" days. The account gets now deleted because it isn't used.");
 		Logger.info(msg.toString(), UserMonitor.class);
-		_personManager.deleteUser(person);
+		person.tDelete();
 	}
 
 }

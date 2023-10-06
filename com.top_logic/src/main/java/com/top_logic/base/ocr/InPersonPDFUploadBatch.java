@@ -50,7 +50,7 @@ public class InPersonPDFUploadBatch extends PDFUploadBatch {
 
 			@Override
 			public Person run() {
-				return _personManager.getPersonByName(_personName);
+				return Person.byName(_personName);
 			}
 		});
 	}

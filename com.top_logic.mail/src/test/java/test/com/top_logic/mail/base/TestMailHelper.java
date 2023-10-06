@@ -38,6 +38,7 @@ import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.time.CalendarUtil;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mail.proxy.MailReceiver;
 import com.top_logic.mail.proxy.MailReceiverService;
@@ -216,8 +217,8 @@ public class TestMailHelper extends BasicTestCase {
         
         //resolve address from Person
         PersonManager thePM = PersonManager.getManager();
-        receiver.add(thePM.getPersonByName("root"));     // support@top-logic.com
-        receiver.add(thePM.getPersonByName("guest_de")); // null
+        receiver.add(Person.byName("root"));     // support@top-logic.com
+        receiver.add(Person.byName("guest_de")); // null
         
         theAddresses = theHelper.getEmailAddresses(receiver, invalidAddresses);
         assertEquals(1, theAddresses.size());
@@ -227,8 +228,8 @@ public class TestMailHelper extends BasicTestCase {
         
         //resolve address from Group
         Group theGroup = Group.createGroup("testmailuser");
-        theGroup.addMember(thePM.getPersonByName("root")); // support@top-logic.com
-        theGroup.addMember(thePM.getPersonByName("guest_de")); // null
+        theGroup.addMember(Person.byName("root")); // support@top-logic.com
+        theGroup.addMember(Person.byName("guest_de")); // null
         
         receiver.add(theGroup);
         theAddresses = theHelper.getEmailAddresses(receiver, invalidAddresses);

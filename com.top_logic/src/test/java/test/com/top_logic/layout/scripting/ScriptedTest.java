@@ -453,7 +453,7 @@ public final class ScriptedTest extends LogListeningTestCase {
 	}
 
 	private Person resolveUserId(final String userId) {
-		return PersonManager.getManager().getPersonByName(userId);
+		return Person.byName(userId);
 	}
 
 	/**

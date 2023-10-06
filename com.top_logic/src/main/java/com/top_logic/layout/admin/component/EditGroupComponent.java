@@ -492,7 +492,7 @@ public class EditGroupComponent extends EditComponent {
 		public boolean check(Object aValue) throws CheckException {
 			{
 				// explicit check all Group names including representative groups
-				List theGroups = Group.getAll(PersistencyLayer.getKnowledgeBase(), FilterFactory.trueFilter(), true);
+				List theGroups = Group.getAll(PersistencyLayer.getKnowledgeBase(), FilterFactory.trueFilter());
                 Set  theNames  = new HashSet(theGroups.size());
                 for (int i=0; i<theGroups.size(); i++) {
                     theNames.add(((Group) theGroups.get(i)).getName());

@@ -1554,7 +1554,6 @@
 					  super-user-name="root"
 					  person-name-pattern="[-_a-zA-Z0-9@\.]+"
 					  token-timeout="5400000"
-					  show-representative-groups="false"
 					  >
 			</instance>
 		</config>

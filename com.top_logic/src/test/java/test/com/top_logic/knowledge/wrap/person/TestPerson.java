@@ -341,7 +341,7 @@ public class TestPerson extends BasicTestCase {
 		try {
 			String authenticationDeviceID = root.getAuthenticationDeviceID();
 			Person testPerson =
-				personManager.createPerson(personName, authenticationDeviceID, Boolean.FALSE);
+				Person.create(PersistencyLayer.getKnowledgeBase(), personName, authenticationDeviceID);
 			transactionCreatePerson.commit();
 			return testPerson;
 		} finally {

@@ -24,6 +24,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.ObjectFlag;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.identifier.ObjectReference;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
@@ -330,7 +331,7 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 	private Person createPerson(PersonManager pm, String personName) {
 		TLSecurityDeviceManager sdm = TLSecurityDeviceManager.getInstance();
 		String authenticationDeviceID = sdm.getDefaultAuthenticationDevice().getDeviceID();
-		return pm.createPerson(personName, authenticationDeviceID, Boolean.FALSE);
+		return Person.create(PersistencyLayer.getKnowledgeBase(), personName, authenticationDeviceID);
 	}
 
     /**

@@ -1281,9 +1281,6 @@
 						clique="edit"/>
 					<handler id="nullModelSwitchToAJAXEdit" class="com.top_logic.layout.form.component.NullModelSwitchEditCommandHandler"
 						clique="edit"/>
-					<handler id="refreshPersonsCommand" class="com.top_logic.knowledge.gui.layout.person.RefreshPersonsCommandHandler"
-						clique="refresh"/>
-					
 					<handler id="listSwitchToAJAXEdit" class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 						clique="edit">
 						<executability>
@@ -1553,7 +1550,6 @@
 			<instance class="com.top_logic.knowledge.wrap.person.PersonManager"
 					  super-user-name="root"
 					  person-name-pattern="[-_a-zA-Z0-9@\.]+"
-					  token-timeout="5400000"
 					  >
 			</instance>
 		</config>
@@ -1607,8 +1603,9 @@
 					</task>
 					<task class="com.top_logic.knowledge.wrap.person.RefreshUsersTask"
 						name="RefreshUsersTask"
-						run-on-startup="false" >
+						run-on-startup="true" >
 						<schedules>
+							<on-startup/>
 							<periodically
 								interval="2h"
 								start-time="00:30"

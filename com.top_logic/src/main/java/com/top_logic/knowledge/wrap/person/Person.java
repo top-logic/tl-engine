@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
+import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
+import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
@@ -21,6 +23,7 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.time.TimeZones;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.NamedValues;
 import com.top_logic.dsa.DataAccessProxy;
@@ -66,10 +69,14 @@ public class Person extends AbstractBoundWrapper implements Author {
 	public static final String RESTRICTED_USER = "restrictedUser";
 
 	/**
-	 * attribute to indicate against which auth system the person should be authenticated, needed in
-	 * the KO only, not in the DO
+	 * @see #getAuthenticationDeviceID()
 	 **/
 	public static final String AUTHENTICATION_DEVICE_ID = "authDeviceID";
+
+	/**
+	 * @see #getDataDeviceId()
+	 */
+	public static final String DATA_DEVICE_ID = "dataDeviceID";
 
 	/** The attribute "locale". */
 	public static final String LOCALE = "locale";
@@ -97,18 +104,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     public static final String ATTR_UNUSED_NOTIFIED = "unusedNotified";
 
     protected static final String GLOBAL_ROLE_KA = "hasGlobalRole";
-    
-    /**
-     * Placeholder for actual data device as should be used for persons initially in KB
-     * will be replaced with default DataAccessDevice automatically
-     */
-    protected static final String PLACE_HOLDER_DEFAULT_DATA_ACCESS_ID = "defaultDataAccessID";
-
-    /**
-     * Placeholder for actual AuthenticationDevice as should be used for persons initially in KB
-     * will be replaced with default AuthenticationDevice automatically
-     */    
-    protected static final String PLACE_HOLDER_DEFAULT_DATA_AUTH_ID   = "defaultAuthenticationID";
     
 	private static final AssociationSetQuery<KnowledgeAssociation> GLOBAL_ROLES_ATTR = AssociationQuery
 		.createOutgoingQuery("globalRoles",
@@ -242,15 +237,25 @@ public class Person extends AbstractBoundWrapper implements Author {
     }
 
     /**
-     * the ID of the AuthenticationDevice, this person can be authenticated against
-     */
+	 * The ID of the {@link AuthenticationDevice}, this account can be authenticated with.
+	 */
 	public String getAuthenticationDeviceID() {
-        String theDeviceID = (String)getValue(Person.AUTHENTICATION_DEVICE_ID);
-        if(PLACE_HOLDER_DEFAULT_DATA_AUTH_ID.equals(theDeviceID)){ //happens only during the initial startup call
-            theDeviceID = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
-        }
-        return theDeviceID;
+		return tGetDataString(Person.AUTHENTICATION_DEVICE_ID);
     }
+
+	/**
+	 * The ID of the {@link PersonDataAccessDevice} that created this account.
+	 */
+	public String getDataDeviceId() {
+		return tGetDataString(DATA_DEVICE_ID);
+	}
+
+	/**
+	 * @see #getDataDeviceId()
+	 */
+	public void setDataDeviceId(String value) {
+		tSetData(DATA_DEVICE_ID, value);
+	}
 
     /**
      * The method which actual copies the data from one user object to another
@@ -490,25 +495,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     public boolean isAlive() {
 		return tValid();
     }
-    
-    /**
-     * Static utility method to create the corresponding representative group for the given
-     * person. Should be called for newly created persons.
-     *
-     * @param aPerson
-     *        the person to create the representative group for
-     */
-    public static void createRepresentativeGroup(Person aPerson){
-        if (aPerson.getRepresentativeGroup() == null) {
-            try{
-                Group thePersonsGroup = Group.createGroup(aPerson.getName());
-                thePersonsGroup.setIsSystem(true);
-                thePersonsGroup.bind(aPerson);
-            } catch(Exception e) {
-                Logger.error("Failed to create personal group for person", e, Person.class);
-            }
-        }
-    }
 
 	/**
 	 * This method determines whether this person is a restricted user, i.e. whether it has
@@ -574,6 +560,36 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 */
 	public void setAdmin(boolean value) {
 		tSetDataBoolean("admin", value);
+	}
+
+	/**
+	 * Create a new {@link Person} in given {@link KnowledgeBase}. Does NOT check if such a person
+	 * already exists! Note: No user object will be created by this method
+	 * 
+	 * @param kb
+	 *        the {@link KnowledgeBase} in which the person is created.
+	 * @param userName
+	 *        the person (login) name
+	 * 
+	 * @return the created person
+	 */
+	public static Person create(KnowledgeBase kb, String userName, String authenticationDeviceID) {
+		KnowledgeObject handle = kb.createKnowledgeObject(OBJECT_NAME);
+		handle.setAttributeValue(AbstractWrapper.NAME_ATTRIBUTE, userName);
+		Person result = handle.getWrapper();
+		result.setAuthenticationDeviceID(authenticationDeviceID);
+		result.setLocale(ResourcesModule.getInstance().getDefaultLocale());
+
+		Group representativeGroup = Group.createGroup(result.getName());
+		representativeGroup.setIsSystem(true);
+		representativeGroup.bind(result);
+
+		Group defaultGroup = InitialGroupManager.getInstance().getDefaultGroup();
+		if (defaultGroup != null) {
+			defaultGroup.addMember(result);
+		}
+
+		return result;
 	}
 
 	/**

@@ -10,6 +10,7 @@ import java.util.Map;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.event.ModelTrackingService;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.form.FormContainer;
@@ -59,7 +60,8 @@ public class NewPersonCommandHandler extends AbstractCreateCommandHandler {
 
 	public Person createPerson(String anID, String aFirst, String aSurname, String aTitle, String aAuthDeviceID,
 			Boolean isRestricted) {
-		Person thePerson = PersonManager.getManager().createPerson(anID, aAuthDeviceID, isRestricted);
+		PersonManager r = PersonManager.getManager();
+		Person thePerson = Person.create(PersistencyLayer.getKnowledgeBase(), anID, aAuthDeviceID);
 		if (thePerson == null) {
 			throw new TopLogicException(I18NConstants.REFRESH_ACCOUNTS_FAILED);
         }

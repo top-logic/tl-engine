@@ -31,6 +31,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Static plug-in implementation of {@link TLObject} functionality.
@@ -215,7 +216,7 @@ public class PersistentObjectImpl {
                 if (value == null) {
                     collectionValue = Collections.EMPTY_LIST;
                 } else if (!(value instanceof Collection)) {
-					throw new IllegalArgumentException("Value for attribute '" + attribute + "' must be a collection.");
+					throw new IllegalArgumentException("Value must be a collection.");
                 } else {
                 	collectionValue = (Collection<?>) value;
                 }
@@ -224,13 +225,8 @@ public class PersistentObjectImpl {
             }
 
 			touch(self, attribute);
-        }
-        catch (IllegalArgumentException iag) {
-            throw iag;  // Rethrow as this is usually logged in lower layers (KHA)
-        } catch (Exception e) {
-			String message = "Problem setting attribute " + attribute + " to " + value;
-			Logger.error(message, e, PersistentObjectImpl.class);
-            throw (IllegalStateException) new IllegalStateException(message).initCause(e);
+		} catch (RuntimeException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_SETTING_VALUE__ATTRIBUTE_VALUE.fill(attribute, value), ex);
         }
 	}
     

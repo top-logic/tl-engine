@@ -34,7 +34,6 @@ import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperNameComparator;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
@@ -329,35 +328,20 @@ public class Group extends AbstractBoundWrapper implements IGroup {
         return getAll(aKB, FilterFactory.trueFilter());
     }
 
-    /**
-	 * Get all Group for the given KnowledgeBase , matching the given filter criteria
-	 * 
-	 * @param aKB
-	 *        the KnowledgeBase to fetch the Group from.
-	 * @return A list of Groups, never null. Includes representative groups depending on
-	 *         configuration of personmanager
-	 */
-	public static final List<Group> getAll(KnowledgeBase aKB, Filter<? super Group> aFilter) {
-    	boolean returnRepresentativeGroups = PersonManager.getManager().returnRepresentativeGroups();
-		return getAll(aKB, aFilter, returnRepresentativeGroups);
-	}
-
 	/**
 	 * Get all Group for the given KnowledgeBase , matching the given filter criteria
 	 * 
 	 * @param aKB
 	 *        the KnowledgeBase to fetch the Group from.
-	 * @param includeRepresentativeGroups Flag to include representative groups regardless of configuration
 	 * @return A list of Groups, never null.
 	 */
-	public static final List<Group> getAll(KnowledgeBase aKB, Filter<? super Group> aFilter,
-			boolean includeRepresentativeGroups) {
+	public static final List<Group> getAll(KnowledgeBase aKB, Filter<? super Group> aFilter) {
 		Collection<KnowledgeObject> allKOs = aKB.getAllKnowledgeObjects(Group.OBJECT_NAME);
 		List<Group> result = new ArrayList<>(allKOs.size());
 		Iterator<KnowledgeObject> koIter = allKOs.iterator();
         while (koIter.hasNext()) {
 			Group aGroup = (Group) WrapperFactory.getWrapper(koIter.next());
-        	if(aFilter.accept(aGroup) && (!aGroup.isRepresentativeGroup() || includeRepresentativeGroups))
+			if (aFilter.accept(aGroup) && !aGroup.isRepresentativeGroup())
             result.add(aGroup);
         }
         Collections.sort(result, WrapperNameComparator.getInstance());

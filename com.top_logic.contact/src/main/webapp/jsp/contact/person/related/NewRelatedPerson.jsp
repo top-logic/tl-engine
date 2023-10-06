@@ -32,9 +32,6 @@ com.top_logic.base.security.device.TLSecurityDeviceManager"
 			<form:inputCell name="<%=PersonAttributes.RESTRICTED_USER%>"
 				colon="true"
 			/>
-			<form:inputCell name="<%=PersonAttributes.DATA_ACCESS_DEVICE_ID%>"
-				colon="true"
-			/>
 
 			<form:ifExists name="<%= NewRelatedPersonComponent.FIELD_NAME_RELATED_CONTACT %>">
 				<form:descriptionCell>

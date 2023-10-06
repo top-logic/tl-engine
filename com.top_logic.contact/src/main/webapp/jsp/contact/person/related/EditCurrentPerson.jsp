@@ -53,14 +53,6 @@
 			<form:groupCell titleKeySuffix="securityData">
 				<%
 				Collection<?> allDataDevices = TLSecurityDeviceManager.getInstance().getConfiguredDataAccessDeviceIDs();
-						if(ThreadContext.isAdmin() && !allDataDevices.isEmpty()){
-				%>
-					<form:inputCell name="<%=PersonAttributes.DATA_ACCESS_DEVICE_ID%>"/>
-					<%
-					}
-					%>
-				
-				<%
 								Collection<?> allAuthDevices = TLSecurityDeviceManager.getInstance().getConfiguredAuthenticationDeviceIDs();
 										if(ThreadContext.isAdmin() && !allAuthDevices.isEmpty()){
 								%>

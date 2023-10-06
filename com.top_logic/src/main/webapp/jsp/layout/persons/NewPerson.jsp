@@ -52,16 +52,6 @@ com.top_logic.base.security.device.TLSecurityDeviceManager"
 				</form:description>
 				<form:input name="<%= PersonAttributes.TITLE %>"/>
 			</form:descriptionCell>
-
-			<form:descriptionCell>
-				<form:description>
-					<form:label name="<%= PersonAttributes.DATA_ACCESS_DEVICE_ID %>"/>
-					<form:error name="<%= PersonAttributes.DATA_ACCESS_DEVICE_ID %>"
-						icon="true"
-					/>
-				</form:description>
-				<form:select name="<%= PersonAttributes.DATA_ACCESS_DEVICE_ID %>"/>
-			</form:descriptionCell>
 		</form:form>
 	</layout:body>
 </layout:html>

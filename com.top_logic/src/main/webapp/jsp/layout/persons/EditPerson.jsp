@@ -159,20 +159,9 @@ com.top_logic.knowledge.wrap.person.PersonManager"
 							/>
 							<%
 							if (ThreadContext.isAdmin()) {
-													Set<String> allDataDevices = TLSecurityDeviceManager.getInstance().getConfiguredDataAccessDeviceIDs();
-													if (!allDataDevices.isEmpty()) {
-							%>
-									<form:inputCell name="<%=PersonAttributes.DATA_ACCESS_DEVICE_ID%>">
-										<form:select name="<%=PersonAttributes.DATA_ACCESS_DEVICE_ID%>"/>
-									</form:inputCell>
-									<%
-									}
+								Set<String> allAuthDevices = TLSecurityDeviceManager.getInstance().getConfiguredAuthenticationDeviceIDs();
+									if (!allAuthDevices.isEmpty()) {
 									%>
-								
-								<%
-																Set<String> allAuthDevices = TLSecurityDeviceManager.getInstance().getConfiguredAuthenticationDeviceIDs();
-																						if (!allAuthDevices.isEmpty()) {
-																%>
 									<form:inputCell name="<%=PersonAttributes.AUTHENTICATION_DEVICE_ID%>">
 										<form:select name="<%=PersonAttributes.AUTHENTICATION_DEVICE_ID%>"/>
 									</form:inputCell>

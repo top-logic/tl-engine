@@ -5873,6 +5873,10 @@ div.mcMinimized .accText {
 	padding-top: 8px;
 }
 
+.tl-info-service-item__details-message > ul {
+	padding-left: 25px;
+}
+
 p.tl-info-service-item__details-message-no-bottom {
 	margin-bottom: 0px;
 }

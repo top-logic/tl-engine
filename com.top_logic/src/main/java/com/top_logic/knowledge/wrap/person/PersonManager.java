@@ -24,7 +24,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -73,11 +72,6 @@ public class PersonManager extends ManagedClass {
 		 * default of @see #getUserNamePattern()
 		 */
 		static final String DEFAULT_PATTERN = "[a-zA-Z]\\w*";
-
-		/**
-		 * @see #isRepresentativeGroupsShown()
-		 */
-		static final String XML_KEY_SHOW_REP_GRPS = "show-representative-groups";
 
 		/**
 		 * @see #getPersonNameMaxLength()
@@ -129,14 +123,6 @@ public class PersonManager extends ManagedClass {
 		Pattern getUserNamePattern();
 
 		/**
-		 * a config flag indicating whether the persons representative groups should show up
-		 *         in the system or not
-		 */
-		@BooleanDefault(false)
-		@Name(XML_KEY_SHOW_REP_GRPS)
-		boolean isRepresentativeGroupsShown();
-
-		/**
 		 * maximum length of person name
 		 */
 		@IntDefault(DEFAULT_MAX_PERSON_NAME_LENGTH)
@@ -173,8 +159,6 @@ public class PersonManager extends ManagedClass {
 
 	private final int maxPersonNameLength;
 
-	private final boolean showRepresentativeGroups;
-	
 	private final String superUserName;
 	
 	private final int tokenTimeout;
@@ -190,7 +174,6 @@ public class PersonManager extends ManagedClass {
 	@CalledByReflection
 	public PersonManager(InstantiationContext context, Config config) {
 		userNamePattern = config.getUserNamePattern();
-		showRepresentativeGroups = config.isRepresentativeGroupsShown();
 		maxPersonNameLength = config.getPersonNameMaxLength();
 		superUserName = config.getSuperUserName();
 		tokenTimeout = config.getTokenTimeout();
@@ -211,14 +194,6 @@ public class PersonManager extends ManagedClass {
 		return superUserName;
 	}
 
-	/**
-	 * A config flag indicating whether the persons representative groups should show up in the
-	 * system or not.
-	 */
-	public boolean returnRepresentativeGroups(){
-		return showRepresentativeGroups;
-	}
-	
 	/**
 	 * Create a new Person and User with given Name in default KnowledgeBase.
 	 * 

@@ -5,164 +5,130 @@
  */
 package com.top_logic.knowledge.wrap.person;
 
-import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import com.top_logic.base.locking.Lock;
-import com.top_logic.basic.DebugHelper;
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
+import com.top_logic.base.user.UserInterface;
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.InApp;
-import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.InstanceFormat;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
-import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.basic.util.Computation;
-import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseException;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.util.sched.task.Task;
-import com.top_logic.util.sched.task.impl.TaskImpl;
-import com.top_logic.util.sched.task.result.TaskResult.ResultType;
+import com.top_logic.util.sched.task.impl.StateHandlingTask;
 
 /**
- * {@link Task} that calls {@link PersonManager#initUserMap() updates} cache in the
- * {@link PersonManager}.
+ * {@link Task} to synchronized accounts with external systems such as LDAP.
  * 
  * @author <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 @InApp
-public class RefreshUsersTask<C extends RefreshUsersTask.Config<?>> extends TaskImpl<C> {
+public class RefreshUsersTask<C extends RefreshUsersTask.Config<?>> extends StateHandlingTask<C> {
 
 	/**
 	 * Configuration options for {@link RefreshUsersTask}.
 	 */
-	public interface Config<I extends RefreshUsersTask<?>> extends TaskImpl.Config<I> {
-
+	public interface Config<I extends RefreshUsersTask<?>> extends StateHandlingTask.Config<I> {
 		/**
-		 * @see #getKnowledgeBaseProvider()
+		 * The maximum number of accounts to delete during a synchronization run.
+		 * 
+		 * <p>
+		 * If more accounts should be removed from the system in a synchronization run as given in
+		 * this limit, this is interpreted as invalid configuration in the remote system. In that
+		 * case, no accounts are removed at all, but the task reports an error.
+		 * </p>
+		 * 
+		 * <p>
+		 * The special value of <code>-1</code> means that no limit should be enforced.
+		 * </p>
+		 * 
+		 * <p>
+		 * A value of <code>0</code> means that accounts are created during synchronization, but
+		 * never removed from this system. An account removal in a remote system is silently
+		 * ignored, without producing an error during synchronization.
+		 * </p>
 		 */
-		static final String KNOWLEDGE_BASE_PROPERTY = "knowledge-base";
-
-		/**
-		 * @see #getPersonManagerProvider()
-		 */
-		static final String PERSON_MANAGER_PROPERTY = "person-manager";
-
-		/**
-		 * {@link PersonManager}, which shall by updated by this task
-		 */
-		@InstanceDefault(DefaultPersonManagerProvider.class)
-		@InstanceFormat
-		@Name(PERSON_MANAGER_PROPERTY)
-		Provider<PersonManager> getPersonManagerProvider();
-
-		/**
-		 * @see #getPersonManagerProvider()
-		 */
-		void setPersonManagerProvider(Provider<PersonManager> value);
-
-		/**
-		 * {@link KnowledgeBase}, to which changes, made by this task, will be committed to
-		 */
-		@InstanceDefault(DefaultKnowledgeBaseProvider.class)
-		@InstanceFormat
-		@Name(KNOWLEDGE_BASE_PROPERTY)
-		Provider<KnowledgeBase> getKnowledgeBaseProvider();
-
-		/**
-		 * @see #getKnowledgeBaseProvider()
-		 */
-		void setKnowledgeBaseProvider(Provider<KnowledgeBase> value);
+		@IntDefault(-1)
+		int getAccountCleanupLimit();
 	}
-
-	private PersonManager personManager;
-	private KnowledgeBase knowledgeBase;
 
 	/**
-	 * @param prop
-	 *        the task scheduling properties
+	 * Creates a {@link RefreshUsersTask} from configuration.
+	 * 
+	 * @param context
+	 *        The context for instantiating sub configurations.
+	 * @param config
+	 *        The configuration.
 	 */
-	public RefreshUsersTask(Properties prop) {
-		super(prop);
-		logInfo();
-	}
-
-	private void logInfo() {
-		Logger.info("RefreshUsersTask loaded.", this);
-	}
-
+	@CalledByReflection
 	public RefreshUsersTask(InstantiationContext context, C config) {
 		super(context, config);
-		this.knowledgeBase = config.getKnowledgeBaseProvider().get();
-		this.personManager = config.getPersonManagerProvider().get();
-
-		logInfo();
 	}
 
-	/**
-	 * Entry to start this tasks thread. Re initialize the user map.
-	 */
 	@Override
-	public synchronized void run() {
-		super.run();
+	protected void runHook() {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		Transaction tx = kb.beginTransaction();
+		try {
+			TLSecurityDeviceManager deviceManager = TLSecurityDeviceManager.getInstance();
+			Set<String> deviceIds = deviceManager.getConfiguredDataAccessDeviceIDs();
+			Set<Person> deletedRemoteAccounts =
+				Person.all().stream().filter(p -> deviceIds.contains(p.getDataDeviceId())).collect(Collectors.toSet());
 
-		getLog().taskStarted();
+			for (String deviceId : deviceIds) {
+				PersonDataAccessDevice device = deviceManager.getDataAccessDevice(deviceId);
+				String authenticationDeviceID = device.getAuthenticationDeviceID();
 
-		ThreadContext.inSystemContext(RefreshUsersTask.class, new Computation<Void>() {
-
-			@Override
-			public Void run() {
-				KnowledgeBase theKB = knowledgeBase;
-				try {
-					long start = System.currentTimeMillis();
-
-					Transaction tx = theKB.beginTransaction();
-					try {
-						Lock theTokenCtxt = personManager.initUserMap();
-						try {
-							if (theTokenCtxt != null && theTokenCtxt.isStateAcquired() && theTokenCtxt.check()) {
-								try {
-									tx.commit();
-								} catch (KnowledgeBaseException ex) {
-									getLog().taskEnded(ResultType.ERROR, I18NConstants.REFRESH_USERS_COMMIT_FAILED, ex);
-
-									Logger.error("Failed to refresh users (commit failed)", ex, this);
-									return null;
-								}
-							}
-						} finally {
-							if (theTokenCtxt != null) {
-								try {
-									theTokenCtxt.unlock();
-								} catch (Exception ex) {
-									// Ignore.
-								}
-							} else {
-								Logger.warn("Unable to get token for user refresh. Skipping this cycle", this);
-							}
-						}
-					} finally {
-						tx.rollback();
-					}
-					long delta = System.currentTimeMillis() - start;
-					String duration = DebugHelper.getTime(delta);
-
-					if (delta > 3000) {
-						Logger.info("run() needed " + duration, this);
+				for (UserInterface user : device.getAllUserData()) {
+					String userName = user.getUserName();
+					if (StringServices.isEmpty(userName)) {
+						Logger.warn("Encountered empty username in '" + deviceId + "' - entry ignored.", this);
+						continue;
 					}
 
-					ResKey i18nMessage =
-						I18NConstants.REFRESH_USERS_SUCCESS__DURATION.fill(duration);
-					getLog().taskEnded(ResultType.SUCCESS, i18nMessage);
-				} catch (Exception ex) {
-					Logger.error("run(): Unexpected Error during refreshing of Users:", ex, this);
-					getLog().taskEnded(ResultType.ERROR, ResultType.ERROR.getMessageI18N(), ex);
+					Person existingAccount = Person.byName(userName);
+					if (existingAccount != null) {
+						deletedRemoteAccounts.remove(existingAccount);
+					} else {
+						Person newAccount =
+							Person.create(PersistencyLayer.getKnowledgeBase(), userName, authenticationDeviceID);
+						newAccount.setDataDeviceId(deviceId);
+					}
+
+					// TODO: Update user info.
 				}
-				return null;
 			}
-		});
+
+			int cleanupLimit = getConfig().getAccountCleanupLimit();
+			if (cleanupLimit > 0 && deletedRemoteAccounts.size() > cleanupLimit) {
+				// No deletion for safety reasons.
+				getLog().getCurrentResult()
+					.addWarning("Skipped excessive account deletion: " + deletedRemoteAccounts.size());
+			} else if (cleanupLimit == 0) {
+				// Ignore deletion.
+			} else {
+				// Delete accounts no longer found in remote systems.
+				for (Person account : deletedRemoteAccounts) {
+					// Account was imported but does no longer exist in the remote system.
+					account.tDelete();
+				}
+			}
+
+			tx.commit();
+		} finally {
+			tx.rollback();
+		}
+	}
+
+	@Override
+	public boolean isNodeLocal() {
+		return false;
 	}
 
 	/**

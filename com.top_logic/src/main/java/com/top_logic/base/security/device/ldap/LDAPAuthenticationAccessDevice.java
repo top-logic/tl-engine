@@ -88,6 +88,11 @@ public class LDAPAuthenticationAccessDevice extends AbstractSecurityDevice
 	}
 
 	@Override
+	public String getAuthenticationDeviceID() {
+		return getDeviceID();
+	}
+
+	@Override
 	public boolean authentify(LoginCredentials login) {
 		String aName = login.getUsername();
 		char[] aPassword = login.getPassword();

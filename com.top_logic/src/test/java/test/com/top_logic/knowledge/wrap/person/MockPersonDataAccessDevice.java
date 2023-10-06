@@ -74,6 +74,11 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	}
 
 	@Override
+	public String getAuthenticationDeviceID() {
+		return getDeviceID();
+	}
+
+	@Override
 	public void startUp() {
 		// Ignore.
 	}

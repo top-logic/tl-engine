@@ -15,6 +15,7 @@ import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
@@ -86,7 +87,7 @@ public class DemoContactGenerator implements DemoPersonNames {
 	private Person createPerson(Random aRand, PersonManager pmgr, String authID, String firstName,
 			String lastName, int i) {
          String name = "" + lastName.charAt(0) + firstName.charAt(0) + Integer.toString(i);
-			Person p = pmgr.createPerson(name, authID, Boolean.FALSE);
+			Person p = Person.create(PersistencyLayer.getKnowledgeBase(), name, authID);
          UserInterface user =  Person.userOrNull(p);
 			user.setName(lastName);
 			user.setFirstName(firstName);

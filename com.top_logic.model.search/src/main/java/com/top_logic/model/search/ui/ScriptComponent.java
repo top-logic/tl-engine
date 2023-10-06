@@ -14,9 +14,9 @@ import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.element.layout.meta.search.AttributedSearchResultSet;
 import com.top_logic.element.meta.TypeSpec;
-import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -34,6 +34,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundLayout;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -78,7 +79,7 @@ public class ScriptComponent extends BoundLayout {
 	 *        Whether data changes made by the expression are allowed. If changes are made, they are
 	 *        stored. Otherwise executing the expression fails.
 	 */
-	public void execute(SearchExpression expression, boolean withCommit) {
+	public HandlerResult execute(SearchExpression expression, boolean withCommit) {
 		Collection<?> results;
 		try {
 			if (withCommit) {
@@ -90,9 +91,9 @@ public class ScriptComponent extends BoundLayout {
 				results = kb().withoutModifications(() -> getResults(expression));
 			}
 		} catch (RuntimeException ex) {
-			InfoService
-				.showError(InfoService.messages(I18NConstants.ERROR_EXECUTING_SEARCH__EXPR.fill(expression), ex));
-			return;
+			HandlerResult error = HandlerResult.error(I18NConstants.ERROR_EXECUTING_SEARCH__EXPR.fill(expression), ex);
+			error.setErrorSeverity(ErrorSeverity.WARNING);
+			return error;
 		}
 
 		Set<TLClass> searchedTypes = SearchUtil.getSearchedTypes(expression);
@@ -132,6 +133,7 @@ public class ScriptComponent extends BoundLayout {
 					null);
 			getResultChannel().set(resultSet);
 		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private Collection<?> getResults(SearchExpression expression) {

@@ -33,7 +33,6 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.util.PersonComparator;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.form.CheckException;
@@ -178,7 +177,7 @@ public class EditGroupComponent extends EditComponent {
             theFC.addMember(theField);
         }
         
-		List<Person> possibleMembers = PersonManager.getManager().getAllAlivePersons();
+		List<Person> possibleMembers = Person.all();
 		SelectField memberField = newSelectField(FORM_FIELD_MEMBERS, possibleMembers, MULTIPLE, members, !IMMUTABLE);
 		memberField.setOptionComparator(PersonComparator.getInstance());
 		makeConfigurable(memberField);

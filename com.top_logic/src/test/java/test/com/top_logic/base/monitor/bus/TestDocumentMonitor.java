@@ -28,7 +28,6 @@ import com.top_logic.event.bus.Sender;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.TLContext;
 
 /**
@@ -50,7 +49,7 @@ public class TestDocumentMonitor extends BasicTestCase {
 	}
 
     public void testDocumentMonitor () throws Exception {
-		Person thePerson = PersonManager.getManager().getPersonByName("root");
+		Person thePerson = Person.byName("root");
 		assertNotNull("no root Person", thePerson);
 		TLContext.getContext().setCurrentPerson(thePerson);
 		String theDocumentId = "NoSecurityDoc";

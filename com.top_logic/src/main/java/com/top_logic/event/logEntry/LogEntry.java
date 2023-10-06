@@ -26,7 +26,6 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperComparator;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
@@ -259,7 +258,7 @@ public class LogEntry extends AbstractBoundWrapper {
     protected static KnowledgeObject getEventActor(MonitorEvent anEvent) {
 		Person ui = anEvent.getUser();
         if(ui!=null){
-			return PersonManager.getManager().getPersonByName(ui.getName()).tHandle();
+			return Person.byName(ui.getName()).tHandle();
         }
 		return null;
     }    

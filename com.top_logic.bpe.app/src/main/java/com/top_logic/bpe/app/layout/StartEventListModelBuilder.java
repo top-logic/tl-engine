@@ -28,9 +28,9 @@ import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link ListModelBuilder} for {@link StartEvent}s. Returns a List of {@link StartEvent}s to a
@@ -49,7 +49,7 @@ public class StartEventListModelBuilder<C extends StartEventListModelBuilder.Con
 		private Map<Node, Lane> _laneByNode;
 
 		public ActorFilter(Collaboration collaboration) {
-			_currentPerson = PersonManager.getManager().getCurrentPerson();
+			_currentPerson = TLContext.currentUser();
 			_laneByNode = laneByNode(collaboration);
 
 		}
@@ -111,7 +111,7 @@ public class StartEventListModelBuilder<C extends StartEventListModelBuilder.Con
 	}
 
 	private boolean hasStartEvent(Collaboration collaboration) {
-		return !GuiEngine.getInstance().getStartEventsFor(collaboration, PersonManager.getManager().getCurrentPerson()).isEmpty();
+		return !GuiEngine.getInstance().getStartEventsFor(collaboration, TLContext.currentUser()).isEmpty();
 	}
 
 	@Override

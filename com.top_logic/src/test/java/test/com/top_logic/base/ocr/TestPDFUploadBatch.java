@@ -27,7 +27,6 @@ import com.top_logic.knowledge.objects.DCMetaData;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.TLContext;
 
 /**
@@ -59,7 +58,7 @@ public class TestPDFUploadBatch extends BasicTestCase {
         try {
             // TODO TRI fix this bug please
             ThreadContext.pushSuperUser();
-            Person ocrPerson = PersonManager.getManager().getPersonByName("root");
+            Person ocrPerson = Person.byName("root");
             assertTrue(ocrPerson.getKnowledgeBase().commit());
         } finally  {
             ThreadContext.popSuperUser();
@@ -117,7 +116,7 @@ public class TestPDFUploadBatch extends BasicTestCase {
         try {
             // TODO TRI fix this bug please
             ThreadContext.pushSuperUser();
-            Person ocrPerson = PersonManager.getManager().getPersonByName("dau");
+            Person ocrPerson = Person.byName("dau");
             assertTrue(ocrPerson.getKnowledgeBase().commit());
         } finally  {
             ThreadContext.popSuperUser();
@@ -175,7 +174,7 @@ public class TestPDFUploadBatch extends BasicTestCase {
         try {
             // TODO TRI fix this bug please
             ThreadContext.pushSuperUser();
-            Person ocrPerson = PersonManager.getManager().getPersonByName("dau");
+            Person ocrPerson = Person.byName("dau");
             assertTrue(ocrPerson.getKnowledgeBase().commit());
         } finally  {
             ThreadContext.popSuperUser();

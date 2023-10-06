@@ -7,7 +7,7 @@ package com.top_logic.element.genericimport.converterfunction;
 
 import com.top_logic.element.genericimport.interfaces.GenericCache;
 import com.top_logic.element.genericimport.interfaces.GenericConverterFunction;
-import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
@@ -17,7 +17,7 @@ public class PersonByIDMapping implements GenericConverterFunction {
     @Override
 	public Object map(Object aValue, GenericCache aCache) {
         if (aValue instanceof String) {
-            return PersonManager.getManager().getPersonByName((String) aValue);
+            return Person.byName((String) aValue);
         }
         return null;
     }

@@ -25,6 +25,7 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.AbstractBoundChecker;
 import com.top_logic.tool.execution.service.CommandApprovalService;
+import com.top_logic.util.TLContext;
 
 /**
  * Simple Implemenation of the {@link com.top_logic.tool.boundsec.BoundChecker} 
@@ -78,9 +79,10 @@ public class SimpleBoundChecker extends AbstractBoundChecker {
         }
         
         if (ThreadContext.isAdmin())
-            return true;    // allow all
+            return true;
+		PersonManager r = PersonManager.getManager();    // allow all
         
-		Person currentPerson = PersonManager.getManager().getCurrentPerson();
+		Person currentPerson = TLContext.currentUser();
         return allow(currentPerson, anObject, aGroup);
     }
 

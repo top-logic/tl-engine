@@ -14,6 +14,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.util.TLContext;
 
 /**
  * Create the List of LogEntries based on a LogEntryFilter.
@@ -59,7 +60,8 @@ public class LogEntryBuilder implements ModelBuilder {
      */
     protected List<LogEntry> createList(LogEntryFilter aFilter) {
 		{
-			Person thePerson = PersonManager.getManager().getCurrentPerson();
+			PersonManager r = PersonManager.getManager();
+			Person thePerson = TLContext.currentUser();
             List<LogEntry> theResult = aFilter.getLogEntries(thePerson);
 
             theResult = this.filterBySelection(theResult, aFilter.getSelection());

@@ -152,10 +152,11 @@ public class DispatchingEVAAssistantController extends EVAAssistantController {
 
             this.implName = aName;
             this.values   = CollectionUtil.dynamicCastView(ImportMessage.class, (Collection<?>) someData.get(EVAAssistantController.VALIDATION_RESULT));
-            this.person   = PersonManager.getManager().getPersonByName(this.implName);
+            this.person   = Person.byName(this.implName);
 
             if (this.person == null) {
-				this.person = PersonManager.getManager().getCurrentPerson();
+				PersonManager r = PersonManager.getManager();
+				this.person = TLContext.currentUser();
             }
         }
 

@@ -13,7 +13,6 @@ import com.top_logic.contact.business.PersonContact;
 import com.top_logic.element.genericimport.interfaces.GenericCache;
 import com.top_logic.element.genericimport.interfaces.GenericConverterFunction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
@@ -26,7 +25,7 @@ public class PersonContactsByPersonIDMapping implements GenericConverterFunction
             String[] parts = StringServices.toArray((String) aValue, ",");
             List<PersonContact> result = new ArrayList<>(parts.length);
             for (String part:parts) {
-                Person thePerson = PersonManager.getManager().getPersonByName(part);
+                Person thePerson = Person.byName(part);
                 if (thePerson != null) {
                     result.add(PersonContact.getPersonContact(thePerson));
                 }

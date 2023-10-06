@@ -213,8 +213,8 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 		// Delete the test accounts.
 		{
 			Transaction tx = begin();
-			pm.deleteUser(p1);
-			pm.deleteUser(p2);
+			p1.tDelete();
+			p2.tDelete();
 			tx.commit();
 		}
 		assertEquals(p1InCreate, wrapper.get().getCreator());
@@ -305,8 +305,8 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 		// Delete the test accounts.
 		{
 			Transaction tx = begin();
-			pm.deleteUser(p1);
-			pm.deleteUser(p2);
+			p1.tDelete();
+			p2.tDelete();
 			tx.commit();
 		}
 		

@@ -23,7 +23,6 @@ import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * The monitor event is used to publish messages of changes on the system.
@@ -262,7 +261,7 @@ public class MonitorEvent extends BusEvent {
             return (null);
         }
         else {
-			return PersonManager.getManager().getPersonByName(aName);
+			return Person.byName(aName);
         }
     }    
     

@@ -73,7 +73,8 @@ public class DeletePersonCommandHandler extends AbstractDeleteCommandHandler {
      * @param    aPerson             The person to be deleted, must not be <code>null</code>.
      */
     public void deletePerson(Person aPerson) {
-        PersonManager.getManager().deleteUser(aPerson);
+        PersonManager r = PersonManager.getManager();
+		aPerson.tDelete();
     }
     
     /**

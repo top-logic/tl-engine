@@ -25,7 +25,6 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.util.PersonComparator;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
@@ -137,7 +136,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
                             @Override
 							protected List initInstance() {
 								// No need to create sorted list, because field gets comparator.
-								return PersonManager.getManager().getAllPersonsList();
+								return Person.all();
                             }
                         };
 

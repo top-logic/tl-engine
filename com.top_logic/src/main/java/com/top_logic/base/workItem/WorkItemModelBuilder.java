@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.util.TLContext;
 
 /**
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
@@ -37,7 +37,7 @@ public class WorkItemModelBuilder implements ListModelBuilder {
     @Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
 		{
-            Collection theWorkItems = WorkItemManager.getManager().getWorkItems(PersonManager.getManager().getCurrentPerson());
+			Collection theWorkItems = WorkItemManager.getManager().getWorkItems(TLContext.currentUser());
 
             return (theWorkItems instanceof List) ? theWorkItems : new ArrayList(theWorkItems);
         }

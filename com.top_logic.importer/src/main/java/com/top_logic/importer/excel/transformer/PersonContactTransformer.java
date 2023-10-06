@@ -14,7 +14,6 @@ import com.top_logic.contact.business.PersonContact;
 import com.top_logic.importer.excel.AbstractExcelFileImportParser;
 import com.top_logic.importer.logger.ImportLogger;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.LabelProviderService;
 
@@ -142,7 +141,7 @@ public class PersonContactTransformer implements Transformer<PersonContact> {
 	}
 
     protected Person getPerson(String aName) {
-        return PersonManager.getManager().getPersonByName(aName);
+        return Person.byName(aName);
     }
 
 }

@@ -35,7 +35,6 @@ import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -821,7 +820,7 @@ public class BoundHelper extends ManagedClass {
             return true;
         }
 		{
-            Person currPerson = PersonManager.getManager().getCurrentPerson();
+			Person currPerson = TLContext.currentUser();
             if (currPerson == null)
                 return false;   // no Person, no Security
 

@@ -358,8 +358,9 @@ public class CompoundSecurityLayout extends BoundLayout {
 		if (ThreadContext.isAdmin()) {
             return true;    // bypass bound security for all for SuperUsers
         }
+		PersonManager r = PersonManager.getManager();
 
-		Person currentPerson = PersonManager.getManager().getCurrentPerson();
+		Person currentPerson = TLContext.currentUser();
         if (currentPerson == null)
             return false;   // Don't know how to check this
 

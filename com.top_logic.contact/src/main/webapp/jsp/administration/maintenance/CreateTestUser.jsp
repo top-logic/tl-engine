@@ -27,8 +27,7 @@
 		/>
 		<basic:cssLink/>
 	</layout:head>
-	<%!
-	private static final String testUserPrefix = "testUser";
+	<%!private static final String testUserPrefix = "testUser";
 	
 	private String createUserName(boolean addPrefix, String foreName, String surName) {
 		String fn = normalize(foreName);
@@ -39,7 +38,7 @@
 				String s2 = sn.substring(j, j+2);
 				String name = s1+s2;
 				name = addPrefix ? testUserPrefix + name : name;
-				if (PersonManager.getManager().getPersonByName(name) == null) {
+				if (PersonManager.getManager().byName(name) == null) {
 					return name;
 				}
 			}
@@ -48,7 +47,7 @@
 		while (true) {
 			// always add prefix to random-usernames to allow easy remove
 			String name = testUserPrefix + StringServices.getRandomString(rand, 8);
-			if (PersonManager.getManager().getPersonByName(name) == null) {
+			if (PersonManager.getManager().byName(name) == null) {
 				return name;
 			}
 		}
@@ -61,8 +60,7 @@
 		name = name.replaceAll("Ö", "O");
 		name = name.replaceAll("Ü", "U");
 		return name;
-	}
-	%>
+	}%>
 	
 
 	<layout:body>

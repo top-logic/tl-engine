@@ -5,7 +5,9 @@
  */
 package com.top_logic.knowledge.wrap.person;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -14,6 +16,7 @@ import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
@@ -24,8 +27,15 @@ import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
+import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
+import com.top_logic.knowledge.wrap.AbstractWrapper;
+import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.core.Author;
@@ -564,6 +574,96 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 */
 	public void setAdmin(boolean value) {
 		tSetDataBoolean("admin", value);
+	}
+
+	/**
+	 * All {@link Person}s that are known in the system.
+	 */
+	public static List<Person> all() {
+		Collection<KnowledgeObject> handles =
+			PersistencyLayer.getKnowledgeBase().getAllKnowledgeObjects(OBJECT_NAME);
+		List<Person> result = new ArrayList<>(handles.size());
+		for (KnowledgeObject handle : handles) {
+			Person person = handle.getWrapper();
+			result.add(person);
+		}
+		return result;
+	}
+
+	/**
+	 * Gets the {@link Person} for a given login name.
+	 * 
+	 * @param kb
+	 *        The {@link KnowledgeBase} to look for the {@link Person}.
+	 * @param name
+	 *        A login name of a {@link Person}.
+	 * 
+	 * @return The requested account or <code>null</code> if not such account exists.
+	 */
+	public static Person byName(KnowledgeBase kb, String name) {
+		if (StringServices.isEmpty(name)) {
+			return null;
+		}
+	
+		KnowledgeObject result =
+			(KnowledgeObject) kb.getObjectByAttribute(OBJECT_NAME, AbstractWrapper.NAME_ATTRIBUTE, name);
+		if (result == null) {
+			return null;
+		}
+	
+		return result.getWrapper();
+	}
+
+	/**
+	 * Gets the {@link Person} for a given login name.
+	 * 
+	 * @param name
+	 *        A login name of a person.
+	 * @return The requested account or <code>null</code> if not such account exists.
+	 */
+	public static Person byName(String name) {
+		return Person.byName(PersistencyLayer.getKnowledgeBase(), name);
+	}
+
+	/**
+	 * Return the instance of person for the given identifier.
+	 * 
+	 * @param kb
+	 *        the knowledge base
+	 * @param historyContext
+	 *        The revision number in which the requested {@link Person} was known to be alive.
+	 * @param id
+	 *        The Knowledge Identifier of the person KO.
+	 * 
+	 * @return The requested {@link Person} in the given history context, or <code>null</code>, if
+	 *         there was no such account at the requested point in time.
+	 */
+	public static Person byId(KnowledgeBase kb, long historyContext, TLID id) {
+		if (historyContext != Revision.CURRENT_REV) {
+			// Fall back: Find historic version of a deleted account.
+			HistoryManager historyManager = HistoryUtils.getHistoryManager(kb);
+			if (historyManager.hasHistory()) {
+				Revision revision = historyManager.getRevision(historyContext);
+				Person historicPerson =
+					(Person) WrapperFactory.getWrapper(historyManager.getTrunk(), revision, id, OBJECT_NAME);
+				if (historicPerson == null) {
+					/* Note: Even a historic reference may not point to a valid person due to
+					 * several reasons:
+					 * 
+					 * - The commit context id is not necessarily a person identifier (e.g. system
+					 * context).
+					 * 
+					 * - The data might have been migrated from non-versioned storage and the person
+					 * has been deleted before the time the repository was switched to versioned
+					 * storage. */
+					return null;
+				}
+	
+				return historicPerson;
+			}
+		}
+	
+		return (Person) WrapperFactory.getWrapper(id, OBJECT_NAME, kb);
 	}
 
 	/**

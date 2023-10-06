@@ -6,7 +6,6 @@
 package com.top_logic.knowledge.monitor;
 
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.util.Resources;
 
@@ -25,7 +24,7 @@ public class UserNameLabelProvider implements LabelProvider {
 
 	@Override
 	public String getLabel(Object object) {
-		Person thePerson = PersonManager.getManager().getPersonByName((String) object);
+		Person thePerson = Person.byName((String) object);
 		if (thePerson != null) {
 			String theName = thePerson.getName();
 			try {

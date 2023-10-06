@@ -19,6 +19,7 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InViewModeExecutable;
+import com.top_logic.util.TLContext;
 
 /**
  * Creates a new workitem with the current model (wrapper) as subject
@@ -44,7 +45,8 @@ public class NewPersistentWorkItemCommandHandler extends AbstractCommandHandler 
             Object model, Map<String, Object> someArguments) {
         try {
 			Wrapper theWrapper = (Wrapper) model;
-            Person   theAssignee = PersonManager.getManager().getCurrentPerson();
+			PersonManager r = PersonManager.getManager();
+            Person   theAssignee = TLContext.currentUser();
             PersistentWrapperWorkItem theItem = this.createWorkItem(theWrapper, theAssignee);
 
             aComponent.invalidateButtons();

@@ -30,7 +30,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -80,7 +79,7 @@ public class TestBoundComponent extends BasicTestCase {
 		File layout = ComponentTestUtils.getLayoutFile(TestBoundComponent.class, "testMain.xml");
 		ComponentName componentName = ComponentTestUtils.newComponentName(layout, "SchuhComponent");
         try {
-            Person guest = PersonManager.getManager().getPersonByName("guest_de");
+            Person guest = Person.byName("guest_de");
 
             TLContext context = TLContext.getContext();
             context.setCurrentPerson(guest);

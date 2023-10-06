@@ -20,7 +20,6 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.knowledge.gui.layout.person.PersonResourceProvider;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.EditComponent;
@@ -86,7 +85,7 @@ public class PersonAjaxForm extends EditComponent {
      */
     @Override
 	public FormContext createFormContext() {
-		List<Person> allPerson = PersonManager.getManager().getAllAlivePersons();
+		List<Person> allPerson = Person.all();
 		Person personModel = (Person) getModel();
         
 		SelectField personGotoField = FormFactory.newSelectField(PERSON_GOTO_FIELD, allPerson);

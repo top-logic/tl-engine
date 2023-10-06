@@ -50,7 +50,8 @@ public class SelfEditPersonComponent  extends EditPersonComponent {
             if (!theResult) {
                 // Allow any Person to edit itself by default
 				{
-                    boolean isCurrentPerson = Utils.equals(PersonManager.getManager().getCurrentPerson(), anObject);
+                    PersonManager r = PersonManager.getManager();
+					boolean isCurrentPerson = Utils.equals(TLContext.currentUser(), anObject);
                     boolean isReadWrite = SimpleBoundCommandGroup.READWRITE_SET.contains(aCmdGroup);
                     theResult = isCurrentPerson && isReadWrite;
                 }

@@ -60,13 +60,13 @@ public class TestBoundSecurity extends BasicTestCase {
 
 		{
             // create three different persons
-            personA = pMgr.getPersonByName("AA"); 
+            personA = Person.byName("AA"); 
             if (personA == null) 
 				personA = pMgr.createPerson("AA", authenticationDeviceID, Boolean.FALSE);
-            personB = pMgr.getPersonByName("BB");
+            personB = Person.byName("BB");
             if (personB == null) 
 				personB = pMgr.createPerson("BB", authenticationDeviceID, Boolean.FALSE);
-            personC = pMgr.getPersonByName("CC");
+            personC = Person.byName("CC");
             if (personC == null)  
 				personC = pMgr.createPerson("CC", authenticationDeviceID, Boolean.FALSE);
             assertTrue(personA.getKnowledgeBase().commit());
@@ -150,13 +150,13 @@ public class TestBoundSecurity extends BasicTestCase {
             assertTrue(theCommands.size()==2);      // READ and WRITE
             
             if (personA != null) {
-				pMgr.deleteUser(personA);
+				personA.tDelete();
             }
             if (personB != null) {
-				pMgr.deleteUser(personB);
+				personB.tDelete();
             }
             if (personC != null) {
-				pMgr.deleteUser(personC);
+				personC.tDelete();
             }
             KBSetup.getKnowledgeBase().commit();
         }

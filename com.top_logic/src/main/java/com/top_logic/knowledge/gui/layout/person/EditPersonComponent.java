@@ -449,7 +449,7 @@ public class EditPersonComponent extends EditComponent {
 	private BooleanField createRestrictedUserField(Person person) {
 		Boolean isRestrictedUser = person.isRestrictedUser();
 		boolean restrictedFieldImmutable =
-			!hasDeleteAccess(person) || person.equals(PersonManager.getManager().getCurrentPerson())
+			!hasDeleteAccess(person) || person.equals(TLContext.currentUser())
 				|| person.equals(PersonManager.getManager().getRoot());
 		BooleanField restrictedUserField =
 			FormFactory.newBooleanField(Person.RESTRICTED_USER, isRestrictedUser, restrictedFieldImmutable);
@@ -463,7 +463,7 @@ public class EditPersonComponent extends EditComponent {
 			public Bubble handleChangeStateChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
 				FormField field = (FormField) sender;
 				String userName = (String) field.getParent().getField(UserInterface.USER_NAME).getValue();
-				Boolean restrictedUser = PersonManager.getManager().getPersonByName(userName).isRestrictedUser();
+				Boolean restrictedUser = Person.byName(userName).isRestrictedUser();
 				if (restrictedUser.equals(field.getValue())) {
 					field.removeConstraint(InfoUserConstraint.INSTANCE);
 				} else {

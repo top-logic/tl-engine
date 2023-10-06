@@ -108,7 +108,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 			TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
 
 		// Create test users if necessary
-		test1Person = PersonManager.getManager().getPersonByName("testSec", kBase);
+		test1Person = Person.byName(kBase, "testSec");
 		if (test1Person == null) {
 			test1Person =
 				PersonManager.getManager().createPerson("testSec", kBase, authenticationDeviceID, Boolean.FALSE);

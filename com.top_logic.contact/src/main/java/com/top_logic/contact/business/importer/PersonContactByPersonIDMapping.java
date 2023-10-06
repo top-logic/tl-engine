@@ -9,7 +9,6 @@ import com.top_logic.contact.business.PersonContact;
 import com.top_logic.element.genericimport.interfaces.GenericCache;
 import com.top_logic.element.genericimport.interfaces.GenericConverterFunction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
@@ -19,7 +18,7 @@ public class PersonContactByPersonIDMapping implements GenericConverterFunction 
     @Override
 	public Object map(Object aValue, GenericCache aCache) {
         if (aValue instanceof String) {
-            Person thePerson = PersonManager.getManager().getPersonByName((String) aValue);
+            Person thePerson = Person.byName((String) aValue);
             if (thePerson != null) {
                 return PersonContact.getPersonContact(thePerson);
             }

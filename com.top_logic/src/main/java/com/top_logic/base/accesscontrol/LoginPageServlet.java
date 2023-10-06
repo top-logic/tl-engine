@@ -40,7 +40,6 @@ import com.top_logic.knowledge.gui.layout.HttpSecureHeaderFilter;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.URLPathBuilder;
 import com.top_logic.mig.html.UserAgent;
 import com.top_logic.util.DeferredBootUtil;
@@ -465,7 +464,7 @@ public class LoginPageServlet extends NoContextServlet {
 	private boolean pwdValidAndNotExpired(HttpServletRequest aRequest){
 		String userName = aRequest.getParameter(Login.USER_NAME);
 		try{
-			Person account = PersonManager.getManager().getPersonByName(userName);
+			Person account = Person.byName(userName);
 			String deviceId = account.getAuthenticationDeviceID();
 			if (StringServices.isEmpty(deviceId)) {
 				// No password change possible, cannot request for a password update.
@@ -511,7 +510,7 @@ public class LoginPageServlet extends NoContextServlet {
 	    if(!pwd1.equals(pwd2)){
 			return I18NConstants.PWD_CHANGE_MSG_PASSWORDS_DONT_MATCH;
 	    }else{
-			Person account = PersonManager.getManager().getPersonByName(username);
+			Person account = Person.byName(username);
 			char[] newPassword = pwd1.toCharArray();
 			AuthenticationDevice device =
 				TLSecurityDeviceManager.getInstance().getAuthenticationDevice(account.getAuthenticationDeviceID());

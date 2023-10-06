@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -46,7 +45,7 @@ public class PersonTableModelBuilder implements ListModelBuilder{
 	 */
 	@Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent component) {
-		return PersonManager.getManager().getAllAlivePersons();
+		return Person.all();
 	} 
     
 	@Override

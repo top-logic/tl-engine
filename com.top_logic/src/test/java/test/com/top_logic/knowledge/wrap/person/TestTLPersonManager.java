@@ -30,7 +30,6 @@ import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.col.ConstantProvider;
-import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -86,10 +85,6 @@ public class TestTLPersonManager extends BasicTestCase {
 
 	private PersonManager createPersonManager(KnowledgeBase knowledgeBase) {
 		PersonManager.Config configItem = TypedConfiguration.newConfigItem(PersonManager.Config.class);
-		ConfigurationDescriptor descriptor = configItem.descriptor();
-		configItem.update(descriptor.getProperty(PersonManager.Config.TL_SECURITY_DEVICE_MANAGER_PROPERTY),
-			new ConstantProvider<>(
-				TLSecurityDeviceManager.getInstance()));
 		return new PersonManager(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, configItem);
 	}
 
@@ -116,10 +111,7 @@ public class TestTLPersonManager extends BasicTestCase {
 			Boolean.TRUE, AUTHENTICATION_DEVICE_ID);
 		createTx.commit();
 
-		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersons().contains(fooPerson));
-		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersonsSet().contains(fooPerson));
-		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllPersonsList().contains(fooPerson));
-		assertTrue("Ticket #13195: ", firstNodePersonManager.getAllAlivePersons().contains(fooPerson));
+		assertTrue("Ticket #13195: ", Person.all().contains(fooPerson));
 	}
 
 	public void testDeletePerson() throws RefetchTimeout {
@@ -138,10 +130,7 @@ public class TestTLPersonManager extends BasicTestCase {
 		deleteTx.commit();
 
 		firstNodeKnowledgeBase.refetch();
-		assertFalse("Ticket #13195: ", firstNodePersonManager.getAllPersons().contains(fooPerson));
-		assertFalse("Ticket #13195: ", firstNodePersonManager.getAllPersonsSet().contains(fooPerson));
-		assertFalse("Ticket #13195: ", firstNodePersonManager.getAllPersonsList().contains(fooPerson));
-		assertFalse("Ticket #13195: ", firstNodePersonManager.getAllAlivePersons().contains(fooPerson));
+		assertFalse("Ticket #13195: ", Person.all().contains(fooPerson));
 	}
 
 	public void testLocalePreservationOnRefetch() {
@@ -149,7 +138,7 @@ public class TestTLPersonManager extends BasicTestCase {
 		UserInterface fooUser = newUser();
 		mockPersonDataAccessDevice.addUserData(fooUser);
 
-		assertNull(firstNodePersonManager.getPersonByName(fooUser.getUserName(), firstNodeKnowledgeBase));
+		assertNull(Person.byName(firstNodeKnowledgeBase, fooUser.getUserName()));
 		Transaction tx = firstNodeKnowledgeBase.beginTransaction();
 		Person fooPerson = firstNodePersonManager.getOrCreatePersonForUser(fooUser.getUserName(),
 			Boolean.TRUE, AUTHENTICATION_DEVICE_ID);
@@ -257,7 +246,7 @@ public class TestTLPersonManager extends BasicTestCase {
 	}
 
 	private void assertAllRegisteredUsers(PersonManager personManager, UserInterface... users) {
-		Collection<Person> registeredPersons = personManager.getAllPersonsSet();
+		Collection<Person> registeredPersons = Person.all();
 
 		for (UserInterface user : users) {
 			Person personForUser = null;

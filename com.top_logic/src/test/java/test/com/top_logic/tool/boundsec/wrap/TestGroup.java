@@ -51,7 +51,7 @@ public class TestGroup extends BasicTestCase {
 				g.tDelete();
 			}
 			
-			Person p = PersonManager.getManager().getPersonByName(name);
+			Person p = Person.byName(name);
 			if (p != null) {
 				p.tDelete();
 			}
@@ -186,7 +186,7 @@ public class TestGroup extends BasicTestCase {
 			tx.commit();
 		}
 
-		Person p2 = PersonManager.getManager().getPersonByName(p1.getName());
+		Person p2 = Person.byName(p1.getName());
 		assertSame(p1, p2);
 		assertSame(p1.getRepresentativeGroup(), p2.getRepresentativeGroup());
 

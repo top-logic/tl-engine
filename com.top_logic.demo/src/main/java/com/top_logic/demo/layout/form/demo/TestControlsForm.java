@@ -93,7 +93,6 @@ import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
 import com.top_logic.knowledge.objects.label.ObjectLabel;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.WrapperFactory;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DefaultIdentifierSource;
@@ -3959,8 +3958,9 @@ public class TestControlsForm extends FormComponent {
 	}
 	
 	/**
-	 * Component shown in dialog. Only creates a command field to go to
-	 * {@link PersonManager#getCurrentPerson() current person}.
+	 * Component shown in dialog. Only creates a command field to go to current user.
+	 * 
+	 * @see TLContext#currentUser()
 	 * 
 	 * @author <a href=mailto:daniel.busche@top-logic.com>Daniel Busche</a>
 	 */
@@ -3980,7 +3980,7 @@ public class TestControlsForm extends FormComponent {
 				@Override
 				public HandlerResult executeCommand(DisplayContext context) {
 					final LayoutComponent surroundingComponent = get(COMPONENT);
-					surroundingComponent.gotoTarget(PersonManager.getManager().getCurrentPerson());
+					surroundingComponent.gotoTarget(TLContext.currentUser());
 					return HandlerResult.DEFAULT_RESULT;
 
 				}

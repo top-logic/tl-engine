@@ -19,6 +19,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey TABBAR;
 
+	/**
+	 * @en Tab
+	 */
+	public static ResKey TAB_LABEL;
+
 	public static ResKey2 NO_SUCH_ATTRIBUTE__TYPE__ATTRIBUTE;
 
 	static {

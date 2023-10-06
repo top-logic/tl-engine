@@ -52,7 +52,6 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.annotate.ui.TLCssClass;
 import com.top_logic.model.annotate.util.ConstraintCheck;
-import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -297,14 +296,13 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 	}
 
 	protected void initFormMember(AttributeUpdate aAttributeUpdate, FormMember result) {
-		TLStructuredTypePart metaAttribute = aAttributeUpdate.getAttribute();
-		ResKey resKey = TLModelI18N.getI18NKey(metaAttribute);
+		ResKey resKey = aAttributeUpdate.getLabelKey();
 		Resources resources = Resources.getInstance();
 		result.setLabel(resources.getString(resKey));
 		result.setTooltip(resources.getString(resKey.tooltip(), null));
 		result.setTooltipCaption(resources.getString(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX), null));
 		
-		if (AttributeOperations.isReadOnly(metaAttribute)) {
+		if (AttributeOperations.isReadOnly(aAttributeUpdate.getAttribute())) {
 			/* The value for the attribute can not be updated. Therefore a constraint is not useful,
 			 * because the user can not change the value to fulfil the constraint. */
 			result.setMandatory(false);

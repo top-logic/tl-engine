@@ -10,7 +10,6 @@ import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 
 /**
  * Generic super-interface for for Security devices. 
@@ -32,18 +31,6 @@ public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Securi
 		/** Name of configuration option {@link SecurityDeviceConfig#getId()}. */
 		String ID_ATTRIBUTE = "id";
 
-		/** Name of configuration option {@link SecurityDeviceConfig#getDomain()}. */
-		String DOMAIN_ATTRIBUTE = "domain";
-
-		/**
-		 * Domain name of the configured {@link SecurityDevice}.
-		 * 
-		 * @see SecurityDevice#getDomainName()
-		 */
-		@Name(DOMAIN_ATTRIBUTE)
-		@Nullable
-		String getDomain();
-
 		/**
 		 * Id of the configured {@link SecurityDevice}.
 		 * 
@@ -64,11 +51,6 @@ public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Securi
 	 * the ID of this device
 	 */
 	public String getDeviceID();
-	
-	/**
-	 * the Domain name of this device; maybe null if not supported
-	 */
-	public String getDomainName();
 
 	/**
 	 * Start this {@link SecurityDevice}.

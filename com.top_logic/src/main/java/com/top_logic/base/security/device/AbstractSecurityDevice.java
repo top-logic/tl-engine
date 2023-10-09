@@ -86,11 +86,6 @@ public abstract class AbstractSecurityDevice implements SecurityDevice {
 	}
 	
 	@Override
-	public String getDomainName() {
-		return _config.getDomain();
-	}
-
-	@Override
 	public String getDeviceID() {
 		return _config.getId();
 	}

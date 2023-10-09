@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.dob.DataObject;
 
 /**
@@ -25,6 +26,9 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 */
 	public interface PersonDataAccessDeviceConfig extends SecurityDeviceConfig {
 
+		/** @see #getDomain() */
+		String DOMAIN_ATTRIBUTE = "domain";
+
 		/**
 		 * Configuration name for option
 		 * {@link PersonDataAccessDeviceConfig#isAllowExtAuthentication}.
@@ -33,6 +37,15 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 
 		/** Configuration name for option {@link PersonDataAccessDeviceConfig#isReadOnly()}. */
 		String READ_ONLY_PROPERTY = "read-only";
+
+		/**
+		 * Domain name of the device.
+		 * 
+		 * @see PersonDataAccessDevice#getDomainName()
+		 */
+		@Name(DOMAIN_ATTRIBUTE)
+		@Nullable
+		String getDomain();
 
 		/**
 		 * Whether this {@link PersonDataAccessDevice} is read-only.
@@ -53,6 +66,22 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 		@Name(ALLOW_EXT_AUTHENTICATION_PROPERTY)
 		boolean isAllowExtAuthentication();
 
+	}
+
+	/**
+	 * The domain name of this device.
+	 * 
+	 * <p>
+	 * A device associates its domain name to users managed by the device. This may be used to
+	 * restrict authentication methods to users associated with certain domains.
+	 * </p>
+	 * 
+	 * <p>
+	 * A value of <code>null</code> means to no associate any domain to managed users.
+	 * </p>
+	 */
+	default String getDomainName() {
+		return ((PersonDataAccessDeviceConfig) getConfig()).getDomain();
 	}
 
 	/**

@@ -18,7 +18,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
-import com.top_logic.dob.DataObject;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
@@ -122,40 +121,6 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 			}
 		}
 		return null;
-	}
-
-	@Override
-	public boolean createUserEntry(DataObject aDo) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return false;
-	}
-
-	@Override
-	public boolean updateUserData(DataObject theDo) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return false;
-	}
-
-	@Override
-	public boolean renameUserData(String oldID, String newID) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return false;
-	}
-
-	@Override
-	public boolean deleteUserData(String aName) {
-		Iterator<UserInterface> allUsers = availableUsers.iterator();
-		while (allUsers.hasNext()) {
-			UserInterface user = allUsers.next();
-			if (StringServices.equals(user.getUserName(), aName)) {
-				allUsers.remove();
-				return true;
-			}
-		}
-		return false;
 	}
 
 	@Override

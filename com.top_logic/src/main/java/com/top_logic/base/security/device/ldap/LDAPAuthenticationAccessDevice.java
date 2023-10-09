@@ -31,7 +31,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.dob.DataObject;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
@@ -195,26 +194,6 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 	@Override
 	public UserInterface getUserData(String aName) {
 		return this.las.getUserData(aName);
-	}
-
-	@Override
-	public boolean updateUserData(DataObject theDo) {
-		throw new UnsupportedOperationException("Updating LDAP user data not suppported.");
-	}
-
-	@Override
-	public boolean createUserEntry(DataObject aDo) {
-		throw new UnsupportedOperationException("Creating LDAP user entries not suppported.");
-	}
-
-	@Override
-	public boolean renameUserData(String oldID, String newID) {
-		throw new UnsupportedOperationException("Renaming LDAP users entries not suppported.");
-	}
-
-	@Override
-	public boolean deleteUserData(String aName) {
-		throw new UnsupportedOperationException("LDAP users cannot be deleted.");
 	}
 
 	/**

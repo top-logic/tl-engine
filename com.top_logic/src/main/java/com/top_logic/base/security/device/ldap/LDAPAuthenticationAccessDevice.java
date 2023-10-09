@@ -52,8 +52,7 @@ public class LDAPAuthenticationAccessDevice extends AbstractSecurityDevice
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends AbstractSecurityDevice.Config, PersonDataAccessDevice.PersonDataAccessDeviceConfig,
-			AuthenticationDevice.AuthenticationDeviceConfig {
+	public interface Config extends PersonDataAccessDevice.Config, AuthenticationDevice.Config {
 		
 		/** Name of configuration option {@link Config#getAccessService()}. */
 		String ACCESS_SERVICE_NAME = "access-service";

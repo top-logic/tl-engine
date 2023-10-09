@@ -19,15 +19,6 @@ import com.top_logic.basic.config.InstantiationContext;
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public abstract class AbstractSecurityDevice implements SecurityDevice {
-	
-	/**
-	 * Configuration of an {@link AbstractSecurityDevice}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public interface Config extends SecurityDevice.SecurityDeviceConfig {
-
-	}
 
 	private final Config _config;
 

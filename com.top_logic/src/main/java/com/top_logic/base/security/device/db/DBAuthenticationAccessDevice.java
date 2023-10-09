@@ -13,7 +13,6 @@ import java.util.List;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.device.AbstractSecurityDevice;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
-import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.password.I18NConstants;
 import com.top_logic.base.security.password.PasswordHistoryFormat;
 import com.top_logic.base.security.password.PasswordValidator;
@@ -55,8 +54,7 @@ public class DBAuthenticationAccessDevice extends AbstractSecurityDevice impleme
 	/**
 	 * Configuration options for {@link DBAuthenticationAccessDevice}.
 	 */
-	public interface Config extends AbstractSecurityDevice.Config, PersonDataAccessDevice.PersonDataAccessDeviceConfig,
-			AuthenticationDevice.AuthenticationDeviceConfig {
+	public interface Config extends AbstractSecurityDevice.Config {
 
 		/**
 		 * Name of the resource with initial users to load.

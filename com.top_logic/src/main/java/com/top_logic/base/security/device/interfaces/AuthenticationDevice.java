@@ -21,7 +21,7 @@ public interface AuthenticationDevice extends SecurityDevice {
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface AuthenticationDeviceConfig extends SecurityDeviceConfig {
+	public interface Config extends SecurityDevice.Config {
 		// Pure marker interface.
 	}
 

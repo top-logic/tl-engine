@@ -34,7 +34,7 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends AuthenticationDeviceConfig, PersonDataAccessDeviceConfig {
+	public interface Config extends AuthenticationDevice.Config, PersonDataAccessDevice.Config {
 
 		@Override
 		@BooleanDefault(true)
@@ -68,7 +68,7 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	}
 
 	@Override
-	public SecurityDeviceConfig getConfig() {
+	public Config getConfig() {
 		return _config;
 	}
 

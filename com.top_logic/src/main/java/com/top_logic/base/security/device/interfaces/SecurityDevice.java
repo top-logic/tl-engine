@@ -19,16 +19,16 @@ import com.top_logic.basic.config.annotation.Name;
  *  
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
-public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.SecurityDeviceConfig> {
+public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Config> {
 	
 	/**
 	 * Configuration of a {@link SecurityDevice}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface SecurityDeviceConfig extends PolymorphicConfiguration<SecurityDevice> {
+	public interface Config extends PolymorphicConfiguration<SecurityDevice> {
 
-		/** Name of configuration option {@link SecurityDeviceConfig#getId()}. */
+		/** Name of configuration option {@link Config#getId()}. */
 		String ID_ATTRIBUTE = "id";
 
 		/**

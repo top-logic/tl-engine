@@ -51,7 +51,7 @@ public class CommonPersonLabelProvider implements LabelProvider {
 			return null;
 		}
 
-		UserInterface user = Person.userOrNull(person);
+		UserInterface user = person.getUser();
 		if (user == null) {
 			return null;
 		}

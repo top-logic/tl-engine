@@ -282,7 +282,9 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
 			return this.getEmailAddress(((UserInterface) anObject).getEMail());
         }
         else if (anObject instanceof Person) {
-			return this.getEmailAddress(((Person) anObject).getInternalMail());
+			Person account = (Person) anObject;
+			UserInterface user = account.getUser();
+			return user == null ? null : this.getEmailAddress(user.getEMail());
         }
         return null;
     }

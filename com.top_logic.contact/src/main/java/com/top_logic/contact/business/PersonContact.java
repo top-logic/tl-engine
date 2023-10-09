@@ -251,30 +251,8 @@ public class PersonContact extends AbstractContact implements UserInterface {
 
         //create new;
 		theBase.createAssociation(theKO, thePKO, ASS_NAME_TO_PERSON);
-        this.copyPersonAttributesToContact(aPerson);
     }
     
-    public void copyPersonAttributesToContact(Person myPerson){
-    	try {
-    	    try {
-                this.setValue(NAME_ATTRIBUTE     ,myPerson.getLastName());
-                String fName = myPerson.getFirstName();
-                if (fName == null) { // Person         _does_  allow null FirstName
-                    fName = "";      // PersonContact does not allow null FirstName.
-                }
-                this.setValue(FIRST_NAME      ,fName);
-                this.setValue(TITLE          ,myPerson.getTitle());
-                this.setValue(EMAIL           ,myPerson.getInternalMail());
-                this.setValue(PHONE   ,myPerson.getInternalNumber());
-            }
-            catch (Exception ex) {
-                Logger.error("Failed to copyPersonAttributesToContact", ex, this);
-            }    	}
-    	catch (Exception ex) {
-    		Logger.error("Failed to copyPersonAttributesToContact", ex, this);
-    	}
-    }
-
     /**
      * If there is a PersonContact connected to the given person, this contact is returned,
      * <code>null</code> otherwise.

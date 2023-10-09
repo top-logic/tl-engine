@@ -92,16 +92,16 @@ public class RefreshUsersTask<C extends RefreshUsersTask.Config<?>> extends Stat
 						continue;
 					}
 
-					Person existingAccount = Person.byName(userName);
-					if (existingAccount != null) {
-						deletedRemoteAccounts.remove(existingAccount);
+					Person account = Person.byName(userName);
+					if (account != null) {
+						deletedRemoteAccounts.remove(account);
 					} else {
-						Person newAccount =
+						account =
 							Person.create(PersistencyLayer.getKnowledgeBase(), userName, authenticationDeviceID);
-						newAccount.setDataDeviceId(deviceId);
+						account.setDataDeviceId(deviceId);
 					}
 
-					// TODO: Update user info.
+					account.getUser();
 				}
 			}
 

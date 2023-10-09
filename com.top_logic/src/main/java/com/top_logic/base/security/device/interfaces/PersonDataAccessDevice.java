@@ -10,7 +10,6 @@ import java.util.List;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.dob.DataObject;
 
 /**
  * Used to access a persons userdata according to PersonAttributes.
@@ -96,30 +95,7 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 * @return the data for the given person as DataObject or null if not found
 	 */
 	public UserInterface getUserData(String aName);
-	
-	/**
-	 * Creates a new user entry with the given data if not already exists
-	 */
-	public boolean createUserEntry(DataObject aDo);
-	
-	/**
-	 * Stores the given user data, if a corresponding user is found in this device
-	 */
-	public boolean updateUserData(DataObject theDo);
-	
-	/**
-	 * Rename an entry so from now on it can be found using the new identifier
-     * 
-	 * @param oldID the old identifier 
-	 * @param newID the new identifier
-	 */
-	public boolean renameUserData(String oldID, String newID);
 
-	/**
-	 * @param aName - the internal unique username
-	 * @return true if data for this name was deleted from this device, false otherwise (i.e. if no such name was found)
-	 */	
-	public boolean deleteUserData(String aName);
 	/**
 	 * @param aName - the internal unique username
 	 * @return true if data for this name is available from this device, false otherwise

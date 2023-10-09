@@ -25,7 +25,7 @@ import javax.naming.directory.SearchResult;
 import com.top_logic.base.security.attributes.GroupAttributes;
 import com.top_logic.base.security.attributes.LDAPAttributes;
 import com.top_logic.base.security.device.DeviceMapping;
-import com.top_logic.base.security.device.interfaces.SecurityDevice;
+import com.top_logic.base.security.device.ldap.LDAPAuthenticationAccessDevice;
 import com.top_logic.base.security.device.ldap.LDAPDataObject;
 import com.top_logic.base.security.device.ldap.LDAPMetaObject;
 import com.top_logic.base.user.UserInterface;
@@ -147,7 +147,7 @@ public class LDAPAccessService {
 	 */
 	private String[] availableAttrs;
 
-	private final SecurityDevice _securityDevice;
+	private final LDAPAuthenticationAccessDevice _securityDevice;
 
 	/**
 	 * Configuration params of this instance
@@ -163,7 +163,7 @@ public class LDAPAccessService {
 	 * @param config
 	 *        Configuration for this {@link LDAPAccessService}.
 	 */
-	public LDAPAccessService(String deviceId, Config config, SecurityDevice securityDevice) {
+	public LDAPAccessService(String deviceId, Config config, LDAPAuthenticationAccessDevice securityDevice) {
 		_spi = ServiceProviderInfo.createFromConfig(deviceId, config);
 		deviceID = deviceId;
 		_securityDevice = securityDevice;

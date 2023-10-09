@@ -2,7 +2,10 @@
 
 <!-- meta objects needed by the contact management -->
 	 
-<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+<objectlist
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
 <metaobjects>
  	<metaobject object_type="MOKnowledgeObject" object_name="Contact" super_class="AttributedObject" db_name="CONTACT">
 <attributes>
@@ -24,19 +27,26 @@
     	</mo_index>
 </index>
 	</metaobject>
-
-	<!-- a special association to connect a PersonContact to a (TopLogic) Person -->
-	<association super_class="Association" object_name="representsUser" db_name="REPRESENTS_USER">
-		<attributes>
-			<source
-				override="true"
-				target-type="Contact"
-			/>
-			<destination
-				override="true"
-				target-type="Person" />
-		</attributes>
-	</association>
+	
+		<metaobject object_name="Person">
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="com.top_logic.contact.business.Account"/>
+				</annotation>
+		    </annotations>
+			<attributes>
+			    <reference att_name="contact"
+			    	by-value="false"
+			    	mandatory="true"
+			    	history-type="current" 
+			    	branch-global="false" 
+			    	monomorphic="true" 
+			    	is-container="false" 
+			    	deletion-policy="delete-referer" 
+			    	target-type="Contact"
+				/>
+			</attributes>
+		</metaobject>
 
 </metaobjects>
 </objectlist>

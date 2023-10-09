@@ -18,10 +18,8 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.element.boundsec.ElementBoundHelper;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
-import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.wrap.StringWrapperAttributeComparator;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -43,8 +41,6 @@ public class PersonContact extends AbstractContact implements UserInterface {
 
 	public static final String META_ELEMENT = "Contact.Person";
 
-    public static final String ASS_NAME_TO_PERSON = "representsUser";
-    
     //values for these are to be delivered by the contacts person if:
     // - this contact currently belongs to a person
     // - this contact has no own value for the given attribute
@@ -56,8 +52,8 @@ public class PersonContact extends AbstractContact implements UserInterface {
 	public static final String COMPANY = "company";
 	public static final String FAX = "fax";
 
-	private static final AssociationSetQuery<KnowledgeAssociation> PERSON_ATTR = AssociationQuery.createOutgoingQuery(
-		"person", ASS_NAME_TO_PERSON);
+	private static final AssociationSetQuery<Account> PERSON_ATTR =
+		AssociationQuery.createQuery("person", Account.class, Person.OBJECT_NAME, "contact");
 	
 	
     public PersonContact(KnowledgeObject ko) {
@@ -181,7 +177,7 @@ public class PersonContact extends AbstractContact implements UserInterface {
      */
     public Person getPerson() {
     	if (!tValid()) return null;
-    	Iterator<Person> theIt     = resolveWrappersTyped(PERSON_ATTR, Person.class).iterator();
+		Iterator<Account> theIt = resolveLinks(PERSON_ATTR).iterator();
     	Person           thePerson = null;
 
         if (theIt.hasNext()) {
@@ -201,11 +197,11 @@ public class PersonContact extends AbstractContact implements UserInterface {
      * 
      * @return a list with all persons this contact is referring to.
      */
-    public Collection getPersons(){
+	public Collection<Account> getPersons() {
         try{
-            return new ArrayList(resolveWrappers(PERSON_ATTR));
+			return new ArrayList<>(resolveLinks(PERSON_ATTR));
         }catch(Exception e){
-            return Collections.EMPTY_LIST;
+			return Collections.emptyList();
         }
     }
 
@@ -239,18 +235,7 @@ public class PersonContact extends AbstractContact implements UserInterface {
      * thrown away as well because only one contact can refer to a person at the a time.
      */
 	public void connectToPerson(Person aPerson) {
-    	KnowledgeObject theKO   = this.tHandle();
-        KnowledgeObject thePKO  = aPerson.tHandle();
-        KnowledgeBase   theBase = theKO.getKnowledgeBase();
-
-		// remove old
-		Collection<KnowledgeAssociation> oldAssociations = new ArrayList<>();
-		CollectionUtil.addAll(oldAssociations, theKO.getOutgoingAssociations(ASS_NAME_TO_PERSON));
-		CollectionUtil.addAll(oldAssociations, theKO.getIncomingAssociations(ASS_NAME_TO_PERSON));
-		theBase.deleteAll(oldAssociations);
-
-        //create new;
-		theBase.createAssociation(theKO, thePKO, ASS_NAME_TO_PERSON);
+		aPerson.tUpdateByName("contact", this);
     }
     
     /**

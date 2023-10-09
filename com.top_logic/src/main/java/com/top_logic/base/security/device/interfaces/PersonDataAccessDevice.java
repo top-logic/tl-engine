@@ -24,7 +24,7 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends SecurityDevice.Config {
+	public interface Config<I extends PersonDataAccessDevice> extends SecurityDevice.Config<I> {
 
 		/** @see #getDomain() */
 		String DOMAIN_ATTRIBUTE = "domain";
@@ -81,7 +81,7 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 * </p>
 	 */
 	default String getDomainName() {
-		return ((Config) getConfig()).getDomain();
+		return ((Config<?>) getConfig()).getDomain();
 	}
 
 	/**
@@ -132,14 +132,14 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 * @see Config#isReadOnly()
 	 */
 	default boolean isReadOnly() {
-		return ((Config) getConfig()).isReadOnly();
+		return ((Config<?>) getConfig()).isReadOnly();
 	}
 
 	/**
 	 * @see Config#isAllowExtAuthentication()
 	 */
 	default boolean allowExternalAuthentication() {
-		return ((Config) getConfig()).isAllowExtAuthentication();
+		return ((Config<?>) getConfig()).isAllowExtAuthentication();
 	}
 
 	/**

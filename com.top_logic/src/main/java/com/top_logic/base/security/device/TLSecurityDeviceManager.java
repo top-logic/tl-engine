@@ -70,7 +70,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		 */
 		@Key(SecurityDevice.Config.ID_ATTRIBUTE)
 		@Name(SECURITY_DEVICES_NAME)
-		Map<String, SecurityDevice.Config> getSecurityDevices();
+		Map<String, ? extends SecurityDevice.Config<?>> getSecurityDevices();
 
 		/**
 		 * Name of the default data access device.
@@ -120,7 +120,8 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	 *        Configuration for this {@link TLSecurityDeviceManager}.
 	 */
 	public TLSecurityDeviceManager(InstantiationContext context, Config config) {
-		_configuredDevices = TypedConfiguration.getInstanceMap(context, config.getSecurityDevices());
+		_configuredDevices =
+			TypedConfiguration.<String, SecurityDevice> getInstanceMap(context, config.getSecurityDevices());
 		checkSecurityDevices(_configuredDevices);
 		_dataAccessDevices = getDataAccessDevices(context, _configuredDevices);
 		_authenticationDevices = getAuthenticationDevices(context, _configuredDevices);

@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.gui.layout.table.filter;
 
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -90,7 +91,9 @@ public class StartsWithFilter implements Filter {
         }
     	String name ="";
         if(anObject instanceof Person){
-			name = ((Person) anObject).getLastName();
+			Person account = (Person) anObject;
+			UserInterface user = account.getUser();
+			name = user == null ? account.getName() : user.getName();
         }else if (anObject instanceof Wrapper) {
             name = (String)((Wrapper)anObject).getValue(attributeName);
         }

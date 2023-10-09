@@ -10,9 +10,11 @@ import java.util.regex.Pattern;
 import com.top_logic.base.locking.LockService;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialGroupManager;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
@@ -184,6 +186,24 @@ public class PersonManager extends ManagedClass {
 	}
 
     /**
+	 * The associated account information for the given account.
+	 * 
+	 * <p>
+	 * This information is only available when also using the contact module. This is the
+	 * implementation of {@link Person#getUser()}.
+	 * </p>
+	 * 
+	 * @param account
+	 *        The account to look up additional information for.
+	 * 
+	 * @see Person#getUser()
+	 */
+	@FrameworkInternal
+	public UserInterface getUser(Person account) {
+		return null;
+	}
+
+	/**
 	 * singleton instance of this manager
 	 */
 	public static final PersonManager getManager() {

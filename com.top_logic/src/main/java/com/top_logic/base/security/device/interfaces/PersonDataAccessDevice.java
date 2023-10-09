@@ -76,7 +76,7 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 * </p>
 	 * 
 	 * <p>
-	 * A value of <code>null</code> means to no associate any domain to managed users.
+	 * A value of <code>null</code> means not to associate any domain to managed users.
 	 * </p>
 	 */
 	default String getDomainName() {

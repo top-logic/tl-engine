@@ -193,7 +193,7 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	 *         If the login is not valid.
 	 */
 	protected void checkUser(String domainName, String userName) throws LoginDeniedException {
-		PersonDataAccessDevice accessDevice = getAccessDevice(domainName, userName);
+		PersonDataAccessDevice accessDevice = getDataDevice(domainName, userName);
 		if (accessDevice == null) {
 			throw new LoginDeniedException("No unique data access device for user '" + userName + "'.");
 		}
@@ -241,7 +241,7 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 	/**
 	 * The {@link PersonDataAccessDevice} linked to the currently executing authentication method.
 	 */
-	protected PersonDataAccessDevice getAccessDevice(String domain, String userName) {
+	protected PersonDataAccessDevice getDataDevice(String domain, String userName) {
 		if (StringServices.isEmpty(userName)) {
 			Logger.debug("No user name given.", ExternalAuthenticationServlet.class);
 			return null;

@@ -24,18 +24,18 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface PersonDataAccessDeviceConfig extends SecurityDeviceConfig {
+	public interface Config extends SecurityDevice.Config {
 
 		/** @see #getDomain() */
 		String DOMAIN_ATTRIBUTE = "domain";
 
 		/**
 		 * Configuration name for option
-		 * {@link PersonDataAccessDeviceConfig#isAllowExtAuthentication}.
+		 * {@link Config#isAllowExtAuthentication}.
 		 */
 		String ALLOW_EXT_AUTHENTICATION_PROPERTY = "allow-ext-authentication";
 
-		/** Configuration name for option {@link PersonDataAccessDeviceConfig#isReadOnly()}. */
+		/** Configuration name for option {@link Config#isReadOnly()}. */
 		String READ_ONLY_PROPERTY = "read-only";
 
 		/**
@@ -81,7 +81,7 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	 * </p>
 	 */
 	default String getDomainName() {
-		return ((PersonDataAccessDeviceConfig) getConfig()).getDomain();
+		return ((Config) getConfig()).getDomain();
 	}
 
 	/**
@@ -129,17 +129,17 @@ public interface PersonDataAccessDevice extends SecurityDevice {
 	}
 	
 	/**
-	 * @see PersonDataAccessDeviceConfig#isReadOnly()
+	 * @see Config#isReadOnly()
 	 */
 	default boolean isReadOnly() {
-		return ((PersonDataAccessDeviceConfig) getConfig()).isReadOnly();
+		return ((Config) getConfig()).isReadOnly();
 	}
 
 	/**
-	 * @see PersonDataAccessDeviceConfig#isAllowExtAuthentication()
+	 * @see Config#isAllowExtAuthentication()
 	 */
 	default boolean allowExternalAuthentication() {
-		return ((PersonDataAccessDeviceConfig) getConfig()).isAllowExtAuthentication();
+		return ((Config) getConfig()).isAllowExtAuthentication();
 	}
 
 	/**

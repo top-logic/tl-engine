@@ -244,8 +244,8 @@ public class EditPersonComponent extends EditComponent {
         // Create the necessary constraints
         SelectionSizeConstraint constraintSelectOne = new SelectionSizeConstraint(1, 1);
 
-		Person thePerson = (Person) this.getModel();
-		Locale theLocale = getLocale(thePerson);
+		Person account = (Person) this.getModel();
+		Locale theLocale = getLocale(account);
 
 		List<String> languages = Arrays.asList(ResourcesModule.getInstance().getSupportedLocaleNames());
         SelectField languageField = FormFactory.newSelectField(EditPersonComponent.LANGUAGE, languages, false, true, false, constraintSelectOne);
@@ -263,19 +263,19 @@ public class EditPersonComponent extends EditComponent {
 		countryField.setAsSingleSelection(theLocale.getCountry());
 		formContext.addMember(countryField);
 
-		formContext.addMember(createTimezoneField(thePerson, constraintSelectOne));
+		formContext.addMember(createTimezoneField(account, constraintSelectOne));
 		// Note: Only super users can change the super user flag. A super-user cannot remove itself
 		// the super user flag to prevent to delete the last super user.
 		boolean cannotChangeSuperUserFlag =
-			!TLContext.isAdmin() || thePerson == TLContext.getContext().getCurrentPersonWrapper()
-				|| noDataStorage(thePerson);
+			!TLContext.isAdmin() || account == TLContext.getContext().getCurrentPersonWrapper()
+				|| noDataStorage(account);
 
 		// TODO BHU, KHA, KBU: this code might never be used at all, the
 		// creation of new users is done in a dialog
         
         // compare to PersonAttributes.
 		BooleanField restrictedUser;
-		if (thePerson == null) {
+		if (account == null) {
             //this is for create new user, null-selection in list is not expected
 
 			int theSize = getSizeForMOAttribute(_userMO, Person.NAME, false);
@@ -305,7 +305,7 @@ public class EditPersonComponent extends EditComponent {
 				|| Group.isMemberOfAnyGroup(TLContext.getContext().getCurrentPersonWrapper(), getAllowedGroups());
 
 			{
-				String authenticationDeviceID = thePerson.getAuthenticationDeviceID();
+				String authenticationDeviceID = account.getAuthenticationDeviceID();
 
 				Set<String> allDataDevices = TLSecurityDeviceManager.getInstance().getConfiguredDataAccessDeviceIDs();
                 ArrayList<String> options = new ArrayList<>(allDataDevices);
@@ -319,46 +319,48 @@ public class EditPersonComponent extends EditComponent {
 				if (!StringServices.isEmpty(authenticationDeviceID))
 					authDevicesField.initSingleSelection(authenticationDeviceID);
 
-				boolean deviceReadonly = noDataStorage(thePerson);
-				// if the device is read only no constraints need to be set, because the following
-				// fields will be disabled anyway.
-                if (deviceReadonly) {
-					formContext.addMember(givenNameField(thePerson, deviceReadonly));
-					formContext.addMember(titleField(thePerson, deviceReadonly));
-					formContext.addMember(surnameField(thePerson, deviceReadonly));
-					formContext.addMember(newPersonField(UserInterface.PHONE, thePerson.getInternalNumber(),
-						deviceReadonly));
-					formContext.addMember(newPersonField(UserInterface.EMAIL, thePerson.getInternalMail(),
-						deviceReadonly));
-                }
-                else {
-					int givenNameSize = getSizeForMOAttribute(_userMO, UserInterface.NAME, deviceReadonly);
-					StringField givenNameField =
-						newSizedFormConstraint(UserInterface.NAME, !allowedToEdit || deviceReadonly, 0,
-							givenNameSize, thePerson.getFirstName());
-					givenNameField.setMandatory(true);
-					formContext.addMember(givenNameField);
-					int tileSize = getSizeForMOAttribute(_userMO, UserInterface.TITLE, deviceReadonly);
-					formContext.addMember(newSizedFormConstraint(UserInterface.TITLE,
-						!allowedToEdit || deviceReadonly, 0, tileSize, thePerson.getTitle()));
-					StringField surNameField =
-						newSizedFormConstraint(UserInterface.FIRST_NAME,
-							!allowedToEdit || deviceReadonly, 1, getSizeForMOAttribute(_userMO,
-								UserInterface.FIRST_NAME, deviceReadonly),
-							thePerson
-								.getLastName());
-					surNameField.setMandatory(true);
-					formContext.addMember(surNameField);
-					formContext.addMember(newSizedFormConstraint(UserInterface.PHONE, deviceReadonly, 0,
-						getSizeForMOAttribute(_userMO, UserInterface.PHONE, deviceReadonly),
-						thePerson.getInternalNumber()));
-					formContext.addMember(newSizedFormConstraint(UserInterface.EMAIL, deviceReadonly, 0,
-						getSizeForMOAttribute(_userMO, UserInterface.EMAIL, deviceReadonly),
-						thePerson.getInternalMail()));
-                }
+				UserInterface user = account.getUser();
+				if (user != null) {
+					boolean deviceReadonly = noDataStorage(account);
+					// if the device is read only no constraints need to be set, because the
+					// following
+					// fields will be disabled anyway.
+					if (deviceReadonly) {
+						formContext.addMember(givenNameField(user, deviceReadonly));
+						formContext.addMember(titleField(user, deviceReadonly));
+						formContext.addMember(surnameField(user, deviceReadonly));
+						formContext.addMember(newPersonField(UserInterface.PHONE, user.getPhone(),
+							deviceReadonly));
+						formContext.addMember(newPersonField(UserInterface.EMAIL, user.getEMail(),
+							deviceReadonly));
+					} else {
+						int givenNameSize = getSizeForMOAttribute(_userMO, UserInterface.NAME, deviceReadonly);
+						StringField givenNameField =
+							newSizedFormConstraint(UserInterface.NAME, !allowedToEdit || deviceReadonly, 0,
+								givenNameSize, user.getFirstName());
+						givenNameField.setMandatory(true);
+						formContext.addMember(givenNameField);
+						int tileSize = getSizeForMOAttribute(_userMO, UserInterface.TITLE, deviceReadonly);
+						formContext.addMember(newSizedFormConstraint(UserInterface.TITLE,
+							!allowedToEdit || deviceReadonly, 0, tileSize, user.getTitle()));
+						StringField surNameField =
+							newSizedFormConstraint(UserInterface.FIRST_NAME,
+								!allowedToEdit || deviceReadonly, 1, getSizeForMOAttribute(_userMO,
+									UserInterface.FIRST_NAME, deviceReadonly),
+								user.getName());
+						surNameField.setMandatory(true);
+						formContext.addMember(surNameField);
+						formContext.addMember(newSizedFormConstraint(UserInterface.PHONE, deviceReadonly, 0,
+							getSizeForMOAttribute(_userMO, UserInterface.PHONE, deviceReadonly),
+							user.getPhone()));
+						formContext.addMember(newSizedFormConstraint(UserInterface.EMAIL, deviceReadonly, 0,
+							getSizeForMOAttribute(_userMO, UserInterface.EMAIL, deviceReadonly),
+							user.getEMail()));
+					}
+				}
                 formContext.addMember(authDevicesField);
 
-				restrictedUser = createRestrictedUserField(thePerson);
+				restrictedUser = createRestrictedUserField(account);
 				formContext.addMember(restrictedUser);
 
                 if(ThreadContext.isAdmin()){
@@ -373,11 +375,11 @@ public class EditPersonComponent extends EditComponent {
 
 				String currentThemeId;
 				Person currentPerson = TLContext.getContext().getCurrentPersonWrapper();
-				if (Utils.equals(thePerson, currentPerson)) {
+				if (Utils.equals(account, currentPerson)) {
 					PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
 					currentThemeId = MultiThemeFactory.getPersonalThemeId(pc);
 				} else {
-					PersonalConfigurationWrapper pcw = PersonalConfigurationWrapper.getPersonalConfiguration(thePerson);
+					PersonalConfigurationWrapper pcw = PersonalConfigurationWrapper.getPersonalConfiguration(account);
 					currentThemeId = pcw == null ? null : MultiThemeFactory.getPersonalThemeId(pcw);
 				}
 				Theme currentTheme;
@@ -399,12 +401,12 @@ public class EditPersonComponent extends EditComponent {
 				themeField.setLabel(getResString("themeSelectorLabel"));
 
 				formContext.addMember(themeField);
-				formContext.addMember(createGroupsField(thePerson));
+				formContext.addMember(createGroupsField(account));
             }
         }
 
 		BooleanField superUser =
-			FormFactory.newBooleanField(SUPER_USER_FIELD, Person.isAdmin(thePerson), cannotChangeSuperUserFlag);
+			FormFactory.newBooleanField(SUPER_USER_FIELD, Person.isAdmin(account), cannotChangeSuperUserFlag);
 		formContext.addMember(superUser);
 
 		AtMostOneFilledFieldDependency dependency = new AtMostOneFilledFieldDependency(restrictedUser, superUser);
@@ -488,8 +490,8 @@ public class EditPersonComponent extends EditComponent {
 		return field;
 	}
 
-	private StringField surnameField(Person person, boolean deviceReadonly) {
-		StringField field = newPersonField(UserInterface.FIRST_NAME, person.getLastName(), deviceReadonly);
+	private StringField surnameField(UserInterface user, boolean deviceReadonly) {
+		StringField field = newPersonField(UserInterface.FIRST_NAME, user.getName(), deviceReadonly);
 		field.setMandatory(true);
 		return field;
 	}
@@ -502,15 +504,15 @@ public class EditPersonComponent extends EditComponent {
 		return userNameField;
 	}
 
-	private StringField titleField(Person person, boolean deviceReadonly) {
-		StringField field = FormFactory.newStringField(UserInterface.TITLE, person.getTitle(), false);
+	private StringField titleField(UserInterface user, boolean deviceReadonly) {
+		StringField field = FormFactory.newStringField(UserInterface.TITLE, user.getTitle(), false);
 		field.setDisabled(deviceReadonly);
 		return field;
 	}
 
-	private StringField givenNameField(Person person, boolean deviceReadonly) {
+	private StringField givenNameField(UserInterface user, boolean deviceReadonly) {
 		StringField field =
-			FormFactory.newStringField(UserInterface.NAME, person.getFirstName(), false);
+			FormFactory.newStringField(UserInterface.NAME, user.getFirstName(), false);
 		field.setDisabled(deviceReadonly);
 		field.setMandatory(true);
 		return field;

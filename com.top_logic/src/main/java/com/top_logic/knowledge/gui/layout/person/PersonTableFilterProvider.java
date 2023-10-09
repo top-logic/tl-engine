@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.gui.layout.person;
 
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.table.filter.FirstCharacterFilterProvider;
@@ -28,7 +29,9 @@ public class PersonTableFilterProvider extends FirstCharacterFilterProvider {
 		@Override
 		public String getLabel(Object object) {
 			if (object instanceof Person) {
-				return ((Person) object).getLastName();
+				Person account = (Person) object;
+				UserInterface user = account.getUser();
+				return user == null ? account.getName() : user.getName();
             }
 			return String.valueOf(object);
         }

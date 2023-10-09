@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.gui.layout.person;
 
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -89,8 +90,13 @@ public class PersonResourceProvider extends WrapperResourceProvider
 			Person account = (Person) anObject;
 
 			String loginName = account.getName();
-			String lastName = account.getLastName();
-			String firstName = account.getFirstName();
+			UserInterface user = account.getUser();
+			if (user == null) {
+				return loginName;
+			}
+
+			String lastName = user.getName();
+			String firstName = user.getFirstName();
 			ResKey key;
 			if (getConfig().getShowLoginName()) {
 				key = I18NConstants.ACCOUNT_LABEL__FIRST_LAST_LOGIN.fill(firstName, lastName, loginName);
@@ -106,9 +112,16 @@ public class PersonResourceProvider extends WrapperResourceProvider
 	@Override
 	protected ResKey getTooltipNonNull(Object object) {
 		Person account = (Person) object;
+
+		UserInterface user = account.getUser();
+		if (user == null) {
+			// No additional information available.
+			return null;
+		}
+
 		String label = this.getLabel(account);
-		String mail = account.getInternalMail();
-		String phone = account.getInternalNumber();
+		String mail = user.getEMail();
+		String phone = user.getPhone();
 
 		return I18NConstants.ACCOUNT_TOOLTIP__LABEL_MAIL_PHONE.fill(
 			quote(label),

@@ -108,13 +108,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 	private static final AssociationSetQuery<KnowledgeAssociation> GLOBAL_ROLES_ATTR = AssociationQuery
 		.createOutgoingQuery("globalRoles",
 		Person.GLOBAL_ROLE_KA);
-
-    /**
-     * Reference to a backed up user object which is used/returned in case of the
-     * actual user being deleted from security or the security system currently
-     * not being available (due to network problems or alike)
-     */
-	private UserInterface _user;
     
     /**
      * Caches the representative group for this person.
@@ -339,13 +332,13 @@ public class Person extends AbstractBoundWrapper implements Author {
 	}
 
 	/**
-	 * Get the DOUser for the Person.
-	 *
-	 * @return the User of this person, or the backup if the secDevice could not be reached or this
-	 *         persons user has been deleted
+	 * User information for this account.
+	 * 
+	 * @return The account information for this account, or <code>null</code> when not available (if
+	 *         the contact module is not linked to the application).
 	 */
 	public UserInterface getUser() {
-		return _user;
+		return PersonManager.getManager().getUser(this);
     }
 
     /**
@@ -386,13 +379,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 		KBUtils.deleteAllKI(tHandle().getOutgoingAssociations(Person.GLOBAL_ROLE_KA, aGlobalRole.tHandle()));
     }
     
-    /**
-     * the firstname of this user
-     */
-	public String getFirstName() {
-		return getUser().getFirstName();
-    }
-
     /**
      * Return the full name of the person -
      * a formatted String for Username, should be "Title FirstName LastName".
@@ -440,39 +426,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 		return result.toString();
     }
 
-
-    /**
-     * the internal email of this user
-     */
-	public String getInternalMail() {
-		return getUser().getEMail();
-    }
-
-    /**
-     * the internal number of this user
-     */
-	public String getInternalNumber() {
-		return getUser().getPhone();
-    }
-
-    /**
-     * the lastname of this user
-     */
-	public String getLastName() {
-		return getUser().getName();
-    }
-
-    /**
-     * the title of this user
-     */
-	public String getTitle() {
-		return getUser().getTitle();
-    }
-
-	void setUser(UserInterface user) {
-		_user = user;
-	}
-    
     /**
      * Can be used to change the AuthenticationDevice of a person during its
      * lifecycle

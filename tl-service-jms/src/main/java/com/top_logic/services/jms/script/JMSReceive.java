@@ -3,45 +3,38 @@
  */
 package com.top_logic.services.jms.script;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.List;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.io.binary.BinaryDataSource;
-import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
+import com.top_logic.services.jms.Consumer;
 import com.top_logic.services.jms.JMSService;
-import com.top_logic.services.jms.Producer;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link GenericMethod} sending a message to a JMS Message Queue System.
+ * {@link GenericMethod} receiving a message from a JMS Message Queue System.
  * 
  * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
  */
-public class JMSSend extends GenericMethod {
+public class JMSReceive extends GenericMethod {
 
 	/**
-	 * Creates a {@link JMSSend} expression.
+	 * Creates a {@link JMSReceive} expression.
 	 */
-	protected JMSSend(String name, SearchExpression self, SearchExpression[] arguments) {
+	protected JMSReceive(String name, SearchExpression self, SearchExpression[] arguments) {
 		super(name, self, arguments);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression self, SearchExpression[] arguments) {
-		return new JMSSend(getName(), self, arguments);
+		return new JMSReceive(getName(), self, arguments);
 	}
 
 	@Override
@@ -57,26 +50,11 @@ public class JMSSend extends GenericMethod {
 		JMSService jmsService = JMSService.Module.INSTANCE.getImplementationInstance();
 		String connectionName = asString(arguments[0]);
 
-		Producer producer = jmsService.getProducer(connectionName);
-		if (producer == null) {
+		Consumer consumer = jmsService.getConsumer(connectionName);
+		if (consumer == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_CONNECTION__NAME_EXPR.fill(connectionName, this));
 		}
-		Object rawData = arguments[1];
-		if (rawData instanceof HTMLFragment) {
-			StringWriter sw = new StringWriter();
-			TagWriter tw = new TagWriter(sw);
-			HTMLFragment html = (HTMLFragment) rawData;
-			try {
-				html.write(DefaultDisplayContext.getDisplayContext(), tw);
-			} catch (IOException ex) {
-				throw new TopLogicException(I18NConstants.ERROR_WRITING_XML, ex);
-			}
-			producer.send(sw.toString());
-		} else if (rawData instanceof BinaryDataSource) {
-			producer.send((BinaryDataSource) rawData);
-		} else {
-			producer.send(ToString.toString(rawData));
-		}
+		consumer.receive();
 
 		return null;
 	}
@@ -88,13 +66,12 @@ public class JMSSend extends GenericMethod {
 
 
 	/**
-	 * {@link AbstractSimpleMethodBuilder} creating an {@link JMSSend} function.
+	 * {@link AbstractSimpleMethodBuilder} creating an {@link JMSReceive} function.
 	 */
-	public static final class Builder extends AbstractSimpleMethodBuilder<JMSSend> {
+	public static final class Builder extends AbstractSimpleMethodBuilder<JMSReceive> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("connection")
-			.mandatory("message")
 			.build();
 
 		/**
@@ -110,9 +87,9 @@ public class JMSSend extends GenericMethod {
 		}
 
 		@Override
-		public JMSSend build(Expr expr, SearchExpression self, SearchExpression[] args)
+		public JMSReceive build(Expr expr, SearchExpression self, SearchExpression[] args)
 				throws ConfigurationException {
-			return new JMSSend(getConfig().getName(), self, args);
+			return new JMSReceive(getConfig().getName(), self, args);
 		}
 
 		@Override

@@ -14,7 +14,9 @@ import javax.jms.Topic;
 
 import com.ibm.msg.client.wmq.WMQConstants;
 
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.services.jms.JMSService.DestinationConfig;
+import com.top_logic.services.jms.JMSService.MessageProcessor;
 import com.top_logic.services.jms.JMSService.Type;
 
 /**
@@ -23,6 +25,8 @@ import com.top_logic.services.jms.JMSService.Type;
 public class Consumer extends JMSClient {
 
 	private JMSConsumer _consumer;
+
+	private MessageProcessor _processor;
 
 	/**
 	 * @param config
@@ -33,10 +37,11 @@ public class Consumer extends JMSClient {
 	public Consumer(DestinationConfig config) throws JMSException {
 		super(config);
 		if (config.getType().equals(Type.TOPIC)) {
-			_consumer = getContext().createSharedDurableConsumer((Topic) getDestination(), "FruitsTopic");
+			_consumer = getContext().createSharedDurableConsumer((Topic) getDestination(), config.getDestName());
 		} else {
 			_consumer = getContext().createConsumer(getDestination());
 		}
+		_processor = TypedConfigUtil.createInstance(config.getProcessor());
 	}
 
 	/**
@@ -45,6 +50,8 @@ public class Consumer extends JMSClient {
 	public void receive() {
 //		while (true) {
 		Message message = _consumer.receive();
+		_processor.processMessage(message);
+
 		String msg = "";
 		try {
 			if (message instanceof TextMessage) {
@@ -55,10 +62,8 @@ public class Consumer extends JMSClient {
 				msg = new String(m, charset);
 			}
 		} catch (JMSException ex) {
-			// TODO Auto-generated catch block
 			ex.printStackTrace();
 		} catch (UnsupportedEncodingException ex) {
-			// TODO Auto-generated catch block
 			ex.printStackTrace();
 		}
 

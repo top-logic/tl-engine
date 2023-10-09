@@ -7,9 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.jms.JMSException;
+import javax.jms.Message;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -52,7 +54,8 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		DestinationConfig.DEST_NAME,
 		DestinationConfig.TYPE,
 		DestinationConfig.USER,
-		DestinationConfig.PASSWORD })
+		DestinationConfig.PASSWORD,
+		DestinationConfig.MESSAGE_PROCESSOR })
 	public interface DestinationConfig extends NamedConfigMandatory {
 
 		/**
@@ -94,6 +97,11 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		 * Configuration name for {@link #getType()}
 		 */
 		String TYPE = "type";
+
+		/**
+		 * 
+		 */
+		String MESSAGE_PROCESSOR = "message-processor";
 
 		/**
 		 * The host of the target queue.
@@ -148,6 +156,12 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		 */
 		@Name(TYPE)
 		Type getType();
+
+		/**
+		 * TODO
+		 */
+		@Name(MESSAGE_PROCESSOR)
+		PolymorphicConfiguration<MessageProcessor> getProcessor();
 	}
 
 	/**
@@ -164,6 +178,17 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		 * messages simultaneously from a topic.
 		 */
 		TOPIC;
+	}
+
+	/**
+	 * TODO
+	 */
+	public interface MessageProcessor {
+		/**
+		 * @param message
+		 *        The {@link Message} received from the {@link Consumer}.
+		 */
+		public void processMessage(Message message);
 	}
 
 	private Map<String, Producer> _producers = new HashMap<>();
@@ -189,8 +214,10 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 			try {
 				Producer prod = new Producer(config);
 				_producers.put(config.getName(), prod);
-				Consumer cons = new Consumer(config);
-				_consumers.put(config.getName(), cons);
+				if (config.getProcessor() != null) {
+					Consumer cons = new Consumer(config);
+					_consumers.put(config.getName(), cons);
+				}
 			} catch (JMSException ex) {
 				InfoService.logError(I18NConstants.ERROR_ESTABLISH_CONNECTION__NAME.fill(config.getName()),
 					ex.getMessage(), ex, JMSService.class);
@@ -205,6 +232,9 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	protected void shutDown() {
 		for (Producer prod : _producers.values()) {
 			prod.close();
+		}
+		for (Consumer cons : _consumers.values()) {
+			cons.close();
 		}
 		super.shutDown();
 	}

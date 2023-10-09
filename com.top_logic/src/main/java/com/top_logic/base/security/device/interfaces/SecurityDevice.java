@@ -19,14 +19,14 @@ import com.top_logic.basic.config.annotation.Name;
  *  
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
-public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Config> {
+public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Config<?>> {
 	
 	/**
 	 * Configuration of a {@link SecurityDevice}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends PolymorphicConfiguration<SecurityDevice> {
+	public interface Config<I extends SecurityDevice> extends PolymorphicConfiguration<I> {
 
 		/** Name of configuration option {@link Config#getId()}. */
 		String ID_ATTRIBUTE = "id";
@@ -50,7 +50,9 @@ public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Config
 	/**
 	 * the ID of this device
 	 */
-	public String getDeviceID();
+	default String getDeviceID() {
+		return getConfig().getId();
+	}
 
 	/**
 	 * Start this {@link SecurityDevice}.
@@ -59,7 +61,9 @@ public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Config
 	 * Called during application startup, when {@link TLSecurityDeviceManager} is starting up.
 	 * </p>
 	 */
-	public void startUp();
+	default void startUp() {
+		// No action.
+	}
 
 	/**
 	 * Stops this {@link SecurityDevice}.
@@ -68,6 +72,8 @@ public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Config
 	 * Called during application shutdown, when {@link TLSecurityDeviceManager} is shutting down.
 	 * </p>
 	 */
-	public void shutDown();
+	default void shutDown() {
+		// No action.
+	}
 
 }

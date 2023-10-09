@@ -15,15 +15,6 @@ import com.top_logic.knowledge.wrap.person.Person;
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
 public interface AuthenticationDevice extends SecurityDevice {
-	
-	/**
-	 * Configuration interface for {@link AuthenticationDevice}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public interface Config extends SecurityDevice.Config {
-		// Pure marker interface.
-	}
 
 	/**
 	 * @param login

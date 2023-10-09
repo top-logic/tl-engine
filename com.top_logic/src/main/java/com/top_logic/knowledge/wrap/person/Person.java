@@ -331,6 +331,13 @@ public class Person extends AbstractBoundWrapper implements Author {
 		return null;
     }
 
+	/**
+	 * @see #getUser()
+	 */
+	public void setUser(UserInterface user) {
+		throw new UnsupportedOperationException("No contact module available.");
+	}
+
     /**
      * Get the global roles as a Collection of BoundedRoles
      * 
@@ -531,6 +538,8 @@ public class Person extends AbstractBoundWrapper implements Author {
 		if (defaultGroup != null) {
 			defaultGroup.addMember(result);
 		}
+
+		PersonManager.getManager().initUser(result);
 
 		return result;
 	}

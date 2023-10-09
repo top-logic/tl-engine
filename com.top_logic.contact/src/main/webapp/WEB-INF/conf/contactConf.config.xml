@@ -159,6 +159,10 @@
 				</handlers>
 			</instance>		
 		</config>
+		
+		<config service-class="com.top_logic.knowledge.wrap.person.PersonManager">
+			<instance class="com.top_logic.contact.layout.person.ContactPersonManager" />
+		</config>
 	</services>
 	
 	<configs>

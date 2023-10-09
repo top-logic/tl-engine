@@ -69,7 +69,6 @@
 			       <module key="com.top_logic.layout.editor.DynamicComponentService$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.commandhandlers.BookmarkService$Module" value="true"/>
 			       <module key="com.top_logic.util.LayoutBasedSecurity$Module" value="true"/>
-			       <module key="com.top_logic.base.security.setup.RootAccountCreation$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>

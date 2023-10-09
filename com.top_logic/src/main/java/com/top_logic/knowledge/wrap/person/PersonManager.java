@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import com.top_logic.base.locking.LockService;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -25,7 +26,9 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.license.LicenseTool;
 
@@ -184,6 +187,18 @@ public class PersonManager extends ManagedClass {
 	}
 
 	/**
+	 * Initializes the {@link Person#getUser()} property with a new user info object, if the current
+	 * system configuration supports user information (the contact module is linked to the
+	 * application).
+	 * 
+	 * @param account
+	 *        The account to initialize.
+	 */
+	public void initUser(Person account) {
+		// No user information available
+	}
+
+	/**
 	 * singleton instance of this manager
 	 */
 	public static final PersonManager getManager() {
@@ -194,6 +209,31 @@ public class PersonManager extends ManagedClass {
 	protected void startUp() {
 		super.startUp();
 		internalStartUp();
+		ensureRootAccount();
+	}
+
+	private void ensureRootAccount() {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+
+		String loginName = getSuperUserName();
+		Person existingAccount = Person.byName(loginName);
+		if (existingAccount != null) {
+			return;
+		}
+
+		try (Transaction tx = kb.beginTransaction()) {
+			AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
+			String deviceID = device.getDeviceID();
+			Person root = Person.create(kb, loginName, deviceID);
+			root.setAdmin(true);
+
+			if (device.allowPwdChange()) {
+				device.setPassword(root, "root1234".toCharArray());
+			} else {
+				Logger.info("No password setting for root user allowed.", PersonManager.class);
+			}
+			tx.commit();
+		}
 	}
 
 	private void internalStartUp() {

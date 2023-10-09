@@ -328,7 +328,7 @@ public class Person extends AbstractBoundWrapper implements Author {
 	 *         the contact module is not linked to the application).
 	 */
 	public UserInterface getUser() {
-		return PersonManager.getManager().getUser(this);
+		return null;
     }
 
     /**

@@ -32,30 +32,7 @@
 						<delete-protected/>
 					</annotations>
 				</property>
-				<property name="pwdhistory"
-					type="tl.core:String"
-				>
-					<annotations>
-						<delete-protected/>
-						<visibility value="hidden"/>
-					</annotations>
-				</property>
-				<property name="lastPwdChange"
-					type="tl.core:Date"
-				>
-					<annotations>
-						<delete-protected/>
-						<visibility value="hidden"/>
-					</annotations>
-				</property>
 				<property name="unusedNotified"
-					type="tl.core:Boolean"
-				>
-					<annotations>
-						<delete-protected/>
-					</annotations>
-				</property>
-				<property name="wasAlive"
 					type="tl.core:Boolean"
 				>
 					<annotations>

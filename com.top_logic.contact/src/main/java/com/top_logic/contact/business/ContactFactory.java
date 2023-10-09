@@ -11,24 +11,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.element.meta.kbbased.AbstractWrapperResolver;
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.search.RevisionQuery;
-import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.AbstractQueryCache;
-import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.QueryCache;
 import com.top_logic.knowledge.service.db2.SimpleQuery;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperNameComparator;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
@@ -56,10 +51,6 @@ public class ContactFactory extends AbstractWrapperResolver {
     
     /** The name of the structure we use */
     public static final String STRUCTURE_NAME      = "Contacts";
-
-    /** Cache KA from Person to Contact (reverse of {@link PersonContact#PERSON_ATTR} */
-	private static final AssociationSetQuery<KnowledgeAssociation> CONTACT_ATTR = AssociationQuery.createIncomingQuery(
-            "contact", PersonContact.ASS_NAME_TO_PERSON);
 
 	private final ConcurrentHashMap<String, QueryCache<?>> _caches = new ConcurrentHashMap<>();
 
@@ -234,7 +225,7 @@ public class ContactFactory extends AbstractWrapperResolver {
 		if (aPerson == null) {
 			return null;
 		}
-        return (PersonContact) CollectionUtil.getFirst(AbstractWrapper.resolveWrappers(aPerson, CONTACT_ATTR));
+		return (PersonContact) aPerson.getUser();
     }
 
 }

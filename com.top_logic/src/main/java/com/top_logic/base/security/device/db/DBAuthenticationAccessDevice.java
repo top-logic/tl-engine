@@ -11,8 +11,8 @@ import java.util.Calendar;
 import java.util.List;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.device.AbstractSecurityDevice;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
+import com.top_logic.base.security.device.interfaces.SecurityDevice;
 import com.top_logic.base.security.password.I18NConstants;
 import com.top_logic.base.security.password.PasswordHistoryFormat;
 import com.top_logic.base.security.password.PasswordValidator;
@@ -21,6 +21,7 @@ import com.top_logic.base.security.password.hashing.PasswordHashingService;
 import com.top_logic.base.security.password.hashing.VerificationResult;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.ListBinding;
@@ -39,7 +40,8 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
-public class DBAuthenticationAccessDevice extends AbstractSecurityDevice implements AuthenticationDevice {
+public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<SecurityDevice.Config<?>>
+		implements AuthenticationDevice {
 
 	private static final String PASSWORD_TABLE = "Password";
 
@@ -54,7 +56,7 @@ public class DBAuthenticationAccessDevice extends AbstractSecurityDevice impleme
 	/**
 	 * Configuration options for {@link DBAuthenticationAccessDevice}.
 	 */
-	public interface Config extends AbstractSecurityDevice.Config {
+	public interface Config extends AuthenticationDevice.Config<DBAuthenticationAccessDevice> {
 
 		/**
 		 * Name of the resource with initial users to load.

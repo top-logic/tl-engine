@@ -88,7 +88,7 @@ public class DemoContactGenerator implements DemoPersonNames {
 			String lastName, int i) {
          String name = "" + lastName.charAt(0) + firstName.charAt(0) + Integer.toString(i);
 			Person p = Person.create(PersistencyLayer.getKnowledgeBase(), name, authID);
-         UserInterface user =  Person.userOrNull(p);
+         UserInterface user =  p.getUser();
 			user.setName(lastName);
 			user.setFirstName(firstName);
          return  p;

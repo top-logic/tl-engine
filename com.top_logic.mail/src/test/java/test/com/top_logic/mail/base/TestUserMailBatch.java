@@ -75,7 +75,7 @@ public class TestUserMailBatch extends BasicTestCase {
 	private void checkUserExists(String userName, String userMailAddress) {
 		Person person = Person.byName(userName);
 		assertNotNull("Person is created because user is defined in Users.test.xml", person);
-		UserInterface user = Person.userOrNull(person);
+		UserInterface user = person.getUser();
 		assertNotNull("User is defined in Users.test.xml", user);
 		assertEquals("Email is defined in Users.test.xml", userMailAddress, user.getEMail());
 	}

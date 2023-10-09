@@ -26,4 +26,9 @@ public class Account extends AttributedPerson {
 		return (UserInterface) tValueByName("contact");
 	}
 
+	@Override
+	public void setUser(UserInterface user) {
+		tUpdateByName("contact", user);
+	}
+
 }

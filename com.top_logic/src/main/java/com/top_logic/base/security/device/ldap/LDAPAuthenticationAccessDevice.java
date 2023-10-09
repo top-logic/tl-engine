@@ -7,6 +7,7 @@ package com.top_logic.base.security.device.ldap;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -17,14 +18,15 @@ import javax.naming.directory.DirContext;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.dsa.ldap.LDAPAccessService;
 import com.top_logic.base.dsa.ldap.ServiceProviderInfo;
-import com.top_logic.base.security.device.AbstractSecurityDevice;
 import com.top_logic.base.security.device.DeviceMapping;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
+import com.top_logic.base.security.device.interfaces.SecurityDevice;
 import com.top_logic.base.security.password.PasswordValidator;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
@@ -44,7 +46,7 @@ import com.top_logic.knowledge.wrap.person.Person;
  * 
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
-public class LDAPAuthenticationAccessDevice extends AbstractSecurityDevice
+public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<SecurityDevice.Config<?>>
 		implements PersonDataAccessDevice, AuthenticationDevice {
 
 	/**
@@ -122,7 +124,7 @@ public class LDAPAuthenticationAccessDevice extends AbstractSecurityDevice
 	 * @return the Mapping
 	 */
 	public DeviceMapping getMapping(List<String> objectClasses) {
-		return getMappingFor(this.mappings, objectClasses, ((Config) getConfig()).getMappings());
+		return LDAPAuthenticationAccessDevice.getMappingFor(this.mappings, objectClasses, ((Config) getConfig()).getMappings());
 	}
 
 	@Override
@@ -213,6 +215,32 @@ public class LDAPAuthenticationAccessDevice extends AbstractSecurityDevice
 	@Override
 	public boolean deleteUserData(String aName) {
 		throw new UnsupportedOperationException("LDAP users cannot be deleted.");
+	}
+
+	/**
+	 * A type specific mapping for this device and the given object class
+	 */
+	public static synchronized DeviceMapping getMappingFor(Map<String, DeviceMapping> aMappingCache,
+			List<String> objectClasses, Map<String, String> mappings) {
+		DeviceMapping theMapping = new DeviceMapping();
+	
+		for (Iterator<String> theClasses = objectClasses.iterator(); theClasses.hasNext();) {
+			String theObjectClass = theClasses.next();
+			DeviceMapping theInnerMapping = null;
+			if (aMappingCache != null) {
+				theInnerMapping = aMappingCache.get(theObjectClass);
+			}
+	
+			if (theInnerMapping == null) {
+				theInnerMapping = new DeviceMapping(mappings, theObjectClass);
+				if (aMappingCache != null) {
+					aMappingCache.put(theObjectClass, theInnerMapping);
+				}
+			}
+			theMapping.mergeWith(theInnerMapping, true);
+		}
+	
+		return theMapping;
 	}
 
 }

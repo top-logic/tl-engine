@@ -521,21 +521,6 @@
 			</instance>
 		</config>
 		
-        <config service-class="com.top_logic.base.security.device.TLSecurityDeviceManager">
-			<instance>
-				<security-devices>
-					<security-device 
-						id="dbSecurity"
-					>
-						<mappings>
-							<mapping key="genericMapping" value="/WEB-INF/database/bos/genericMapping.properties"/>
-							<mapping key="person" value="/WEB-INF/database/bos/person.properties"/>
-						</mappings>
-					</security-device>
-				</security-devices>
-			</instance>
-		</config>
-		
 		<config service-class="com.top_logic.knowledge.service.encryption.SecurityService">
 			<instance class="com.top_logic.knowledge.service.encryption.SecurityService">
 				<providers>

@@ -606,8 +606,6 @@
 					<security-device 
 						id="dbSecurity"
 						class="com.top_logic.base.security.device.db.DBAuthenticationAccessDevice"
-						read-only="false"
-						allow-ext-authentication="false"
 					>
 						<password-validator>
 							<enabled>true</enabled>
@@ -620,10 +618,6 @@
 						<initial-user-resources>
 							<initial-user-resource name="/WEB-INF/database/Users.xml"/>
 						</initial-user-resources>
-						<mappings>
-							<mapping key="genericMapping" value="/WEB-INF/database/bos/genericMapping.properties"/>
-							<mapping key="person" value="/WEB-INF/database/bos/person.properties"/>
-						</mappings>		
 					</security-device>
 				</security-devices>
 			</instance>

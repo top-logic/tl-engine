@@ -2,6 +2,30 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<modules>
+		<module name="tl.accounts">
+			<class name="Person">
+				<annotations>
+					<implementation-binding class-name="com.top_logic.knowledge.wrap.person.Person"/>
+				</annotations>
+				<attributes>
+					<reference name="contact"
+						multiple="false"
+						type="Contacts:PersonContact"
+					>
+						<annotations>
+							<storage-algorithm>
+								<foreign-key-storage
+									storage-type="Person"
+									storage-attribute="contact"
+								/>
+							</storage-algorithm>
+							<delete-protected/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+		</module>
+		
 		<module name="Contacts">
 			<annotations>
 				<display-group value="tl.contact"/>
@@ -165,20 +189,6 @@
 								</storage-algorithm>
 							</annotations>
 						</property>
-						<reference name="account"
-							multiple="false"
-							type="tl.accounts:Person"
-						>
-							<annotations>
-								<storage-algorithm>
-									<singleton-link-storage
-										monomorphic-table="true"
-										table="representsUser"
-									/>
-								</storage-algorithm>
-								<delete-protected/>
-							</annotations>
-						</reference>
 					</attributes>
 					<generalizations>
 						<generalization type="Contact.all"/>
@@ -335,6 +345,14 @@
 					<generalizations>
 						<generalization type="Contact.Person"/>
 					</generalizations>
+					<attributes>
+						<reference name="account"
+							multiple="false"
+							type="tl.accounts:Person"
+							kind="backwards"
+							inverse-reference="contact"
+						/>
+					</attributes>
 				</class>
 				<class name="CompanyContact">
 					<annotations>

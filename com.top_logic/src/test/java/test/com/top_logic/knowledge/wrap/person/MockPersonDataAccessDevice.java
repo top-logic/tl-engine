@@ -171,16 +171,6 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	}
 
 	@Override
-	public boolean isReadOnly() {
-		return _config.isReadOnly();
-	}
-
-	@Override
-	public boolean allowExternalAuthentication() {
-		return _config.isAllowExtAuthentication();
-	}
-
-	@Override
 	public boolean authentify(LoginCredentials login) {
 		throw new UnsupportedOperationException("Method is not implemented");
 	}

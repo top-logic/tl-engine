@@ -322,16 +322,6 @@ public class Person extends AbstractBoundWrapper implements Author {
     }
 
 	/**
-	 * Null-safe account information retrieval for the given account.
-	 */
-	public static UserInterface userOrNull(Person person) {
-		if (person == null) {
-			return null;
-		}
-		return person.getUser();
-	}
-
-	/**
 	 * User information for this account.
 	 * 
 	 * @return The account information for this account, or <code>null</code> when not available (if

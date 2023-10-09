@@ -26,7 +26,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.util.DataAccessProxyDataSource;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.TLContext;
 
 /** 
@@ -420,7 +419,7 @@ public class Mail {
      */
     public static String getCurrentUserAddress() {
         
-		UserInterface theUser = Person.userOrNull(TLContext.currentUser());
+		UserInterface theUser = TLContext.currentUser().getUser();
         String theAddress = null;
         if (theUser != null) {
             //anAddress = theUser.getUserName();

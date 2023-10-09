@@ -16,7 +16,6 @@ import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.device.interfaces.SecurityDevice;
-import com.top_logic.base.security.device.interfaces.SecurityDevice.SecurityDeviceConfig;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.FrameworkInternal;
@@ -69,9 +68,9 @@ public class TLSecurityDeviceManager extends ManagedClass {
 		/**
 		 * Configuration of all {@link SecurityDevice}s.
 		 */
-		@Key(SecurityDevice.SecurityDeviceConfig.ID_ATTRIBUTE)
+		@Key(SecurityDevice.Config.ID_ATTRIBUTE)
 		@Name(SECURITY_DEVICES_NAME)
-		Map<String, SecurityDeviceConfig> getSecurityDevices();
+		Map<String, SecurityDevice.Config> getSecurityDevices();
 
 		/**
 		 * Name of the default data access device.
@@ -142,7 +141,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 			String id = entry.getKey();
 			SecurityDevice device = entry.getValue();
 
-			SecurityDeviceConfig deviceConfig = device.getConfig();
+			SecurityDevice.Config deviceConfig = device.getConfig();
 			if (deviceConfig.isDisabled()) {
 				continue;
 			}
@@ -199,7 +198,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 			String id = entry.getKey();
 			SecurityDevice device = entry.getValue();
 
-			SecurityDeviceConfig deviceConfig = device.getConfig();
+			SecurityDevice.Config deviceConfig = device.getConfig();
 			if (deviceConfig.isDisabled()) {
 				continue;
 			}

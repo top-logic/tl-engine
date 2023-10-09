@@ -5,15 +5,10 @@
  */
 package com.top_logic.base.security.device.interfaces;
 
-import java.util.List;
-import java.util.Map;
-
-import com.top_logic.base.security.device.DeviceMapping;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 
@@ -59,12 +54,6 @@ public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Securi
 		String getId();
 
 		/**
-		 * Property mappings.
-		 */
-		@MapBinding()
-		Map<String, String> getMappings();
-
-		/**
 		 * Whether the configured {@link SecurityDevice} is not active in the application.
 		 */
 		boolean isDisabled();
@@ -98,17 +87,5 @@ public interface SecurityDevice extends ConfiguredInstance<SecurityDevice.Securi
 	 * </p>
 	 */
 	public void shutDown();
-
-	/**
-	 * @param objectClass  the type of object for which a mapping is requested. DeviceMapping::OBJ_CLASS_GENERIC for generic mapping. May not be empty
-	 * @return the Mapping
-	 */
-	public DeviceMapping getMapping(String objectClass);
-
-	/**
-	 * @param objectClasses  the types of object for which a mapping is requested. DeviceMapping::OBJ_CLASS_GENERIC for generic mapping. May not be empty
-	 * @return the Mapping
-	 */
-	public DeviceMapping getMapping(List<String> objectClasses);
 
 }

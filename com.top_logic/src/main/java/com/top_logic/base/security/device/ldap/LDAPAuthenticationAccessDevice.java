@@ -5,7 +5,10 @@
  */
 package com.top_logic.base.security.device.ldap;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.naming.AuthenticationException;
 import javax.naming.NamingException;
@@ -15,6 +18,7 @@ import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.dsa.ldap.LDAPAccessService;
 import com.top_logic.base.dsa.ldap.ServiceProviderInfo;
 import com.top_logic.base.security.device.AbstractSecurityDevice;
+import com.top_logic.base.security.device.DeviceMapping;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.password.PasswordValidator;
@@ -23,6 +27,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.DataObject;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -60,11 +65,19 @@ public class LDAPAuthenticationAccessDevice extends AbstractSecurityDevice
 		@Name(ACCESS_SERVICE_NAME)
 		LDAPAccessService.Config getAccessService();
 
+		/**
+		 * Property mappings.
+		 */
+		@MapBinding()
+		Map<String, String> getMappings();
 	}
+
 	/**
 	 * Instance of the LDAP access service, used to actually access the external system
 	 */
 	protected LDAPAccessService	las;
+
+	private Map mappings;
 
 	/**
 	 * Creates a new {@link LDAPAuthenticationAccessDevice} from the given configuration.
@@ -78,6 +91,7 @@ public class LDAPAuthenticationAccessDevice extends AbstractSecurityDevice
 	public LDAPAuthenticationAccessDevice(InstantiationContext context, Config config) {
 		super(context, config);
 		initLAS(getDeviceID(), config);
+		mappings = new HashMap();
 	}
 
 	/**
@@ -90,6 +104,26 @@ public class LDAPAuthenticationAccessDevice extends AbstractSecurityDevice
 	@Override
 	public String getAuthenticationDeviceID() {
 		return getDeviceID();
+	}
+
+	/**
+	 * @param objectClass
+	 *        the type of object for which a mapping is requested. DeviceMapping::OBJ_CLASS_GENERIC
+	 *        for generic mapping. May not be empty
+	 * @return the Mapping
+	 */
+	public DeviceMapping getMapping(String objectClass) {
+		return this.getMapping(Collections.singletonList(objectClass));
+	}
+
+	/**
+	 * @param objectClasses
+	 *        the types of object for which a mapping is requested. DeviceMapping::OBJ_CLASS_GENERIC
+	 *        for generic mapping. May not be empty
+	 * @return the Mapping
+	 */
+	public DeviceMapping getMapping(List<String> objectClasses) {
+		return getMappingFor(this.mappings, objectClasses, ((Config) getConfig()).getMappings());
 	}
 
 	@Override

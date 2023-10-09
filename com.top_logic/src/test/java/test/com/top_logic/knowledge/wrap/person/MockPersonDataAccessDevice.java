@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.security.device.DeviceMapping;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.password.PasswordValidator;
@@ -96,20 +95,6 @@ public class MockPersonDataAccessDevice implements PersonDataAccessDevice, Authe
 	@Override
 	public String getDomainName() {
 		return _config.getDomain();
-	}
-
-	@Override
-	public DeviceMapping getMapping(String objectClass) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return null;
-	}
-
-	@Override
-	public DeviceMapping getMapping(List objectClasses) {
-		if (true)
-			throw new UnsupportedOperationException("Method is not implemented");
-		return null;
 	}
 
 	@Override

@@ -5,8 +5,6 @@
  */
 package com.top_logic.base.security.device;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +29,6 @@ public abstract class AbstractSecurityDevice implements SecurityDevice {
 
 	}
 
-	private Map		mappings;
-
 	private final Config _config;
 
 	/**
@@ -46,7 +42,6 @@ public abstract class AbstractSecurityDevice implements SecurityDevice {
 	 */
 	public AbstractSecurityDevice(InstantiationContext context, Config config) {
 		_config = config;
-		mappings = new HashMap();
 	}
 
 	@Override
@@ -64,19 +59,6 @@ public abstract class AbstractSecurityDevice implements SecurityDevice {
 		// No action.
 	}
 
-	/**
-	 * A type specific mapping for this device and the given object class
-	 */
-	@Override
-	public synchronized DeviceMapping getMapping(String objectClass) {
-		return this.getMapping(Collections.singletonList(objectClass));
-	}
-
-	@Override
-	public DeviceMapping getMapping(List<String> objectClasses) {
-		return getMappingFor(this.mappings, objectClasses, _config.getMappings());
-	}
-	
 	/**
 	 * A type specific mapping for this device and the given object class
 	 */

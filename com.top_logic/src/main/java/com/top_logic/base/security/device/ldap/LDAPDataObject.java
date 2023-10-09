@@ -18,8 +18,6 @@ import javax.naming.directory.Attributes;
 
 import com.top_logic.base.security.attributes.LDAPAttributes;
 import com.top_logic.base.security.device.DeviceMapping;
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
-import com.top_logic.base.security.device.interfaces.SecurityDevice;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringID;
 import com.top_logic.basic.TLID;
@@ -49,7 +47,7 @@ public class LDAPDataObject extends AttributesDataObject {
 
     private String          myDeviceID;
     
-    private SecurityDevice  myDevice;
+	private LDAPAuthenticationAccessDevice myDevice;
     
 	private TLID identifier;
     
@@ -63,17 +61,7 @@ public class LDAPDataObject extends AttributesDataObject {
      * @param someAttr
      *            The attributes for this instance.
      */
-    public LDAPDataObject(Attributes someAttr, String deviceID) throws NamingException{
-        this(someAttr, TLSecurityDeviceManager.getInstance().getSecurityDevice(deviceID));
-    }
-    
-    /**
-     * Creates an instance of this class.
-     * 
-     * @param someAttr
-     *            The attributes for this instance.
-     */
-    public LDAPDataObject(Attributes someAttr, SecurityDevice aDevice) throws NamingException{
+	public LDAPDataObject(Attributes someAttr, LDAPAuthenticationAccessDevice aDevice) throws NamingException {
         super(someAttr);
         this.attributeValues = new HashMap();
         this.myDeviceID = aDevice.getDeviceID();

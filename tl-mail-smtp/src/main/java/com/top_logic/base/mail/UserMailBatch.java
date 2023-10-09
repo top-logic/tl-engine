@@ -113,12 +113,15 @@ public class UserMailBatch extends BatchImpl {
 
             while (theNameIter.hasNext()){
                 String        theName = (String) theNameIter.next();
-                UserInterface theUser = Person.userOrNull(Person.byName(theName));
+                Person account = Person.byName(theName);
+				if (account == null) {
+					Logger.warn("No such account: " + theName, UserMailBatch.class);
+					continue;
+				}
+
+				UserInterface theUser = account.getUser();
                 if (theUser != null){
                     theRecipients.add(theUser); 
-                }
-                else{
-					Logger.warn("No such user: " + theName, UserMailBatch.class);
                 }
             }
             return theRecipients;

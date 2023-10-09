@@ -95,7 +95,7 @@ public class ReportGeneratorTest extends BasicTestCase {
             ThreadContext.pushSuperUser();
             Map<String, ?> env = getEnvironment();
             Person thePerson = (Person) env.get("person");
-            UserInterface theUser = Person.userOrNull(thePerson);
+			UserInterface theUser = thePerson.getUser();
             ReportToken theToken = ReportGenerator.getInstance()
                     .requestReport("personSlide", env, theUser);
             boolean finished = false;

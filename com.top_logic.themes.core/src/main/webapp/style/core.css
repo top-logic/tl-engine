@@ -49,6 +49,14 @@ div.layoutHorizontalAdjustmentGrabber {
   cursor: e-resize;
 }
 
+.structuredTextFullHeight {
+    padding: 0 var(--spacing-03);
+}
+
+.margin5 {
+    margin-top: 0.5rem;
+}
+
 .noSelection {
 	position: relative; 
 	top: 40%; 
@@ -1686,7 +1694,8 @@ h5.card-title a {
 }
 
 .ToolBarContainer .IconContainer .cButton a,
-.ToolBarContainer .IconContainer .trbEntry a {
+.ToolBarContainer .IconContainer .trbEntry a,
+.quickSearch .cButton a {
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -2031,8 +2040,14 @@ If they're delete, this can be deleted too
 	color: var(--icon-primary);
 }
 
-
-
-
+.Footer {
+	font-size: var(--body-01-font-size);
+    line-height: var(--body-01-line-height);
+    letter-spacing: var(--body-01-letter-spacing);
+	color: var(--text-secondary);
+	text-align: right;
+	padding-right: var(--spacing-03);
+	background: var(--layer-accent);
+}
 
 

@@ -980,6 +980,9 @@
 	<int name="com.top_logic.layout.form.selection.Icons.SELECTION_CONTROL_FIELD_HEIGHT"
 		value="40"
 	/>
+	<box name="GROUP_COLLAPSED_RADIUS"
+		value="5px 5px 0px 0px"
+	/>
 	
 	<!-- Style Tokens -->
 	<!-- Color Tokens -->

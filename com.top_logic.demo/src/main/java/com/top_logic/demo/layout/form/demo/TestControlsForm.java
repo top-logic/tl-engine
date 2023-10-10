@@ -168,6 +168,7 @@ import com.top_logic.layout.form.control.DownloadControl;
 import com.top_logic.layout.form.control.DropDownControl;
 import com.top_logic.layout.form.control.FractionSelectControl;
 import com.top_logic.layout.form.control.IntegerInputControl;
+import com.top_logic.layout.form.control.MegaMenuControl;
 import com.top_logic.layout.form.control.OpenCalendarControl.OpenCalendar;
 import com.top_logic.layout.form.control.SelectControl;
 import com.top_logic.layout.form.control.SelectionPartControl;
@@ -1260,6 +1261,8 @@ public class TestControlsForm extends FormComponent {
 		dropDownMulti.setOptionComparator(LabelComparator.newCachingInstance());
 		controlsGroup.addMember(dropDownMulti);
 
+		addMegaMenus(controlsGroup);
+
 		FormGroup selectionControlGroup = new FormGroup("selectionControlGroup", I18NConstants.CONTROLS);
 		selectionControlGroup.setResources(PlainKeyResources.INSTANCE);
 		addTestSelectionControl(selectionControlGroup);
@@ -1732,6 +1735,18 @@ public class TestControlsForm extends FormComponent {
 
 		addOpenCalendarControl(controlsGroup);
 		return context;
+	}
+
+	private void addMegaMenus(FormGroup parent) {
+		ResPrefix resPrefix = getResPrefix();
+		FormGroup megaMenu = new FormGroup("megaMenu", resPrefix);
+		addEmptyMandatoryMegaMenu(megaMenu, resPrefix);
+		addSmallMegaMenu(megaMenu, resPrefix);
+		addBigMegaMenu(megaMenu, resPrefix);
+		addBiggestMegaMenu(megaMenu, resPrefix);
+		addMegaMenuWithFixedOption(megaMenu, resPrefix);
+		addMegaMenuWithInvalidSelection(megaMenu, resPrefix);
+		parent.addMember(megaMenu);
 	}
 
 	private CommandField createProgressCommand() {
@@ -3295,6 +3310,107 @@ public class TestControlsForm extends FormComponent {
 			Resource.resource(item.key("32"), null, null),
 			Resource.resource(item.key("33"), null, null),
 			Resource.resource(item.key("34"), null, null));
+	}
+
+	private Resource megaMenuOption(ResKey label, ResKey tooltip) {
+		return com.top_logic.layout.Resource.resourceFor(null, label, null, tooltip);
+	}
+
+	private Resource megaMenuOptionWithIcon(ResKey label, ThemeImage img, ResKey tooltip) {
+		return com.top_logic.layout.Resource.resourceFor(null, label, img, tooltip);
+	}
+
+	private void addMegaMenuWithInvalidSelection(FormGroup megaMenuGroup, ResPrefix resPrefix) {
+		List<com.top_logic.layout.Resource> options = Arrays
+			.asList(
+				megaMenuOption(I18NConstants.ADMINISTRATION, I18NConstants.ADMINISTRATION.tooltip()),
+				megaMenuOption(I18NConstants.ACCESS_RIGHTS, I18NConstants.ACCESS_RIGHTS.tooltip()),
+				megaMenuOption(I18NConstants.PERMISSIONS, I18NConstants.PERMISSIONS.tooltip()),
+				megaMenuOption(I18NConstants.BASISADMINISTRATION, I18NConstants.BASISADMINISTRATION.tooltip()));
+		SelectField field =
+			FormFactory.newSelectField("megaMenuInvalidSelection", options, false, false);
+		field.setAsSingleSelection(megaMenuOption(I18NConstants.DELETED_VIEW, null));
+		field.setControlProvider(MegaMenuControl.CP.INSTANCE);
+
+		megaMenuGroup.addMember(field);
+	}
+
+	private void addMegaMenuWithFixedOption(FormGroup megaMenuGroup, ResPrefix resPrefix) {
+		List<com.top_logic.layout.Resource> options = Arrays
+			.asList(
+				megaMenuOptionWithIcon(I18NConstants.ADMINISTRATION, Icons.USER_ICON,
+					I18NConstants.ADMINISTRATION.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.ACCESS_RIGHTS, Icons.USER_LOCK,
+					I18NConstants.ACCESS_RIGHTS.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.PERMISSIONS, Icons.KEY,
+					I18NConstants.PERMISSIONS.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.BASISADMINISTRATION, Icons.USER_CONFIG,
+					I18NConstants.BASISADMINISTRATION.tooltip()));
+		SelectField field =
+			FormFactory.newSelectField("megaMenuFixedOptions", options, false, false);
+		field.setFixedOptions(Arrays.asList(options.get(1), options.get(3)));
+		field.setControlProvider(MegaMenuControl.CP.INSTANCE);
+
+		megaMenuGroup.addMember(field);
+	}
+
+	private void addEmptyMandatoryMegaMenu(FormGroup megaMenu, ResPrefix resPrefix) {
+		List<com.top_logic.layout.Resource> megaMenuSelectListSmallest = Arrays.asList();
+		SelectField megaMenuEmptyMandatory =
+			FormFactory.newSelectField("emptyMandatoryMegaMenu", megaMenuSelectListSmallest, false, true, false, null);
+		megaMenu.addMember(megaMenuEmptyMandatory);
+	}
+
+	private void addSmallMegaMenu(FormGroup megaMenuGroup, ResPrefix resPrefix) {
+		List<com.top_logic.layout.Resource> megaMenuSelectListSmallest = Arrays
+			.asList(
+				megaMenuOptionWithIcon(I18NConstants.ADMINISTRATION, Icons.USER_ICON,
+					I18NConstants.ADMINISTRATION.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.ACCESS_RIGHTS, Icons.USER_LOCK,
+					I18NConstants.ACCESS_RIGHTS.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.PERMISSIONS, Icons.KEY,
+					I18NConstants.PERMISSIONS.tooltip()),
+				megaMenuOption(I18NConstants.MONITOR, I18NConstants.MONITOR));
+		SelectField megaMenuOptionsBiggest =
+			FormFactory.newSelectField("smallestMegaMenuOptions", megaMenuSelectListSmallest, false, false);
+		megaMenuOptionsBiggest.setEmptySelectionMegaMenu(I18NConstants.CUSTOMIZED_NO_OPTION_MEGAMENU);
+
+		megaMenuGroup.addMember(megaMenuOptionsBiggest);
+	}
+
+	private void addBigMegaMenu(FormGroup megaMenuGroup, ResPrefix resPrefix) {
+		List<com.top_logic.layout.Resource> megaMenuSelectListBig = Arrays
+			.asList(
+				megaMenuOptionWithIcon(I18NConstants.ADMINISTRATION, Icons.USER_ICON,
+					I18NConstants.ADMINISTRATION.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.ACCESS_RIGHTS, Icons.USER_LOCK,
+					I18NConstants.ACCESS_RIGHTS.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.PERMISSIONS, Icons.KEY,
+					I18NConstants.PERMISSIONS.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.BASISADMINISTRATION, Icons.USER_CONFIG,
+					I18NConstants.BASISADMINISTRATION.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.TECHNICAL_ADMINISTRATION, Icons.TOOLS,
+					I18NConstants.TECHNICAL_ADMINISTRATION.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.MONITOR, Icons.DESKTOP,
+					I18NConstants.MONITOR.tooltip()),
+				megaMenuOptionWithIcon(I18NConstants.DEVELOPMENT, Icons.FILE_CODE,
+					I18NConstants.DEVELOPMENT.tooltip()));
+
+		SelectField megaMenuOptionsBiggest =
+			FormFactory.newSelectField("bigMegaMenuOptions", megaMenuSelectListBig, false, true, false, null);
+		megaMenuGroup.addMember(megaMenuOptionsBiggest);
+	}
+
+	private void addBiggestMegaMenu(FormGroup megaMenuGroup, ResPrefix resPrefix) {
+		List<com.top_logic.layout.Resource> megaMenuSelectListBiggest = new ArrayList<>();
+		for (int i = 0; i < 50; i++) {
+			ResKey label = ResKey.text("Development " + i);
+			megaMenuSelectListBiggest
+				.add(com.top_logic.layout.Resource.resourceFor(null, label, null, I18NConstants.DEVELOPMENT.tooltip()));
+		}
+		SelectField megaMenuOptionsBiggest =
+			FormFactory.newSelectField("biggestMegaMenuOptions", megaMenuSelectListBiggest, false, false);
+		megaMenuGroup.addMember(megaMenuOptionsBiggest);
 	}
 
 	private void addTestSelectionControlMultiTree(FormGroup controlsGroup) {

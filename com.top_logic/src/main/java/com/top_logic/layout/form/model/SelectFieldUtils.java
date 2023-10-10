@@ -28,6 +28,7 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.Renderer;
@@ -266,6 +267,29 @@ public class SelectFieldUtils {
 	 */
 	public static void setEmptySelectionLabel(FormField field, String aLabel) {
 		field.set(SelectField.EMPTY_LABEL_PROPERTY, aLabel);
+	}
+
+	/**
+	 * Getter method for the no selection label in the mega menu.
+	 * 
+	 * @param field
+	 *        {@link FormField} of which you want to receive the empty selection.
+	 * @return {@link SelectField#EMPTY_LABEL_PROPERTY_MEGAMENU}.
+	 */
+	public static ResKey getEmptySelectionMegaMenu(FormField field) {
+		return field.get(SelectField.EMPTY_LABEL_PROPERTY_MEGAMENU);
+	}
+
+	/**
+	 * Setter method for the no selection label in the mega menu.
+	 * 
+	 * @param field
+	 *        {@link FormField} of which the empty selection should be changed.
+	 * @param label
+	 *        new {@link ResKey} for replacing {@link SelectField#EMPTY_LABEL_PROPERTY_MEGAMENU}.
+	 */
+	public static void setEmptySelectionMegaMenu(FormField field, ResKey label) {
+		field.set(SelectField.EMPTY_LABEL_PROPERTY_MEGAMENU, label);
 	}
 
 	/**

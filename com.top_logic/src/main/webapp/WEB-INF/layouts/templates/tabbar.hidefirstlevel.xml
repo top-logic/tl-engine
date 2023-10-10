@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="components"/>
+
+		<param name="domain"
+			value=""
+		/>
+		<param name="helpIDLegacy"
+			value=""
+		/>
+		<param name="useDefaultChecker"
+			value="false"
+		/>
+		<param name="tabIcon"
+			optional="true"
+		/>
+		<param name="tabVisible"
+			optional="true"
+		/>
+
+		<!-- START: Legacy parameters that never should get filled explicitly -->
+		<param name="z_legacy_componentName"
+			value="view"
+		/>
+		<param name="z_legacy_tabBarName"
+			value="tab"
+		/>
+		<param name="z_legacy_tabId"
+			optional="true"
+		/>
+		<param name="z_legacy_resPrefix"
+			value="%LAYOUT_RESPREFIX%"
+		/>
+		<param name="z_legacy_tabLabel"
+			value="${z_legacy_resPrefix}tab"
+		/>
+		<!-- STOP: Legacy parameters that never should get filled explicitly -->
+	</params>
+
+	<securityLayout name="${z_legacy_componentName}"
+		helpIDLegacy="${helpIDLegacy}"
+		securityDomain="${domain}"
+		titleKey="${z_legacy_tabLabel}"
+		useDefaultChecker="${useDefaultChecker}"
+	>
+		<tabInfo id="${z_legacy_tabId}"
+			image="${tabIcon}"
+			label="${z_legacy_tabLabel}"
+			rendered="${tabVisible}"
+		/>
+
+		<components>
+			<tabbar name="${z_legacy_tabBarName}">
+				<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
+				<components>${components}</components>
+			</tabbar>
+		</components>
+	</securityLayout>
+</template>

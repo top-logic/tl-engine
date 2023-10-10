@@ -272,6 +272,14 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 	static final Property<String> EMPTY_LABEL_PROPERTY = TypedAnnotatable.property(String.class, "emptyLabel");
 	
 	/**
+	 * ResKey for storing an explicit empty label for the mega menu.
+	 * 
+	 * @see #setEmptySelectionMegaMenu(ResKey)
+	 */
+	public static final Property<ResKey> EMPTY_LABEL_PROPERTY_MEGAMENU =
+		TypedAnnotatable.property(ResKey.class, "noOptionSelectedLabelMegaMenu");
+
+	/**
 	 * Key for storing the empty label set for immutable mode.
 	 * 
 	 * @see #setEmptyLabelImmutable(String)
@@ -1121,6 +1129,25 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
     public void setEmptyLabel(String aLabel) {
     	SelectFieldUtils.setEmptySelectionLabel(this, aLabel);
     }
+
+	/**
+	 * Getter method for the no selection label in the mega menu.
+	 * 
+	 * @return {@link #EMPTY_LABEL_PROPERTY_MEGAMENU}.
+	 */
+	public ResKey getEmptySelectionMegaMenu() {
+		return SelectFieldUtils.getEmptySelectionMegaMenu(this);
+	}
+
+	/**
+	 * Setter method for the no selection label in the mega menu.
+	 * 
+	 * @param label
+	 *        new {@link ResKey} for replacing {@link #EMPTY_LABEL_PROPERTY_MEGAMENU}.
+	 */
+	public void setEmptySelectionMegaMenu(ResKey label) {
+		SelectFieldUtils.setEmptySelectionMegaMenu(this, label);
+	}
 
 	/**
 	 * Sets the label for the value that represents the empty selection in

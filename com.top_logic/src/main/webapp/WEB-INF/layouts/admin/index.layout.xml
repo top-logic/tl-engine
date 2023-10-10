@@ -2,7 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	template="com.top_logic/legacyTabbar.template.xml"
+	template="com.top_logic/legacyTabbar.hidefirstlevel.template.xml"
 >
 	<arguments
 		tabIcon="theme:IMAGE_BUTTONS_ADMINISTRATION22"

@@ -40,6 +40,7 @@ div.fptBodyContent {
 	right: 0px;
 	top: 0px;
 	bottom: 0px;
+	padding: 0 var(--spacing-03);
 }
 
 div.fptTitle {
@@ -152,10 +153,6 @@ label.disabled  {
 	padding: 0 var(--spacing-03);
 }
 
-.frmBody form {
-	padding-top: var(--spacing-02);
-}
-
 div.frmBody > div.dropPane {
 	display: none;
 }
@@ -253,6 +250,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
     min-height: 1.5rem;
     margin: var(--spacing-02) 0;
   	word-wrap: break-word;
+  	box-sizing: border-box
 }
 
 /* columns layout */
@@ -456,12 +454,12 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	grid-gap: .5rem .5rem;
 }
 
-.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
+.rf_inputCell > div:nth-child(1) {
 	grid-row:1; 
 	grid-column:1; 
 }
 
-.rf_inputCellOneLine > div:nth-child(2) {
+.rf_inputCell > div:nth-child(2) {
 	grid-row:1; 
 	grid-column:2; 
 }
@@ -495,17 +493,8 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	padding-left: 5px;
 }
 
-.dlgDialog .rf_labelInFrontOfInput .rf_inputCellOneLine:not(.rf_line) > :nth-child(n+2) {
-	padding-left: 0px;
-}
-
 .rf_inputCell .ace_editor div,
 .rf_inputCell .ace_editor {
-	line-height: 24px;
-}
-
-.rf_inputCellOneLine div:not(.rf_cell .rf_groupCell),
-.rf_inputCell div:not(.rf_cell .rf_groupCell) {
 	line-height: 24px;
 }
 
@@ -515,52 +504,6 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 .i18nStringTable p {
 	margin-top: 0px;
-}
-
-
-/* input controls */
-/*
-.cPopupSelect.active,
-.cPopupSelect.disabled,
-.cExpandableTextInput.active,
-.cIntegerInput.active,
-.cBlockTextInput.active {
-	display: flex;
-}
-
-.cPopupSelect.active > .lFlexible,
-.cExpandableTextInput.active > .lFlexible,
-.cIntegerInput.active > .lFlexible,
-.cBlockTextInput.active > .lFlexible  {
-	display: contents;
-}
-
-.cPopupSelect .lFlexible,
-.cPopupSelect .is-popup:not([size]),
-.cIntegerInput .lFlexible,
-.cIntegerInput .is-input:not([size]),
-.cExpandableTextInput .lFlexible,
-.cExpandableTextInput .is-input:not([size]),
-.cTextInput:not(.searchIrrelevant) .is-input:not([size]),
-.cBlockTextInput .lFlexible,
-.cBlockTextInput .is-input:not([size]),
-.dfList .dfListEntry .cTextInput:not(.searchIrrelevant) textarea.is-input {
-	box-sizing: border-box;
-	width: 100%;
-}
-
-.cPopupSelect .is-popup,
-.cIntegerInput .is-input,
-.cExpandableTextInput .is-input,
-.cTextInput .is-input,
-.cBlockTextInput .is-input {
-	min-width: 20px;
-	max-width: 100%;
-}
-*/
-
-.rf_cell {
-	box-sizing: border-box;
 }
 
 .rf_content table.schedulingAlgorithm {
@@ -588,7 +531,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 	white-space: pre-line;
 }
 
-.rf_inputCellOneLine .rightAlign {
+.rf_inputCell .rightAlign {
 	text-align: right;
 	padding-right: 5px;
 }
@@ -623,10 +566,10 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .fltContent .rf_groupCell {
-    border-top:1px solid #F6F7F8; 
-    border-right:1px solid #F6F7F8;
-    border-bottom:1px solid #7695C3;
-    border-left:1px solid #7695C3; 
+    border-top:1px solid var(--background);
+    border-right:1px solid var(--background);
+    border-bottom:1px solid var(--text-interactive);
+    border-left:1px solid var(--text-interactive); 
 	border-radius: 0px;
     position:relative;
     padding: 0.5em;
@@ -710,6 +653,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 
 /* Form editor */
 /*
+MAYBE DELETE
 .cFormEditorElement .rf_columnsLayout,
 .cFormEditorElement .rf_columnsLayout.rf_line,
 .cFormEditorElement .rf_content {
@@ -751,7 +695,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .cFormEditorPreview.rf_highlighted [data-type = 'columns'] .rf_groupCell,
-.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_inputCellOneLine,
+.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_inputCell,
 .cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
 	background: rgba(255,255,255,0.6);
 	border-radius: 0px
@@ -782,75 +726,6 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 	/* width: 100px; */
 	box-sizing: border-box;
 }
-
-/* overwritten layout selectors */
-/*
-.cFormEditorPreview .rf_columnsLayout > .rf_line,
-.cFormEditorPreview .rf_columnsLayout > *:not(body),
-.cFormEditorPreview .rf_columnsLayout.cols1 > *:not(body),
-.dflColumns.dflColumns0 .cFormEditorPreview .rf_columnsLayout > *:not(body),
-.dflColumns.dflColumns1 .cFormEditorPreview .rf_columnsLayout > *:not(body),
-.layoutControl.dflColumns.dflColumns2 .cFormEditorPreview .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout:not([class*="cols"]) > *:not(.dfListEntry),
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout:not([class*="cols"]) > *:not(.dfListEntry),
-.layoutControl.dflColumns.dflColumns1 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.layoutControl.dflColumns.dflColumns2 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols1 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.layoutControl .layoutControl.dflColumns .cFormEditorPreview .rf_inputCell.is-control > .rf_cell .rf_columnsLayout > *:not(body),
-.layoutControl .layoutControl.dflColumns .cFormEditorPreview .rf_inputCellOneLine.is-control > .rf_cell .rf_columnsLayout > *:not(body),
-.layoutControl.dflColumns .cFormEditorPreview .rf_groupCell .rf_content .rf_groupCell .rf_content .rf_columnsLayout {
-	min-width: 100%;
-  	width: 100%;
-  	padding-right: 0px;
-}
- 
-.dflColumns2 .cFormEditorPreview .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols2 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.cFormEditorPreview .rf_columnsLayout.cols2 > *:not(.rf_line),
-.layoutControl.dflColumns1 .cFormEditorPreview .rf_columnsLayout.cols2 > *:not(.rf_line)  { 
-  	min-width: 50%; 
- 	width: 50%; 
-  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
-}
-
-.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout.cols3 > *:not(.rf_line):not(.rf_line),
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols3 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
-  	min-width: 33.3%; 
- 	width: 33.3%; 
-  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
-}
-
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols4 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout.cols4 > *:not(.rf_line):not(.rf_line) { 
-  	min-width: 25%; 
- 	width: 25%; 
-  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
-}
-
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .maxCols5 .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line),
-.layoutControl.dflColumns.dflColumns3 .cFormEditorPreview .rf_columnsLayout.cols5 > *:not(.rf_line):not(.rf_line) { 
-  	min-width: 20%; 
- 	width: 20%; 
-  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
-}
-
-.dlgDialog .dflColumns.dflColumns1 .cFormEditorDisplay .rf_labelInFrontOfInput .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry), 
-.dlgDialog .dflColumns .cFormEditorPreview .rf_columnsLayout .rf_columnsLayout .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry),
-.dlgDialog .dflColumns .cFormEditorPreview .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
-	min-width: 100%; 
- 	width: 100%; 
-  	padding-right: 0px;
-}
-
-.dlgDialog .dflColumns:not(.dflColumns0):not(.dflColumns1) .cFormEditorPreview .rf_columnsLayout:not(.cols1) > *:not(.rf_line):not(.dfListEntry) { 
-  	min-width: 50%;
- 	width: 50%; 
-  	padding-right: var(--RF_HORIZONTAL_GAP_COLUMNS);
-}
-*/
-
 
 /* form editor icons */
 [data-tool=true] > .attribute .type-image > .tool {
@@ -937,7 +812,7 @@ div.cFormEditorToolbox [data-tool=true] > .attribute {
 .cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_dropTarget.rf_parent,
 .rf_highlighted .rf_dragged .locked .rf_container,
 .rf_dropArea .locked,
-.cFormEditorPreview.rf_highlighted .locked .rf_inputCellOneLine,  
+.cFormEditorPreview.rf_highlighted .locked .rf_inputCell,  
 .cFormEditorPreview.rf_highlighted .locked .rf_dragElement .rf_table {
 	border: inherit;
 	background: var(--background);
@@ -1454,9 +1329,7 @@ span.cIconSelect .input-image.cannot-edit i {
 .cTextInput textarea::placeholder,
 .cExpandableTextInput input::placeholder,
 .cBlockTextInput input::placeholder,
-.cPopupSelect input::placeholder,
-.cDateInput input,
-.cTimeInput input {
+.cPopupSelect input::placeholder {
 	color: var(--text-placeholder);
 }
 
@@ -2030,6 +1903,11 @@ span.bcc-option, .cChoice-option {
 .cChoice-vertical.disabled input[type="checkbox"]:checked::before {
 	background-color: var(--icon-disabled);
 	cursor: default;
+}
+
+.cSelectOption {
+	display: inline-block;
+  	padding: 0 var(--spacing-03) 0 var(--spacing-02);
 }
 
 /* ==================================== */
@@ -2617,10 +2495,6 @@ span.disabled .ddwttChevron::after {
 	padding: 0 var(--spacing-03);
 }
 
-.ddwttTagLoc {
-	padding-right: var(--spacing-02);
-}
-
 .ddwttTagLoc, .ddwttTag {
 	display: inline-flex;
 	width: fit-content;
@@ -2635,6 +2509,7 @@ span.disabled .ddwttChevron::after {
 	gap: var(--spacing-01);
 	padding: 0 var(--spacing-02);
 	height: 2rem;
+	margin-right: var(--spacing-02);
 }
 
 .ddwttTag:hover {

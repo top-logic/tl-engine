@@ -109,6 +109,7 @@ span.tblButton input {
 	background-color:var(--layer-accent);
 	text-align: right;
 	white-space: nowrap;
+	padding-right: var(--spacing-03);
 }
 
 th.tblCounterNoBorder {

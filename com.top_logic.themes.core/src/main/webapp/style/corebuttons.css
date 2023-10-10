@@ -36,6 +36,24 @@
 	text-decoration: none;
 }
 
+div.cmdProgress {
+	position:         absolute;
+	left:             0px;
+	top:              0px;
+	width:            100%;
+	height:           100%;
+	background:       #FFFFFF;
+	display:          none;
+}
+
+div.cmdProgress img {
+	border: 0;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
 /*
 ****					****
 ****	Button styles	****

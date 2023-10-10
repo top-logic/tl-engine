@@ -186,7 +186,7 @@ public class TreeNavigatorControl<N> extends AbstractControlBase implements Sing
 
 	@Override
 	public void notifySelectionChanged(SingleSelectionModel model, Object formerlySelectedObject, Object selectedObject) {
-		if (model == _entrySelection) {
+		if (selectedObject != null && model == _entrySelection) {
 			TreePath selectedNode = path(selectedObject);
 			TreePath parent = selectedNode.getParent();
 			_levelSelection.setSingleSelection(parent);

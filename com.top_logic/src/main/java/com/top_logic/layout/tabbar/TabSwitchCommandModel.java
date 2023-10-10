@@ -171,6 +171,11 @@ public class TabSwitchCommandModel extends ComponentCommandModel {
 		}
 	}
 
+	@Override
+	public boolean isLinkActive() {
+		return I18NConstants.NOT_EXECUTABLE_TAB_SELECTED.equals(getNotExecutableReasonKey());
+	}
+
 	/**
 	 * This method sets this model visible if there is a card to select and the card to select is
 	 * not inactive.

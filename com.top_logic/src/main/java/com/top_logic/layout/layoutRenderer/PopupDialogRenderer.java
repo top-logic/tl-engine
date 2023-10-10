@@ -77,7 +77,6 @@ public class PopupDialogRenderer extends DefaultControlRenderer<PopupDialogContr
 			writeDialogWidthStyle(out, dialogModel);
 			writeDialogHeightStyle(out, dialogModel);
 			out.append("border-style: solid; ");
-			out.append("border-top-style: none; ");
 			out.append("border-width: ");
 			out.writeInt(dialogModel.getBorderWidth());
 			out.append("px; ");

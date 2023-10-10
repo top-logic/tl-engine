@@ -10,7 +10,6 @@ import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.GenericPropertyListener;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.VisibilityModel;
-import com.top_logic.layout.tabbar.I18NConstants;
 
 
 /**
@@ -315,7 +314,7 @@ public interface ButtonUIModel extends Focusable, TypedAnnotatable, VisibilityMo
 	 * Whether this button is currently active.
 	 */
 	default boolean isLinkActive() {
-		return I18NConstants.NOT_EXECUTABLE_TAB_SELECTED.equals(getNotExecutableReasonKey());
+		return false;
 	}
 
 	/**

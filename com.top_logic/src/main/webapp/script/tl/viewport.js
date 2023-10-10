@@ -852,8 +852,17 @@ services.viewport = {
 			const paddingLeft = parseFloat(buttonPadding.getPropertyValue('padding-left'));
 			const paddingRight = parseFloat(buttonPadding.getPropertyValue('padding-right'));
 			dropdownContent.style.width = `${maxWidth + paddingLeft + paddingRight}px`;
+			const ancestorWithLcHidden = this.findAncestorWithClass(dropdownButton, 'lcHidden', 5);
+	        if (ancestorWithLcHidden) {
+	            // Code hier um das 'overflow' des gefundenen Elements vorübergehend zu ändern
+	            ancestorWithLcHidden.style.overflow = 'visible';
+	        }
 	  	} else {
 	    	dropdownContent.style.display = 'none';
+	    	const ancestorWithLcHidden = this.findAncestorWithClass(dropdownButton, 'lcHidden', 5);
+	        if (ancestorWithLcHidden) {
+	            ancestorWithLcHidden.style.overflow = 'hidden';
+	        }
 	  	}
 	  	// Closes dropdown when user clicks somewhere else outside the dropdown.
 	  	document.addEventListener('click', function(event) {
@@ -861,5 +870,13 @@ services.viewport = {
 	      		dropdownContent.style.display = 'none';
 	    	}
 	  	});
+	},
+	
+	findAncestorWithClass: function(element, cssClass, maxHops) {
+		let hops = 0;
+	    while ((element = element.parentElement) && !element.classList.contains(cssClass) && hops < maxHops) {
+	        hops++;
+	    }
+	    return element.classList.contains(cssClass) ? element : null;
 	}
 };

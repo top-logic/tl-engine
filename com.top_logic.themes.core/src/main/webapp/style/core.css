@@ -1052,6 +1052,119 @@ div.mboxInput {
 	padding-left: 10px;
 }
 
+/* ============================================ */
+/* ==== simpleajax network error box (sx) ===== */
+/* ============================================ */
+
+div.sxError {
+	font-size: large;
+	color: white;
+	position: absolute;
+	background: #EE3333;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	padding: 10px;
+	border: 3px solid #CC2222;
+	cursor: default;
+}
+
+div.sxMessage,
+div.sxFailure
+{
+	margin: 10px;
+}
+
+div.sxButtons {
+	font-size: small;
+	text-align: right;
+	margin-top: 20px;
+}
+
+div.sxFailure,
+div.sxButtons
+{
+	display: none;	
+}
+
+div.sxRetry div.sxMessage {
+	display: none;
+}
+
+div.sxRetry div.sxFailure,
+div.sxRetry div.sxButtons 
+{
+	display: block;
+}
+
+span.sxButton {
+	margin-left: 5px;
+	display: inline-block;
+	padding: 5px;
+	border: 1px solid #ffffff;
+	cursor: pointer;
+}
+
+span.sxButton:HOVER {
+	color: #EE3333;
+	background: white;
+}
+
+/* ==================================== */
+/* ==== layoutControl.cCollapsible styles (lc) ===== */
+/* ==================================== */
+
+div.lcViewport {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	bottom: 0px;
+	right: 0px;
+}
+
+div.lcAuto {
+	overflow: auto;
+}
+
+div.lcScroll {
+	overflow: scroll;
+}
+
+div.lcHidden {
+	overflow: hidden;
+}
+
+div.mcToggle {
+	position: absolute;
+	cursor: pointer;
+	width: var(--MC_TOGGLE_WIDTH);
+	height: var(--MC_TOGGLE_HEIGHT);
+	right: 0px;
+	
+	/* Duplicate defintion for legacy compatibility. */
+	top: 50%;
+	top: calc(50% - var(--MC_TOGGLE_HEIGHT) / 2);
+	
+	background: var(--MC_MINIMIZE_ICON);
+	visibility: hidden;
+}
+
+div.mcMinimized > div.mcToggle {
+	background: var(--MC_NORMALIZE_ICON);
+}
+
+div.cMinimizable:HOVER > div.mcToggle {
+	visibility: visible;
+}
+
+div.mcMinimized.frmBody, div.mcMinimized div.frmBody {
+	overflow: hidden;
+}
+
+div.mcMinimized .accText {
+	display: none;
+}
+
 /*
 ****					****
 ****	Tooltip Styles	****
@@ -1917,5 +2030,9 @@ If they're delete, this can be deleted too
 .tl-table__title-toolbar a {
 	color: var(--icon-primary);
 }
+
+
+
+
 
 

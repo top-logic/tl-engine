@@ -114,6 +114,12 @@
 	<boolean name="LOGOUT_TIMER"
 		value="true"
 	/>
+	<dim name="MC_TOGGLE_HEIGHT"
+		value="50px"
+	/>
+	<dim name="MC_TOGGLE_WIDTH"
+		value="8px"
+	/>
 	
 	
 	<size name="TABLE_TITLE_HEIGHT"

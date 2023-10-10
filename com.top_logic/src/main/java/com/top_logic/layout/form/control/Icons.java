@@ -211,4 +211,7 @@ public class Icons extends IconsBase {
 	@DefaultValue("16")
 	public static ThemeVar<Integer> TAB_COMPONENT_DEFAULT_TAB_HEIGHT;
 
+	@DefaultValue("3")
+	public static ThemeVar<Integer> MEGA_MENU_BORDER_WIDTH;
+
 }

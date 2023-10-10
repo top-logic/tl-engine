@@ -2423,7 +2423,7 @@ div.frmBody {
 	color: var(--S_TXT_RELEVANT);
 }
 
-.mandatory input, .mandatory select, .mandatory textarea  {
+.mandatory input, .mandatory select, .mandatory textarea, .mandatory .megaMenuButton  {
     background-color: var(--MANDATORY_FIELD_BG);
 }
 
@@ -3427,6 +3427,128 @@ div.pdlgContent {
 	position: relative;
 	width: 100%;
 	overflow: hidden;
+}
+
+/* ====================================== */
+/* ======    Styles for mega menu   ===== */
+/* ====================================== */
+
+.mandatory .megaMenuButton {
+	border: 1px solid var(--ACCORDION_HOVER_BACKGROUND_COLOR)
+}
+
+.megaMenuButton {
+	padding-right: 0;
+	border-radius: 4px;
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--NORMAL_TEXT);
+	font-size: 12px;
+	font-family: 'Open Sans', Geneva, sans-serif;
+	font-weight: normal;
+	background-color: var(--IMAGE_BUTTON_BACKGROUND_HOVER_BOXSHADOW);
+	/* creates the arrow */
+	line-height: 1.3;
+  	padding: .2em 1.9em .2em .6em;
+  	margin: 0;
+  	-moz-appearance: none;
+  	-webkit-appearance: none;
+  	appearance: none;
+  	background-image: linear-gradient(45deg, transparent 49%, var(--ACCORDION_HOVER_BACKGROUND_COLOR) 50%), linear-gradient(135deg, var(--ACCORDION_HOVER_BACKGROUND_COLOR) 49%, transparent 50%);
+  	background-position: calc(100% - 10px) center, calc(100% - 5px) center;
+  	background-size: 5px 5px, 5px 5px;
+  	background-repeat: no-repeat;
+  	background-color: var(--MANDATORY_FIELD_BG);
+}
+
+.megaMenuGridContainer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.megaMenuFlexContainer {
+	display: flex;
+	flex-direction: column;
+}
+
+.megaMenuGridContainer, .megaMenuFlexContainer {
+	overflow: auto;
+    position: relative;
+    max-height: 90vh;
+}
+
+.megaMenuItem {
+	cursor: pointer;
+	padding: 5px;
+	line-break: anywhere;
+}
+
+.megaMenuItem a {
+    width: 100%;
+    height: 100%;
+    float: left;
+    text-decoration: none;
+}
+
+.megaMenuItem a:hover {
+    color: var(--NORMAL_TEXT);
+}
+
+.megaMenuItem:hover {
+    color: var(--NORMAL_TEXT);
+    background-color: var(--CALENDAR_HOVER_BACKGROUND_COLOR);
+}
+
+.megaMenuItemSelected {
+    color: var(--NORMAL_TEXT);
+    background-color: var(--CALENDAR_HOVER_BACKGROUND_COLOR);
+}
+
+.megaMenuItemSelected a:hover {
+    color: var(--NORMAL_TEXT);
+}
+
+.megaMenuImmutableLabel {
+	font-weight: normal;
+}
+
+.megaMenuFixedItem {
+	cursor: default;
+	padding: 5px;	
+}
+
+.megaMenuFlexContainer .megaMenuFixedItem,
+.megaMenuGridContainer .megaMenuFixedItem {
+	color: graytext;
+}
+
+.itemContainer {
+	display: flex;
+	justify-content: flex-start;
+}
+
+.megaMenuIconContainer {
+	align-self: flex-start;
+	flex-shrink: 0;	
+	display: flex;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	padding: 0 10px 0 10px;
+}
+
+.megaMenuIcon {
+	font-size: 21px;
+}
+
+.megaMenuFixedItem .itemContainer .megaMenuIconContainer .megaMenuIcon,
+.megaMenuFixedItem .itemContainer .megaMenuIconContainer .megaMenuIcon .tl-icon {
+	color: graytext;
+}
+
+.megaMenuItem .itemContainer .megaMenuIconContainer .megaMenuIcon,
+.megaMenuItem .itemContainer .megaMenuIconContainer .megaMenuIcon .tl-icon {
+	color: #000;
 }
 
 /* ====================================== */

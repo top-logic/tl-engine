@@ -306,6 +306,34 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_UPLOAD_SIZE_EXCEEDED__NAME_LIMIT;
 
+	/**
+	 * @en Opening the mega menu pop up.
+	 */
+	public static ResKey OPEN_MEGA_MENU;
+
+	/**
+	 * @en Sets selection and closes mega menu pop up.
+	 */
+	public static ResKey SET_VALUE_CLOSE_POPUP;
+
+	/**
+	 * @en No selection
+	 * @tooltip This resets the set selection.
+	 */
+	public static ResKey MEGAMENU_NO_OPTION_LABEL;
+
+	/**
+	 * @en No selection available
+	 * @tooltip The list is empty. Selection options should be added
+	 */
+	public static ResKey EMPTY_SINGLE_SELECTION_WITH_NO_OPTIONS_MEGA_MENU;
+
+	/**
+	 * @en No selection available
+	 * @tooltip This field is mandatory, but the list is empty. Selection options should be added
+	 */
+	public static ResKey MANDATORY_EMPTY_SINGLE_SELECTION_WITH_NO_OPTIONS_MEGA_MENU;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

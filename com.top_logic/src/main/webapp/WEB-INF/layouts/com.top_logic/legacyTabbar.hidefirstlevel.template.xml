@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Configured template that makes migrating legacy configurations easy.
+	
+	Note: Using this template does not provide full in-app configuration functionality
+	for views contained within tabs. It template only allows to add new tabs to existing tab bars.
+	
+	New configurations should use the `tabbar.template.xml` in combination with tabs using
+	the `tab.template.xml`.
+-->
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties extends="com.top_logic.mig.html.layout.SubComponentConfig">
+		<property name="components"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<available-templates value="tabbar"/>
+			<options
+				fun="com.top_logic.layout.editor.DynamicComponentOptions"
+				mapping="com.top_logic.layout.editor.DynamicComponentOptionMapping"
+			/>
+			<option-labels value="com.top_logic.layout.editor.DynamicComponentDefinition$Labels"/>
+			<dynamic-mode fun="com.top_logic.layout.form.values.edit.mode.CustomMode"/>
+		</property>
+		<property name="z_legacy_componentName"
+			default="Layout"
+			type="String"
+		>
+			<hidden/>
+		</property>
+		<property name="z_legacy_tabBarName"
+			default="Tabbar"
+			type="String"
+		>
+			<hidden/>
+		</property>
+		<property name="z_legacy_tabId"
+			type="String"
+		>
+			<hidden/>
+		</property>
+		<property name="z_legacy_tabLabel"
+			default=""
+			type="String"
+		>
+			<hidden/>
+		</property>
+		<property name="domain"
+			default=""
+			type="String"
+		>
+			<hidden/>
+		</property>
+		<property name="helpIDLegacy"
+			type="String"
+		>
+			<hidden/>
+		</property>
+		<property name="tabIcon"
+			type="com.top_logic.layout.basic.ThemeImage"
+		/>
+		<property name="tabVisible"
+			default="true"
+			type="boolean"
+		>
+			<hidden/>
+		</property>
+	</properties>
+
+	<include name="templates/tabbar.hidefirstlevel.xml"
+		components="${components}"
+		domain="${domain}"
+		helpIDLegacy="${helpIDLegacy}"
+		tabIcon="${tabIcon}"
+		tabVisible="${tabVisible}"
+		z_legacy_componentName="${z_legacy_componentName}"
+		z_legacy_tabBarName="${z_legacy_tabBarName}"
+		z_legacy_tabId="${z_legacy_tabId}"
+		z_legacy_tabLabel="${z_legacy_tabLabel}"
+	/>
+</config:template>

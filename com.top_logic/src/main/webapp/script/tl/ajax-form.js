@@ -1972,6 +1972,24 @@ services.form = {
 			}, true, callback);
 		}
 	},
+	
+	MegaMenuButtonControl: {
+	
+		handleButtonClick: function(optionElement, controlID, showWait) {
+			services.ajax.execute("dispatchControlCommand", {
+				controlCommand : "megaMenuActive",
+				controlID : controlID
+			}, true);
+		}, 
+		
+		handleOnOptionClick : function(optionElement, controlID, showWait) {
+			var optionValue = BAL.DOM.getNonStandardAttribute(optionElement, "data-value");
+			var selectionArray = [];
+			selectionArray.push(optionValue);
+			
+			services.form.sendValueUpdate(optionElement, controlID, selectionArray, showWait);
+		}
+	},
 
 	ChoiceControl : {
 		handleClick : function(optionInput, controlId, showWait) {

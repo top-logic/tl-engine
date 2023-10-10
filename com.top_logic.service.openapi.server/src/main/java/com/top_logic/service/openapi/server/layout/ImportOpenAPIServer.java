@@ -137,7 +137,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		InfoObject info = openApiDoc.getInfo();
 		target.setTitle(info.getTitle());
 		target.setVersion(info.getVersion());
-		target.setDescription(info.getDescription());
+		OpenAPIExporter.transferIfNotEmpty(info::getDescription, target::setDescription);
 		target.setTermsOfService(info.getTermsOfService());
 		target.setContact(TypedConfiguration.copy(info.getContact()));
 		target.setLicense(TypedConfiguration.copy(info.getLicense()));
@@ -215,8 +215,8 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		} else if (!globalSecurity.isEmpty()) {
 			newOperation.setAuthentication(globalSecurity);
 		}
-		newOperation.setDescription(operation.getDescription());
-		newOperation.setSummary(operation.getSummary());
+		OpenAPIExporter.transferIfNotEmpty(operation::getDescription, newOperation::setDescription);
+		OpenAPIExporter.transferIfNotEmpty(operation::getSummary, newOperation::setSummary);
 		String[] tags = operation.getTags();
 		if (tags.length > 0) {
 			newOperation.setTags(Arrays.asList(tags));
@@ -225,12 +225,12 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		if (method.supportsBody() && requestBody != null) {
 			RequestBodyParameter.Config bodyParam = newConfigForImplementation(RequestBodyParameter.class);
 			bodyParam.setName("requestBody");
-			bodyParam.setDescription(requestBody.getDescription());
+			OpenAPIExporter.transferIfNotEmpty(requestBody::getDescription, bodyParam::setDescription);
 			bodyParam.setRequired(requestBody.isRequired());
 			MediaTypeObject jsonResponse = requestBody.getContent().get(JsonUtilities.JSON_CONTENT_TYPE);
 			if (jsonResponse != null) {
 				bodyParam.setFormat(ParameterFormat.OBJECT);
-				bodyParam.setSchema(jsonResponse.getSchema());
+				OpenAPIExporter.transferIfNotEmpty(jsonResponse::getSchema, bodyParam::setSchema);
 				bodyParam.setExample(jsonResponse.getExample());
 			}
 			newOperation.getParameters().add(bodyParam);
@@ -241,7 +241,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		for (ResponsesObject response : operation.getResponses().values()) {
 			OperationResponse opResp = TypedConfiguration.newConfigItem(OperationResponse.class);
 			opResp.setResponseCode(response.getStatusCode());
-			opResp.setDescription(response.getDescription());
+			OpenAPIExporter.transferIfNotEmpty(response::getDescription, opResp::setDescription);
 			MediaTypeObject jsonResponse = response.getContent().get(JsonUtilities.JSON_CONTENT_TYPE);
 			if (jsonResponse != null) {
 				opResp.setFormat(ParameterFormat.OBJECT);
@@ -341,7 +341,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				throw new UnreachableAssertion("No such parameter location: " + paramObject.getIn());
 		}
 		requestParam.setName(paramObject.getName());
-		requestParam.setDescription(paramObject.getDescription());
+		OpenAPIExporter.transferIfNotEmpty(paramObject::getDescription, requestParam::setDescription);
 		if (paramObject.getIn() != ParameterLocation.PATH) {
 			// Path is always required and can not be set.
 			requestParam.setRequired(paramObject.isRequired());

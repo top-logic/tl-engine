@@ -29,7 +29,6 @@ import com.top_logic.element.layout.formeditor.builder.FormDefinitionUtil;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
 import com.top_logic.element.layout.formeditor.builder.TypedFormDefinition;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.form.component.FormComponent;
@@ -196,7 +195,7 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 	protected FormEditorContext getExportContext(DisplayContext context, LayoutComponent component,
 			TLObject model,
 			Map<String, Object> someArguments) {
-		TypedForm exportForm = exportForm(component, model);
+		TypedForm exportForm = lookupExport(component, model);
 		return new FormEditorContext.Builder()
 			.formType(exportForm.getFormType())
 			.concreteType(exportForm.getDisplayedType())
@@ -205,38 +204,40 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 	}
 
 	private FormDefinition findFormDefinition(LayoutComponent aComponent, TLObject model) {
-		TypedForm exportForm = exportForm(aComponent, model);
+		TypedForm exportForm = lookupExport(aComponent, model);
 		if (exportForm == null) {
 			return null;
 		}
 		return exportForm.getFormDefinition();
 	}
 
-	private  TypedForm exportForm(LayoutComponent aComponent, TLObject model) {
+	private TypedForm lookupExport(LayoutComponent aComponent, TLObject model) {
 		if (model == null) {
 			// Must not occur, because command is hidden for null model.
 			throw new TopLogicException(I18NConstants.ERROR_NO_MODEL);
 		}
 		TLStructuredType modelType = model.tType();
-		TypedForm configuredExportForm = TypedForm.findForm(_configuredExportForms, modelType);
-		if (configuredExportForm != null) {
-			return configuredExportForm;
+
+		// Look up export defined locally at the current command.
+		TypedForm configuredExport = TypedForm.findForm(_configuredExportForms, modelType);
+		if (configuredExport != null) {
+			return configuredExport;
 		}
+
+		// Look up display form locally defined at the current component.
 		if (aComponent instanceof FormComponent) {
 			ModelBuilder builder = ((FormComponent) aComponent).getBuilder();
 			if (builder instanceof ConfiguredDynamicFormBuilder) {
 				Map<TLType, FormDefinition> displayForms = ((ConfiguredDynamicFormBuilder) builder).getConfiguredForms();
-				TypedForm configuredDisplayForm = TypedForm.findForm(displayForms, modelType);
-				if (configuredDisplayForm != null) {
-					return configuredDisplayForm;
+				TypedForm componentForm = TypedForm.findForm(displayForms, modelType);
+				if (componentForm != null) {
+					return componentForm;
 				}
 			}
 		}
-		TypedForm annotatedExportForm = annotatedExportForm(modelType);
-		if (annotatedExportForm != null) {
-			return annotatedExportForm;
-		}
-		return TypedForm.lookup(modelType);
+
+		// Use globally defined export from the model.
+		return TypedForm.lookupExport(modelType);
 	}
 
 	@Override
@@ -283,31 +284,6 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 			}
 
 		};
-	}
-
-	private static TypedForm annotatedExportForm(TLStructuredType displayedType) {
-		TLStructuredType formType = FormDefinitionUtil.findExportFormDefiningType(displayedType);
-		if (formType != null) {
-			return annotatedExport(displayedType, formType);
-		}
-
-		TLStructuredType current = WrapperHistoryUtils.getCurrent(displayedType);
-		if (current != displayedType) {
-			formType = FormDefinitionUtil.findExportFormDefiningType(current);
-
-			if (formType != null) {
-				// Use the form defined for the current version of the displayed type, even if there
-				// was no form definition for the version of the type that is currently displayed.
-				return annotatedExport(displayedType, formType);
-			}
-		}
-
-		return null;
-	}
-
-	private static TypedForm annotatedExport(TLStructuredType displayedType, TLStructuredType formType) {
-		FormDefinition form = FormDefinitionUtil.getExportAnnotation(formType).getExportForm();
-		return new TypedForm(displayedType, formType, form, false);
 	}
 
 }

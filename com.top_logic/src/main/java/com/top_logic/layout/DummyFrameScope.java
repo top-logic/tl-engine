@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import com.top_logic.base.services.simpleajax.ClientAction;
+import com.top_logic.model.listen.DummyModelScope;
 import com.top_logic.model.listen.ModelScope;
 
 /**
@@ -18,6 +19,8 @@ import com.top_logic.model.listen.ModelScope;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public final class DummyFrameScope implements FrameScope {
+
+	private final ModelScope _modelScope = new DummyModelScope();
 
 	private int _id = 1;
 
@@ -83,7 +86,7 @@ public final class DummyFrameScope implements FrameScope {
 
 	@Override
 	public ModelScope getModelScope() {
-		return null;
+		return _modelScope;
 	}
 
 	@Override

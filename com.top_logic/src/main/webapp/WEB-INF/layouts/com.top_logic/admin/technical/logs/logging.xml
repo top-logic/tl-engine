@@ -5,37 +5,6 @@
 	<components>
 		<tabbar name="loggingTabBar">
 			<components>
-				<component class="com.top_logic.layout.log.LogFolderComponent"
-					columns="_download,name,_size,_date"
-					modelBuilder="com.top_logic.util.log.LogFilesBuilder"
-					name="basicFileLogView"
-					resPrefix="admin.filelog.view."
-					securityProviderClass="securityRoot"
-				>
-					<tabInfo label="admin.logs.files"/>
-				</component>
-				<component class="com.top_logic.layout.form.component.FormComponent"
-					modelBuilder="com.top_logic.layout.admin.component.ChangeLogFileBuilder"
-					name="logConfig"
-					page="/jsp/administration/configureLogging.jsp"
-					resPrefix="layouts.admin.technical.logging.details."
-					securityProviderClass="securityRoot"
-				>
-					<tabInfo label="admin.logs.config"/>
-					<buttons>
-						<sequence id="changeLogFileAndReload"
-							clique="save"
-							group="Write"
-						>
-							<commands>
-								<command id="changeLogFile"
-									class="com.top_logic.layout.admin.component.ApplyLoggingConfigChanged"
-								/>
-								<reference command-id="invalidate"/>
-							</commands>
-						</sequence>
-					</buttons>
-				</component>
 				<tableView name="logEntriesTable"
 					modelBuilder="com.top_logic.layout.log.entry.ParsedLogEntriesModelBuilder"
 					resetInvisible="true"
@@ -50,7 +19,7 @@
 						/>
 					</buttons>
 					<table
-						defaultColumns="time, severity, category, file-category, thread, message, details"
+						defaultColumns="time, severity, file-category, category, thread, message, details"
 						defaultSortOrder="severity:descending, time:descending"
 						fixedColumns="2"
 						tableRenderer="com.top_logic.layout.log.entry.LogEntryTableRenderer"
@@ -125,6 +94,37 @@
 						</columns>
 					</table>
 				</tableView>
+				<component class="com.top_logic.layout.log.LogFolderComponent"
+					columns="_download,name,_size,_date"
+					modelBuilder="com.top_logic.util.log.LogFilesBuilder"
+					name="basicFileLogView"
+					resPrefix="admin.filelog.view."
+					securityProviderClass="securityRoot"
+				>
+					<tabInfo label="admin.logs.files"/>
+				</component>
+				<component class="com.top_logic.layout.form.component.FormComponent"
+					modelBuilder="com.top_logic.layout.admin.component.ChangeLogFileBuilder"
+					name="logConfig"
+					page="/jsp/administration/configureLogging.jsp"
+					resPrefix="layouts.admin.technical.logging.details."
+					securityProviderClass="securityRoot"
+				>
+					<tabInfo label="admin.logs.config"/>
+					<buttons>
+						<sequence id="changeLogFileAndReload"
+							clique="save"
+							group="Write"
+						>
+							<commands>
+								<command id="changeLogFile"
+									class="com.top_logic.layout.admin.component.ApplyLoggingConfigChanged"
+								/>
+								<reference command-id="invalidate"/>
+							</commands>
+						</sequence>
+					</buttons>
+				</component>
 			</components>
 		</tabbar>
 	</components>

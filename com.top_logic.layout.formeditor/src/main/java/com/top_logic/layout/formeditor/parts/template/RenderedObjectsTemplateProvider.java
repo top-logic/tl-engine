@@ -108,23 +108,25 @@ public class RenderedObjectsTemplateProvider
 		String VALUE_TEMPLATES = "value-templates";
 
 		/**
-		 * Function computing the items to display.
+		 * Function computing the objects to display.
 		 * 
 		 * <p>
-		 * The function expects the component's model as single argument.
+		 * The function expects the component's model as single argument. The
+		 * {@link #getListTemplate()} is responsible for rendering the objects.
 		 * </p>
 		 */
 		@Name(ITEMS)
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@Mandatory
+		@Label("Displayed objects")
 		Expr getItems();
 
 		/**
-		 * The HTML template to render the whole list with.
+		 * HTML template that renders the {@link #getItems() objects to display}.
 		 * 
 		 * <p>
 		 * The only property that can be accessed is <code>{items}</code> which renders all elements
-		 * to display. Separate templates can be provided for the rendered items in the
+		 * to display. Separate templates can be provided for each type of rendered object in the
 		 * {@link #getValueTemplates()} section.
 		 * </p>
 		 */

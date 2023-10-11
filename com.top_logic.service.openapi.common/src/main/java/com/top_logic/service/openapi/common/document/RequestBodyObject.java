@@ -38,7 +38,6 @@ public interface RequestBodyObject extends Described {
 	 * <p>
 	 * <i>CommonMark</i> syntax may be used for rich text representation.
 	 * </p>
-	 * 
 	 */
 	@Override
 	String getDescription();

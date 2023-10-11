@@ -17,7 +17,9 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DummyControlScope;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
@@ -29,6 +31,7 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContext;
 
 /**
  * Abstract super class for {@link CommandHandler} exporting a PDF defined by a
@@ -95,12 +98,19 @@ public abstract class AbstractPDFExportCommand extends AbstractCommandHandler {
 			
 			@Override
 			public void deliverTo(OutputStream out) throws IOException {
-				DisplayContext exportDC = DefaultDisplayContext.getDisplayContext();
+				// Note: Must set up a separate display context, to allow one-time rendering of
+				// controls during export. The "current" display context is not available for
+				// control rendering, since the current session is not in rendering mode.
+				DisplayContext exportContext = new DummyDisplayContext()
+					.initServletContext(DefaultDisplayContext.getDisplayContext().asServletContext());
+				exportContext.initScope(new DummyControlScope());
+				exportContext.installSubSessionContext(TLContext.getContext());
+
 				try {
 					TLObject exportObject = (TLObject) model;
-					exporter(exportDC, aComponent, exportObject, someArguments).createPDFExport(exportDC, out,
-						getExportDescription(exportDC, aComponent, exportObject, someArguments),
-						getExportContext(exportDC, aComponent, exportObject, someArguments));
+					exporter(exportContext, aComponent, exportObject, someArguments).createPDFExport(exportContext, out,
+						getExportDescription(exportContext, aComponent, exportObject, someArguments),
+						getExportContext(exportContext, aComponent, exportObject, someArguments));
 				} catch (DocumentException ex) {
 					throw new IOException("Invalid PDF document.", ex);
 				}

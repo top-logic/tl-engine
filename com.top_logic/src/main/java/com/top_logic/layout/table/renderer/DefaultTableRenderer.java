@@ -2159,7 +2159,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		footerProperties.put("lastPageButton", createLastPageButtonFragment(view, hasNextPage));
 		footerProperties.put("pageSize", createPageSizeFragment(view));
 		footerProperties.put("pageInfo", createPageInfoFragment(view));
-		footerProperties.put("text", getFooterText(view));
+		footerProperties.put("text", createFooterTextFragment(view));
 
 		Icons.TABLE_FOOTER_TEMPLATE.get().write(context, out, footerProperties);
 	}
@@ -2174,10 +2174,12 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * @param view
 	 *        Underlying control that display the {@link TableModel}..
 	 */
-	protected String getFooterText(TableControl view) {
-		int numberOfRenderedRows = view.getPagingModel().getCurrentPageSize();
-
-		return Resources.getInstance().getString(I18NConstants.NUMBER_OF_ROWS_TEXT__ROWS.fill(numberOfRenderedRows));
+	protected HTMLFragment createFooterTextFragment(TableControl view) {
+		return (HTMLFragment) (context, out) -> {
+			int numberOfRenderedRows = view.getPagingModel().getCurrentPageSize();
+			ResKey numberOfRowsKey = I18NConstants.NUMBER_OF_ROWS_TEXT__ROWS.fill(numberOfRenderedRows);
+			out.write(Resources.getInstance().getString(numberOfRowsKey));
+		};
 	}
 
 	private Object createCurrentPageFragment(TableControl view) {

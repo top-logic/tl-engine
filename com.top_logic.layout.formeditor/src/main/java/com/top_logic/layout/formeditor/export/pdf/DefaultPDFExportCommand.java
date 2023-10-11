@@ -228,7 +228,7 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 
 			@Override
 			public String getName() {
-				return getExportName(aContext, aComponent, (TLObject) model, someArguments);
+				return getExportName(aComponent, (TLObject) model);
 			}
 
 			@Override
@@ -253,9 +253,9 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 
 				try {
 					TLObject exportObject = (TLObject) model;
-					exporter(exportContext, aComponent, exportObject, someArguments).createPDFExport(exportContext, out,
-						getExportDescription(exportContext, aComponent, exportObject, someArguments),
-						getExportContext(exportContext, aComponent, exportObject, someArguments));
+					exporter(aComponent, exportObject).createPDFExport(exportContext, out,
+						getExportDescription(aComponent, exportObject),
+						getExportContext(aComponent, exportObject));
 				} catch (DocumentException ex) {
 					throw new IOException("Invalid PDF document.", ex);
 				}
@@ -267,21 +267,14 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 
 	/**
 	 * Creates the export context object.
-	 * 
-	 * @param context
-	 *        Export interaction.
 	 * @param component
 	 *        {@link LayoutComponent} creating the PDF export.
 	 * @param model
 	 *        The exported model.
-	 * @param someArguments
-	 *        Arguments given in
-	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}
+	 * 
 	 * @return {@link FormEditorContext} retrieving all context informations for the export from.
 	 */
-	protected FormEditorContext getExportContext(DisplayContext context, LayoutComponent component,
-			TLObject model,
-			Map<String, Object> someArguments) {
+	protected FormEditorContext getExportContext(LayoutComponent component, TLObject model) {
 		TypedForm exportForm = lookupExport(component, model);
 		return new FormEditorContext.Builder()
 			.formType(exportForm.getFormType())
@@ -292,38 +285,25 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 
 	/**
 	 * Creates the description of the exported PDF.
-	 * 
-	 * @param context
-	 *        Export interaction.
 	 * @param component
 	 *        {@link LayoutComponent} creating the PDF export.
 	 * @param model
 	 *        The exported model.
-	 * @param someArguments
-	 *        Arguments given in
-	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}
+	 * 
 	 * @return {@link FormElementTemplateProvider} defining the exported PDF layout as HTML.
 	 */
-	protected FormElementTemplateProvider getExportDescription(DisplayContext context, LayoutComponent component,
-			TLObject model, Map<String, Object> someArguments) {
+	protected FormElementTemplateProvider getExportDescription(LayoutComponent component, TLObject model) {
 		return TypedConfigUtil.createInstance(findFormDefinition(component, model));
 	}
 
 	/**
 	 * Determines the name of the exported file.
-	 * 
-	 * @param context
-	 *        Export interaction.
 	 * @param component
 	 *        {@link LayoutComponent} creating the PDF export.
 	 * @param model
 	 *        The exported model.
-	 * @param someArguments
-	 *        Arguments given in
-	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}
 	 */
-	protected String getExportName(DisplayContext context, LayoutComponent component, TLObject model,
-			Map<String, Object> someArguments) {
+	protected String getExportName(LayoutComponent component, TLObject model) {
 		String fileName = _pdfName.execute(model).toString();
 		// Replace illegal file name characters
 		return fileName.replaceAll("[/;:\\\\]", "_");
@@ -331,19 +311,12 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 
 	/**
 	 * Creates the actual {@link PDFExport exporter}.
-	 * 
-	 * @param context
-	 *        Export interaction.
 	 * @param component
 	 *        {@link LayoutComponent} creating the PDF export.
 	 * @param model
 	 *        The exported model.
-	 * @param someArguments
-	 *        Arguments given in
-	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}
 	 */
-	protected PDFExport exporter(DisplayContext context, LayoutComponent component, TLObject model,
-			Map<String, Object> someArguments) {
+	protected PDFExport exporter(LayoutComponent component, TLObject model) {
 		Expr header = config().getHeader();
 		if (header == null) {
 			return new PDFExport();

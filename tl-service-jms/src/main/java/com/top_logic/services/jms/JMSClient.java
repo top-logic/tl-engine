@@ -26,15 +26,21 @@ public class JMSClient implements Closeable {
 
 	private JmsConnectionFactory _cf;
 
+//	private ConnectionFactory _cf;
+
 	private JMSContext _context;
 
 	private Destination _destination;
+
+	private String _destinationName;
 
 	/**
 	 * Constructor for every JMSClient (producer and consumer) that initializes the connection
 	 * factory.
 	 */
 	public JMSClient(DestinationConfig config) throws JMSException {
+		_destinationName = config.getName();
+
 		_ff = JmsFactoryFactory.getInstance(WMQConstants.WMQ_PROVIDER);
 		_cf = _ff.createConnectionFactory();
 		// Set the properties
@@ -74,6 +80,15 @@ public class JMSClient implements Closeable {
 	 */
 	protected Destination getDestination() {
 		return _destination;
+	}
+
+	/**
+	 * This method returns the name of the destination config.
+	 * 
+	 * @return the name of the destination config
+	 */
+	protected String getDestinationName() {
+		return _destinationName;
 	}
 
 	@Override

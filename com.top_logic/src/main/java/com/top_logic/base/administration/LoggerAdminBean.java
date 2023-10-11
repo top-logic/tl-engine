@@ -230,7 +230,12 @@ public final class LoggerAdminBean extends ConfiguredManagedClass<LoggerAdminBea
 	public File getLogDir() {
 		return new File(getConfig().getLogDir());
    }
-   
+
+	/** The singleton {@link LoggerAdminBean} instance. */
+	public static LoggerAdminBean getInstance() {
+		return Module.INSTANCE.getImplementationInstance();
+	}
+
 	/**
 	 * Singleton reference to {@link LoggerAdminBean}.
 	 */

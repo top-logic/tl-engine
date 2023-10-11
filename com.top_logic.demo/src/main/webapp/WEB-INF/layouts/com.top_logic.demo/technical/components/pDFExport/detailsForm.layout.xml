@@ -2,7 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
+	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
 	<arguments model="selection(com.top_logic.demo/technical/components/pDFExport/allAceGrid.layout.xml#Grid)">
@@ -14,6 +14,8 @@
 			<default-pdf-export id="ID_9d6a7f86_7841_44ff_bcfd_b69243f98797"
 				pdf-name="{dateFormat('yyyy-MM-dd').format(now())}-{$model}.pdf"
 			>
+				<header><![CDATA[<p>Mein Export von <strong>{$model}</strong></p>
+]]></header>
 				<export-descriptions>
 					<export-description type="test.pdfExport:D">
 						<formDefinition>

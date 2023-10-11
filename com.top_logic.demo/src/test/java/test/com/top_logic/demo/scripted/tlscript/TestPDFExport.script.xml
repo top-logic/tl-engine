@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Komponenten > PDF-Export"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Neues A"
+			component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+			component-name="com.top_logic.demo/technical/components/pDFExport/allAceGrid.layout.xml#Grid"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Typ"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+						ref="test.pdfExport:D"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Name"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="My D"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Datumsattribut"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="05.08.2023"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.GenericCreateHandlerByExpression"
+			command-label="Anlegen"
+			component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
+			component-name="com.top_logic.demo/technical/components/pDFExport/newA/dialog.layout.xml#Editor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+					name="My D"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/components/pDFExport/allAceGrid.layout.xml#Grid"
+					tab-path="Technisches Demo > Komponenten > PDF-Export"
+				/>
+				<path>
+					<named-member name="fieldTable"/>
+				</path>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+			command-label="PDF Snapshot erzeugen"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="31577e57-c482-4757-986d-90c57969ec65.layout.xml#Table"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="customEdit"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="com.top_logic.demo/technical/components/pDFExport/detailsForm.layout.xml#Form"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Datumsattribut"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/components/pDFExport/detailsForm.layout.xml#Form"
+					tab-path="Technisches Demo > Komponenten > PDF-Export"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="11.11.2023"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+			command-label="Speichern"
+			command-name="defaultSave"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="com.top_logic.demo/technical/components/pDFExport/detailsForm.layout.xml#Form"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
+			command-label="PDF Snapshot erzeugen"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="31577e57-c482-4757-986d-90c57969ec65.layout.xml#Table"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+					name="1"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Komponenten > PDF-Export > Snapshots"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+					name="2"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Komponenten > PDF-Export > Snapshots"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+			command-label="Löschen"
+			component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+			component-name="com.top_logic.demo/technical/components/pDFExport/allAceGrid.layout.xml#Grid"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

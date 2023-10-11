@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="version,file,date"
+		model="selection(com.top_logic.demo/technical/components/pDFExport/allAceGrid.layout.xml#Grid)"
+		type="test.pdfExport:PDFSnapshot"
+	>
+		<name key="dynamic.d9f090d4-7bd2-4d90-ac58-ebf273900e05">
+			<en>Snapshots</en>
+			<de>Snapshots</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->$model.get(`test.pdfExport:A#snapshots`)"
+			supportsElement="element->$element.instanceOf(`test.pdfExport:PDFSnapshot`)"
+		/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_5394eaf8_6205_4cc4_9491_7db640ae72fb"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				image="css:fas fa-print"
+			>
+				<resourceKey key="dynamic.d57db948-3578-4843-ac4f-580f68f2dce0">
+					<en>Create PDF snapshot</en>
+					<de>PDF Snapshot erzeugen</de>
+				</resourceKey>
+				<operation><![CDATA[model -> {
+    name = $model.get(`test.pdfExport:A#name`);
+    version = $model.get(`test.pdfExport:A#version`);
+    snapshot = new(`test.pdfExport:PDFSnapshot`);
+    $snapshot.set(`test.pdfExport:PDFSnapshot#file`, $model.pdfExport($name + "-v" + $version + ".pdf"));
+    $snapshot.set(`test.pdfExport:PDFSnapshot#version`, $version);
+    $model.add(`test.pdfExport:A#snapshots`, $snapshot);
+    $model.set(`test.pdfExport:A#version`, $version + 1);
+}]]></operation>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

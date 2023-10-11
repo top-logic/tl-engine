@@ -36,10 +36,8 @@ import com.top_logic.element.layout.formeditor.builder.TypedForm;
 import com.top_logic.element.layout.formeditor.builder.TypedFormDefinition;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.DummyControlScope;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -71,7 +69,6 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.NullModelHidden;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -225,7 +222,6 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 			Map<String, Object> someArguments) {
 
 		aContext.getWindowScope().deliverContent(new BinaryDataSource() {
-
 			@Override
 			public String getName() {
 				return getExportName(aComponent, (TLObject) model);
@@ -243,19 +239,19 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 
 			@Override
 			public void deliverTo(OutputStream out) throws IOException {
-				// Note: Must set up a separate display context, to allow one-time rendering of
-				// controls during export. The "current" display context is not available for
-				// control rendering, since the current session is not in rendering mode.
-				DisplayContext exportContext = new DummyDisplayContext()
-					.initServletContext(DefaultDisplayContext.getDisplayContext().asServletContext());
-				exportContext.initScope(new DummyControlScope());
-				exportContext.installSubSessionContext(TLContext.getContext());
-
 				try {
 					TLObject exportObject = (TLObject) model;
-					exporter(aComponent, exportObject).createPDFExport(exportContext, out,
-						getExportDescription(aComponent, exportObject),
-						getExportContext(aComponent, exportObject));
+					TypedForm exportForm = lookupExport(aComponent, exportObject);
+
+					FormElementTemplateProvider template =
+						TypedConfigUtil.createInstance(exportForm.getFormDefinition());
+					FormEditorContext exportContext = new FormEditorContext.Builder()
+						.formType(exportForm.getFormType())
+						.concreteType(exportForm.getDisplayedType())
+						.model(exportObject)
+						.build();
+					PDFExport exporter = exporter(aComponent, exportObject);
+					exporter.createPDFExport(DefaultDisplayContext.getDisplayContext(), out, template, exportContext);
 				} catch (DocumentException ex) {
 					throw new IOException("Invalid PDF document.", ex);
 				}
@@ -263,37 +259,6 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 		});
 
 		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	/**
-	 * Creates the export context object.
-	 * @param component
-	 *        {@link LayoutComponent} creating the PDF export.
-	 * @param model
-	 *        The exported model.
-	 * 
-	 * @return {@link FormEditorContext} retrieving all context informations for the export from.
-	 */
-	protected FormEditorContext getExportContext(LayoutComponent component, TLObject model) {
-		TypedForm exportForm = lookupExport(component, model);
-		return new FormEditorContext.Builder()
-			.formType(exportForm.getFormType())
-			.concreteType(exportForm.getDisplayedType())
-			.model(model)
-			.build();
-	}
-
-	/**
-	 * Creates the description of the exported PDF.
-	 * @param component
-	 *        {@link LayoutComponent} creating the PDF export.
-	 * @param model
-	 *        The exported model.
-	 * 
-	 * @return {@link FormElementTemplateProvider} defining the exported PDF layout as HTML.
-	 */
-	protected FormElementTemplateProvider getExportDescription(LayoutComponent component, TLObject model) {
-		return TypedConfigUtil.createInstance(findFormDefinition(component, model));
 	}
 
 	/**
@@ -323,14 +288,6 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 		} else {
 			return exporter(header, model);
 		}
-	}
-
-	private FormDefinition findFormDefinition(LayoutComponent aComponent, TLObject model) {
-		TypedForm exportForm = lookupExport(aComponent, model);
-		if (exportForm == null) {
-			return null;
-		}
-		return exportForm.getFormDefinition();
 	}
 
 	private TypedForm lookupExport(LayoutComponent aComponent, TLObject model) {

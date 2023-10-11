@@ -22,6 +22,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.util.model.ModelService;
 
 /**
  * TLScript function generating a PDF from an object.
@@ -48,7 +49,7 @@ public class PDFExportFunction extends GenericMethod {
 
 	@Override
 	public TLType getType(TLType selfType, List<TLType> argumentTypes) {
-		return TLCore.getPrimitiveType(selfType.getModel(), Kind.BINARY);
+		return TLCore.getPrimitiveType(ModelService.getInstance().getModel(), Kind.BINARY);
 	}
 
 	@Override

@@ -9,6 +9,8 @@ import java.util.Map;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -25,6 +27,8 @@ import com.top_logic.event.infoservice.InfoService;
 /**
  * The TopLogic Service to set the config for a connection and establish this connection to a JMS
  * Message System. In this case the connection is tuned to the IBM MQ system.
+ * 
+ * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
  */
 public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 
@@ -99,7 +103,7 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		String TYPE = "type";
 
 		/**
-		 * 
+		 * Configuration name for {@link #getProcessor()}
 		 */
 		String MESSAGE_PROCESSOR = "message-processor";
 
@@ -158,7 +162,7 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		Type getType();
 
 		/**
-		 * TODO
+		 * The config for a processor that processes messages.
 		 */
 		@Name(MESSAGE_PROCESSOR)
 		PolymorphicConfiguration<MessageProcessor> getProcessor();
@@ -181,19 +185,25 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	}
 
 	/**
-	 * TODO
+	 * A {@link MessageProcessor} provides a method to process messages that where received by a
+	 * {@link Consumer}.
+	 * 
+	 * Implementations of {@link MessageProcessor} typically contain a config to set a custom
+	 * processor for received messages.
 	 */
 	public interface MessageProcessor {
 		/**
+		 * Processes the given {@link Message}.
+		 * 
 		 * @param message
-		 *        The {@link Message} received from the {@link Consumer}.
+		 *        The {@link Message} received by the {@link Consumer}.
 		 */
 		public void processMessage(Message message);
 	}
 
 	private Map<String, Producer> _producers = new HashMap<>();
 
-	private Map<String, Consumer> _consumers = new HashMap<>();
+	private Map<String, Pair<Consumer, Thread>> _consumers = new HashMap<>();
 
 	/**
 	 * Constructor for the service that establishes connections with the given config.
@@ -216,7 +226,11 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 				_producers.put(config.getName(), prod);
 				if (config.getProcessor() != null) {
 					Consumer cons = new Consumer(config);
-					_consumers.put(config.getName(), cons);
+
+					Thread consThread = new Thread(() -> cons.receive());
+					consThread.setName("JMS Consumer - " + config.getName());
+					consThread.start();
+					_consumers.put(config.getName(), new Pair<>(cons, consThread));
 				}
 			} catch (JMSException ex) {
 				InfoService.logError(I18NConstants.ERROR_ESTABLISH_CONNECTION__NAME.fill(config.getName()),
@@ -233,8 +247,11 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		for (Producer prod : _producers.values()) {
 			prod.close();
 		}
-		for (Consumer cons : _consumers.values()) {
-			cons.close();
+		for (Pair<Consumer, Thread> pair : _consumers.values()) {
+			Consumer cons = pair.getFirst();
+			Thread thread = pair.getSecond();
+			thread.interrupt();
+			Logger.info("Interrupted consumer thread " + thread.getName() + ".", JMSService.class);
 		}
 		super.shutDown();
 	}
@@ -258,7 +275,7 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	 * @return The requested Consumer
 	 */
 	public Consumer getConsumer(String name) {
-		return _consumers.get(name);
+		return _consumers.get(name).getFirst();
 	}
 
 	/**

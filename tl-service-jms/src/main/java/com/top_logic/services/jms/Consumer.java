@@ -3,17 +3,12 @@
  */
 package com.top_logic.services.jms;
 
-import java.io.UnsupportedEncodingException;
-
-import javax.jms.BytesMessage;
 import javax.jms.JMSConsumer;
 import javax.jms.JMSException;
 import javax.jms.Message;
-import javax.jms.TextMessage;
 import javax.jms.Topic;
 
-import com.ibm.msg.client.wmq.WMQConstants;
-
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.services.jms.JMSService.DestinationConfig;
 import com.top_logic.services.jms.JMSService.MessageProcessor;
@@ -48,27 +43,14 @@ public class Consumer extends JMSClient {
 	 * Fetches a message from the given queue
 	 */
 	public void receive() {
-//		while (true) {
-		Message message = _consumer.receive();
-		_processor.processMessage(message);
-
-		String msg = "";
 		try {
-			if (message instanceof TextMessage) {
-				msg = message.getBody(String.class);
-			} else if (message instanceof BytesMessage) {
-				byte[] m = message.getBody(byte[].class);
-				String charset = message.getStringProperty(WMQConstants.JMS_IBM_CHARACTER_SET);
-				msg = new String(m, charset);
+			while (true) {
+				Message message = _consumer.receive();
+				_processor.processMessage(message);
 			}
-		} catch (JMSException ex) {
-			ex.printStackTrace();
-		} catch (UnsupportedEncodingException ex) {
-			ex.printStackTrace();
+		} finally {
+			Logger.info("Stopping consumer " + getDestinationName() + ".", Consumer.class);
+			_consumer.close();
 		}
-
-		System.out.println("\nReceived message:\n" + msg);
-//			getContext().close();
-//		}
 	}
 }

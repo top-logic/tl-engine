@@ -15,6 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import javax.servlet.ServletContext;
+
 import org.w3c.dom.Element;
 import org.xhtmlrenderer.extend.ReplacedElement;
 import org.xhtmlrenderer.extend.ReplacedElementFactory;
@@ -33,6 +35,7 @@ import com.lowagie.text.DocumentException;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
@@ -161,7 +164,8 @@ public class PDFExport {
 		// Note: Must set up a separate display context, to allow one-time rendering of
 		// controls during export. The "current" display context is not available for
 		// control rendering, since the current session is not in rendering mode.
-		DisplayContext context = new DummyDisplayContext().initServletContext(displayContext.asServletContext());
+		ServletContext servletContext = ServletContextService.getInstance().getServletContext();
+		DisplayContext context = new DummyDisplayContext().initServletContext(servletContext);
 		context.initScope(new DummyControlScope());
 		context.installSubSessionContext(TLContext.getContext());
 

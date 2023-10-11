@@ -36,6 +36,95 @@
 						</sequence>
 					</buttons>
 				</component>
+				<tableView name="logEntriesTable"
+					modelBuilder="com.top_logic.layout.log.entry.ParsedLogEntriesModelBuilder"
+					resetInvisible="true"
+					resPrefix="layouts.admin.technical.logs.logging.logEntriesTable."
+				>
+					<componentControlProvider class="com.top_logic.layout.structure.TableWithSidebar"/>
+					<tabInfo label="admin.logs.entries"/>
+					<buttons>
+						<reference command-id="invalidate"/>
+						<button id="printToConsole"
+							class="com.top_logic.layout.log.entry.PrintLogEntryCommand"
+						/>
+					</buttons>
+					<table
+						defaultColumns="time, severity, category, file-category, thread, message, details"
+						defaultSortOrder="severity:descending, time:descending"
+						fixedColumns="2"
+						tableRenderer="com.top_logic.layout.log.entry.LogEntryTableRenderer"
+					>
+						<column-default
+							accessor="com.top_logic.layout.log.entry.LogEntryAccessor"
+							cssClassProvider="com.top_logic.layout.log.entry.LogEntryCellClassProvider"
+							filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+							resourceProvider="com.top_logic.layout.provider.resource.LabelAsTooltipResourceProvider"
+						/>
+						<columns>
+							<column name="time"
+								columnWidth="125px"
+								labelProvider="com.top_logic.layout.table.renderer.DateTimeFormat"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.DateTableFilterProvider"
+									comparison-operators-provider="com.top_logic.layout.table.filter.FloatValueOperatorsProvider"
+									show-option-entries="false"
+								/>
+							</column>
+							<column name="severity"
+								columnWidth="90px"
+								labelProvider="com.top_logic.layout.log.entry.LogEntrySeverityLabelProvider"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="true"
+								/>
+							</column>
+							<column name="file-category"
+								columnWidth="150px"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="true"
+								/>
+							</column>
+							<column name="file-name"
+								columnWidth="150px"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="true"
+								/>
+							</column>
+							<column name="category"
+								columnWidth="350px"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="true"
+								/>
+							</column>
+							<column name="thread"
+								columnWidth="200px"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="true"
+								/>
+							</column>
+							<column name="message"
+								columnWidth="900px"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="true"
+								/>
+							</column>
+							<column name="details"
+								columnWidth="35px"
+								renderer="com.top_logic.layout.log.entry.LogEntryDetailsColumnRenderer"
+							>
+								<filterProvider class="com.top_logic.layout.table.filter.LabelFilterProvider"
+									show-option-entries="false"
+								/>
+							</column>
+						</columns>
+					</table>
+				</tableView>
 			</components>
 		</tabbar>
 	</components>

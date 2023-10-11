@@ -56,8 +56,6 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.NullModelHidden;
-import com.top_logic.tool.export.pdf.AbstractPDFExportCommand;
-import com.top_logic.tool.export.pdf.PDFExport;
 import com.top_logic.util.error.TopLogicException;
 
 /**

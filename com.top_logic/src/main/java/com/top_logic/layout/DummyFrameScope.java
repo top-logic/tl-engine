@@ -3,28 +3,24 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.layout.basic;
+package com.top_logic.layout;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
 import com.top_logic.base.services.simpleajax.ClientAction;
-import com.top_logic.layout.CommandListener;
-import com.top_logic.layout.ContentHandler;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.FrameScope;
-import com.top_logic.layout.URLBuilder;
-import com.top_logic.layout.URLParser;
-import com.top_logic.layout.WindowScope;
 import com.top_logic.model.listen.ModelScope;
 
 /**
- * {@link FrameScope} for test.
+ * {@link FrameScope} for testing and one-time rendering of exports.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public final class DummyFrameScope implements FrameScope {
+
+	private int _id = 1;
+
 	@Override
 	public boolean removeCommandListener(CommandListener listener) {
 		return false;
@@ -82,7 +78,7 @@ public final class DummyFrameScope implements FrameScope {
 
 	@Override
 	public String createNewID() {
-		return "test-id";
+		return "c" + (_id++);
 	}
 
 	@Override

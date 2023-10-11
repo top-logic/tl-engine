@@ -20,7 +20,6 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
-import test.com.top_logic.layout.basic.DummyControlScope;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -29,6 +28,7 @@ import com.top_logic.basic.generate.CodeUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DummyControlScope;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.AbstractDisplayContext;
 import com.top_logic.layout.basic.DummyDisplayContext;

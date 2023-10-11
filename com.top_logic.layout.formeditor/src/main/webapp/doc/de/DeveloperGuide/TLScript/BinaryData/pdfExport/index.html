@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$input.pdfExport(name: "my-data.pdf")</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Erzeugt aus dem angegebenen Objekt einen PDF export mit dem angegebenen Namen. Das Objekt wird über die an seinem Typ annotierte Formulardefinition gedruckt. Wenn Der Modell-Typ keine Formulardefinition hat, wird ein Standardformular erzeugt, dass alle sichtbaren Eigenschaften des Typs enthält.</p>
+
+<p>Eine Formulardefinition für den Export wird über die <a class="tlObject" href="?page=classAnnotations&amp;uuid=71f57a30-d648-4680-89cb-67450b3b67a1">Annotation</a> "PDF-Export-Definition" am Typ des zu exportierenden Objektes hinterlegt.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">input</code></td>
+			<td>Fachobjekt</td>
+			<td>Das zu druckende Objekt</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">name</code></td>
+			<td>Zeichenkette</td>
+			<td>Der Dateiname der erzeugten PDF-Datei.</td>
+			<td>nein</td>
+			<td>"export.pdf"</td>
+		</tr>
+	</tbody>
+</table>

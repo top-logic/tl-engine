@@ -6,7 +6,10 @@
 package com.top_logic.layout.formeditor.export.pdf;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
+
+import com.lowagie.text.DocumentException;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -18,19 +21,26 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
 import com.top_logic.element.layout.formeditor.builder.FormDefinitionUtil;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
 import com.top_logic.element.layout.formeditor.builder.TypedFormDefinition;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DummyControlScope;
 import com.top_logic.layout.ModelSpec;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.wysiwyg.ui.MacroControlProvider;
@@ -52,14 +62,20 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.tool.boundsec.AbstractCommandHandler;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.NullModelHidden;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link AbstractPDFExportCommand} exporting the model of a component.
+ * {@link AbstractCommandHandler} exporting the model of a component as PDF document.
  * 
  * <p>
  * When an export definition for the type of the model is given, that definition is used. If no such
@@ -80,7 +96,7 @@ import com.top_logic.util.error.TopLogicException;
  */
 @InApp
 @Label("Export model as PDF")
-public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
+public class DefaultPDFExportCommand extends AbstractCommandHandler {
 
 	/**
 	 * Configuration of a {@link DefaultPDFExportCommand}.
@@ -96,7 +112,12 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 	})
 	@DisplayInherited(DisplayStrategy.APPEND)
 	@TagName("default-pdf-export")
-	public interface Config extends AbstractPDFExportCommand.Config {
+	/**
+	 * Configuration of an {@link DefaultPDFExportCommand}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface Config extends AbstractCommandHandler.Config {
 
 		/** Configuration name of {@link #getPDFName()}. */
 		String PDF_NAME = "pdf-name";
@@ -106,6 +127,22 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 
 		/** Configuration name of {@link #getExportDescriptions()}. */
 		String EXPORT_DESCRIPTIONS = "export-descriptions";
+
+		@Override
+		@FormattedDefault(SimpleBoundCommandGroup.EXPORT_NAME)
+		CommandGroupReference getGroup();
+
+		@Override
+		@FormattedDefault("theme:ICONS_EXPORT_PDF")
+		ThemeImage getImage();
+
+		@Override
+		@FormattedDefault("theme:ICONS_EXPORT_PDFDISABLED")
+		ThemeImage getDisabledImage();
+
+		@Override
+		@StringDefault(CommandHandlerFactory.EXPORT_BUTTONS_GROUP)
+		String getClique();
 
 		/**
 		 * Name of the downloaded PDF.
@@ -184,12 +221,64 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 	}
 
 	@Override
-	protected FormElementTemplateProvider getExportDescription(DisplayContext context, LayoutComponent component,
-			TLObject model, Map<String, Object> someArguments) {
-		return TypedConfigUtil.createInstance(findFormDefinition(component, model));
+	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
+			Map<String, Object> someArguments) {
+
+		aContext.getWindowScope().deliverContent(new BinaryDataSource() {
+
+			@Override
+			public String getName() {
+				return getExportName(aContext, aComponent, (TLObject) model, someArguments);
+			}
+
+			@Override
+			public long getSize() {
+				return 0;
+			}
+
+			@Override
+			public String getContentType() {
+				return MimeTypes.getInstance().getMimeType(getName());
+			}
+
+			@Override
+			public void deliverTo(OutputStream out) throws IOException {
+				// Note: Must set up a separate display context, to allow one-time rendering of
+				// controls during export. The "current" display context is not available for
+				// control rendering, since the current session is not in rendering mode.
+				DisplayContext exportContext = new DummyDisplayContext()
+					.initServletContext(DefaultDisplayContext.getDisplayContext().asServletContext());
+				exportContext.initScope(new DummyControlScope());
+				exportContext.installSubSessionContext(TLContext.getContext());
+
+				try {
+					TLObject exportObject = (TLObject) model;
+					exporter(exportContext, aComponent, exportObject, someArguments).createPDFExport(exportContext, out,
+						getExportDescription(exportContext, aComponent, exportObject, someArguments),
+						getExportContext(exportContext, aComponent, exportObject, someArguments));
+				} catch (DocumentException ex) {
+					throw new IOException("Invalid PDF document.", ex);
+				}
+			}
+		});
+
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	@Override
+	/**
+	 * Creates the export context object.
+	 * 
+	 * @param context
+	 *        Export interaction.
+	 * @param component
+	 *        {@link LayoutComponent} creating the PDF export.
+	 * @param model
+	 *        The exported model.
+	 * @param someArguments
+	 *        Arguments given in
+	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}
+	 * @return {@link FormEditorContext} retrieving all context informations for the export from.
+	 */
 	protected FormEditorContext getExportContext(DisplayContext context, LayoutComponent component,
 			TLObject model,
 			Map<String, Object> someArguments) {
@@ -199,6 +288,68 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 			.concreteType(exportForm.getDisplayedType())
 			.model(model)
 			.build();
+	}
+
+	/**
+	 * Creates the description of the exported PDF.
+	 * 
+	 * @param context
+	 *        Export interaction.
+	 * @param component
+	 *        {@link LayoutComponent} creating the PDF export.
+	 * @param model
+	 *        The exported model.
+	 * @param someArguments
+	 *        Arguments given in
+	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}
+	 * @return {@link FormElementTemplateProvider} defining the exported PDF layout as HTML.
+	 */
+	protected FormElementTemplateProvider getExportDescription(DisplayContext context, LayoutComponent component,
+			TLObject model, Map<String, Object> someArguments) {
+		return TypedConfigUtil.createInstance(findFormDefinition(component, model));
+	}
+
+	/**
+	 * Determines the name of the exported file.
+	 * 
+	 * @param context
+	 *        Export interaction.
+	 * @param component
+	 *        {@link LayoutComponent} creating the PDF export.
+	 * @param model
+	 *        The exported model.
+	 * @param someArguments
+	 *        Arguments given in
+	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}
+	 */
+	protected String getExportName(DisplayContext context, LayoutComponent component, TLObject model,
+			Map<String, Object> someArguments) {
+		String fileName = _pdfName.execute(model).toString();
+		// Replace illegal file name characters
+		return fileName.replaceAll("[/;:\\\\]", "_");
+	}
+
+	/**
+	 * Creates the actual {@link PDFExport exporter}.
+	 * 
+	 * @param context
+	 *        Export interaction.
+	 * @param component
+	 *        {@link LayoutComponent} creating the PDF export.
+	 * @param model
+	 *        The exported model.
+	 * @param someArguments
+	 *        Arguments given in
+	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}
+	 */
+	protected PDFExport exporter(DisplayContext context, LayoutComponent component, TLObject model,
+			Map<String, Object> someArguments) {
+		Expr header = config().getHeader();
+		if (header == null) {
+			return new PDFExport();
+		} else {
+			return exporter(header, model);
+		}
 	}
 
 	private FormDefinition findFormDefinition(LayoutComponent aComponent, TLObject model) {
@@ -241,25 +392,6 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 	@Override
 	protected ExecutabilityRule intrinsicExecutability() {
 		return CombinedExecutabilityRule.combine(super.intrinsicExecutability(), NullModelHidden.INSTANCE);
-	}
-
-	@Override
-	protected String getExportName(DisplayContext context, LayoutComponent component, TLObject model,
-			Map<String, Object> someArguments) {
-		String fileName = _pdfName.execute(model).toString();
-		// Replace illegal file name characters
-		return fileName.replaceAll("[/;:\\\\]", "_");
-	}
-
-	@Override
-	protected PDFExport exporter(DisplayContext context, LayoutComponent component, TLObject model,
-			Map<String, Object> someArguments) {
-		Expr header = config().getHeader();
-		if (header == null) {
-			return super.exporter(context, component, model, someArguments);
-		} else {
-			return exporter(header, model);
-		}
 	}
 
 	private PDFExport exporter(Expr header, TLObject model) {

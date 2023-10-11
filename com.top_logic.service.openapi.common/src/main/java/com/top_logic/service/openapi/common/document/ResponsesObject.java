@@ -67,7 +67,6 @@ public interface ResponsesObject extends Described {
 	 * A short description of the response.
 	 */
 	@Name(DESCRIPTION)
-	@Mandatory
 	@Override
 	String getDescription();
 

@@ -395,7 +395,9 @@ public class OpenAPIExporter {
 	private ResponsesObject newResponsesObject(String statusCode, String description) {
 		ResponsesObject resonses = newItem(ResponsesObject.class);
 		resonses.setStatusCode(statusCode);
-		resonses.setDescription(description);
+		if (description != null && !description.isBlank()) {
+			resonses.setDescription(description);
+		}
 		return resonses;
 	}
 

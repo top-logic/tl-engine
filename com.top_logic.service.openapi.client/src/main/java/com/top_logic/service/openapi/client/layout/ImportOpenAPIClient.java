@@ -133,13 +133,13 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		newMethod.setName(getMethodName(operation, httpMethod, baseName));
 		newMethod.setBaseUrl(url);
 		String description = operation.getDescription();
-		if (description == null) {
+		if (description != null && !description.isBlank()) {
+			newMethod.setDescription(description);
+		} else {
 			String summary = operation.getSummary();
-			if (!summary.isEmpty()) {
+			if (summary != null && !summary.isBlank()) {
 				newMethod.setDescription(summary);
 			}
-		} else {
-			newMethod.setDescription(description);
 		}
 		newMethod.setHttpMethod(httpMethod);
 		addParameters(newMethod, completeAPI, operation, path, warnings);
@@ -384,7 +384,9 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		ParameterDefinition newParameterDef = TypedConfiguration.newConfigItem(ParameterDefinition.class);
 		newParameterDef.setName(paramName);
 		newParameterDef.setRequired(isRequired);
-		newParameterDef.setDescription(description);
+		if (description != null && !description.isBlank()) {
+			newParameterDef.setDescription(description);
+		}
 		if (!StringServices.isEmpty(schema)) {
 			try (JsonReader reader = new JsonReader(new StringR(schema))) {
 				reader.beginObject();

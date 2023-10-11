@@ -6,10 +6,7 @@
 package com.top_logic.layout.formeditor.export.pdf;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Map;
-
-import com.lowagie.text.DocumentException;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -22,14 +19,11 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
 import com.top_logic.element.layout.formeditor.builder.FormDefinitionUtil;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
@@ -37,7 +31,6 @@ import com.top_logic.element.layout.formeditor.builder.TypedFormDefinition;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -221,40 +214,17 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
 
-		aContext.getWindowScope().deliverContent(new BinaryDataSource() {
+		TLObject exportObject = (TLObject) model;
+		String name = getExportName(aComponent, (TLObject) model);
+		aContext.getWindowScope().deliverContent(new PDFData(name, exportObject) {
 			@Override
-			public String getName() {
-				return getExportName(aComponent, (TLObject) model);
+			protected TypedForm lookupForm() {
+				return lookupExport(aComponent, getExportObject());
 			}
 
 			@Override
-			public long getSize() {
-				return 0;
-			}
-
-			@Override
-			public String getContentType() {
-				return MimeTypes.getInstance().getMimeType(getName());
-			}
-
-			@Override
-			public void deliverTo(OutputStream out) throws IOException {
-				try {
-					TLObject exportObject = (TLObject) model;
-					TypedForm exportForm = lookupExport(aComponent, exportObject);
-
-					FormElementTemplateProvider template =
-						TypedConfigUtil.createInstance(exportForm.getFormDefinition());
-					FormEditorContext exportContext = new FormEditorContext.Builder()
-						.formType(exportForm.getFormType())
-						.concreteType(exportForm.getDisplayedType())
-						.model(exportObject)
-						.build();
-					PDFExport exporter = exporter(aComponent, exportObject);
-					exporter.createPDFExport(DefaultDisplayContext.getDisplayContext(), out, template, exportContext);
-				} catch (DocumentException ex) {
-					throw new IOException("Invalid PDF document.", ex);
-				}
+			protected PDFExport createExporter() {
+				return exporter(aComponent, getExportObject());
 			}
 		});
 

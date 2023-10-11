@@ -59,7 +59,7 @@ public class PDFData implements BinaryDataSource {
 
 	@Override
 	public long getSize() {
-		return 0;
+		return -1;
 	}
 
 	@Override

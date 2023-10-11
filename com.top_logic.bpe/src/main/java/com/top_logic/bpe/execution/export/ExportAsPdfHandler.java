@@ -28,6 +28,7 @@ import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.formeditor.export.pdf.PDFExport;
 import com.top_logic.layout.table.model.I18NConstants;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLFormatter;
@@ -39,7 +40,6 @@ import com.top_logic.tool.boundsec.conditional.CommandStep;
 import com.top_logic.tool.boundsec.conditional.Hide;
 import com.top_logic.tool.boundsec.conditional.PreconditionCommandHandler;
 import com.top_logic.tool.boundsec.conditional.Success;
-import com.top_logic.tool.export.pdf.PDFExport;
 import com.top_logic.util.error.TopLogicException;
 
 /**

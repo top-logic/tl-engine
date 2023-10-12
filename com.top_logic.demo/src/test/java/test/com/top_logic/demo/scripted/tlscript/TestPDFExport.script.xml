@@ -106,7 +106,7 @@
 			command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
 			command-label="PDF Snapshot erzeugen"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-			component-name="31577e57-c482-4757-986d-90c57969ec65.layout.xml#Table"
+			component-name="com.top_logic.demo/technical/components/pDFExport/snapshotsTable.layout.xml#Table"
 			user-id="root"
 		>
 			<arguments/>
@@ -150,7 +150,7 @@
 			command-implementation-comment="com.top_logic.model.search.providers.CommandHandlerByExpression"
 			command-label="PDF Snapshot erzeugen"
 			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-			component-name="31577e57-c482-4757-986d-90c57969ec65.layout.xml#Table"
+			component-name="com.top_logic.demo/technical/components/pDFExport/snapshotsTable.layout.xml#Table"
 			user-id="root"
 		>
 			<arguments/>

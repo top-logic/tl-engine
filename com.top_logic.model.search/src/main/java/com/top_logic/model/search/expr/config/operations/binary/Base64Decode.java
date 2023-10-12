@@ -94,7 +94,7 @@ public class Base64Decode extends SimpleGenericMethod {
 	 * String buffer accepting binary data in ASCII encoding scheme.
 	 */
 	private static final class ASCIISource extends InputStream {
-		private String _input;
+		private final String _input;
 
 		private int _pos;
 

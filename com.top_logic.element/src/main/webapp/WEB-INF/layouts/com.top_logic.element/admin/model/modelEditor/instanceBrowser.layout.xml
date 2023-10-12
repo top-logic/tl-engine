@@ -8,10 +8,11 @@
 	<components>
 		<!-- table with MetaAttributes -->
 		<!-- Button component is only necessary for invalidation if model changes. -->
-		<grid name="Instances"
+		<grid class="com.top_logic.element.layout.instances.InstanceBrowserGrid"
 			deleteCommand=""
 			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
 			modelBuilder="com.top_logic.element.layout.instances.DirectInstances"
+			name="Instances"
 			resPrefix="layouts.element.meta.InstanceBrowser.table"
 			securityProviderClass="securityRoot"
 			showMaximize="true"

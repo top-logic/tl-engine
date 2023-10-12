@@ -321,8 +321,7 @@ public class DropDownControl extends AbstractSelectControl {
 	}
 
 	private void renderTooltip(DisplayContext context, TagWriter out, FormField dropdown, Object item,
-			Boolean useDropDownTooltip)
-			throws IOException {
+			boolean useDropDownTooltip) throws IOException {
 		LabelProvider lprovider = SelectFieldUtils.getOptionLabelProvider(dropdown);
 		ResourceProvider rprovider = LabelResourceProvider.toResourceProvider(lprovider);
 		String tooltip = item == SelectField.NO_OPTION ? null : rprovider.getTooltip(item);

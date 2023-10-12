@@ -296,6 +296,8 @@
 					<method name="toUpperCase" class="com.top_logic.model.search.expr.config.operations.string.ToUpperCase$Builder"/>
 
 					<method name="toString" class="com.top_logic.model.search.expr.ToString$Builder"/>
+					<method name="base64Encode" class="com.top_logic.model.search.expr.config.operations.binary.Base64Encode$Builder"/>
+					<method name="base64Decode" class="com.top_logic.model.search.expr.config.operations.binary.Base64Decode$Builder"/>
 					<method name="contextPath" class="com.top_logic.model.search.expr.config.operations.web.ContextPath$Builder"/>
 					<method name="numberFormat" class="com.top_logic.model.search.expr.NumerFormatExpr$Builder"/>
 					<method name="dateFormat" class="com.top_logic.model.search.expr.DateFormatExpr$Builder"/>

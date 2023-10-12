@@ -211,20 +211,20 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 	}
 
 	@Override
-	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
+	public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> someArguments) {
 
 		TLObject exportObject = (TLObject) model;
-		String name = getExportName(aComponent, (TLObject) model);
-		aContext.getWindowScope().deliverContent(new PDFData(name, exportObject) {
+		String name = getExportName(component, (TLObject) model);
+		context.getWindowScope().deliverContent(new PDFData(name, exportObject) {
 			@Override
 			protected TypedForm lookupForm() {
-				return lookupExport(aComponent, getExportObject());
+				return lookupExport(component, getExportObject());
 			}
 
 			@Override
 			protected PDFExport createExporter() {
-				return exporter(aComponent, getExportObject());
+				return exporter(component, getExportObject());
 			}
 		});
 

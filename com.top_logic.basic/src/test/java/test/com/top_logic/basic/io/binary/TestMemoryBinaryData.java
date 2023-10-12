@@ -125,21 +125,19 @@ public class TestMemoryBinaryData extends BasicTestCase {
     }
     
     /**
-     * Provoke exceptions when using FileBasedBinaryData.
-     */
-    public void testException() throws  IOException {
+	 * Testing of border cases.
+	 */
+    public void testProblems() throws  IOException {
 		File thisFile = testFixture();
         assert thisFile.length() < BinaryDataFactory.MAX_MEMORY_SIZE;
 
-        try {
-            BinaryDataFactory.createMemoryBinaryData(new FileInputStream(thisFile), thisFile.length() + 1);
-            fail("IOException expected");
-        } catch (IOException expected) { /* expected */ }
+		BinaryData shortData =
+			BinaryDataFactory.createMemoryBinaryData(new FileInputStream(thisFile), thisFile.length() + 1);
+		assertEquals(thisFile.length(), shortData.getSize());
 
-        try {
-            BinaryDataFactory.createMemoryBinaryData(new FileInputStream(thisFile), thisFile.length() >> 1);
-            fail("IOException expected");
-        } catch (IOException expected) { /* expected */ }
+		BinaryData longData =
+			BinaryDataFactory.createMemoryBinaryData(new FileInputStream(thisFile), thisFile.length() >> 1);
+		assertEquals(thisFile.length(), longData.getSize());
         
 		BinaryData mbd = BinaryDataFactory.createMemoryBinaryData(new FileInputStream(thisFile), thisFile.length());
         File tmpFile = createNamedTestFile("TestMemoryBinaryData");

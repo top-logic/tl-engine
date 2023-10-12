@@ -31,8 +31,9 @@ import com.top_logic.model.form.implementation.FormElementTemplateProvider;
  */
 public class PDFData implements BinaryDataSource {
 
-	private String _name;
-	private TLObject _exportObject;
+	private final String _name;
+
+	private final TLObject _exportObject;
 
 	/**
 	 * Creates a {@link PDFData}.

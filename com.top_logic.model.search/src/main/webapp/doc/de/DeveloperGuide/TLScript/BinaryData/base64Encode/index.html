@@ -1,0 +1,49 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$input.base64Encode()</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Kodiert die übergebenen Binärdaten mit dem Base64 Kodierungsschema und liefert das Ergebnis als Zeichenkette zurück.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Binärdaten</td>
+			<td>Die zu kodierenden Binärdaten</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>mime</td>
+			<td>Wahrheitswert</td>
+			<td>Ob MIME-kompatible Kodierung stattfinden soll</td>
+			<td>nein</td>
+			<td>false</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Zeichenkette</p>
+
+<h2>Beispiel</h2>
+
+<pre>
+<code>binary(name: "file.txt", data: "Mein Text", encoding: "utf-8").base64Encode()</code></pre>
+
+<p>Liefert die Base64 Kodierung von "Mein Text" im UTF-8 Zeichensatz: "TWVpbiBUZXh0"</p>

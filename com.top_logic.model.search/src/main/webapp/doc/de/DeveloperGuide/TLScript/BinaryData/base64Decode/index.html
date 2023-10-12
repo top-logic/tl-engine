@@ -1,0 +1,60 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$input.base64Decode()</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Dekodiert die Base64 kodierte Zeichenkette und liefert die zugehörigen Binärdaten.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Zeichenkette</td>
+			<td>Base64 kodierter Inhalt</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>Zeichenkette</td>
+			<td>Name der zu erzeugenden Datei</td>
+			<td>nein</td>
+			<td>"data"</td>
+		</tr>
+		<tr>
+			<td>contentType</td>
+			<td>Zeichenkette</td>
+			<td>Content-Type der zu erzeugenden Datei</td>
+			<td>nein</td>
+			<td>Wird aus dem Namen geschlossen, z.B. "text/plain" für "*.txt".</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><span><strong>Typ:</strong></span> Binärdaten</p>
+
+<p>Der aus der Base64-Kodierung extrahierte Binärwert.</p>
+
+<h2>Beispiel</h2>
+
+<pre>
+	<code>"TWVpbiBUZXh0".base64Decode(name: "file.txt")
+</code>
+</pre>
+
+<p><span><strong>Ausgabe:</strong></span> Eine Text-Datei mit Inhalt "Mein Text".</p>

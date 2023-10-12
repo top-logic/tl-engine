@@ -15,7 +15,8 @@ import org.apache.commons.codec.binary.Base64;
 import com.top_logic.basic.encryption.SymmetricEncryption;
 
 /**
- * The class {@link Base64Encoder} encrypts / decrypts strings andencodes / decodes it Base64.
+ * Encrypts data and encodes it <code>Base64</code>, or decodes <code>Base64</code> strings and
+ * decrypts data from them.
  * 
  * @since 5.7.4
  * 

@@ -325,7 +325,7 @@ public class DropDownControl extends AbstractSelectControl {
 			throws IOException {
 		LabelProvider lprovider = SelectFieldUtils.getOptionLabelProvider(dropdown);
 		ResourceProvider rprovider = LabelResourceProvider.toResourceProvider(lprovider);
-		String tooltip = rprovider.getTooltip(item);
+		String tooltip = item == SelectField.NO_OPTION ? null : rprovider.getTooltip(item);
 
 		if (useDropDownTooltip) {
 			out.beginBeginTag(SPAN);

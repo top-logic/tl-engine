@@ -516,7 +516,7 @@
 										<path>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suche (Suche veröffentlichen)"
+													value="Suche (Suchanfragen veröffentlichen)"
 												/>
 											</object>
 											<named-member name="publisher"/>
@@ -600,7 +600,7 @@
 										<path>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Auswertungen (Suche veröffentlichen)"
+													value="Auswertungen (Suchanfragen veröffentlichen)"
 												/>
 											</object>
 											<named-member name="publisher"/>
@@ -2636,7 +2636,7 @@
 								<path>
 									<object>
 										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Suche (Suche veröffentlichen)"
+											value="Suche (Suchanfragen veröffentlichen)"
 										/>
 									</object>
 									<named-member name="OwnerRole"/>
@@ -2741,7 +2741,7 @@
 								<path>
 									<object>
 										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Auswertungen (Suche veröffentlichen)"
+											value="Auswertungen (Suchanfragen veröffentlichen)"
 										/>
 									</object>
 									<named-member name="OwnerRole"/>

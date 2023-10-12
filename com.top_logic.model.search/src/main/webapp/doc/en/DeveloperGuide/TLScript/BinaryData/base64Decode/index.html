@@ -1,0 +1,60 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$input.base64Decode()</code></pre>
+
+<h2>Description</h2>
+
+<p>Decodes the Base64 encoded string and returns the corresponding binary data.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>String</td>
+			<td>Base64 encoded content</td>
+			<td>yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>string</td>
+			<td>name of the file to create</td>
+			<td>no</td>
+			<td>"data</td>
+		</tr>
+		<tr>
+			<td>contentType</td>
+			<td>String</td>
+			<td>Content-Type of the file to be created</td>
+			<td>no</td>
+			<td>Is inferred from the name, e.g. "text/plain" for "*.txt".</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span><strong>Type:</strong></span> Binary data</p>
+
+<p>The binary value extracted from the Base64 encoding.</p>
+
+<h2>Example</h2>
+
+<pre>
+	<code>"TWVpbiBUZXh0".base64Decode(name: "file.txt")
+</code>
+</pre>
+
+<p><span><strong>Output:</strong></span> A text file with content "My Text".</p>

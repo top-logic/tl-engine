@@ -1,0 +1,49 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$input.base64Encode()</code></pre>
+
+<h2>Description</h2>
+
+<p>Encodes the passed binary data using the Base64 encoding scheme and returns the result as a string.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Binary data</td>
+			<td>The binary data to be encoded</td>
+			<td>yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>mime</td>
+			<td>Truth value</td>
+			<td>Whether MIME-compatible encoding should take place</td>
+			<td>no</td>
+			<td>false</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>type:</strong> string</p>
+
+<h2>Example</h2>
+
+<pre>
+<code>binary(name: "file.txt", data: "Mein Text", encoding: "utf-8").base64Encode()</code></pre>
+
+<p>Returns the Base64 encoding of "My Text" in UTF-8 character set: "TWVpbiBUZXh0".</p>

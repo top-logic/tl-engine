@@ -65,6 +65,16 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 ERROR_NOT_A_THEME_IMAGE__VALUE__EXPR;
 
+	/**
+	 * @en Encoding value of expression {1} failed: {0}
+	 */
+	public static ResKey2 ENCODING_FAILED__MSG_EXPR;
+
+	/**
+	 * @en The value '{0}' is not a binary data value in {1}.
+	 */
+	public static ResKey2 ERROR_NOT_A_BINARY_VALUE__VAL_EXPR;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

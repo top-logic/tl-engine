@@ -81,7 +81,10 @@ public class Base64Encode extends SimpleGenericMethod {
 
 		@Override
 		public void write(int b) throws IOException {
-			_buffer.append((char) ((byte) b));
+			// In a stream, only 8 bit of the passed value can be set, higher bits must be ignored.
+			// However, this stream expects that only 7 bits are in use (ASCII). This allows a
+			// direct mapping to Java UTF-16 character representation.
+			_buffer.append((char) (b & 0xFF));
 		}
 
 		@Override

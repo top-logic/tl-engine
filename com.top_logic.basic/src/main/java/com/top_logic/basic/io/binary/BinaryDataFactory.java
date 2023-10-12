@@ -6,7 +6,6 @@
 package com.top_logic.basic.io.binary;
 
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -16,9 +15,11 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.mime.MimeTypesModule;
+import com.top_logic.basic.thread.StackTrace;
 
 /**
  * Factory for {@link BinaryData} from various sources.
@@ -254,10 +255,25 @@ public class BinaryDataFactory {
 		}
 
 		if (contentSize < size) {
-			throw new EOFException("No more data after reading '" + contentSize + "' bytes, expected '" + size + "'.");
+			Logger.warn("Inconsistent blob data, expected " + size + " bytes, received " + contentSize + " bytes.",
+				new StackTrace(), BinaryDataFactory.class);
+
+			byte[] trimmed = new byte[contentSize];
+			System.arraycopy(data, 0, trimmed, 0, contentSize);
+			return trimmed;
 		}
-		if (content.read() >= 0) {
-			throw new IOException("Extra data after " + size + " bytes");
+		else {
+			int next = content.read();
+			if (next >= 0) {
+				Logger.warn("Inconsistent blob data, received extra data after expected " + size + " bytes.",
+					new StackTrace(), BinaryDataFactory.class);
+
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				out.write(data);
+				out.write(next);
+				StreamUtilities.copyStreamContents(content, out);
+				return out.toByteArray();
+			}
 		}
 		return data;
 	}

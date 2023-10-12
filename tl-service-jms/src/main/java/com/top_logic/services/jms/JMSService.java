@@ -6,6 +6,7 @@ package com.top_logic.services.jms;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
@@ -18,7 +19,6 @@ import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -51,36 +51,13 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	 * connection.
 	 */
 	@DisplayOrder({ DestinationConfig.NAME_ATTRIBUTE,
-		DestinationConfig.HOST,
-		DestinationConfig.PORT,
-		DestinationConfig.CHANNEL,
-		DestinationConfig.QUEUE_MANAGER,
 		DestinationConfig.DEST_NAME,
 		DestinationConfig.TYPE,
 		DestinationConfig.USER,
 		DestinationConfig.PASSWORD,
+		DestinationConfig.MQ_SYSTEM,
 		DestinationConfig.MESSAGE_PROCESSOR })
 	public interface DestinationConfig extends NamedConfigMandatory {
-
-		/**
-		 * Configuration name for {@link #getHost()}.
-		 */
-		String HOST = "host";
-
-		/**
-		 * Configuration name for {@link #getPort()}.
-		 */
-		String PORT = "port";
-
-		/**
-		 * Configuration name for {@link #getChannel()}.
-		 */
-		String CHANNEL = "channel";
-
-		/**
-		 * Configuration name for {@link #getQueueManager()}.
-		 */
-		String QUEUE_MANAGER = "queue-manager";
 
 		/**
 		 * Configuration name for {@link #getUser()}.
@@ -103,37 +80,14 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		String TYPE = "type";
 
 		/**
+		 * Configuration name for {@link #getMQSystem()}
+		 */
+		String MQ_SYSTEM = "mq-system";
+
+		/**
 		 * Configuration name for {@link #getProcessor()}
 		 */
 		String MESSAGE_PROCESSOR = "message-processor";
-
-		/**
-		 * The host of the target queue.
-		 */
-		@Mandatory
-		@Name(HOST)
-		String getHost();
-
-		/**
-		 * The port of the target queue.
-		 */
-		@Name(PORT)
-		@IntDefault(1414)
-		int getPort();
-
-		/**
-		 * The channel of the target queue.
-		 */
-		@Mandatory
-		@Name(CHANNEL)
-		String getChannel();
-
-		/**
-		 * The queue manager of the target queue.
-		 */
-		@Mandatory
-		@Name(QUEUE_MANAGER)
-		String getQueueManager();
 
 		/**
 		 * The user name to log in to the message queue server.
@@ -162,6 +116,12 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		Type getType();
 
 		/**
+		 * The config for the Message Queue System that is being used.
+		 */
+		@Name(MQ_SYSTEM)
+		PolymorphicConfiguration<MQSystemConfig> getMQSystem();
+
+		/**
 		 * The config for a processor that processes messages.
 		 */
 		@Name(MESSAGE_PROCESSOR)
@@ -182,6 +142,16 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		 * messages simultaneously from a topic.
 		 */
 		TOPIC;
+	}
+
+	/**
+	 * The System behind the Message Queue that runs the Queue Manager.
+	 */
+	public interface MQSystemConfig {
+		/**
+		 * 
+		 */
+		public ConnectionFactory setupMQConnection() throws JMSException;
 	}
 
 	/**

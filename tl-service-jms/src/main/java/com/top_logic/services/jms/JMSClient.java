@@ -5,6 +5,7 @@ package com.top_logic.services.jms;
 
 import java.io.Closeable;
 
+import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSContext;
 import javax.jms.JMSException;
@@ -14,6 +15,7 @@ import com.ibm.msg.client.jms.JmsFactoryFactory;
 import com.ibm.msg.client.wmq.WMQConstants;
 
 import com.top_logic.services.jms.JMSService.DestinationConfig;
+import com.top_logic.services.jms.JMSService.MQSystem;
 import com.top_logic.services.jms.JMSService.Type;
 import com.top_logic.util.Resources;
 
@@ -22,11 +24,7 @@ import com.top_logic.util.Resources;
  */
 public class JMSClient implements Closeable {
 
-	private JmsFactoryFactory _ff;
-
-	private JmsConnectionFactory _cf;
-
-//	private ConnectionFactory _cf;
+	private ConnectionFactory _cf;
 
 	private JMSContext _context;
 
@@ -34,34 +32,68 @@ public class JMSClient implements Closeable {
 
 	private String _destinationName;
 
+	private JmsFactoryFactory _ibmff;
+
+	private JmsConnectionFactory _ibmcf;
+
 	/**
 	 * Constructor for every JMSClient (producer and consumer) that initializes the connection
 	 * factory.
 	 */
 	public JMSClient(DestinationConfig config) throws JMSException {
 		_destinationName = config.getName();
-
-		_ff = JmsFactoryFactory.getInstance(WMQConstants.WMQ_PROVIDER);
-		_cf = _ff.createConnectionFactory();
-		// Set the properties
-		_cf.setStringProperty(WMQConstants.WMQ_HOST_NAME, config.getHost());
-		_cf.setIntProperty(WMQConstants.WMQ_PORT, config.getPort());
-		_cf.setStringProperty(WMQConstants.WMQ_CHANNEL, config.getChannel());
-		_cf.setIntProperty(WMQConstants.WMQ_CONNECTION_MODE, WMQConstants.WMQ_CM_CLIENT);
-		_cf.setStringProperty(WMQConstants.WMQ_QUEUE_MANAGER, config.getQueueManager());
-		_cf.setStringProperty(WMQConstants.WMQ_APPLICATIONNAME,
-			Resources.getSystemInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
-//		_cf.setBooleanProperty(WMQConstants.USER_AUTHENTICATION_MQCSP, true);
-		_cf.setStringProperty(WMQConstants.USERID, config.getUser());
-		_cf.setStringProperty(WMQConstants.PASSWORD, config.getPassword());
+		if (config.getMQSystem() == MQSystem.IBMMQ) {
+			_cf = setupIBMMQConnection(config);
+		} else if (config.getMQSystem() == MQSystem.ACTIVEMQ) {
+			_cf = setupActiveMQConnection(config);
+		}
 
 		// Create JMS objects
-		_context = _cf.createContext();
+		_context = _cf.createContext(config.getUser(), config.getPassword());
 		if (config.getType() == Type.TOPIC) {
 			_destination = getContext().createTopic(config.getDestName());
 		} else {
 			_destination = getContext().createQueue(config.getDestName());
 		}
+	}
+
+	/**
+	 * Setup for a connection with an IBM MQ.
+	 * 
+	 * @param config
+	 *        The config for the destination of the connection
+	 * @throws JMSException
+	 *         Exception if something is not jms conform
+	 * @return the connection factory
+	 */
+	private ConnectionFactory setupIBMMQConnection(DestinationConfig config) throws JMSException {
+		_ibmff = JmsFactoryFactory.getInstance(WMQConstants.WMQ_PROVIDER);
+		_ibmcf = _ibmff.createConnectionFactory();
+
+		// Set properties for the connection
+		_ibmcf.setStringProperty(WMQConstants.WMQ_HOST_NAME, config.getHost());
+		_ibmcf.setIntProperty(WMQConstants.WMQ_PORT, config.getPort());
+		_ibmcf.setStringProperty(WMQConstants.WMQ_CHANNEL, config.getChannel());
+		_ibmcf.setIntProperty(WMQConstants.WMQ_CONNECTION_MODE, WMQConstants.WMQ_CM_CLIENT);
+		_ibmcf.setStringProperty(WMQConstants.WMQ_QUEUE_MANAGER, config.getQueueManager());
+		_ibmcf.setStringProperty(WMQConstants.WMQ_APPLICATIONNAME,
+			Resources.getSystemInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
+//		_ibmcf.setStringProperty(WMQConstants.USERID, config.getUser());
+//		_ibmcf.setStringProperty(WMQConstants.PASSWORD, config.getPassword());
+		return _ibmcf;
+	}
+
+	/**
+	 * Setup for a connection with an ActiveMQ by Apache.
+	 * 
+	 * @param config
+	 *        The config for the destination of the connection
+	 * 
+	 * @return the connection factory
+	 */
+	private ConnectionFactory setupActiveMQConnection(DestinationConfig config) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**

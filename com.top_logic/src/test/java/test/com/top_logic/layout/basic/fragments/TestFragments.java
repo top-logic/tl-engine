@@ -160,17 +160,17 @@ public class TestFragments extends TestCase {
 	}
 
 	public void testConditionalTag() throws IOException {
-		assertRender("<br id=\"test-id\" class=\"is-control foo\"/>",
+		assertRender("<br id=\"c1\" class=\"is-control foo\"/>",
 			Fragments.conditional(VisibilityModel.AlwaysVisible.INSTANCE, Fragments.br("foo")));
-		assertRender("<div id=\"test-id\" class=\"is-control\">content</div>",
+		assertRender("<div id=\"c1\" class=\"is-control\">content</div>",
 			Fragments.conditional(VisibilityModel.AlwaysVisible.INSTANCE, Fragments.div(Fragments.text("content"))));
 	}
 
 	public void testConditionalTagInvisible() throws IOException {
 		VisibilityModel.Default invisible = new VisibilityModel.Default(false);
-		assertRender("<br id=\"test-id\" class=\"is-control\" style=\"display:none;\"/>",
+		assertRender("<br id=\"c1\" class=\"is-control\" style=\"display:none;\"/>",
 			Fragments.conditional(invisible, Fragments.br("foo")));
-		assertRender("<div id=\"test-id\" class=\"is-control\" style=\"display:none;\"></div>",
+		assertRender("<div id=\"c1\" class=\"is-control\" style=\"display:none;\"></div>",
 			Fragments.conditional(invisible, Fragments.div(Fragments.text("content"))));
 	}
 
@@ -269,27 +269,27 @@ public class TestFragments extends TestCase {
 			}
 		};
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_LABEL_VALUE + "</span>",
+			"<span id=\"c1\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_LABEL_VALUE + "</span>",
 			Fragments.label(cp, field));
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
+			"<span id=\"c1\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
 				+ "</span>",
 			Fragments.labelWithColon(cp, field));
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\">style:value</span>",
+			"<span id=\"c1\" class=\"is-control\">style:value</span>",
 			Fragments.value(cp, field));
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_ERROR_VALUE
+			"<span id=\"c1\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_ERROR_VALUE
 				+ "</span>",
 			Fragments.error(cp, field));
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\"><span id=\"test-id\" class=\"is-control\">style:value</span><span id=\"test-id\" class=\"is-control\">style:"
+			"<span id=\"c1\" class=\"is-control\"><span id=\"c2\" class=\"is-control\">style:value</span><span id=\"c3\" class=\"is-control\">style:"
 				+ FormTemplateConstants.STYLE_ERROR_VALUE + "</span></span>",
 			Fragments.valueWithError(cp, field));
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\"><span id=\"test-id\" class=\"is-control\">style:"
+			"<span id=\"c1\" class=\"is-control\"><span id=\"c2\" class=\"is-control\">style:"
 				+ FormTemplateConstants.STYLE_ERROR_VALUE
-				+ "</span><span id=\"test-id\" class=\"is-control\">style:value</span></span>",
+				+ "</span><span id=\"c3\" class=\"is-control\">style:value</span></span>",
 			Fragments.errorWithValue(cp, field));
 	}
 

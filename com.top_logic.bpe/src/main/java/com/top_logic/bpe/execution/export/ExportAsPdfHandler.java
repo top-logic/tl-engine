@@ -76,7 +76,7 @@ public class ExportAsPdfHandler extends PreconditionCommandHandler {
 			tmpFile =
 				File.createTempFile("SimpleDataExport", ending, Settings.getInstance().getTempDir());
 			try (FileOutputStream pdfOut = new FileOutputStream(tmpFile)) {
-				exporter().createPDFExport(aContext, pdfOut, TypedConfigUtil.createInstance(exportDescription), wrapper);
+				exporter().createPDFExport(pdfOut, TypedConfigUtil.createInstance(exportDescription), wrapper);
 			}
 		} catch (Exception ex) {
 			throw new TopLogicException(I18NConstants.ERROR_TABLE_EXPORT, ex);

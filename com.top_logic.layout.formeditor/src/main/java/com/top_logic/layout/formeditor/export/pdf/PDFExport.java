@@ -106,9 +106,6 @@ public class PDFExport {
 
 	/**
 	 * Writes the PDF export computed from the given export description to the given output.
-	 * 
-	 * @param context
-	 *        Export context to get context informations from.
 	 * @param out
 	 *        {@link OutputStream} to write PDF to.
 	 * @param exportDescription
@@ -116,16 +113,13 @@ public class PDFExport {
 	 * @param element
 	 *        Context object for the export.
 	 */
-	public final void createPDFExport(DisplayContext context, OutputStream out,
-			FormElementTemplateProvider exportDescription, TLObject element) throws IOException, DocumentException {
-		createPDFExport(context, out, exportDescription, element, (TLClass) element.tType());
+	public final void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
+			TLObject element) throws IOException, DocumentException {
+		createPDFExport(out, exportDescription, element, (TLClass) element.tType());
 	}
 
 	/**
 	 * Writes the PDF export computed from the given export description to the given output.
-	 * 
-	 * @param context
-	 *        Export context to get context informations from.
 	 * @param out
 	 *        {@link OutputStream} to write PDF to.
 	 * @param exportDescription
@@ -135,22 +129,19 @@ public class PDFExport {
 	 * @param type
 	 *        Context type in which the export description is evaluated.
 	 */
-	public final void createPDFExport(DisplayContext context, OutputStream out,
-			FormElementTemplateProvider exportDescription, TLObject element, TLClass type)
+	public final void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
+			TLObject element, TLClass type)
 			throws IOException, DocumentException {
 		FormEditorContext renderContext = new FormEditorContext.Builder()
 			.model(element)
 			.formType(type)
 			.build();
-		createPDFExport(context, out, exportDescription, renderContext);
+		createPDFExport(out, exportDescription, renderContext);
 
 	}
 
 	/**
 	 * Writes the PDF export computed from the given export description to the given output.
-	 * 
-	 * @param displayContext
-	 *        Export context to get context information from.
 	 * @param out
 	 *        {@link OutputStream} to write PDF to.
 	 * @param exportDescription
@@ -158,8 +149,7 @@ public class PDFExport {
 	 * @param renderContext
 	 *        Context information about the exported object.
 	 */
-	public void createPDFExport(DisplayContext displayContext, OutputStream out,
-			FormElementTemplateProvider exportDescription,
+	public void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
 			FormEditorContext renderContext) throws IOException, DocumentException {
 		// Note: Must set up a separate display context, to allow one-time rendering of
 		// controls during export. The "current" display context is not available for

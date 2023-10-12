@@ -15,7 +15,6 @@ import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
 import com.top_logic.element.layout.formeditor.definition.PDFExportAnnotation;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
@@ -80,7 +79,7 @@ public class PDFData implements BinaryDataSource {
 				.concreteType(exportForm.getDisplayedType())
 				.model(getExportObject())
 				.build();
-			createExporter().createPDFExport(DefaultDisplayContext.getDisplayContext(), out, template, exportContext);
+			createExporter().createPDFExport(out, template, exportContext);
 		} catch (DocumentException ex) {
 			throw new IOException("Invalid PDF document.", ex);
 		}

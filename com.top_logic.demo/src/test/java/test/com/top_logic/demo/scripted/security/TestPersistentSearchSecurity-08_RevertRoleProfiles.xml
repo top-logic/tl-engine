@@ -9,11 +9,9 @@
 			business-object="Sicht"
 		>
 			<parameters>
-				<parameter name="Pfad">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Administration > Berechtigungen"
-					/>
-				</parameter>
+				<parameter name="Pfad"
+					value="Administration > Berechtigungen"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
@@ -44,11 +42,9 @@
 			business-object="Sicht"
 		>
 			<parameters>
-				<parameter name="Pfad">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Administration > Berechtigungen > Rollenprofile"
-					/>
-				</parameter>
+				<parameter name="Pfad"
+					value="Administration > Berechtigungen > Rollenprofile"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
@@ -71,11 +67,9 @@
 			business-object="Knopf"
 		>
 			<parameters>
-				<parameter name="Name">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Bearbeiten"
-					/>
-				</parameter>
+				<parameter name="Name"
+					value="Bearbeiten"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
@@ -83,11 +77,9 @@
 			business-object="Knopf"
 		>
 			<parameters>
-				<parameter name="Name">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Rollenprofile aufklappen"
-					/>
-				</parameter>
+				<parameter name="Name"
+					value="Rollenprofile aufklappen"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -168,7 +160,7 @@
 						<path>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-									value="Suche (Suche veröffentlichen)"
+									value="Suche (Suchanfragen veröffentlichen)"
 								/>
 							</object>
 							<named-member name="OwnerRole"/>
@@ -189,7 +181,7 @@
 						<path>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-									value="Suche (Anfragen ändern)"
+									value="Suche (Suchanfragen bearbeiten)"
 								/>
 							</object>
 							<named-member name="OwnerRole"/>
@@ -273,7 +265,7 @@
 						<path>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-									value="Auswertungen (Suche veröffentlichen)"
+									value="Auswertungen (Suchanfragen veröffentlichen)"
 								/>
 							</object>
 							<named-member name="OwnerRole"/>
@@ -294,7 +286,7 @@
 						<path>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-									value="Auswertungen (Anfragen ändern)"
+									value="Auswertungen (Suchanfragen bearbeiten)"
 								/>
 							</object>
 							<named-member name="OwnerRole"/>
@@ -309,11 +301,9 @@
 					business-object="Knopf"
 				>
 					<parameters>
-						<parameter name="Name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Speichern"
-							/>
-						</parameter>
+						<parameter name="Name"
+							value="Speichern"
+						/>
 					</parameters>
 				</action>
 			</actions>

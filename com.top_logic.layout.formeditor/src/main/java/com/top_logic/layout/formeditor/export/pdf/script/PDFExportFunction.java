@@ -55,6 +55,9 @@ public class PDFExportFunction extends GenericMethod {
 	@Override
 	protected Object eval(Object self, Object[] arguments, EvalContext definitions) {
 		TLObject exportObject = asTLObject(self);
+		if (exportObject == null) {
+			return null;
+		}
 		String name = asString(arguments[0]);
 
 		return new PDFData(name, exportObject);

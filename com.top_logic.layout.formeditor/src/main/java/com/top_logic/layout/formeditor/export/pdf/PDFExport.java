@@ -41,7 +41,6 @@ import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DummyControlScope;
-import com.top_logic.layout.basic.AbstractDisplayContext;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
@@ -151,33 +150,25 @@ public class PDFExport {
 	 */
 	public void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
 			FormEditorContext renderContext) throws IOException, DocumentException {
+		DisplayContext context = createDisplayContext();
+
+		StringWriter html = new StringWriter();
+		try (TagWriter tagWriter = new TagWriter(html)) {
+			writeHTML(context, tagWriter, exportDescription, renderContext);
+		}
+		convertToPDF(context, out, html.toString());
+	}
+
+	private DisplayContext createDisplayContext() {
 		// Note: Must set up a separate display context, to allow one-time rendering of
 		// controls during export. The "current" display context is not available for
 		// control rendering, since the current session is not in rendering mode.
 		ServletContext servletContext = ServletContextService.getInstance().getServletContext();
-		DisplayContext context = new DummyDisplayContext().initServletContext(servletContext);
+		DisplayContext context =
+			new DummyDisplayContext().initServletContext(servletContext).initOutputMedia(Media.PDF);
 		context.initScope(new DummyControlScope());
 		context.installSubSessionContext(TLContext.getContext());
-
-		StringWriter w = new StringWriter();
-		try (TagWriter tagWriter = new TagWriter(w)) {
-			Media outputMedia = context.getOutputMedia();
-			if (outputMedia == Media.PDF) {
-				writeHTML(context, tagWriter, exportDescription, renderContext);
-			} else if (!(context instanceof AbstractDisplayContext)) {
-				// try with default media.
-				writeHTML(context, tagWriter, exportDescription, renderContext);
-			} else {
-				AbstractDisplayContext dc = (AbstractDisplayContext) context;
-				dc.setOutputMedia(Media.PDF);
-				try {
-					writeHTML(context, tagWriter, exportDescription, renderContext);
-				} finally {
-					dc.setOutputMedia(outputMedia);
-				}
-			}
-		}
-		writeToPDF(context, out, w.toString());
+		return context;
 	}
 
 	/**
@@ -299,9 +290,9 @@ public class PDFExport {
 	}
 
 	/**
-	 * Writes the created HTML as PDF to given {@link OutputStream}.
+	 * Converts the given HTML string to PDF written to the given {@link OutputStream}.
 	 */
-	protected void writeToPDF(DisplayContext context, OutputStream out, String html) throws DocumentException {
+	protected void convertToPDF(DisplayContext context, OutputStream out, String html) throws DocumentException {
 		ITextRenderer renderer = new ITextRenderer(150f / 72f, 1);
 		setCustomizedUserAgentCallback(context, renderer);
 		renderer.setDocumentFromString(html);

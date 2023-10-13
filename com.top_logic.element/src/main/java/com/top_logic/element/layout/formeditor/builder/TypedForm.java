@@ -183,6 +183,16 @@ public class TypedForm {
 			}
 		}
 
+		return createGeneric(displayedType);
+	}
+
+	/**
+	 * Creates a generic {@link FormDefinition} to display objects of the given type.
+	 * 
+	 * @param displayedType
+	 *        The type that describes the object to display.
+	 */
+	public static TypedForm createGeneric(TLStructuredType displayedType) {
 		return new TypedForm(displayedType, null, FormDefinitionUtil.createAllPartsFormDefinition(), false);
 	}
 
@@ -236,8 +246,8 @@ public class TypedForm {
 			}
 		}
 
-		// Fall-back to the display form definition.
-		return TypedForm.lookup(displayedType);
+		// Fall-back to the generic display definition.
+		return createGeneric(displayedType);
 	}
 
 	/**
@@ -252,9 +262,16 @@ public class TypedForm {
 	private static TypedForm findExportFormDefiningType(TLStructuredType type) {
 		TLStructuredType current = type;
 		while (true) {
-			PDFExportAnnotation annotation = current.getAnnotation(PDFExportAnnotation.class);
-			if (annotation != null) {
-				return new TypedForm(type, current, annotation.getExportForm(), false);
+			PDFExportAnnotation exportAnnotation = current.getAnnotation(PDFExportAnnotation.class);
+			if (exportAnnotation != null) {
+				return new TypedForm(type, current, exportAnnotation.getExportForm(), false);
+			}
+
+			// Use display annotation as fallback. Consider a direct display annotation as more
+			// specific than an inherited export annotation.
+			TLFormDefinition displayAnnotation = current.getAnnotation(TLFormDefinition.class);
+			if (displayAnnotation != null) {
+				return new TypedForm(type, current, displayAnnotation.getForm(), false);
 			}
 	
 			current = TLModelUtil.getPrimaryGeneralization(current);

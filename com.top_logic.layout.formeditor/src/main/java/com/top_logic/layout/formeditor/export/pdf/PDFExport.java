@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tool.export.pdf;
+package com.top_logic.layout.formeditor.export.pdf;
 
 import java.awt.Dimension;
 import java.io.IOException;
@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+
+import javax.servlet.ServletContext;
 
 import org.w3c.dom.Element;
 import org.xhtmlrenderer.extend.ReplacedElement;
@@ -33,11 +35,14 @@ import com.lowagie.text.DocumentException;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DummyControlScope;
 import com.top_logic.layout.basic.AbstractDisplayContext;
+import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.Media;
@@ -45,6 +50,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
+import com.top_logic.util.TLContext;
 
 /**
  * Exporter of a {@link FormElementTemplateProvider} to PDF.
@@ -100,9 +106,6 @@ public class PDFExport {
 
 	/**
 	 * Writes the PDF export computed from the given export description to the given output.
-	 * 
-	 * @param context
-	 *        Export context to get context informations from.
 	 * @param out
 	 *        {@link OutputStream} to write PDF to.
 	 * @param exportDescription
@@ -110,16 +113,13 @@ public class PDFExport {
 	 * @param element
 	 *        Context object for the export.
 	 */
-	public final void createPDFExport(DisplayContext context, OutputStream out,
-			FormElementTemplateProvider exportDescription, TLObject element) throws IOException, DocumentException {
-		createPDFExport(context, out, exportDescription, element, (TLClass) element.tType());
+	public final void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
+			TLObject element) throws IOException, DocumentException {
+		createPDFExport(out, exportDescription, element, (TLClass) element.tType());
 	}
 
 	/**
 	 * Writes the PDF export computed from the given export description to the given output.
-	 * 
-	 * @param context
-	 *        Export context to get context informations from.
 	 * @param out
 	 *        {@link OutputStream} to write PDF to.
 	 * @param exportDescription
@@ -129,22 +129,19 @@ public class PDFExport {
 	 * @param type
 	 *        Context type in which the export description is evaluated.
 	 */
-	public final void createPDFExport(DisplayContext context, OutputStream out,
-			FormElementTemplateProvider exportDescription, TLObject element, TLClass type)
+	public final void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
+			TLObject element, TLClass type)
 			throws IOException, DocumentException {
 		FormEditorContext renderContext = new FormEditorContext.Builder()
 			.model(element)
 			.formType(type)
 			.build();
-		createPDFExport(context, out, exportDescription, renderContext);
+		createPDFExport(out, exportDescription, renderContext);
 
 	}
 
 	/**
 	 * Writes the PDF export computed from the given export description to the given output.
-	 * 
-	 * @param context
-	 *        Export context to get context informations from.
 	 * @param out
 	 *        {@link OutputStream} to write PDF to.
 	 * @param exportDescription
@@ -152,8 +149,16 @@ public class PDFExport {
 	 * @param renderContext
 	 *        Context information about the exported object.
 	 */
-	public void createPDFExport(DisplayContext context, OutputStream out, FormElementTemplateProvider exportDescription,
+	public void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
 			FormEditorContext renderContext) throws IOException, DocumentException {
+		// Note: Must set up a separate display context, to allow one-time rendering of
+		// controls during export. The "current" display context is not available for
+		// control rendering, since the current session is not in rendering mode.
+		ServletContext servletContext = ServletContextService.getInstance().getServletContext();
+		DisplayContext context = new DummyDisplayContext().initServletContext(servletContext);
+		context.initScope(new DummyControlScope());
+		context.installSubSessionContext(TLContext.getContext());
+
 		StringWriter w = new StringWriter();
 		try (TagWriter tagWriter = new TagWriter(w)) {
 			Media outputMedia = context.getOutputMedia();

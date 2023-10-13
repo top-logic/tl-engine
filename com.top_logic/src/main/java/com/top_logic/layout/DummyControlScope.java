@@ -3,15 +3,10 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.layout.basic;
-
-
-import com.top_logic.layout.ControlScope;
-import com.top_logic.layout.FrameScope;
-import com.top_logic.layout.UpdateListener;
+package com.top_logic.layout;
 
 /**
- * {@link ControlScope} for test.
+ * {@link ControlScope} for testing and one-time rendering of exports.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

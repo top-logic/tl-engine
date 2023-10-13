@@ -19,7 +19,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.element.layout.formeditor.FormDefinitionTemplate;
 import com.top_logic.element.layout.formeditor.definition.OtherAttributes;
-import com.top_logic.element.layout.formeditor.definition.PDFExportAnnotation;
 import com.top_logic.element.layout.formeditor.definition.TLFormDefinition;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
@@ -36,30 +35,6 @@ import com.top_logic.model.util.TLModelUtil;
  */
 public class FormDefinitionUtil {
 
-	/**
-	 * Look up the first primary generalization of the given type that defines a
-	 * {@link FormDefinition}.
-	 * 
-	 * @param type
-	 *        The type to display in a form.
-	 * @return The type defining a form for the given type.
-	 * 
-	 * @see #findExportFormDefiningType(TLStructuredType)
-	 */
-	public static TLStructuredType findFormDefiningType(TLStructuredType type) {
-		TLStructuredType current = type;
-		while (true) {
-			if (hasAnnotatedFormDefinition(current)) {
-				return current;
-			}
-
-			current = TLModelUtil.getPrimaryGeneralization(current);
-			if (current == null) {
-				return null;
-			}
-		}
-	}
-
 	static FormDefinition createAllPartsFormDefinition() {
 		FormDefinition definition = TypedConfiguration.newConfigItem(FormDefinition.class);
 		definition.getContent().add(TypedConfiguration.newConfigItem(OtherAttributes.class));
@@ -71,10 +46,6 @@ public class FormDefinitionUtil {
 	 */
 	public static TLFormDefinition getFormAnnotation(TLStructuredType structuredType) {
 		return structuredType.getAnnotation(TLFormDefinition.class);
-	}
-
-	private static boolean hasAnnotatedFormDefinition(TLStructuredType structuredType) {
-		return getFormAnnotation(structuredType) != null;
 	}
 
 	/**
@@ -123,37 +94,6 @@ public class FormDefinitionUtil {
 		}
 
 		return typedForms;
-	}
-
-	/**
-	 * Look up the first primary generalization of the given type that defines an export
-	 * {@link FormDefinition}.
-	 * 
-	 * @param type
-	 *        The type to display in a form.
-	 * @return The type defining a form for the given type.
-	 * 
-	 * @see #findFormDefiningType(TLStructuredType)
-	 */
-	public static TLStructuredType findExportFormDefiningType(TLStructuredType type) {
-		TLStructuredType current = type;
-		while (true) {
-			if (getExportAnnotation(current) != null) {
-				return current;
-			}
-
-			current = TLModelUtil.getPrimaryGeneralization(current);
-			if (current == null) {
-				return null;
-			}
-		}
-	}
-
-	/**
-	 * Computes the {@link PDFExportAnnotation} for the given {@link TLStructuredType}.
-	 */
-	public static PDFExportAnnotation getExportAnnotation(TLStructuredType structuredType) {
-		return structuredType.getAnnotation(PDFExportAnnotation.class);
 	}
 
 }

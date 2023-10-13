@@ -18,7 +18,7 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -29,9 +29,9 @@ import com.top_logic.element.layout.formeditor.builder.FormDefinitionUtil;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
 import com.top_logic.element.layout.formeditor.builder.TypedFormDefinition;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.wysiwyg.ui.MacroControlProvider;
@@ -53,16 +53,19 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.tool.boundsec.AbstractCommandHandler;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.NullModelHidden;
-import com.top_logic.tool.export.pdf.AbstractPDFExportCommand;
-import com.top_logic.tool.export.pdf.PDFExport;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link AbstractPDFExportCommand} exporting the model of a component.
+ * {@link AbstractCommandHandler} exporting the model of a component as PDF document.
  * 
  * <p>
  * When an export definition for the type of the model is given, that definition is used. If no such
@@ -83,7 +86,7 @@ import com.top_logic.util.error.TopLogicException;
  */
 @InApp
 @Label("Export model as PDF")
-public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
+public class DefaultPDFExportCommand extends AbstractCommandHandler {
 
 	/**
 	 * Configuration of a {@link DefaultPDFExportCommand}.
@@ -99,7 +102,12 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 	})
 	@DisplayInherited(DisplayStrategy.APPEND)
 	@TagName("default-pdf-export")
-	public interface Config extends AbstractPDFExportCommand.Config {
+	/**
+	 * Configuration of an {@link DefaultPDFExportCommand}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface Config extends AbstractCommandHandler.Config {
 
 		/** Configuration name of {@link #getPDFName()}. */
 		String PDF_NAME = "pdf-name";
@@ -109,6 +117,22 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 
 		/** Configuration name of {@link #getExportDescriptions()}. */
 		String EXPORT_DESCRIPTIONS = "export-descriptions";
+
+		@Override
+		@FormattedDefault(SimpleBoundCommandGroup.EXPORT_NAME)
+		CommandGroupReference getGroup();
+
+		@Override
+		@FormattedDefault("theme:ICONS_EXPORT_PDF")
+		ThemeImage getImage();
+
+		@Override
+		@FormattedDefault("theme:ICONS_EXPORT_PDFDISABLED")
+		ThemeImage getDisabledImage();
+
+		@Override
+		@StringDefault(CommandHandlerFactory.EXPORT_BUTTONS_GROUP)
+		String getClique();
 
 		/**
 		 * Name of the downloaded PDF.
@@ -187,80 +211,87 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 	}
 
 	@Override
-	protected FormElementTemplateProvider getExportDescription(DisplayContext context, LayoutComponent component,
-			TLObject model, Map<String, Object> someArguments) {
-		return TypedConfigUtil.createInstance(findFormDefinition(component, model));
-	}
-
-	@Override
-	protected FormEditorContext getExportContext(DisplayContext context, LayoutComponent component,
-			TLObject model,
+	public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> someArguments) {
-		TypedForm exportForm = exportForm(component, model);
-		return new FormEditorContext.Builder()
-			.formType(exportForm.getFormType())
-			.concreteType(exportForm.getDisplayedType())
-			.model(model)
-			.build();
-	}
 
-	private FormDefinition findFormDefinition(LayoutComponent aComponent, TLObject model) {
-		TypedForm exportForm = exportForm(aComponent, model);
-		if (exportForm == null) {
-			return null;
-		}
-		return exportForm.getFormDefinition();
-	}
-
-	private  TypedForm exportForm(LayoutComponent aComponent, TLObject model) {
-		if (model == null) {
-			// Must not occur, because command is hidden for null model.
-			throw new TopLogicException(I18NConstants.ERROR_NO_MODEL);
-		}
-		TLStructuredType modelType = model.tType();
-		TypedForm configuredExportForm = TypedForm.findForm(_configuredExportForms, modelType);
-		if (configuredExportForm != null) {
-			return configuredExportForm;
-		}
-		if (aComponent instanceof FormComponent) {
-			ModelBuilder builder = ((FormComponent) aComponent).getBuilder();
-			if (builder instanceof ConfiguredDynamicFormBuilder) {
-				Map<TLType, FormDefinition> displayForms = ((ConfiguredDynamicFormBuilder) builder).getConfiguredForms();
-				TypedForm configuredDisplayForm = TypedForm.findForm(displayForms, modelType);
-				if (configuredDisplayForm != null) {
-					return configuredDisplayForm;
-				}
+		TLObject exportObject = (TLObject) model;
+		String name = getExportName(component, (TLObject) model);
+		context.getWindowScope().deliverContent(new PDFData(name, exportObject) {
+			@Override
+			protected TypedForm lookupForm() {
+				return lookupExport(component, getExportObject());
 			}
-		}
-		TypedForm annotatedExportForm = annotatedExportForm(modelType);
-		if (annotatedExportForm != null) {
-			return annotatedExportForm;
-		}
-		return TypedForm.lookup(modelType);
+
+			@Override
+			protected PDFExport createExporter() {
+				return exporter(component, getExportObject());
+			}
+		});
+
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	@Override
-	protected ExecutabilityRule intrinsicExecutability() {
-		return CombinedExecutabilityRule.combine(super.intrinsicExecutability(), NullModelHidden.INSTANCE);
-	}
-
-	@Override
-	protected String getExportName(DisplayContext context, LayoutComponent component, TLObject model,
-			Map<String, Object> someArguments) {
+	/**
+	 * Determines the name of the exported file.
+	 * @param component
+	 *        {@link LayoutComponent} creating the PDF export.
+	 * @param model
+	 *        The exported model.
+	 */
+	protected String getExportName(LayoutComponent component, TLObject model) {
 		String fileName = _pdfName.execute(model).toString();
 		// Replace illegal file name characters
 		return fileName.replaceAll("[/;:\\\\]", "_");
 	}
 
-	@Override
-	protected PDFExport exporter(DisplayContext context, LayoutComponent component, TLObject model,
-			Map<String, Object> someArguments) {
+	/**
+	 * Creates the actual {@link PDFExport exporter}.
+	 * @param component
+	 *        {@link LayoutComponent} creating the PDF export.
+	 * @param model
+	 *        The exported model.
+	 */
+	protected PDFExport exporter(LayoutComponent component, TLObject model) {
 		Expr header = config().getHeader();
 		if (header == null) {
-			return super.exporter(context, component, model, someArguments);
+			return new PDFExport();
 		} else {
 			return exporter(header, model);
 		}
+	}
+
+	private TypedForm lookupExport(LayoutComponent aComponent, TLObject model) {
+		if (model == null) {
+			// Must not occur, because command is hidden for null model.
+			throw new TopLogicException(I18NConstants.ERROR_NO_MODEL);
+		}
+		TLStructuredType modelType = model.tType();
+
+		// Look up export defined locally at the current command.
+		TypedForm configuredExport = TypedForm.findForm(_configuredExportForms, modelType);
+		if (configuredExport != null) {
+			return configuredExport;
+		}
+
+		// Look up display form locally defined at the current component.
+		if (aComponent instanceof FormComponent) {
+			ModelBuilder builder = ((FormComponent) aComponent).getBuilder();
+			if (builder instanceof ConfiguredDynamicFormBuilder) {
+				Map<TLType, FormDefinition> displayForms = ((ConfiguredDynamicFormBuilder) builder).getConfiguredForms();
+				TypedForm componentForm = TypedForm.findForm(displayForms, modelType);
+				if (componentForm != null) {
+					return componentForm;
+				}
+			}
+		}
+
+		// Use globally defined export from the model.
+		return TypedForm.lookupExport(modelType);
+	}
+
+	@Override
+	protected ExecutabilityRule intrinsicExecutability() {
+		return CombinedExecutabilityRule.combine(super.intrinsicExecutability(), NullModelHidden.INSTANCE);
 	}
 
 	private PDFExport exporter(Expr header, TLObject model) {
@@ -283,31 +314,6 @@ public class DefaultPDFExportCommand extends AbstractPDFExportCommand {
 			}
 
 		};
-	}
-
-	private static TypedForm annotatedExportForm(TLStructuredType displayedType) {
-		TLStructuredType formType = FormDefinitionUtil.findExportFormDefiningType(displayedType);
-		if (formType != null) {
-			return annotatedExport(displayedType, formType);
-		}
-
-		TLStructuredType current = WrapperHistoryUtils.getCurrent(displayedType);
-		if (current != displayedType) {
-			formType = FormDefinitionUtil.findExportFormDefiningType(current);
-
-			if (formType != null) {
-				// Use the form defined for the current version of the displayed type, even if there
-				// was no form definition for the version of the type that is currently displayed.
-				return annotatedExport(displayedType, formType);
-			}
-		}
-
-		return null;
-	}
-
-	private static TypedForm annotatedExport(TLStructuredType displayedType, TLStructuredType formType) {
-		FormDefinition form = FormDefinitionUtil.getExportAnnotation(formType).getExportForm();
-		return new TypedForm(displayedType, formType, form, false);
 	}
 
 }

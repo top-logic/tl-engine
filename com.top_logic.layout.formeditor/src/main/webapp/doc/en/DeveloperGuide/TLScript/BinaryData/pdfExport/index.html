@@ -1,0 +1,44 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$input.pdfExport(name: "my-data.pdf")</code></pre>
+
+<h2>Description</h2>
+
+<p>Creates a PDF export with the specified name from the specified object. The object will be printed using the form definition annotated to its type. If the model type does not have a form definition, a default form is created which contains all visible properties of the type.</p>
+
+<p>A form definition for export is stored using the "PDF export definition" <a class="tlObject" href="?page=classAnnotations&amp;uuid=71f57a30-d648-4680-89cb-67450b3b67a1">annotation</a> on the type of the object to be exported.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">input</code></td>
+			<td>Subject object</td>
+			<td>The object to be printed</td>
+			<td>yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">name</code></td>
+			<td>String</td>
+			<td>The file name of the generated PDF file.</td>
+			<td>no</td>
+			<td>"export.pdf"</td>
+		</tr>
+	</tbody>
+</table>
+
+<p> </p>
+
+<p> </p>

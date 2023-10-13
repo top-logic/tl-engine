@@ -36,6 +36,23 @@
 					mandatory="true"
 					type="tl.core:String"
 				/>
+				<reference name="snapshots"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="PDFSnapshot"
+				/>
+				<property name="version"
+					mandatory="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<default-value>
+							<int value="1"/>
+						</default-value>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="B">
@@ -94,6 +111,34 @@
 			<attributes>
 				<property name="password"
 					type="tl.core:Password"
+				/>
+			</attributes>
+		</class>
+		<class name="PDFSnapshot">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<id-column value="version"/>
+			</annotations>
+			<attributes>
+				<property name="file"
+					mandatory="true"
+					type="tl.core:Binary"
+				/>
+				<property name="date"
+					mandatory="true"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.createRevision().get(`tl.core:Revision#date`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="version"
+					mandatory="true"
+					type="tl.core:Integer"
 				/>
 			</attributes>
 		</class>

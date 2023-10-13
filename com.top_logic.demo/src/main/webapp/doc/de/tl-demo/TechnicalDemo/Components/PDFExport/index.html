@@ -1,8 +1,20 @@
-<p>Hier kann der PDF Export getestet werden.</p> 
-<p>Es gibt verschiedene Typen <code class="hljs inlineCode">A</code>, <code class="hljs inlineCode">B</code>, <code class="hljs inlineCode">C</code>, <code class="hljs inlineCode">D</code> (im Modul <code class="hljs inlineCode">test.pdfExport</code>) wobei A eine Oberklasse von <code class="hljs inlineCode">B</code>, <code class="hljs inlineCode">C</code>, und <code class="hljs inlineCode">D</code> ist.</p> 
-<ul> 
- <li>In <code class="hljs inlineCode">A</code> ist eine Formulardefinition angegeben und eine PDF-Export Definition.<br> Wenn <code class="hljs inlineCode">A</code> exportiert wird, wird die PDF-Export Definition von <code class="hljs inlineCode">A</code> benutzt.</li> 
- <li>In <code class="hljs inlineCode">B</code> ist eine PDF- Export-Definition gegeben.<br> Wenn <code class="hljs inlineCode">B</code> exportiert wird, wird die PDF-Export Definition von <code class="hljs inlineCode">B</code> benutzt, angezeigt wird aber das Formular von <code class="hljs inlineCode">A</code>.</li> 
- <li>In <code class="hljs inlineCode">C</code> ist nichts konfiguriert.<br> Es wird sowohl bei der Anzeige als auch beim Export die Definition von <code class="hljs inlineCode">A</code> benutzt.</li> 
- <li>In <code class="hljs inlineCode">D</code> ist nichts konfiguriert. In der Komponente ist eine lokale PDF-Export Definition gesetzt.<br> Hier wird beim Export die konfigurierte PDF-Export Definition, an anderen Stellen würde die Definition von <code class="hljs inlineCode">A</code> benutzt werden.</li> 
+<p>Hier kann der PDF Export getestet werden.</p>
+
+<p>Es gibt verschiedene Typen <code class="hljs inlineCode">A</code>, <code class="hljs inlineCode">B</code>, <code class="hljs inlineCode">C</code>, <code class="hljs inlineCode">D</code> (im Modul <code class="hljs inlineCode">test.pdfExport</code>) wobei A eine Oberklasse von <code class="hljs inlineCode">B</code>, <code class="hljs inlineCode">C</code>, und <code class="hljs inlineCode">D</code> ist.</p>
+
+<ul>
+	<li>In <code class="hljs inlineCode">A</code> ist eine Formulardefinition angegeben und eine PDF-Export Definition.<br />
+	Wenn <code class="hljs inlineCode">A</code> exportiert wird, wird die PDF-Export Definition von <code class="hljs inlineCode">A</code> benutzt.</li>
+	<li>In <code class="hljs inlineCode">B</code> ist eine PDF- Export-Definition gegeben.<br />
+	Wenn <code class="hljs inlineCode">B</code> exportiert wird, wird die PDF-Export Definition von <code class="hljs inlineCode">B</code> benutzt, angezeigt wird aber das Formular von <code class="hljs inlineCode">A</code>.</li>
+	<li>In <code class="hljs inlineCode">C</code> ist nichts konfiguriert.<br />
+	Es wird sowohl bei der Anzeige als auch beim Export die Definition von <code class="hljs inlineCode">A</code> benutzt.</li>
+	<li>In <code class="hljs inlineCode">D</code> ist nichts konfiguriert. In der Komponente ist eine lokale PDF-Export Definition gesetzt.<br />
+	Hier wird beim Export die konfigurierte PDF-Export Definition, an anderen Stellen würde die Definition von <code class="hljs inlineCode">A</code> benutzt werden.</li>
 </ul>
+
+<h2>Snapshots</h2>
+
+<p>Mit dem Druck-Befehl in der Snapshot-Tabelle kann das aktuell angzeigte Objekt in ein PDF-Dokument gedruckt werden und die so erzeugte PDF-Datei im System abgelegt werden. Die Snapshot-Tabelle zeigt alle ausgedruckten Versionen des aktuellen Objektes an. Über den PDF-Download der PDF-Datei kann nachvollzogen werden, welche Wert das Objekt zu dem Zeitpunkt der Snapshot-Erzeugung hatte.</p>
+
+<p>Nebenbemerkung: Diese Funktionalität ist eine reine Demo für die PDF-Export-Funktion in TLScript. Eine nachvollziehbare Historie von Objekten könnte viel einfacher über die eingebaute Daten-Historisierung von TopLogic realisiert werden.</p>

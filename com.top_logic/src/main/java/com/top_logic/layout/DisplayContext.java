@@ -162,8 +162,10 @@ public interface DisplayContext extends TLInteractionContext, WindowScopeProvide
 	LayoutContext getLayoutContext();
 
 	/**
-	 * Media to which output must be generated.
+	 * Media to which output is rendered.
 	 */
-	Media getOutputMedia();
+	default Media getOutputMedia() {
+		return Media.BROWSER;
+	}
 
 }

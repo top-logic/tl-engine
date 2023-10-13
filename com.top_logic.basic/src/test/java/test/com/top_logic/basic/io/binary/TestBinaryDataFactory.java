@@ -73,32 +73,30 @@ public class TestBinaryDataFactory extends TestCase {
     	int size = BinaryDataFactory.MAX_MEMORY_SIZE / 2;
     	BinaryData binaryData = BinaryDataFactory.createBinaryData(new TestingDataStream(size, 101, 42), size);
     	assertEquals(size, binaryData.getSize());
-		try (InputStream in1 = new TestingDataStream(size, size, 42)) {
+		assertEquals(new TestingDataStream(size, size, 42), binaryData);
+	}
+
+	private void assertEquals(TestingDataStream expected, BinaryData binaryData) throws IOException {
+		try (InputStream in1 = expected) {
 			try (InputStream in2 = binaryData.getStream()) {
 				assertTrue(StreamUtilities.equalsStreamContents(in1, in2));
 			}
 		}
+	}
+    
+	public void testNoMoreDataLarge() throws IOException {
+    	doTestSize(2 * BinaryDataFactory.MAX_MEMORY_SIZE);
     }
     
-    public void testNoMoreDataLarge() {
-    	int size = 2 * BinaryDataFactory.MAX_MEMORY_SIZE;
-    	try {
-			BinaryDataFactory.createBinaryData(new TestingDataStream(size - 1, 101, 42), size);
-			fail("End of stream exception expected.");
-		} catch (IOException ex) {
-			// Expected.
-		}
+	public void testNoMoreDataSmall() throws IOException {
+    	doTestSize(BinaryDataFactory.MAX_MEMORY_SIZE / 2);
     }
-    
-    public void testNoMoreDataSmall() {
-    	int size = BinaryDataFactory.MAX_MEMORY_SIZE / 2;
-    	try {
-			BinaryDataFactory.createBinaryData(new TestingDataStream(size - 1, 101, 42), size);
-			fail("End of stream exception expected.");
-		} catch (IOException ex) {
-			// Expected.
-		}
-    }
+
+	private void doTestSize(int size) throws IOException {
+		BinaryData smallData = BinaryDataFactory.createBinaryData(new TestingDataStream(size - 1, 101, 42), size);
+		assertEquals(size - 1, smallData.getSize());
+		assertEquals(new TestingDataStream(size - 1, size - 1, 42), smallData);
+	}
     
     /**
      * Test the main aspects of the {@link BinaryDataFactory}.

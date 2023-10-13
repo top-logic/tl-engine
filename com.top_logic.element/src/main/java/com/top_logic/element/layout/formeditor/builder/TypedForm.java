@@ -7,6 +7,8 @@ package com.top_logic.element.layout.formeditor.builder;
 
 import java.util.Map;
 
+import com.top_logic.element.layout.formeditor.definition.PDFExportAnnotation;
+import com.top_logic.element.layout.formeditor.definition.TLFormDefinition;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -102,7 +104,7 @@ public class TypedForm {
 	 * @see #lookup(TLStructuredType)
 	 */
 	public static TypedForm lookup(Map<TLType, FormDefinition> specificFormDefinitions, TLObject object) {
-		TLStructuredType type = getType(object);
+		TLStructuredType type = object == null ? null : object.tType();
 		if (type == null) {
 			return new TypedForm(null, null, null, false);
 		} else {
@@ -166,30 +168,99 @@ public class TypedForm {
 	 *        searched for.
 	 */
 	public static TypedForm lookup(TLStructuredType displayedType) {
-		TLStructuredType formType = FormDefinitionUtil.findFormDefiningType(displayedType);
-		if (formType != null) {
-			return annotatedForm(displayedType, formType);
+		TypedForm formDefinition = TypedForm.findFormDefinition(displayedType);
+		if (formDefinition != null) {
+			return formDefinition;
 		}
 
 		TLStructuredType current = WrapperHistoryUtils.getCurrent(displayedType);
 		if (current != displayedType) {
-			formType = FormDefinitionUtil.findFormDefiningType(current);
-
-			if (formType != null) {
+			TypedForm currentFormDefinition = TypedForm.findFormDefinition(current);
+			if (currentFormDefinition != null) {
 				// Use the form defined for the current version of the displayed type, even if there
 				// was no form definition for the version of the type that is currently displayed.
-				return annotatedForm(displayedType, formType);
+				return currentFormDefinition;
 			}
 		}
 
 		return new TypedForm(displayedType, null, FormDefinitionUtil.createAllPartsFormDefinition(), false);
 	}
 
-	private static TypedForm annotatedForm(TLStructuredType displayedType, TLStructuredType formType) {
-		return new TypedForm(displayedType, formType, FormDefinitionUtil.getFormAnnotation(formType).getForm(), false);
+	/**
+	 * Look up the first primary generalization of the given type that defines a
+	 * {@link FormDefinition}.
+	 * 
+	 * @param type
+	 *        The type to display in a form.
+	 * @return The form definition found for the given type, or <code>null</code> if there is no
+	 *         such form definition.
+	 * 
+	 * @see TypedForm#findExportFormDefiningType(TLStructuredType)
+	 */
+	private static TypedForm findFormDefinition(TLStructuredType type) {
+		TLStructuredType current = type;
+		while (true) {
+			TLFormDefinition annotation = current.getAnnotation(TLFormDefinition.class);
+			if (annotation != null) {
+				return new TypedForm(type, current, annotation.getForm(), false);
+			}
+	
+			current = TLModelUtil.getPrimaryGeneralization(current);
+			if (current == null) {
+				return null;
+			}
+		}
 	}
 
-	private static TLStructuredType getType(TLObject object) {
-		return object == null ? null : object.tType();
+	/**
+	 * Looks up the {@link FormDefinition} for exporting objects of the given type.
+	 * 
+	 * @param displayedType
+	 *        The type that describes the exported object. For that type a form definition is
+	 *        searched for.
+	 */
+	public static TypedForm lookupExport(TLStructuredType displayedType) {
+		TypedForm formDefinition = TypedForm.findExportFormDefiningType(displayedType);
+		if (formDefinition != null) {
+			return formDefinition;
+		}
+
+		TLStructuredType current = WrapperHistoryUtils.getCurrent(displayedType);
+		if (current != displayedType) {
+			TypedForm currentFormDefinition = TypedForm.findExportFormDefiningType(current);
+
+			if (currentFormDefinition != null) {
+				// Use the form defined for the current version of the displayed type, even if there
+				// was no form definition for the version of the type that is currently displayed.
+				return currentFormDefinition;
+			}
+		}
+
+		// Fall-back to the display form definition.
+		return TypedForm.lookup(displayedType);
+	}
+
+	/**
+	 * Look up the form definition of first primary generalization of the given type that defines
+	 * one.
+	 * 
+	 * @param type
+	 *        The type to display in a form.
+	 * @return The form definition found in the hierarchy, or <code>null</code> if there is no such
+	 *         form definition.
+	 */
+	private static TypedForm findExportFormDefiningType(TLStructuredType type) {
+		TLStructuredType current = type;
+		while (true) {
+			PDFExportAnnotation annotation = current.getAnnotation(PDFExportAnnotation.class);
+			if (annotation != null) {
+				return new TypedForm(type, current, annotation.getExportForm(), false);
+			}
+	
+			current = TLModelUtil.getPrimaryGeneralization(current);
+			if (current == null) {
+				return null;
+			}
+		}
 	}
 }

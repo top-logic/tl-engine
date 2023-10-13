@@ -20,7 +20,6 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
-import test.com.top_logic.layout.basic.DummyControlScope;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -29,6 +28,7 @@ import com.top_logic.basic.generate.CodeUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DummyControlScope;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.AbstractDisplayContext;
 import com.top_logic.layout.basic.DummyDisplayContext;
@@ -160,17 +160,17 @@ public class TestFragments extends TestCase {
 	}
 
 	public void testConditionalTag() throws IOException {
-		assertRender("<br id=\"test-id\" class=\"is-control foo\"/>",
+		assertRender("<br id=\"c1\" class=\"is-control foo\"/>",
 			Fragments.conditional(VisibilityModel.AlwaysVisible.INSTANCE, Fragments.br("foo")));
-		assertRender("<div id=\"test-id\" class=\"is-control\">content</div>",
+		assertRender("<div id=\"c1\" class=\"is-control\">content</div>",
 			Fragments.conditional(VisibilityModel.AlwaysVisible.INSTANCE, Fragments.div(Fragments.text("content"))));
 	}
 
 	public void testConditionalTagInvisible() throws IOException {
 		VisibilityModel.Default invisible = new VisibilityModel.Default(false);
-		assertRender("<br id=\"test-id\" class=\"is-control\" style=\"display:none;\"/>",
+		assertRender("<br id=\"c1\" class=\"is-control\" style=\"display:none;\"/>",
 			Fragments.conditional(invisible, Fragments.br("foo")));
-		assertRender("<div id=\"test-id\" class=\"is-control\" style=\"display:none;\"></div>",
+		assertRender("<div id=\"c1\" class=\"is-control\" style=\"display:none;\"></div>",
 			Fragments.conditional(invisible, Fragments.div(Fragments.text("content"))));
 	}
 
@@ -269,27 +269,27 @@ public class TestFragments extends TestCase {
 			}
 		};
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_LABEL_VALUE + "</span>",
+			"<span id=\"c1\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_LABEL_VALUE + "</span>",
 			Fragments.label(cp, field));
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
+			"<span id=\"c1\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
 				+ "</span>",
 			Fragments.labelWithColon(cp, field));
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\">style:value</span>",
+			"<span id=\"c1\" class=\"is-control\">style:value</span>",
 			Fragments.value(cp, field));
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_ERROR_VALUE
+			"<span id=\"c1\" class=\"is-control\">style:" + FormTemplateConstants.STYLE_ERROR_VALUE
 				+ "</span>",
 			Fragments.error(cp, field));
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\"><span id=\"test-id\" class=\"is-control\">style:value</span><span id=\"test-id\" class=\"is-control\">style:"
+			"<span id=\"c1\" class=\"is-control\"><span id=\"c2\" class=\"is-control\">style:value</span><span id=\"c3\" class=\"is-control\">style:"
 				+ FormTemplateConstants.STYLE_ERROR_VALUE + "</span></span>",
 			Fragments.valueWithError(cp, field));
 		assertRender(
-			"<span id=\"test-id\" class=\"is-control\"><span id=\"test-id\" class=\"is-control\">style:"
+			"<span id=\"c1\" class=\"is-control\"><span id=\"c2\" class=\"is-control\">style:"
 				+ FormTemplateConstants.STYLE_ERROR_VALUE
-				+ "</span><span id=\"test-id\" class=\"is-control\">style:value</span></span>",
+				+ "</span><span id=\"c3\" class=\"is-control\">style:value</span></span>",
 			Fragments.errorWithValue(cp, field));
 	}
 

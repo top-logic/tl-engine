@@ -1,8 +1,16 @@
-<p>Here you can test the PDF export.</p> 
-<p>There are different types <code class="hljs inlineCode">A</code>, <code class="hljs inlineCode">B</code>, <code class="hljs inlineCode">C</code>, <code class="hljs inlineCode">D</code> (in module <code class="hljs inlineCode">test.pdfExport</code>) where A is a superclass of <code class="hljs inlineCode">B</code>, <code class="hljs inlineCode">C</code>, and <code class="hljs inlineCode">D</code>.</p> 
-<ul> 
- <li>In <code class="hljs inlineCode">A</code> a form definition is specified and a PDF export definition.<br> When <code class="hljs inlineCode">A</code> is exported, the PDF export definition of <code class="hljs inlineCode">A</code> is used.</li> 
- <li>In <code class="hljs inlineCode">B</code> a PDF export definition is given.<br> If <code class="hljs inlineCode">B</code> is exported, the PDF export definition of <code class="hljs inlineCode">B</code> is used, but the form of <code class="hljs inlineCode">A</code> is displayed.</li> 
- <li>In <code class="hljs inlineCode">C</code> nothing is configured.<br> The definition of <code class="hljs inlineCode">A</code> is used for both display and export.</li> 
- <li>Nothing is configured in <code class="hljs inlineCode">D</code>. A local PDF export definition is set in the component.<br> Here, the configured PDF export definition is used when exporting, in other places the definition from <code class="hljs inlineCode">A</code> would be used.<br> <br> </li> 
+<p>Here you can test the PDF export.</p>
+
+<p>There are different types <code class="hljs inlineCode">A</code>, <code class="hljs inlineCode">B</code>, <code class="hljs inlineCode">C</code>, <code class="hljs inlineCode">D</code> (in module <code class="hljs inlineCode">test.pdfExport</code>) where A is a superclass of <code class="hljs inlineCode">B</code>, <code class="hljs inlineCode">C</code>, and <code class="hljs inlineCode">D</code>.</p>
+
+<ul>
+	<li>In <code class="hljs inlineCode">A</code> a form definition is specified and a PDF export definition.<br />When <code class="hljs inlineCode">A</code> is exported, the PDF export definition of <code class="hljs inlineCode">A</code> is used.</li>
+	<li>In <code class="hljs inlineCode">B</code> a PDF export definition is given.<br />If <code class="hljs inlineCode">B</code> is exported, the PDF export definition of <code class="hljs inlineCode">B</code> is used, but the form of <code class="hljs inlineCode">A</code> is displayed.</li>
+	<li>Nothing is configured in <code class="hljs inlineCode">C</code>.<br />The definition of <code class="hljs inlineCode">A</code> is used for both display and export.</li>
+	<li>Nothing is configured in <code class="hljs inlineCode">D</code>. A local PDF export definition is set in the component.<br />Here the configured PDF export definition is used when exporting, elsewhere the definition of <code class="hljs inlineCode">A</code> would be used.</li>
 </ul>
+
+<h2>Snapshots</h2>
+
+<p>The print command in the snapshot table can be used to print the currently displayed object to a PDF document and store the resulting PDF file in the system. The snapshot table shows all printed versions of the current object. The PDF download of the PDF file can be used to trace what value the object had at the time of snapshot creation.</p>
+
+<p>Side note: This functionality is just a demo for the PDF export feature in TLScript. A traceable history of objects could be much more easily realized using TopLogic's built-in data historization.</p>

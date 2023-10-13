@@ -26,10 +26,14 @@ public class DummyDisplayContext extends AbstractDisplayContext {
     
 	private static final UserAgent FEATURE_DETECTION_USER_AGENT = new UserAgent(UserAgent.FEATURE_DETECTION_BROWSER);
 
+	private ServletContext _servletContext;
+
 	/**
+	 * Creates a {@link DummyDisplayContext}.
+	 * 
 	 * @see #forScope(ControlScope)
 	 */
-	protected DummyDisplayContext() {
+	public DummyDisplayContext() {
 		super();
 	}
 	
@@ -60,7 +64,18 @@ public class DummyDisplayContext extends AbstractDisplayContext {
 
 	@Override
 	public ServletContext asServletContext() {
-		return null;
+		return _servletContext;
+	}
+
+	/**
+	 * Sets up {@link #asServletContext()}.
+	 */
+	public DummyDisplayContext initServletContext(ServletContext servletContext) {
+		if (_servletContext != null) {
+			throw new IllegalStateException("ServletContext already initialized.");
+		}
+		_servletContext = servletContext;
+		return this;
 	}
 	
 	@Override

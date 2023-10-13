@@ -2,7 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
+	final="true"
 	template="com.top_logic.element/grid.template.xml"
 >
 	<arguments
@@ -25,6 +25,10 @@
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_b1b98b5d_55df_4bb1_a908_188c3610ec25"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
 			/>
 		</buttons>
 	</arguments>

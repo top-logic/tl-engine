@@ -316,10 +316,9 @@ public class BinaryDataFactory {
 	public static BinaryData createFileBasedBinaryData(String contentType, InputStream content, long size, String name)
 			throws IOException {
 		BinaryData result = createFileBasedBinaryData(content, contentType, name);
-		if (size > 0 && result.getSize() != size) {
-			throw new IOException(
-				"Size of stream data '" + result.getSize() + "' does not match expected size '" + size
-					+ "'.");
+		if (size >= 0 && result.getSize() != size) {
+			Logger.warn("Inconsistent blob data, expected " + size + " bytes, received " + result.getSize() + " bytes.",
+				new StackTrace(), BinaryDataFactory.class);
 		}
 
 		return result;

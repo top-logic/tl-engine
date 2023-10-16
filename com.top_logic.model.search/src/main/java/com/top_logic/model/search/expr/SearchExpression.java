@@ -287,10 +287,10 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * Dynamic cast to {@link TLStructuredType} with user-readable error message and ensures the
 	 * value is not <code>null</code>.
 	 *
-	 * @param expr
-	 *        The evaluated expression.
 	 * @param value
 	 *        The evaluation value.
+	 * @param expr
+	 *        The evaluated expression.
 	 * @return The given value cast to {@link TLStructuredType}.
 	 */
 	public static TLStructuredType asStructuredTypeNonNull(Object value, SearchExpression expr) {
@@ -300,17 +300,20 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	/**
 	 * Dynamic cast to {@link TLStructuredType} with user-readable error message.
 	 *
+	 * @param value
+	 *        The evaluation value. Must be <code>null</code> or a {@link TLStructuredType}.
 	 * @param expr
 	 *        The evaluated expression.
-	 * @param value
-	 *        The evaluation value.
 	 * @return The given value cast to {@link TLStructuredType}.
 	 */
 	public static TLStructuredType asStructuredType(Object value, SearchExpression expr) {
-		if (!(value instanceof TLStructuredType)) {
-			throw new TopLogicException(I18NConstants.ERROR_NOT_A_TYPE__VAL_EXPR.fill(value, expr));
+		if (value == null) {
+			return null;
 		}
-		return (TLStructuredType) value;
+		if (value instanceof TLStructuredType) {
+			return (TLStructuredType) value;
+		}
+		throw new TopLogicException(I18NConstants.ERROR_NOT_A_TYPE__VAL_EXPR.fill(value, expr));
 	}
 
 	/** 

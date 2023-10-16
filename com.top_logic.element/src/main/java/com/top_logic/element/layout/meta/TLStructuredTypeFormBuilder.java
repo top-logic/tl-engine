@@ -36,6 +36,7 @@ import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
@@ -310,6 +311,16 @@ public class TLStructuredTypeFormBuilder
 		 * {@link AllClasses} that are non-final without converting to and from qualified names.
 		 */
 		class AllExtendableClassesDirect extends AllClasses {
+
+			private DeclarativeFormOptions _options;
+
+			/**
+			 * Creates a new {@link AllExtendableClassesDirect}.
+			 */
+			public AllExtendableClassesDirect(DeclarativeFormOptions options) {
+				_options = options;
+			}
+
 			@Override
 			protected OptionModel<TLModelPart> options(TypesTree tree, Filter<? super TLModelPart> modelFilter) {
 				return new DefaultTreeOptionModel<>(tree, modelFilter);
@@ -317,16 +328,40 @@ public class TLStructuredTypeFormBuilder
 
 			@Override
 			protected Filter<? super TLModelPart> modelFilter() {
-				return new IsExtendableType();
+				EditModel editModel = (EditModel) _options.get(DeclarativeFormBuilder.FORM_MODEL);
+				TLStructuredType editedType = editModel.getEditedType();
+				if (editedType instanceof TLClass) {
+					return new IsExtendableType((TLClass) editedType);
+				} else {
+					return new IsExtendableType();
+				}
+
 			}
 
 			public class IsExtendableType implements Filter<TLModelPart> {
+				private TLClass _edited;
+
+				public IsExtendableType(TLClass edited) {
+					_edited = edited;
+				}
+
+				public IsExtendableType() {
+					this(null);
+				}
+
 				@Override
 				public boolean accept(TLModelPart object) {
-					if (object instanceof TLClass) {
-						return !((TLClass) object).isFinal();
+					if (!(object instanceof TLClass)) {
+						return false;
 					}
-					return false;
+					TLClass tlClass = (TLClass) object;
+					if (tlClass.isFinal()) {
+						return false;
+					}
+					if (_edited == null) {
+						return true;
+					}
+					return !TLModelUtil.isGeneralization(_edited, tlClass);
 				}
 			}
 		}

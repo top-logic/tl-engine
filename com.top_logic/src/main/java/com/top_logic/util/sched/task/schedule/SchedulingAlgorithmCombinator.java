@@ -14,6 +14,7 @@ import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.layout.ResPrefix;
@@ -31,6 +32,7 @@ import com.top_logic.util.Resources;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 @InApp
+@Label("Combined schedule")
 public class SchedulingAlgorithmCombinator implements SchedulingAlgorithm {
 
 	/** The name of the {@link FormGroup} containing all the children's {@link FormGroup}s. */

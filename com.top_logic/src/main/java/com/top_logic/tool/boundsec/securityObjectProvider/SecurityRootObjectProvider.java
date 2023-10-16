@@ -6,6 +6,7 @@
 package com.top_logic.tool.boundsec.securityObjectProvider;
 
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -13,12 +14,15 @@ import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
 
 /**
- * The SecurityRootObjectProvider uses the security root ({@link BoundHelper#getDefaultObject()})
- * as security object.
+ * The {@link SecurityRootObjectProvider} uses the root of the security structure as security
+ * object.
+ * 
+ * @see BoundHelper#getDefaultObject()
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 @InApp
+@Label("Security root object")
 public class SecurityRootObjectProvider implements SecurityObjectProvider {
 
 	/** Alias for {@link SecurityRootObjectProvider}. */
@@ -33,7 +37,9 @@ public class SecurityRootObjectProvider implements SecurityObjectProvider {
 	}
 
 	/**
-	 * Returns the security root ({@link BoundHelper#getDefaultObject()}) as security object.
+	 * Returns the security root as security object.
+	 * 
+	 * @see BoundHelper#getDefaultObject()
 	 */
 	public BoundObject getSecurityRoot() {
 		return BoundHelper.getInstance().getDefaultObject();

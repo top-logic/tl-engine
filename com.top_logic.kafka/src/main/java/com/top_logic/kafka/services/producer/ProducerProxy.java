@@ -156,7 +156,7 @@ public abstract class ProducerProxy<K, V> implements Producer<K, V>, KafkaHeader
 	}
 
 	private void logTransmissionFailed(UUID id, Throwable exception) {
-		logError("Tansmission failed. Record id: " + id + ".", exception);
+		logError("Transmission failed. Record id: " + id + ".", exception);
 	}
 
 	private void logTransmissionSucceeded(RecordMetadata metaData, UUID id) {

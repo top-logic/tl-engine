@@ -13,6 +13,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.search.ui.ScriptComponent;
 import com.top_logic.model.search.ui.SearchExpressionEditor;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -20,8 +21,13 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * {@link CommandHandler} for the TL-Script console.
- *
+ * {@link CommandHandler} for the TL-Script console, that executes an entered script expression.
+ * 
+ * <p>
+ * If the handler is configured with {@link Config#isWithCommit()} the script expression may modify
+ * persistent data, such as create or delete {@link TLObject}s.
+ * </p>
+ * 
  * @author <a href="daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ScriptConsoleHandler extends AbstractCommandHandler {
@@ -34,14 +40,14 @@ public class ScriptConsoleHandler extends AbstractCommandHandler {
 	public interface Config extends AbstractCommandHandler.Config {
 		
 		/**
-		 * Name of the {@link ScriptComponent} that actually executes the search operation.
+		 * Name of the {@link ScriptComponent} that actually executes the script.
 		 */
 		@Mandatory
 		ComponentName getScriptComponent();
 
 
 		/**
-		 * Whether the search expression must be executed in a {@link Transaction} context.
+		 * Whether the script is executed in a {@link Transaction} context.
 		 */
 		boolean isWithCommit();
 

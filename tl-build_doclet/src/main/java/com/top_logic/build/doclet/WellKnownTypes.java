@@ -31,6 +31,8 @@ public class WellKnownTypes {
 
 	private static final String NAME_ANNOTATION = "com.top_logic.basic.config.annotation.Name";
 
+	private static final String IN_APP_ANNOTATION = "com.top_logic.basic.annotation.InApp";
+
 	private static final String TEMPLATE_VARIABLE_ANNOTATION = "com.top_logic.layout.basic.TemplateVariable";
 
 	TypeMirror _configType;
@@ -75,6 +77,8 @@ public class WellKnownTypes {
 
 	private final Types _types;
 
+	TypeMirror _inAppAnnotation;
+
 	/**
 	 * Creates a new {@link WellKnownTypes}.
 	 */
@@ -100,6 +104,7 @@ public class WellKnownTypes {
 			typeMirror("com.top_logic.basic.util.ResKey5"),
 			typeMirror("com.top_logic.basic.util.ResKeyN"));
 		_instantiationContext = typeMirror("com.top_logic.basic.config.InstantiationContext");
+		_inAppAnnotation = typeMirror(IN_APP_ANNOTATION);
 		_abstractAnnotation = typeMirror(ABSTRACT_ANNOTATION);
 		TypeElement name = typeElement(NAME_ANNOTATION);
 		if (name != null) {
@@ -192,6 +197,13 @@ public class WellKnownTypes {
 	 */
 	public boolean hasDeprecatedAnnotation(Element methodDoc) {
 		return hasAnnotation(methodDoc, _deprecatedAnnotation);
+	}
+
+	/**
+	 * Whether the {@value #IN_APP_ANNOTATION} annotation is present.
+	 */
+	public boolean hasInAppAnnotation(Element elem) {
+		return hasAnnotation(elem, _inAppAnnotation);
 	}
 
 	/**

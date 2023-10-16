@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import com.manticore.h2.H2MigrationTool;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -34,8 +35,7 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 
 	private static final String DATABASE_FILENAME_EXTENSION = ".mv.db";
 
-	private static final String MIGRATION_NAME_INFO =
-		"The name of the migrated database should extend the name of the original database. The migrated database should be the only database that extends the name of the original database.";
+	private static final String MIGRATION_NAME_INFO = "The name of the migrated database should extend the name of the original database.";
 
 	private final Properties _config;
 
@@ -64,18 +64,41 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 	}
 
 	private void migrateDatabaseVersion() {
-		String versionFrom = getCurrentDatabaseVersion();
 		String versionTo = getNewDatabaseVersion();
-		Path databasePath = getDatabasePath();
+		Path database = getDatabasePath();
 
-		Logger.info("Try to migrate database from " + versionFrom + " to " + versionTo, H2DataSourceProxy.class);
+		Logger.info("Try to migrate database to " + versionTo, H2DataSourceProxy.class);
 
 		try {
-			migrateDatabase(databasePath, versionFrom, versionTo);
+			Path databaseFolder = database.getParent();
 
-			replaceDatabaseWithMigration(databasePath);
+			Set<Path> databasesBeforeMigration = getAllDatabases(databaseFolder);
+			migrateDatabase(database, versionTo);
+			Set<Path> databasesAfterMigration = getAllDatabases(databaseFolder);
+
+			Set<Path> databaseMigrations = CollectionUtil.difference(databasesAfterMigration, databasesBeforeMigration);
+
+			replaceDatabaseWithMigration(database, databaseMigrations);
 		} catch (Exception exception) {
 			Logger.error("Database migration failed.", exception, H2DataSourceProxy.class);
+		}
+	}
+
+	private void replaceDatabaseWithMigration(Path database, Set<Path> databaseMigrations) throws IOException {
+		int size = databaseMigrations.size();
+
+		if (size == 0) {
+			noDatabaseMigrationFoundError(database);
+		} else if (size == 1) {
+			replaceDatabase(database, CollectionUtilShared.getSingleValueFromCollection(databaseMigrations));
+		} else {
+			multipleDatabaseMigrationsFoundError(database);
+		}
+	}
+
+	private Set<Path> getAllDatabases(Path folder) throws IOException {
+		try (Stream<Path> stream = Files.list(folder)) {
+			return stream.filter(H2DataSourceProxy::isDatabase).collect(Collectors.toSet());
 		}
 	}
 
@@ -94,28 +117,20 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 		}
 	}
 
-	/**
-	 * Since no connection to the database can be established, the current version of the database
-	 * is hardcoded here.
-	 */
-	private String getCurrentDatabaseVersion() {
-		return "H2-2.1.214";
-	}
-
 	private String getNewDatabaseVersion() {
 		return "H2-2.2.224";
 	}
 
-	private void migrateDatabase(Path databasePath, String versionFrom, String versionTo) throws Exception {
+	private void migrateDatabase(Path databasePath, String versionTo) throws Exception {
 		H2MigrationTool.readDriverRecords();
 
 		String user = getUser();
 		String password = getPassword();
 
-		new H2MigrationTool().migrate(versionFrom, versionTo, databasePath.toString(), user, password, null,
+		new H2MigrationTool().migrateAuto(versionTo, databasePath.toString(), user, password, null,
 			"COMPRESSION ZIP",
 			"VARIABLE_BINARY",
-			true, true, null);
+			true, true);
 	}
 
 	private String getUser() {
@@ -126,34 +141,8 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 		return _config.getProperty("password");
 	}
 
-	private void replaceDatabaseWithMigration(Path database) throws IOException {
-		Path databaseFolder = database.getParent();
-
-		try (Stream<Path> stream = Files.list(databaseFolder)) {
-			Set<Path> databaseExtensions = getDatabaseExtensions(database, stream);
-
-			int size = databaseExtensions.size();
-
-			if (size == 0) {
-				noDatabaseMigrationFoundError(database);
-			} else if (size == 1) {
-				replaceDatabase(CollectionUtilShared.getSingleValueFromCollection(databaseExtensions), database);
-			} else {
-				multipleDatabaseMigrationsFoundError(database);
-			}
-		}
-	}
-
-	private Set<Path> getDatabaseExtensions(Path database, Stream<Path> stream) {
-		return stream.filter(path -> isDatabase(path) && extendsDatabase(path, database)).collect(Collectors.toSet());
-	}
-
-	private boolean isDatabase(Path database) {
+	private static boolean isDatabase(Path database) {
 		return database.toString().endsWith(DATABASE_FILENAME_EXTENSION);
-	}
-
-	private boolean extendsDatabase(Path path, Path database) {
-		return path.compareTo(database) != 0 && path.toString().startsWith(database.toString());
 	}
 
 	private void noDatabaseMigrationFoundError(Path database) {
@@ -162,7 +151,7 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 		Logger.error(noDatabaseMigrationFound + MIGRATION_NAME_INFO, H2DataSourceProxy.class);
 	}
 
-	private void replaceDatabase(Path databaseFrom, Path databaseTo) throws IOException {
+	private void replaceDatabase(Path databaseTo, Path databaseFrom) throws IOException {
 		Logger.info("Replace content of " + databaseFrom + " with " + databaseTo, H2DataSourceProxy.class);
 		Files.copy(databaseFrom, databaseTo, StandardCopyOption.REPLACE_EXISTING);
 		Files.deleteIfExists(databaseFrom);

@@ -2269,7 +2269,7 @@ public class GridComponent extends EditComponent implements
 						AttributeUpdate update;
 						if (editedObject == null) {
 							// currently no object -> creating a new object
-							if (DisplayAnnotations.isHiddenInCreate(attribute)) {
+							if (isHiddenInCreate(attribute)) {
 								// Should not be visible.
 								update = null;
 							} else {
@@ -2277,7 +2277,7 @@ public class GridComponent extends EditComponent implements
 							}
 						} else {
 							boolean disabled = this.isReadOnly(attribute, columnName);
-							if (DisplayAnnotations.isHidden(attribute)) {
+							if (isHidden(attribute)) {
 								update = null;
 							} else {
 								update = overlay.newEditUpdateDefault(attribute, disabled);
@@ -2329,6 +2329,16 @@ public class GridComponent extends EditComponent implements
         updateTableRow(row, false);
 
     }
+
+	/** Whether the attribute is declared as "hidden during creation" in the model. */
+	protected boolean isHiddenInCreate(TLStructuredTypePart attribute) {
+		return DisplayAnnotations.isHiddenInCreate(attribute);
+	}
+
+	/** Whether the attribute is declared as "hidden" in the model. */
+	protected boolean isHidden(TLStructuredTypePart attribute) {
+		return DisplayAnnotations.isHidden(attribute);
+	}
 
 	private void updateFocus(FormGroup row, AttributeFormContext theContext, TLClass rowType) {
 		String focusColumn = _focusColumn;

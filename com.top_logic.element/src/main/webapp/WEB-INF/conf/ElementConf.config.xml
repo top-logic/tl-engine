@@ -527,6 +527,7 @@
 						<search-relevant value="false"/>
 						<fulltext-relevant value="false"/>
 						<tag-provider impl="com.top_logic.element.meta.form.tag.GalleryTagProvider"/>
+						<pdf-renderer impl="com.top_logic.layout.image.gallery.GalleryPdfRenderer"/>
 					</attribute-setting>
 
 					<attribute-setting config-name="TYPEDSET">

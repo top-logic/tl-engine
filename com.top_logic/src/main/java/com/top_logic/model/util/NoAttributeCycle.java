@@ -69,7 +69,7 @@ public class NoAttributeCycle implements ConstraintCheck {
 					extendedPath = new ArrayList<>(path);
 				}
 				extendedPath.add(item);
-				if (item == object) {
+				if (object.equals(item)) {
 					return I18NConstants.ERROR_CYLCE_NOT_ALLOWED__OBJECT_ATTRIBUTE_VALUE_CYCLE.fill(object, attribute,
 						object.tValue(attribute), extendedPath);
 				}

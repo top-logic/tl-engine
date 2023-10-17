@@ -25,7 +25,9 @@ import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.table.provider.ColumnInfo;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.export.EmptyPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
@@ -296,8 +298,13 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 	protected void addPartColumns(Map<String, ColumnInfo> result, List<TLStructuredTypePart> parts) {
 		for (TLStructuredTypePart typePart : parts) {
 			String columnName = typePart.getName();
+			ColumnInfo clash = result.get(columnName);
+			if ((clash != null) && !isAttributeRelevant(typePart, clash)) {
+				/* Keep the existing ColumnInfo, as only it is relevant for this table. */
+				continue;
+			}
 			ColumnInfo info = createColumnInfo(typePart);
-			ColumnInfo clash = result.put(columnName, info);
+			result.put(columnName, info);
 			if (clash != null) {
 				// Note: The order is important here. the existing column `clash` is joined with the
 				// new one keeping core attributes like the label. In case of an overridden
@@ -307,6 +314,48 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 				result.put(columnName, info);
 			}
 		}
+	}
+
+	private boolean isAttributeRelevant(TLStructuredTypePart newAttribute, ColumnInfo clash) {
+		TLTypePart clashAttribute = clash.getTypeContext().getTypePart();
+		if (clashAttribute == null) {
+			/* The new attribute is relevant: If there is no attribute, this clash cannot be caused
+			 * by an attribute override. And only when this is about an attribute override can the
+			 * new attribute be irrelevant. */
+			return true;
+		}
+		/* The cast is safe: Only StructuredTypes can have TypeParts. */
+		TLStructuredType clashOwner = (TLStructuredType) clashAttribute.getOwner();
+		TLStructuredType ownOwner = newAttribute.getOwner();
+		if (!TLModelUtil.isGeneralization(ownOwner, clashOwner)) {
+			/* This is not a simple attribute override. The new attribute is therefore relevant. */
+			return true;
+		}
+		return isGeneralizationRelevant(clashOwner, ownOwner);
+	}
+
+	/**
+	 * Whether the overridden attribute is relevant for this table.
+	 * <p>
+	 * That is the case, when the table can display subtypes of the original attribute's owner, that
+	 * are not subtypes of the specialized attribute's owner.
+	 * </p>
+	 */
+	private boolean isGeneralizationRelevant(TLStructuredType override, TLStructuredType original) {
+		for (TLClass contentType : getContentTypes()) {
+			if (TLModelUtil.isGeneralization(override, contentType)) {
+				// This contentType uses the specialized attribute. The original attribute is not
+				// relevant for this content type.
+				continue;
+			}
+			if (TLModelUtil.isGeneralization(original, contentType)
+				|| TLModelUtil.isGeneralization(contentType, original)) {
+				/* There might be subclasses that use the original attribute, not the specialized
+				 * one. The original attribute is therefore relevant. */
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -351,8 +400,6 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 	@Override
 	public ColumnInfo createColumnInfo(TLStructuredTypePart typePart) {
 		TLTypeContext contentType = new TypePartContext(typePart);
-		boolean multiple = typePart.isMultiple();
-		boolean mandatory = typePart.isMandatory();
 
 		ColumnInfo info = createColumnInfo(contentType, headerI18N(typePart));
 		if (TLModelUtil.isAccessAware(typePart)) {

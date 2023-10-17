@@ -32,6 +32,7 @@ import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.model.utility.OptionModel;
+import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -206,6 +207,11 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 */
 	public FormMember getField() {
 		return _field;
+	}
+
+	@Override
+	public Media getOutputMedia() {
+		return _overlay.getOutputMedia();
 	}
 
 	/**

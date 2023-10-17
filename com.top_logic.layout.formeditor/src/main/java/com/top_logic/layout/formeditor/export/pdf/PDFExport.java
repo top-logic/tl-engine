@@ -35,17 +35,23 @@ import com.lowagie.text.DocumentException;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.element.layout.formeditor.builder.TypedForm;
+import com.top_logic.element.meta.form.AttributeFormContext;
+import com.top_logic.element.meta.form.MetaControlProvider;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DummyControlScope;
+import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.layout.form.template.model.internal.TemplateControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.Media;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
@@ -87,76 +93,54 @@ public class PDFExport {
 
 	private static final float INCH_MILLIES_FACTOR = 25.4F;
 
-	private static final String STYLE_PDF_EXPORT_CSS = "/style/pdfExport.css";
-
-	private static final String STYLE_TL_ICON_FONT_CSS = "/style/tl_iconFont.css";
-
-	private static final String STYLE_TL_FONT_COLOR_CSS = "/style/fontColor.css";
-
-	private static final String STYLE_FONTAWESOME_ALL_CSS = "/style/fontawesome/all.css";
-
 	private Dimension _pageSize = DEFAULT_PAGE_SIZE;
 
 	private float _pageResolution = DEFAULT_PAGE_RESOLUTION;
 
 	private int[] _margins = DEFAULT_MARGINS;
 
-	private Theme _exportTheme = ThemeFactory.getTheme();
+	private Theme _exportTheme = ThemeFactory.getInstance().getTheme("PDFExport");
 
 	/**
 	 * Writes the PDF export computed from the given export description to the given output.
+	 * 
 	 * @param out
 	 *        {@link OutputStream} to write PDF to.
-	 * @param exportDescription
-	 *        Description of the PDF export.
-	 * @param element
-	 *        Context object for the export.
+	 * @param exportForm
+	 *        Description of the PDF form to export.
+	 * @param model
+	 *        The underlying model to export.
 	 */
-	public final void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
-			TLObject element) throws IOException, DocumentException {
-		createPDFExport(out, exportDescription, element, (TLClass) element.tType());
-	}
-
-	/**
-	 * Writes the PDF export computed from the given export description to the given output.
-	 * @param out
-	 *        {@link OutputStream} to write PDF to.
-	 * @param exportDescription
-	 *        Description of the PDF export.
-	 * @param element
-	 *        Context object for the export.
-	 * @param type
-	 *        Context type in which the export description is evaluated.
-	 */
-	public final void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
-			TLObject element, TLClass type)
+	public void createPDFExport(OutputStream out, TypedForm exportForm, TLObject model)
 			throws IOException, DocumentException {
-		FormEditorContext renderContext = new FormEditorContext.Builder()
-			.model(element)
-			.formType(type)
-			.build();
-		createPDFExport(out, exportDescription, renderContext);
-
-	}
-
-	/**
-	 * Writes the PDF export computed from the given export description to the given output.
-	 * @param out
-	 *        {@link OutputStream} to write PDF to.
-	 * @param exportDescription
-	 *        Description of the PDF export.
-	 * @param renderContext
-	 *        Context information about the exported object.
-	 */
-	public void createPDFExport(OutputStream out, FormElementTemplateProvider exportDescription,
-			FormEditorContext renderContext) throws IOException, DocumentException {
 		DisplayContext context = createDisplayContext();
 
-		StringWriter html = new StringWriter();
-		try (TagWriter tagWriter = new TagWriter(html)) {
-			writeHTML(context, tagWriter, exportDescription, renderContext);
+		AttributeFormContext formContext = new AttributeFormContext("pdf", ResPrefix.NONE, Media.PDF);
+		formContext.setImmutable(true);
+
+		FormElementTemplateProvider template =
+			TypedConfigUtil.createInstance(exportForm.getFormDefinition());
+
+		FormEditorContext renderContext = new FormEditorContext.Builder()
+			.formType(exportForm.getFormType())
+			.concreteType(exportForm.getDisplayedType())
+			.model(model)
+			.formContext(formContext)
+			.contentGroup(formContext)
+			.build();
+
+		StringWriter htmlBuffer = new StringWriter();
+		try (TagWriter tagWriter = new TagWriter(htmlBuffer)) {
+			ThemeFactory.getInstance().withTheme(getExportTheme(), () -> {
+				writeHTML(context, tagWriter, template, renderContext);
+				return null;
+			});
 		}
-		convertToPDF(context, out, html.toString());
+
+		String html = htmlBuffer.toString();
+		Logger.debug(html, PDFExport.class);
+
+		convertToPDF(context, out, html);
 	}
 
 	private DisplayContext createDisplayContext() {
@@ -222,16 +206,8 @@ public class PDFExport {
 	protected void writePDFStyles(DisplayContext context, TagWriter out) throws IOException {
 		writePageStyles(context, out);
 
-		Theme currentTheme = getExportTheme();
-		String mergedCSS = currentTheme.getStyleSheet(
-			"pdfExport.css",
-			new String[] {
-				currentTheme.getFileLink(STYLE_FONTAWESOME_ALL_CSS),
-				currentTheme.getFileLink(STYLE_TL_ICON_FONT_CSS),
-				currentTheme.getFileLink(STYLE_TL_FONT_COLOR_CSS),
-				currentTheme.getFileLink(STYLE_PDF_EXPORT_CSS),
-
-			});
+		Theme exportTheme = getExportTheme();
+		String mergedCSS = exportTheme.getStyleSheet();
 		HTMLUtil.writeStylesheetRef(out, context.getContextPath(), mergedCSS);
 	}
 
@@ -286,7 +262,11 @@ public class PDFExport {
 	 */
 	protected void renderContent(DisplayContext context, TagWriter out, FormElementTemplateProvider exportDescription,
 			FormEditorContext renderContext) throws IOException {
-		exportDescription.renderPDFExport(context, out, renderContext);
+
+		HTMLTemplateFragment template = exportDescription.createDisplayTemplate(renderContext);
+		TemplateControl control =
+			new TemplateControl(renderContext.getContentGroup(), MetaControlProvider.INSTANCE, template);
+		control.write(context, out);
 	}
 
 	/**

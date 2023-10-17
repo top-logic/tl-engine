@@ -10,14 +10,11 @@ import java.io.OutputStream;
 
 import com.lowagie.text.DocumentException;
 
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
 import com.top_logic.element.layout.formeditor.definition.PDFExportAnnotation;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.form.implementation.FormEditorContext;
-import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 
 /**
  * {@link BinaryDataSource} that renders an object as PDF document.
@@ -71,15 +68,9 @@ public class PDFData implements BinaryDataSource {
 	public void deliverTo(OutputStream out) throws IOException {
 		try {
 			TypedForm exportForm = lookupForm();
-
-			FormElementTemplateProvider template =
-				TypedConfigUtil.createInstance(exportForm.getFormDefinition());
-			FormEditorContext exportContext = new FormEditorContext.Builder()
-				.formType(exportForm.getFormType())
-				.concreteType(exportForm.getDisplayedType())
-				.model(getExportObject())
-				.build();
-			createExporter().createPDFExport(out, template, exportContext);
+			TLObject model = getExportObject();
+			PDFExport exporter = createExporter();
+			exporter.createPDFExport(out, exportForm, model);
 		} catch (DocumentException ex) {
 			throw new IOException("Invalid PDF document.", ex);
 		}

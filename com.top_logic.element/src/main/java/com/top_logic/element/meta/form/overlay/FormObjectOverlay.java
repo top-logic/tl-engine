@@ -21,6 +21,7 @@ import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.mig.html.Media;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
@@ -71,6 +72,11 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	@Override
 	public TLStructuredType getType() {
 		return _type;
+	}
+
+	@Override
+	public Media getOutputMedia() {
+		return _scope.getOutputMedia();
 	}
 
 	@Override

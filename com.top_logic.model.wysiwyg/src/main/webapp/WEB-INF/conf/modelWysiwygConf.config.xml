@@ -32,6 +32,7 @@
 						<field-provider impl="com.top_logic.model.wysiwyg.fieldprovider.StructuredTextFieldProvider"/>
 						<tag-provider impl="com.top_logic.model.wysiwyg.fieldprovider.StructuredTextTagProvider"/>
 						<export-binding impl="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeValueBinding"/>
+						<pdf-renderer impl="com.top_logic.layout.wysiwyg.ui.StructuredTextPDFRenderer"/>
 					</attribute-setting>
 
 					<attribute-setting config-name="I18N_HTML" legacy-type-code="1">
@@ -56,6 +57,7 @@
 						</column-info>
 						<field-provider impl="com.top_logic.model.wysiwyg.fieldprovider.I18NStructureTextFieldProvider"/>
 						<tag-provider impl="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructureTextTagProvider"/>
+						<pdf-renderer impl="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextPDFRenderer"/>
 					</attribute-setting>
 
 					<!-- Enhancements for datatypes defined in tl-model-search -->

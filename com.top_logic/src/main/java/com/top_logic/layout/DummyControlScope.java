@@ -12,7 +12,21 @@ package com.top_logic.layout;
  */
 public final class DummyControlScope implements ControlScope {
 
-	private FrameScope _frameScope = new DummyFrameScope();
+	private final FrameScope _frameScope;
+
+	/**
+	 * Creates a {@link DummyControlScope}.
+	 */
+	public DummyControlScope() {
+		this(new DummyFrameScope());
+	}
+
+	/**
+	 * Creates a {@link DummyControlScope}.
+	 */
+	public DummyControlScope(FrameScope frameScope) {
+		_frameScope = frameScope;
+	}
 
 	@Override
 	public boolean removeUpdateListener(UpdateListener aListener) {

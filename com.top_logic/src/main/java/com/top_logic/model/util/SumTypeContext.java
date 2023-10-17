@@ -33,7 +33,8 @@ public class SumTypeContext implements TLTypeContext {
 		}
 		boolean multiple = self.isMultiple() || other.isMultiple();
 		boolean mandatory = self.isMandatory() && other.isMandatory();
-		return SumTypeContext.createSumTypeContext(self, types, otherTypes, multiple, mandatory);
+		boolean composite = self.isCompositionContext() && other.isCompositionContext();
+		return SumTypeContext.createSumTypeContext(self, types, otherTypes, multiple, mandatory, composite);
 	}
 
 	/**
@@ -41,14 +42,14 @@ public class SumTypeContext implements TLTypeContext {
 	 * displayed at the same location.
 	 */
 	private static SumTypeContext createSumTypeContext(TLTypeContext lead, Set<TLType> types, Set<TLType> otherTypes,
-			boolean multiple, boolean mandatory) {
+			boolean multiple, boolean mandatory, boolean composite) {
 		Set<TLType> allTypes = new HashSet<>();
 		allTypes.addAll(types);
 		allTypes.addAll(otherTypes);
 	
 		TLType commonSuperType = commonSuperType(allTypes);
 	
-		return new SumTypeContext(lead, commonSuperType, allTypes, multiple, mandatory);
+		return new SumTypeContext(lead, commonSuperType, allTypes, multiple, mandatory, composite);
 	}
 
 	private Set<TLType> _concreteTypes;
@@ -61,16 +62,18 @@ public class SumTypeContext implements TLTypeContext {
 
 	private boolean _mandatory;
 
+	private final boolean _composite;
 	/**
 	 * Creates a {@link SumTypeContext}.
 	 */
 	private SumTypeContext(TLTypeContext lead, TLType commonType, Set<TLType> concreteTypes, boolean multiple,
-			boolean mandatory) {
+			boolean mandatory, boolean composite) {
 		_lead = lead;
 		_commonType = commonType;
 		_concreteTypes = concreteTypes;
 		_multiple = multiple;
 		_mandatory = mandatory;
+		_composite = composite;
 	}
 
 	private static TLType commonSuperType(Set<TLType> allTypes) {
@@ -121,7 +124,7 @@ public class SumTypeContext implements TLTypeContext {
 
 	@Override
 	public boolean isCompositionContext() {
-		return false;
+		return _composite;
 	}
 
 	@Override

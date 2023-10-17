@@ -130,6 +130,11 @@ public interface EditContextBase extends AnnotationLookup {
 	}
 
 	/**
+	 * Whether this is an edit operation in a table.
+	 */
+	boolean inTableContext();
+
+	/**
 	 * Media to which the form is rendered.
 	 */
 	default Media getOutputMedia() {

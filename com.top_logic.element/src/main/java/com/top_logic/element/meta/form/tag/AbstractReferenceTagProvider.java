@@ -67,6 +67,9 @@ public abstract class AbstractReferenceTagProvider implements DisplayProvider {
 				return createPopupDisplay(editContext, member);
 			}
 			case TABLE: {
+				if (editContext.inTableContext()) {
+					return createPopupDisplay(editContext, member);
+				}
 				return createTableDisplay(member);
 			}
 			default:

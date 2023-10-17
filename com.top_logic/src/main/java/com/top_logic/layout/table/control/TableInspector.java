@@ -13,6 +13,7 @@ import com.top_logic.layout.scripting.recorder.gui.inspector.GuiInspectorCommand
 import com.top_logic.layout.scripting.recorder.gui.inspector.GuiInspectorPluginFactory;
 import com.top_logic.layout.scripting.recorder.gui.inspector.InspectorModel;
 import com.top_logic.layout.table.TableViewModel;
+import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.util.Utils;
 
 /**
@@ -61,29 +62,15 @@ public class TableInspector extends GuiInspectorCommand<TableControl, TableCell>
 	}
 
 	private int calcColumnIndex(TableControl tableControl, Map<String, Object> arguments) {
-		int columnIndexIgnoringFixedColumns = (Integer) arguments.get("columnIndex");
-		boolean isFixedColumn = (Boolean) arguments.get("isFixedColumn");
-		int columnIndex = columnIndexIgnoringFixedColumns;
+		return TableUtil.getServerColumnIndex(tableControl.getViewModel(), getClientColumnIndex(arguments));
+	}
 
-		if (!isFixedColumn) {
-			columnIndex += findFixedColumnsCount(tableControl);
-		}
-		return columnIndex;
+	private Integer getClientColumnIndex(Map<String, Object> arguments) {
+		return (Integer) arguments.get("columnIndex");
 	}
 
 	private int calcRowIndex(Map<String, Object> arguments) {
 		return (Integer) arguments.get("rowIndex");
-	}
-
-	private int findFixedColumnsCount(TableControl tableControl) {
-		int fixedColumnCount = Math.max(0, tableControl.getViewModel().getFixedColumnCount());
-		if (fixedColumnCount == TableViewModel.NO_FIXED_COLUMN_PERSONALIZATION) {
-			return 0;
-		} else {
-			assert fixedColumnCount >= 0 : "Unexpected value for the number of fixed columns: '" + fixedColumnCount
-				+ "'! Can only interprete '-1' (no fixed columns) and values >= 0.";
-			return fixedColumnCount;
-		}
 	}
 
 	@Override

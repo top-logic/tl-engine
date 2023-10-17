@@ -52,15 +52,15 @@ public class SumTypeContext implements TLTypeContext {
 		return new SumTypeContext(lead, commonSuperType, allTypes, multiple, mandatory, composite);
 	}
 
-	private Set<TLType> _concreteTypes;
+	private final Set<TLType> _concreteTypes;
 
-	private TLTypeContext _lead;
+	private final TLTypeContext _lead;
 
-	private TLType _commonType;
+	private final TLType _commonType;
 
-	private boolean _multiple;
+	private final boolean _multiple;
 
-	private boolean _mandatory;
+	private final boolean _mandatory;
 
 	private final boolean _composite;
 	/**

@@ -61,6 +61,7 @@ public class AttributedNodeGroupInitializer implements NodeGroupInitializer {
 			if (update == null) {
 				continue;
 			}
+			update.setInTableContext(true);
 			FormMember theMember = formContext.createFormMemberForUpdate(update);
 			if (theMember != null) {
 				nodeGroup.addMember(theMember);

@@ -444,6 +444,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				TLFormObject editedObject, TLStructuredTypePart attribute, Collection<String> readOnlyColumns) {
 			AttributeFormContext formContext = updateContainer.getFormContext();
 			AttributeUpdate update = editedObject.newEditUpdateDefault(attribute, false);
+			update.setInTableContext(true);
 			return createFieldForUpdate(contentGroup, attribute, readOnlyColumns, formContext, update);
 		}
 
@@ -708,6 +709,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				return null;
 			}
 			AttributeUpdate update = newObject.newCreateUpdate(attribute);
+			update.setInTableContext(true);
 			return createFieldForUpdate(contentGroup, attribute, readOnlyColumns, formContext, update);
 		}
 

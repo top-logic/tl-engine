@@ -31,7 +31,6 @@ import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.provider.DefaultTableConfigurationProvider;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.ui.OptionsDisplay;
 import com.top_logic.model.annotate.ui.OptionsPresentation;
@@ -100,7 +99,6 @@ public abstract class AbstractWrapperFieldProvider extends AbstractSelectFieldPr
 	 */
 	protected void initSelectDialogProvider(SelectField selectField, EditContext editContext) {
 		if (!editContext.isOrdered()) {
-			TLStructuredTypePart x;
 			OptionsPresentation optionsPresentation =
 				AttributeOperations.getOptionsPresentation(
 					editContext.getAnnotation(OptionsDisplay.class),

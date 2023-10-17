@@ -19,8 +19,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
 import org.apache.hc.core5.http.protocol.BasicHttpContext;
 import org.apache.hc.core5.http.protocol.HttpContext;
@@ -268,9 +268,17 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 
 				try (final CloseableHttpClient httpclient = enhancer.enhanceClient(HttpClients.custom()).build()) {
 					enhancer.enhanceRequest(httpclient, request);
-					try (CloseableHttpResponse response = httpclient.execute(request, _requestContext)) {
-						return _responseHandler.handle(method, call, response);
-					}
+					return httpclient.execute(request, _requestContext, response -> {
+						try {
+							return _responseHandler.handle(method, call, response);
+						} catch (RuntimeException ex) {
+							throw ex;
+						} catch (IOException | HttpException ex) {
+							throw ex;
+						} catch (Exception ex) {
+							throw new IOException("Problem processing response.", ex);
+						}
+					});
 				}
 			}
 

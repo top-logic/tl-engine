@@ -30,21 +30,21 @@ public class DiagramJSObjectUtil {
 	 * Checks if the given {@link JavaScriptObject} is diagramJS Label.
 	 */
 	public static boolean isLabel(JavaScriptObject object) {
-		return getFunctionName(getConstructor(object)) == "Label";
+		return JavaScriptObjectUtil.has(object, "labelTarget");
 	}
 
 	/**
 	 * Checks if the given {@link JavaScriptObject} is diagramJS Shape.
 	 */
 	public static boolean isShape(JavaScriptObject object) {
-		return getFunctionName(getConstructor(object)) == "Shape";
+		return JavaScriptObjectUtil.has(object, "children");
 	}
 
 	/**
 	 * Checks if the given {@link JavaScriptObject} is diagramJS Connection.
 	 */
 	public static boolean isConnection(JavaScriptObject object) {
-		return getFunctionName(getConstructor(object)) == "Connection";
+		return JavaScriptObjectUtil.has(object, "waypoints");
 	}
 	
 	private static native JavaScriptObject getConstructor(JavaScriptObject object) /*-{

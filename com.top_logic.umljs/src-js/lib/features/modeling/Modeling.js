@@ -5,7 +5,6 @@ import LayoutConnectionLabelsHandler from './cmd/LayoutConnectionLabelsHandler';
 import HideElementHandler from './cmd/HideElementHandler';
 
 import BaseModeling from 'diagram-js/lib/features/modeling/Modeling';
-import { Label, Shape, Connection } from 'diagram-js/lib/model';
 
 import { assign } from 'min-dash';
 

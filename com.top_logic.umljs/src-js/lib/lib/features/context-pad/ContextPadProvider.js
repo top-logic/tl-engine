@@ -1,4 +1,4 @@
-import { Shape, Label } from 'diagram-js/lib/model';
+import { isShape, isLabel } from '../../util/ModelUtil';
 
 import { assign } from 'min-dash';
 
@@ -107,7 +107,7 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
     'hide': getHidePadEntry()
   };
 
-  if(element instanceof Shape && !(element instanceof Label)) {
+  if(isShape(element) && !isLabel(element)) {
     if(!('stereotypes' in element && element.stereotypes.indexOf('enumeration') != -1)) {
       assign(contextPadEntries, {
         'inheritance-connection': getConnectionPadEntry('inheritance', 'Inheritance Connection'),

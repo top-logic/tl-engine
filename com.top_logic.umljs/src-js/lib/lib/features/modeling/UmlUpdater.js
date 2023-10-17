@@ -1,6 +1,6 @@
 import CommandInterceptor from 'diagram-js/lib/command/CommandInterceptor';
 
-import { Label } from 'diagram-js/lib/model';
+import { isLabel } from '../../util/ModelUtil';
 
 import inherits from 'inherits';
 
@@ -48,7 +48,7 @@ export default function UmlUpdater(eventBus, connectionDocking, commandStack) {
   });
 
   eventBus.on('element.hover', 1500, function(event) {
-    if(event.element instanceof Label && event.element.labelType === 'classifier') {
+    if(isLabel(event.element) && event.element.labelType === 'classifier') {
       return false;
     }
   });
@@ -56,7 +56,7 @@ export default function UmlUpdater(eventBus, connectionDocking, commandStack) {
   var delegatedClassifierEvents = ['element.click', 'element.mousedown', 'element.mouseup', 'element.contextmenu', 'element.dblclick' ]
 
   eventBus.on(delegatedClassifierEvents, 1500, function(event) {
-    if(event.element instanceof Label && event.element.labelType === 'classifier') {
+    if(isLabel(event.element) && event.element.labelType === 'classifier') {
       event.stopPropagation();
 
       eventBus.fire(event.type, {

@@ -17,7 +17,7 @@ import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.util.model.ModelService;
 
 /**
- * {@link TLTypeContext} that represents a mix of multipe other contexts.
+ * {@link TLTypeContext} that represents a mix of multiple other contexts.
  */
 public class SumTypeContext implements TLTypeContext {
 

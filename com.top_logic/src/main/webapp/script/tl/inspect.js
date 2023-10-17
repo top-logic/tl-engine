@@ -162,7 +162,6 @@ INSPECT = {
 			commandArguments.isTableCell = true;
 			commandArguments.rowIndex = INSPECT.getIndexOfTableRow(element);
 			commandArguments.columnIndex = INSPECT.getIndexOfTableColumn(element);
-			commandArguments.isFixedColumn = INSPECT.isWithinFixedColumn(element);
 			if (INSPECT.isTreeTableNodeContent(element)){
 				commandArguments.isTreeNode = true;
 			}
@@ -313,14 +312,6 @@ INSPECT = {
 	
 	getIndexOfTableColumn: function(element) {
 		return INSPECT.findParentTag(element, 'td').cellIndex;
-	},
-	
-	/**
-	 * Is that element within fixed column of a "frozen table"?
-	 */
-	isWithinFixedColumn: function(element) {
-		var controlIdOfSurroundingRow = INSPECT.findControlIdOfSurroundingRow(element);
-		return controlIdOfSurroundingRow.indexOf('fixed') != -1;
 	},
 	
 	findControlIdOfSurroundingRow: function(element) {

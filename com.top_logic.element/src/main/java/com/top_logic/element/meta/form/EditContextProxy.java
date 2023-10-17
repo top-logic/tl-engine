@@ -62,6 +62,11 @@ public class EditContextProxy implements EditContext {
 	}
 
 	@Override
+	public boolean inTableContext() {
+		return _base.inTableContext();
+	}
+
+	@Override
 	public boolean isBag() {
 		return _base.isBag();
 	}

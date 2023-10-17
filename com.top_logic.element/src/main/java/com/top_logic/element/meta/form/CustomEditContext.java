@@ -42,6 +42,8 @@ public class CustomEditContext implements EditContext {
 
 	private boolean _composition = false;
 
+	private boolean _inTableContext = false;
+
 	private Generator _options = null;
 
 	/**
@@ -185,6 +187,19 @@ public class CustomEditContext implements EditContext {
 	 */
 	public CustomEditContext setComposition(boolean composition) {
 		_composition = composition;
+		return this;
+	}
+
+	@Override
+	public boolean inTableContext() {
+		return _inTableContext;
+	}
+
+	/**
+	 * @see #inTableContext()
+	 */
+	public CustomEditContext setInTableContext(boolean inTableContext) {
+		_inTableContext = inTableContext;
 		return this;
 	}
 

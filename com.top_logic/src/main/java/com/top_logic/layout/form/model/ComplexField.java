@@ -223,7 +223,7 @@ public final class ComplexField extends AbstractSingleValueField {
 	}
 
 	/**
-	 * this field. This can be used to chain multipe settes into a
+	 * this field. This can be used to chain multiple set into a
 	 *     single expression.
 	 *
 	 * @see #isWhiteSpaceIgnored()
